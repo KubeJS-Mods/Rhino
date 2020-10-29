@@ -90,4 +90,15 @@ public class ArrowFunction extends BaseFunction
 	{
 		return eq.equalGraphs(f1.boundThis, f2.boundThis) && eq.equalGraphs(f1.targetFunction, f2.targetFunction);
 	}
+
+	@Override
+	public String toString()
+	{
+		if (targetFunction instanceof BaseFunction)
+		{
+			return "ArrowFunction (" + ((BaseFunction) targetFunction).getLength() + ") => {...}";
+		}
+
+		return "ArrowFunction";
+	}
 }

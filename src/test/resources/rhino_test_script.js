@@ -7,7 +7,9 @@ events.listen('test', event => {
   console.info('TEEST: ' + event)
 })
 
-console.info([49, 1, 48, 521].sort())
+const numbers = [49, 1, 48, 521]
+
+console.info(numbers.sort())
 console.info({test: 'abc', d: []})
 
 function Rectangle(w, h) {
@@ -27,3 +29,7 @@ console.info('' + rect) // js toString
 console.info(events.abc)
 console.info(events.abcd)
 events.abc = 'hello'
+
+for (n in numbers) {
+  console.info(numbers[n])
+}
