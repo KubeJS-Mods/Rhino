@@ -1823,8 +1823,7 @@ public class Context
 	 */
 	public static Object javaToJS(Object value, Scriptable scope)
 	{
-		if (value instanceof String || value instanceof Number
-				|| value instanceof Boolean || value instanceof Scriptable)
+		if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Scriptable)
 		{
 			return value;
 		}

@@ -33,3 +33,7 @@ events.abc = 'hello'
 for (n in numbers) {
   console.info(numbers[n])
 }
+
+console.info(java.lang.Math)
+console.info(java.lang.Math.pow)
+console.info(java.lang.Math.pow(3, 4))

@@ -1,10 +1,10 @@
 package dev.latvian.mods.rhino.test;
 
-import dev.latvian.mods.rhino.BaseFunction;
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.RhinoException;
 import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.ScriptableObject;
+import dev.latvian.mods.rhino.util.DynamicFunction;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -12,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * @author LatvianModder
@@ -24,6 +23,12 @@ public class ScriptTest
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(ScriptTest.class.getResourceAsStream("/rhino_test_script.js"), StandardCharsets.UTF_8)))
 		{
 			Context cx = Context.enter();
+
+			cx.setClassShutter(fullClassName -> {
+				System.out.println(fullClassName);
+				return true;
+			});
+
 			Scriptable scope = cx.initStandardObjects();
 
 			ScriptableObject.putProperty(scope, "console", Context.javaToJS(new ConsoleJS(), scope));
@@ -69,22 +74,6 @@ public class ScriptTest
 		public void info(Object o)
 		{
 			System.out.println(o);
-		}
-	}
-
-	public static class DynamicFunction extends BaseFunction
-	{
-		private final Function<Object[], Object> function;
-
-		public DynamicFunction(Function<Object[], Object> f)
-		{
-			function = f;
-		}
-
-		@Override
-		public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
-		{
-			return function.apply(args);
 		}
 	}
 
