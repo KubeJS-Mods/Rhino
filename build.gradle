@@ -1,0 +1,133 @@
+buildscript {
+	repositories {
+		jcenter()
+		maven { url = 'https://files.minecraftforge.net/maven' }
+		maven { url "https://plugins.gradle.org/m2/" }
+		mavenCentral()
+	}
+	dependencies {
+		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+		classpath 'gradle.plugin.com.matthewprenger:CurseGradle:1.1.0'
+	}
+}
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'eclipse'
+apply plugin: 'com.matthewprenger.cursegradle'
+apply plugin: 'maven'
+
+apply from: 'https://raw.githubusercontent.com/MinecraftModDevelopment/Gradle-Collection/master/generic/markdown-git-changelog.gradle'
+
+def ENV = System.getenv()
+version = ENV.BUILD_NUMBER ? "${mod_version}.${ENV.BUILD_NUMBER}" : "${mod_version}.custom"
+group = project.mod_package
+archivesBaseName = project.mod_name
+
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+
+minecraft {
+	mappings channel: 'snapshot', version: project.mapping_version
+	// accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+	runs {
+		client {
+			workingDirectory project.file('run')
+			//property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+			property 'forge.logging.console.level', 'debug'
+
+			if (project.hasProperty('mc_dev_uuid')) args '--uuid', project.mc_dev_uuid
+			if (project.hasProperty('mc_dev_username')) args '--username', project.mc_dev_username
+			if (project.hasProperty('mc_dev_width')) args '--width', project.mc_dev_width
+			if (project.hasProperty('mc_dev_height')) args '--height', project.mc_dev_height
+
+			mods {
+				logisticstrains {
+					source sourceSets.main
+				}
+			}
+		}
+
+		server {
+			workingDirectory project.file('run')
+			//property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+			property 'forge.logging.console.level', 'debug'
+
+			args 'nogui'
+
+			mods {
+				logisticstrains {
+					source sourceSets.main
+				}
+			}
+		}
+
+		data {
+			workingDirectory project.file('run')
+			//property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+			property 'forge.logging.console.level', 'debug'
+
+			args '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/')
+
+			mods {
+				logisticstrains {
+					source sourceSets.main
+				}
+			}
+		}
+	}
+}
+
+repositories {
+	mavenLocal()
+}
+
+dependencies {
+	minecraft "net.minecraftforge:forge:${forge_version}"
+}
+
+jar {
+	manifest {
+		attributes([
+				"Specification-Title"     : project.mod_id,
+				"Specification-Vendor"    : project.mod_author,
+				"Specification-Version"   : "1",
+				"Implementation-Title"    : project.name,
+				"Implementation-Version"  : version,
+				"Implementation-Vendor"   : project.mod_author,
+				"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+		])
+	}
+}
+
+def reobfFile = file("$buildDir/reobfJar/output.jar")
+def reobfArtifact = artifacts.add('default', reobfFile) {
+	type 'jar'
+	builtBy 'reobfJar'
+}
+
+if (ENV.LOCAL_MAVEN) {
+	uploadArchives {
+		repositories {
+			mavenDeployer {
+				repository(url: "file://${ENV.LOCAL_MAVEN}")
+			}
+		}
+	}
+}
+
+if (ENV.CURSEFORGE_KEY) {
+	curseforge {
+		apiKey = ENV.CURSEFORGE_KEY
+		project {
+			id = "${curseforge_id}"
+			releaseType = "release"
+			addGameVersion "1.12.2"
+			addGameVersion "1.14.4"
+			addGameVersion "1.15.2"
+			addGameVersion "1.16.1"
+			addGameVersion "1.16.2"
+			addGameVersion "1.16.3"
+			changelog = getGitChangelog
+			changelogType = 'markdown'
+			addArtifact(deobfJar)
+		}
+	}
+}
