@@ -7,6 +7,7 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.regexp.NativeRegExp;
+import dev.latvian.mods.rhino.util.DataObject;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+import java.util.function.Supplier;
 
 /**
  * This class implements the Array native object.
@@ -24,7 +26,7 @@ import java.util.NoSuchElementException;
  * @author Norris Boyd
  * @author Mike McCabe
  */
-public class NativeArray extends IdScriptableObject implements List
+public class NativeArray extends IdScriptableObject implements List, DataObject
 {
 	private static final long serialVersionUID = 7331366857676127338L;
 
@@ -3256,4 +3258,44 @@ public class NativeArray extends IdScriptableObject implements List
 	 */
 	private static final double GROW_FACTOR = 1.5;
 	private static final int MAX_PRE_GROW_SIZE = (int) (Integer.MAX_VALUE / GROW_FACTOR);
+
+	@Override
+	public <T> T createDataObject(Supplier<T> instanceFactory)
+	{
+		List<T> list = createDataObjectList(instanceFactory);
+
+		if (list.isEmpty())
+		{
+			throw new ArrayIndexOutOfBoundsException("Array doesn't contain any objects");
+		}
+
+		return list.get(0);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> List<T> createDataObjectList(Supplier<T> instanceFactory)
+	{
+		List<T> list = new ArrayList<>();
+
+		for (Object o : this)
+		{
+			if (o instanceof DataObject)
+			{
+				list.add(((DataObject) o).createDataObject(instanceFactory));
+			}
+			else
+			{
+				list.add((T) o);
+			}
+		}
+
+		return list;
+	}
+
+	@Override
+	public boolean isDataObjectList()
+	{
+		return true;
+	}
 }

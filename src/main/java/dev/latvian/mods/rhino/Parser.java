@@ -4147,7 +4147,6 @@ public class Parser
 		}
 		Comment objJsdocNode = getAndResetJsDoc();
 
-		commaLoop:
 		for (; ; )
 		{
 			String propertyName = null;
@@ -4165,7 +4164,7 @@ public class Parser
 				{
 					warnTrailingComma(pos, elems, afterComma);
 				}
-				break commaLoop;
+				break;
 			}
 			AstNode pname = objliteralProperty();
 			if (pname == null)
@@ -4275,7 +4274,7 @@ public class Parser
 			}
 			else
 			{
-				break commaLoop;
+				break;
 			}
 		}
 

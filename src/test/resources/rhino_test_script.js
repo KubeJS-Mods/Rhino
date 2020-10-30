@@ -8,8 +8,9 @@ events.listen('test', event => {
 })
 
 const numbers = [49, 1, 48, 521]
+numbers.sort()
 
-console.info(numbers.sort())
+console.info(numbers)
 console.info({test: 'abc', d: []})
 
 function Rectangle(w, h) {
@@ -30,10 +31,16 @@ console.info(events.abc)
 console.info(events.abcd)
 events.abc = 'hello'
 
-for (n in numbers) {
-  console.info(numbers[n])
+for (n of numbers) {
+  console.info('Numbers: ' + n)
 }
 
-console.info(java.lang.Math)
-console.info(java.lang.Math.pow)
-console.info(java.lang.Math.pow(3, 4))
+console.info(newMath)
+console.info(newMath.pow)
+console.info(newMath.pow(3, 4))
+
+const { pow } = newMath
+
+console.info(pow(3, 5))
+
+events.testData({someString: 'abc'})

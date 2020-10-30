@@ -1,9 +1,12 @@
 package dev.latvian.mods.rhino.test;
 
+import dev.latvian.mods.rhino.ClassShutter;
 import dev.latvian.mods.rhino.Context;
+import dev.latvian.mods.rhino.NativeJavaClass;
 import dev.latvian.mods.rhino.RhinoException;
 import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.ScriptableObject;
+import dev.latvian.mods.rhino.util.DataObject;
 import dev.latvian.mods.rhino.util.DynamicFunction;
 
 import java.io.BufferedReader;
@@ -23,8 +26,14 @@ public class ScriptTest
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(ScriptTest.class.getResourceAsStream("/rhino_test_script.js"), StandardCharsets.UTF_8)))
 		{
 			Context cx = Context.enter();
+			cx.setLanguageVersion(Context.VERSION_ES6);
 
-			cx.setClassShutter(fullClassName -> {
+			cx.setClassShutter((fullClassName, type) -> {
+				if (type == ClassShutter.TYPE_CLASS_IN_PACKAGE)
+				{
+					return false;
+				}
+
 				System.out.println(fullClassName);
 				return true;
 			});
@@ -32,6 +41,8 @@ public class ScriptTest
 			Scriptable scope = cx.initStandardObjects();
 
 			ScriptableObject.putProperty(scope, "console", Context.javaToJS(new ConsoleJS(), scope));
+
+			ScriptableObject.putProperty(scope, "newMath", Context.javaToJS(new NativeJavaClass(scope, Math.class), scope));
 
 			EventsJS eventsJS = new EventsJS();
 
@@ -116,6 +127,20 @@ public class ScriptTest
 
 		public void setAbc(String val)
 		{
+		}
+
+		public static class DataTest
+		{
+			public int someInt;
+			public String someString;
+		}
+
+		public void testData(DataObject data)
+		{
+			for (DataTest test : data.createDataObjectList(DataTest::new))
+			{
+				System.out.println("Test: " + test.someString + " : " + test.someInt);
+			}
 		}
 	}
 }

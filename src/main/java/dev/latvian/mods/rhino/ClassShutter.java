@@ -19,6 +19,10 @@ package dev.latvian.mods.rhino;
 
 public interface ClassShutter
 {
+	int TYPE_UNKNOWN = 0;
+	int TYPE_MEMBER = 1;
+	int TYPE_CLASS_IN_PACKAGE = 2;
+	int TYPE_EXCEPTION = 3;
 
 	/**
 	 * Return true iff the Java class with the given name should be exposed
@@ -54,5 +58,5 @@ public interface ClassShutter
 	 *                      standard string class is "java.lang.String"
 	 * @return whether or not to reveal this class to scripts
 	 */
-	boolean visibleToScripts(String fullClassName);
+	boolean visibleToScripts(String fullClassName, int type);
 }

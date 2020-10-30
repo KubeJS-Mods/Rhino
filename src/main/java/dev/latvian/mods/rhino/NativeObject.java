@@ -6,14 +6,21 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.DataObject;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * This class implements the Object native object.
@@ -21,7 +28,7 @@ import java.util.Set;
  *
  * @author Norris Boyd
  */
-public class NativeObject extends IdScriptableObject implements Map
+public class NativeObject extends IdScriptableObject implements Map, DataObject
 {
 	private static final long serialVersionUID = -6345305608474346996L;
 
@@ -1165,6 +1172,42 @@ public class NativeObject extends IdScriptableObject implements Map
 			Id___lookupGetter__ = 11,
 			Id___lookupSetter__ = 12,
 			MAX_PROTOTYPE_ID = 12;
+
+	@Override
+	public <T> T createDataObject(Supplier<T> instanceFactory)
+	{
+		T inst = instanceFactory.get();
+
+		try
+		{
+			for (Field field : inst.getClass().getFields())
+			{
+				if (Modifier.isPublic(field.getModifiers()) && !Modifier.isTransient(field.getModifiers()) && has(field.getName(), this))
+				{
+					field.setAccessible(true);
+					field.set(inst, get(field.getName(), this));
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+
+		return inst;
+	}
+
+	@Override
+	public <T> List<T> createDataObjectList(Supplier<T> instanceFactory)
+	{
+		return Collections.singletonList(createDataObject(instanceFactory));
+	}
+
+	@Override
+	public boolean isDataObjectList()
+	{
+		return false;
+	}
 
 	// #/string_id_map#
 }

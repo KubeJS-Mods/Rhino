@@ -4273,7 +4273,7 @@ public class ScriptRuntime
 				((NativeError) errorObject).setStackProvider(re);
 			}
 
-			if (javaException != null && isVisible(cx, javaException))
+			if (javaException != null && isVisible(cx, javaException, ClassShutter.TYPE_EXCEPTION))
 			{
 				Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException,
 						null);
@@ -4281,7 +4281,7 @@ public class ScriptRuntime
 						errorObject, "javaException", wrap,
 						ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
 			}
-			if (isVisible(cx, re))
+			if (isVisible(cx, re, ClassShutter.TYPE_EXCEPTION))
 			{
 				Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
 				ScriptableObject.defineProperty(
@@ -4296,7 +4296,7 @@ public class ScriptRuntime
 		catchScopeObject.defineProperty(
 				exceptionName, obj, ScriptableObject.PERMANENT);
 
-		if (isVisible(cx, t))
+		if (isVisible(cx, t, ClassShutter.TYPE_EXCEPTION))
 		{
 			// Add special Rhino object __exception__ defined in the catch
 			// scope that can be used to retrieve the Java exception associated
@@ -4385,7 +4385,7 @@ public class ScriptRuntime
 			((NativeError) errorObject).setStackProvider(re);
 		}
 
-		if (javaException != null && isVisible(cx, javaException))
+		if (javaException != null && isVisible(cx, javaException, ClassShutter.TYPE_EXCEPTION))
 		{
 			Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException,
 					null);
@@ -4393,7 +4393,7 @@ public class ScriptRuntime
 					errorObject, "javaException", wrap,
 					ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
 		}
-		if (isVisible(cx, re))
+		if (isVisible(cx, re, ClassShutter.TYPE_EXCEPTION))
 		{
 			Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
 			ScriptableObject.defineProperty(
@@ -4403,11 +4403,10 @@ public class ScriptRuntime
 		return errorObject;
 	}
 
-	private static boolean isVisible(Context cx, Object obj)
+	private static boolean isVisible(Context cx, Object obj, int type)
 	{
 		ClassShutter shutter = cx.getClassShutter();
-		return shutter == null ||
-				shutter.visibleToScripts(obj.getClass().getName());
+		return shutter == null || shutter.visibleToScripts(obj.getClass().getName(), type);
 	}
 
 	public static Scriptable enterWith(Object obj, Context cx,
