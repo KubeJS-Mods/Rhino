@@ -142,5 +142,10 @@ public class ScriptTest
 				System.out.println("Test: " + test.someString + " : " + test.someInt);
 			}
 		}
+
+		public int[] getNumberList()
+		{
+			return new int[] {20, 94, 3034, -3030};
+		}
 	}
 }

@@ -44,3 +44,7 @@ const { pow } = newMath
 console.info(pow(3, 5))
 
 events.testData({someString: 'abc'})
+
+for (n of events.numberList) {
+  console.info('Event numbers: ' + n)
+}
