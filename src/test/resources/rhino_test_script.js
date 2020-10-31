@@ -48,3 +48,6 @@ events.testData({someString: 'abc'})
 for (n of events.numberList) {
   console.info('Event numbers: ' + n)
 }
+
+console.info(events.dynamicMap.awudh.awdhauwhd);
+console.info(events.dynamicMap.awuwadawdawdh.fhhue);

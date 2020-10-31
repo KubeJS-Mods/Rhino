@@ -8,6 +8,7 @@ import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.ScriptableObject;
 import dev.latvian.mods.rhino.util.DataObject;
 import dev.latvian.mods.rhino.util.DynamicFunction;
+import dev.latvian.mods.rhino.util.DynamicMap;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -91,6 +92,7 @@ public class ScriptTest
 	public static class EventsJS
 	{
 		public Consumer<Object> lastCallback;
+		private final DynamicMap<DynamicMap<Integer>> dynamicMap0 = new DynamicMap<>(s1 -> new DynamicMap<>(s2 -> s1.hashCode() + s2.hashCode()));
 
 		public void listen(String id, Consumer<Object> callback)
 		{
@@ -146,6 +148,11 @@ public class ScriptTest
 		public int[] getNumberList()
 		{
 			return new int[] {20, 94, 3034, -3030};
+		}
+
+		public DynamicMap<DynamicMap<Integer>> getDynamicMap()
+		{
+			return dynamicMap0;
 		}
 	}
 }
