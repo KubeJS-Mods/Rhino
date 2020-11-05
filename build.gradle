@@ -15,7 +15,7 @@ apply plugin: 'eclipse'
 apply plugin: 'com.matthewprenger.cursegradle'
 apply plugin: 'maven'
 
-apply from: 'https://raw.githubusercontent.com/MinecraftModDevelopment/Gradle-Collection/master/generic/markdown-git-changelog.gradle'
+apply from: 'https://files.latmod.com/public/markdown-git-changelog.gradle'
 
 def ENV = System.getenv()
 version = ENV.BUILD_NUMBER ? "${mod_version}.${ENV.BUILD_NUMBER}" : "${mod_version}.custom"
@@ -125,6 +125,7 @@ if (ENV.CURSEFORGE_KEY) {
 			addGameVersion "1.16.1"
 			addGameVersion "1.16.2"
 			addGameVersion "1.16.3"
+			addGameVersion "1.16.4"
 			changelog = getGitChangelog
 			changelogType = 'markdown'
 		}
