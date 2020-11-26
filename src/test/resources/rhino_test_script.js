@@ -55,3 +55,10 @@ console.info(events.dynamicMap.awuwadawdawdh.fhhue);
 var a = 30
 var b = 'Hello'
 console.info(`Testing templates! ${a} and ${b}`)
+
+a = "ba"
+b = "QUX"
+var c = `foo bar
+${a + "z"} ${b.toLowerCase()}`
+console.info(c)
+console.info(c === "foo bar\r\nbaz qux")
