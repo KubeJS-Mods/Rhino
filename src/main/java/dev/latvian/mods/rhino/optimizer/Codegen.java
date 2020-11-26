@@ -23,6 +23,7 @@ import dev.latvian.mods.rhino.Token;
 import dev.latvian.mods.rhino.ast.FunctionNode;
 import dev.latvian.mods.rhino.ast.Name;
 import dev.latvian.mods.rhino.ast.ScriptNode;
+import dev.latvian.mods.rhino.ast.TemplateCharacters;
 import dev.latvian.mods.rhino.classfile.ByteCode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter;
 
@@ -351,6 +352,7 @@ public class Codegen implements Evaluator
 		}
 
 		emitRegExpInit(cfw);
+		emitTemplateLiteralInit(cfw);
 		emitConstantDudeInitializers(cfw);
 
 		return cfw.toByteArray();
@@ -791,6 +793,13 @@ public class Codegen implements Evaluator
 					REGEXP_INIT_METHOD_NAME, REGEXP_INIT_METHOD_SIGNATURE);
 		}
 
+		// emit all template literals
+		if (ofn.fnode.getTemplateLiteralCount() != 0)
+		{
+			cfw.addInvoke(ByteCode.INVOKESTATIC, mainClassName,
+					TEMPLATE_LITERAL_INIT_METHOD_NAME, TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
+		}
+
 		cfw.add(ByteCode.RETURN);
 		// 3 = (scriptThis/functionRef) + scope + context
 		cfw.stopMethod((short) 3);
@@ -1146,6 +1155,92 @@ public class Codegen implements Evaluator
 		cfw.stopMethod((short) 2);
 	}
 
+	/**
+	 * Overview:
+	 * <pre>
+	 * for each fn in functions(script) do
+	 *   let field = []
+	 *   for each templateLiteral in templateLiterals(fn) do
+	 *     let values = concat([[cooked(s), raw(s)] | s <- strings(templateLiteral)])
+	 *     field.push(values)
+	 *   end
+	 *   class[getTemplateLiteralName(fn)] = field
+	 * end
+	 * </pre>
+	 */
+	private void emitTemplateLiteralInit(ClassFileWriter cfw)
+	{
+		// emit all template literals
+
+		int totalTemplateLiteralCount = 0;
+		for (ScriptNode n : scriptOrFnNodes)
+		{
+			totalTemplateLiteralCount += n.getTemplateLiteralCount();
+		}
+		if (totalTemplateLiteralCount == 0)
+		{
+			return;
+		}
+
+		cfw.startMethod(TEMPLATE_LITERAL_INIT_METHOD_NAME, TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE,
+				(short) (ClassFileWriter.ACC_STATIC | ClassFileWriter.ACC_PRIVATE));
+		cfw.addField("_qInitDone", "Z",
+				(short) (ClassFileWriter.ACC_STATIC | ClassFileWriter.ACC_PRIVATE | ClassFileWriter.ACC_VOLATILE));
+
+		cfw.add(ByteCode.GETSTATIC, mainClassName, "_qInitDone", "Z");
+		int doInit = cfw.acquireLabel();
+		cfw.add(ByteCode.IFEQ, doInit);
+		cfw.add(ByteCode.RETURN);
+		cfw.markLabel(doInit);
+
+		// We could apply double-checked locking here but concurrency
+		// shouldn't be a problem in practice
+		for (ScriptNode n : scriptOrFnNodes)
+		{
+			int qCount = n.getTemplateLiteralCount();
+			if (qCount == 0)
+			{
+				continue;
+			}
+			String qFieldName = getTemplateLiteralName(n);
+			String qFieldType = "[Ljava/lang/Object;";
+			cfw.addField(qFieldName, qFieldType,
+					(short) (ClassFileWriter.ACC_STATIC | ClassFileWriter.ACC_PRIVATE));
+			cfw.addPush(qCount);
+			cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+			for (int j = 0; j < qCount; ++j)
+			{
+				List<TemplateCharacters> strings = n.getTemplateLiteralStrings(j);
+				cfw.add(ByteCode.DUP);
+				cfw.addPush(j);
+				cfw.addPush(strings.size() * 2);
+				cfw.add(ByteCode.ANEWARRAY, "java/lang/String");
+				int k = 0;
+				for (TemplateCharacters s : strings)
+				{
+					// cooked value
+					cfw.add(ByteCode.DUP);
+					cfw.addPush(k++);
+					cfw.addPush(s.getValue());
+					cfw.add(ByteCode.AASTORE);
+					// raw value
+					cfw.add(ByteCode.DUP);
+					cfw.addPush(k++);
+					cfw.addPush(s.getRawValue());
+					cfw.add(ByteCode.AASTORE);
+				}
+				cfw.add(ByteCode.AASTORE);
+			}
+			cfw.add(ByteCode.PUTSTATIC, mainClassName,
+					qFieldName, qFieldType);
+		}
+
+		cfw.addPush(true);
+		cfw.add(ByteCode.PUTSTATIC, mainClassName, "_qInitDone", "Z");
+		cfw.add(ByteCode.RETURN);
+		cfw.stopMethod((short) 0);
+	}
+
 	private void emitConstantDudeInitializers(ClassFileWriter cfw)
 	{
 		int N = itsConstantListSize;
@@ -1365,6 +1460,11 @@ public class Codegen implements Evaluator
 		return "_re" + getIndex(n) + "_" + regexpIndex;
 	}
 
+	String getTemplateLiteralName(ScriptNode n)
+	{
+		return "_q" + getIndex(n);
+	}
+
 	static RuntimeException badTree()
 	{
 		throw new RuntimeException("Bad tree in codegen");
@@ -1386,6 +1486,10 @@ public class Codegen implements Evaluator
 	static final String REGEXP_INIT_METHOD_NAME = "_reInit";
 	static final String REGEXP_INIT_METHOD_SIGNATURE
 			= "(Ldev/latvian/mods/rhino/Context;)V";
+
+	static final String TEMPLATE_LITERAL_INIT_METHOD_NAME = "_qInit";
+	static final String TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE
+			= "()V";
 
 	static final String FUNCTION_INIT_SIGNATURE
 			= "(Ldev/latvian/mods/rhino/Context;"

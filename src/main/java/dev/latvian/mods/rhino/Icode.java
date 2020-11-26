@@ -139,8 +139,11 @@ abstract class Icode
 	Icode_GENERATOR_RETURN = -65,
 			Icode_YIELD_STAR = -66,
 
+	// Call to GetTemplateLiteralCallSite
+	Icode_TEMPLATE_LITERAL_CALLSITE = -67,
+
 	// Last icode
-	MIN_ICODE = -66;
+	MIN_ICODE = -67;
 
 	static String bytecodeName(int bytecode)
 	{
@@ -293,6 +296,8 @@ abstract class Icode
 				return "GENERATOR_RETURN";
 			case Icode_YIELD_STAR:
 				return "YIELD_STAR";
+			case Icode_TEMPLATE_LITERAL_CALLSITE:
+				return "TEMPLATE_LITERAL_CALLSITE";
 		}
 
 		// icode without name

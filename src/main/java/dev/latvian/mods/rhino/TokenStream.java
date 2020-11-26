@@ -1357,7 +1357,7 @@ class TokenStream
 			}
 
 			// is it a string?
-			if (c == '"' || c == '\'' || c == '`')
+			if (c == '"' || c == '\'')
 			{
 				// We attempt to accumulate a string the fast way, by
 				// building it directly out of the reader.  But if there
@@ -1766,6 +1766,8 @@ class TokenStream
 					}
 					dirtyLine = true;
 					return c;
+				case '`':
+					return Token.TEMPLATE_LITERAL;
 
 				default:
 					parser.addError("msg.illegal.character", c);
@@ -1913,6 +1915,236 @@ class TokenStream
 		String flags = this.regExpFlags;
 		this.regExpFlags = null;
 		return flags;
+	}
+
+	private final StringBuilder rawString = new StringBuilder();
+
+	String getRawString()
+	{
+		if (rawString.length() == 0)
+		{
+			return "";
+		}
+		return rawString.toString();
+	}
+
+	private int getTemplateLiteralChar() throws IOException
+	{
+		boolean unget = ungetCursor != 0;
+		int oldLineEnd = lineEndChar;
+		// getChar() skips past '\r\n' sequences, but we need a faithful
+		// representation of the complete input for template literals
+		int c = getCharIgnoreLineEnd(false);
+		if (c == '\n')
+		{
+			c = lineEndChar;
+		}
+		// update lineno after passing line boundaries (cf. getChar())
+		// - unless this is a 'unget' character
+		// - unless this is a '\r\n' sequence
+		if (oldLineEnd >= 0 && !unget && !(oldLineEnd == '\r' && c == '\n'))
+		{
+			lineEndChar = -1;
+			lineStart = sourceCursor - 1;
+			lineno++;
+		}
+		rawString.append((char) c);
+		return c;
+	}
+
+	private void ungetTemplateLiteralChar(int c)
+	{
+		ungetCharIgnoreLineEnd(c);
+		rawString.setLength(rawString.length() - 1);
+	}
+
+	private boolean matchTemplateLiteralChar(int test) throws IOException
+	{
+		int c = getTemplateLiteralChar();
+		if (c == test)
+		{
+			return true;
+		}
+		ungetTemplateLiteralChar(c);
+		return false;
+	}
+
+	private int peekTemplateLiteralChar() throws IOException
+	{
+		int c = getTemplateLiteralChar();
+		ungetTemplateLiteralChar(c);
+		return c;
+	}
+
+	int readTemplateLiteral() throws IOException
+	{
+		rawString.setLength(0);
+		stringBufferTop = 0;
+		while (true)
+		{
+			int c = getTemplateLiteralChar();
+			switch (c)
+			{
+				case EOF_CHAR:
+					this.string = getStringFromBuffer();
+					tokenEnd = cursor - 1; // restore tokenEnd
+					parser.reportError("msg.unexpected.eof");
+					return Token.ERROR;
+				case '`':
+					rawString.setLength(rawString.length() - 1); // don't include "`"
+					this.string = getStringFromBuffer();
+					return Token.TEMPLATE_LITERAL;
+				case '$':
+					if (matchTemplateLiteralChar('{'))
+					{
+						rawString.setLength(rawString.length() - 2); // don't include "${"
+						this.string = getStringFromBuffer();
+						this.tokenEnd = cursor - 1; // don't include "{"
+						return Token.TEMPLATE_LITERAL_SUBST;
+					}
+					else
+					{
+						addToString(c);
+						break;
+					}
+				case '\\':
+					// LineContinuation ::
+					//   \ LineTerminatorSequence
+					// EscapeSequence ::
+					//   CharacterEscapeSequence
+					//   0 [LA not DecimalDigit]
+					//   HexEscapeSequence
+					//   UnicodeEscapeSequence
+					// CharacterEscapeSequence ::
+					//   SingleEscapeCharacter
+					//   NonEscapeCharacter
+					// SingleEscapeCharacter ::
+					//   ' "  \  b f n r t v
+					// NonEscapeCharacter ::
+					//   SourceCharacter but not one of EscapeCharacter or LineTerminator
+					// EscapeCharacter ::
+					//   SingleEscapeCharacter
+					//   DecimalDigit
+					//   x
+					//   u
+					c = getTemplateLiteralChar();
+					switch (c)
+					{
+						case '\r':
+							// skip past \r\n sequence
+							matchTemplateLiteralChar('\n');
+							continue;
+						case '\n':
+						case '\u2028':
+						case '\u2029':
+							continue;
+						case '\'':
+						case '"':
+						case '\\':
+							// use as-is
+							break;
+						case 'b':
+							c = '\b';
+							break;
+						case 'f':
+							c = '\f';
+							break;
+						case 'n':
+							c = '\n';
+							break;
+						case 'r':
+							c = '\r';
+							break;
+						case 't':
+							c = '\t';
+							break;
+						case 'v':
+							c = 0xb;
+							break;
+						case 'x':
+						{
+							int escapeVal = 0;
+							escapeVal = Kit.xDigitToInt(getTemplateLiteralChar(), escapeVal);
+							escapeVal = Kit.xDigitToInt(getTemplateLiteralChar(), escapeVal);
+							if (escapeVal < 0)
+							{
+								parser.reportError("msg.syntax");
+								return Token.ERROR;
+							}
+							c = escapeVal;
+							break;
+						}
+						case 'u':
+						{
+							int escapeVal = 0;
+							c = getTemplateLiteralChar();
+							if (c == '{')
+							{
+								c = getTemplateLiteralChar();
+								do
+								{
+									escapeVal = Kit.xDigitToInt(c, escapeVal);
+									if (escapeVal < 0 || escapeVal > 0x10FFFF)
+									{
+										parser.reportError("msg.syntax");
+										return Token.ERROR;
+									}
+								}
+								while ((c = getTemplateLiteralChar()) != '}');
+								if (escapeVal > 0xFFFF)
+								{
+									addToString(Character.highSurrogate(escapeVal));
+									addToString(Character.lowSurrogate(escapeVal));
+									continue;
+								}
+								c = escapeVal;
+								break;
+							}
+							escapeVal = Kit.xDigitToInt(c, escapeVal);
+							escapeVal = Kit.xDigitToInt(getTemplateLiteralChar(), escapeVal);
+							escapeVal = Kit.xDigitToInt(getTemplateLiteralChar(), escapeVal);
+							escapeVal = Kit.xDigitToInt(getTemplateLiteralChar(), escapeVal);
+							if (escapeVal < 0)
+							{
+								parser.reportError("msg.syntax");
+								return Token.ERROR;
+							}
+							c = escapeVal;
+							break;
+						}
+						case '0':
+						{
+							int d = peekTemplateLiteralChar();
+							if (d >= '0' && d <= '9')
+							{
+								parser.reportError("msg.syntax");
+								return Token.ERROR;
+							}
+							c = 0x00;
+							break;
+						}
+						case '1':
+						case '2':
+						case '3':
+						case '4':
+						case '5':
+						case '6':
+						case '7':
+						case '8':
+						case '9':
+							parser.reportError("msg.syntax");
+							return Token.ERROR;
+						default:
+							// use as-is
+							break;
+					}
+					addToString(c);
+					break;
+				default:
+					addToString(c);
+					break;
+			}
+		}
 	}
 
 	boolean isXMLAttribute()
@@ -2382,6 +2614,11 @@ class TokenStream
 
 	private int getCharIgnoreLineEnd() throws IOException
 	{
+		return getCharIgnoreLineEnd(true);
+	}
+
+	private int getCharIgnoreLineEnd(boolean skipFormattingChars) throws IOException
+	{
 		if (ungetCursor != 0)
 		{
 			cursor++;
@@ -2429,7 +2666,7 @@ class TokenStream
 				{
 					return c; // BOM is considered whitespace
 				}
-				if (isJSFormatChar(c))
+				if (skipFormattingChars && isJSFormatChar(c))
 				{
 					continue;
 				}

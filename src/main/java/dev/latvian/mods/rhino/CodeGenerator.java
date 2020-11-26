@@ -13,7 +13,10 @@ import dev.latvian.mods.rhino.ast.FunctionNode;
 import dev.latvian.mods.rhino.ast.Jump;
 import dev.latvian.mods.rhino.ast.Scope;
 import dev.latvian.mods.rhino.ast.ScriptNode;
+import dev.latvian.mods.rhino.ast.TemplateCharacters;
 import dev.latvian.mods.rhino.ast.VariableInitializer;
+
+import java.util.List;
 
 /**
  * Generates bytecode for the Interpreter.
@@ -135,6 +138,8 @@ class CodeGenerator extends Icode
 		generateNestedFunctions();
 
 		generateRegExpLiterals();
+
+		generateTemplateLiterals();
 
 		visitStatement(tree, 0);
 		fixLabelGotos();
@@ -264,6 +269,30 @@ class CodeGenerator extends Icode
 			array[i] = rep.compileRegExp(cx, string, flags);
 		}
 		itsData.itsRegExpLiterals = array;
+	}
+
+	private void generateTemplateLiterals()
+	{
+		int N = scriptOrFn.getTemplateLiteralCount();
+		if (N == 0)
+		{
+			return;
+		}
+
+		Object[] array = new Object[N];
+		for (int i = 0; i != N; i++)
+		{
+			List<TemplateCharacters> strings = scriptOrFn.getTemplateLiteralStrings(i);
+			int j = 0;
+			String[] values = new String[strings.size() * 2];
+			for (TemplateCharacters s : strings)
+			{
+				values[j++] = s.getValue();
+				values[j++] = s.getRawValue();
+			}
+			array[i] = values;
+		}
+		itsData.itsTemplateLiterals = array;
 	}
 
 	private void updateLineNumber(Node node)
@@ -1121,6 +1150,10 @@ class CodeGenerator extends Icode
 				break;
 			}
 
+			case Token.TEMPLATE_LITERAL:
+				visitTemplateLiteral(node);
+				break;
+
 			default:
 				throw badTree(node);
 		}
@@ -1308,6 +1341,13 @@ class CodeGenerator extends Icode
 			addIndexOp(Token.OBJECTLIT, index);
 		}
 		stackChange(-1);
+	}
+
+	private void visitTemplateLiteral(Node node)
+	{
+		int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
+		addIndexOp(Icode_TEMPLATE_LITERAL_CALLSITE, index);
+		stackChange(1);
 	}
 
 	private void visitArrayComprehension(Node node, Node initStmt, Node expr)

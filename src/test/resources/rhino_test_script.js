@@ -51,3 +51,7 @@ for (n of events.numberList) {
 
 console.info(events.dynamicMap.awudh.awdhauwhd);
 console.info(events.dynamicMap.awuwadawdawdh.fhhue);
+
+var a = 30
+var b = 'Hello'
+console.info(`Testing templates! ${a} and ${b}`)

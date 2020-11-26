@@ -235,7 +235,11 @@ public class Token
 			METHOD = 164,  // ES6 MethodDefinition
 			ARROW = 165,  // ES6 ArrowFunction
 			YIELD_STAR = 166,  // ES6 "yield *", a specialization of yield
-			LAST_TOKEN = 167;
+			TEMPLATE_LITERAL = 167,  // template literal
+			TEMPLATE_CHARS = 168,  // template literal - literal section
+			TEMPLATE_LITERAL_SUBST = 169,  // template literal - substitution
+			TAGGED_TEMPLATE_LITERAL = 170,  // template literal - tagged/handler
+			LAST_TOKEN = 170;
 
 
 	/**
@@ -595,6 +599,14 @@ public class Token
 				return "ARROW";
 			case YIELD_STAR:
 				return "YIELD_STAR";
+			case TEMPLATE_LITERAL:
+				return "TEMPLATE_LITERAL";
+			case TEMPLATE_CHARS:
+				return "TEMPLATE_CHARS";
+			case TEMPLATE_LITERAL_SUBST:
+				return "TEMPLATE_LITERAL_SUBST";
+			case TAGGED_TEMPLATE_LITERAL:
+				return "TAGGED_TEMPLATE_LITERAL";
 		}
 
 		// Token without name

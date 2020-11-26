@@ -134,6 +134,12 @@ public class Decompiler
 		appendString(str);
 	}
 
+	void addTemplateLiteral(String str)
+	{
+		addToken(Token.TEMPLATE_CHARS);
+		appendString(str);
+	}
+
 	void addRegexp(String regexp, String flags)
 	{
 		addToken(Token.REGEXP);
@@ -861,6 +867,18 @@ public class Decompiler
 				case Token.MOD:
 					result.append(" % ");
 					break;
+
+				case Token.TEMPLATE_LITERAL:
+					result.append("`");
+					break;
+
+				case Token.TEMPLATE_LITERAL_SUBST:
+					result.append("${");
+					break;
+
+				case Token.TEMPLATE_CHARS:
+					i = printSourceString(source, i + 1, false, result);
+					continue;
 
 				case Token.COLONCOLON:
 					result.append("::");

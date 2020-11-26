@@ -322,14 +322,23 @@ class BodyCodegen
 			}
 		}
 
-		// Compile RegExp literals if this is a script. For functions
+		// Compile RegExp and template literals if this is a script. For functions
 		// this is performed during instantiation in functionInit
-		if (fnCurrent == null && scriptOrFn.getRegexpCount() != 0)
+		if (fnCurrent == null)
 		{
-			cfw.addALoad(contextLocal);
-			cfw.addInvoke(ByteCode.INVOKESTATIC, codegen.mainClassName,
-					Codegen.REGEXP_INIT_METHOD_NAME,
-					Codegen.REGEXP_INIT_METHOD_SIGNATURE);
+			if (scriptOrFn.getRegexpCount() != 0)
+			{
+				cfw.addALoad(contextLocal);
+				cfw.addInvoke(ByteCode.INVOKESTATIC, codegen.mainClassName,
+						Codegen.REGEXP_INIT_METHOD_NAME,
+						Codegen.REGEXP_INIT_METHOD_SIGNATURE);
+			}
+			if (scriptOrFn.getTemplateLiteralCount() != 0)
+			{
+				cfw.addInvoke(ByteCode.INVOKESTATIC, codegen.mainClassName,
+						Codegen.TEMPLATE_LITERAL_INIT_METHOD_NAME,
+						Codegen.TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
+			}
 		}
 
 		if (compilerEnv.isGenerateObserverCount())
@@ -1791,6 +1800,10 @@ class BodyCodegen
 				break;
 			}
 
+			case Token.TEMPLATE_LITERAL:
+				visitTemplateLiteral(node);
+				break;
+
 			default:
 				throw new RuntimeException("Unexpected node type " + type);
 		}
@@ -1981,6 +1994,26 @@ class BodyCodegen
 		cfw.addILoad(operationLocal);
 		cfw.addLoadConstant(NativeGenerator.GENERATOR_THROW);
 		cfw.add(ByteCode.IF_ICMPEQ, throwLabel);
+	}
+
+	private void visitTemplateLiteral(Node node)
+	{
+		// create the template literal call-site object for tagged template literals,
+		// default template literals are already handled earlier in IRFactory
+		int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
+		cfw.addALoad(contextLocal);
+		cfw.addALoad(variableObjectLocal);
+		cfw.add(ByteCode.GETSTATIC, codegen.mainClassName,
+				codegen.getTemplateLiteralName(scriptOrFn),
+				"[Ljava/lang/Object;");
+		cfw.addPush(index);
+		cfw.addInvoke(ByteCode.INVOKESTATIC,
+				"org/mozilla/javascript/ScriptRuntime",
+				"getTemplateLiteralCallSite",
+				"(Lorg/mozilla/javascript/Context;"
+						+ "Lorg/mozilla/javascript/Scriptable;"
+						+ "[Ljava/lang/Object;I"
+						+ ")Lorg/mozilla/javascript/Scriptable;");
 	}
 
 	private void generateIfJump(Node node, Node parent,

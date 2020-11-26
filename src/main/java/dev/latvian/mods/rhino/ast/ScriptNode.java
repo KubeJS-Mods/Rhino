@@ -29,6 +29,7 @@ public class ScriptNode extends Scope
 
 	private List<FunctionNode> functions;
 	private List<RegExpLiteral> regexps;
+	private List<TemplateLiteral> templateLiterals;
 	private final List<FunctionNode> EMPTY_LIST = Collections.emptyList();
 
 	private List<Symbol> symbols = new ArrayList<>(4);
@@ -251,6 +252,33 @@ public class ScriptNode extends Scope
 		}
 		regexps.add(re);
 		re.putIntProp(REGEXP_PROP, regexps.size() - 1);
+	}
+
+	public int getTemplateLiteralCount()
+	{
+		return templateLiterals == null ? 0 : templateLiterals.size();
+	}
+
+	public List<TemplateCharacters> getTemplateLiteralStrings(int index)
+	{
+		return templateLiterals.get(index).getTemplateStrings();
+	}
+
+	/**
+	 * Called by IRFactory to add a Template Literal to the templateLiterals table.
+	 */
+	public void addTemplateLiteral(TemplateLiteral templateLiteral)
+	{
+		if (templateLiteral == null)
+		{
+			codeBug();
+		}
+		if (templateLiterals == null)
+		{
+			templateLiterals = new ArrayList<>();
+		}
+		templateLiterals.add(templateLiteral);
+		templateLiteral.putIntProp(TEMPLATE_LITERAL_PROP, templateLiterals.size() - 1);
 	}
 
 	public int getIndexForNameNode(Node nameNode)
