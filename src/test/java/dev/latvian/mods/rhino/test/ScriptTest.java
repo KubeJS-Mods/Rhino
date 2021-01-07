@@ -9,6 +9,7 @@ import dev.latvian.mods.rhino.ScriptableObject;
 import dev.latvian.mods.rhino.util.DataObject;
 import dev.latvian.mods.rhino.util.DynamicFunction;
 import dev.latvian.mods.rhino.util.DynamicMap;
+import dev.latvian.mods.rhino.util.HideFromJS;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -44,6 +45,7 @@ public class ScriptTest
 			ScriptableObject.putProperty(scope, "console", Context.javaToJS(new ConsoleJS(), scope));
 
 			ScriptableObject.putProperty(scope, "newMath", Context.javaToJS(new NativeJavaClass(scope, Math.class), scope));
+			ScriptableObject.putProperty(scope, "Rect", new NativeJavaClass(scope, Rect.class));
 
 			EventsJS eventsJS = new EventsJS();
 
@@ -70,6 +72,8 @@ public class ScriptTest
 			sb.append(": ");
 			sb.append(ex.details());
 			System.err.println(sb.toString());
+
+			ex.printStackTrace();
 		}
 		catch (Exception ex)
 		{
@@ -83,9 +87,31 @@ public class ScriptTest
 
 	public static class ConsoleJS
 	{
+		@HideFromJS
+		public int consoleTest = 304;
+
 		public void info(Object o)
 		{
 			System.out.println(o);
+		}
+	}
+
+	public static class Rect
+	{
+		public final int width;
+		public final int height;
+
+		@HideFromJS
+		public Rect(int w, int h)
+		{
+			width = w;
+			height = h;
+		}
+
+		public Rect(int w, int h, int d)
+		{
+			this(w, h);
+			System.out.println("Depth: " + d);
 		}
 	}
 

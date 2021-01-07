@@ -6,7 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
-import java.lang.reflect.AccessibleObject;
+import dev.latvian.mods.rhino.util.HideFromJS;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -41,8 +42,7 @@ class JavaMembers
 			ClassShutter shutter = cx.getClassShutter();
 			if (shutter != null && !shutter.visibleToScripts(cl.getName(), ClassShutter.TYPE_MEMBER))
 			{
-				throw Context.reportRuntimeError1("msg.access.prohibited",
-						cl.getName());
+				throw Context.reportRuntimeError1("msg.access.prohibited", cl.getName());
 			}
 			this.members = new HashMap<>();
 			this.staticMembers = new HashMap<>();
@@ -210,7 +210,7 @@ class JavaMembers
 	Object[] getIds(boolean isStatic)
 	{
 		Map<String, Object> map = isStatic ? staticMembers : members;
-		return map.keySet().toArray(new Object[map.size()]);
+		return map.keySet().toArray(new Object[0]);
 	}
 
 	static String javaSignature(Class<?> type)
@@ -362,20 +362,20 @@ class JavaMembers
 	 * interfaces (if they exist). Basically upcasts every method to the
 	 * nearest accessible method.
 	 */
-	private static Method[] discoverAccessibleMethods(Class<?> clazz,
-													  boolean includeProtected,
-													  boolean includePrivate)
+	private static Map<MethodSignature, Method> discoverAccessibleMethods(Class<?> clazz,
+																		  boolean includeProtected,
+																		  boolean includePrivate)
 	{
 		Map<MethodSignature, Method> map = new HashMap<>();
 		discoverAccessibleMethods(clazz, map, includeProtected, includePrivate);
-		return map.values().toArray(new Method[map.size()]);
+		return map;
 	}
 
 	private static void discoverAccessibleMethods(Class<?> clazz,
 												  Map<MethodSignature, Method> map, boolean includeProtected,
 												  boolean includePrivate)
 	{
-		if (isPublic(clazz.getModifiers()) || includePrivate)
+		if ((isPublic(clazz.getModifiers()) || includePrivate) && !clazz.isAnnotationPresent(HideFromJS.class))
 		{
 			try
 			{
@@ -388,6 +388,11 @@ class JavaMembers
 							Method[] methods = clazz.getDeclaredMethods();
 							for (Method method : methods)
 							{
+								if (method.isAnnotationPresent(HideFromJS.class))
+								{
+									continue;
+								}
+
 								int mods = method.getModifiers();
 
 								if (isPublic(mods)
@@ -437,6 +442,11 @@ class JavaMembers
 					Method[] methods = clazz.getMethods();
 					for (Method method : methods)
 					{
+						if (method.isAnnotationPresent(HideFromJS.class))
+						{
+							continue;
+						}
+
 						MethodSignature sig = new MethodSignature(method);
 						// Array may contain methods with same signature but different return value!
 						if (!map.containsKey(sig))
@@ -506,17 +516,19 @@ class JavaMembers
 		}
 	}
 
-	private void reflect(Scriptable scope,
-						 boolean includeProtected,
-						 boolean includePrivate)
+	private void reflect(Scriptable scope, boolean includeProtected, boolean includePrivate)
 	{
+		if (cl.isAnnotationPresent(HideFromJS.class) || (cl.getPackage() != null && cl.getPackage().isAnnotationPresent(HideFromJS.class)))
+		{
+			ctors = new NativeJavaMethod(new MemberBox[0], cl.getSimpleName());
+			return;
+		}
+
 		// We reflect methods first, because we want overloaded field/method
 		// names to be allocated to the NativeJavaMethod before the field
 		// gets in the way.
 
-		Method[] methods = discoverAccessibleMethods(cl, includeProtected,
-				includePrivate);
-		for (Method method : methods)
+		for (Method method : discoverAccessibleMethods(cl, includeProtected, includePrivate).values())
 		{
 			int mods = method.getModifiers();
 			boolean isStatic = Modifier.isStatic(mods);
@@ -590,8 +602,7 @@ class JavaMembers
 		}
 
 		// Reflect fields.
-		Field[] fields = getAccessibleFields(includeProtected, includePrivate);
-		for (Field field : fields)
+		for (Field field : getAccessibleFields(includeProtected, includePrivate))
 		{
 			String name = field.getName();
 			int mods = field.getModifiers();
@@ -723,7 +734,7 @@ class JavaMembers
 
 					// Find the getter method, or if there is none, the is-
 					// method.
-					MemberBox getter = null;
+					MemberBox getter;
 					getter = findGetter(isStatic, ht, "get", nameComponent);
 					// If there was no valid getter, check for an is- method.
 					if (getter == null)
@@ -775,79 +786,91 @@ class JavaMembers
 		}
 
 		// Reflect constructors
-		Constructor<?>[] constructors = getAccessibleConstructors(includePrivate);
-		MemberBox[] ctorMembers = new MemberBox[constructors.length];
-		for (int i = 0; i != constructors.length; ++i)
+		List<Constructor<?>> constructors = getAccessibleConstructors(includePrivate);
+		MemberBox[] ctorMembers = new MemberBox[constructors.size()];
+		for (int i = 0; i != constructors.size(); ++i)
 		{
-			ctorMembers[i] = new MemberBox(constructors[i]);
+			ctorMembers[i] = new MemberBox(constructors.get(i));
 		}
 		ctors = new NativeJavaMethod(ctorMembers, cl.getSimpleName());
 	}
 
-	private Constructor<?>[] getAccessibleConstructors(boolean includePrivate)
+	private List<Constructor<?>> getAccessibleConstructors(boolean includePrivate)
 	{
 		// The JVM currently doesn't allow changing access on java.lang.Class
 		// constructors, so don't try
-		if (includePrivate && cl != ScriptRuntime.ClassClass)
+		if (cl == ScriptRuntime.ClassClass)
 		{
-			try
-			{
-				Constructor<?>[] cons = cl.getDeclaredConstructors();
-				AccessibleObject.setAccessible(cons, true);
+			return Arrays.asList(cl.getConstructors());
+		}
 
-				return cons;
-			}
-			catch (SecurityException e)
+		List<Constructor<?>> constructorsList = new ArrayList<>();
+
+		try
+		{
+			for (Constructor<?> c : cl.getDeclaredConstructors())
 			{
-				// Fall through to !includePrivate case
-				Context.reportWarning("Could not access constructor " +
-						" of class " + cl.getName() +
-						" due to lack of privileges.");
+				if (!c.isAnnotationPresent(HideFromJS.class))
+				{
+					if (isPublic(c.getModifiers()))
+					{
+						constructorsList.add(c);
+					}
+					else if (includePrivate)
+					{
+						c.setAccessible(true);
+						constructorsList.add(c);
+					}
+				}
 			}
 		}
-		return cl.getConstructors();
+		catch (SecurityException e)
+		{
+			// Fall through to !includePrivate case
+			Context.reportWarning("Could not access constructor " +
+					" of class " + cl.getName() +
+					" due to lack of privileges.");
+		}
+
+		return constructorsList;
 	}
 
-	private Field[] getAccessibleFields(boolean includeProtected,
-										boolean includePrivate)
+	private List<Field> getAccessibleFields(boolean includeProtected, boolean includePrivate)
 	{
-		if (includePrivate || includeProtected)
+		List<Field> fieldsList = new ArrayList<>();
+
+		try
 		{
-			try
-			{
-				List<Field> fieldsList = new ArrayList<>();
-				Class<?> currentClass = cl;
+			Class<?> currentClass = cl;
 
-				while (currentClass != null)
+			while (currentClass != null)
+			{
+				// get all declared fields in this class, make them
+				// accessible, and save
+				Field[] declared = currentClass.getDeclaredFields();
+				for (Field field : declared)
 				{
-					// get all declared fields in this class, make them
-					// accessible, and save
-					Field[] declared = currentClass.getDeclaredFields();
-					for (Field field : declared)
+					int mod = field.getModifiers();
+					if (!isTransient(mod) && (includePrivate || isPublic(mod) || (includeProtected && isProtected(mod))) && !field.isAnnotationPresent(HideFromJS.class))
 					{
-						int mod = field.getModifiers();
-						if (includePrivate || isPublic(mod) || isProtected(mod))
+						if (!field.isAccessible())
 						{
-							if (!field.isAccessible())
-							{
-								field.setAccessible(true);
-							}
-							fieldsList.add(field);
+							field.setAccessible(true);
 						}
+						fieldsList.add(field);
 					}
-					// walk up superclass chain.  no need to deal specially with
-					// interfaces, since they can't have fields
-					currentClass = currentClass.getSuperclass();
 				}
-
-				return fieldsList.toArray(new Field[fieldsList.size()]);
-			}
-			catch (SecurityException e)
-			{
-				// fall through to !includePrivate case
+				// walk up superclass chain.  no need to deal specially with
+				// interfaces, since they can't have fields
+				currentClass = currentClass.getSuperclass();
 			}
 		}
-		return cl.getFields();
+		catch (SecurityException e)
+		{
+			// fall through to !includePrivate case
+		}
+
+		return fieldsList;
 	}
 
 	private static MemberBox findGetter(boolean isStatic, Map<String, Object> ht, String prefix,
