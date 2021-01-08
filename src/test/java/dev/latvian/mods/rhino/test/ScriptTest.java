@@ -10,6 +10,7 @@ import dev.latvian.mods.rhino.util.DataObject;
 import dev.latvian.mods.rhino.util.DynamicFunction;
 import dev.latvian.mods.rhino.util.DynamicMap;
 import dev.latvian.mods.rhino.util.HideFromJS;
+import dev.latvian.mods.rhino.util.RemapForJS;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -92,6 +93,9 @@ public class ScriptTest
 		@HideFromJS
 		public int consoleTest = 304;
 
+		@RemapForJS("consoleTest")
+		public int consoleTest123 = 305;
+
 		public void info(Object o)
 		{
 			System.out.println(o);
@@ -101,7 +105,7 @@ public class ScriptTest
 	public static class Rect
 	{
 		public final int width;
-		public final int height;
+		public final transient int height;
 
 		@HideFromJS
 		public Rect(int w, int h)
@@ -183,7 +187,8 @@ public class ScriptTest
 			return dynamicMap0;
 		}
 
-		public void testWrapper(Identifier item)
+		@RemapForJS("testWrapper")
+		public void testWrapper123(Identifier item)
 		{
 			System.out.println("Testing wrapper: " + item);
 		}
