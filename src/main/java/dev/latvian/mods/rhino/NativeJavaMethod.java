@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.wrap.TypeWrapper;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -224,7 +226,20 @@ public class NativeJavaMethod extends BaseFunction
 			for (int i = 0; i < args.length; i++)
 			{
 				Object arg = args[i];
-				Object coerced = Context.jsToJava(arg, argTypes[i]);
+				Object coerced = arg;
+
+				if (arg != null)
+				{
+					TypeWrapper<?> typeWrapper = argTypes[i] != null && cx.hasTypeWrappers() ? cx.getTypeWrappers().getWrapper(meth.wrapIds[i], arg, argTypes[i]) : null;
+
+					if (typeWrapper != null)
+					{
+						coerced = typeWrapper.function.apply(arg);
+					}
+				}
+
+				coerced = Context.jsToJava(coerced, argTypes[i]);
+
 				if (coerced != arg)
 				{
 					if (origArgs == args)
@@ -326,8 +341,7 @@ public class NativeJavaMethod extends BaseFunction
 	 * or constructors and the arguments.
 	 * If no function can be found to call, return -1.
 	 */
-	static int findFunction(Context cx,
-							MemberBox[] methodsOrCtors, Object[] args)
+	static int findFunction(Context cx, MemberBox[] methodsOrCtors, Object[] args)
 	{
 		if (methodsOrCtors.length == 0)
 		{
@@ -336,8 +350,7 @@ public class NativeJavaMethod extends BaseFunction
 		else if (methodsOrCtors.length == 1)
 		{
 			MemberBox member = methodsOrCtors[0];
-			Class<?>[] argTypes = member.argTypes;
-			int alength = argTypes.length;
+			int alength = member.argTypes.length;
 
 			if (member.vararg)
 			{
@@ -356,7 +369,7 @@ public class NativeJavaMethod extends BaseFunction
 			}
 			for (int j = 0; j != alength; ++j)
 			{
-				if (!NativeJavaObject.canConvert(args[j], argTypes[j]))
+				if (!NativeJavaObject.canConvert(cx, args[j], member.argTypes[j], member.wrapIds[j]))
 				{
 					if (debug)
 					{
@@ -381,8 +394,7 @@ public class NativeJavaMethod extends BaseFunction
 		for (int i = 0; i < methodsOrCtors.length; i++)
 		{
 			MemberBox member = methodsOrCtors[i];
-			Class<?>[] argTypes = member.argTypes;
-			int alength = argTypes.length;
+			int alength = member.argTypes.length;
 			if (member.vararg)
 			{
 				alength--;
@@ -400,7 +412,7 @@ public class NativeJavaMethod extends BaseFunction
 			}
 			for (int j = 0; j < alength; j++)
 			{
-				if (!NativeJavaObject.canConvert(args[j], argTypes[j]))
+				if (!NativeJavaObject.canConvert(cx, args[j], member.argTypes[j], member.wrapIds[j]))
 				{
 					if (debug)
 					{
@@ -457,7 +469,7 @@ public class NativeJavaMethod extends BaseFunction
 					}
 					else
 					{
-						int preference = preferSignature(args, argTypes,
+						int preference = preferSignature(args, member.argTypes,
 								member.vararg,
 								bestFit.argTypes,
 								bestFit.vararg);

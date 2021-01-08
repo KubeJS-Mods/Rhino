@@ -296,8 +296,13 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	 * desired one.  This should be superceded by a conversion-cost calculation
 	 * function, but for now I'll hide behind precedent.
 	 */
-	public static boolean canConvert(Object fromObj, Class<?> to)
+	public static boolean canConvert(Context cx, Object fromObj, Class<?> to, String wrapId)
 	{
+		if (wrapId != null && cx.hasTypeWrappers() && cx.getTypeWrappers().getWrapper(wrapId, fromObj, to) != null)
+		{
+			return true;
+		}
+
 		int weight = getConversionWeight(fromObj, to);
 
 		return (weight < CONVERSION_NONE);
@@ -617,7 +622,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	 */
 	static Object coerceTypeImpl(Class<?> type, Object value)
 	{
-		if (value != null && value.getClass() == type)
+		if (value == null || value.getClass() == type)
 		{
 			return value;
 		}

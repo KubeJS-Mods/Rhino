@@ -13,6 +13,7 @@ import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter.ClassFileFormatException;
 import dev.latvian.mods.rhino.debug.DebuggableScript;
 import dev.latvian.mods.rhino.debug.Debugger;
+import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 import dev.latvian.mods.rhino.xml.XMLLib;
 
 import java.beans.PropertyChangeEvent;
@@ -2822,6 +2823,21 @@ public class Context
 		return isTopLevelStrict || (currentActivationCall != null && currentActivationCall.isStrict);
 	}
 
+	public TypeWrappers getTypeWrappers()
+	{
+		if (typeWrappers == null)
+		{
+			typeWrappers = new TypeWrappers();
+		}
+
+		return typeWrappers;
+	}
+
+	public boolean hasTypeWrappers()
+	{
+		return typeWrappers != null;
+	}
+
 	private final ContextFactory factory;
 	private boolean sealed;
 	private Object sealKey;
@@ -2888,4 +2904,6 @@ public class Context
 	public boolean generateObserverCount = false;
 
 	boolean isTopLevelStrict;
+
+	private TypeWrappers typeWrappers;
 }

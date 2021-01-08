@@ -67,3 +67,5 @@ console.info(console.consoleTest)
 
 const rect2 = new Rect(2345, 5404, 7)
 console.info(`${rect2.width} : ${rect2.height}`)
+
+events.testWrapper('rhino:test')

@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.wrap.Wrap;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -15,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
 
 /**
  * Wrapper class for Method and Constructor instances to cache
@@ -30,6 +33,7 @@ final class MemberBox implements Serializable
 
 	private transient Member memberObject;
 	transient Class<?>[] argTypes;
+	transient String[] wrapIds;
 	transient Object delegateTo;
 	transient boolean vararg;
 
@@ -49,6 +53,7 @@ final class MemberBox implements Serializable
 		this.memberObject = method;
 		this.argTypes = method.getParameterTypes();
 		this.vararg = method.isVarArgs();
+		initParams(method.getParameters());
 	}
 
 	private void init(Constructor<?> constructor)
@@ -56,6 +61,51 @@ final class MemberBox implements Serializable
 		this.memberObject = constructor;
 		this.argTypes = constructor.getParameterTypes();
 		this.vararg = constructor.isVarArgs();
+		initParams(constructor.getParameters());
+	}
+
+	private void initParams(Parameter[] parameters)
+	{
+		this.wrapIds = new String[parameters.length];
+
+		for (int i = 0; i < parameters.length; i++)
+		{
+			Wrap w = parameters[i].getAnnotation(Wrap.class);
+			Class<?> a = argTypes[i];
+
+			if (w == null && !a.isAnnotation())
+			{
+				w = a.getAnnotation(Wrap.class);
+
+				// Not sure what to do with arrays. Will have to figure that out later
+
+				if (w == null && !a.isInterface())
+				{
+					// Check one level of interfaces, in case Wrap with inherit=true has been added with Mixin
+					for (Class<?> c : a.getInterfaces())
+					{
+						w = c.getAnnotation(Wrap.class);
+
+						if (w != null)
+						{
+							if (w.inherit())
+							{
+								break;
+							}
+							else
+							{
+								w = null;
+							}
+						}
+					}
+				}
+			}
+
+			if (w != null)
+			{
+				wrapIds[i] = w.value();
+			}
+		}
 	}
 
 	Method method()
@@ -145,7 +195,7 @@ final class MemberBox implements Serializable
 			}
 			catch (IllegalAccessException ex)
 			{
-				Method accessible = searchAccessibleMethod(method, argTypes);
+				Method accessible = searchAccessibleMethod(method, argTypes, wrapIds);
 				if (accessible != null)
 				{
 					memberObject = accessible;
@@ -207,7 +257,7 @@ final class MemberBox implements Serializable
 		}
 	}
 
-	private static Method searchAccessibleMethod(Method method, Class<?>[] params)
+	private static Method searchAccessibleMethod(Method method, Class<?>[] params, String[] conversionIds)
 	{
 		int modifiers = method.getModifiers();
 		if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers))

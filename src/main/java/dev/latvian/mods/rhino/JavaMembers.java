@@ -49,7 +49,7 @@ class JavaMembers
 			this.cl = cl;
 			boolean includePrivate = cx.hasFeature(
 					Context.FEATURE_ENHANCED_JAVA_ACCESS);
-			reflect(scope, includeProtected, includePrivate);
+			reflect(cx, scope, includeProtected, includePrivate);
 		}
 		finally
 		{
@@ -371,9 +371,7 @@ class JavaMembers
 		return map;
 	}
 
-	private static void discoverAccessibleMethods(Class<?> clazz,
-												  Map<MethodSignature, Method> map, boolean includeProtected,
-												  boolean includePrivate)
+	private static void discoverAccessibleMethods(Class<?> clazz, Map<MethodSignature, Method> map, boolean includeProtected, boolean includePrivate)
 	{
 		if ((isPublic(clazz.getModifiers()) || includePrivate) && !clazz.isAnnotationPresent(HideFromJS.class))
 		{
@@ -399,15 +397,12 @@ class JavaMembers
 										|| isProtected(mods)
 										|| includePrivate)
 								{
-									MethodSignature sig = new MethodSignature(method);
-									if (!map.containsKey(sig))
+									if (includePrivate && !method.isAccessible())
 									{
-										if (includePrivate && !method.isAccessible())
-										{
-											method.setAccessible(true);
-										}
-										map.put(sig, method);
+										method.setAccessible(true);
 									}
+
+									addMethod(map, method);
 								}
 							}
 							Class<?>[] interfaces = clazz.getInterfaces();
@@ -426,11 +421,7 @@ class JavaMembers
 							Method[] methods = clazz.getMethods();
 							for (Method method : methods)
 							{
-								MethodSignature sig = new MethodSignature(method);
-								if (!map.containsKey(sig))
-								{
-									map.put(sig, method);
-								}
+								addMethod(map, method);
 							}
 							break; // getMethods gets superclass methods, no
 							// need to loop any more
@@ -442,17 +433,7 @@ class JavaMembers
 					Method[] methods = clazz.getMethods();
 					for (Method method : methods)
 					{
-						if (method.isAnnotationPresent(HideFromJS.class))
-						{
-							continue;
-						}
-
-						MethodSignature sig = new MethodSignature(method);
-						// Array may contain methods with same signature but different return value!
-						if (!map.containsKey(sig))
-						{
-							map.put(sig, method);
-						}
+						addMethod(map, method);
 					}
 				}
 				return;
@@ -482,8 +463,23 @@ class JavaMembers
 		}
 	}
 
+	private static void addMethod(Map<MethodSignature, Method> map, Method method) throws SecurityException
+	{
+		if (!method.isAnnotationPresent(HideFromJS.class))
+		{
+			MethodSignature sig = new MethodSignature(method.getName(), method.getParameterTypes());
+			// Array may contain methods with same signature but different return value!
+			if (!map.containsKey(sig))
+			{
+				map.put(sig, method);
+			}
+		}
+	}
+
 	private static final class MethodSignature
 	{
+		private static final Class<?>[] NO_ARGS = new Class<?>[0];
+
 		private final String name;
 		private final Class<?>[] args;
 
@@ -491,11 +487,6 @@ class JavaMembers
 		{
 			this.name = name;
 			this.args = args;
-		}
-
-		MethodSignature(Method method)
-		{
-			this(method.getName(), method.getParameterTypes());
 		}
 
 		@Override
@@ -516,7 +507,7 @@ class JavaMembers
 		}
 	}
 
-	private void reflect(Scriptable scope, boolean includeProtected, boolean includePrivate)
+	private void reflect(Context cx, Scriptable scope, boolean includeProtected, boolean includePrivate)
 	{
 		if (cl.isAnnotationPresent(HideFromJS.class) || (cl.getPackage() != null && cl.getPackage().isAnnotationPresent(HideFromJS.class)))
 		{

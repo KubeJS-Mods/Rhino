@@ -40,6 +40,8 @@ public class ScriptTest
 				return true;
 			});
 
+			cx.getTypeWrappers().register("id", String.class, Identifier.class, Identifier::new);
+
 			Scriptable scope = cx.initStandardObjects();
 
 			ScriptableObject.putProperty(scope, "console", Context.javaToJS(new ConsoleJS(), scope));
@@ -179,6 +181,11 @@ public class ScriptTest
 		public DynamicMap<DynamicMap<Integer>> getDynamicMap()
 		{
 			return dynamicMap0;
+		}
+
+		public void testWrapper(Identifier item)
+		{
+			System.out.println("Testing wrapper: " + item);
 		}
 	}
 }
