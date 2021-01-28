@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "rhino",
-	"version": "1.7.13",
+	"version": "1.7.13-build.12",
 	"name": "Rhino",
 	"description": "A fork of Mozilla's Rhino library, modified for use in mods",
 	"authors": [
