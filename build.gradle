@@ -18,7 +18,7 @@ apply plugin: 'maven'
 apply from: 'https://files.latmod.com/public/markdown-git-changelog.gradle'
 
 def ENV = System.getenv()
-version = ENV.BUILD_NUMBER ? "${mod_version}.${ENV.BUILD_NUMBER}" : "${mod_version}.custom"
+version = "${mod_version}-build.${ENV.BUILD_NUMBER ?: 9999}"
 group = project.mod_package
 archivesBaseName = project.mod_name
 
@@ -126,6 +126,7 @@ if (ENV.CURSEFORGE_KEY) {
 			addGameVersion "1.16.2"
 			addGameVersion "1.16.3"
 			addGameVersion "1.16.4"
+			addGameVersion "1.16.5"
 			changelog = getGitChangelog
 			changelogType = 'markdown'
 		}
