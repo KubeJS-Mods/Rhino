@@ -6,7 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.util.wrap.TypeWrapper;
+import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
@@ -230,11 +230,11 @@ public class NativeJavaMethod extends BaseFunction
 
 				if (arg != null)
 				{
-					TypeWrapper<?> typeWrapper = argTypes[i] != null && cx.hasTypeWrappers() ? cx.getTypeWrappers().getWrapper(meth.wrapIds[i], arg, argTypes[i]) : null;
+					TypeWrapperFactory<?> factory = argTypes[i] != null && cx.hasTypeWrappers() ? cx.getTypeWrappers().getWrapperFactory(argTypes[i], arg) : null;
 
-					if (typeWrapper != null)
+					if (factory != null)
 					{
-						coerced = typeWrapper.function.apply(arg);
+						coerced = factory.wrap(arg);
 					}
 				}
 
@@ -369,7 +369,7 @@ public class NativeJavaMethod extends BaseFunction
 			}
 			for (int j = 0; j != alength; ++j)
 			{
-				if (!NativeJavaObject.canConvert(cx, args[j], member.argTypes[j], member.wrapIds[j]))
+				if (!NativeJavaObject.canConvert(cx, args[j], member.argTypes[j]))
 				{
 					if (debug)
 					{
@@ -412,7 +412,7 @@ public class NativeJavaMethod extends BaseFunction
 			}
 			for (int j = 0; j < alength; j++)
 			{
-				if (!NativeJavaObject.canConvert(cx, args[j], member.argTypes[j], member.wrapIds[j]))
+				if (!NativeJavaObject.canConvert(cx, args[j], member.argTypes[j]))
 				{
 					if (debug)
 					{

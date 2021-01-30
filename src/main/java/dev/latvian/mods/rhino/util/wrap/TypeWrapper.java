@@ -1,18 +1,22 @@
 package dev.latvian.mods.rhino.util.wrap;
 
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * @author LatvianModder
  */
-public final class TypeWrapper<T>
+public class TypeWrapper<T>
 {
-	public final Class<T> to;
-	public final Function<Object, Object> function;
+	public static final Predicate<Object> ALWAYS_VALID = o -> true;
 
-	TypeWrapper(Class<T> t, Function<Object, Object> f)
+	public final Class<T> target;
+	public final Predicate<Object> validator;
+	public final TypeWrapperFactory<T> factory;
+
+	TypeWrapper(Class<T> t, Predicate<Object> v, TypeWrapperFactory<T> f)
 	{
-		to = t;
-		function = f;
+		target = t;
+		validator = v;
+		factory = f;
 	}
 }

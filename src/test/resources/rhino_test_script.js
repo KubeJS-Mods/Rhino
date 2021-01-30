@@ -69,3 +69,5 @@ const rect2 = new Rect(2345, 5404, 7)
 console.info(`${rect2.width} : ${rect2.height}`)
 
 events.testWrapper('rhino:test')
+events.testWrapper2(['rhino:array_test_1', 'rhino:array_test_2'])
+events.testWrapper3([[['a', 'b', 'c']], [['d', 'e', 'f']]])

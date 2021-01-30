@@ -3,7 +3,7 @@ package dev.latvian.mods.rhino.test;
 /**
  * @author LatvianModder
  */
-public class Identifier implements IdInherit
+public class Identifier
 {
 	public final String namespace;
 	public final String path;
@@ -28,6 +28,11 @@ public class Identifier implements IdInherit
 			namespace = i.substring(0, c);
 			path = i.substring(c + 1);
 		}
+	}
+
+	public Identifier(Object anyObject)
+	{
+		this(anyObject.toString());
 	}
 
 	@Override

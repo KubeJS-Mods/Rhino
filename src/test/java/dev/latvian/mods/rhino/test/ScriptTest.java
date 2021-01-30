@@ -15,6 +15,7 @@ import dev.latvian.mods.rhino.util.RemapForJS;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -41,7 +42,7 @@ public class ScriptTest
 				return true;
 			});
 
-			cx.getTypeWrappers().register("id", String.class, Identifier.class, Identifier::new);
+			cx.getTypeWrappers().register(Identifier.class, o -> !"rhino:array_test_1".equals(o), Identifier::new);
 
 			Scriptable scope = cx.initStandardObjects();
 
@@ -191,6 +192,18 @@ public class ScriptTest
 		public void testWrapper123(Identifier item)
 		{
 			System.out.println("Testing wrapper: " + item);
+		}
+
+		@RemapForJS("testWrapper2")
+		public void testWrapper123(Identifier[] item)
+		{
+			System.out.println("Testing wrapper: " + Arrays.asList(item));
+		}
+
+		@RemapForJS("testWrapper3")
+		public void testWrapper123(Identifier[][][] item)
+		{
+			System.out.println("Testing wrapper: " + Arrays.asList(item));
 		}
 	}
 }

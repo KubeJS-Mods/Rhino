@@ -1,27 +1,85 @@
 package dev.latvian.mods.rhino.util.wrap;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * @author LatvianModder
  */
 public class TypeWrappers
 {
-	private final Map<TypeWrapperKey, TypeWrapper<?>> wrapperMap = new HashMap<>();
+	private final Map<Class<?>, TypeWrapper<?>> wrappers = new HashMap<>();
 
+	@Deprecated
 	public <F, T> void register(String id, Class<F> from, Class<T> to, Function<F, T> factory)
 	{
-		TypeWrapper<T> wrapper = new TypeWrapper<>(to, (Function<Object, Object>) factory);
-		wrapperMap.put(new TypeWrapperKey("", from, to), wrapper);
-		wrapperMap.put(new TypeWrapperKey(id, from, to), wrapper);
+		// Keep old one for now so that it doesn't crash
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> void register(Class<T> target, Predicate<Object> validator, TypeWrapperFactory<T> factory)
+	{
+		if (target == null || target == Object.class)
+		{
+			throw new IllegalArgumentException("target can't be Object.class!");
+		}
+		else if (target.isArray())
+		{
+			throw new IllegalArgumentException("target can't be an array!");
+		}
+		else if (wrappers.containsKey(target))
+		{
+			throw new IllegalArgumentException("Wrapper for class " + target.getName() + " already exists!");
+		}
+
+		TypeWrapper<T> typeWrapper0 = new TypeWrapper<>(target, validator, factory);
+		wrappers.put(target, typeWrapper0);
+
+		// I know this looks like cancer but it's actually pretty simple - grab T[].class, register ArrayTypeWrapperFactory
+		// You may say that it would be better to just implement N-sized array checking directly in java parser, but this is way more efficient
+
+		// 1D
+		Class<T[]> target1 = (Class<T[]>) Array.newInstance(target, 0).getClass();
+		TypeWrapper<T[]> typeWrapper1 = new TypeWrapper<>(target1, validator, new ArrayTypeWrapperFactory<>(typeWrapper0, target, target1));
+		wrappers.put(target1, typeWrapper1);
+
+		// 2D
+		Class<T[][]> target2 = (Class<T[][]>) Array.newInstance(target1, 0).getClass();
+		TypeWrapper<T[][]> typeWrapper2 = new TypeWrapper<>(target2, validator, new ArrayTypeWrapperFactory<>(typeWrapper1, target1, target2));
+		wrappers.put(target2, typeWrapper2);
+
+		// 3D
+		Class<T[][][]> target3 = (Class<T[][][]>) Array.newInstance(target2, 0).getClass();
+		TypeWrapper<T[][][]> typeWrapper3 = new TypeWrapper<>(target3, validator, new ArrayTypeWrapperFactory<>(typeWrapper2, target2, target3));
+		wrappers.put(target3, typeWrapper3);
+
+		// 4D.. yeah no. 3D already is an overkill
+	}
+
+	public <T> void register(Class<T> target, TypeWrapperFactory<T> factory)
+	{
+		register(target, TypeWrapper.ALWAYS_VALID, factory);
 	}
 
 	@Nullable
-	public TypeWrapper<?> getWrapper(String id, Object from, Class<?> to)
+	public TypeWrapperFactory<?> getWrapperFactory(Class<?> target, @Nullable Object from)
 	{
-		return id == null || from == null ? null : wrapperMap.get(new TypeWrapperKey(id, from.getClass(), to));
+		if (from == null)
+		{
+			return null;
+		}
+
+		TypeWrapper<?> wrapper = wrappers.get(target);
+
+		if (wrapper != null && wrapper.validator.test(from))
+		{
+			return wrapper.factory;
+		}
+
+		return null;
 	}
 }
