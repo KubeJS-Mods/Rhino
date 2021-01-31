@@ -27,6 +27,8 @@ public class ScriptTest
 {
 	public static void main(String[] args)
 	{
+		EventsJS eventsJS = new EventsJS();
+
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(ScriptTest.class.getResourceAsStream("/rhino_test_script.js"), StandardCharsets.UTF_8)))
 		{
 			Context cx = Context.enter();
@@ -51,14 +53,10 @@ public class ScriptTest
 			ScriptableObject.putProperty(scope, "newMath", Context.javaToJS(new NativeJavaClass(scope, Math.class), scope));
 			ScriptableObject.putProperty(scope, "Rect", new NativeJavaClass(scope, Rect.class));
 
-			EventsJS eventsJS = new EventsJS();
-
 			ScriptableObject.putProperty(scope, "events", Context.javaToJS(eventsJS, scope));
 			ScriptableObject.putProperty(scope, "sqTest", Context.javaToJS(new DynamicFunction(o -> ((Number) o[0]).doubleValue() * ((Number) o[0]).doubleValue()), scope));
 
 			cx.evaluateReader(scope, reader, "rhino_test_script.js", 1, null);
-
-			eventsJS.lastCallback.accept(48);
 		}
 		catch (RhinoException ex)
 		{
@@ -87,6 +85,8 @@ public class ScriptTest
 		{
 			Context.exit();
 		}
+
+		eventsJS.lastCallback.accept(48);
 	}
 
 	public static class ConsoleJS
@@ -189,9 +189,9 @@ public class ScriptTest
 		}
 
 		@RemapForJS("testWrapper")
-		public void testWrapper123(Identifier item)
+		public void testWrapper123(Identifier item, int a, int b, int c)
 		{
-			System.out.println("Testing wrapper: " + item);
+			System.out.println("Testing wrapper: " + item + ", " + a + ", " + b + ", " + c);
 		}
 
 		@RemapForJS("testWrapper2")

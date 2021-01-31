@@ -2825,17 +2825,17 @@ public class Context
 
 	public TypeWrappers getTypeWrappers()
 	{
-		if (typeWrappers == null)
+		if (factory.typeWrappers == null)
 		{
-			typeWrappers = new TypeWrappers();
+			factory.typeWrappers = new TypeWrappers();
 		}
 
-		return typeWrappers;
+		return factory.typeWrappers;
 	}
 
 	public boolean hasTypeWrappers()
 	{
-		return typeWrappers != null;
+		return factory.typeWrappers != null;
 	}
 
 	private final ContextFactory factory;
@@ -2904,6 +2904,4 @@ public class Context
 	public boolean generateObserverCount = false;
 
 	boolean isTopLevelStrict;
-
-	private TypeWrappers typeWrappers;
 }

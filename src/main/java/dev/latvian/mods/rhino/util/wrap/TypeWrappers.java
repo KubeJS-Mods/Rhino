@@ -2,7 +2,7 @@ package dev.latvian.mods.rhino.util.wrap;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Array;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -12,7 +12,12 @@ import java.util.function.Predicate;
  */
 public class TypeWrappers
 {
-	private final Map<Class<?>, TypeWrapper<?>> wrappers = new HashMap<>();
+	private final Map<Class<?>, TypeWrapper<?>> wrappers = new LinkedHashMap<>();
+
+	public void removeAll()
+	{
+		wrappers.clear();
+	}
 
 	@Deprecated
 	public <F, T> void register(String id, Class<F> from, Class<T> to, Function<F, T> factory)
@@ -68,7 +73,7 @@ public class TypeWrappers
 	@Nullable
 	public TypeWrapperFactory<?> getWrapperFactory(Class<?> target, @Nullable Object from)
 	{
-		if (from == null)
+		if (target == Object.class)
 		{
 			return null;
 		}
@@ -79,6 +84,10 @@ public class TypeWrappers
 		{
 			return wrapper.factory;
 		}
+		//else if (from != null && target.isArray() && !from.getClass().isArray() && target.getComponentType() == from.getClass() && !target.isPrimitive())
+		//{
+		//	return TypeWrapperFactory.OBJECT_TO_ARRAY;
+		//}
 
 		return null;
 	}

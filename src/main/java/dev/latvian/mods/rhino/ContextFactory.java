@@ -8,6 +8,7 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 import dev.latvian.mods.rhino.xml.XMLLib;
 
 import java.security.AccessController;
@@ -119,6 +120,7 @@ public class ContextFactory
 	private volatile Object listeners;
 	private boolean disabledListening;
 	private ClassLoader applicationClassLoader;
+	TypeWrappers typeWrappers;
 
 	/**
 	 * Listener of {@link Context} creation and release events.
