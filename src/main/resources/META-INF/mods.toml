@@ -5,7 +5,7 @@ license = "MPL-2.0"
 
 [[mods]]
 modId = "rhino"
-version = "${file.jarVersion}"
+version = "${version}"
 displayName = "Rhino"
 authors = "LatvianModder, Mozilla"
 description = '''
