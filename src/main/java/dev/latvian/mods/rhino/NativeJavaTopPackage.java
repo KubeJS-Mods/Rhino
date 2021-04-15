@@ -36,7 +36,7 @@ public class NativeJavaTopPackage
 			{"javax", "swing"}
 	};
 
-	NativeJavaTopPackage(ClassLoader loader) {
+	public NativeJavaTopPackage(ClassLoader loader) {
 		super(true, "", loader);
 	}
 
