@@ -126,9 +126,7 @@ publishing {
     publications {
         mavenRhino(MavenPublication) {
             artifactId = rootProject.archivesBaseName
-            artifact(file("${project.buildDir}/libs/${archivesBaseName}-${version}.jar")) {
-                builtBy build
-            }
+            artifact reobfArtifact
         }
     }
 
