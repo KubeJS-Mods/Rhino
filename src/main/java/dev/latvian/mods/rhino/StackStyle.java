@@ -8,8 +8,7 @@ package dev.latvian.mods.rhino;
  * This class distinguishes between the three different supported stack trace formats.
  */
 
-public enum StackStyle
-{
+public enum StackStyle {
 	/**
 	 * This is the default stack trace style in Rhino, which is like Java:
 	 * <code>    at fileName:lineNumber (functionName)</code>

@@ -31,31 +31,27 @@
 package dev.latvian.mods.rhino.v8dtoa;
 
 // Helper functions for doubles.
-public class DoubleHelper
-{
+public class DoubleHelper {
 
 	static final long kSignMask = 0x8000000000000000L;
 	static final long kExponentMask = 0x7FF0000000000000L;
 	static final long kSignificandMask = 0x000FFFFFFFFFFFFFL;
 	static final long kHiddenBit = 0x0010000000000000L;
 
-	static DiyFp asDiyFp(long d64)
-	{
+	static DiyFp asDiyFp(long d64) {
 		assert (!isSpecial(d64));
 		return new DiyFp(significand(d64), exponent(d64));
 	}
 
 	// this->Significand() must not be 0.
-	static DiyFp asNormalizedDiyFp(long d64)
-	{
+	static DiyFp asNormalizedDiyFp(long d64) {
 		long f = significand(d64);
 		int e = exponent(d64);
 
 		assert (f != 0);
 
 		// The current double could be a denormal.
-		while ((f & kHiddenBit) == 0)
-		{
+		while ((f & kHiddenBit) == 0) {
 			f <<= 1;
 			e--;
 		}
@@ -65,10 +61,8 @@ public class DoubleHelper
 		return new DiyFp(f, e);
 	}
 
-	static int exponent(long d64)
-	{
-		if (isDenormal(d64))
-		{
+	static int exponent(long d64) {
+		if (isDenormal(d64)) {
 			return kDenormalExponent;
 		}
 
@@ -76,45 +70,38 @@ public class DoubleHelper
 		return biased_e - kExponentBias;
 	}
 
-	static long significand(long d64)
-	{
+	static long significand(long d64) {
 		long significand = d64 & kSignificandMask;
-		if (!isDenormal(d64))
-		{
+		if (!isDenormal(d64)) {
 			return significand + kHiddenBit;
 		}
 		return significand;
 	}
 
 	// Returns true if the double is a denormal.
-	static boolean isDenormal(long d64)
-	{
+	static boolean isDenormal(long d64) {
 		return (d64 & kExponentMask) == 0L;
 	}
 
 	// We consider denormals not to be special.
 	// Hence only Infinity and NaN are special.
-	static boolean isSpecial(long d64)
-	{
+	static boolean isSpecial(long d64) {
 		return (d64 & kExponentMask) == kExponentMask;
 	}
 
-	static boolean isNan(long d64)
-	{
+	static boolean isNan(long d64) {
 		return ((d64 & kExponentMask) == kExponentMask) &&
 				((d64 & kSignificandMask) != 0L);
 	}
 
 
-	static boolean isInfinite(long d64)
-	{
+	static boolean isInfinite(long d64) {
 		return ((d64 & kExponentMask) == kExponentMask) &&
 				((d64 & kSignificandMask) == 0L);
 	}
 
 
-	static int sign(long d64)
-	{
+	static int sign(long d64) {
 		return (d64 & kSignMask) == 0L ? 1 : -1;
 	}
 
@@ -122,15 +109,13 @@ public class DoubleHelper
 	// Returns the two boundaries of first argument.
 	// The bigger boundary (m_plus) is normalized. The lower boundary has the same
 	// exponent as m_plus.
-	static void normalizedBoundaries(long d64, DiyFp m_minus, DiyFp m_plus)
-	{
+	static void normalizedBoundaries(long d64, DiyFp m_minus, DiyFp m_plus) {
 		DiyFp v = asDiyFp(d64);
 		boolean significand_is_zero = (v.f() == kHiddenBit);
 		m_plus.setF((v.f() << 1) + 1);
 		m_plus.setE(v.e() - 1);
 		m_plus.normalize();
-		if (significand_is_zero && v.e() != kDenormalExponent)
-		{
+		if (significand_is_zero && v.e() != kDenormalExponent) {
 			// The boundary is closer. Think of v = 1000e10 and v- = 9999e9.
 			// Then the boundary (== (v - v-)/2) is not just at a distance of 1e9 but
 			// at a distance of 1e8.
@@ -139,9 +124,7 @@ public class DoubleHelper
 			// Note: denormals have the same exponent as the smallest normals.
 			m_minus.setF((v.f() << 2) - 1);
 			m_minus.setE(v.e() - 2);
-		}
-		else
-		{
+		} else {
 			m_minus.setF((v.f() << 1) - 1);
 			m_minus.setE(v.e() - 1);
 		}

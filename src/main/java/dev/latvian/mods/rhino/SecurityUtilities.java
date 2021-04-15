@@ -13,8 +13,7 @@ import java.security.ProtectionDomain;
 /**
  * @author Attila Szegedi
  */
-public class SecurityUtilities
-{
+public class SecurityUtilities {
 	/**
 	 * Retrieves a system property within a privileged block. Use it only when
 	 * the property is used from within Rhino code and is not passed out of it.
@@ -22,14 +21,12 @@ public class SecurityUtilities
 	 * @param name the name of the system property
 	 * @return the value of the system property
 	 */
-	public static String getSystemProperty(final String name)
-	{
+	public static String getSystemProperty(final String name) {
 		return AccessController.doPrivileged(
 				(PrivilegedAction<String>) () -> System.getProperty(name));
 	}
 
-	public static ProtectionDomain getProtectionDomain(final Class<?> clazz)
-	{
+	public static ProtectionDomain getProtectionDomain(final Class<?> clazz) {
 		return AccessController.doPrivileged(
 				(PrivilegedAction<ProtectionDomain>) () -> clazz.getProtectionDomain());
 	}
@@ -42,11 +39,9 @@ public class SecurityUtilities
 	 *
 	 * @return The protection of the top-most script in the current stack, or null
 	 */
-	public static ProtectionDomain getScriptProtectionDomain()
-	{
+	public static ProtectionDomain getScriptProtectionDomain() {
 		final SecurityManager securityManager = System.getSecurityManager();
-		if (securityManager instanceof RhinoSecurityManager)
-		{
+		if (securityManager instanceof RhinoSecurityManager) {
 			return AccessController.doPrivileged(
 					(PrivilegedAction<ProtectionDomain>) () -> {
 						Class<?> c = ((RhinoSecurityManager) securityManager)

@@ -17,8 +17,7 @@ import dev.latvian.mods.rhino.Undefined;
  */
 
 public abstract class NativeArrayBufferView
-		extends IdScriptableObject
-{
+		extends IdScriptableObject {
 	private static final long serialVersionUID = 6884475582973958419L;
 
 	private static Boolean useLittleEndian = null;
@@ -36,15 +35,13 @@ public abstract class NativeArrayBufferView
 	 */
 	protected final int byteLength;
 
-	public NativeArrayBufferView()
-	{
+	public NativeArrayBufferView() {
 		arrayBuffer = new NativeArrayBuffer();
 		offset = 0;
 		byteLength = 0;
 	}
 
-	protected NativeArrayBufferView(NativeArrayBuffer ab, int offset, int byteLength)
-	{
+	protected NativeArrayBufferView(NativeArrayBuffer ab, int offset, int byteLength) {
 		this.offset = offset;
 		this.byteLength = byteLength;
 		this.arrayBuffer = ab;
@@ -53,35 +50,29 @@ public abstract class NativeArrayBufferView
 	/**
 	 * Return the buffer that backs this view.
 	 */
-	public NativeArrayBuffer getBuffer()
-	{
+	public NativeArrayBuffer getBuffer() {
 		return arrayBuffer;
 	}
 
 	/**
 	 * Return the offset in bytes from the start of the buffer that this view represents.
 	 */
-	public int getByteOffset()
-	{
+	public int getByteOffset() {
 		return offset;
 	}
 
 	/**
 	 * Return the length, in bytes, of the part of the buffer that this view represents.
 	 */
-	public int getByteLength()
-	{
+	public int getByteLength() {
 		return byteLength;
 	}
 
-	protected static boolean useLittleEndian()
-	{
-		if (useLittleEndian == null)
-		{
+	protected static boolean useLittleEndian() {
+		if (useLittleEndian == null) {
 			Context ctx = Context.getCurrentContext();
 			// for some unit tests this might be null
-			if (ctx == null)
-			{
+			if (ctx == null) {
 				return false;
 			}
 			useLittleEndian = ctx.hasFeature(Context.FEATURE_LITTLE_ENDIAN);
@@ -89,24 +80,20 @@ public abstract class NativeArrayBufferView
 		return useLittleEndian;
 	}
 
-	protected static boolean isArg(Object[] args, int i)
-	{
+	protected static boolean isArg(Object[] args, int i) {
 		return ((args.length > i) && !Undefined.instance.equals(args[i]));
 	}
 
 	// Property dispatcher
 
 	@Override
-	protected int getMaxInstanceId()
-	{
+	protected int getMaxInstanceId() {
 		return MAX_INSTANCE_ID;
 	}
 
 	@Override
-	protected String getInstanceIdName(int id)
-	{
-		switch (id)
-		{
+	protected String getInstanceIdName(int id) {
+		switch (id) {
 			case Id_buffer:
 				return "buffer";
 			case Id_byteOffset:
@@ -119,10 +106,8 @@ public abstract class NativeArrayBufferView
 	}
 
 	@Override
-	protected Object getInstanceIdValue(int id)
-	{
-		switch (id)
-		{
+	protected Object getInstanceIdValue(int id) {
+		switch (id) {
 			case Id_buffer:
 				return arrayBuffer;
 			case Id_byteOffset:
@@ -137,8 +122,7 @@ public abstract class NativeArrayBufferView
 	// #string_id_map#
 
 	@Override
-	protected int findInstanceIdInfo(String s)
-	{
+	protected int findInstanceIdInfo(String s) {
 		int id;
 		// #generated# Last update: 2014-12-08 17:32:09 PST
 		L0:
@@ -147,34 +131,26 @@ public abstract class NativeArrayBufferView
 			String X = null;
 			int c;
 			int s_length = s.length();
-			if (s_length == 6)
-			{
+			if (s_length == 6) {
 				X = "buffer";
 				id = Id_buffer;
-			}
-			else if (s_length == 10)
-			{
+			} else if (s_length == 10) {
 				c = s.charAt(4);
-				if (c == 'L')
-				{
+				if (c == 'L') {
 					X = "byteLength";
 					id = Id_byteLength;
-				}
-				else if (c == 'O')
-				{
+				} else if (c == 'O') {
 					X = "byteOffset";
 					id = Id_byteOffset;
 				}
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;
 		}
 		// #/generated#
-		if (id == 0)
-		{
+		if (id == 0) {
 			return super.findInstanceIdInfo(s);
 		}
 		return instanceIdInfo(READONLY | PERMANENT, id);

@@ -12,8 +12,7 @@ package dev.latvian.mods.rhino.debug;
  * This interface exposes debugging information from executable
  * code (either functions or top-level scripts).
  */
-public interface DebuggableScript
-{
+public interface DebuggableScript {
 	boolean isTopLevel();
 
 	/**

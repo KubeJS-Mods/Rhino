@@ -22,8 +22,7 @@ import dev.latvian.mods.rhino.Token;
  * {@link VariableDeclaration} node of type {@code Token.LET},
  * wrapped with an {@link ExpressionStatement}.
  */
-public class LetNode extends Scope
-{
+public class LetNode extends Scope {
 
 	private VariableDeclaration variables;
 	private AstNode body;
@@ -34,25 +33,21 @@ public class LetNode extends Scope
 		type = Token.LETEXPR;
 	}
 
-	public LetNode()
-	{
+	public LetNode() {
 	}
 
-	public LetNode(int pos)
-	{
+	public LetNode(int pos) {
 		super(pos);
 	}
 
-	public LetNode(int pos, int len)
-	{
+	public LetNode(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Returns variable list
 	 */
-	public VariableDeclaration getVariables()
-	{
+	public VariableDeclaration getVariables() {
 		return variables;
 	}
 
@@ -61,8 +56,7 @@ public class LetNode extends Scope
 	 *
 	 * @throws IllegalArgumentException if variables is {@code null}
 	 */
-	public void setVariables(VariableDeclaration variables)
-	{
+	public void setVariables(VariableDeclaration variables) {
 		assertNotNull(variables);
 		this.variables = variables;
 		variables.setParent(this);
@@ -76,8 +70,7 @@ public class LetNode extends Scope
 	 *
 	 * @return the body form
 	 */
-	public AstNode getBody()
-	{
+	public AstNode getBody() {
 		return body;
 	}
 
@@ -88,11 +81,9 @@ public class LetNode extends Scope
 	 * @param body the body statement or expression.  May be
 	 *             {@code null}.
 	 */
-	public void setBody(AstNode body)
-	{
+	public void setBody(AstNode body) {
 		this.body = body;
-		if (body != null)
-		{
+		if (body != null) {
 			body.setParent(this);
 		}
 	}
@@ -100,55 +91,48 @@ public class LetNode extends Scope
 	/**
 	 * Returns left paren position, -1 if missing
 	 */
-	public int getLp()
-	{
+	public int getLp() {
 		return lp;
 	}
 
 	/**
 	 * Sets left paren position
 	 */
-	public void setLp(int lp)
-	{
+	public void setLp(int lp) {
 		this.lp = lp;
 	}
 
 	/**
 	 * Returns right paren position, -1 if missing
 	 */
-	public int getRp()
-	{
+	public int getRp() {
 		return rp;
 	}
 
 	/**
 	 * Sets right paren position
 	 */
-	public void setRp(int rp)
-	{
+	public void setRp(int rp) {
 		this.rp = rp;
 	}
 
 	/**
 	 * Sets both paren positions
 	 */
-	public void setParens(int lp, int rp)
-	{
+	public void setParens(int lp, int rp) {
 		this.lp = lp;
 		this.rp = rp;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		String pad = makeIndent(depth);
 		StringBuilder sb = new StringBuilder();
 		sb.append(pad);
 		sb.append("let (");
 		printList(variables.getVariables(), sb);
 		sb.append(") ");
-		if (body != null)
-		{
+		if (body != null) {
 			sb.append(body.toSource(depth));
 		}
 		return sb.toString();
@@ -159,13 +143,10 @@ public class LetNode extends Scope
 	 * expression or statement.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			variables.visit(v);
-			if (body != null)
-			{
+			if (body != null) {
 				body.visit(v);
 			}
 		}

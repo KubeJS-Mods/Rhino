@@ -16,17 +16,14 @@ import dev.latvian.mods.rhino.ScriptableObject;
 /**
  * This Interface describes what all XML objects (XML, XMLList) should have in common.
  */
-public abstract class XMLObject extends IdScriptableObject
-{
+public abstract class XMLObject extends IdScriptableObject {
 
 	private static final long serialVersionUID = 8455156490438576500L;
 
-	public XMLObject()
-	{
+	public XMLObject() {
 	}
 
-	public XMLObject(Scriptable scope, Scriptable prototype)
-	{
+	public XMLObject(Scriptable scope, Scriptable prototype) {
 		super(scope, prototype);
 	}
 
@@ -97,8 +94,7 @@ public abstract class XMLObject extends IdScriptableObject
 	 *                   if false, the object should calculate value + this.
 	 * @param value      the second argument for addition operation.
 	 */
-	public Object addValues(Context cx, boolean thisIsLeft, Object value)
-	{
+	public Object addValues(Context cx, boolean thisIsLeft, Object value) {
 		return Scriptable.NOT_FOUND;
 	}
 
@@ -109,8 +105,7 @@ public abstract class XMLObject extends IdScriptableObject
 	 * @see ScriptableObject#getTypeOf()
 	 */
 	@Override
-	public String getTypeOf()
-	{
+	public String getTypeOf() {
 		return avoidObjectDetection() ? "undefined" : "xml";
 	}
 }

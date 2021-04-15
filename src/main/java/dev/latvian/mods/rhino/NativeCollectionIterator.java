@@ -6,27 +6,23 @@ import java.io.ObjectOutputStream;
 import java.util.Collections;
 import java.util.Iterator;
 
-public class NativeCollectionIterator extends ES6Iterator
-{
+public class NativeCollectionIterator extends ES6Iterator {
 	private static final long serialVersionUID = 7094840979404373443L;
 	private String className;
 	private Type type;
 	private transient Iterator<Hashtable.Entry> iterator = Collections.emptyIterator();
 
-	enum Type
-	{
+	enum Type {
 		KEYS,
 		VALUES,
 		BOTH
 	}
 
-	static void init(ScriptableObject scope, String tag, boolean sealed)
-	{
+	static void init(ScriptableObject scope, String tag, boolean sealed) {
 		init(scope, sealed, new NativeCollectionIterator(tag), tag);
 	}
 
-	public NativeCollectionIterator(String tag)
-	{
+	public NativeCollectionIterator(String tag) {
 		this.className = tag;
 		this.iterator = Collections.emptyIterator();
 		this.type = Type.BOTH;
@@ -34,8 +30,7 @@ public class NativeCollectionIterator extends ES6Iterator
 
 	public NativeCollectionIterator(
 			Scriptable scope, String className,
-			Type type, Iterator<Hashtable.Entry> iterator)
-	{
+			Type type, Iterator<Hashtable.Entry> iterator) {
 		super(scope, className);
 		this.className = className;
 		this.iterator = iterator;
@@ -43,37 +38,32 @@ public class NativeCollectionIterator extends ES6Iterator
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return className;
 	}
 
 	@Override
-	protected boolean isDone(Context cx, Scriptable scope)
-	{
+	protected boolean isDone(Context cx, Scriptable scope) {
 		return !iterator.hasNext();
 	}
 
 	@Override
-	protected Object nextValue(Context cx, Scriptable scope)
-	{
+	protected Object nextValue(Context cx, Scriptable scope) {
 		final Hashtable.Entry e = iterator.next();
-		switch (type)
-		{
+		switch (type) {
 			case KEYS:
 				return e.key;
 			case VALUES:
 				return e.value;
 			case BOTH:
-				return cx.newArray(scope, new Object[] {e.key, e.value});
+				return cx.newArray(scope, new Object[]{e.key, e.value});
 			default:
 				throw new AssertionError();
 		}
 	}
 
 	private void readObject(ObjectInputStream stream)
-			throws IOException, ClassNotFoundException
-	{
+			throws IOException, ClassNotFoundException {
 		stream.defaultReadObject();
 		className = (String) stream.readObject();
 		type = (Type) stream.readObject();
@@ -81,8 +71,7 @@ public class NativeCollectionIterator extends ES6Iterator
 	}
 
 	private void writeObject(ObjectOutputStream stream)
-			throws IOException
-	{
+			throws IOException {
 		stream.defaultWriteObject();
 		stream.writeObject(className);
 		stream.writeObject(type);

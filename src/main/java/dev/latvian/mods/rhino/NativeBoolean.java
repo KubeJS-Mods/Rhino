@@ -12,48 +12,40 @@ package dev.latvian.mods.rhino;
  *
  * @author Norris Boyd
  */
-final class NativeBoolean extends IdScriptableObject
-{
+final class NativeBoolean extends IdScriptableObject {
 	private static final long serialVersionUID = -3716996899943880933L;
 
 	private static final Object BOOLEAN_TAG = "Boolean";
 
-	static void init(Scriptable scope, boolean sealed)
-	{
+	static void init(Scriptable scope, boolean sealed) {
 		NativeBoolean obj = new NativeBoolean(false);
 		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
 
-	NativeBoolean(boolean b)
-	{
+	NativeBoolean(boolean b) {
 		booleanValue = b;
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "Boolean";
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> typeHint)
-	{
+	public Object getDefaultValue(Class<?> typeHint) {
 		// This is actually non-ECMA, but will be proposed
 		// as a change in round 2.
-		if (typeHint == ScriptRuntime.BooleanClass)
-		{
+		if (typeHint == ScriptRuntime.BooleanClass) {
 			return ScriptRuntime.wrapBoolean(booleanValue);
 		}
 		return super.getDefaultValue(typeHint);
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
+	protected void initPrototypeId(int id) {
 		String s;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				arity = 1;
 				s = "constructor";
@@ -78,23 +70,17 @@ final class NativeBoolean extends IdScriptableObject
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(BOOLEAN_TAG))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(BOOLEAN_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
 
-		if (id == Id_constructor)
-		{
+		if (id == Id_constructor) {
 			boolean b;
-			if (args.length == 0)
-			{
+			if (args.length == 0) {
 				b = false;
-			}
-			else
-			{
+			} else {
 				// see special handling in ScriptRuntime.toBoolean(Object)
 				// avoidObjectDetection() is used to implement document.all
 				// see Note on page
@@ -102,8 +88,7 @@ final class NativeBoolean extends IdScriptableObject
 				b = (!(args[0] instanceof ScriptableObject) ||
 						!((ScriptableObject) args[0]).avoidObjectDetection()) && ScriptRuntime.toBoolean(args[0]);
 			}
-			if (thisObj == null)
-			{
+			if (thisObj == null) {
 				// new Boolean(val) creates a new boolean object.
 				return new NativeBoolean(b);
 			}
@@ -113,14 +98,12 @@ final class NativeBoolean extends IdScriptableObject
 
 		// The rest of Boolean.prototype methods require thisObj to be Boolean
 
-		if (!(thisObj instanceof NativeBoolean))
-		{
+		if (!(thisObj instanceof NativeBoolean)) {
 			throw incompatibleCallError(f);
 		}
 		boolean value = ((NativeBoolean) thisObj).booleanValue;
 
-		switch (id)
-		{
+		switch (id) {
 
 			case Id_toString:
 				return value ? "true" : "false";
@@ -137,8 +120,7 @@ final class NativeBoolean extends IdScriptableObject
 	// #string_id_map#
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2007-05-09 08:15:31 EDT
 		L0:
@@ -147,32 +129,23 @@ final class NativeBoolean extends IdScriptableObject
 			String X = null;
 			int c;
 			int s_length = s.length();
-			if (s_length == 7)
-			{
+			if (s_length == 7) {
 				X = "valueOf";
 				id = Id_valueOf;
-			}
-			else if (s_length == 8)
-			{
+			} else if (s_length == 8) {
 				c = s.charAt(3);
-				if (c == 'o')
-				{
+				if (c == 'o') {
 					X = "toSource";
 					id = Id_toSource;
-				}
-				else if (c == 't')
-				{
+				} else if (c == 't') {
 					X = "toString";
 					id = Id_toString;
 				}
-			}
-			else if (s_length == 11)
-			{
+			} else if (s_length == 11) {
 				X = "constructor";
 				id = Id_constructor;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;

@@ -17,8 +17,7 @@ import dev.latvian.mods.rhino.Token;
  * pseudo-keywords for object-initializer getter/setter properties, and it's
  * also used for the "*" wildcard in E4X XML namespace and name expressions.
  */
-public class Name extends AstNode
-{
+public class Name extends AstNode {
 
 	private String identifier;
 	private Scope scope;
@@ -27,17 +26,14 @@ public class Name extends AstNode
 		type = Token.NAME;
 	}
 
-	public Name()
-	{
+	public Name() {
 	}
 
-	public Name(int pos)
-	{
+	public Name(int pos) {
 		super(pos);
 	}
 
-	public Name(int pos, int len)
-	{
+	public Name(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -48,14 +44,12 @@ public class Name extends AstNode
 	 * @param len  node length
 	 * @param name the identifier associated with this {@code Name} node
 	 */
-	public Name(int pos, int len, String name)
-	{
+	public Name(int pos, int len, String name) {
 		super(pos, len);
 		setIdentifier(name);
 	}
 
-	public Name(int pos, String name)
-	{
+	public Name(int pos, String name) {
 		super(pos);
 		setIdentifier(name);
 		setLength(name.length());
@@ -64,8 +58,7 @@ public class Name extends AstNode
 	/**
 	 * Returns the node's identifier
 	 */
-	public String getIdentifier()
-	{
+	public String getIdentifier() {
 		return identifier;
 	}
 
@@ -74,8 +67,7 @@ public class Name extends AstNode
 	 *
 	 * @throws IllegalArgumentException if identifier is null
 	 */
-	public void setIdentifier(String identifier)
-	{
+	public void setIdentifier(String identifier) {
 		assertNotNull(identifier);
 		this.identifier = identifier;
 		setLength(identifier.length());
@@ -92,8 +84,7 @@ public class Name extends AstNode
 	 *          scope.
 	 */
 	@Override
-	public void setScope(Scope s)
-	{
+	public void setScope(Scope s) {
 		scope = s;
 	}
 
@@ -105,8 +96,7 @@ public class Name extends AstNode
 	 * if any.
 	 */
 	@Override
-	public Scope getScope()
-	{
+	public Scope getScope() {
 		return scope;
 	}
 
@@ -116,8 +106,7 @@ public class Name extends AstNode
 	 * @return the scope in which this name is defined, or {@code null}
 	 * if it's not defined in the current lexical scope chain
 	 */
-	public Scope getDefiningScope()
-	{
+	public Scope getDefiningScope() {
 		Scope enclosing = getEnclosingScope();
 		String name = getIdentifier();
 		return enclosing == null ? null : enclosing.getDefiningScope(name);
@@ -136,8 +125,7 @@ public class Name extends AstNode
 	 * name is not defined as a symbol in the symbol table, in which case it
 	 * may be an external or built-in name (or just an error of some sort.)
 	 */
-	public boolean isLocalName()
-	{
+	public boolean isLocalName() {
 		Scope scope = getDefiningScope();
 		return scope != null && scope.getParentScope() != null;
 	}
@@ -148,14 +136,12 @@ public class Name extends AstNode
 	 * {@link AstNode#getLength} method, which returns the range of
 	 * characters that this node overlaps in the source input.
 	 */
-	public int length()
-	{
+	public int length() {
 		return identifier == null ? 0 : identifier.length();
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		return makeIndent(depth) + (identifier == null ? "<null>" : identifier);
 	}
 
@@ -163,8 +149,7 @@ public class Name extends AstNode
 	 * Visits this node.  There are no children to visit.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
+	public void visit(NodeVisitor v) {
 		v.visit(this);
 	}
 }

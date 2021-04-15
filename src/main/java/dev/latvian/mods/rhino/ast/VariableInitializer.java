@@ -16,8 +16,7 @@ import dev.latvian.mods.rhino.Token;
  * Node type is one of {@link Token#VAR}, {@link Token#CONST}, or
  * {@link Token#LET}.
  */
-public class VariableInitializer extends AstNode
-{
+public class VariableInitializer extends AstNode {
 
 	private AstNode target;
 	private AstNode initializer;
@@ -32,28 +31,23 @@ public class VariableInitializer extends AstNode
 	 * @throws IllegalArgumentException if {@code nodeType} is not one of
 	 *                                  {@link Token#VAR}, {@link Token#CONST}, or {@link Token#LET}
 	 */
-	public void setNodeType(int nodeType)
-	{
+	public void setNodeType(int nodeType) {
 		if (nodeType != Token.VAR
 				&& nodeType != Token.CONST
-				&& nodeType != Token.LET)
-		{
+				&& nodeType != Token.LET) {
 			throw new IllegalArgumentException("invalid node type");
 		}
 		setType(nodeType);
 	}
 
-	public VariableInitializer()
-	{
+	public VariableInitializer() {
 	}
 
-	public VariableInitializer(int pos)
-	{
+	public VariableInitializer(int pos) {
 		super(pos);
 	}
 
-	public VariableInitializer(int pos, int len)
-	{
+	public VariableInitializer(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -65,16 +59,14 @@ public class VariableInitializer extends AstNode
 	 * @return {@code true} if the {@code target} field is a destructuring form
 	 * (an {@link ArrayLiteral} or {@link ObjectLiteral} node)
 	 */
-	public boolean isDestructuring()
-	{
+	public boolean isDestructuring() {
 		return !(target instanceof Name);
 	}
 
 	/**
 	 * Returns the variable name or destructuring form
 	 */
-	public AstNode getTarget()
-	{
+	public AstNode getTarget() {
 		return target;
 	}
 
@@ -84,12 +76,10 @@ public class VariableInitializer extends AstNode
 	 *
 	 * @throws IllegalArgumentException if target is {@code null}
 	 */
-	public void setTarget(AstNode target)
-	{
+	public void setTarget(AstNode target) {
 		// Don't throw exception if target is an "invalid" node type.
 		// See mozilla/js/tests/js1_7/block/regress-350279.js
-		if (target == null)
-		{
+		if (target == null) {
 			throw new IllegalArgumentException("invalid target arg");
 		}
 		this.target = target;
@@ -99,8 +89,7 @@ public class VariableInitializer extends AstNode
 	/**
 	 * Returns the initial value, or {@code null} if not provided
 	 */
-	public AstNode getInitializer()
-	{
+	public AstNode getInitializer() {
 		return initializer;
 	}
 
@@ -109,23 +98,19 @@ public class VariableInitializer extends AstNode
 	 *
 	 * @param initializer the initial value.  May be {@code null}.
 	 */
-	public void setInitializer(AstNode initializer)
-	{
+	public void setInitializer(AstNode initializer) {
 		this.initializer = initializer;
-		if (initializer != null)
-		{
+		if (initializer != null) {
 			initializer.setParent(this);
 		}
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append(target.toSource(0));
-		if (initializer != null)
-		{
+		if (initializer != null) {
 			sb.append(" = ");
 			sb.append(initializer.toSource(0));
 		}
@@ -137,13 +122,10 @@ public class VariableInitializer extends AstNode
 	 * expression if present.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			target.visit(v);
-			if (initializer != null)
-			{
+			if (initializer != null) {
 				initializer.visit(v);
 			}
 		}

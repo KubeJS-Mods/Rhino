@@ -10,12 +10,10 @@ package dev.latvian.mods.rhino;
 /**
  * The class of exceptions thrown by the JavaScript engine.
  */
-public class EvaluatorException extends RhinoException
-{
+public class EvaluatorException extends RhinoException {
 	private static final long serialVersionUID = -8743165779676009808L;
 
-	public EvaluatorException(String detail)
-	{
+	public EvaluatorException(String detail) {
 		super(detail);
 	}
 
@@ -30,8 +28,7 @@ public class EvaluatorException extends RhinoException
 	 * @param lineNumber the line number of the source
 	 */
 	public EvaluatorException(String detail, String sourceName,
-							  int lineNumber)
-	{
+							  int lineNumber) {
 		this(detail, sourceName, lineNumber, null, 0);
 	}
 
@@ -50,8 +47,7 @@ public class EvaluatorException extends RhinoException
 	 *                     null if unknown)
 	 */
 	public EvaluatorException(String detail, String sourceName, int lineNumber,
-							  String lineSource, int columnNumber)
-	{
+							  String lineSource, int columnNumber) {
 		super(detail);
 		recordErrorOrigin(sourceName, lineNumber, lineSource, columnNumber);
 	}

@@ -19,8 +19,7 @@ import dev.latvian.mods.rhino.Token;
  * closing right-bracket.  In the presence of a syntax error, the right bracket
  * position is -1, and the node ends at the end of the element expression.
  */
-public class ElementGet extends AstNode
-{
+public class ElementGet extends AstNode {
 
 	private AstNode target;
 	private AstNode element;
@@ -31,22 +30,18 @@ public class ElementGet extends AstNode
 		type = Token.GETELEM;
 	}
 
-	public ElementGet()
-	{
+	public ElementGet() {
 	}
 
-	public ElementGet(int pos)
-	{
+	public ElementGet(int pos) {
 		super(pos);
 	}
 
-	public ElementGet(int pos, int len)
-	{
+	public ElementGet(int pos, int len) {
 		super(pos, len);
 	}
 
-	public ElementGet(AstNode target, AstNode element)
-	{
+	public ElementGet(AstNode target, AstNode element) {
 		setTarget(target);
 		setElement(element);
 	}
@@ -54,8 +49,7 @@ public class ElementGet extends AstNode
 	/**
 	 * Returns the object on which the element is being fetched.
 	 */
-	public AstNode getTarget()
-	{
+	public AstNode getTarget() {
 		return target;
 	}
 
@@ -66,8 +60,7 @@ public class ElementGet extends AstNode
 	 *               to do the element lookup
 	 * @throws IllegalArgumentException if target is {@code null}
 	 */
-	public void setTarget(AstNode target)
-	{
+	public void setTarget(AstNode target) {
 		assertNotNull(target);
 		this.target = target;
 		target.setParent(this);
@@ -76,8 +69,7 @@ public class ElementGet extends AstNode
 	/**
 	 * Returns the element being accessed
 	 */
-	public AstNode getElement()
-	{
+	public AstNode getElement() {
 		return element;
 	}
 
@@ -86,8 +78,7 @@ public class ElementGet extends AstNode
 	 *
 	 * @throws IllegalArgumentException if element is {@code null}
 	 */
-	public void setElement(AstNode element)
-	{
+	public void setElement(AstNode element) {
 		assertNotNull(element);
 		this.element = element;
 		element.setParent(this);
@@ -96,44 +87,38 @@ public class ElementGet extends AstNode
 	/**
 	 * Returns left bracket position
 	 */
-	public int getLb()
-	{
+	public int getLb() {
 		return lb;
 	}
 
 	/**
 	 * Sets left bracket position
 	 */
-	public void setLb(int lb)
-	{
+	public void setLb(int lb) {
 		this.lb = lb;
 	}
 
 	/**
 	 * Returns right bracket position, -1 if missing
 	 */
-	public int getRb()
-	{
+	public int getRb() {
 		return rb;
 	}
 
 	/**
 	 * Sets right bracket position, -1 if not present
 	 */
-	public void setRb(int rb)
-	{
+	public void setRb(int rb) {
 		this.rb = rb;
 	}
 
-	public void setParens(int lb, int rb)
-	{
+	public void setParens(int lb, int rb) {
 		this.lb = lb;
 		this.rb = rb;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append(target.toSource(0));
@@ -147,10 +132,8 @@ public class ElementGet extends AstNode
 	 * Visits this node, the target, and the index expression.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			target.visit(v);
 			element.visit(v);
 		}

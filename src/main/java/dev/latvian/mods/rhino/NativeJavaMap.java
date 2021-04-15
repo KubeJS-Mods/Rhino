@@ -9,51 +9,42 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class NativeJavaMap extends NativeJavaObject
-{
+public class NativeJavaMap extends NativeJavaObject {
 
 	private final Map<Object, Object> map;
 
 	@SuppressWarnings("unchecked")
-	public NativeJavaMap(Scriptable scope, Object map)
-	{
+	public NativeJavaMap(Scriptable scope, Object map) {
 		super(scope, map, map.getClass());
 		assert map instanceof Map;
 		this.map = (Map<Object, Object>) map;
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "JavaMap";
 	}
 
 
 	@Override
-	public boolean has(String name, Scriptable start)
-	{
-		if (map.containsKey(name))
-		{
+	public boolean has(String name, Scriptable start) {
+		if (map.containsKey(name)) {
 			return true;
 		}
 		return super.has(name, start);
 	}
 
 	@Override
-	public boolean has(int index, Scriptable start)
-	{
-		if (map.containsKey(index))
-		{
+	public boolean has(int index, Scriptable start) {
+		if (map.containsKey(index)) {
 			return true;
 		}
 		return super.has(index, start);
 	}
 
 	@Override
-	public Object get(String name, Scriptable start)
-	{
-		if (map.containsKey(name))
-		{
+	public Object get(String name, Scriptable start) {
+		if (map.containsKey(name)) {
 			Context cx = Context.getContext();
 			Object obj = map.get(name);
 			return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
@@ -62,10 +53,8 @@ public class NativeJavaMap extends NativeJavaObject
 	}
 
 	@Override
-	public Object get(int index, Scriptable start)
-	{
-		if (map.containsKey(index))
-		{
+	public Object get(int index, Scriptable start) {
+		if (map.containsKey(index)) {
 			Context cx = Context.getContext();
 			Object obj = map.get(index);
 			return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
@@ -74,29 +63,22 @@ public class NativeJavaMap extends NativeJavaObject
 	}
 
 	@Override
-	public void put(String name, Scriptable start, Object value)
-	{
+	public void put(String name, Scriptable start, Object value) {
 		map.put(name, Context.jsToJava(value, Object.class));
 	}
 
 	@Override
-	public void put(int index, Scriptable start, Object value)
-	{
+	public void put(int index, Scriptable start, Object value) {
 		map.put(index, Context.jsToJava(value, Object.class));
 	}
 
 	@Override
-	public Object[] getIds()
-	{
+	public Object[] getIds() {
 		List<Object> ids = new ArrayList<>(map.size());
-		for (Object key : map.keySet())
-		{
-			if (key instanceof Integer)
-			{
+		for (Object key : map.keySet()) {
+			if (key instanceof Integer) {
 				ids.add(key);
-			}
-			else
-			{
+			} else {
 				ids.add(ScriptRuntime.toString(key));
 			}
 		}

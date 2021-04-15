@@ -19,8 +19,7 @@ import dev.latvian.mods.rhino.Token;
  * sharing.  Structurally a {@code NewExpression} node is very similar to a
  * {@code FunctionCall}, so it made a certain amount of sense.
  */
-public class NewExpression extends FunctionCall
-{
+public class NewExpression extends FunctionCall {
 
 	private ObjectLiteral initializer;
 
@@ -28,17 +27,14 @@ public class NewExpression extends FunctionCall
 		type = Token.NEW;
 	}
 
-	public NewExpression()
-	{
+	public NewExpression() {
 	}
 
-	public NewExpression(int pos)
-	{
+	public NewExpression(int pos) {
 		super(pos);
 	}
 
-	public NewExpression(int pos, int len)
-	{
+	public NewExpression(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -48,8 +44,7 @@ public class NewExpression extends FunctionCall
 	 * @return extra initializer object-literal expression, or {@code null} if
 	 * not specified.
 	 */
-	public ObjectLiteral getInitializer()
-	{
+	public ObjectLiteral getInitializer() {
 		return initializer;
 	}
 
@@ -62,30 +57,25 @@ public class NewExpression extends FunctionCall
 	 * @param initializer extra initializer object.
 	 *                    Can be {@code null}.
 	 */
-	public void setInitializer(ObjectLiteral initializer)
-	{
+	public void setInitializer(ObjectLiteral initializer) {
 		this.initializer = initializer;
-		if (initializer != null)
-		{
+		if (initializer != null) {
 			initializer.setParent(this);
 		}
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("new ");
 		sb.append(target.toSource(0));
 		sb.append("(");
-		if (arguments != null)
-		{
+		if (arguments != null) {
 			printList(arguments, sb);
 		}
 		sb.append(")");
-		if (initializer != null)
-		{
+		if (initializer != null) {
 			sb.append(" ");
 			sb.append(initializer.toSource(0));
 		}
@@ -97,17 +87,13 @@ public class NewExpression extends FunctionCall
 	 * a trailing initializer node, visits that last.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			target.visit(v);
-			for (AstNode arg : getArguments())
-			{
+			for (AstNode arg : getArguments()) {
 				arg.visit(v);
 			}
-			if (initializer != null)
-			{
+			if (initializer != null) {
 				initializer.visit(v);
 			}
 		}

@@ -24,8 +24,7 @@ import java.util.List;
  * <i>Finally</i> :
  *        <b>finally</b> Block</pre>
  */
-public class TryStatement extends AstNode
-{
+public class TryStatement extends AstNode {
 
 	private static final List<CatchClause> NO_CATCHES =
 			Collections.unmodifiableList(new ArrayList<>());
@@ -39,22 +38,18 @@ public class TryStatement extends AstNode
 		type = Token.TRY;
 	}
 
-	public TryStatement()
-	{
+	public TryStatement() {
 	}
 
-	public TryStatement(int pos)
-	{
+	public TryStatement(int pos) {
 		super(pos);
 	}
 
-	public TryStatement(int pos, int len)
-	{
+	public TryStatement(int pos, int len) {
 		super(pos, len);
 	}
 
-	public AstNode getTryBlock()
-	{
+	public AstNode getTryBlock() {
 		return tryBlock;
 	}
 
@@ -63,8 +58,7 @@ public class TryStatement extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if {@code tryBlock} is {@code null}
 	 */
-	public void setTryBlock(AstNode tryBlock)
-	{
+	public void setTryBlock(AstNode tryBlock) {
 		assertNotNull(tryBlock);
 		this.tryBlock = tryBlock;
 		tryBlock.setParent(this);
@@ -74,8 +68,7 @@ public class TryStatement extends AstNode
 	 * Returns list of {@link CatchClause} nodes.  If there are no catch
 	 * clauses, returns an immutable empty list.
 	 */
-	public List<CatchClause> getCatchClauses()
-	{
+	public List<CatchClause> getCatchClauses() {
 		return catchClauses != null ? catchClauses : NO_CATCHES;
 	}
 
@@ -84,20 +77,14 @@ public class TryStatement extends AstNode
 	 * to this node.  May be {@code null}.  Replaces any existing catch
 	 * clauses for this node.
 	 */
-	public void setCatchClauses(List<CatchClause> catchClauses)
-	{
-		if (catchClauses == null)
-		{
+	public void setCatchClauses(List<CatchClause> catchClauses) {
+		if (catchClauses == null) {
 			this.catchClauses = null;
-		}
-		else
-		{
-			if (this.catchClauses != null)
-			{
+		} else {
+			if (this.catchClauses != null) {
 				this.catchClauses.clear();
 			}
-			for (CatchClause cc : catchClauses)
-			{
+			for (CatchClause cc : catchClauses) {
 				addCatchClause(cc);
 			}
 		}
@@ -109,11 +96,9 @@ public class TryStatement extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if {@code clause} is {@code null}
 	 */
-	public void addCatchClause(CatchClause clause)
-	{
+	public void addCatchClause(CatchClause clause) {
 		assertNotNull(clause);
-		if (catchClauses == null)
-		{
+		if (catchClauses == null) {
 			catchClauses = new ArrayList<>();
 		}
 		catchClauses.add(clause);
@@ -123,8 +108,7 @@ public class TryStatement extends AstNode
 	/**
 	 * Returns finally block, or {@code null} if not present
 	 */
-	public AstNode getFinallyBlock()
-	{
+	public AstNode getFinallyBlock() {
 		return finallyBlock;
 	}
 
@@ -132,11 +116,9 @@ public class TryStatement extends AstNode
 	 * Sets finally block, and sets its parent to this node.
 	 * May be {@code null}.
 	 */
-	public void setFinallyBlock(AstNode finallyBlock)
-	{
+	public void setFinallyBlock(AstNode finallyBlock) {
 		this.finallyBlock = finallyBlock;
-		if (finallyBlock != null)
-		{
+		if (finallyBlock != null) {
 			finallyBlock.setParent(this);
 		}
 	}
@@ -144,36 +126,30 @@ public class TryStatement extends AstNode
 	/**
 	 * Returns position of {@code finally} keyword, if present, or -1
 	 */
-	public int getFinallyPosition()
-	{
+	public int getFinallyPosition() {
 		return finallyPosition;
 	}
 
 	/**
 	 * Sets position of {@code finally} keyword, if present, or -1
 	 */
-	public void setFinallyPosition(int finallyPosition)
-	{
+	public void setFinallyPosition(int finallyPosition) {
 		this.finallyPosition = finallyPosition;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder(250);
 		sb.append(makeIndent(depth));
 		sb.append("try ");
-		if (this.getInlineComment() != null)
-		{
+		if (this.getInlineComment() != null) {
 			sb.append(this.getInlineComment().toSource(depth + 1)).append("\n");
 		}
 		sb.append(tryBlock.toSource(depth).trim());
-		for (CatchClause cc : getCatchClauses())
-		{
+		for (CatchClause cc : getCatchClauses()) {
 			sb.append(cc.toSource(depth));
 		}
-		if (finallyBlock != null)
-		{
+		if (finallyBlock != null) {
 			sb.append(" finally ");
 			sb.append(finallyBlock.toSource(depth));
 		}
@@ -185,17 +161,13 @@ public class TryStatement extends AstNode
 	 * and then any finally block.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			tryBlock.visit(v);
-			for (CatchClause cc : getCatchClauses())
-			{
+			for (CatchClause cc : getCatchClauses()) {
 				cc.visit(v);
 			}
-			if (finallyBlock != null)
-			{
+			if (finallyBlock != null) {
 				finallyBlock.visit(v);
 			}
 		}

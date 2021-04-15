@@ -6,46 +6,39 @@
 
 package dev.latvian.mods.rhino;
 
-public final class NativeStringIterator extends ES6Iterator
-{
+public final class NativeStringIterator extends ES6Iterator {
 	private static final long serialVersionUID = 1L;
 	private static final String ITERATOR_TAG = "StringIterator";
 
-	static void init(ScriptableObject scope, boolean sealed)
-	{
+	static void init(ScriptableObject scope, boolean sealed) {
 		init(scope, sealed, new NativeStringIterator(), ITERATOR_TAG);
 	}
 
 	/**
 	 * Only for constructing the prototype object.
 	 */
-	private NativeStringIterator()
-	{
+	private NativeStringIterator() {
 		super();
 	}
 
-	NativeStringIterator(Scriptable scope, Object stringLike)
-	{
+	NativeStringIterator(Scriptable scope, Object stringLike) {
 		super(scope, ITERATOR_TAG);
 		this.index = 0;
 		this.string = ScriptRuntime.toString(stringLike);
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "String Iterator";
 	}
 
 	@Override
-	protected boolean isDone(Context cx, Scriptable scope)
-	{
+	protected boolean isDone(Context cx, Scriptable scope) {
 		return index >= string.length();
 	}
 
 	@Override
-	protected Object nextValue(Context cx, Scriptable scope)
-	{
+	protected Object nextValue(Context cx, Scriptable scope) {
 		int newIndex = string.offsetByCodePoints(index, 1);
 		Object value = string.substring(index, newIndex);
 		index = newIndex;
@@ -53,8 +46,7 @@ public final class NativeStringIterator extends ES6Iterator
 	}
 
 	@Override
-	protected String getTag()
-	{
+	protected String getTag() {
 		return ITERATOR_TAG;
 	}
 

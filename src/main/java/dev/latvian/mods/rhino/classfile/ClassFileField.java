@@ -6,18 +6,15 @@
 
 package dev.latvian.mods.rhino.classfile;
 
-final class ClassFileField
-{
-	ClassFileField(short nameIndex, short typeIndex, short flags)
-	{
+final class ClassFileField {
+	ClassFileField(short nameIndex, short typeIndex, short flags) {
 		itsNameIndex = nameIndex;
 		itsTypeIndex = typeIndex;
 		itsFlags = flags;
 		itsHasAttributes = false;
 	}
 
-	void setAttributes(short attr1, short attr2, short attr3, int index)
-	{
+	void setAttributes(short attr1, short attr2, short attr3, int index) {
 		itsHasAttributes = true;
 		itsAttr1 = attr1;
 		itsAttr2 = attr2;
@@ -25,18 +22,14 @@ final class ClassFileField
 		itsIndex = index;
 	}
 
-	int write(byte[] data, int offset)
-	{
+	int write(byte[] data, int offset) {
 		offset = ClassFileWriter.putInt16(itsFlags, data, offset);
 		offset = ClassFileWriter.putInt16(itsNameIndex, data, offset);
 		offset = ClassFileWriter.putInt16(itsTypeIndex, data, offset);
-		if (!itsHasAttributes)
-		{
+		if (!itsHasAttributes) {
 			// write 0 attributes
 			offset = ClassFileWriter.putInt16(0, data, offset);
-		}
-		else
-		{
+		} else {
 			offset = ClassFileWriter.putInt16(1, data, offset);
 			offset = ClassFileWriter.putInt16(itsAttr1, data, offset);
 			offset = ClassFileWriter.putInt16(itsAttr2, data, offset);
@@ -46,15 +39,11 @@ final class ClassFileField
 		return offset;
 	}
 
-	int getWriteSize()
-	{
+	int getWriteSize() {
 		int size = 2 * 3;
-		if (!itsHasAttributes)
-		{
+		if (!itsHasAttributes) {
 			size += 2;
-		}
-		else
-		{
+		} else {
 			size += 2 + 2 * 4;
 		}
 		return size;

@@ -8,8 +8,7 @@
 
 package dev.latvian.mods.rhino;
 
-public interface ConstProperties
-{
+public interface ConstProperties {
 	/**
 	 * Sets a named const property in this object.
 	 * <p>

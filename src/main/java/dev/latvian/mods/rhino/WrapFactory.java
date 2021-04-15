@@ -23,8 +23,7 @@ import java.util.Map;
  * @see Context#setWrapFactory(WrapFactory)
  * @since 1.5 Release 4
  */
-public class WrapFactory
-{
+public class WrapFactory {
 	/**
 	 * Wrap the object.
 	 * <p>
@@ -46,45 +45,35 @@ public class WrapFactory
 	 * @return the wrapped value.
 	 */
 	public Object wrap(Context cx, Scriptable scope,
-					   Object obj, Class<?> staticType)
-	{
+					   Object obj, Class<?> staticType) {
 		if (obj == null || obj == Undefined.instance
-				|| obj instanceof Scriptable)
-		{
+				|| obj instanceof Scriptable) {
 			return obj;
 		}
-		if (staticType != null && staticType.isPrimitive())
-		{
-			if (staticType == Void.TYPE)
-			{
+		if (staticType != null && staticType.isPrimitive()) {
+			if (staticType == Void.TYPE) {
 				return Undefined.instance;
 			}
-			if (staticType == Character.TYPE)
-			{
+			if (staticType == Character.TYPE) {
 				return (int) (Character) obj;
 			}
 			return obj;
 		}
-		if (!isJavaPrimitiveWrap())
-		{
+		if (!isJavaPrimitiveWrap()) {
 			if (obj instanceof String ||
 					obj instanceof Boolean ||
 					obj instanceof Integer ||
 					obj instanceof Short ||
 					obj instanceof Long ||
 					obj instanceof Float ||
-					obj instanceof Double)
-			{
+					obj instanceof Double) {
 				return obj;
-			}
-			else if (obj instanceof Character)
-			{
+			} else if (obj instanceof Character) {
 				return String.valueOf(((Character) obj).charValue());
 			}
 		}
 		Class<?> cls = obj.getClass();
-		if (cls.isArray())
-		{
+		if (cls.isArray()) {
 			return NativeJavaArray.wrap(scope, obj);
 		}
 		return wrapAsJavaObject(cx, scope, obj, staticType);
@@ -98,15 +87,12 @@ public class WrapFactory
 	 * @param obj   the object to be wrapped
 	 * @return the wrapped value.
 	 */
-	public Scriptable wrapNewObject(Context cx, Scriptable scope, Object obj)
-	{
-		if (obj instanceof Scriptable)
-		{
+	public Scriptable wrapNewObject(Context cx, Scriptable scope, Object obj) {
+		if (obj instanceof Scriptable) {
 			return (Scriptable) obj;
 		}
 		Class<?> cls = obj.getClass();
-		if (cls.isArray())
-		{
+		if (cls.isArray()) {
 			return NativeJavaArray.wrap(scope, obj);
 		}
 		return wrapAsJavaObject(cx, scope, obj, null);
@@ -132,14 +118,10 @@ public class WrapFactory
 	 * @return the wrapped value which shall not be null
 	 */
 	public Scriptable wrapAsJavaObject(Context cx, Scriptable scope,
-									   Object javaObject, Class<?> staticType)
-	{
-		if (List.class.isAssignableFrom(javaObject.getClass()))
-		{
+									   Object javaObject, Class<?> staticType) {
+		if (List.class.isAssignableFrom(javaObject.getClass())) {
 			return new NativeJavaList(scope, javaObject);
-		}
-		else if (Map.class.isAssignableFrom(javaObject.getClass()))
-		{
+		} else if (Map.class.isAssignableFrom(javaObject.getClass())) {
 			return new NativeJavaMap(scope, javaObject);
 		}
 		return new NativeJavaObject(scope, javaObject, staticType);
@@ -159,8 +141,7 @@ public class WrapFactory
 	 * @since 1.7R3
 	 */
 	public Scriptable wrapJavaClass(Context cx, Scriptable scope,
-									Class<?> javaClass)
-	{
+									Class<?> javaClass) {
 		return new NativeJavaClass(scope, javaClass);
 	}
 
@@ -175,19 +156,16 @@ public class WrapFactory
 	 * scripts can access any Java method available in these objects.
 	 * Use {@link #setJavaPrimitiveWrap(boolean)} to change this.
 	 */
-	public final boolean isJavaPrimitiveWrap()
-	{
+	public final boolean isJavaPrimitiveWrap() {
 		return javaPrimitiveWrap;
 	}
 
 	/**
 	 * @see #isJavaPrimitiveWrap()
 	 */
-	public final void setJavaPrimitiveWrap(boolean value)
-	{
+	public final void setJavaPrimitiveWrap(boolean value) {
 		Context cx = Context.getCurrentContext();
-		if (cx != null && cx.isSealed())
-		{
+		if (cx != null && cx.isSealed()) {
 			Context.onSealedMutation();
 		}
 		javaPrimitiveWrap = value;

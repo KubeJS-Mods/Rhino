@@ -29,8 +29,7 @@ import java.util.List;
  * <i>DefaultClause</i> :
  *        <b>default</b> : [StatementList]</pre>
  */
-public class SwitchStatement extends Jump
-{
+public class SwitchStatement extends Jump {
 
 	private static final List<SwitchCase> NO_CASES =
 			Collections.unmodifiableList(new ArrayList<>());
@@ -44,18 +43,15 @@ public class SwitchStatement extends Jump
 		type = Token.SWITCH;
 	}
 
-	public SwitchStatement()
-	{
+	public SwitchStatement() {
 	}
 
-	public SwitchStatement(int pos)
-	{
+	public SwitchStatement(int pos) {
 		// can't call super (Jump) for historical reasons
 		position = pos;
 	}
 
-	public SwitchStatement(int pos, int len)
-	{
+	public SwitchStatement(int pos, int len) {
 		position = pos;
 		length = len;
 	}
@@ -63,8 +59,7 @@ public class SwitchStatement extends Jump
 	/**
 	 * Returns the switch discriminant expression
 	 */
-	public AstNode getExpression()
-	{
+	public AstNode getExpression() {
 		return expression;
 	}
 
@@ -74,8 +69,7 @@ public class SwitchStatement extends Jump
 	 *
 	 * @throws IllegalArgumentException} if expression is {@code null}
 	 */
-	public void setExpression(AstNode expression)
-	{
+	public void setExpression(AstNode expression) {
 		assertNotNull(expression);
 		this.expression = expression;
 		expression.setParent(this);
@@ -85,8 +79,7 @@ public class SwitchStatement extends Jump
 	 * Returns case statement list.  If there are no cases,
 	 * returns an immutable empty list.
 	 */
-	public List<SwitchCase> getCases()
-	{
+	public List<SwitchCase> getCases() {
 		return cases != null ? cases : NO_CASES;
 	}
 
@@ -96,20 +89,14 @@ public class SwitchStatement extends Jump
 	 *
 	 * @param cases list, which may be {@code null} to remove all the cases
 	 */
-	public void setCases(List<SwitchCase> cases)
-	{
-		if (cases == null)
-		{
+	public void setCases(List<SwitchCase> cases) {
+		if (cases == null) {
 			this.cases = null;
-		}
-		else
-		{
-			if (this.cases != null)
-			{
+		} else {
+			if (this.cases != null) {
 				this.cases.clear();
 			}
-			for (SwitchCase sc : cases)
-			{
+			for (SwitchCase sc : cases) {
 				addCase(sc);
 			}
 		}
@@ -120,11 +107,9 @@ public class SwitchStatement extends Jump
 	 *
 	 * @throws IllegalArgumentException} if switchCase is {@code null}
 	 */
-	public void addCase(SwitchCase switchCase)
-	{
+	public void addCase(SwitchCase switchCase) {
 		assertNotNull(switchCase);
-		if (cases == null)
-		{
+		if (cases == null) {
 			cases = new ArrayList<>();
 		}
 		cases.add(switchCase);
@@ -134,57 +119,49 @@ public class SwitchStatement extends Jump
 	/**
 	 * Returns left paren position, -1 if missing
 	 */
-	public int getLp()
-	{
+	public int getLp() {
 		return lp;
 	}
 
 	/**
 	 * Sets left paren position
 	 */
-	public void setLp(int lp)
-	{
+	public void setLp(int lp) {
 		this.lp = lp;
 	}
 
 	/**
 	 * Returns right paren position, -1 if missing
 	 */
-	public int getRp()
-	{
+	public int getRp() {
 		return rp;
 	}
 
 	/**
 	 * Sets right paren position
 	 */
-	public void setRp(int rp)
-	{
+	public void setRp(int rp) {
 		this.rp = rp;
 	}
 
 	/**
 	 * Sets both paren positions
 	 */
-	public void setParens(int lp, int rp)
-	{
+	public void setParens(int lp, int rp) {
 		this.lp = lp;
 		this.rp = rp;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		String pad = makeIndent(depth);
 		StringBuilder sb = new StringBuilder();
 		sb.append(pad);
 		sb.append("switch (");
 		sb.append(expression.toSource(0));
 		sb.append(") {\n");
-		if (cases != null)
-		{
-			for (SwitchCase sc : cases)
-			{
+		if (cases != null) {
+			for (SwitchCase sc : cases) {
 				sb.append(sc.toSource(depth + 1));
 			}
 		}
@@ -198,13 +175,10 @@ public class SwitchStatement extends Jump
 	 * in lexical order.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			expression.visit(v);
-			for (SwitchCase sc : getCases())
-			{
+			for (SwitchCase sc : getCases()) {
 				sc.visit(v);
 			}
 		}

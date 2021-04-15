@@ -11,26 +11,21 @@ package dev.latvian.mods.rhino;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 
-public abstract class VMBridge
-{
+public abstract class VMBridge {
 
 	static final VMBridge instance = makeInstance();
 
-	private static VMBridge makeInstance()
-	{
+	private static VMBridge makeInstance() {
 		String[] classNames = {
 				"dev.latvian.mods.rhino.VMBridge_custom",
 				"dev.latvian.mods.rhino.jdk18.VMBridge_jdk18",
 		};
-		for (int i = 0; i != classNames.length; ++i)
-		{
+		for (int i = 0; i != classNames.length; ++i) {
 			String className = classNames[i];
 			Class<?> cl = Kit.classOrNull(className);
-			if (cl != null)
-			{
+			if (cl != null) {
 				VMBridge bridge = (VMBridge) Kit.newInstanceOrNull(cl);
-				if (bridge != null)
-				{
+				if (bridge != null) {
 					return bridge;
 				}
 			}

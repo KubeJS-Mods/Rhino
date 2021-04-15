@@ -13,30 +13,25 @@ import dev.latvian.mods.rhino.Token;
  * <p>
  * To create an empty statement, wrap it with an {@link ExpressionStatement}.
  */
-public class EmptyExpression extends AstNode
-{
+public class EmptyExpression extends AstNode {
 
 	{
 		type = Token.EMPTY;
 	}
 
-	public EmptyExpression()
-	{
+	public EmptyExpression() {
 	}
 
-	public EmptyExpression(int pos)
-	{
+	public EmptyExpression(int pos) {
 		super(pos);
 	}
 
-	public EmptyExpression(int pos, int len)
-	{
+	public EmptyExpression(int pos, int len) {
 		super(pos, len);
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		return makeIndent(depth);
 	}
 
@@ -44,8 +39,7 @@ public class EmptyExpression extends AstNode
 	 * Visits this node.  There are no children.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
+	public void visit(NodeVisitor v) {
 		v.visit(this);
 	}
 }

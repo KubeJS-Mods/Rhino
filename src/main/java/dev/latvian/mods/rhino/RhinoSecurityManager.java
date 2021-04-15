@@ -12,8 +12,7 @@ package dev.latvian.mods.rhino;
  * <code>ProtectionDomain</code> as the script code that created them.
  * Embeddings that implement their own SecurityManager can use this as base class.
  */
-public class RhinoSecurityManager extends SecurityManager
-{
+public class RhinoSecurityManager extends SecurityManager {
 
 	/**
 	 * Get the class of the top-most stack element representing a script.
@@ -21,14 +20,11 @@ public class RhinoSecurityManager extends SecurityManager
 	 * @return The class of the top-most script in the current stack,
 	 * or null if no script is currently running
 	 */
-	protected Class<?> getCurrentScriptClass()
-	{
+	protected Class<?> getCurrentScriptClass() {
 		Class<?>[] context = getClassContext();
-		for (Class<?> c : context)
-		{
+		for (Class<?> c : context) {
 			if (c != InterpretedFunction.class && NativeFunction.class.isAssignableFrom(c) ||
-					PolicySecurityController.SecureCaller.class.isAssignableFrom(c))
-			{
+					PolicySecurityController.SecureCaller.class.isAssignableFrom(c)) {
 				return c;
 			}
 		}

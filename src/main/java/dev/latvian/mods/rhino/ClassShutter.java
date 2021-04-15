@@ -17,8 +17,7 @@ package dev.latvian.mods.rhino;
  * @since 1.5 Release 4
  */
 
-public interface ClassShutter
-{
+public interface ClassShutter {
 	int TYPE_UNKNOWN = 0;
 	int TYPE_MEMBER = 1;
 	int TYPE_CLASS_IN_PACKAGE = 2;

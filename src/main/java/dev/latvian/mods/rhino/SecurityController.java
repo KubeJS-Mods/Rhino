@@ -32,13 +32,11 @@ package dev.latvian.mods.rhino;
  * @see java.lang.ClassLoader
  * @since 1.5 Release 4
  */
-public abstract class SecurityController
-{
+public abstract class SecurityController {
 	private static SecurityController global;
 
 	// The method must NOT be public or protected
-	static SecurityController global()
-	{
+	static SecurityController global() {
 		return global;
 	}
 
@@ -47,8 +45,7 @@ public abstract class SecurityController
 	 *
 	 * @see #initGlobal(SecurityController controller)
 	 */
-	public static boolean hasGlobal()
-	{
+	public static boolean hasGlobal() {
 		return global != null;
 	}
 
@@ -64,14 +61,11 @@ public abstract class SecurityController
 	 *
 	 * @see #hasGlobal()
 	 */
-	public static void initGlobal(SecurityController controller)
-	{
-		if (controller == null)
-		{
+	public static void initGlobal(SecurityController controller) {
+		if (controller == null) {
 			throw new IllegalArgumentException();
 		}
-		if (global != null)
-		{
+		if (global != null) {
 			throw new SecurityException("Cannot overwrite already installed global SecurityController");
 		}
 		global = controller;
@@ -105,35 +99,28 @@ public abstract class SecurityController
 	 * @param staticDomain static security domain.
 	 */
 	public static GeneratedClassLoader createLoader(
-			ClassLoader parent, Object staticDomain)
-	{
+			ClassLoader parent, Object staticDomain) {
 		Context cx = Context.getContext();
-		if (parent == null)
-		{
+		if (parent == null) {
 			parent = cx.getApplicationClassLoader();
 		}
 		SecurityController sc = cx.getSecurityController();
 		GeneratedClassLoader loader;
-		if (sc == null)
-		{
+		if (sc == null) {
 			loader = cx.createClassLoader(parent);
-		}
-		else
-		{
+		} else {
 			Object dynamicDomain = sc.getDynamicSecurityDomain(staticDomain);
 			loader = sc.createClassLoader(parent, dynamicDomain);
 		}
 		return loader;
 	}
 
-	public static Class<?> getStaticSecurityDomainClass()
-	{
+	public static Class<?> getStaticSecurityDomainClass() {
 		SecurityController sc = Context.getContext().getSecurityController();
 		return sc == null ? null : sc.getStaticSecurityDomainClassInternal();
 	}
 
-	public Class<?> getStaticSecurityDomainClassInternal()
-	{
+	public Class<?> getStaticSecurityDomainClassInternal() {
 		return null;
 	}
 
@@ -163,8 +150,7 @@ public abstract class SecurityController
 	 */
 	public Object callWithDomain(Object securityDomain, Context cx,
 								 final Callable callable, Scriptable scope,
-								 final Scriptable thisObj, final Object[] args)
-	{
+								 final Scriptable thisObj, final Object[] args) {
 		return execWithDomain(cx, scope, (cx1, scope1) -> callable.call(cx1, scope1, thisObj, args), securityDomain);
 	}
 
@@ -175,8 +161,7 @@ public abstract class SecurityController
 	 */
 	@Deprecated
 	public Object execWithDomain(Context cx, Scriptable scope,
-								 Script script, Object securityDomain)
-	{
+								 Script script, Object securityDomain) {
 		throw new IllegalStateException("callWithDomain should be overridden");
 	}
 

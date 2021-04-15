@@ -30,8 +30,7 @@
 
 package dev.latvian.mods.rhino.v8dtoa;
 
-public class FastDtoa
-{
+public class FastDtoa {
 
 	// FastDtoa will produce at most kFastDtoaMaximalLength digits.
 	static final int kFastDtoaMaximalLength = 17;
@@ -66,8 +65,7 @@ public class FastDtoa
 							 long unsafe_interval,
 							 long rest,
 							 long ten_kappa,
-							 long unit)
-	{
+							 long unit) {
 		long small_distance = distance_too_high_w - unit;
 		long big_distance = distance_too_high_w + unit;
 		// Let w_low  = too_high - big_distance, and
@@ -142,8 +140,7 @@ public class FastDtoa
 		while (rest < small_distance &&  // Negated condition 1
 				unsafe_interval - rest >= ten_kappa &&  // Negated condition 2
 				(rest + ten_kappa < small_distance ||  // buffer{-1} > w_high
-						small_distance - rest >= rest + ten_kappa - small_distance))
-		{
+						small_distance - rest >= rest + ten_kappa - small_distance)) {
 			buffer.decreaseLast();
 			rest += ten_kappa;
 		}
@@ -154,8 +151,7 @@ public class FastDtoa
 		if (rest < big_distance &&
 				unsafe_interval - rest >= ten_kappa &&
 				(rest + ten_kappa < big_distance ||
-						big_distance - rest > rest + ten_kappa - big_distance))
-		{
+						big_distance - rest > rest + ten_kappa - big_distance)) {
 			return false;
 		}
 
@@ -181,16 +177,13 @@ public class FastDtoa
 	// The number of bits must be <= 32.
 	// Precondition: (1 << number_bits) <= number < (1 << (number_bits + 1)).
 	static long biggestPowerTen(int number,
-								int number_bits)
-	{
+								int number_bits) {
 		int power, exponent;
-		switch (number_bits)
-		{
+		switch (number_bits) {
 			case 32:
 			case 31:
 			case 30:
-				if (kTen9 <= number)
-				{
+				if (kTen9 <= number) {
 					power = kTen9;
 					exponent = 9;
 					break;
@@ -198,8 +191,7 @@ public class FastDtoa
 			case 29:
 			case 28:
 			case 27:
-				if (kTen8 <= number)
-				{
+				if (kTen8 <= number) {
 					power = kTen8;
 					exponent = 8;
 					break;
@@ -207,8 +199,7 @@ public class FastDtoa
 			case 26:
 			case 25:
 			case 24:
-				if (kTen7 <= number)
-				{
+				if (kTen7 <= number) {
 					power = kTen7;
 					exponent = 7;
 					break;
@@ -217,8 +208,7 @@ public class FastDtoa
 			case 22:
 			case 21:
 			case 20:
-				if (kTen6 <= number)
-				{
+				if (kTen6 <= number) {
 					power = kTen6;
 					exponent = 6;
 					break;
@@ -226,8 +216,7 @@ public class FastDtoa
 			case 19:
 			case 18:
 			case 17:
-				if (kTen5 <= number)
-				{
+				if (kTen5 <= number) {
 					power = kTen5;
 					exponent = 5;
 					break;
@@ -235,8 +224,7 @@ public class FastDtoa
 			case 16:
 			case 15:
 			case 14:
-				if (kTen4 <= number)
-				{
+				if (kTen4 <= number) {
 					power = kTen4;
 					exponent = 4;
 					break;
@@ -245,8 +233,7 @@ public class FastDtoa
 			case 12:
 			case 11:
 			case 10:
-				if (1000 <= number)
-				{
+				if (1000 <= number) {
 					power = 1000;
 					exponent = 3;
 					break;
@@ -254,8 +241,7 @@ public class FastDtoa
 			case 9:
 			case 8:
 			case 7:
-				if (100 <= number)
-				{
+				if (100 <= number) {
 					power = 100;
 					exponent = 2;
 					break;
@@ -263,8 +249,7 @@ public class FastDtoa
 			case 6:
 			case 5:
 			case 4:
-				if (10 <= number)
-				{
+				if (10 <= number) {
 					power = 10;
 					exponent = 1;
 					break;
@@ -272,8 +257,7 @@ public class FastDtoa
 			case 3:
 			case 2:
 			case 1:
-				if (1 <= number)
-				{
+				if (1 <= number) {
 					power = 1;
 					exponent = 0;
 					break;
@@ -291,8 +275,7 @@ public class FastDtoa
 		return ((long) power << 32) | (0xffffffffL & exponent);
 	}
 
-	private static boolean uint64_lte(long a, long b)
-	{
+	private static boolean uint64_lte(long a, long b) {
 		// less-or-equal for unsigned int64 in java-style...
 		return (a == b) || ((a < b) ^ (a < 0) ^ (b < 0));
 	}
@@ -343,8 +326,7 @@ public class FastDtoa
 							DiyFp w,
 							DiyFp high,
 							FastDtoaBuilder buffer,
-							int mk)
-	{
+							int mk) {
 		assert (low.e() == w.e() && w.e() == high.e());
 		assert uint64_lte(low.f() + 1, high.f() - 1);
 		assert (minimal_target_exponent <= w.e() && w.e() <= maximal_target_exponent);
@@ -385,8 +367,7 @@ public class FastDtoa
 		// The invariant holds for the first iteration: kappa has been initialized
 		// with the divider exponent + 1. And the divider is the biggest power of ten
 		// that is smaller than integrals.
-		while (kappa > 0)
-		{
+		while (kappa > 0) {
 			int digit = integrals / divider;
 			buffer.append((char) ('0' + digit));
 			integrals %= divider;
@@ -397,8 +378,7 @@ public class FastDtoa
 					((long) integrals << -one.e()) + fractionals;
 			// Invariant: too_high = buffer * 10^kappa + DiyFp(rest, one.e())
 			// Reminder: unsafe_interval.e() == one.e()
-			if (rest < unsafe_interval.f())
-			{
+			if (rest < unsafe_interval.f()) {
 				// Rounding down (by not emitting the remaining digits) yields a number
 				// that lies within the unsafe interval.
 				buffer.point = buffer.end - mk + kappa;
@@ -423,8 +403,7 @@ public class FastDtoa
 		//      and we have again fractionals.e == one.e which allows us to divide
 		//           fractionals.f() by one.f()
 		// We simply combine the *= 10 and the >>= 1.
-		while (true)
-		{
+		while (true) {
 			fractionals *= 5;
 			unit *= 5;
 			unsafe_interval.setF(unsafe_interval.f() * 5);
@@ -436,8 +415,7 @@ public class FastDtoa
 			buffer.append((char) ('0' + digit));
 			fractionals &= one.f() - 1;  // Modulo by one.
 			kappa--;
-			if (fractionals < unsafe_interval.f())
-			{
+			if (fractionals < unsafe_interval.f()) {
 				buffer.point = buffer.end - mk + kappa;
 				return roundWeed(buffer, DiyFp.minus(too_high, w).f() * unit,
 						unsafe_interval.f(), fractionals, one.f(), unit);
@@ -457,8 +435,7 @@ public class FastDtoa
 	// The last digit will be closest to the actual v. That is, even if several
 	// digits might correctly yield 'v' when read again, the closest will be
 	// computed.
-	static boolean grisu3(double v, FastDtoaBuilder buffer)
-	{
+	static boolean grisu3(double v, FastDtoaBuilder buffer) {
 		long bits = Double.doubleToLongBits(v);
 		DiyFp w = DoubleHelper.asNormalizedDiyFp(bits);
 		// boundary_minus and boundary_plus are the boundaries between v and its
@@ -506,8 +483,7 @@ public class FastDtoa
 	}
 
 
-	public static boolean dtoa(double v, FastDtoaBuilder buffer)
-	{
+	public static boolean dtoa(double v, FastDtoaBuilder buffer) {
 		assert (v > 0);
 		assert (!Double.isNaN(v));
 		assert (!Double.isInfinite(v));
@@ -515,17 +491,14 @@ public class FastDtoa
 		return grisu3(v, buffer);
 	}
 
-	public static String numberToString(double v)
-	{
+	public static String numberToString(double v) {
 		FastDtoaBuilder buffer = new FastDtoaBuilder();
 		return numberToString(v, buffer) ? buffer.format() : null;
 	}
 
-	public static boolean numberToString(double v, FastDtoaBuilder buffer)
-	{
+	public static boolean numberToString(double v, FastDtoaBuilder buffer) {
 		buffer.reset();
-		if (v < 0)
-		{
+		if (v < 0) {
 			buffer.append('-');
 			v = -v;
 		}

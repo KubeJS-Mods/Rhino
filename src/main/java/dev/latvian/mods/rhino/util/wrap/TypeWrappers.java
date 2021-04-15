@@ -10,34 +10,25 @@ import java.util.function.Predicate;
 /**
  * @author LatvianModder
  */
-public class TypeWrappers
-{
+public class TypeWrappers {
 	private final Map<Class<?>, TypeWrapper<?>> wrappers = new LinkedHashMap<>();
 
-	public void removeAll()
-	{
+	public void removeAll() {
 		wrappers.clear();
 	}
 
 	@Deprecated
-	public <F, T> void register(String id, Class<F> from, Class<T> to, Function<F, T> factory)
-	{
+	public <F, T> void register(String id, Class<F> from, Class<T> to, Function<F, T> factory) {
 		// Keep old one for now so that it doesn't crash
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> void register(Class<T> target, Predicate<Object> validator, TypeWrapperFactory<T> factory)
-	{
-		if (target == null || target == Object.class)
-		{
+	public <T> void register(Class<T> target, Predicate<Object> validator, TypeWrapperFactory<T> factory) {
+		if (target == null || target == Object.class) {
 			throw new IllegalArgumentException("target can't be Object.class!");
-		}
-		else if (target.isArray())
-		{
+		} else if (target.isArray()) {
 			throw new IllegalArgumentException("target can't be an array!");
-		}
-		else if (wrappers.containsKey(target))
-		{
+		} else if (wrappers.containsKey(target)) {
 			throw new IllegalArgumentException("Wrapper for class " + target.getName() + " already exists!");
 		}
 
@@ -65,23 +56,19 @@ public class TypeWrappers
 		// 4D.. yeah no. 3D already is an overkill
 	}
 
-	public <T> void register(Class<T> target, TypeWrapperFactory<T> factory)
-	{
+	public <T> void register(Class<T> target, TypeWrapperFactory<T> factory) {
 		register(target, TypeWrapper.ALWAYS_VALID, factory);
 	}
 
 	@Nullable
-	public TypeWrapperFactory<?> getWrapperFactory(Class<?> target, @Nullable Object from)
-	{
-		if (target == Object.class)
-		{
+	public TypeWrapperFactory<?> getWrapperFactory(Class<?> target, @Nullable Object from) {
+		if (target == Object.class) {
 			return null;
 		}
 
 		TypeWrapper<?> wrapper = wrappers.get(target);
 
-		if (wrapper != null && wrapper.validator.test(from))
-		{
+		if (wrapper != null && wrapper.validator.test(from)) {
 			return wrapper.factory;
 		}
 		//else if (from != null && target.isArray() && !from.getClass().isArray() && target.getComponentType() == from.getClass() && !target.isPrimitive())

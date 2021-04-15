@@ -11,19 +11,16 @@ package dev.latvian.mods.rhino;
  *
  * @author Norris Boyd
  */
-class DefaultErrorReporter implements ErrorReporter
-{
+class DefaultErrorReporter implements ErrorReporter {
 	static final DefaultErrorReporter instance = new DefaultErrorReporter();
 
 	private boolean forEval;
 	private ErrorReporter chainedReporter;
 
-	private DefaultErrorReporter()
-	{
+	private DefaultErrorReporter() {
 	}
 
-	static ErrorReporter forEval(ErrorReporter reporter)
-	{
+	static ErrorReporter forEval(ErrorReporter reporter) {
 		DefaultErrorReporter r = new DefaultErrorReporter();
 		r.forEval = true;
 		r.chainedReporter = reporter;
@@ -32,25 +29,19 @@ class DefaultErrorReporter implements ErrorReporter
 
 	@Override
 	public void warning(String message, String sourceURI, int line,
-						String lineText, int lineOffset)
-	{
-		if (chainedReporter != null)
-		{
+						String lineText, int lineOffset) {
+		if (chainedReporter != null) {
 			chainedReporter.warning(
 					message, sourceURI, line, lineText, lineOffset);
-		}
-		else
-		{
+		} else {
 			// Do nothing
 		}
 	}
 
 	@Override
 	public void error(String message, String sourceURI, int line,
-					  String lineText, int lineOffset)
-	{
-		if (forEval)
-		{
+					  String lineText, int lineOffset) {
+		if (forEval) {
 			// Assume error message strings that start with "TypeError: "
 			// should become TypeError exceptions. A bit of a hack, but we
 			// don't want to change the ErrorReporter interface.
@@ -58,21 +49,17 @@ class DefaultErrorReporter implements ErrorReporter
 			final String TYPE_ERROR_NAME = "TypeError";
 			final String DELIMETER = ": ";
 			final String prefix = TYPE_ERROR_NAME + DELIMETER;
-			if (message.startsWith(prefix))
-			{
+			if (message.startsWith(prefix)) {
 				error = TYPE_ERROR_NAME;
 				message = message.substring(prefix.length());
 			}
 			throw ScriptRuntime.constructError(error, message, sourceURI,
 					line, lineText, lineOffset);
 		}
-		if (chainedReporter != null)
-		{
+		if (chainedReporter != null) {
 			chainedReporter.error(
 					message, sourceURI, line, lineText, lineOffset);
-		}
-		else
-		{
+		} else {
 			throw runtimeError(
 					message, sourceURI, line, lineText, lineOffset);
 		}
@@ -81,10 +68,8 @@ class DefaultErrorReporter implements ErrorReporter
 	@Override
 	public EvaluatorException runtimeError(String message, String sourceURI,
 										   int line, String lineText,
-										   int lineOffset)
-	{
-		if (chainedReporter != null)
-		{
+										   int lineOffset) {
+		if (chainedReporter != null) {
 			return chainedReporter.runtimeError(message, sourceURI, line, lineText, lineOffset);
 		}
 		return new EvaluatorException(message, sourceURI, line, lineText, lineOffset);

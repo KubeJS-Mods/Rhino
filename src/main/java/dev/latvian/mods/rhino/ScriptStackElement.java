@@ -13,8 +13,7 @@ import java.io.Serializable;
  * @see RhinoException#getScriptStack()
  * @since 1.7R3
  */
-public final class ScriptStackElement implements Serializable
-{
+public final class ScriptStackElement implements Serializable {
 
 	private static final long serialVersionUID = -6416688260860477449L;
 
@@ -22,16 +21,14 @@ public final class ScriptStackElement implements Serializable
 	public final String functionName;
 	public final int lineNumber;
 
-	public ScriptStackElement(String fileName, String functionName, int lineNumber)
-	{
+	public ScriptStackElement(String fileName, String functionName, int lineNumber) {
 		this.fileName = fileName;
 		this.functionName = functionName;
 		this.lineNumber = lineNumber;
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		renderMozillaStyle(sb);
 		return sb.toString();
@@ -43,15 +40,12 @@ public final class ScriptStackElement implements Serializable
 	 *
 	 * @param sb the StringBuilder to append to
 	 */
-	public void renderJavaStyle(StringBuilder sb)
-	{
+	public void renderJavaStyle(StringBuilder sb) {
 		sb.append("\tat ").append(fileName);
-		if (lineNumber > -1)
-		{
+		if (lineNumber > -1) {
 			sb.append(':').append(lineNumber);
 		}
-		if (functionName != null)
-		{
+		if (functionName != null) {
 			sb.append(" (").append(functionName).append(')');
 		}
 	}
@@ -62,15 +56,12 @@ public final class ScriptStackElement implements Serializable
 	 *
 	 * @param sb the StringBuilder to append to
 	 */
-	public void renderMozillaStyle(StringBuilder sb)
-	{
-		if (functionName != null)
-		{
+	public void renderMozillaStyle(StringBuilder sb) {
+		if (functionName != null) {
 			sb.append(functionName).append("()");
 		}
 		sb.append('@').append(fileName);
-		if (lineNumber > -1)
-		{
+		if (lineNumber > -1) {
 			sb.append(':').append(lineNumber);
 		}
 	}
@@ -83,27 +74,22 @@ public final class ScriptStackElement implements Serializable
 	 *
 	 * @param sb the StringBuilder to append to
 	 */
-	public void renderV8Style(StringBuilder sb)
-	{
+	public void renderV8Style(StringBuilder sb) {
 		sb.append("    at ");
 
 		if ((functionName == null) || "anonymous".equals(functionName) || "undefined"
-				.equals(functionName))
-		{
+				.equals(functionName)) {
 			// Anonymous functions in V8 don't have names in the stack trace
 			appendV8Location(sb);
 
-		}
-		else
-		{
+		} else {
 			sb.append(functionName).append(" (");
 			appendV8Location(sb);
 			sb.append(')');
 		}
 	}
 
-	private void appendV8Location(StringBuilder sb)
-	{
+	private void appendV8Location(StringBuilder sb) {
 		sb.append(fileName).append(':');
 		sb.append(lineNumber > -1 ? lineNumber : 0).append(":0");
 	}

@@ -15,8 +15,7 @@ package dev.latvian.mods.rhino;
  * @author Norris Boyd
  */
 
-public interface ErrorReporter
-{
+public interface ErrorReporter {
 
 	/**
 	 * Report a warning.

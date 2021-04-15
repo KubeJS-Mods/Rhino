@@ -41,8 +41,7 @@ import dev.latvian.mods.rhino.ast.FunctionNode;
  * the final constant pool entry from information available at parse
  * time.
  */
-public class Decompiler
-{
+public class Decompiler {
 	/**
 	 * Flag to indicate that the decompilation should omit the
 	 * function header and trailing brace.
@@ -73,48 +72,39 @@ public class Decompiler
 	// the last RC of object literals in case of function expressions
 	private static final int FUNCTION_END = Token.LAST_TOKEN + 1;
 
-	String getEncodedSource()
-	{
+	String getEncodedSource() {
 		return sourceToString(0);
 	}
 
-	int getCurrentOffset()
-	{
+	int getCurrentOffset() {
 		return sourceTop;
 	}
 
-	int markFunctionStart(int functionType)
-	{
+	int markFunctionStart(int functionType) {
 		int savedOffset = getCurrentOffset();
-		if (functionType != FunctionNode.ARROW_FUNCTION)
-		{
+		if (functionType != FunctionNode.ARROW_FUNCTION) {
 			addToken(Token.FUNCTION);
 			append((char) functionType);
 		}
 		return savedOffset;
 	}
 
-	int markFunctionEnd(int functionStart)
-	{
+	int markFunctionEnd(int functionStart) {
 		int offset = getCurrentOffset();
 		append((char) FUNCTION_END);
 		return offset;
 	}
 
-	void addToken(int token)
-	{
-		if (!(0 <= token && token <= Token.LAST_TOKEN))
-		{
+	void addToken(int token) {
+		if (!(0 <= token && token <= Token.LAST_TOKEN)) {
 			throw new IllegalArgumentException();
 		}
 
 		append((char) token);
 	}
 
-	void addEOL(int token)
-	{
-		if (!(0 <= token && token <= Token.LAST_TOKEN))
-		{
+	void addEOL(int token) {
+		if (!(0 <= token && token <= Token.LAST_TOKEN)) {
 			throw new IllegalArgumentException();
 		}
 
@@ -122,32 +112,27 @@ public class Decompiler
 		append((char) Token.EOL);
 	}
 
-	void addName(String str)
-	{
+	void addName(String str) {
 		addToken(Token.NAME);
 		appendString(str);
 	}
 
-	void addString(String str)
-	{
+	void addString(String str) {
 		addToken(Token.STRING);
 		appendString(str);
 	}
 
-	void addTemplateLiteral(String str)
-	{
+	void addTemplateLiteral(String str) {
 		addToken(Token.TEMPLATE_CHARS);
 		appendString(str);
 	}
 
-	void addRegexp(String regexp, String flags)
-	{
+	void addRegexp(String regexp, String flags) {
 		addToken(Token.REGEXP);
 		appendString('/' + regexp + '/' + flags);
 	}
 
-	void addNumber(double n)
-	{
+	void addNumber(double n) {
 		addToken(Token.NUMBER);
 
 		/* encode the number in the source stream.
@@ -168,8 +153,7 @@ public class Decompiler
 		 */
 
 		long lbits = (long) n;
-		if (lbits != n)
-		{
+		if (lbits != n) {
 			// if it's floating point, save as a Double bit pattern.
 			// (12/15/97 our scanner only returns Double for f.p.)
 			lbits = Double.doubleToLongBits(n);
@@ -178,25 +162,19 @@ public class Decompiler
 			append((char) (lbits >> 32));
 			append((char) (lbits >> 16));
 			append((char) lbits);
-		}
-		else
-		{
+		} else {
 			// we can ignore negative values, bc they're already prefixed
 			// by NEG
-			if (lbits < 0)
-			{
+			if (lbits < 0) {
 				Kit.codeBug();
 			}
 
 			// will it fit in a char?
 			// this gives a short encoding for integer values up to 2^16.
-			if (lbits <= Character.MAX_VALUE)
-			{
+			if (lbits <= Character.MAX_VALUE) {
 				append('S');
 				append((char) lbits);
-			}
-			else
-			{ // Integral, but won't fit in a char. Store as a long.
+			} else { // Integral, but won't fit in a char. Store as a long.
 				append('J');
 				append((char) (lbits >> 48));
 				append((char) (lbits >> 32));
@@ -206,21 +184,17 @@ public class Decompiler
 		}
 	}
 
-	private void appendString(String str)
-	{
+	private void appendString(String str) {
 		int L = str.length();
 		int lengthEncodingSize = 1;
-		if (L >= 0x8000)
-		{
+		if (L >= 0x8000) {
 			lengthEncodingSize = 2;
 		}
 		int nextTop = sourceTop + lengthEncodingSize + L;
-		if (nextTop > sourceBuffer.length)
-		{
+		if (nextTop > sourceBuffer.length) {
 			increaseSourceCapacity(nextTop);
 		}
-		if (L >= 0x8000)
-		{
+		if (L >= 0x8000) {
 			// Use 2 chars to encode strings exceeding 32K, were the highest
 			// bit in the first char indicates presence of the next byte
 			sourceBuffer[sourceTop] = (char) (0x8000 | (L >>> 16));
@@ -232,26 +206,21 @@ public class Decompiler
 		sourceTop = nextTop;
 	}
 
-	private void append(char c)
-	{
-		if (sourceTop == sourceBuffer.length)
-		{
+	private void append(char c) {
+		if (sourceTop == sourceBuffer.length) {
 			increaseSourceCapacity(sourceTop + 1);
 		}
 		sourceBuffer[sourceTop] = c;
 		++sourceTop;
 	}
 
-	private void increaseSourceCapacity(int minimalCapacity)
-	{
+	private void increaseSourceCapacity(int minimalCapacity) {
 		// Call this only when capacity increase is must
-		if (minimalCapacity <= sourceBuffer.length)
-		{
+		if (minimalCapacity <= sourceBuffer.length) {
 			Kit.codeBug();
 		}
 		int newCapacity = sourceBuffer.length * 2;
-		if (newCapacity < minimalCapacity)
-		{
+		if (newCapacity < minimalCapacity) {
 			newCapacity = minimalCapacity;
 		}
 		char[] tmp = new char[newCapacity];
@@ -259,10 +228,8 @@ public class Decompiler
 		sourceBuffer = tmp;
 	}
 
-	private String sourceToString(int offset)
-	{
-		if (offset < 0 || sourceTop < offset)
-		{
+	private String sourceToString(int offset) {
+		if (offset < 0 || sourceTop < offset) {
 			Kit.codeBug();
 		}
 		return new String(sourceBuffer, offset, sourceTop - offset);
@@ -282,27 +249,22 @@ public class Decompiler
 	 * @param properties indentation properties
 	 */
 	public static String decompile(String source, int flags,
-								   UintMap properties)
-	{
+								   UintMap properties) {
 		int length = source.length();
-		if (length == 0)
-		{
+		if (length == 0) {
 			return "";
 		}
 
 		int indent = properties.getInt(INITIAL_INDENT_PROP, 0);
-		if (indent < 0)
-		{
+		if (indent < 0) {
 			throw new IllegalArgumentException();
 		}
 		int indentGap = properties.getInt(INDENT_GAP_PROP, 4);
-		if (indentGap < 0)
-		{
+		if (indentGap < 0) {
 			throw new IllegalArgumentException();
 		}
 		int caseGap = properties.getInt(CASE_GAP_PROP, 2);
-		if (caseGap < 0)
-		{
+		if (caseGap < 0) {
 			throw new IllegalArgumentException();
 		}
 
@@ -312,20 +274,16 @@ public class Decompiler
 
 		// Spew tokens in source, for debugging.
 		// as TYPE number char
-		if (printSource)
-		{
+		if (printSource) {
 			System.err.println("length:" + length);
-			for (int i = 0; i < length; ++i)
-			{
+			for (int i = 0; i < length; ++i) {
 				// Note that tokenToName will fail unless Context.printTrees
 				// is true.
 				String tokenname = null;
-				if (Token.printNames)
-				{
+				if (Token.printNames) {
 					tokenname = Token.name(source.charAt(i));
 				}
-				if (tokenname == null)
-				{
+				if (tokenname == null) {
 					tokenname = "---";
 				}
 				String pad = tokenname.length() > 7
@@ -345,46 +303,33 @@ public class Decompiler
 		boolean afterFirstEOL = false;
 		int i = 0;
 		int topFunctionType;
-		if (source.charAt(i) == Token.SCRIPT)
-		{
+		if (source.charAt(i) == Token.SCRIPT) {
 			++i;
 			topFunctionType = -1;
-		}
-		else
-		{
+		} else {
 			topFunctionType = source.charAt(i + 1);
 		}
 
-		if (!toSource)
-		{
+		if (!toSource) {
 			// add an initial newline to exactly match js.
 			result.append('\n');
-			for (int j = 0; j < indent; j++)
-			{
+			for (int j = 0; j < indent; j++) {
 				result.append(' ');
 			}
-		}
-		else
-		{
-			if (topFunctionType == FunctionNode.FUNCTION_EXPRESSION)
-			{
+		} else {
+			if (topFunctionType == FunctionNode.FUNCTION_EXPRESSION) {
 				result.append('(');
 			}
 		}
 
-		while (i < length)
-		{
-			switch (source.charAt(i))
-			{
+		while (i < length) {
+			switch (source.charAt(i)) {
 				case Token.GET:
 				case Token.SET:
 				case Token.METHOD:
-					if (source.charAt(i) == Token.GET)
-					{
+					if (source.charAt(i) == Token.GET) {
 						result.append("get ");
-					}
-					else if (source.charAt(i) == Token.SET)
-					{
+					} else if (source.charAt(i) == Token.SET) {
 						result.append("set ");
 					}
 					++i;
@@ -437,28 +382,24 @@ public class Decompiler
 
 				case Token.LC:
 					++braceNesting;
-					if (Token.EOL == getNext(source, length, i))
-					{
+					if (Token.EOL == getNext(source, length, i)) {
 						indent += indentGap;
 					}
 					result.append('{');
 					break;
 
-				case Token.RC:
-				{
+				case Token.RC: {
 					--braceNesting;
 					/* don't print the closing RC if it closes the
 					 * toplevel function and we're called from
 					 * decompileFunctionBody.
 					 */
-					if (justFunctionBody && braceNesting == 0)
-					{
+					if (justFunctionBody && braceNesting == 0) {
 						break;
 					}
 
 					result.append('}');
-					switch (getNext(source, length, i))
-					{
+					switch (getNext(source, length, i)) {
 						case Token.EOL:
 						case FUNCTION_END:
 							indent -= indentGap;
@@ -477,8 +418,7 @@ public class Decompiler
 
 				case Token.RP:
 					result.append(')');
-					if (Token.LC == getNext(source, length, i))
-					{
+					if (Token.LC == getNext(source, length, i)) {
 						result.append(' ');
 					}
 					break;
@@ -491,18 +431,14 @@ public class Decompiler
 					result.append(']');
 					break;
 
-				case Token.EOL:
-				{
-					if (toSource)
-					{
+				case Token.EOL: {
+					if (toSource) {
 						break;
 					}
 					boolean newLine = true;
-					if (!afterFirstEOL)
-					{
+					if (!afterFirstEOL) {
 						afterFirstEOL = true;
-						if (justFunctionBody)
-						{
+						if (justFunctionBody) {
 							/* throw away just added 'function name(...) {'
 							 * and restore the original indent
 							 */
@@ -511,8 +447,7 @@ public class Decompiler
 							newLine = false;
 						}
 					}
-					if (newLine)
-					{
+					if (newLine) {
 						result.append('\n');
 					}
 
@@ -520,34 +455,27 @@ public class Decompiler
 					 * less setback if next token is
 					 * a label, case or default.
 					 */
-					if (i + 1 < length)
-					{
+					if (i + 1 < length) {
 						int less = 0;
 						int nextToken = source.charAt(i + 1);
 						if (nextToken == Token.CASE
-								|| nextToken == Token.DEFAULT)
-						{
+								|| nextToken == Token.DEFAULT) {
 							less = indentGap - caseGap;
-						}
-						else if (nextToken == Token.RC)
-						{
+						} else if (nextToken == Token.RC) {
 							less = indentGap;
 						}
 
 						/* elaborate check against label... skip past a
 						 * following inlined NAME and look for a COLON.
 						 */
-						else if (nextToken == Token.NAME)
-						{
+						else if (nextToken == Token.NAME) {
 							int afterName = getSourceStringEnd(source, i + 2);
-							if (source.charAt(afterName) == Token.COLON)
-							{
+							if (source.charAt(afterName) == Token.COLON) {
 								less = indentGap;
 							}
 						}
 
-						for (; less < indent; less++)
-						{
+						for (; less < indent; less++) {
 							result.append(' ');
 						}
 					}
@@ -615,16 +543,14 @@ public class Decompiler
 
 				case Token.BREAK:
 					result.append("break");
-					if (Token.NAME == getNext(source, length, i))
-					{
+					if (Token.NAME == getNext(source, length, i)) {
 						result.append(' ');
 					}
 					break;
 
 				case Token.CONTINUE:
 					result.append("continue");
-					if (Token.NAME == getNext(source, length, i))
-					{
+					if (Token.NAME == getNext(source, length, i)) {
 						result.append(' ');
 					}
 					break;
@@ -639,8 +565,7 @@ public class Decompiler
 
 				case Token.RETURN:
 					result.append("return");
-					if (Token.SEMI != getNext(source, length, i))
-					{
+					if (Token.SEMI != getNext(source, length, i)) {
 						result.append(' ');
 					}
 					break;
@@ -655,8 +580,7 @@ public class Decompiler
 
 				case Token.SEMI:
 					result.append(';');
-					if (Token.EOL != getNext(source, length, i))
-					{
+					if (Token.EOL != getNext(source, length, i)) {
 						// separators in FOR
 						result.append(' ');
 					}
@@ -728,8 +652,7 @@ public class Decompiler
 					// it's the end of a label
 					{
 						result.append(':');
-					}
-					else
+					} else
 					// it's the middle part of a ternary
 					{
 						result.append(" : ");
@@ -912,18 +835,13 @@ public class Decompiler
 			++i;
 		}
 
-		if (!toSource)
-		{
+		if (!toSource) {
 			// add that trailing newline if it's an outermost function.
-			if (!justFunctionBody)
-			{
+			if (!justFunctionBody) {
 				result.append('\n');
 			}
-		}
-		else
-		{
-			if (topFunctionType == FunctionNode.FUNCTION_EXPRESSION)
-			{
+		} else {
+			if (topFunctionType == FunctionNode.FUNCTION_EXPRESSION) {
 				result.append(')');
 			}
 		}
@@ -931,36 +849,28 @@ public class Decompiler
 		return result.toString();
 	}
 
-	private static int getNext(String source, int length, int i)
-	{
+	private static int getNext(String source, int length, int i) {
 		return (i + 1 < length) ? source.charAt(i + 1) : Token.EOF;
 	}
 
-	private static int getSourceStringEnd(String source, int offset)
-	{
+	private static int getSourceStringEnd(String source, int offset) {
 		return printSourceString(source, offset, false, null);
 	}
 
 	private static int printSourceString(String source, int offset,
 										 boolean asQuotedString,
-										 StringBuilder sb)
-	{
+										 StringBuilder sb) {
 		int length = source.charAt(offset);
 		++offset;
-		if ((0x8000 & length) != 0)
-		{
+		if ((0x8000 & length) != 0) {
 			length = ((0x7FFF & length) << 16) | source.charAt(offset);
 			++offset;
 		}
-		if (sb != null)
-		{
+		if (sb != null) {
 			String str = source.substring(offset, offset + length);
-			if (!asQuotedString)
-			{
+			if (!asQuotedString) {
 				sb.append(str);
-			}
-			else
-			{
+			} else {
 				sb.append('"');
 				sb.append(ScriptRuntime.escapeString(str));
 				sb.append('"');
@@ -970,47 +880,35 @@ public class Decompiler
 	}
 
 	private static int printSourceNumber(String source, int offset,
-										 StringBuilder sb)
-	{
+										 StringBuilder sb) {
 		double number = 0.0;
 		char type = source.charAt(offset);
 		++offset;
-		if (type == 'S')
-		{
-			if (sb != null)
-			{
+		if (type == 'S') {
+			if (sb != null) {
 				int ival = source.charAt(offset);
 				number = ival;
 			}
 			++offset;
-		}
-		else if (type == 'J' || type == 'D')
-		{
-			if (sb != null)
-			{
+		} else if (type == 'J' || type == 'D') {
+			if (sb != null) {
 				long lbits;
 				lbits = (long) source.charAt(offset) << 48;
 				lbits |= (long) source.charAt(offset + 1) << 32;
 				lbits |= (long) source.charAt(offset + 2) << 16;
 				lbits |= source.charAt(offset + 3);
-				if (type == 'J')
-				{
+				if (type == 'J') {
 					number = lbits;
-				}
-				else
-				{
+				} else {
 					number = Double.longBitsToDouble(lbits);
 				}
 			}
 			offset += 4;
-		}
-		else
-		{
+		} else {
 			// Bad source
 			throw new RuntimeException();
 		}
-		if (sb != null)
-		{
+		if (sb != null) {
 			sb.append(ScriptRuntime.numberToString(number, 10));
 		}
 		return offset;

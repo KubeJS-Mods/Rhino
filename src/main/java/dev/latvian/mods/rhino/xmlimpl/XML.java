@@ -12,61 +12,48 @@ import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.Undefined;
 import dev.latvian.mods.rhino.xml.XMLObject;
 
-class XML extends XMLObjectImpl
-{
+class XML extends XMLObjectImpl {
 	static final long serialVersionUID = -630969919086449092L;
 
 	private XmlNode node;
 
-	XML(XMLLibImpl lib, Scriptable scope, XMLObject prototype, XmlNode node)
-	{
+	XML(XMLLibImpl lib, Scriptable scope, XMLObject prototype, XmlNode node) {
 		super(lib, scope, prototype);
 		initialize(node);
 	}
 
-	void initialize(XmlNode node)
-	{
+	void initialize(XmlNode node) {
 		this.node = node;
 		this.node.setXml(this);
 	}
 
 	@Override
-	final XML getXML()
-	{
+	final XML getXML() {
 		return this;
 	}
 
-	void replaceWith(XML value)
-	{
+	void replaceWith(XML value) {
 		//    We use the underlying document structure if the node is not
 		//    "standalone," but we need to just replace the XmlNode instance
 		//    otherwise
-		if (this.node.parent() != null)
-		{
+		if (this.node.parent() != null) {
 			this.node.replaceWith(value.node);
-		}
-		else
-		{
+		} else {
 			this.initialize(value.node);
 		}
 	}
 
 	/* TODO: needs encapsulation. */
-	XML makeXmlFromString(XMLName name, String value)
-	{
-		try
-		{
+	XML makeXmlFromString(XMLName name, String value) {
+		try {
 			return newTextElementXML(this.node, name.toQname(), value);
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			throw ScriptRuntime.typeError(e.getMessage());
 		}
 	}
 
 	/* TODO: Rename this, at the very least.  But it's not clear it's even necessary */
-	XmlNode getAnnotation()
-	{
+	XmlNode getAnnotation() {
 		return node;
 	}
 
@@ -77,51 +64,39 @@ class XML extends XMLObjectImpl
 	//    TODO Either cross-reference this next comment with the specification or delete it and change the behavior
 	//    The comment: XML[0] should return this, all other indexes are Undefined
 	@Override
-	public Object get(int index, Scriptable start)
-	{
-		if (index == 0)
-		{
+	public Object get(int index, Scriptable start) {
+		if (index == 0) {
 			return this;
-		}
-		else
-		{
+		} else {
 			return Scriptable.NOT_FOUND;
 		}
 	}
 
 	@Override
-	public boolean has(int index, Scriptable start)
-	{
+	public boolean has(int index, Scriptable start) {
 		return (index == 0);
 	}
 
 	@Override
-	public void put(int index, Scriptable start, Object value)
-	{
+	public void put(int index, Scriptable start, Object value) {
 		//    TODO    Clarify the following comment and add a reference to the spec
 		//    The comment: Spec says assignment to indexed XML object should return type error
 		throw ScriptRuntime.typeError("Assignment to indexed XML is not allowed");
 	}
 
 	@Override
-	public Object[] getIds()
-	{
-		if (isPrototype())
-		{
+	public Object[] getIds() {
+		if (isPrototype()) {
 			return new Object[0];
-		}
-		else
-		{
-			return new Object[] {0};
+		} else {
+			return new Object[]{0};
 		}
 	}
 
 	//    TODO    This is how I found it but I am not sure it makes sense
 	@Override
-	public void delete(int index)
-	{
-		if (index == 0)
-		{
+	public void delete(int index) {
+		if (index == 0) {
 			this.remove();
 		}
 	}
@@ -131,14 +106,12 @@ class XML extends XMLObjectImpl
 	//
 
 	@Override
-	boolean hasXMLProperty(XMLName xmlName)
-	{
+	boolean hasXMLProperty(XMLName xmlName) {
 		return (getPropertyList(xmlName).length() > 0);
 	}
 
 	@Override
-	Object getXMLProperty(XMLName xmlName)
-	{
+	Object getXMLProperty(XMLName xmlName) {
 		return getPropertyList(xmlName);
 	}
 
@@ -148,78 +121,61 @@ class XML extends XMLObjectImpl
 	//
 	//
 
-	XmlNode.QName getNodeQname()
-	{
+	XmlNode.QName getNodeQname() {
 		return this.node.getQname();
 	}
 
-	XML[] getChildren()
-	{
-		if (!isElement())
-		{
+	XML[] getChildren() {
+		if (!isElement()) {
 			return null;
 		}
 		XmlNode[] children = this.node.getMatchingChildren(XmlNode.Filter.TRUE);
 		XML[] rv = new XML[children.length];
-		for (int i = 0; i < rv.length; i++)
-		{
+		for (int i = 0; i < rv.length; i++) {
 			rv[i] = toXML(children[i]);
 		}
 		return rv;
 	}
 
-	XML[] getAttributes()
-	{
+	XML[] getAttributes() {
 		XmlNode[] attributes = this.node.getAttributes();
 		XML[] rv = new XML[attributes.length];
-		for (int i = 0; i < rv.length; i++)
-		{
+		for (int i = 0; i < rv.length; i++) {
 			rv[i] = toXML(attributes[i]);
 		}
 		return rv;
 	}
 
 	//    Used only by XML, XMLList
-	XMLList getPropertyList(XMLName name)
-	{
+	XMLList getPropertyList(XMLName name) {
 		return name.getMyValueOn(this);
 	}
 
 	@Override
-	void deleteXMLProperty(XMLName name)
-	{
+	void deleteXMLProperty(XMLName name) {
 		XMLList list = getPropertyList(name);
-		for (int i = 0; i < list.length(); i++)
-		{
+		for (int i = 0; i < list.length(); i++) {
 			list.item(i).node.deleteMe();
 		}
 	}
 
 	@Override
-	void putXMLProperty(XMLName xmlName, Object value)
-	{
-		if (isPrototype())
-		{
+	void putXMLProperty(XMLName xmlName, Object value) {
+		if (isPrototype()) {
 			//    TODO    Is this really a no-op?  Check the spec to be sure
-		}
-		else
-		{
+		} else {
 			xmlName.setMyValueOn(this, value);
 		}
 	}
 
 	@Override
-	boolean hasOwnProperty(XMLName xmlName)
-	{
+	boolean hasOwnProperty(XMLName xmlName) {
 		boolean hasProperty = false;
 
-		if (isPrototype())
-		{
+		if (isPrototype()) {
 			String property = xmlName.localName();
 			hasProperty = (0 != findPrototypeId(property));
-		}
-		else
-		{
+		} else {
 			hasProperty = (getPropertyList(xmlName).length() > 0);
 		}
 
@@ -227,20 +183,15 @@ class XML extends XMLObjectImpl
 	}
 
 	@Override
-	protected Object jsConstructor(Context cx, boolean inNewExpr, Object[] args)
-	{
-		if (args.length == 0 || args[0] == null || args[0] == Undefined.instance)
-		{
-			args = new Object[] {""};
+	protected Object jsConstructor(Context cx, boolean inNewExpr, Object[] args) {
+		if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
+			args = new Object[]{""};
 		}
 		//    ECMA 13.4.2 does not appear to specify what to do if multiple arguments are sent.
 		XML toXml = ecmaToXml(args[0]);
-		if (inNewExpr)
-		{
+		if (inNewExpr) {
 			return toXml.copy();
-		}
-		else
-		{
+		} else {
 			return toXml;
 		}
 	}
@@ -248,10 +199,8 @@ class XML extends XMLObjectImpl
 	//    See ECMA 357, 11_2_2_1, Semantics, 3_f.
 	@SuppressWarnings("deprecation")
 	@Override
-	public Scriptable getExtraMethodSource(Context cx)
-	{
-		if (hasSimpleContent())
-		{
+	public Scriptable getExtraMethodSource(Context cx) {
+		if (hasSimpleContent()) {
 			String src = toString();
 			return ScriptRuntime.toObjectOrNull(cx, src);
 		}
@@ -262,62 +211,50 @@ class XML extends XMLObjectImpl
 	//    TODO    Miscellaneous methods not yet grouped
 	//
 
-	void removeChild(int index)
-	{
+	void removeChild(int index) {
 		this.node.removeChild(index);
 	}
 
 	@Override
-	void normalize()
-	{
+	void normalize() {
 		this.node.normalize();
 	}
 
-	private XML toXML(XmlNode node)
-	{
-		if (node.getXml() == null)
-		{
+	private XML toXML(XmlNode node) {
+		if (node.getXml() == null) {
 			node.setXml(newXML(node));
 		}
 		return node.getXml();
 	}
 
-	void setAttribute(XMLName xmlName, Object value)
-	{
-		if (!isElement())
-		{
+	void setAttribute(XMLName xmlName, Object value) {
+		if (!isElement()) {
 			throw new IllegalStateException("Can only set attributes on elements.");
 		}
 		//    TODO    Is this legal, but just not "supported"?  If so, support it.
-		if (xmlName.uri() == null && xmlName.localName().equals("*"))
-		{
+		if (xmlName.uri() == null && xmlName.localName().equals("*")) {
 			throw ScriptRuntime.typeError("@* assignment not supported.");
 		}
 		this.node.setAttribute(xmlName.toQname(), ScriptRuntime.toString(value));
 	}
 
-	void remove()
-	{
+	void remove() {
 		this.node.deleteMe();
 	}
 
 	@Override
-	void addMatches(XMLList rv, XMLName name)
-	{
+	void addMatches(XMLList rv, XMLName name) {
 		name.addMatches(rv, this);
 	}
 
 	@Override
-	XMLList elements(XMLName name)
-	{
+	XMLList elements(XMLName name) {
 		XMLList rv = newXMLList();
 		rv.setTargets(this, name.toQname());
 		//    TODO    Should have an XMLNode.Filter implementation based on XMLName
 		XmlNode[] elements = this.node.getMatchingChildren(XmlNode.Filter.ELEMENT);
-		for (int i = 0; i < elements.length; i++)
-		{
-			if (name.matches(toXML(elements[i])))
-			{
+		for (int i = 0; i < elements.length; i++) {
+			if (name.matches(toXML(elements[i]))) {
 				rv.addToList(toXML(elements[i]));
 			}
 		}
@@ -325,8 +262,7 @@ class XML extends XMLObjectImpl
 	}
 
 	@Override
-	XMLList child(XMLName xmlName)
-	{
+	XMLList child(XMLName xmlName) {
 		//    TODO    Right now I think this method would allow child( "@xxx" ) to return the xxx attribute, which is wrong
 
 		XMLList rv = newXMLList();
@@ -335,10 +271,8 @@ class XML extends XMLObjectImpl
 		//            class to add an acceptsProcessingInstruction() method
 
 		XmlNode[] elements = this.node.getMatchingChildren(XmlNode.Filter.ELEMENT);
-		for (int i = 0; i < elements.length; i++)
-		{
-			if (xmlName.matchesElement(elements[i].getQname()))
-			{
+		for (int i = 0; i < elements.length; i++) {
+			if (xmlName.matchesElement(elements[i].getQname())) {
 				rv.addToList(toXML(elements[i]));
 			}
 		}
@@ -346,101 +280,80 @@ class XML extends XMLObjectImpl
 		return rv;
 	}
 
-	XML replace(XMLName xmlName, Object xml)
-	{
+	XML replace(XMLName xmlName, Object xml) {
 		putXMLProperty(xmlName, xml);
 		return this;
 	}
 
 	@Override
-	XMLList children()
-	{
+	XMLList children() {
 		XMLList rv = newXMLList();
 		XMLName all = XMLName.formStar();
 		rv.setTargets(this, all.toQname());
 		XmlNode[] children = this.node.getMatchingChildren(XmlNode.Filter.TRUE);
-		for (int i = 0; i < children.length; i++)
-		{
+		for (int i = 0; i < children.length; i++) {
 			rv.addToList(toXML(children[i]));
 		}
 		return rv;
 	}
 
 	@Override
-	XMLList child(int index)
-	{
+	XMLList child(int index) {
 		//    ECMA357 13.4.4.6 (numeric case)
 		XMLList result = newXMLList();
 		result.setTargets(this, null);
-		if (index >= 0 && index < this.node.getChildCount())
-		{
+		if (index >= 0 && index < this.node.getChildCount()) {
 			result.addToList(getXmlChild(index));
 		}
 		return result;
 	}
 
-	XML getXmlChild(int index)
-	{
+	XML getXmlChild(int index) {
 		XmlNode child = this.node.getChild(index);
-		if (child.getXml() == null)
-		{
+		if (child.getXml() == null) {
 			child.setXml(newXML(child));
 		}
 		return child.getXml();
 	}
 
 	/* Return the last added element */
-	XML getLastXmlChild()
-	{
+	XML getLastXmlChild() {
 		int pos = this.node.getChildCount() - 1;
-		if (pos < 0)
-		{
+		if (pos < 0) {
 			return null;
 		}
 		return getXmlChild(pos);
 	}
 
-	int childIndex()
-	{
+	int childIndex() {
 		return this.node.getChildIndex();
 	}
 
 	@Override
-	boolean contains(Object xml)
-	{
-		if (xml instanceof XML)
-		{
+	boolean contains(Object xml) {
+		if (xml instanceof XML) {
 			return equivalentXml(xml);
-		}
-		else
-		{
+		} else {
 			return false;
 		}
 	}
 
 	//    Method overriding XMLObjectImpl
 	@Override
-	boolean equivalentXml(Object target)
-	{
+	boolean equivalentXml(Object target) {
 		boolean result = false;
 
-		if (target instanceof XML)
-		{
+		if (target instanceof XML) {
 			//    TODO    This is a horrifyingly inefficient way to do this so we should make it better.  It may also not work.
 			return this.node.toXmlString(getProcessor()).equals(((XML) target).node.toXmlString(getProcessor()));
-		}
-		else if (target instanceof XMLList)
-		{
+		} else if (target instanceof XMLList) {
 			//    TODO    Is this right?  Check the spec ...
 			XMLList otherList = (XMLList) target;
 
-			if (otherList.length() == 1)
-			{
+			if (otherList.length() == 1) {
 				result = equivalentXml(otherList.getXML());
 			}
-		}
-		else if (hasSimpleContent())
-		{
+		} else if (hasSimpleContent()) {
 			String otherStr = ScriptRuntime.toString(target);
 
 			result = toString().equals(otherStr);
@@ -450,85 +363,68 @@ class XML extends XMLObjectImpl
 	}
 
 	@Override
-	XMLObjectImpl copy()
-	{
+	XMLObjectImpl copy() {
 		return newXML(this.node.copy());
 	}
 
 	@Override
-	boolean hasSimpleContent()
-	{
-		if (isComment() || isProcessingInstruction())
-		{
+	boolean hasSimpleContent() {
+		if (isComment() || isProcessingInstruction()) {
 			return false;
 		}
-		if (isText() || this.node.isAttributeType())
-		{
+		if (isText() || this.node.isAttributeType()) {
 			return true;
 		}
 		return !this.node.hasChildElement();
 	}
 
 	@Override
-	boolean hasComplexContent()
-	{
+	boolean hasComplexContent() {
 		return !hasSimpleContent();
 	}
 
 	//    TODO Cross-reference comment below with spec
 	//    Comment is: Length of an XML object is always 1, it's a list of XML objects of size 1.
 	@Override
-	int length()
-	{
+	int length() {
 		return 1;
 	}
 
 	//    TODO    it is not clear what this method was for ...
-	boolean is(XML other)
-	{
+	boolean is(XML other) {
 		return this.node.isSameNode(other.node);
 	}
 
-	Object nodeKind()
-	{
+	Object nodeKind() {
 		return ecmaClass();
 	}
 
 	@Override
-	Object parent()
-	{
+	Object parent() {
 		XmlNode parent = this.node.parent();
-		if (parent == null)
-		{
+		if (parent == null) {
 			return null;
 		}
 		return newXML(this.node.parent());
 	}
 
 	@Override
-	boolean propertyIsEnumerable(Object name)
-	{
+	boolean propertyIsEnumerable(Object name) {
 		boolean result;
-		if (name instanceof Integer)
-		{
+		if (name instanceof Integer) {
 			result = ((Integer) name == 0);
-		}
-		else if (name instanceof Number)
-		{
+		} else if (name instanceof Number) {
 			double x = ((Number) name).doubleValue();
 			// Check that number is positive 0
 			result = (x == 0.0 && 1.0 / x > 0);
-		}
-		else
-		{
+		} else {
 			result = ScriptRuntime.toString(name).equals("0");
 		}
 		return result;
 	}
 
 	@Override
-	Object valueOf()
-	{
+	Object valueOf() {
 		return this;
 	}
 
@@ -537,24 +433,21 @@ class XML extends XMLObjectImpl
 	//
 
 	@Override
-	XMLList comments()
-	{
+	XMLList comments() {
 		XMLList rv = newXMLList();
 		this.node.addMatchingChildren(rv, XmlNode.Filter.COMMENT);
 		return rv;
 	}
 
 	@Override
-	XMLList text()
-	{
+	XMLList text() {
 		XMLList rv = newXMLList();
 		this.node.addMatchingChildren(rv, XmlNode.Filter.TEXT);
 		return rv;
 	}
 
 	@Override
-	XMLList processingInstructions(XMLName xmlName)
-	{
+	XMLList processingInstructions(XMLName xmlName) {
 		XMLList rv = newXMLList();
 		this.node.addMatchingChildren(rv, XmlNode.Filter.PROCESSING_INSTRUCTION(xmlName));
 		return rv;
@@ -570,35 +463,26 @@ class XML extends XMLObjectImpl
 	//    going to insert into?  insertAfter might get confused about where to
 	//    insert.  This actually came up with SpiderMonkey, leading to a (very)
 	//    long discussion.  See bug #354145.
-	private XmlNode[] getNodesForInsert(Object value)
-	{
-		if (value instanceof XML)
-		{
-			return new XmlNode[] {((XML) value).node};
-		}
-		else if (value instanceof XMLList)
-		{
+	private XmlNode[] getNodesForInsert(Object value) {
+		if (value instanceof XML) {
+			return new XmlNode[]{((XML) value).node};
+		} else if (value instanceof XMLList) {
 			XMLList list = (XMLList) value;
 			XmlNode[] rv = new XmlNode[list.length()];
-			for (int i = 0; i < list.length(); i++)
-			{
+			for (int i = 0; i < list.length(); i++) {
 				rv[i] = list.item(i).node;
 			}
 			return rv;
-		}
-		else
-		{
-			return new XmlNode[] {
+		} else {
+			return new XmlNode[]{
 					XmlNode.createText(getProcessor(), ScriptRuntime.toString(value))
 			};
 		}
 	}
 
-	XML replace(int index, Object xml)
-	{
+	XML replace(int index, Object xml) {
 		XMLList xlChildToReplace = child(index);
-		if (xlChildToReplace.length() > 0)
-		{
+		if (xlChildToReplace.length() > 0) {
 			// One exists an that index
 			XML childToReplace = xlChildToReplace.item(0);
 			insertChildAfter(childToReplace, xml);
@@ -607,50 +491,38 @@ class XML extends XMLObjectImpl
 		return this;
 	}
 
-	XML prependChild(Object xml)
-	{
-		if (this.node.isParentType())
-		{
+	XML prependChild(Object xml) {
+		if (this.node.isParentType()) {
 			this.node.insertChildrenAt(0, getNodesForInsert(xml));
 		}
 		return this;
 	}
 
-	XML appendChild(Object xml)
-	{
-		if (this.node.isParentType())
-		{
+	XML appendChild(Object xml) {
+		if (this.node.isParentType()) {
 			XmlNode[] nodes = getNodesForInsert(xml);
 			this.node.insertChildrenAt(this.node.getChildCount(), nodes);
 		}
 		return this;
 	}
 
-	private int getChildIndexOf(XML child)
-	{
-		for (int i = 0; i < this.node.getChildCount(); i++)
-		{
-			if (this.node.getChild(i).isSameNode(child.node))
-			{
+	private int getChildIndexOf(XML child) {
+		for (int i = 0; i < this.node.getChildCount(); i++) {
+			if (this.node.getChild(i).isSameNode(child.node)) {
 				return i;
 			}
 		}
 		return -1;
 	}
 
-	XML insertChildBefore(XML child, Object xml)
-	{
-		if (child == null)
-		{
+	XML insertChildBefore(XML child, Object xml) {
+		if (child == null) {
 			// Spec says inserting before nothing is the same as appending
 			appendChild(xml);
-		}
-		else
-		{
+		} else {
 			XmlNode[] toInsert = getNodesForInsert(xml);
 			int index = getChildIndexOf(child);
-			if (index != -1)
-			{
+			if (index != -1) {
 				this.node.insertChildrenAt(index, toInsert);
 			}
 		}
@@ -658,19 +530,14 @@ class XML extends XMLObjectImpl
 		return this;
 	}
 
-	XML insertChildAfter(XML child, Object xml)
-	{
-		if (child == null)
-		{
+	XML insertChildAfter(XML child, Object xml) {
+		if (child == null) {
 			// Spec says inserting after nothing is the same as prepending
 			prependChild(xml);
-		}
-		else
-		{
+		} else {
 			XmlNode[] toInsert = getNodesForInsert(xml);
 			int index = getChildIndexOf(child);
-			if (index != -1)
-			{
+			if (index != -1) {
 				this.node.insertChildrenAt(index + 1, toInsert);
 			}
 		}
@@ -678,16 +545,13 @@ class XML extends XMLObjectImpl
 		return this;
 	}
 
-	XML setChildren(Object xml)
-	{
+	XML setChildren(Object xml) {
 		//    TODO    Have not carefully considered the spec but it seems to call for this
-		if (!isElement())
-		{
+		if (!isElement()) {
 			return this;
 		}
 
-		while (this.node.getChildCount() > 0)
-		{
+		while (this.node.getChildCount() > 0) {
 			this.node.removeChild(0);
 		}
 		XmlNode[] toInsert = getNodesForInsert(xml);
@@ -701,125 +565,95 @@ class XML extends XMLObjectImpl
 	//    Name and namespace-related methods
 	//
 
-	private void addInScopeNamespace(Namespace ns)
-	{
-		if (!isElement())
-		{
+	private void addInScopeNamespace(Namespace ns) {
+		if (!isElement()) {
 			return;
 		}
 		//    See ECMA357 9.1.1.13
 		//    in this implementation null prefix means ECMA undefined
-		if (ns.prefix() != null)
-		{
-			if (ns.prefix().length() == 0 && ns.uri().length() == 0)
-			{
+		if (ns.prefix() != null) {
+			if (ns.prefix().length() == 0 && ns.uri().length() == 0) {
 				return;
 			}
-			if (node.getQname().getNamespace().getPrefix().equals(ns.prefix()))
-			{
+			if (node.getQname().getNamespace().getPrefix().equals(ns.prefix())) {
 				node.invalidateNamespacePrefix();
 			}
 			node.declareNamespace(ns.prefix(), ns.uri());
-		}
-		else
-		{
+		} else {
 			return;
 		}
 	}
 
-	Namespace[] inScopeNamespaces()
-	{
+	Namespace[] inScopeNamespaces() {
 		XmlNode.Namespace[] inScope = this.node.getInScopeNamespaces();
 		return createNamespaces(inScope);
 	}
 
-	private XmlNode.Namespace adapt(Namespace ns)
-	{
-		if (ns.prefix() == null)
-		{
+	private XmlNode.Namespace adapt(Namespace ns) {
+		if (ns.prefix() == null) {
 			return XmlNode.Namespace.create(ns.uri());
-		}
-		else
-		{
+		} else {
 			return XmlNode.Namespace.create(ns.prefix(), ns.uri());
 		}
 	}
 
-	XML removeNamespace(Namespace ns)
-	{
-		if (!isElement())
-		{
+	XML removeNamespace(Namespace ns) {
+		if (!isElement()) {
 			return this;
 		}
 		this.node.removeNamespace(adapt(ns));
 		return this;
 	}
 
-	XML addNamespace(Namespace ns)
-	{
+	XML addNamespace(Namespace ns) {
 		addInScopeNamespace(ns);
 		return this;
 	}
 
-	QName name()
-	{
-		if (isText() || isComment())
-		{
+	QName name() {
+		if (isText() || isComment()) {
 			return null;
 		}
-		if (isProcessingInstruction())
-		{
+		if (isProcessingInstruction()) {
 			return newQName("", this.node.getQname().getLocalName(), null);
 		}
 		return newQName(node.getQname());
 	}
 
-	Namespace[] namespaceDeclarations()
-	{
+	Namespace[] namespaceDeclarations() {
 		XmlNode.Namespace[] declarations = node.getNamespaceDeclarations();
 		return createNamespaces(declarations);
 	}
 
-	Namespace namespace(String prefix)
-	{
-		if (prefix == null)
-		{
+	Namespace namespace(String prefix) {
+		if (prefix == null) {
 			return createNamespace(this.node.getNamespaceDeclaration());
-		}
-		else
-		{
+		} else {
 			return createNamespace(this.node.getNamespaceDeclaration(prefix));
 		}
 	}
 
-	String localName()
-	{
-		if (name() == null)
-		{
+	String localName() {
+		if (name() == null) {
 			return null;
 		}
 		return name().localName();
 	}
 
-	void setLocalName(String localName)
-	{
+	void setLocalName(String localName) {
 		//    ECMA357 13.4.4.34
-		if (isText() || isComment())
-		{
+		if (isText() || isComment()) {
 			return;
 		}
 		this.node.setLocalName(localName);
 	}
 
-	void setName(QName name)
-	{
+	void setName(QName name) {
 		//    See ECMA357 13.4.4.35
-		if (isText() || isComment())
-		{
+		if (isText() || isComment()) {
 			return;
 		}
-		if (isProcessingInstruction())
-		{
+		if (isProcessingInstruction()) {
 			//    Spec says set the name URI to empty string and then set the [[Name]] property, but I understand this to do the same
 			//    thing, unless we allow colons in processing instruction targets, which I think we do not.
 			this.node.setLocalName(name.localName());
@@ -828,78 +662,57 @@ class XML extends XMLObjectImpl
 		node.renameNode(name.getDelegate());
 	}
 
-	void setNamespace(Namespace ns)
-	{
+	void setNamespace(Namespace ns) {
 		//    See ECMA357 13.4.4.36
-		if (isText() || isComment() || isProcessingInstruction())
-		{
+		if (isText() || isComment() || isProcessingInstruction()) {
 			return;
 		}
 		setName(newQName(ns.uri(), localName(), ns.prefix()));
 	}
 
-	final String ecmaClass()
-	{
+	final String ecmaClass() {
 		//    See ECMA357 9.1
 
 		//    TODO    See ECMA357 9.1.1 last paragraph for what defaults should be
 
-		if (node.isTextType())
-		{
+		if (node.isTextType()) {
 			return "text";
-		}
-		else if (node.isAttributeType())
-		{
+		} else if (node.isAttributeType()) {
 			return "attribute";
-		}
-		else if (node.isCommentType())
-		{
+		} else if (node.isCommentType()) {
 			return "comment";
-		}
-		else if (node.isProcessingInstructionType())
-		{
+		} else if (node.isProcessingInstructionType()) {
 			return "processing-instruction";
-		}
-		else if (node.isElementType())
-		{
+		} else if (node.isElementType()) {
 			return "element";
-		}
-		else
-		{
+		} else {
 			throw new RuntimeException("Unrecognized type: " + node);
 		}
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		//    TODO:    This appears to confuse the interpreter if we use the "real" class property from ECMA.  Otherwise this code
 		//    would be:
 		//    return ecmaClass();
 		return "XML";
 	}
 
-	private String ecmaValue()
-	{
+	private String ecmaValue() {
 		return node.ecmaValue();
 	}
 
-	private String ecmaToString()
-	{
+	private String ecmaToString() {
 		//    See ECMA357 10.1.1
-		if (isAttribute() || isText())
-		{
+		if (isAttribute() || isText()) {
 			return ecmaValue();
 		}
-		if (this.hasSimpleContent())
-		{
+		if (this.hasSimpleContent()) {
 			StringBuilder rv = new StringBuilder();
-			for (int i = 0; i < this.node.getChildCount(); i++)
-			{
+			for (int i = 0; i < this.node.getChildCount(); i++) {
 				XmlNode child = this.node.getChild(i);
 				if (!child.isProcessingInstructionType() &&
-						!child.isCommentType())
-				{
+						!child.isCommentType()) {
 					// TODO: Probably inefficient; taking clean non-optimized
 					// solution for now
 					XML x = new XML(getLib(), getParentScope(),
@@ -913,51 +726,42 @@ class XML extends XMLObjectImpl
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return ecmaToString();
 	}
 
 	@Override
-	String toSource(int indent)
-	{
+	String toSource(int indent) {
 		return toXMLString();
 	}
 
 	@Override
-	String toXMLString()
-	{
+	String toXMLString() {
 		return this.node.ecmaToXMLString(getProcessor());
 	}
 
-	final boolean isAttribute()
-	{
+	final boolean isAttribute() {
 		return node.isAttributeType();
 	}
 
-	final boolean isComment()
-	{
+	final boolean isComment() {
 		return node.isCommentType();
 	}
 
-	final boolean isText()
-	{
+	final boolean isText() {
 		return node.isTextType();
 	}
 
-	final boolean isElement()
-	{
+	final boolean isElement() {
 		return node.isElementType();
 	}
 
-	final boolean isProcessingInstruction()
-	{
+	final boolean isProcessingInstruction() {
 		return node.isProcessingInstructionType();
 	}
 
 	//    Support experimental Java interface
-	org.w3c.dom.Node toDomNode()
-	{
+	org.w3c.dom.Node toDomNode() {
 		return node.toDomNode();
 	}
 }

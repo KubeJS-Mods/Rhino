@@ -25,8 +25,7 @@ import dev.latvian.mods.rhino.Token;
  * right-bracket, or if it is missing due to a syntax error, through the
  * end of the index expression.
  */
-public class XmlPropRef extends XmlRef
-{
+public class XmlPropRef extends XmlRef {
 
 	private Name propName;
 
@@ -34,25 +33,21 @@ public class XmlPropRef extends XmlRef
 		type = Token.REF_NAME;
 	}
 
-	public XmlPropRef()
-	{
+	public XmlPropRef() {
 	}
 
-	public XmlPropRef(int pos)
-	{
+	public XmlPropRef(int pos) {
 		super(pos);
 	}
 
-	public XmlPropRef(int pos, int len)
-	{
+	public XmlPropRef(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Returns property name.
 	 */
-	public Name getPropName()
-	{
+	public Name getPropName() {
 		return propName;
 	}
 
@@ -61,24 +56,20 @@ public class XmlPropRef extends XmlRef
 	 *
 	 * @throws IllegalArgumentException if {@code propName} is {@code null}
 	 */
-	public void setPropName(Name propName)
-	{
+	public void setPropName(Name propName) {
 		assertNotNull(propName);
 		this.propName = propName;
 		propName.setParent(this);
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
-		if (isAttributeAccess())
-		{
+		if (isAttributeAccess()) {
 			sb.append("@");
 		}
-		if (namespace != null)
-		{
+		if (namespace != null) {
 			sb.append(namespace.toSource(0));
 			sb.append("::");
 		}
@@ -90,12 +81,9 @@ public class XmlPropRef extends XmlRef
 	 * Visits this node, then the namespace if present, then the property name.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
-			if (namespace != null)
-			{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
+			if (namespace != null) {
 				namespace.visit(v);
 			}
 			propName.visit(v);

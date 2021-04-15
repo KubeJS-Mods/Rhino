@@ -9,11 +9,9 @@ package dev.latvian.mods.rhino.ast;
 /**
  * Encapsulates information for a JavaScript parse error or warning.
  */
-public class ParseProblem
-{
+public class ParseProblem {
 
-	public enum Type
-	{
+	public enum Type {
 		Error,
 		Warning
 	}
@@ -28,8 +26,7 @@ public class ParseProblem
 	 * Constructs a new ParseProblem.
 	 */
 	public ParseProblem(ParseProblem.Type type, String message,
-						String sourceName, int offset, int length)
-	{
+						String sourceName, int offset, int length) {
 		setType(type);
 		setMessage(message);
 		setSourceName(sourceName);
@@ -37,59 +34,48 @@ public class ParseProblem
 		setLength(length);
 	}
 
-	public ParseProblem.Type getType()
-	{
+	public ParseProblem.Type getType() {
 		return type;
 	}
 
-	public void setType(ParseProblem.Type type)
-	{
+	public void setType(ParseProblem.Type type) {
 		this.type = type;
 	}
 
-	public String getMessage()
-	{
+	public String getMessage() {
 		return message;
 	}
 
-	public void setMessage(String msg)
-	{
+	public void setMessage(String msg) {
 		this.message = msg;
 	}
 
-	public String getSourceName()
-	{
+	public String getSourceName() {
 		return sourceName;
 	}
 
-	public void setSourceName(String name)
-	{
+	public void setSourceName(String name) {
 		this.sourceName = name;
 	}
 
-	public int getFileOffset()
-	{
+	public int getFileOffset() {
 		return offset;
 	}
 
-	public void setFileOffset(int offset)
-	{
+	public void setFileOffset(int offset) {
 		this.offset = offset;
 	}
 
-	public int getLength()
-	{
+	public int getLength() {
 		return length;
 	}
 
-	public void setLength(int length)
-	{
+	public void setLength(int length) {
 		this.length = length;
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		StringBuilder sb = new StringBuilder(200);
 		sb.append(sourceName).append(":");
 		sb.append("offset=").append(offset).append(",");

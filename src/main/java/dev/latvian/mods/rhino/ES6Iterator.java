@@ -6,21 +6,17 @@
 
 package dev.latvian.mods.rhino;
 
-public abstract class ES6Iterator extends IdScriptableObject
-{
+public abstract class ES6Iterator extends IdScriptableObject {
 
 	private static final long serialVersionUID = 2438373029140003950L;
 
-	protected static void init(ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag)
-	{
-		if (scope != null)
-		{
+	protected static void init(ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag) {
+		if (scope != null) {
 			prototype.setParentScope(scope);
 			prototype.setPrototype(getObjectPrototype(scope));
 		}
 		prototype.activatePrototypeMap(MAX_PROTOTYPE_ID);
-		if (sealed)
-		{
+		if (sealed) {
 			prototype.sealObject();
 		}
 
@@ -28,8 +24,7 @@ public abstract class ES6Iterator extends IdScriptableObject
 		// Iterator instances, but don't have a iterator constructor
 		// to use to find the prototype. Use the "associateValue"
 		// approach instead.
-		if (scope != null)
-		{
+		if (scope != null) {
 			scope.associateValue(tag, prototype);
 		}
 	}
@@ -37,12 +32,10 @@ public abstract class ES6Iterator extends IdScriptableObject
 	protected boolean exhausted = false;
 	private String tag;
 
-	protected ES6Iterator()
-	{
+	protected ES6Iterator() {
 	}
 
-	protected ES6Iterator(Scriptable scope, String tag)
-	{
+	protected ES6Iterator(Scriptable scope, String tag) {
 		// Set parent and prototype properties. Since we don't have a
 		// "Iterator" constructor in the top scope, we stash the
 		// prototype in the top scope's associated value.
@@ -55,10 +48,8 @@ public abstract class ES6Iterator extends IdScriptableObject
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
-		switch (id)
-		{
+	protected void initPrototypeId(int id) {
+		switch (id) {
 			case Id_next:
 				initPrototypeMethod(getTag(), id, NEXT_METHOD, 0);
 				return;
@@ -75,23 +66,19 @@ public abstract class ES6Iterator extends IdScriptableObject
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(getTag()))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(getTag())) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
 
-		if (!(thisObj instanceof ES6Iterator))
-		{
+		if (!(thisObj instanceof ES6Iterator)) {
 			throw incompatibleCallError(f);
 		}
 
 		ES6Iterator iterator = (ES6Iterator) thisObj;
 
-		switch (id)
-		{
+		switch (id) {
 			case Id_next:
 				return iterator.next(cx, scope);
 			case SymbolId_iterator:
@@ -102,24 +89,18 @@ public abstract class ES6Iterator extends IdScriptableObject
 	}
 
 	@Override
-	protected int findPrototypeId(Symbol k)
-	{
-		if (SymbolKey.ITERATOR.equals(k))
-		{
+	protected int findPrototypeId(Symbol k) {
+		if (SymbolKey.ITERATOR.equals(k)) {
 			return SymbolId_iterator;
-		}
-		else if (SymbolKey.TO_STRING_TAG.equals(k))
-		{
+		} else if (SymbolKey.TO_STRING_TAG.equals(k)) {
 			return SymbolId_toStringTag;
 		}
 		return 0;
 	}
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
-		if (NEXT_METHOD.equals(s))
-		{
+	protected int findPrototypeId(String s) {
+		if (NEXT_METHOD.equals(s)) {
 			return Id_next;
 		}
 		return 0;
@@ -129,34 +110,27 @@ public abstract class ES6Iterator extends IdScriptableObject
 
 	abstract protected Object nextValue(Context cx, Scriptable scope);
 
-	protected Object next(Context cx, Scriptable scope)
-	{
+	protected Object next(Context cx, Scriptable scope) {
 		Object value = Undefined.instance;
 		boolean done = isDone(cx, scope) || this.exhausted;
-		if (!done)
-		{
+		if (!done) {
 			value = nextValue(cx, scope);
-		}
-		else
-		{
+		} else {
 			this.exhausted = true;
 		}
 		return makeIteratorResult(cx, scope, done, value);
 	}
 
-	protected String getTag()
-	{
+	protected String getTag() {
 		return tag;
 	}
 
 	// 25.1.1.3 The IteratorResult Interface
-	static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done)
-	{
+	static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done) {
 		return makeIteratorResult(cx, scope, done, Undefined.instance);
 	}
 
-	static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done, Object value)
-	{
+	static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done, Object value) {
 		final Scriptable iteratorResult = cx.newObject(scope);
 		ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value);
 		ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);

@@ -11,8 +11,7 @@ package dev.latvian.mods.rhino.ast;
  * an arbitrary order.  The visitor must cast nodes to the appropriate
  * type based on their token-type.
  */
-public interface NodeVisitor
-{
+public interface NodeVisitor {
 
 	/**
 	 * Visits an AST node.

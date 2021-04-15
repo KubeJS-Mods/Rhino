@@ -16,29 +16,24 @@ import dev.latvian.mods.rhino.Token;
  * <p>
  * Node type is {@link Token#DOT} or {@link Token#DOTDOT}.
  */
-public class XmlMemberGet extends InfixExpression
-{
+public class XmlMemberGet extends InfixExpression {
 
 	{
 		type = Token.DOTDOT;
 	}
 
-	public XmlMemberGet()
-	{
+	public XmlMemberGet() {
 	}
 
-	public XmlMemberGet(int pos)
-	{
+	public XmlMemberGet(int pos) {
 		super(pos);
 	}
 
-	public XmlMemberGet(int pos, int len)
-	{
+	public XmlMemberGet(int pos, int len) {
 		super(pos, len);
 	}
 
-	public XmlMemberGet(int pos, int len, AstNode target, XmlRef ref)
-	{
+	public XmlMemberGet(int pos, int len, AstNode target, XmlRef ref) {
 		super(pos, len, target, ref);
 	}
 
@@ -46,13 +41,11 @@ public class XmlMemberGet extends InfixExpression
 	 * Constructs a new {@code XmlMemberGet} node.
 	 * Updates bounds to include {@code target} and {@code ref} nodes.
 	 */
-	public XmlMemberGet(AstNode target, XmlRef ref)
-	{
+	public XmlMemberGet(AstNode target, XmlRef ref) {
 		super(target, ref);
 	}
 
-	public XmlMemberGet(AstNode target, XmlRef ref, int opPos)
-	{
+	public XmlMemberGet(AstNode target, XmlRef ref, int opPos) {
 		super(Token.DOTDOT, target, ref, opPos);
 	}
 
@@ -60,8 +53,7 @@ public class XmlMemberGet extends InfixExpression
 	 * Returns the object on which the XML member-ref expression
 	 * is being evaluated.  Should never be {@code null}.
 	 */
-	public AstNode getTarget()
-	{
+	public AstNode getTarget() {
 		return getLeft();
 	}
 
@@ -70,8 +62,7 @@ public class XmlMemberGet extends InfixExpression
 	 *
 	 * @throws IllegalArgumentException if {@code target} is {@code null}
 	 */
-	public void setTarget(AstNode target)
-	{
+	public void setTarget(AstNode target) {
 		setLeft(target);
 	}
 
@@ -79,8 +70,7 @@ public class XmlMemberGet extends InfixExpression
 	 * Returns the right-side XML member ref expression.
 	 * Should never be {@code null} unless the code is malformed.
 	 */
-	public XmlRef getMemberRef()
-	{
+	public XmlRef getMemberRef() {
 		return (XmlRef) getRight();
 	}
 
@@ -90,14 +80,12 @@ public class XmlMemberGet extends InfixExpression
 	 *
 	 * @throws IllegalArgumentException if property is {@code null}
 	 */
-	public void setProperty(XmlRef ref)
-	{
+	public void setProperty(XmlRef ref) {
 		setRight(ref);
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append(getLeft().toSource(0));
@@ -112,10 +100,8 @@ public class XmlMemberGet extends InfixExpression
 	 * @return String representation of inner dots token (e.g. '.' or '..')
 	 * @throws IllegalArgumentException on unexpected token type
 	 */
-	private String dotsToString()
-	{
-		switch (getType())
-		{
+	private String dotsToString() {
+		switch (getType()) {
 			case Token.DOT:
 				return ".";
 			case Token.DOTDOT:

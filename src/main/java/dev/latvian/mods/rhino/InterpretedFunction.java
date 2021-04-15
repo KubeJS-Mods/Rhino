@@ -8,8 +8,7 @@ package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.debug.DebuggableScript;
 
-final class InterpretedFunction extends NativeFunction implements Script
-{
+final class InterpretedFunction extends NativeFunction implements Script {
 	private static final long serialVersionUID = 541475680333911468L;
 
 	InterpreterData idata;
@@ -17,8 +16,7 @@ final class InterpretedFunction extends NativeFunction implements Script
 	Object securityDomain;
 
 	private InterpretedFunction(InterpreterData idata,
-								Object staticSecurityDomain)
-	{
+								Object staticSecurityDomain) {
 		this.idata = idata;
 
 		// Always get Context from the current thread to
@@ -27,14 +25,10 @@ final class InterpretedFunction extends NativeFunction implements Script
 		Context cx = Context.getContext();
 		SecurityController sc = cx.getSecurityController();
 		Object dynamicDomain;
-		if (sc != null)
-		{
+		if (sc != null) {
 			dynamicDomain = sc.getDynamicSecurityDomain(staticSecurityDomain);
-		}
-		else
-		{
-			if (staticSecurityDomain != null)
-			{
+		} else {
+			if (staticSecurityDomain != null) {
 				throw new IllegalArgumentException();
 			}
 			dynamicDomain = null;
@@ -44,8 +38,7 @@ final class InterpretedFunction extends NativeFunction implements Script
 		this.securityDomain = dynamicDomain;
 	}
 
-	private InterpretedFunction(InterpretedFunction parent, int index)
-	{
+	private InterpretedFunction(InterpretedFunction parent, int index) {
 		this.idata = parent.idata.itsNestedFunctions[index];
 		this.securityController = parent.securityController;
 		this.securityDomain = parent.securityDomain;
@@ -55,8 +48,7 @@ final class InterpretedFunction extends NativeFunction implements Script
 	 * Create script from compiled bytecode.
 	 */
 	static InterpretedFunction createScript(InterpreterData idata,
-											Object staticSecurityDomain)
-	{
+											Object staticSecurityDomain) {
 		InterpretedFunction f;
 		f = new InterpretedFunction(idata, staticSecurityDomain);
 		return f;
@@ -67,8 +59,7 @@ final class InterpretedFunction extends NativeFunction implements Script
 	 */
 	static InterpretedFunction createFunction(Context cx, Scriptable scope,
 											  InterpreterData idata,
-											  Object staticSecurityDomain)
-	{
+											  Object staticSecurityDomain) {
 		InterpretedFunction f;
 		f = new InterpretedFunction(idata, staticSecurityDomain);
 		f.initScriptFunction(cx, scope, f.idata.isES6Generator);
@@ -80,8 +71,7 @@ final class InterpretedFunction extends NativeFunction implements Script
 	 */
 	static InterpretedFunction createFunction(Context cx, Scriptable scope,
 											  InterpretedFunction parent,
-											  int index)
-	{
+											  int index) {
 		InterpretedFunction f = new InterpretedFunction(parent, index);
 		f.initScriptFunction(cx, scope, f.idata.isES6Generator);
 		return f;
@@ -89,8 +79,7 @@ final class InterpretedFunction extends NativeFunction implements Script
 
 
 	@Override
-	public String getFunctionName()
-	{
+	public String getFunctionName() {
 		return (idata.itsName == null) ? "" : idata.itsName;
 	}
 
@@ -106,25 +95,20 @@ final class InterpretedFunction extends NativeFunction implements Script
 	 */
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args)
-	{
-		if (!ScriptRuntime.hasTopCall(cx))
-		{
+					   Object[] args) {
+		if (!ScriptRuntime.hasTopCall(cx)) {
 			return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args, idata.isStrict);
 		}
 		return Interpreter.interpret(this, cx, scope, thisObj, args);
 	}
 
 	@Override
-	public Object exec(Context cx, Scriptable scope)
-	{
-		if (!isScript())
-		{
+	public Object exec(Context cx, Scriptable scope) {
+		if (!isScript()) {
 			// Can only be applied to scripts
 			throw new IllegalStateException();
 		}
-		if (!ScriptRuntime.hasTopCall(cx))
-		{
+		if (!ScriptRuntime.hasTopCall(cx)) {
 			// It will go through "call" path. but they are equivalent
 			return ScriptRuntime.doTopCall(
 					this, cx, scope, scope, ScriptRuntime.emptyArgs, idata.isStrict);
@@ -133,68 +117,56 @@ final class InterpretedFunction extends NativeFunction implements Script
 				this, cx, scope, scope, ScriptRuntime.emptyArgs);
 	}
 
-	public boolean isScript()
-	{
+	public boolean isScript() {
 		return idata.itsFunctionType == 0;
 	}
 
 	@Override
-	public String getEncodedSource()
-	{
+	public String getEncodedSource() {
 		return Interpreter.getEncodedSource(idata);
 	}
 
 	@Override
-	public DebuggableScript getDebuggableView()
-	{
+	public DebuggableScript getDebuggableView() {
 		return idata;
 	}
 
 	@Override
 	public Object resumeGenerator(Context cx, Scriptable scope, int operation,
-								  Object state, Object value)
-	{
+								  Object state, Object value) {
 		return Interpreter.resumeGenerator(cx, scope, operation, state, value);
 	}
 
 	@Override
-	protected int getLanguageVersion()
-	{
+	protected int getLanguageVersion() {
 		return idata.languageVersion;
 	}
 
 	@Override
-	protected int getParamCount()
-	{
+	protected int getParamCount() {
 		return idata.argCount;
 	}
 
 	@Override
-	protected int getParamAndVarCount()
-	{
+	protected int getParamAndVarCount() {
 		return idata.argNames.length;
 	}
 
 	@Override
-	protected String getParamOrVarName(int index)
-	{
+	protected String getParamOrVarName(int index) {
 		return idata.argNames[index];
 	}
 
 	@Override
-	protected boolean getParamOrVarConst(int index)
-	{
+	protected boolean getParamOrVarConst(int index) {
 		return idata.argIsConst[index];
 	}
 
-	boolean hasFunctionNamed(String name)
-	{
-		for (int f = 0; f < idata.getFunctionCount(); f++)
-		{
+	boolean hasFunctionNamed(String name) {
+		for (int f = 0; f < idata.getFunctionCount(); f++) {
 			InterpreterData functionData = (InterpreterData) idata.getFunction(f);
 			if (!functionData.declaredAsFunctionExpression
-					&& name.equals(functionData.getFunctionName()))
-			{
+					&& name.equals(functionData.getFunctionName())) {
 				return false;
 			}
 		}

@@ -14,8 +14,7 @@ import dev.latvian.mods.rhino.Token;
  * <pre><i>WithStatement</i> :
  *      <b>with</b> ( Expression ) Statement ;</pre>
  */
-public class WithStatement extends AstNode
-{
+public class WithStatement extends AstNode {
 
 	private AstNode expression;
 	private AstNode statement;
@@ -26,25 +25,21 @@ public class WithStatement extends AstNode
 		type = Token.WITH;
 	}
 
-	public WithStatement()
-	{
+	public WithStatement() {
 	}
 
-	public WithStatement(int pos)
-	{
+	public WithStatement(int pos) {
 		super(pos);
 	}
 
-	public WithStatement(int pos, int len)
-	{
+	public WithStatement(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Returns object expression
 	 */
-	public AstNode getExpression()
-	{
+	public AstNode getExpression() {
 		return expression;
 	}
 
@@ -53,8 +48,7 @@ public class WithStatement extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if expression is {@code null}
 	 */
-	public void setExpression(AstNode expression)
-	{
+	public void setExpression(AstNode expression) {
 		assertNotNull(expression);
 		this.expression = expression;
 		expression.setParent(this);
@@ -63,8 +57,7 @@ public class WithStatement extends AstNode
 	/**
 	 * Returns the statement or block
 	 */
-	public AstNode getStatement()
-	{
+	public AstNode getStatement() {
 		return statement;
 	}
 
@@ -73,8 +66,7 @@ public class WithStatement extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if statement is {@code null}
 	 */
-	public void setStatement(AstNode statement)
-	{
+	public void setStatement(AstNode statement) {
 		assertNotNull(statement);
 		this.statement = statement;
 		statement.setParent(this);
@@ -83,67 +75,56 @@ public class WithStatement extends AstNode
 	/**
 	 * Returns left paren offset
 	 */
-	public int getLp()
-	{
+	public int getLp() {
 		return lp;
 	}
 
 	/**
 	 * Sets left paren offset
 	 */
-	public void setLp(int lp)
-	{
+	public void setLp(int lp) {
 		this.lp = lp;
 	}
 
 	/**
 	 * Returns right paren offset
 	 */
-	public int getRp()
-	{
+	public int getRp() {
 		return rp;
 	}
 
 	/**
 	 * Sets right paren offset
 	 */
-	public void setRp(int rp)
-	{
+	public void setRp(int rp) {
 		this.rp = rp;
 	}
 
 	/**
 	 * Sets both paren positions
 	 */
-	public void setParens(int lp, int rp)
-	{
+	public void setParens(int lp, int rp) {
 		this.lp = lp;
 		this.rp = rp;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("with (");
 		sb.append(expression.toSource(0));
 		sb.append(") ");
-		if (this.getInlineComment() != null)
-		{
+		if (this.getInlineComment() != null) {
 			sb.append(this.getInlineComment().toSource(depth + 1));
 		}
-		if (statement.getType() == Token.BLOCK)
-		{
-			if (this.getInlineComment() != null)
-			{
+		if (statement.getType() == Token.BLOCK) {
+			if (this.getInlineComment() != null) {
 				sb.append("\n");
 			}
 			sb.append(statement.toSource(depth).trim());
 			sb.append("\n");
-		}
-		else
-		{
+		} else {
 			sb.append("\n").append(statement.toSource(depth + 1));
 		}
 		return sb.toString();
@@ -153,10 +134,8 @@ public class WithStatement extends AstNode
 	 * Visits this node, then the with-object, then the body statement.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			expression.visit(v);
 			statement.visit(v);
 		}

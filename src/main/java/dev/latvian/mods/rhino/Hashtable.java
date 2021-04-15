@@ -20,8 +20,7 @@ import java.util.NoSuchElementException;
  * exist, and even lets an iterator keep on iterating on a collection that was
  * empty when it was created..
  */
-public class Hashtable implements Serializable, Iterable<Hashtable.Entry>
-{
+public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
 
 	private static final long serialVersionUID = -7151554912419543747L;
 	private final HashMap<Object, Entry> map = new HashMap<>();
@@ -34,8 +33,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry>
 	 * node in the linked list.
 	 */
 
-	public static final class Entry implements Serializable
-	{
+	public static final class Entry implements Serializable {
 		private static final long serialVersionUID = 4086572107122965503L;
 		protected Object key;
 		protected Object value;
@@ -44,58 +42,43 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry>
 		protected Entry prev;
 		private final int hashCode;
 
-		Entry()
-		{
+		Entry() {
 			hashCode = 0;
 		}
 
-		Entry(Object k, Object value)
-		{
-			if ((k instanceof Number) && (!(k instanceof Double)))
-			{
+		Entry(Object k, Object value) {
+			if ((k instanceof Number) && (!(k instanceof Double))) {
 				// Hash comparison won't work if we don't do this
 				this.key = ((Number) k).doubleValue();
-			}
-			else if (k instanceof ConsString)
-			{
+			} else if (k instanceof ConsString) {
 				this.key = k.toString();
-			}
-			else
-			{
+			} else {
 				this.key = k;
 			}
 
-			if (key == null)
-			{
+			if (key == null) {
 				hashCode = 0;
-			}
-			else if (k.equals(ScriptRuntime.negativeZeroObj))
-			{
+			} else if (k.equals(ScriptRuntime.negativeZeroObj)) {
 				hashCode = 0;
-			}
-			else
-			{
+			} else {
 				hashCode = key.hashCode();
 			}
 
 			this.value = value;
 		}
 
-		public Object key()
-		{
+		public Object key() {
 			return key;
 		}
 
-		public Object value()
-		{
+		public Object value() {
 			return value;
 		}
 
 		/**
 		 * Zero out key and value and return old value.
 		 */
-		Object clear()
-		{
+		Object clear() {
 			final Object ret = value;
 			key = Undefined.instance;
 			value = Undefined.instance;
@@ -104,89 +87,69 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry>
 		}
 
 		@Override
-		public int hashCode()
-		{
+		public int hashCode() {
 			return hashCode;
 		}
 
 		@Override
-		public boolean equals(Object o)
-		{
-			if (o == null)
-			{
+		public boolean equals(Object o) {
+			if (o == null) {
 				return false;
 			}
-			try
-			{
+			try {
 				return ScriptRuntime.sameZero(key, ((Entry) o).key);
-			}
-			catch (ClassCastException cce)
-			{
+			} catch (ClassCastException cce) {
 				return false;
 			}
 		}
 	}
 
-	private static Entry makeDummy()
-	{
+	private static Entry makeDummy() {
 		final Entry d = new Entry();
 		d.clear();
 		return d;
 	}
 
-	public int size()
-	{
+	public int size() {
 		return map.size();
 	}
 
-	public void put(Object key, Object value)
-	{
+	public void put(Object key, Object value) {
 		final Entry nv = new Entry(key, value);
 		final Entry ev = map.putIfAbsent(nv, nv);
-		if (ev == null)
-		{
+		if (ev == null) {
 			// New value -- insert to end of doubly-linked list
-			if (first == null)
-			{
+			if (first == null) {
 				first = last = nv;
-			}
-			else
-			{
+			} else {
 				last.next = nv;
 				nv.prev = last;
 				last = nv;
 			}
-		}
-		else
-		{
+		} else {
 			// Update the existing value and keep it in the same place in the list
 			ev.value = value;
 		}
 	}
 
-	public Object get(Object key)
-	{
+	public Object get(Object key) {
 		final Entry e = new Entry(key, null);
 		final Entry v = map.get(e);
-		if (v == null)
-		{
+		if (v == null) {
 			return null;
 		}
 		return v.value;
 	}
 
-	public boolean has(Object key)
-	{
+	public boolean has(Object key) {
 		final Entry e = new Entry(key, null);
 		return map.containsKey(e);
 	}
 
-	public Object delete(Object key)
-	{
+	public Object delete(Object key) {
 		final Entry e = new Entry(key, null);
 		final Entry v = map.remove(e);
-		if (v == null)
-		{
+		if (v == null) {
 			return null;
 		}
 
@@ -198,36 +161,26 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry>
 		// This way, new iterators will not "see" the deleted elements, and
 		// existing iterators will continue from wherever they left off to
 		// continue iterating in insertion order.
-		if (v == first)
-		{
-			if (v == last)
-			{
+		if (v == first) {
+			if (v == last) {
 				// Removing the only element. Leave it as a dummy or existing iterators
 				// will never stop.
 				v.clear();
 				v.prev = null;
-			}
-			else
-			{
+			} else {
 				first = v.next;
 				first.prev = null;
-				if (first.next != null)
-				{
+				if (first.next != null) {
 					first.next.prev = first;
 				}
 			}
-		}
-		else
-		{
+		} else {
 			final Entry prev = v.prev;
 			prev.next = v.next;
 			v.prev = null;
-			if (v.next != null)
-			{
+			if (v.next != null) {
 				v.next.prev = prev;
-			}
-			else
-			{
+			} else {
 				assert (v == last);
 				last = prev;
 			}
@@ -236,8 +189,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry>
 		return v.clear();
 	}
 
-	public void clear()
-	{
+	public void clear() {
 		// Zero out all the entries so that existing iterators will skip them all
 		Iterator<Entry> it = iterator();
 		it.forEachRemaining(Entry::clear);
@@ -246,8 +198,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry>
 		// of the current list. If new nodes are added now, existing iterators
 		// will drive forward right into the new list. If they are not, then
 		// nothing is referencing the old list and it'll get GCed.
-		if (first != null)
-		{
+		if (first != null) {
 			Entry dummy = makeDummy();
 			last.next = dummy;
 			first = last = dummy;
@@ -257,50 +208,43 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry>
 		map.clear();
 	}
 
-	public Iterator<Entry> iterator()
-	{
+	@Override
+	public Iterator<Entry> iterator() {
 		return new Iter(first);
 	}
 
 	// The iterator for this class works directly on the linked list so that it implements
 	// the specified iteration behavior, which is very different from Java.
 	private final static class Iter
-			implements Iterator<Entry>
-	{
+			implements Iterator<Entry> {
 		private Entry pos;
 
-		Iter(Entry start)
-		{
+		Iter(Entry start) {
 			// Keep the logic simpler by having a dummy at the start
 			Entry dummy = makeDummy();
 			dummy.next = start;
 			this.pos = dummy;
 		}
 
-		private void skipDeleted()
-		{
+		private void skipDeleted() {
 			// Skip forward past deleted elements, which could appear due to
 			// "delete" or a "clear" operation after this iterator was created.
 			// End up just before the next non-deleted node.
-			while ((pos.next != null) && pos.next.deleted)
-			{
+			while ((pos.next != null) && pos.next.deleted) {
 				pos = pos.next;
 			}
 		}
 
 		@Override
-		public boolean hasNext()
-		{
+		public boolean hasNext() {
 			skipDeleted();
 			return ((pos != null) && (pos.next != null));
 		}
 
 		@Override
-		public Entry next()
-		{
+		public Entry next() {
 			skipDeleted();
-			if ((pos == null) || (pos.next == null))
-			{
+			if ((pos == null) || (pos.next == null)) {
 				throw new NoSuchElementException();
 			}
 			final Entry e = pos.next;

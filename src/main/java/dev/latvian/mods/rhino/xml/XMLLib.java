@@ -12,8 +12,7 @@ import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.ScriptableObject;
 
-public abstract class XMLLib
-{
+public abstract class XMLLib {
 	private static final Object XML_LIB_KEY = new Object();
 
 	/**
@@ -25,16 +24,12 @@ public abstract class XMLLib
 	 * cause many more ripple effects in the code, all the way back to
 	 * {@link ScriptRuntime}.
 	 */
-	public static abstract class Factory
-	{
+	public static abstract class Factory {
 
-		public static Factory create(final String className)
-		{
-			return new Factory()
-			{
+		public static Factory create(final String className) {
+			return new Factory() {
 				@Override
-				public String getImplementationClassName()
-				{
+				public String getImplementationClassName() {
 					return className;
 				}
 			};
@@ -43,11 +38,9 @@ public abstract class XMLLib
 		public abstract String getImplementationClassName();
 	}
 
-	public static XMLLib extractFromScopeOrNull(Scriptable scope)
-	{
+	public static XMLLib extractFromScopeOrNull(Scriptable scope) {
 		ScriptableObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
-		if (so == null)
-		{
+		if (so == null) {
 			// If library is not yet initialized, return null
 			return null;
 		}
@@ -59,22 +52,18 @@ public abstract class XMLLib
 		return (XMLLib) so.getAssociatedValue(XML_LIB_KEY);
 	}
 
-	public static XMLLib extractFromScope(Scriptable scope)
-	{
+	public static XMLLib extractFromScope(Scriptable scope) {
 		XMLLib lib = extractFromScopeOrNull(scope);
-		if (lib != null)
-		{
+		if (lib != null) {
 			return lib;
 		}
 		String msg = ScriptRuntime.getMessage0("msg.XML.not.available");
 		throw Context.reportRuntimeError(msg);
 	}
 
-	protected final XMLLib bindToScope(Scriptable scope)
-	{
+	protected final XMLLib bindToScope(Scriptable scope) {
 		ScriptableObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
-		if (so == null)
-		{
+		if (so == null) {
 			// standard library should be initialized at this point
 			throw new IllegalStateException();
 		}
@@ -111,53 +100,43 @@ public abstract class XMLLib
 	 */
 	public abstract Object toDefaultXmlNamespace(Context cx, Object uriValue);
 
-	public void setIgnoreComments(boolean b)
-	{
+	public void setIgnoreComments(boolean b) {
 		throw new UnsupportedOperationException();
 	}
 
-	public void setIgnoreWhitespace(boolean b)
-	{
+	public void setIgnoreWhitespace(boolean b) {
 		throw new UnsupportedOperationException();
 	}
 
-	public void setIgnoreProcessingInstructions(boolean b)
-	{
+	public void setIgnoreProcessingInstructions(boolean b) {
 		throw new UnsupportedOperationException();
 	}
 
-	public void setPrettyPrinting(boolean b)
-	{
+	public void setPrettyPrinting(boolean b) {
 		throw new UnsupportedOperationException();
 	}
 
-	public void setPrettyIndent(int i)
-	{
+	public void setPrettyIndent(int i) {
 		throw new UnsupportedOperationException();
 	}
 
-	public boolean isIgnoreComments()
-	{
+	public boolean isIgnoreComments() {
 		throw new UnsupportedOperationException();
 	}
 
-	public boolean isIgnoreProcessingInstructions()
-	{
+	public boolean isIgnoreProcessingInstructions() {
 		throw new UnsupportedOperationException();
 	}
 
-	public boolean isIgnoreWhitespace()
-	{
+	public boolean isIgnoreWhitespace() {
 		throw new UnsupportedOperationException();
 	}
 
-	public boolean isPrettyPrinting()
-	{
+	public boolean isPrettyPrinting() {
 		throw new UnsupportedOperationException();
 	}
 
-	public int getPrettyIndent()
-	{
+	public int getPrettyIndent() {
 		throw new UnsupportedOperationException();
 	}
 }

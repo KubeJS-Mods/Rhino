@@ -6,6 +6,5 @@ import net.minecraftforge.fml.common.Mod;
  * @author LatvianModder
  */
 @Mod("rhino")
-public class ForgeModNew
-{
+public class ForgeModNew {
 }

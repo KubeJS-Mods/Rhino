@@ -13,8 +13,7 @@ import java.lang.reflect.Modifier;
  * Adapter to use JS function as implementation of Java interfaces with
  * single method or multiple methods with the same signature.
  */
-public class InterfaceAdapter
-{
+public class InterfaceAdapter {
 	private final Object proxyHelper;
 
 	/**
@@ -25,10 +24,8 @@ public class InterfaceAdapter
 	 * @return The glue object or null if <code>cl</code> is not interface or
 	 * has methods with different signatures.
 	 */
-	static Object create(Context cx, Class<?> cl, ScriptableObject object)
-	{
-		if (!cl.isInterface())
-		{
+	static Object create(Context cx, Class<?> cl, ScriptableObject object) {
+		if (!cl.isInterface()) {
 			throw new IllegalArgumentException();
 		}
 
@@ -37,36 +34,27 @@ public class InterfaceAdapter
 		InterfaceAdapter adapter;
 		adapter = (InterfaceAdapter) cache.getInterfaceAdapter(cl);
 		ContextFactory cf = cx.getFactory();
-		if (adapter == null)
-		{
+		if (adapter == null) {
 			Method[] methods = cl.getMethods();
-			if (object instanceof Callable)
-			{
+			if (object instanceof Callable) {
 				// Check if interface can be implemented by a single function.
 				// We allow this if the interface has only one method or multiple
 				// methods with the same name (in which case they'd result in
 				// the same function to be invoked anyway).
 				int length = methods.length;
-				if (length == 0)
-				{
+				if (length == 0) {
 					throw Context.reportRuntimeError1(
 							"msg.no.empty.interface.conversion", cl.getName());
 				}
-				if (length > 1)
-				{
+				if (length > 1) {
 					String methodName = null;
-					for (Method method : methods)
-					{
+					for (Method method : methods) {
 						// there are multiple methods in the interface we inspect
 						// only abstract ones, they must all have the same name.
-						if (isFunctionalMethodCandidate(method))
-						{
-							if (methodName == null)
-							{
+						if (isFunctionalMethodCandidate(method)) {
+							if (methodName == null) {
 								methodName = method.getName();
-							}
-							else if (!methodName.equals(method.getName()))
-							{
+							} else if (!methodName.equals(method.getName())) {
 								throw Context.reportRuntimeError1(
 										"msg.no.function.interface.conversion",
 										cl.getName());
@@ -88,27 +76,22 @@ public class InterfaceAdapter
 	 *
 	 * @return true, if the function
 	 */
-	private static boolean isFunctionalMethodCandidate(Method method)
-	{
+	private static boolean isFunctionalMethodCandidate(Method method) {
 		if (method.getName().equals("equals")
 				|| method.getName().equals("hashCode")
-				|| method.getName().equals("toString"))
-		{
+				|| method.getName().equals("toString")) {
 			// it should be safe to ignore them as there is also a special
 			// case for these methods in VMBridge_jdk18.newInterfaceProxy
 			return false;
-		}
-		else
-		{
+		} else {
 			return Modifier.isAbstract(method.getModifiers());
 		}
 	}
 
-	private InterfaceAdapter(ContextFactory cf, Class<?> cl)
-	{
+	private InterfaceAdapter(ContextFactory cf, Class<?> cl) {
 		this.proxyHelper
 				= VMBridge.instance.getInterfaceProxyHelper(
-				cf, new Class[] {cl});
+				cf, new Class[]{cl});
 	}
 
 	public Object invoke(ContextFactory cf,
@@ -116,8 +99,7 @@ public class InterfaceAdapter
 						 final Scriptable topScope,
 						 final Object thisObject,
 						 final Method method,
-						 final Object[] args)
-	{
+						 final Object[] args) {
 		return cf.call(cx -> invokeImpl(cx, target, topScope, thisObject, method, args));
 	}
 
@@ -126,53 +108,41 @@ public class InterfaceAdapter
 					  Scriptable topScope,
 					  Object thisObject,
 					  Method method,
-					  Object[] args)
-	{
+					  Object[] args) {
 		Callable function;
-		if (target instanceof Callable)
-		{
+		if (target instanceof Callable) {
 			function = (Callable) target;
-		}
-		else
-		{
+		} else {
 			Scriptable s = (Scriptable) target;
 			String methodName = method.getName();
 			Object value = ScriptableObject.getProperty(s, methodName);
-			if (value == Scriptable.NOT_FOUND)
-			{
+			if (value == Scriptable.NOT_FOUND) {
 				// We really should throw an error here, but for the sake of
 				// compatibility with JavaAdapter we silently ignore undefined
 				// methods.
 				Context.reportWarning(ScriptRuntime.getMessage1(
 						"msg.undefined.function.interface", methodName));
 				Class<?> resultType = method.getReturnType();
-				if (resultType == Void.TYPE)
-				{
+				if (resultType == Void.TYPE) {
 					return null;
 				}
 				return Context.jsToJava(null, resultType);
 			}
-			if (!(value instanceof Callable))
-			{
+			if (!(value instanceof Callable)) {
 				throw Context.reportRuntimeError1(
 						"msg.not.function.interface", methodName);
 			}
 			function = (Callable) value;
 		}
 		WrapFactory wf = cx.getWrapFactory();
-		if (args == null)
-		{
+		if (args == null) {
 			args = ScriptRuntime.emptyArgs;
-		}
-		else
-		{
-			for (int i = 0, N = args.length; i != N; ++i)
-			{
+		} else {
+			for (int i = 0, N = args.length; i != N; ++i) {
 				Object arg = args[i];
 				// neutralize wrap factory java primitive wrap feature
 				if (!(arg instanceof String || arg instanceof Number
-						|| arg instanceof Boolean))
-				{
+						|| arg instanceof Boolean)) {
 					args[i] = wf.wrap(cx, topScope, arg, null);
 				}
 			}
@@ -181,12 +151,9 @@ public class InterfaceAdapter
 
 		Object result = function.call(cx, topScope, thisObj, args);
 		Class<?> javaResultType = method.getReturnType();
-		if (javaResultType == Void.TYPE)
-		{
+		if (javaResultType == Void.TYPE) {
 			result = null;
-		}
-		else
-		{
+		} else {
 			result = Context.jsToJava(result, javaResultType);
 		}
 		return result;

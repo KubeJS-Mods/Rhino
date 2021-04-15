@@ -18,8 +18,7 @@ import java.util.List;
  *
  * <p>Node type is {@link Token#EXPR_VOID}.</p>
  */
-public class LabeledStatement extends AstNode
-{
+public class LabeledStatement extends AstNode {
 
 	private final List<Label> labels = new ArrayList<>();  // always at least 1
 	private AstNode statement;
@@ -28,25 +27,21 @@ public class LabeledStatement extends AstNode
 		type = Token.EXPR_VOID;
 	}
 
-	public LabeledStatement()
-	{
+	public LabeledStatement() {
 	}
 
-	public LabeledStatement(int pos)
-	{
+	public LabeledStatement(int pos) {
 		super(pos);
 	}
 
-	public LabeledStatement(int pos, int len)
-	{
+	public LabeledStatement(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Returns label list
 	 */
-	public List<Label> getLabels()
-	{
+	public List<Label> getLabels() {
 		return labels;
 	}
 
@@ -56,15 +51,12 @@ public class LabeledStatement extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if labels is {@code null}
 	 */
-	public void setLabels(List<Label> labels)
-	{
+	public void setLabels(List<Label> labels) {
 		assertNotNull(labels);
-		if (this.labels != null)
-		{
+		if (this.labels != null) {
 			this.labels.clear();
 		}
-		for (Label l : labels)
-		{
+		for (Label l : labels) {
 			addLabel(l);
 		}
 	}
@@ -74,8 +66,7 @@ public class LabeledStatement extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if label is {@code null}
 	 */
-	public void addLabel(Label label)
-	{
+	public void addLabel(Label label) {
 		assertNotNull(label);
 		labels.add(label);
 		label.setParent(this);
@@ -84,8 +75,7 @@ public class LabeledStatement extends AstNode
 	/**
 	 * Returns the labeled statement
 	 */
-	public AstNode getStatement()
-	{
+	public AstNode getStatement() {
 		return statement;
 	}
 
@@ -94,12 +84,9 @@ public class LabeledStatement extends AstNode
 	 * this labeled statement.  Returns {@code null} if there is no
 	 * label with that name in the list.
 	 */
-	public Label getLabelByName(String name)
-	{
-		for (Label label : labels)
-		{
-			if (name.equals(label.getName()))
-			{
+	public Label getLabelByName(String name) {
+		for (Label label : labels) {
+			if (name.equals(label.getName())) {
 				return label;
 			}
 		}
@@ -111,31 +98,26 @@ public class LabeledStatement extends AstNode
 	 *
 	 * @throws IllegalArgumentException if {@code statement} is {@code null}
 	 */
-	public void setStatement(AstNode statement)
-	{
+	public void setStatement(AstNode statement) {
 		assertNotNull(statement);
 		this.statement = statement;
 		statement.setParent(this);
 	}
 
-	public Label getFirstLabel()
-	{
+	public Label getFirstLabel() {
 		return labels.get(0);
 	}
 
 	@Override
-	public boolean hasSideEffects()
-	{
+	public boolean hasSideEffects() {
 		// just to avoid the default case for EXPR_VOID in AstNode
 		return true;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
-		for (Label label : labels)
-		{
+		for (Label label : labels) {
 			sb.append(label.toSource(depth));  // prints newline
 		}
 		sb.append(statement.toSource(depth + 1));
@@ -147,12 +129,9 @@ public class LabeledStatement extends AstNode
 	 * statement.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
-			for (AstNode label : labels)
-			{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
+			for (AstNode label : labels) {
 				label.visit(v);
 			}
 			statement.visit(v);

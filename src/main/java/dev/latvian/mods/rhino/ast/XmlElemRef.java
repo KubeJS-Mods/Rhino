@@ -30,8 +30,7 @@ import dev.latvian.mods.rhino.Token;
  * right-bracket, or if it is missing due to a syntax error, through the
  * end of the index expression.
  */
-public class XmlElemRef extends XmlRef
-{
+public class XmlElemRef extends XmlRef {
 
 	private AstNode indexExpr;
 	private int lb = -1;
@@ -41,17 +40,14 @@ public class XmlElemRef extends XmlRef
 		type = Token.REF_MEMBER;
 	}
 
-	public XmlElemRef()
-	{
+	public XmlElemRef() {
 	}
 
-	public XmlElemRef(int pos)
-	{
+	public XmlElemRef(int pos) {
 		super(pos);
 	}
 
-	public XmlElemRef(int pos, int len)
-	{
+	public XmlElemRef(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -59,8 +55,7 @@ public class XmlElemRef extends XmlRef
 	 * Returns index expression: the 'expr' in {@code @[expr]}
 	 * or {@code @*::[expr]}.
 	 */
-	public AstNode getExpression()
-	{
+	public AstNode getExpression() {
 		return indexExpr;
 	}
 
@@ -69,8 +64,7 @@ public class XmlElemRef extends XmlRef
 	 *
 	 * @throws IllegalArgumentException if {@code expr} is {@code null}
 	 */
-	public void setExpression(AstNode expr)
-	{
+	public void setExpression(AstNode expr) {
 		assertNotNull(expr);
 		indexExpr = expr;
 		expr.setParent(this);
@@ -79,55 +73,47 @@ public class XmlElemRef extends XmlRef
 	/**
 	 * Returns left bracket position, or -1 if missing.
 	 */
-	public int getLb()
-	{
+	public int getLb() {
 		return lb;
 	}
 
 	/**
 	 * Sets left bracket position, or -1 if missing.
 	 */
-	public void setLb(int lb)
-	{
+	public void setLb(int lb) {
 		this.lb = lb;
 	}
 
 	/**
 	 * Returns left bracket position, or -1 if missing.
 	 */
-	public int getRb()
-	{
+	public int getRb() {
 		return rb;
 	}
 
 	/**
 	 * Sets right bracket position, -1 if missing.
 	 */
-	public void setRb(int rb)
-	{
+	public void setRb(int rb) {
 		this.rb = rb;
 	}
 
 	/**
 	 * Sets both bracket positions.
 	 */
-	public void setBrackets(int lb, int rb)
-	{
+	public void setBrackets(int lb, int rb) {
 		this.lb = lb;
 		this.rb = rb;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
-		if (isAttributeAccess())
-		{
+		if (isAttributeAccess()) {
 			sb.append("@");
 		}
-		if (namespace != null)
-		{
+		if (namespace != null) {
 			sb.append(namespace.toSource(0));
 			sb.append("::");
 		}
@@ -142,12 +128,9 @@ public class XmlElemRef extends XmlRef
 	 * index expression.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
-			if (namespace != null)
-			{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
+			if (namespace != null) {
 				namespace.visit(v);
 			}
 			indexExpr.visit(v);

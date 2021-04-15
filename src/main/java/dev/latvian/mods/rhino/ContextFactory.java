@@ -109,8 +109,7 @@ import java.security.PrivilegedAction;
  * </pre>
  */
 
-public class ContextFactory
-{
+public class ContextFactory {
 	private static volatile boolean hasCustomGlobal;
 	private static ContextFactory global = new ContextFactory();
 
@@ -125,8 +124,7 @@ public class ContextFactory
 	/**
 	 * Listener of {@link Context} creation and release events.
 	 */
-	public interface Listener
-	{
+	public interface Listener {
 		/**
 		 * Notify about newly created {@link Context} object.
 		 */
@@ -145,8 +143,7 @@ public class ContextFactory
 	 * @see #hasExplicitGlobal()
 	 * @see #initGlobal(ContextFactory)
 	 */
-	public static ContextFactory getGlobal()
-	{
+	public static ContextFactory getGlobal() {
 		return global;
 	}
 
@@ -159,8 +156,7 @@ public class ContextFactory
 	 * @see #getGlobal()
 	 * @see #initGlobal(ContextFactory)
 	 */
-	public static boolean hasExplicitGlobal()
-	{
+	public static boolean hasExplicitGlobal() {
 		return hasCustomGlobal;
 	}
 
@@ -171,45 +167,36 @@ public class ContextFactory
 	 * @see #getGlobal()
 	 * @see #hasExplicitGlobal()
 	 */
-	public synchronized static void initGlobal(ContextFactory factory)
-	{
-		if (factory == null)
-		{
+	public synchronized static void initGlobal(ContextFactory factory) {
+		if (factory == null) {
 			throw new IllegalArgumentException();
 		}
-		if (hasCustomGlobal)
-		{
+		if (hasCustomGlobal) {
 			throw new IllegalStateException();
 		}
 		hasCustomGlobal = true;
 		global = factory;
 	}
 
-	public interface GlobalSetter
-	{
+	public interface GlobalSetter {
 		void setContextFactoryGlobal(ContextFactory factory);
 
 		ContextFactory getContextFactoryGlobal();
 	}
 
-	public synchronized static GlobalSetter getGlobalSetter()
-	{
-		if (hasCustomGlobal)
-		{
+	public synchronized static GlobalSetter getGlobalSetter() {
+		if (hasCustomGlobal) {
 			throw new IllegalStateException();
 		}
 		hasCustomGlobal = true;
-		class GlobalSetterImpl implements GlobalSetter
-		{
+		class GlobalSetterImpl implements GlobalSetter {
 			@Override
-			public void setContextFactoryGlobal(ContextFactory factory)
-			{
+			public void setContextFactoryGlobal(ContextFactory factory) {
 				global = factory == null ? new ContextFactory() : factory;
 			}
 
 			@Override
-			public ContextFactory getContextFactoryGlobal()
-			{
+			public ContextFactory getContextFactoryGlobal() {
 				return global;
 			}
 		}
@@ -225,8 +212,7 @@ public class ContextFactory
 	 * {@link Context#seal(Object)} on the result to prevent
 	 * {@link Context} changes by hostile scripts or applets.
 	 */
-	protected Context makeContext()
-	{
+	protected Context makeContext() {
 		return new Context(this);
 	}
 
@@ -235,11 +221,9 @@ public class ContextFactory
 	 * This can be used to customize {@link Context} without introducing
 	 * additional subclasses.
 	 */
-	protected boolean hasFeature(Context cx, int featureIndex)
-	{
+	protected boolean hasFeature(Context cx, int featureIndex) {
 		int version;
-		switch (featureIndex)
-		{
+		switch (featureIndex) {
 			case Context.FEATURE_NON_ECMA_GET_YEAR:
 				/*
 				 * During the great date rewrite of 1.3, we tried to track the
@@ -321,22 +305,17 @@ public class ContextFactory
 		throw new IllegalArgumentException(String.valueOf(featureIndex));
 	}
 
-	private static boolean isDom3Present()
-	{
+	private static boolean isDom3Present() {
 		Class<?> nodeClass = Kit.classOrNull("org.w3c.dom.Node");
-		if (nodeClass == null)
-		{
+		if (nodeClass == null) {
 			return false;
 		}
 		// Check to see whether DOM3 is present; use a new method defined in
 		// DOM3 that is vital to our implementation
-		try
-		{
+		try {
 			nodeClass.getMethod("getUserData", String.class);
 			return true;
-		}
-		catch (NoSuchMethodException e)
-		{
+		} catch (NoSuchMethodException e) {
 			return false;
 		}
 	}
@@ -353,16 +332,14 @@ public class ContextFactory
 	 * The default implementation now prefers the DOM3 E4X implementation.
 	 */
 	protected XMLLib.Factory
-	getE4xImplementationFactory()
-	{
+	getE4xImplementationFactory() {
 		// Must provide default implementation, rather than abstract method,
 		// so that past implementors of ContextFactory do not fail at runtime
 		// upon invocation of this method.
 		// Note that the default implementation returns null if we
 		// neither have XMLBeans nor a DOM3 implementation present.
 
-		if (isDom3Present())
-		{
+		if (isDom3Present()) {
 			return XMLLib.Factory.create(
 					"dev.latvian.mods.rhino.xmlimpl.XMLLibImpl"
 			);
@@ -379,8 +356,7 @@ public class ContextFactory
 	 * is installed.
 	 * Application can override the method to provide custom class loading.
 	 */
-	protected GeneratedClassLoader createClassLoader(final ClassLoader parent)
-	{
+	protected GeneratedClassLoader createClassLoader(final ClassLoader parent) {
 		return AccessController.doPrivileged((PrivilegedAction<DefiningClassLoader>) () -> new DefiningClassLoader(parent));
 	}
 
@@ -390,8 +366,7 @@ public class ContextFactory
 	 * {@link #initApplicationClassLoader(ClassLoader)} the method returns
 	 * null to indicate that Thread.getContextClassLoader() should be used.
 	 */
-	public final ClassLoader getApplicationClassLoader()
-	{
+	public final ClassLoader getApplicationClassLoader() {
 		return applicationClassLoader;
 	}
 
@@ -400,20 +375,16 @@ public class ContextFactory
 	 *
 	 * @see #getApplicationClassLoader()
 	 */
-	public final void initApplicationClassLoader(ClassLoader loader)
-	{
-		if (loader == null)
-		{
+	public final void initApplicationClassLoader(ClassLoader loader) {
+		if (loader == null) {
 			throw new IllegalArgumentException("loader is null");
 		}
-		if (!Kit.testIfCanLoadRhinoClasses(loader))
-		{
+		if (!Kit.testIfCanLoadRhinoClasses(loader)) {
 			throw new IllegalArgumentException(
 					"Loader can not resolve Rhino classes");
 		}
 
-		if (this.applicationClassLoader != null)
-		{
+		if (this.applicationClassLoader != null) {
 			throw new IllegalStateException(
 					"applicationClassLoader can only be set once");
 		}
@@ -431,8 +402,7 @@ public class ContextFactory
 	 */
 	protected Object doTopCall(Callable callable,
 							   Context cx, Scriptable scope,
-							   Scriptable thisObj, Object[] args)
-	{
+							   Scriptable thisObj, Object[] args) {
 		Object result = callable.call(cx, scope, thisObj, args);
 		return result instanceof ConsString ? result.toString() : result;
 	}
@@ -443,58 +413,45 @@ public class ContextFactory
 	 * This can be used to customize {@link Context} without introducing
 	 * additional subclasses.
 	 */
-	protected void observeInstructionCount(Context cx, int instructionCount)
-	{
+	protected void observeInstructionCount(Context cx, int instructionCount) {
 	}
 
-	protected void onContextCreated(Context cx)
-	{
+	protected void onContextCreated(Context cx) {
 		Object listeners = this.listeners;
-		for (int i = 0; ; ++i)
-		{
+		for (int i = 0; ; ++i) {
 			Listener l = (Listener) Kit.getListener(listeners, i);
-			if (l == null)
-			{
+			if (l == null) {
 				break;
 			}
 			l.contextCreated(cx);
 		}
 	}
 
-	protected void onContextReleased(Context cx)
-	{
+	protected void onContextReleased(Context cx) {
 		Object listeners = this.listeners;
-		for (int i = 0; ; ++i)
-		{
+		for (int i = 0; ; ++i) {
 			Listener l = (Listener) Kit.getListener(listeners, i);
-			if (l == null)
-			{
+			if (l == null) {
 				break;
 			}
 			l.contextReleased(cx);
 		}
 	}
 
-	public final void addListener(Listener listener)
-	{
+	public final void addListener(Listener listener) {
 		checkNotSealed();
-		synchronized (listenersLock)
-		{
-			if (disabledListening)
-			{
+		synchronized (listenersLock) {
+			if (disabledListening) {
 				throw new IllegalStateException();
 			}
 			listeners = Kit.addListener(listeners, listener);
 		}
 	}
 
-	public final void removeListener(Listener listener)
-	{
+	public final void removeListener(Listener listener) {
 		checkNotSealed();
-		synchronized (listenersLock)
-		{
-			if (disabledListening)
-			{
+		synchronized (listenersLock) {
+			if (disabledListening) {
 				throw new IllegalStateException();
 			}
 			listeners = Kit.removeListener(listeners, listener);
@@ -505,11 +462,9 @@ public class ContextFactory
 	 * The method is used only to implement
 	 * Context.disableStaticContextListening()
 	 */
-	final void disableContextListening()
-	{
+	final void disableContextListening() {
 		checkNotSealed();
-		synchronized (listenersLock)
-		{
+		synchronized (listenersLock) {
 			disabledListening = true;
 			listeners = null;
 		}
@@ -520,8 +475,7 @@ public class ContextFactory
 	 *
 	 * @see #seal()
 	 */
-	public final boolean isSealed()
-	{
+	public final boolean isSealed() {
 		return sealed;
 	}
 
@@ -531,16 +485,13 @@ public class ContextFactory
 	 *
 	 * @see #isSealed()
 	 */
-	public final void seal()
-	{
+	public final void seal() {
 		checkNotSealed();
 		sealed = true;
 	}
 
-	protected final void checkNotSealed()
-	{
-		if (sealed)
-		{
+	protected final void checkNotSealed() {
+		if (sealed) {
 			throw new IllegalStateException();
 		}
 	}
@@ -558,8 +509,7 @@ public class ContextFactory
 	 * Scriptable scope, Scriptable thisObj,
 	 * Object[] args)
 	 */
-	public final <T> T call(ContextAction<T> action)
-	{
+	public final <T> T call(ContextAction<T> action) {
 		return Context.call(this, action);
 	}
 
@@ -603,8 +553,7 @@ public class ContextFactory
 	 * @see Context#exit()
 	 * @see #call(ContextAction)
 	 */
-	public Context enterContext()
-	{
+	public Context enterContext() {
 		return enterContext(null);
 	}
 
@@ -624,8 +573,7 @@ public class ContextFactory
 	 * @see #enterContext()
 	 * @see #call(ContextAction)
 	 */
-	public final Context enterContext(Context cx)
-	{
+	public final Context enterContext(Context cx) {
 		return Context.enter(cx, this);
 	}
 }

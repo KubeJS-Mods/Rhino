@@ -13,47 +13,39 @@ package dev.latvian.mods.rhino;
  * @author Norris Boyd
  */
 
-final class NativeMath extends IdScriptableObject
-{
+final class NativeMath extends IdScriptableObject {
 	private static final long serialVersionUID = -8838847185801131569L;
 
 	private static final Object MATH_TAG = "Math";
 	private static final double LOG2E = 1.4426950408889634;
 	private static final Double Double32 = 32d;
 
-	static void init(Scriptable scope, boolean sealed)
-	{
+	static void init(Scriptable scope, boolean sealed) {
 		NativeMath obj = new NativeMath();
 		obj.activatePrototypeMap(MAX_ID);
 		obj.setPrototype(getObjectPrototype(scope));
 		obj.setParentScope(scope);
-		if (sealed)
-		{
+		if (sealed) {
 			obj.sealObject();
 		}
 		defineProperty(scope, "Math", obj,
 				DONTENUM);
 	}
 
-	private NativeMath()
-	{
+	private NativeMath() {
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "Math";
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
-		if (id <= LAST_METHOD_ID)
-		{
+	protected void initPrototypeId(int id) {
+		if (id <= LAST_METHOD_ID) {
 			String name;
 			int arity;
-			switch (id)
-			{
+			switch (id) {
 				case Id_toSource:
 					arity = 0;
 					name = "toSource";
@@ -202,13 +194,10 @@ final class NativeMath extends IdScriptableObject
 					throw new IllegalStateException(String.valueOf(id));
 			}
 			initPrototypeMethod(MATH_TAG, id, name, arity);
-		}
-		else
-		{
+		} else {
 			String name;
 			double x;
-			switch (id)
-			{
+			switch (id) {
 				case Id_E:
 					x = Math.E;
 					name = "E";
@@ -251,16 +240,13 @@ final class NativeMath extends IdScriptableObject
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(MATH_TAG))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(MATH_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		double x;
 		int methodId = f.methodId();
-		switch (methodId)
-		{
+		switch (methodId) {
 			case Id_toSource:
 				return "Math";
 
@@ -273,36 +259,28 @@ final class NativeMath extends IdScriptableObject
 			case Id_acos:
 			case Id_asin:
 				x = ScriptRuntime.toNumber(args, 0);
-				if (!Double.isNaN(x) && -1.0 <= x && x <= 1.0)
-				{
+				if (!Double.isNaN(x) && -1.0 <= x && x <= 1.0) {
 					x = (methodId == Id_acos) ? Math.acos(x) : Math.asin(x);
-				}
-				else
-				{
+				} else {
 					x = Double.NaN;
 				}
 				break;
 
 			case Id_acosh:
 				x = ScriptRuntime.toNumber(args, 0);
-				if (!Double.isNaN(x))
-				{
+				if (!Double.isNaN(x)) {
 					return Math.log(x + Math.sqrt(x * x - 1.0));
 				}
 				return ScriptRuntime.NaNobj;
 
 			case Id_asinh:
 				x = ScriptRuntime.toNumber(args, 0);
-				if (Double.isInfinite(x))
-				{
+				if (Double.isInfinite(x)) {
 					return x;
 				}
-				if (!Double.isNaN(x))
-				{
-					if (x == 0)
-					{
-						if (1 / x > 0)
-						{
+				if (!Double.isNaN(x)) {
+					if (x == 0) {
+						if (1 / x > 0) {
 							return ScriptRuntime.zeroObj;
 						}
 						return ScriptRuntime.negativeZeroObj;
@@ -318,12 +296,9 @@ final class NativeMath extends IdScriptableObject
 
 			case Id_atanh:
 				x = ScriptRuntime.toNumber(args, 0);
-				if (!Double.isNaN(x) && -1.0 <= x && x <= 1.0)
-				{
-					if (x == 0)
-					{
-						if (1 / x > 0)
-						{
+				if (!Double.isNaN(x) && -1.0 <= x && x <= 1.0) {
+					if (x == 0) {
+						if (1 / x > 0) {
 							return ScriptRuntime.zeroObj;
 						}
 						return ScriptRuntime.negativeZeroObj;
@@ -351,13 +326,11 @@ final class NativeMath extends IdScriptableObject
 				x = ScriptRuntime.toNumber(args, 0);
 				if (x == 0
 						|| Double.isNaN(x)
-						|| Double.isInfinite(x))
-				{
+						|| Double.isInfinite(x)) {
 					return Double32;
 				}
 				long n = ScriptRuntime.toUint32(x);
-				if (n == 0)
-				{
+				if (n == 0) {
 					return Double32;
 				}
 				return 31 - Math.floor(Math.log(n >>> 0) * LOG2E);
@@ -429,21 +402,16 @@ final class NativeMath extends IdScriptableObject
 			case Id_min:
 				x = (methodId == Id_max)
 						? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
-				for (int i = 0; i != args.length; ++i)
-				{
+				for (int i = 0; i != args.length; ++i) {
 					double d = ScriptRuntime.toNumber(args[i]);
-					if (Double.isNaN(d))
-					{
+					if (Double.isNaN(d)) {
 						x = d; // NaN
 						break;
 					}
-					if (methodId == Id_max)
-					{
+					if (methodId == Id_max) {
 						// if (x < d) x = d; does not work due to -0.0 >= +0.0
 						x = Math.max(x, d);
-					}
-					else
-					{
+					} else {
 						x = Math.min(x, d);
 					}
 				}
@@ -460,23 +428,16 @@ final class NativeMath extends IdScriptableObject
 
 			case Id_round:
 				x = ScriptRuntime.toNumber(args, 0);
-				if (!Double.isNaN(x) && !Double.isInfinite(x))
-				{
+				if (!Double.isNaN(x) && !Double.isInfinite(x)) {
 					// Round only finite x
 					long l = Math.round(x);
-					if (l != 0)
-					{
+					if (l != 0) {
 						x = l;
-					}
-					else
-					{
+					} else {
 						// We must propagate the sign of d into the result
-						if (x < 0.0)
-						{
+						if (x < 0.0) {
 							x = ScriptRuntime.negativeZero;
-						}
-						else if (x != 0.0)
-						{
+						} else if (x != 0.0) {
 							x = 0.0;
 						}
 					}
@@ -485,12 +446,9 @@ final class NativeMath extends IdScriptableObject
 
 			case Id_sign:
 				x = ScriptRuntime.toNumber(args, 0);
-				if (!Double.isNaN(x))
-				{
-					if (x == 0)
-					{
-						if (1 / x > 0)
-						{
+				if (!Double.isNaN(x)) {
+					if (x == 0) {
+						if (1 / x > 0) {
 							return ScriptRuntime.zeroObj;
 						}
 						return ScriptRuntime.negativeZeroObj;
@@ -536,83 +494,52 @@ final class NativeMath extends IdScriptableObject
 	}
 
 	// See Ecma 15.8.2.13
-	private static double js_pow(double x, double y)
-	{
+	private static double js_pow(double x, double y) {
 		double result;
-		if (Double.isNaN(y))
-		{
+		if (Double.isNaN(y)) {
 			// y is NaN, result is always NaN
 			result = y;
-		}
-		else if (y == 0)
-		{
+		} else if (y == 0) {
 			// Java's pow(NaN, 0) = NaN; we need 1
 			result = 1.0;
-		}
-		else if (x == 0)
-		{
+		} else if (x == 0) {
 			// Many differences from Java's Math.pow
-			if (1 / x > 0)
-			{
+			if (1 / x > 0) {
 				result = (y > 0) ? 0 : Double.POSITIVE_INFINITY;
-			}
-			else
-			{
+			} else {
 				// x is -0, need to check if y is an odd integer
 				long y_long = (long) y;
-				if (y_long == y && (y_long & 0x1) != 0)
-				{
+				if (y_long == y && (y_long & 0x1) != 0) {
 					result = (y > 0) ? -0.0 : Double.NEGATIVE_INFINITY;
-				}
-				else
-				{
+				} else {
 					result = (y > 0) ? 0.0 : Double.POSITIVE_INFINITY;
 				}
 			}
-		}
-		else
-		{
+		} else {
 			result = Math.pow(x, y);
-			if (Double.isNaN(result))
-			{
+			if (Double.isNaN(result)) {
 				// Check for broken Java implementations that gives NaN
 				// when they should return something else
-				if (y == Double.POSITIVE_INFINITY)
-				{
-					if (x < -1.0 || 1.0 < x)
-					{
+				if (y == Double.POSITIVE_INFINITY) {
+					if (x < -1.0 || 1.0 < x) {
 						result = Double.POSITIVE_INFINITY;
-					}
-					else if (-1.0 < x && x < 1.0)
-					{
+					} else if (-1.0 < x && x < 1.0) {
 						result = 0;
 					}
-				}
-				else if (y == Double.NEGATIVE_INFINITY)
-				{
-					if (x < -1.0 || 1.0 < x)
-					{
+				} else if (y == Double.NEGATIVE_INFINITY) {
+					if (x < -1.0 || 1.0 < x) {
 						result = 0;
-					}
-					else if (-1.0 < x && x < 1.0)
-					{
+					} else if (-1.0 < x && x < 1.0) {
 						result = Double.POSITIVE_INFINITY;
 					}
-				}
-				else if (x == Double.POSITIVE_INFINITY)
-				{
+				} else if (x == Double.POSITIVE_INFINITY) {
 					result = (y > 0) ? Double.POSITIVE_INFINITY : 0.0;
-				}
-				else if (x == Double.NEGATIVE_INFINITY)
-				{
+				} else if (x == Double.NEGATIVE_INFINITY) {
 					long y_long = (long) y;
-					if (y_long == y && (y_long & 0x1) != 0)
-					{
+					if (y_long == y && (y_long & 0x1) != 0) {
 						// y is odd integer
 						result = (y > 0) ? Double.NEGATIVE_INFINITY : -0.0;
-					}
-					else
-					{
+					} else {
 						result = (y > 0) ? Double.POSITIVE_INFINITY : 0.0;
 					}
 				}
@@ -622,10 +549,8 @@ final class NativeMath extends IdScriptableObject
 	}
 
 	// Based on code from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/hypot
-	private static double js_hypot(Object[] args)
-	{
-		if (args == null)
-		{
+	private static double js_hypot(Object[] args) {
+		if (args == null) {
 			return 0.0;
 		}
 		double y = 0.0;
@@ -634,44 +559,33 @@ final class NativeMath extends IdScriptableObject
 		boolean hasNaN = false;
 		boolean hasInfinity = false;
 
-		for (Object o : args)
-		{
+		for (Object o : args) {
 			double d = ScriptRuntime.toNumber(o);
-			if (Double.isNaN(d))
-			{
+			if (Double.isNaN(d)) {
 				hasNaN = true;
-			}
-			else if (Double.isInfinite(d))
-			{
+			} else if (Double.isInfinite(d)) {
 				hasInfinity = true;
-			}
-			else
-			{
+			} else {
 				y += d * d;
 			}
 		}
 
-		if (hasInfinity)
-		{
+		if (hasInfinity) {
 			return Double.POSITIVE_INFINITY;
 		}
-		if (hasNaN)
-		{
+		if (hasNaN) {
 			return Double.NaN;
 		}
 		return Math.sqrt(y);
 	}
 
-	private static double js_trunc(double d)
-	{
+	private static double js_trunc(double d) {
 		return ((d < 0.0) ? Math.ceil(d) : Math.floor(d));
 	}
 
 	// From EcmaScript 6 section 20.2.2.19
-	private static int js_imul(Object[] args)
-	{
-		if (args == null)
-		{
+	private static int js_imul(Object[] args) {
+		if (args == null) {
 			return 0;
 		}
 
@@ -683,8 +597,7 @@ final class NativeMath extends IdScriptableObject
 	// #string_id_map#
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2018-07-02 19:08:32 MESZ
 		L0:
@@ -693,96 +606,79 @@ final class NativeMath extends IdScriptableObject
 			String X = null;
 			int c;
 			L:
-			switch (s.length())
-			{
+			switch (s.length()) {
 				case 1:
-					if (s.charAt(0) == 'E')
-					{
+					if (s.charAt(0) == 'E') {
 						id = Id_E;
 						break L0;
 					}
 					break L;
 				case 2:
-					if (s.charAt(0) == 'P' && s.charAt(1) == 'I')
-					{
+					if (s.charAt(0) == 'P' && s.charAt(1) == 'I') {
 						id = Id_PI;
 						break L0;
 					}
 					break L;
 				case 3:
-					switch (s.charAt(0))
-					{
+					switch (s.charAt(0)) {
 						case 'L':
-							if (s.charAt(2) == '2' && s.charAt(1) == 'N')
-							{
+							if (s.charAt(2) == '2' && s.charAt(1) == 'N') {
 								id = Id_LN2;
 								break L0;
 							}
 							break L;
 						case 'a':
-							if (s.charAt(2) == 's' && s.charAt(1) == 'b')
-							{
+							if (s.charAt(2) == 's' && s.charAt(1) == 'b') {
 								id = Id_abs;
 								break L0;
 							}
 							break L;
 						case 'c':
-							if (s.charAt(2) == 's' && s.charAt(1) == 'o')
-							{
+							if (s.charAt(2) == 's' && s.charAt(1) == 'o') {
 								id = Id_cos;
 								break L0;
 							}
 							break L;
 						case 'e':
-							if (s.charAt(2) == 'p' && s.charAt(1) == 'x')
-							{
+							if (s.charAt(2) == 'p' && s.charAt(1) == 'x') {
 								id = Id_exp;
 								break L0;
 							}
 							break L;
 						case 'l':
-							if (s.charAt(2) == 'g' && s.charAt(1) == 'o')
-							{
+							if (s.charAt(2) == 'g' && s.charAt(1) == 'o') {
 								id = Id_log;
 								break L0;
 							}
 							break L;
 						case 'm':
 							c = s.charAt(2);
-							if (c == 'n')
-							{
-								if (s.charAt(1) == 'i')
-								{
+							if (c == 'n') {
+								if (s.charAt(1) == 'i') {
 									id = Id_min;
 									break L0;
 								}
-							}
-							else if (c == 'x')
-							{
-								if (s.charAt(1) == 'a')
-								{
+							} else if (c == 'x') {
+								if (s.charAt(1) == 'a') {
 									id = Id_max;
 									break L0;
 								}
 							}
 							break L;
 						case 'p':
-							if (s.charAt(2) == 'w' && s.charAt(1) == 'o')
-							{
+							if (s.charAt(2) == 'w' && s.charAt(1) == 'o') {
 								id = Id_pow;
 								break L0;
 							}
 							break L;
 						case 's':
-							if (s.charAt(2) == 'n' && s.charAt(1) == 'i')
-							{
+							if (s.charAt(2) == 'n' && s.charAt(1) == 'i') {
 								id = Id_sin;
 								break L0;
 							}
 							break L;
 						case 't':
-							if (s.charAt(2) == 'n' && s.charAt(1) == 'a')
-							{
+							if (s.charAt(2) == 'n' && s.charAt(1) == 'a') {
 								id = Id_tan;
 								break L0;
 							}
@@ -790,8 +686,7 @@ final class NativeMath extends IdScriptableObject
 					}
 					break L;
 				case 4:
-					switch (s.charAt(1))
-					{
+					switch (s.charAt(1)) {
 						case 'N':
 							X = "LN10";
 							id = Id_LN10;
@@ -814,18 +709,13 @@ final class NativeMath extends IdScriptableObject
 							break L;
 						case 'i':
 							c = s.charAt(3);
-							if (c == 'h')
-							{
-								if (s.charAt(0) == 's' && s.charAt(2) == 'n')
-								{
+							if (c == 'h') {
+								if (s.charAt(0) == 's' && s.charAt(2) == 'n') {
 									id = Id_sinh;
 									break L0;
 								}
-							}
-							else if (c == 'n')
-							{
-								if (s.charAt(0) == 's' && s.charAt(2) == 'g')
-								{
+							} else if (c == 'n') {
+								if (s.charAt(0) == 's' && s.charAt(2) == 'g') {
 									id = Id_sign;
 									break L0;
 								}
@@ -837,18 +727,13 @@ final class NativeMath extends IdScriptableObject
 							break L;
 						case 'o':
 							c = s.charAt(0);
-							if (c == 'c')
-							{
-								if (s.charAt(2) == 's' && s.charAt(3) == 'h')
-								{
+							if (c == 'c') {
+								if (s.charAt(2) == 's' && s.charAt(3) == 'h') {
 									id = Id_cosh;
 									break L0;
 								}
-							}
-							else if (c == 'l')
-							{
-								if (s.charAt(2) == 'g' && s.charAt(3) == '2')
-								{
+							} else if (c == 'l') {
+								if (s.charAt(2) == 'g' && s.charAt(3) == '2') {
 									id = Id_log2;
 									break L0;
 								}
@@ -869,8 +754,7 @@ final class NativeMath extends IdScriptableObject
 					}
 					break L;
 				case 5:
-					switch (s.charAt(0))
-					{
+					switch (s.charAt(0)) {
 						case 'L':
 							X = "LOG2E";
 							id = Id_LOG2E;
@@ -881,31 +765,21 @@ final class NativeMath extends IdScriptableObject
 							break L;
 						case 'a':
 							c = s.charAt(1);
-							if (c == 'c')
-							{
+							if (c == 'c') {
 								X = "acosh";
 								id = Id_acosh;
-							}
-							else if (c == 's')
-							{
+							} else if (c == 's') {
 								X = "asinh";
 								id = Id_asinh;
-							}
-							else if (c == 't')
-							{
+							} else if (c == 't') {
 								c = s.charAt(4);
-								if (c == '2')
-								{
-									if (s.charAt(2) == 'a' && s.charAt(3) == 'n')
-									{
+								if (c == '2') {
+									if (s.charAt(2) == 'a' && s.charAt(3) == 'n') {
 										id = Id_atan2;
 										break L0;
 									}
-								}
-								else if (c == 'h')
-								{
-									if (s.charAt(2) == 'a' && s.charAt(3) == 'n')
-									{
+								} else if (c == 'h') {
+									if (s.charAt(2) == 'a' && s.charAt(3) == 'n') {
 										id = Id_atanh;
 										break L0;
 									}
@@ -930,13 +804,10 @@ final class NativeMath extends IdScriptableObject
 							break L;
 						case 'l':
 							c = s.charAt(4);
-							if (c == '0')
-							{
+							if (c == '0') {
 								X = "log10";
 								id = Id_log10;
-							}
-							else if (c == 'p')
-							{
+							} else if (c == 'p') {
 								X = "log1p";
 								id = Id_log1p;
 							}
@@ -953,18 +824,13 @@ final class NativeMath extends IdScriptableObject
 					break L;
 				case 6:
 					c = s.charAt(0);
-					if (c == 'L')
-					{
+					if (c == 'L') {
 						X = "LOG10E";
 						id = Id_LOG10E;
-					}
-					else if (c == 'f')
-					{
+					} else if (c == 'f') {
 						X = "fround";
 						id = Id_fround;
-					}
-					else if (c == 'r')
-					{
+					} else if (c == 'r') {
 						X = "random";
 						id = Id_random;
 					}
@@ -978,8 +844,7 @@ final class NativeMath extends IdScriptableObject
 					id = Id_toSource;
 					break L;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;

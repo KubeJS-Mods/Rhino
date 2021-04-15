@@ -15,8 +15,7 @@ import dev.latvian.mods.rhino.Scriptable;
  * Interface to implement if the application is interested in receiving debug
  * information during execution of a particular script or function.
  */
-public interface DebugFrame
-{
+public interface DebugFrame {
 
 	/**
 	 * Called when execution is ready to start bytecode interpretation for entered a particular function or script.

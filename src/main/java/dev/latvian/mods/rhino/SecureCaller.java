@@ -22,8 +22,7 @@ import java.util.WeakHashMap;
 /**
  * @author Attila Szegedi
  */
-public abstract class SecureCaller
-{
+public abstract class SecureCaller {
 	private static final byte[] secureCallerImplBytecode = loadBytecode();
 
 	// We're storing a CodeSource -> (ClassLoader -> SecureRenderer), since we
@@ -42,55 +41,41 @@ public abstract class SecureCaller
 	 * specified code source.
 	 */
 	static Object callSecurely(final CodeSource codeSource, Callable callable,
-							   Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
-	{
+							   Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		final Thread thread = Thread.currentThread();
 		// Run in doPrivileged as we might be checked for "getClassLoader"
 		// runtime permission
 		final ClassLoader classLoader = (ClassLoader) AccessController.doPrivileged(
 				(PrivilegedAction<Object>) () -> thread.getContextClassLoader());
 		Map<ClassLoader, SoftReference<SecureCaller>> classLoaderMap;
-		synchronized (callers)
-		{
+		synchronized (callers) {
 			classLoaderMap = callers.get(codeSource);
-			if (classLoaderMap == null)
-			{
+			if (classLoaderMap == null) {
 				classLoaderMap = new WeakHashMap<>();
 				callers.put(codeSource, classLoaderMap);
 			}
 		}
 		SecureCaller caller;
-		synchronized (classLoaderMap)
-		{
+		synchronized (classLoaderMap) {
 			SoftReference<SecureCaller> ref = classLoaderMap.get(classLoader);
-			if (ref != null)
-			{
+			if (ref != null) {
 				caller = ref.get();
-			}
-			else
-			{
+			} else {
 				caller = null;
 			}
-			if (caller == null)
-			{
-				try
-				{
+			if (caller == null) {
+				try {
 					// Run in doPrivileged as we'll be checked for
 					// "createClassLoader" runtime permission
 					caller = (SecureCaller) AccessController.doPrivileged(
-							new PrivilegedExceptionAction<Object>()
-							{
+							new PrivilegedExceptionAction<Object>() {
 								@Override
-								public Object run() throws Exception
-								{
+								public Object run() throws Exception {
 									ClassLoader effectiveClassLoader;
 									Class<?> thisClass = getClass();
-									if (classLoader.loadClass(thisClass.getName()) != thisClass)
-									{
+									if (classLoader.loadClass(thisClass.getName()) != thisClass) {
 										effectiveClassLoader = thisClass.getClassLoader();
-									}
-									else
-									{
+									} else {
 										effectiveClassLoader = classLoader;
 									}
 									SecureClassLoaderImpl secCl =
@@ -102,9 +87,7 @@ public abstract class SecureCaller
 								}
 							});
 					classLoaderMap.put(classLoader, new SoftReference<>(caller));
-				}
-				catch (PrivilegedActionException ex)
-				{
+				} catch (PrivilegedActionException ex) {
 					throw new UndeclaredThrowableException(ex.getCause());
 				}
 			}
@@ -112,52 +95,39 @@ public abstract class SecureCaller
 		return caller.call(callable, cx, scope, thisObj, args);
 	}
 
-	private static class SecureClassLoaderImpl extends SecureClassLoader
-	{
-		SecureClassLoaderImpl(ClassLoader parent)
-		{
+	private static class SecureClassLoaderImpl extends SecureClassLoader {
+		SecureClassLoaderImpl(ClassLoader parent) {
 			super(parent);
 		}
 
-		Class<?> defineAndLinkClass(String name, byte[] bytes, CodeSource cs)
-		{
+		Class<?> defineAndLinkClass(String name, byte[] bytes, CodeSource cs) {
 			Class<?> cl = defineClass(name, bytes, 0, bytes.length, cs);
 			resolveClass(cl);
 			return cl;
 		}
 	}
 
-	private static byte[] loadBytecode()
-	{
+	private static byte[] loadBytecode() {
 		return (byte[]) AccessController.doPrivileged((PrivilegedAction<Object>) () -> loadBytecodePrivileged());
 	}
 
-	private static byte[] loadBytecodePrivileged()
-	{
+	private static byte[] loadBytecodePrivileged() {
 		URL url = SecureCaller.class.getResource("SecureCallerImpl.clazz");
-		try
-		{
+		try {
 			InputStream in = url.openStream();
-			try
-			{
+			try {
 				ByteArrayOutputStream bout = new ByteArrayOutputStream();
-				for (; ; )
-				{
+				for (; ; ) {
 					int r = in.read();
-					if (r == -1)
-					{
+					if (r == -1) {
 						return bout.toByteArray();
 					}
 					bout.write(r);
 				}
-			}
-			finally
-			{
+			} finally {
 				in.close();
 			}
-		}
-		catch (IOException e)
-		{
+		} catch (IOException e) {
 			throw new UndeclaredThrowableException(e);
 		}
 	}

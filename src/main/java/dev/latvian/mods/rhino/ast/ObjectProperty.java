@@ -30,8 +30,7 @@ import dev.latvian.mods.rhino.Token;
  *       StringLiteral
  *       NumberLiteral</pre>
  */
-public class ObjectProperty extends InfixExpression
-{
+public class ObjectProperty extends InfixExpression {
 
 	{
 		type = Token.COLON;
@@ -43,97 +42,80 @@ public class ObjectProperty extends InfixExpression
 	 *
 	 * @throws IllegalArgumentException if {@code nodeType} is invalid
 	 */
-	public void setNodeType(int nodeType)
-	{
+	public void setNodeType(int nodeType) {
 		if (nodeType != Token.COLON
 				&& nodeType != Token.GET
 				&& nodeType != Token.SET
-				&& nodeType != Token.METHOD)
-		{
+				&& nodeType != Token.METHOD) {
 			throw new IllegalArgumentException("invalid node type: "
 					+ nodeType);
 		}
 		setType(nodeType);
 	}
 
-	public ObjectProperty()
-	{
+	public ObjectProperty() {
 	}
 
-	public ObjectProperty(int pos)
-	{
+	public ObjectProperty(int pos) {
 		super(pos);
 	}
 
-	public ObjectProperty(int pos, int len)
-	{
+	public ObjectProperty(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Marks this node as a "getter" property.
 	 */
-	public void setIsGetterMethod()
-	{
+	public void setIsGetterMethod() {
 		type = Token.GET;
 	}
 
 	/**
 	 * Returns true if this is a getter function.
 	 */
-	public boolean isGetterMethod()
-	{
+	public boolean isGetterMethod() {
 		return type == Token.GET;
 	}
 
 	/**
 	 * Marks this node as a "setter" property.
 	 */
-	public void setIsSetterMethod()
-	{
+	public void setIsSetterMethod() {
 		type = Token.SET;
 	}
 
 	/**
 	 * Returns true if this is a setter function.
 	 */
-	public boolean isSetterMethod()
-	{
+	public boolean isSetterMethod() {
 		return type == Token.SET;
 	}
 
-	public void setIsNormalMethod()
-	{
+	public void setIsNormalMethod() {
 		type = Token.METHOD;
 	}
 
-	public boolean isNormalMethod()
-	{
+	public boolean isNormalMethod() {
 		return type == Token.METHOD;
 	}
 
-	public boolean isMethod()
-	{
+	public boolean isMethod() {
 		return isGetterMethod() || isSetterMethod() || isNormalMethod();
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("\n");
 		sb.append(makeIndent(depth + 1));
-		if (isGetterMethod())
-		{
+		if (isGetterMethod()) {
 			sb.append("get ");
-		}
-		else if (isSetterMethod())
-		{
+		} else if (isSetterMethod()) {
 			sb.append("set ");
 		}
 		sb.append(left.toSource(getType() == Token.COLON ? 0 : depth));
-		if (type == Token.COLON)
-		{
+		if (type == Token.COLON) {
 			sb.append(": ");
 		}
 		sb.append(right.toSource(getType() == Token.COLON ? 0 : depth + 1));

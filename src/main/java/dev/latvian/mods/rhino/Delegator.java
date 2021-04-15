@@ -24,8 +24,7 @@ package dev.latvian.mods.rhino;
  */
 
 public class Delegator
-		implements Function, SymbolScriptable
-{
+		implements Function, SymbolScriptable {
 
 	protected Scriptable obj = null;
 
@@ -37,8 +36,7 @@ public class Delegator
 	 *
 	 * @see Delegator#construct
 	 */
-	public Delegator()
-	{
+	public Delegator() {
 	}
 
 	/**
@@ -48,8 +46,7 @@ public class Delegator
 	 * @param obj the delegee
 	 * @see Scriptable
 	 */
-	public Delegator(Scriptable obj)
-	{
+	public Delegator(Scriptable obj) {
 		this.obj = obj;
 	}
 
@@ -59,14 +56,10 @@ public class Delegator
 	 *
 	 * @see #construct(Context cx, Scriptable scope, Object[] args)
 	 */
-	protected Delegator newInstance()
-	{
-		try
-		{
+	protected Delegator newInstance() {
+		try {
 			return this.getClass().newInstance();
-		}
-		catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			throw Context.throwAsScriptRuntimeEx(ex);
 		}
 	}
@@ -76,8 +69,7 @@ public class Delegator
 	 *
 	 * @return the delegee
 	 */
-	public Scriptable getDelegee()
-	{
+	public Scriptable getDelegee() {
 		return obj;
 	}
 
@@ -87,8 +79,7 @@ public class Delegator
 	 * @param obj the delegee
 	 * @see Scriptable
 	 */
-	public void setDelegee(Scriptable obj)
-	{
+	public void setDelegee(Scriptable obj) {
 		this.obj = obj;
 	}
 
@@ -96,8 +87,7 @@ public class Delegator
 	 * @see Scriptable#getClassName
 	 */
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return getDelegee().getClassName();
 	}
 
@@ -105,17 +95,14 @@ public class Delegator
 	 * @see Scriptable#get(String, Scriptable)
 	 */
 	@Override
-	public Object get(String name, Scriptable start)
-	{
+	public Object get(String name, Scriptable start) {
 		return getDelegee().get(name, start);
 	}
 
 	@Override
-	public Object get(Symbol key, Scriptable start)
-	{
+	public Object get(Symbol key, Scriptable start) {
 		final Scriptable delegee = getDelegee();
-		if (delegee instanceof SymbolScriptable)
-		{
+		if (delegee instanceof SymbolScriptable) {
 			return ((SymbolScriptable) delegee).get(key, start);
 		}
 		return NOT_FOUND;
@@ -125,8 +112,7 @@ public class Delegator
 	 * @see Scriptable#get(int, Scriptable)
 	 */
 	@Override
-	public Object get(int index, Scriptable start)
-	{
+	public Object get(int index, Scriptable start) {
 		return getDelegee().get(index, start);
 	}
 
@@ -134,17 +120,14 @@ public class Delegator
 	 * @see Scriptable#has(String, Scriptable)
 	 */
 	@Override
-	public boolean has(String name, Scriptable start)
-	{
+	public boolean has(String name, Scriptable start) {
 		return getDelegee().has(name, start);
 	}
 
 	@Override
-	public boolean has(Symbol key, Scriptable start)
-	{
+	public boolean has(Symbol key, Scriptable start) {
 		final Scriptable delegee = getDelegee();
-		if (delegee instanceof SymbolScriptable)
-		{
+		if (delegee instanceof SymbolScriptable) {
 			return ((SymbolScriptable) delegee).has(key, start);
 		}
 		return false;
@@ -154,8 +137,7 @@ public class Delegator
 	 * @see Scriptable#has(int, Scriptable)
 	 */
 	@Override
-	public boolean has(int index, Scriptable start)
-	{
+	public boolean has(int index, Scriptable start) {
 		return getDelegee().has(index, start);
 	}
 
@@ -163,8 +145,7 @@ public class Delegator
 	 * @see Scriptable#put(String, Scriptable, Object)
 	 */
 	@Override
-	public void put(String name, Scriptable start, Object value)
-	{
+	public void put(String name, Scriptable start, Object value) {
 		getDelegee().put(name, start, value);
 	}
 
@@ -172,11 +153,9 @@ public class Delegator
 	 * @see SymbolScriptable#put(Symbol, Scriptable, Object)
 	 */
 	@Override
-	public void put(Symbol symbol, Scriptable start, Object value)
-	{
+	public void put(Symbol symbol, Scriptable start, Object value) {
 		final Scriptable delegee = getDelegee();
-		if (delegee instanceof SymbolScriptable)
-		{
+		if (delegee instanceof SymbolScriptable) {
 			((SymbolScriptable) delegee).put(symbol, start, value);
 		}
 	}
@@ -185,8 +164,7 @@ public class Delegator
 	 * @see Scriptable#put(int, Scriptable, Object)
 	 */
 	@Override
-	public void put(int index, Scriptable start, Object value)
-	{
+	public void put(int index, Scriptable start, Object value) {
 		getDelegee().put(index, start, value);
 	}
 
@@ -194,17 +172,14 @@ public class Delegator
 	 * @see Scriptable#delete(String)
 	 */
 	@Override
-	public void delete(String name)
-	{
+	public void delete(String name) {
 		getDelegee().delete(name);
 	}
 
 	@Override
-	public void delete(Symbol key)
-	{
+	public void delete(Symbol key) {
 		final Scriptable delegee = getDelegee();
-		if (delegee instanceof SymbolScriptable)
-		{
+		if (delegee instanceof SymbolScriptable) {
 			((SymbolScriptable) delegee).delete(key);
 		}
 	}
@@ -213,8 +188,7 @@ public class Delegator
 	 * @see Scriptable#delete(int)
 	 */
 	@Override
-	public void delete(int index)
-	{
+	public void delete(int index) {
 		getDelegee().delete(index);
 	}
 
@@ -222,8 +196,7 @@ public class Delegator
 	 * @see Scriptable#getPrototype
 	 */
 	@Override
-	public Scriptable getPrototype()
-	{
+	public Scriptable getPrototype() {
 		return getDelegee().getPrototype();
 	}
 
@@ -231,8 +204,7 @@ public class Delegator
 	 * @see Scriptable#setPrototype
 	 */
 	@Override
-	public void setPrototype(Scriptable prototype)
-	{
+	public void setPrototype(Scriptable prototype) {
 		getDelegee().setPrototype(prototype);
 	}
 
@@ -240,8 +212,7 @@ public class Delegator
 	 * @see Scriptable#getParentScope
 	 */
 	@Override
-	public Scriptable getParentScope()
-	{
+	public Scriptable getParentScope() {
 		return getDelegee().getParentScope();
 	}
 
@@ -249,8 +220,7 @@ public class Delegator
 	 * @see Scriptable#setParentScope
 	 */
 	@Override
-	public void setParentScope(Scriptable parent)
-	{
+	public void setParentScope(Scriptable parent) {
 		getDelegee().setParentScope(parent);
 	}
 
@@ -258,8 +228,7 @@ public class Delegator
 	 * @see Scriptable#getIds
 	 */
 	@Override
-	public Object[] getIds()
-	{
+	public Object[] getIds() {
 		return getDelegee().getIds();
 	}
 
@@ -275,8 +244,7 @@ public class Delegator
 	 * @see Scriptable#getDefaultValue
 	 */
 	@Override
-	public Object getDefaultValue(Class<?> hint)
-	{
+	public Object getDefaultValue(Class<?> hint) {
 		return (hint == null ||
 				hint == ScriptRuntime.ScriptableClass ||
 				hint == ScriptRuntime.FunctionClass) ?
@@ -287,8 +255,7 @@ public class Delegator
 	 * @see Scriptable#hasInstance
 	 */
 	@Override
-	public boolean hasInstance(Scriptable instance)
-	{
+	public boolean hasInstance(Scriptable instance) {
 		return getDelegee().hasInstance(instance);
 	}
 
@@ -297,8 +264,7 @@ public class Delegator
 	 */
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args)
-	{
+					   Object[] args) {
 		return ((Function) getDelegee()).call(cx, scope, thisObj, args);
 	}
 
@@ -317,20 +283,15 @@ public class Delegator
 	 * @see Function#construct(Context, Scriptable, Object[])
 	 */
 	@Override
-	public Scriptable construct(Context cx, Scriptable scope, Object[] args)
-	{
+	public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
 		Scriptable myDelegee = getDelegee();
-		if (myDelegee == null)
-		{
+		if (myDelegee == null) {
 			//this little trick allows us to declare prototype objects for Delegators
 			Delegator n = newInstance();
 			Scriptable delegee;
-			if (args.length == 0)
-			{
+			if (args.length == 0) {
 				delegee = new NativeObject();
-			}
-			else
-			{
+			} else {
 				delegee = ScriptRuntime.toObject(cx, scope, args[0]);
 			}
 			n.setDelegee(delegee);

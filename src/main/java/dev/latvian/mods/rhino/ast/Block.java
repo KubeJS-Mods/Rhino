@@ -17,54 +17,45 @@ import dev.latvian.mods.rhino.Token;
  * <pre><i>Block</i> :
  *     <b>{</b> Statement* <b>}</b></pre>
  */
-public class Block extends AstNode
-{
+public class Block extends AstNode {
 
 	{
 		this.type = Token.BLOCK;
 	}
 
-	public Block()
-	{
+	public Block() {
 	}
 
-	public Block(int pos)
-	{
+	public Block(int pos) {
 		super(pos);
 	}
 
-	public Block(int pos, int len)
-	{
+	public Block(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Alias for {@link #addChild}.
 	 */
-	public void addStatement(AstNode statement)
-	{
+	public void addStatement(AstNode statement) {
 		addChild(statement);
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("{\n");
-		for (Node kid : this)
-		{
+		for (Node kid : this) {
 			AstNode astNodeKid = (AstNode) kid;
 			sb.append(astNodeKid.toSource(depth + 1));
-			if (astNodeKid.getType() == Token.COMMENT)
-			{
+			if (astNodeKid.getType() == Token.COMMENT) {
 				sb.append("\n");
 			}
 		}
 		sb.append(makeIndent(depth));
 		sb.append("}");
-		if (this.getInlineComment() != null)
-		{
+		if (this.getInlineComment() != null) {
 			sb.append(this.getInlineComment().toSource(depth));
 		}
 		sb.append("\n");
@@ -72,12 +63,9 @@ public class Block extends AstNode
 	}
 
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
-			for (Node kid : this)
-			{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
+			for (Node kid : this) {
 				((AstNode) kid).visit(v);
 			}
 		}

@@ -20,8 +20,7 @@ import dev.latvian.mods.rhino.Token;
  * bounds of the node.  If the right paren is missing, the node ends at the end
  * of the filter expression.
  */
-public class XmlDotQuery extends InfixExpression
-{
+public class XmlDotQuery extends InfixExpression {
 
 	private int rp = -1;
 
@@ -29,17 +28,14 @@ public class XmlDotQuery extends InfixExpression
 		type = Token.DOTQUERY;
 	}
 
-	public XmlDotQuery()
-	{
+	public XmlDotQuery() {
 	}
 
-	public XmlDotQuery(int pos)
-	{
+	public XmlDotQuery(int pos) {
 		super(pos);
 	}
 
-	public XmlDotQuery(int pos, int len)
-	{
+	public XmlDotQuery(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -50,22 +46,19 @@ public class XmlDotQuery extends InfixExpression
 	 * immediately after the "." in the operator - no whitespace is
 	 * permitted between the dot and lp by the scanner.
 	 */
-	public int getRp()
-	{
+	public int getRp() {
 		return rp;
 	}
 
 	/**
 	 * Sets right-paren position
 	 */
-	public void setRp(int rp)
-	{
+	public void setRp(int rp) {
 		this.rp = rp;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append(getLeft().toSource(0));

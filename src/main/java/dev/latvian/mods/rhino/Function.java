@@ -16,8 +16,7 @@ package dev.latvian.mods.rhino;
  * @see Scriptable
  */
 
-public interface Function extends Scriptable, Callable
-{
+public interface Function extends Scriptable, Callable {
 	/**
 	 * Call the function.
 	 * <p>

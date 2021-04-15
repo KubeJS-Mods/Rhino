@@ -14,24 +14,19 @@ import java.util.Iterator;
  *
  * @author Norris Boyd
  */
-public final class NativeIterator extends IdScriptableObject
-{
+public final class NativeIterator extends IdScriptableObject {
 	private static final long serialVersionUID = -4136968203581667681L;
 	private static final Object ITERATOR_TAG = "Iterator";
 
-	static void init(Context cx, ScriptableObject scope, boolean sealed)
-	{
+	static void init(Context cx, ScriptableObject scope, boolean sealed) {
 		// Iterator
 		NativeIterator iterator = new NativeIterator();
 		iterator.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 
 		// Generator
-		if (cx.getLanguageVersion() >= Context.VERSION_ES6)
-		{
+		if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
 			ES6Generator.init(scope, sealed);
-		}
-		else
-		{
+		} else {
 			NativeGenerator.init(scope, sealed);
 		}
 
@@ -39,8 +34,7 @@ public final class NativeIterator extends IdScriptableObject
 		NativeObject obj = new StopIteration();
 		obj.setPrototype(getObjectPrototype(scope));
 		obj.setParentScope(scope);
-		if (sealed)
-		{
+		if (sealed) {
 			obj.sealObject();
 		}
 		defineProperty(scope, STOP_ITERATION, obj,
@@ -54,12 +48,10 @@ public final class NativeIterator extends IdScriptableObject
 	/**
 	 * Only for constructing the prototype object.
 	 */
-	private NativeIterator()
-	{
+	private NativeIterator() {
 	}
 
-	private NativeIterator(Object objectIterator)
-	{
+	private NativeIterator(Object objectIterator) {
 		this.objectIterator = objectIterator;
 	}
 
@@ -72,8 +64,7 @@ public final class NativeIterator extends IdScriptableObject
 	 * @param scope a scope whose parent chain reaches a top-level scope
 	 * @return the StopIteration object
 	 */
-	public static Object getStopIterationObject(Scriptable scope)
-	{
+	public static Object getStopIterationObject(Scriptable scope) {
 		Scriptable top = getTopLevelScope(scope);
 		return getTopScopeValue(top, ITERATOR_TAG);
 	}
@@ -81,29 +72,24 @@ public final class NativeIterator extends IdScriptableObject
 	private static final String STOP_ITERATION = "StopIteration";
 	public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
 
-	public static class StopIteration extends NativeObject
-	{
+	public static class StopIteration extends NativeObject {
 		private static final long serialVersionUID = 2485151085722377663L;
 
 		private Object value = Undefined.instance;
 
-		public StopIteration()
-		{
+		public StopIteration() {
 		}
 
-		public StopIteration(Object val)
-		{
+		public StopIteration(Object val) {
 			this.value = val;
 		}
 
-		public Object getValue()
-		{
+		public Object getValue() {
 			return value;
 		}
 
 		@Override
-		public String getClassName()
-		{
+		public String getClassName() {
 			return STOP_ITERATION;
 		}
 
@@ -111,25 +97,21 @@ public final class NativeIterator extends IdScriptableObject
 		 * doesn't have a constructor.
 		 */
 		@Override
-		public boolean hasInstance(Scriptable instance)
-		{
+		public boolean hasInstance(Scriptable instance) {
 			return instance instanceof StopIteration;
 		}
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "Iterator";
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
+	protected void initPrototypeId(int id) {
 		String s;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				arity = 2;
 				s = "constructor";
@@ -150,28 +132,23 @@ public final class NativeIterator extends IdScriptableObject
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(ITERATOR_TAG))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(ITERATOR_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
 
-		if (id == Id_constructor)
-		{
+		if (id == Id_constructor) {
 			return jsConstructor(cx, scope, thisObj, args);
 		}
 
-		if (!(thisObj instanceof NativeIterator))
-		{
+		if (!(thisObj instanceof NativeIterator)) {
 			throw incompatibleCallError(f);
 		}
 
 		NativeIterator iterator = (NativeIterator) thisObj;
 
-		switch (id)
-		{
+		switch (id) {
 
 			case Id_next:
 				return iterator.next(cx, scope);
@@ -187,27 +164,23 @@ public final class NativeIterator extends IdScriptableObject
 
 	/* The JavaScript constructor */
 	private static Object jsConstructor(Context cx, Scriptable scope,
-										Scriptable thisObj, Object[] args)
-	{
+										Scriptable thisObj, Object[] args) {
 		if (args.length == 0 || args[0] == null ||
-				args[0] == Undefined.instance)
-		{
+				args[0] == Undefined.instance) {
 			Object argument = args.length == 0 ? Undefined.instance : args[0];
 			throw ScriptRuntime.typeError1("msg.no.properties",
 					ScriptRuntime.toString(argument));
 		}
 		Scriptable obj = ScriptRuntime.toObject(cx, scope, args[0]);
 		boolean keyOnly = args.length > 1 && ScriptRuntime.toBoolean(args[1]);
-		if (thisObj != null)
-		{
+		if (thisObj != null) {
 			// Called as a function. Convert to iterator if possible.
 
 			// For objects that implement java.lang.Iterable or
 			// java.util.Iterator, have JavaScript Iterator call the underlying
 			// iteration methods
 			Iterator<?> iterator = getJavaIterator(obj);
-			if (iterator != null)
-			{
+			if (iterator != null) {
 				scope = getTopLevelScope(scope);
 				return cx.getWrapFactory().wrap(cx, scope,
 						new WrappedJavaIterator(iterator, scope),
@@ -217,8 +190,7 @@ public final class NativeIterator extends IdScriptableObject
 			// Otherwise, just call the runtime routine
 			Scriptable jsIterator = ScriptRuntime.toIterator(cx, scope, obj,
 					keyOnly);
-			if (jsIterator != null)
-			{
+			if (jsIterator != null) {
 				return jsIterator;
 			}
 		}
@@ -236,11 +208,9 @@ public final class NativeIterator extends IdScriptableObject
 		return result;
 	}
 
-	private Object next(Context cx, Scriptable scope)
-	{
+	private Object next(Context cx, Scriptable scope) {
 		Boolean b = ScriptRuntime.enumNext(this.objectIterator);
-		if (!b)
-		{
+		if (!b) {
 			// Out of values. Throw StopIteration.
 			throw new JavaScriptException(
 					NativeIterator.getStopIterationObject(scope), null, 0);
@@ -253,18 +223,14 @@ public final class NativeIterator extends IdScriptableObject
 	 * wrapping as a JavaScript Iterator. Otherwise, return null.
 	 * This method is in VMBridge since Iterable is a JDK 1.5 addition.
 	 */
-	static private Iterator<?> getJavaIterator(Object obj)
-	{
-		if (obj instanceof Wrapper)
-		{
+	static private Iterator<?> getJavaIterator(Object obj) {
+		if (obj instanceof Wrapper) {
 			Object unwrapped = ((Wrapper) obj).unwrap();
 			Iterator<?> iterator = null;
-			if (unwrapped instanceof Iterator)
-			{
+			if (unwrapped instanceof Iterator) {
 				iterator = (Iterator<?>) unwrapped;
 			}
-			if (unwrapped instanceof Iterable)
-			{
+			if (unwrapped instanceof Iterable) {
 				iterator = ((Iterable<?>) unwrapped).iterator();
 			}
 			return iterator;
@@ -272,18 +238,14 @@ public final class NativeIterator extends IdScriptableObject
 		return null;
 	}
 
-	static public class WrappedJavaIterator
-	{
-		WrappedJavaIterator(Iterator<?> iterator, Scriptable scope)
-		{
+	static public class WrappedJavaIterator {
+		WrappedJavaIterator(Iterator<?> iterator, Scriptable scope) {
 			this.iterator = iterator;
 			this.scope = scope;
 		}
 
-		public Object next()
-		{
-			if (!iterator.hasNext())
-			{
+		public Object next() {
+			if (!iterator.hasNext()) {
 				// Out of values. Throw StopIteration.
 				throw new JavaScriptException(
 						NativeIterator.getStopIterationObject(scope), null, 0);
@@ -291,8 +253,7 @@ public final class NativeIterator extends IdScriptableObject
 			return iterator.next();
 		}
 
-		public Object __iterator__(boolean b)
-		{
+		public Object __iterator__(boolean b) {
 			return this;
 		}
 
@@ -303,8 +264,7 @@ public final class NativeIterator extends IdScriptableObject
 	// #string_id_map#
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2007-06-11 09:43:19 EDT
 		L0:
@@ -312,23 +272,17 @@ public final class NativeIterator extends IdScriptableObject
 			id = 0;
 			String X = null;
 			int s_length = s.length();
-			if (s_length == 4)
-			{
+			if (s_length == 4) {
 				X = "next";
 				id = Id_next;
-			}
-			else if (s_length == 11)
-			{
+			} else if (s_length == 11) {
 				X = "constructor";
 				id = Id_constructor;
-			}
-			else if (s_length == 12)
-			{
+			} else if (s_length == 12) {
 				X = "__iterator__";
 				id = Id___iterator__;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;

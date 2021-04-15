@@ -15,8 +15,7 @@ import java.util.List;
  * AST node for a JavaScript 1.7 Array comprehension.
  * Node type is {@link Token#ARRAYCOMP}.
  */
-public class ArrayComprehension extends Scope
-{
+public class ArrayComprehension extends Scope {
 
 	private AstNode result;
 	private final List<ArrayComprehensionLoop> loops =
@@ -30,25 +29,21 @@ public class ArrayComprehension extends Scope
 		type = Token.ARRAYCOMP;
 	}
 
-	public ArrayComprehension()
-	{
+	public ArrayComprehension() {
 	}
 
-	public ArrayComprehension(int pos)
-	{
+	public ArrayComprehension(int pos) {
 		super(pos);
 	}
 
-	public ArrayComprehension(int pos, int len)
-	{
+	public ArrayComprehension(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Returns result expression node (just after opening bracket)
 	 */
-	public AstNode getResult()
-	{
+	public AstNode getResult() {
 		return result;
 	}
 
@@ -57,8 +52,7 @@ public class ArrayComprehension extends Scope
 	 *
 	 * @throws IllegalArgumentException if result is {@code null}
 	 */
-	public void setResult(AstNode result)
-	{
+	public void setResult(AstNode result) {
 		assertNotNull(result);
 		this.result = result;
 		result.setParent(this);
@@ -67,8 +61,7 @@ public class ArrayComprehension extends Scope
 	/**
 	 * Returns loop list
 	 */
-	public List<ArrayComprehensionLoop> getLoops()
-	{
+	public List<ArrayComprehensionLoop> getLoops() {
 		return loops;
 	}
 
@@ -77,12 +70,10 @@ public class ArrayComprehension extends Scope
 	 *
 	 * @throws IllegalArgumentException if loops is {@code null}
 	 */
-	public void setLoops(List<ArrayComprehensionLoop> loops)
-	{
+	public void setLoops(List<ArrayComprehensionLoop> loops) {
 		assertNotNull(loops);
 		this.loops.clear();
-		for (ArrayComprehensionLoop acl : loops)
-		{
+		for (ArrayComprehensionLoop acl : loops) {
 			addLoop(acl);
 		}
 	}
@@ -92,8 +83,7 @@ public class ArrayComprehension extends Scope
 	 *
 	 * @throws IllegalArgumentException if acl is {@code null}
 	 */
-	public void addLoop(ArrayComprehensionLoop acl)
-	{
+	public void addLoop(ArrayComprehensionLoop acl) {
 		assertNotNull(acl);
 		loops.add(acl);
 		acl.setParent(this);
@@ -102,8 +92,7 @@ public class ArrayComprehension extends Scope
 	/**
 	 * Returns filter expression, or {@code null} if not present
 	 */
-	public AstNode getFilter()
-	{
+	public AstNode getFilter() {
 		return filter;
 	}
 
@@ -111,11 +100,9 @@ public class ArrayComprehension extends Scope
 	 * Sets filter expression, and sets its parent to this node.
 	 * Can be {@code null}.
 	 */
-	public void setFilter(AstNode filter)
-	{
+	public void setFilter(AstNode filter) {
 		this.filter = filter;
-		if (filter != null)
-		{
+		if (filter != null) {
 			filter.setParent(this);
 		}
 	}
@@ -123,63 +110,54 @@ public class ArrayComprehension extends Scope
 	/**
 	 * Returns position of 'if' keyword, -1 if not present
 	 */
-	public int getIfPosition()
-	{
+	public int getIfPosition() {
 		return ifPosition;
 	}
 
 	/**
 	 * Sets position of 'if' keyword
 	 */
-	public void setIfPosition(int ifPosition)
-	{
+	public void setIfPosition(int ifPosition) {
 		this.ifPosition = ifPosition;
 	}
 
 	/**
 	 * Returns filter left paren position, or -1 if no filter
 	 */
-	public int getFilterLp()
-	{
+	public int getFilterLp() {
 		return lp;
 	}
 
 	/**
 	 * Sets filter left paren position, or -1 if no filter
 	 */
-	public void setFilterLp(int lp)
-	{
+	public void setFilterLp(int lp) {
 		this.lp = lp;
 	}
 
 	/**
 	 * Returns filter right paren position, or -1 if no filter
 	 */
-	public int getFilterRp()
-	{
+	public int getFilterRp() {
 		return rp;
 	}
 
 	/**
 	 * Sets filter right paren position, or -1 if no filter
 	 */
-	public void setFilterRp(int rp)
-	{
+	public void setFilterRp(int rp) {
 		this.rp = rp;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder(250);
 		sb.append("[");
 		sb.append(result.toSource(0));
-		for (ArrayComprehensionLoop loop : loops)
-		{
+		for (ArrayComprehensionLoop loop : loops) {
 			sb.append(loop.toSource(0));
 		}
-		if (filter != null)
-		{
+		if (filter != null) {
 			sb.append(" if (");
 			sb.append(filter.toSource(0));
 			sb.append(")");
@@ -193,19 +171,15 @@ public class ArrayComprehension extends Scope
 	 * filter.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (!v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (!v.visit(this)) {
 			return;
 		}
 		result.visit(v);
-		for (ArrayComprehensionLoop loop : loops)
-		{
+		for (ArrayComprehensionLoop loop : loops) {
 			loop.visit(v);
 		}
-		if (filter != null)
-		{
+		if (filter != null) {
 			filter.visit(v);
 		}
 	}

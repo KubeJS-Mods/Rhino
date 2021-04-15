@@ -25,8 +25,7 @@ import java.util.ArrayDeque;
  *
  * <p>Both the name and the concept are borrowed from V8.</p>
  */
-public class ConsString implements CharSequence, Serializable
-{
+public class ConsString implements CharSequence, Serializable {
 
 	private static final long serialVersionUID = -8432806714471372570L;
 
@@ -34,8 +33,7 @@ public class ConsString implements CharSequence, Serializable
 	private final int length;
 	private boolean isFlat;
 
-	public ConsString(CharSequence str1, CharSequence str2)
-	{
+	public ConsString(CharSequence str1, CharSequence str2) {
 		left = str1;
 		right = str2;
 		length = left.length() + right.length();
@@ -43,21 +41,17 @@ public class ConsString implements CharSequence, Serializable
 	}
 
 	// Replace with string representation when serializing
-	private Object writeReplace()
-	{
+	private Object writeReplace() {
 		return this.toString();
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return isFlat ? (String) left : flatten();
 	}
 
-	private synchronized String flatten()
-	{
-		if (!isFlat)
-		{
+	private synchronized String flatten() {
+		if (!isFlat) {
 			final char[] chars = new char[length];
 			int charPos = length;
 
@@ -65,17 +59,12 @@ public class ConsString implements CharSequence, Serializable
 			stack.addFirst(left);
 
 			CharSequence next = right;
-			do
-			{
-				if (next instanceof ConsString)
-				{
+			do {
+				if (next instanceof ConsString) {
 					ConsString casted = (ConsString) next;
-					if (casted.isFlat)
-					{
+					if (casted.isFlat) {
 						next = casted.left;
-					}
-					else
-					{
+					} else {
 						stack.addFirst(casted.left);
 						next = casted.right;
 						continue;
@@ -97,21 +86,18 @@ public class ConsString implements CharSequence, Serializable
 	}
 
 	@Override
-	public int length()
-	{
+	public int length() {
 		return length;
 	}
 
 	@Override
-	public char charAt(int index)
-	{
+	public char charAt(int index) {
 		String str = isFlat ? (String) left : flatten();
 		return str.charAt(index);
 	}
 
 	@Override
-	public CharSequence subSequence(int start, int end)
-	{
+	public CharSequence subSequence(int start, int end) {
 		String str = isFlat ? (String) left : flatten();
 		return str.substring(start, end);
 	}

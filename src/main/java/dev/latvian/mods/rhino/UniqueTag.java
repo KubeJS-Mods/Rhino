@@ -17,8 +17,7 @@ import java.io.Serializable;
  * ObjectInputStream would not restore them correctly as it lacks support
  * for readResolve method
  */
-public final class UniqueTag implements Serializable
-{
+public final class UniqueTag implements Serializable {
 	private static final long serialVersionUID = -4320556826714577259L;
 
 	private static final int ID_NOT_FOUND = 1;
@@ -46,15 +45,12 @@ public final class UniqueTag implements Serializable
 
 	private final int tagId;
 
-	private UniqueTag(int tagId)
-	{
+	private UniqueTag(int tagId) {
 		this.tagId = tagId;
 	}
 
-	public Object readResolve()
-	{
-		switch (tagId)
-		{
+	public Object readResolve() {
+		switch (tagId) {
 			case ID_NOT_FOUND:
 				return NOT_FOUND;
 			case ID_NULL_VALUE:
@@ -67,11 +63,9 @@ public final class UniqueTag implements Serializable
 
 	// Overridden for better debug printouts
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		String name;
-		switch (tagId)
-		{
+		switch (tagId) {
 			case ID_NOT_FOUND:
 				name = "NOT_FOUND";
 				break;

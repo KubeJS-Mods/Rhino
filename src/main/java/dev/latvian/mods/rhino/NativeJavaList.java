@@ -7,71 +7,58 @@ package dev.latvian.mods.rhino;
 
 import java.util.List;
 
-public class NativeJavaList extends NativeJavaObject
-{
+public class NativeJavaList extends NativeJavaObject {
 
 	private final List<Object> list;
 
 	@SuppressWarnings("unchecked")
-	public NativeJavaList(Scriptable scope, Object list)
-	{
+	public NativeJavaList(Scriptable scope, Object list) {
 		super(scope, list, list.getClass());
 		assert list instanceof List;
 		this.list = (List<Object>) list;
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "JavaList";
 	}
 
 
 	@Override
-	public boolean has(String name, Scriptable start)
-	{
-		if (name.equals("length"))
-		{
+	public boolean has(String name, Scriptable start) {
+		if (name.equals("length")) {
 			return true;
 		}
 		return super.has(name, start);
 	}
 
 	@Override
-	public boolean has(int index, Scriptable start)
-	{
-		if (isWithValidIndex(index))
-		{
+	public boolean has(int index, Scriptable start) {
+		if (isWithValidIndex(index)) {
 			return true;
 		}
 		return super.has(index, start);
 	}
 
 	@Override
-	public boolean has(Symbol key, Scriptable start)
-	{
-		if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key))
-		{
+	public boolean has(Symbol key, Scriptable start) {
+		if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key)) {
 			return true;
 		}
 		return super.has(key, start);
 	}
 
 	@Override
-	public Object get(String name, Scriptable start)
-	{
-		if ("length".equals(name))
-		{
+	public Object get(String name, Scriptable start) {
+		if ("length".equals(name)) {
 			return list.size();
 		}
 		return super.get(name, start);
 	}
 
 	@Override
-	public Object get(int index, Scriptable start)
-	{
-		if (isWithValidIndex(index))
-		{
+	public Object get(int index, Scriptable start) {
+		if (isWithValidIndex(index)) {
 			Context cx = Context.getContext();
 			Object obj = list.get(index);
 			return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
@@ -80,20 +67,16 @@ public class NativeJavaList extends NativeJavaObject
 	}
 
 	@Override
-	public Object get(Symbol key, Scriptable start)
-	{
-		if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key))
-		{
+	public Object get(Symbol key, Scriptable start) {
+		if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key)) {
 			return Boolean.TRUE;
 		}
 		return super.get(key, start);
 	}
 
 	@Override
-	public void put(int index, Scriptable start, Object value)
-	{
-		if (isWithValidIndex(index))
-		{
+	public void put(int index, Scriptable start, Object value) {
+		if (isWithValidIndex(index)) {
 			list.set(index, Context.jsToJava(value, Object.class));
 			return;
 		}
@@ -101,20 +84,17 @@ public class NativeJavaList extends NativeJavaObject
 	}
 
 	@Override
-	public Object[] getIds()
-	{
+	public Object[] getIds() {
 		List<?> list = (List<?>) javaObject;
 		Object[] result = new Object[list.size()];
 		int i = list.size();
-		while (--i >= 0)
-		{
+		while (--i >= 0) {
 			result[i] = i;
 		}
 		return result;
 	}
 
-	private boolean isWithValidIndex(int index)
-	{
+	private boolean isWithValidIndex(int index) {
 		return index >= 0 && index < list.size();
 	}
 }

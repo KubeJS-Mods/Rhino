@@ -25,8 +25,7 @@ import java.util.TreeSet;
  * {@link Parser} via the
  * {@link CompilerEnvirons}.
  */
-public class AstRoot extends ScriptNode
-{
+public class AstRoot extends ScriptNode {
 
 	private SortedSet<Comment> comments;
 
@@ -34,12 +33,10 @@ public class AstRoot extends ScriptNode
 		type = Token.SCRIPT;
 	}
 
-	public AstRoot()
-	{
+	public AstRoot() {
 	}
 
-	public AstRoot(int pos)
-	{
+	public AstRoot(int pos) {
 		super(pos);
 	}
 
@@ -48,8 +45,7 @@ public class AstRoot extends ScriptNode
 	 *
 	 * @return comment set, sorted by start position. Can be {@code null}.
 	 */
-	public SortedSet<Comment> getComments()
-	{
+	public SortedSet<Comment> getComments() {
 		return comments;
 	}
 
@@ -59,20 +55,14 @@ public class AstRoot extends ScriptNode
 	 *
 	 * @param comments comment list.  can be {@code null}.
 	 */
-	public void setComments(SortedSet<Comment> comments)
-	{
-		if (comments == null)
-		{
+	public void setComments(SortedSet<Comment> comments) {
+		if (comments == null) {
 			this.comments = null;
-		}
-		else
-		{
-			if (this.comments != null)
-			{
+		} else {
+			if (this.comments != null) {
 				this.comments.clear();
 			}
-			for (Comment c : comments)
-			{
+			for (Comment c : comments) {
 				addComment(c);
 			}
 		}
@@ -84,11 +74,9 @@ public class AstRoot extends ScriptNode
 	 * @param comment the comment node.
 	 * @throws IllegalArgumentException if comment is {@code null}
 	 */
-	public void addComment(Comment comment)
-	{
+	public void addComment(Comment comment) {
 		assertNotNull(comment);
-		if (comments == null)
-		{
+		if (comments == null) {
 			comments = new TreeSet<>(new AstNode.PositionComparator());
 		}
 		comments.add(comment);
@@ -103,12 +91,9 @@ public class AstRoot extends ScriptNode
 	 * @param visitor the callback object.  It is passed each comment node.
 	 *                The return value is ignored.
 	 */
-	public void visitComments(NodeVisitor visitor)
-	{
-		if (comments != null)
-		{
-			for (Comment c : comments)
-			{
+	public void visitComments(NodeVisitor visitor) {
+		if (comments != null) {
+			for (Comment c : comments) {
 				visitor.visit(c);
 			}
 		}
@@ -122,21 +107,17 @@ public class AstRoot extends ScriptNode
 	 *
 	 * @param visitor the callback object.
 	 */
-	public void visitAll(NodeVisitor visitor)
-	{
+	public void visitAll(NodeVisitor visitor) {
 		visit(visitor);
 		visitComments(visitor);
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
-		for (Node node : this)
-		{
+		for (Node node : this) {
 			sb.append(((AstNode) node).toSource(depth));
-			if (node.getType() == Token.COMMENT)
-			{
+			if (node.getType() == Token.COMMENT) {
 				sb.append("\n");
 			}
 		}
@@ -147,8 +128,7 @@ public class AstRoot extends ScriptNode
 	 * A debug-printer that includes comments (at the end).
 	 */
 	@Override
-	public String debugPrint()
-	{
+	public String debugPrint() {
 		DebugPrintVisitor dpv = new DebugPrintVisitor(new StringBuilder(1000));
 		visitAll(dpv);
 		return dpv.toString();
@@ -160,16 +140,13 @@ public class AstRoot extends ScriptNode
 	 *
 	 * @throws IllegalStateException if a parent link is missing
 	 */
-	public void checkParentLinks()
-	{
+	public void checkParentLinks() {
 		this.visit(node -> {
 			int type = node.getType();
-			if (type == Token.SCRIPT)
-			{
+			if (type == Token.SCRIPT) {
 				return true;
 			}
-			if (node.getParent() == null)
-			{
+			if (node.getParent() == null) {
 				throw new IllegalStateException
 						("No parent for node: " + node
 								+ "\n" + node.toSource(0));

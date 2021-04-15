@@ -11,8 +11,7 @@ package dev.latvian.mods.rhino.ast;
  * node types, both of which may appear in "destructuring" expressions or
  * contexts.
  */
-public interface DestructuringForm
-{
+public interface DestructuringForm {
 
 	/**
 	 * Marks this node as being a destructuring form - that is, appearing

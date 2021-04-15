@@ -26,8 +26,7 @@ package dev.latvian.mods.rhino;
  * @see Delegator
  */
 
-public class Synchronizer extends Delegator
-{
+public class Synchronizer extends Delegator {
 
 	private Object syncObject;
 
@@ -36,8 +35,7 @@ public class Synchronizer extends Delegator
 	 *
 	 * @param obj the existing function
 	 */
-	public Synchronizer(Scriptable obj)
-	{
+	public Synchronizer(Scriptable obj) {
 		super(obj);
 	}
 
@@ -48,8 +46,7 @@ public class Synchronizer extends Delegator
 	 * @param obj        the existing function
 	 * @param syncObject the object to synchronized on
 	 */
-	public Synchronizer(Scriptable obj, Object syncObject)
-	{
+	public Synchronizer(Scriptable obj, Object syncObject) {
 		super(obj);
 		this.syncObject = syncObject;
 	}
@@ -59,11 +56,9 @@ public class Synchronizer extends Delegator
 	 */
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args)
-	{
+					   Object[] args) {
 		Object sync = syncObject != null ? syncObject : thisObj;
-		synchronized (sync instanceof Wrapper ? ((Wrapper) sync).unwrap() : sync)
-		{
+		synchronized (sync instanceof Wrapper ? ((Wrapper) sync).unwrap() : sync) {
 			return ((Function) obj).call(cx, scope, thisObj, args);
 		}
 	}

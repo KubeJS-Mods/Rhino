@@ -15,8 +15,7 @@ import dev.latvian.mods.rhino.Token;
  * <pre><i>CatchClause</i> :
  *        <b>catch</b> ( <i><b>Identifier</b></i> [<b>if</b> Expression] ) Block</pre>
  */
-public class CatchClause extends AstNode
-{
+public class CatchClause extends AstNode {
 
 	private Name varName;
 	private AstNode catchCondition;
@@ -29,17 +28,14 @@ public class CatchClause extends AstNode
 		type = Token.CATCH;
 	}
 
-	public CatchClause()
-	{
+	public CatchClause() {
 	}
 
-	public CatchClause(int pos)
-	{
+	public CatchClause(int pos) {
 		super(pos);
 	}
 
-	public CatchClause(int pos, int len)
-	{
+	public CatchClause(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -48,8 +44,7 @@ public class CatchClause extends AstNode
 	 *
 	 * @return catch variable
 	 */
-	public Name getVarName()
-	{
+	public Name getVarName() {
 		return varName;
 	}
 
@@ -59,8 +54,7 @@ public class CatchClause extends AstNode
 	 * @param varName catch variable
 	 * @throws IllegalArgumentException if varName is {@code null}
 	 */
-	public void setVarName(Name varName)
-	{
+	public void setVarName(Name varName) {
 		assertNotNull(varName);
 		this.varName = varName;
 		varName.setParent(this);
@@ -71,8 +65,7 @@ public class CatchClause extends AstNode
 	 *
 	 * @return catch condition node, {@code null} if not present
 	 */
-	public AstNode getCatchCondition()
-	{
+	public AstNode getCatchCondition() {
 		return catchCondition;
 	}
 
@@ -81,11 +74,9 @@ public class CatchClause extends AstNode
 	 *
 	 * @param catchCondition catch condition node.  Can be {@code null}.
 	 */
-	public void setCatchCondition(AstNode catchCondition)
-	{
+	public void setCatchCondition(AstNode catchCondition) {
 		this.catchCondition = catchCondition;
-		if (catchCondition != null)
-		{
+		if (catchCondition != null) {
 			catchCondition.setParent(this);
 		}
 	}
@@ -93,8 +84,7 @@ public class CatchClause extends AstNode
 	/**
 	 * Returns catch body
 	 */
-	public Block getBody()
-	{
+	public Block getBody() {
 		return body;
 	}
 
@@ -103,8 +93,7 @@ public class CatchClause extends AstNode
 	 *
 	 * @throws IllegalArgumentException if body is {@code null}
 	 */
-	public void setBody(Block body)
-	{
+	public void setBody(Block body) {
 		assertNotNull(body);
 		this.body = body;
 		body.setParent(this);
@@ -113,40 +102,35 @@ public class CatchClause extends AstNode
 	/**
 	 * Returns left paren position
 	 */
-	public int getLp()
-	{
+	public int getLp() {
 		return lp;
 	}
 
 	/**
 	 * Sets left paren position
 	 */
-	public void setLp(int lp)
-	{
+	public void setLp(int lp) {
 		this.lp = lp;
 	}
 
 	/**
 	 * Returns right paren position
 	 */
-	public int getRp()
-	{
+	public int getRp() {
 		return rp;
 	}
 
 	/**
 	 * Sets right paren position
 	 */
-	public void setRp(int rp)
-	{
+	public void setRp(int rp) {
 		this.rp = rp;
 	}
 
 	/**
 	 * Sets both paren positions
 	 */
-	public void setParens(int lp, int rp)
-	{
+	public void setParens(int lp, int rp) {
 		this.lp = lp;
 		this.rp = rp;
 	}
@@ -156,8 +140,7 @@ public class CatchClause extends AstNode
 	 *
 	 * @return position of "if" keyword, if present, or -1
 	 */
-	public int getIfPosition()
-	{
+	public int getIfPosition() {
 		return ifPosition;
 	}
 
@@ -166,20 +149,17 @@ public class CatchClause extends AstNode
 	 *
 	 * @param ifPosition position of "if" keyword, if present, or -1
 	 */
-	public void setIfPosition(int ifPosition)
-	{
+	public void setIfPosition(int ifPosition) {
 		this.ifPosition = ifPosition;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("catch (");
 		sb.append(varName.toSource(0));
-		if (catchCondition != null)
-		{
+		if (catchCondition != null) {
 			sb.append(" if ");
 			sb.append(catchCondition.toSource(0));
 		}
@@ -193,13 +173,10 @@ public class CatchClause extends AstNode
 	 * non-{@code null}, and the catch body.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			varName.visit(v);
-			if (catchCondition != null)
-			{
+			if (catchCondition != null) {
 				catchCondition.visit(v);
 			}
 			body.visit(v);

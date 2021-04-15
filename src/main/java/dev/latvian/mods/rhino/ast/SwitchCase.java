@@ -27,8 +27,7 @@ import java.util.List;
  * <i>DefaultClause</i> :
  *        <b>default</b> : [StatementList]</pre>
  */
-public class SwitchCase extends AstNode
-{
+public class SwitchCase extends AstNode {
 
 	private AstNode expression;
 	private List<AstNode> statements;
@@ -37,25 +36,21 @@ public class SwitchCase extends AstNode
 		type = Token.CASE;
 	}
 
-	public SwitchCase()
-	{
+	public SwitchCase() {
 	}
 
-	public SwitchCase(int pos)
-	{
+	public SwitchCase(int pos) {
 		super(pos);
 	}
 
-	public SwitchCase(int pos, int len)
-	{
+	public SwitchCase(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Returns the case expression, {@code null} for default case
 	 */
-	public AstNode getExpression()
-	{
+	public AstNode getExpression() {
 		return expression;
 	}
 
@@ -66,11 +61,9 @@ public class SwitchCase extends AstNode
 	 * first case has an {@code expression} that is a
 	 * {@link NumberLiteral} with value {@code 0}.
 	 */
-	public void setExpression(AstNode expression)
-	{
+	public void setExpression(AstNode expression) {
 		this.expression = expression;
-		if (expression != null)
-		{
+		if (expression != null) {
 			expression.setParent(this);
 		}
 	}
@@ -80,16 +73,14 @@ public class SwitchCase extends AstNode
 	 *
 	 * @return true if {@link #getExpression} would return {@code null}
 	 */
-	public boolean isDefault()
-	{
+	public boolean isDefault() {
 		return expression == null;
 	}
 
 	/**
 	 * Returns statement list, which may be {@code null}.
 	 */
-	public List<AstNode> getStatements()
-	{
+	public List<AstNode> getStatements() {
 		return statements;
 	}
 
@@ -97,14 +88,11 @@ public class SwitchCase extends AstNode
 	 * Sets statement list.  May be {@code null}.  Replaces any existing
 	 * statements.  Each element in the list has its parent set to this node.
 	 */
-	public void setStatements(List<AstNode> statements)
-	{
-		if (this.statements != null)
-		{
+	public void setStatements(List<AstNode> statements) {
+		if (this.statements != null) {
 			this.statements.clear();
 		}
-		for (AstNode s : statements)
-		{
+		for (AstNode s : statements) {
 			addStatement(s);
 		}
 	}
@@ -118,11 +106,9 @@ public class SwitchCase extends AstNode
 	 * @param statement a child statement
 	 * @throws IllegalArgumentException} if statement is {@code null}
 	 */
-	public void addStatement(AstNode statement)
-	{
+	public void addStatement(AstNode statement) {
 		assertNotNull(statement);
-		if (statements == null)
-		{
+		if (statements == null) {
 			statements = new ArrayList<>();
 		}
 		int end = statement.getPosition() + statement.getLength();
@@ -132,32 +118,24 @@ public class SwitchCase extends AstNode
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
-		if (expression == null)
-		{
+		if (expression == null) {
 			sb.append("default:\n");
-		}
-		else
-		{
+		} else {
 			sb.append("case ");
 			sb.append(expression.toSource(0));
 			sb.append(":");
-			if (this.getInlineComment() != null)
-			{
+			if (this.getInlineComment() != null) {
 				sb.append(this.getInlineComment().toSource(depth + 1));
 			}
 			sb.append("\n");
 		}
-		if (statements != null)
-		{
-			for (AstNode s : statements)
-			{
+		if (statements != null) {
+			for (AstNode s : statements) {
 				sb.append(s.toSource(depth + 1));
-				if (s.getType() == Token.COMMENT && ((Comment) s).getCommentType() == Token.CommentType.LINE)
-				{
+				if (s.getType() == Token.COMMENT && ((Comment) s).getCommentType() == Token.CommentType.LINE) {
 					sb.append("\n");
 				}
 			}
@@ -170,18 +148,13 @@ public class SwitchCase extends AstNode
 	 * each statement (if any are specified).
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
-			if (expression != null)
-			{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
+			if (expression != null) {
 				expression.visit(v);
 			}
-			if (statements != null)
-			{
-				for (AstNode s : statements)
-				{
+			if (statements != null) {
+				for (AstNode s : statements) {
 					s.visit(v);
 				}
 			}

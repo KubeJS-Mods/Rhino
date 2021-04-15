@@ -12,20 +12,17 @@ package dev.latvian.mods.rhino;
  * fit.
  */
 
-public class NativeCallSite extends IdScriptableObject
-{
+public class NativeCallSite extends IdScriptableObject {
 	private static final long serialVersionUID = 2688372752566593594L;
 	private static final String CALLSITE_TAG = "CallSite";
 	private ScriptStackElement element;
 
-	static void init(Scriptable scope, boolean sealed)
-	{
+	static void init(Scriptable scope, boolean sealed) {
 		NativeCallSite cs = new NativeCallSite();
 		cs.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
 
-	static NativeCallSite make(Scriptable scope, Scriptable ctorObj)
-	{
+	static NativeCallSite make(Scriptable scope, Scriptable ctorObj) {
 		NativeCallSite cs = new NativeCallSite();
 		Scriptable proto = (Scriptable) (ctorObj.get("prototype", ctorObj));
 		cs.setParentScope(scope);
@@ -33,28 +30,23 @@ public class NativeCallSite extends IdScriptableObject
 		return cs;
 	}
 
-	private NativeCallSite()
-	{
+	private NativeCallSite() {
 	}
 
-	void setElement(ScriptStackElement elt)
-	{
+	void setElement(ScriptStackElement elt) {
 		this.element = elt;
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "CallSite";
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
+	protected void initPrototypeId(int id) {
 		String s;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				arity = 0;
 				s = "constructor";
@@ -123,15 +115,12 @@ public class NativeCallSite extends IdScriptableObject
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(CALLSITE_TAG))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(CALLSITE_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				return make(scope, f);
 			case Id_getFunctionName:
@@ -161,23 +150,18 @@ public class NativeCallSite extends IdScriptableObject
 	}
 
 	@Override
-	public String toString()
-	{
-		if (element == null)
-		{
+	public String toString() {
+		if (element == null) {
 			return "";
 		}
 		return element.toString();
 	}
 
-	private static Object js_toString(Scriptable obj)
-	{
-		while (obj != null && !(obj instanceof NativeCallSite))
-		{
+	private static Object js_toString(Scriptable obj) {
+		while (obj != null && !(obj instanceof NativeCallSite)) {
 			obj = obj.getPrototype();
 		}
-		if (obj == null)
-		{
+		if (obj == null) {
 			return NOT_FOUND;
 		}
 		NativeCallSite cs = (NativeCallSite) obj;
@@ -186,47 +170,37 @@ public class NativeCallSite extends IdScriptableObject
 		return sb.toString();
 	}
 
-	private static Object getFunctionName(Scriptable obj)
-	{
-		while (obj != null && !(obj instanceof NativeCallSite))
-		{
+	private static Object getFunctionName(Scriptable obj) {
+		while (obj != null && !(obj instanceof NativeCallSite)) {
 			obj = obj.getPrototype();
 		}
-		if (obj == null)
-		{
+		if (obj == null) {
 			return NOT_FOUND;
 		}
 		NativeCallSite cs = (NativeCallSite) obj;
 		return (cs.element == null ? null : cs.element.functionName);
 	}
 
-	private static Object getFileName(Scriptable obj)
-	{
-		while (obj != null && !(obj instanceof NativeCallSite))
-		{
+	private static Object getFileName(Scriptable obj) {
+		while (obj != null && !(obj instanceof NativeCallSite)) {
 			obj = obj.getPrototype();
 		}
-		if (obj == null)
-		{
+		if (obj == null) {
 			return NOT_FOUND;
 		}
 		NativeCallSite cs = (NativeCallSite) obj;
 		return (cs.element == null ? null : cs.element.fileName);
 	}
 
-	private static Object getLineNumber(Scriptable obj)
-	{
-		while (obj != null && !(obj instanceof NativeCallSite))
-		{
+	private static Object getLineNumber(Scriptable obj) {
+		while (obj != null && !(obj instanceof NativeCallSite)) {
 			obj = obj.getPrototype();
 		}
-		if (obj == null)
-		{
+		if (obj == null) {
 			return NOT_FOUND;
 		}
 		NativeCallSite cs = (NativeCallSite) obj;
-		if ((cs.element == null) || (cs.element.lineNumber < 0))
-		{
+		if ((cs.element == null) || (cs.element.lineNumber < 0)) {
 			return Undefined.instance;
 		}
 		return cs.element.lineNumber;
@@ -235,8 +209,7 @@ public class NativeCallSite extends IdScriptableObject
 	// #string_id_map#
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2015-03-02 23:42:12 PST
 		L0:
@@ -245,8 +218,7 @@ public class NativeCallSite extends IdScriptableObject
 			String X = null;
 			int c;
 			L:
-			switch (s.length())
-			{
+			switch (s.length()) {
 				case 6:
 					X = "isEval";
 					id = Id_isEval;
@@ -257,13 +229,10 @@ public class NativeCallSite extends IdScriptableObject
 					break L;
 				case 8:
 					c = s.charAt(0);
-					if (c == 'i')
-					{
+					if (c == 'i') {
 						X = "isNative";
 						id = Id_isNative;
-					}
-					else if (c == 't')
-					{
+					} else if (c == 't') {
 						X = "toString";
 						id = Id_toString;
 					}
@@ -273,8 +242,7 @@ public class NativeCallSite extends IdScriptableObject
 					id = Id_isToplevel;
 					break L;
 				case 11:
-					switch (s.charAt(4))
-					{
+					switch (s.charAt(4)) {
 						case 'i':
 							X = "getFileName";
 							id = Id_getFileName;
@@ -294,8 +262,7 @@ public class NativeCallSite extends IdScriptableObject
 					}
 					break L;
 				case 13:
-					switch (s.charAt(3))
-					{
+					switch (s.charAt(3)) {
 						case 'E':
 							X = "getEvalOrigin";
 							id = Id_getEvalOrigin;
@@ -316,20 +283,16 @@ public class NativeCallSite extends IdScriptableObject
 					break L;
 				case 15:
 					c = s.charAt(3);
-					if (c == 'C')
-					{
+					if (c == 'C') {
 						X = "getColumnNumber";
 						id = Id_getColumnNumber;
-					}
-					else if (c == 'F')
-					{
+					} else if (c == 'F') {
 						X = "getFunctionName";
 						id = Id_getFunctionName;
 					}
 					break L;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;

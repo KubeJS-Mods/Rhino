@@ -19,41 +19,33 @@ import dev.latvian.mods.rhino.Undefined;
  */
 
 public class NativeDataView
-		extends NativeArrayBufferView
-{
+		extends NativeArrayBufferView {
 	private static final long serialVersionUID = 1427967607557438968L;
 
 	public static final String CLASS_NAME = "DataView";
 
-	public NativeDataView()
-	{
+	public NativeDataView() {
 		super();
 	}
 
-	public NativeDataView(NativeArrayBuffer ab, int offset, int length)
-	{
+	public NativeDataView(NativeArrayBuffer ab, int offset, int length) {
 		super(ab, offset, length);
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return CLASS_NAME;
 	}
 
-	public static void init(Context cx, Scriptable scope, boolean sealed)
-	{
+	public static void init(Context cx, Scriptable scope, boolean sealed) {
 		NativeDataView dv = new NativeDataView();
 		dv.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
 
-	private static int determinePos(Object[] args)
-	{
-		if (isArg(args, 0))
-		{
+	private static int determinePos(Object[] args) {
+		if (isArg(args, 0)) {
 			double doublePos = ScriptRuntime.toNumber(args[0]);
-			if (Double.isInfinite(doublePos))
-			{
+			if (Double.isInfinite(doublePos)) {
 				throw ScriptRuntime.rangeError("offset out of range");
 			}
 			return ScriptRuntime.toInt32(doublePos);
@@ -61,98 +53,74 @@ public class NativeDataView
 		return 0;
 	}
 
-	private void rangeCheck(int pos, int len)
-	{
-		if ((pos < 0) || ((pos + len) > byteLength))
-		{
+	private void rangeCheck(int pos, int len) {
+		if ((pos < 0) || ((pos + len) > byteLength)) {
 			throw ScriptRuntime.rangeError("offset out of range");
 		}
 	}
 
-	private static NativeDataView realThis(Scriptable thisObj, IdFunctionObject f)
-	{
-		if (!(thisObj instanceof NativeDataView))
-		{
+	private static NativeDataView realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (!(thisObj instanceof NativeDataView)) {
 			throw incompatibleCallError(f);
 		}
 		return (NativeDataView) thisObj;
 	}
 
-	private static NativeDataView js_constructor(Object[] args)
-	{
-		if (!isArg(args, 0) || !(args[0] instanceof NativeArrayBuffer))
-		{
+	private static NativeDataView js_constructor(Object[] args) {
+		if (!isArg(args, 0) || !(args[0] instanceof NativeArrayBuffer)) {
 			throw ScriptRuntime.constructError("TypeError", "Missing parameters");
 		}
 
 		NativeArrayBuffer ab = (NativeArrayBuffer) args[0];
 
 		int pos;
-		if (isArg(args, 1))
-		{
+		if (isArg(args, 1)) {
 			double doublePos = ScriptRuntime.toNumber(args[1]);
-			if (Double.isInfinite(doublePos))
-			{
+			if (Double.isInfinite(doublePos)) {
 				throw ScriptRuntime.rangeError("offset out of range");
 			}
 			pos = ScriptRuntime.toInt32(doublePos);
-		}
-		else
-		{
+		} else {
 			pos = 0;
 		}
 
 		int len;
-		if (isArg(args, 2))
-		{
+		if (isArg(args, 2)) {
 			double doublePos = ScriptRuntime.toNumber(args[2]);
-			if (Double.isInfinite(doublePos))
-			{
+			if (Double.isInfinite(doublePos)) {
 				throw ScriptRuntime.rangeError("offset out of range");
 			}
 			len = ScriptRuntime.toInt32(doublePos);
-		}
-		else
-		{
+		} else {
 			len = ab.getLength() - pos;
 		}
 
-		if (len < 0)
-		{
+		if (len < 0) {
 			throw ScriptRuntime.rangeError("length out of range");
 		}
-		if ((pos < 0) || ((pos + len) > ab.getLength()))
-		{
+		if ((pos < 0) || ((pos + len) > ab.getLength())) {
 			throw ScriptRuntime.rangeError("offset out of range");
 		}
 		return new NativeDataView(ab, pos, len);
 	}
 
-	private Object js_getInt(int bytes, boolean signed, Object[] args)
-	{
+	private Object js_getInt(int bytes, boolean signed, Object[] args) {
 		int pos = determinePos(args);
 		rangeCheck(pos, bytes);
 
 		boolean littleEndian = isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]);
 
-		switch (bytes)
-		{
+		switch (bytes) {
 			case 1:
-				if (signed)
-				{
+				if (signed) {
 					return ByteIo.readInt8(arrayBuffer.buffer, offset + pos);
-				}
-				else
-				{
+				} else {
 					return ByteIo.readUint8(arrayBuffer.buffer, offset + pos);
 				}
 			case 2:
-				if (signed)
-				{
+				if (signed) {
 					return ByteIo.readInt16(arrayBuffer.buffer, offset + pos, littleEndian);
-				}
-				else
-				{
+				} else {
 					return ByteIo.readUint16(arrayBuffer.buffer, offset + pos, littleEndian);
 				}
 			case 4:
@@ -163,15 +131,13 @@ public class NativeDataView
 		}
 	}
 
-	private Object js_getFloat(int bytes, Object[] args)
-	{
+	private Object js_getFloat(int bytes, Object[] args) {
 		int pos = determinePos(args);
 		rangeCheck(pos, bytes);
 
 		boolean littleEndian = isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]);
 
-		switch (bytes)
-		{
+		switch (bytes) {
 			case 4:
 				return ByteIo.readFloat32(arrayBuffer.buffer, offset + pos, littleEndian);
 			case 8:
@@ -181,79 +147,60 @@ public class NativeDataView
 		}
 	}
 
-	private void js_setInt(int bytes, boolean signed, Object[] args)
-	{
+	private void js_setInt(int bytes, boolean signed, Object[] args) {
 		int pos = determinePos(args);
-		if (pos < 0)
-		{
+		if (pos < 0) {
 			throw ScriptRuntime.rangeError("offset out of range");
 		}
 
 		boolean littleEndian = isArg(args, 2) && (bytes > 1) && ScriptRuntime.toBoolean(args[2]);
 
 		Object val = ScriptRuntime.zeroObj;
-		if (args.length > 1)
-		{
+		if (args.length > 1) {
 			val = args[1];
 		}
 
-		switch (bytes)
-		{
+		switch (bytes) {
 			case 1:
-				if (signed)
-				{
+				if (signed) {
 					int value = Conversions.toInt8(val);
-					if (pos + bytes > byteLength)
-					{
+					if (pos + bytes > byteLength) {
 						throw ScriptRuntime.rangeError("offset out of range");
 					}
 					ByteIo.writeInt8(arrayBuffer.buffer, offset + pos, value);
-				}
-				else
-				{
+				} else {
 					int value = Conversions.toUint8(val);
-					if (pos + bytes > byteLength)
-					{
+					if (pos + bytes > byteLength) {
 						throw ScriptRuntime.rangeError("offset out of range");
 					}
 					ByteIo.writeUint8(arrayBuffer.buffer, offset + pos, value);
 				}
 				break;
 			case 2:
-				if (signed)
-				{
+				if (signed) {
 					int value = Conversions.toInt16(val);
-					if (pos + bytes > byteLength)
-					{
+					if (pos + bytes > byteLength) {
 						throw ScriptRuntime.rangeError("offset out of range");
 					}
 					ByteIo.writeInt16(arrayBuffer.buffer, offset + pos, value, littleEndian);
-				}
-				else
-				{
+				} else {
 					int value = Conversions.toUint16(val);
-					if (pos + bytes > byteLength)
-					{
+					if (pos + bytes > byteLength) {
 						throw ScriptRuntime.rangeError("offset out of range");
 					}
 					ByteIo.writeUint16(arrayBuffer.buffer, offset + pos, value, littleEndian);
 				}
 				break;
 			case 4:
-				if (signed)
-				{
+				if (signed) {
 					int value = Conversions.toInt32(val);
-					if (pos + bytes > byteLength)
-					{
+					if (pos + bytes > byteLength) {
 						throw ScriptRuntime.rangeError("offset out of range");
 					}
 					ByteIo.writeInt32(arrayBuffer.buffer, offset + pos, value, littleEndian);
-				}
-				else
-				{
+				} else {
 					long value = Conversions.toUint32(val);
-					if (pos + bytes > byteLength)
-					{
+					if (pos + bytes > byteLength) {
 						throw ScriptRuntime.rangeError("offset out of range");
 					}
 					ByteIo.writeUint32(arrayBuffer.buffer, offset + pos, value, littleEndian);
@@ -264,29 +211,24 @@ public class NativeDataView
 		}
 	}
 
-	private void js_setFloat(int bytes, Object[] args)
-	{
+	private void js_setFloat(int bytes, Object[] args) {
 		int pos = determinePos(args);
-		if (pos < 0)
-		{
+		if (pos < 0) {
 			throw ScriptRuntime.rangeError("offset out of range");
 		}
 
 		boolean littleEndian = isArg(args, 2) && (bytes > 1) && ScriptRuntime.toBoolean(args[2]);
 
 		double val = Double.NaN;
-		if (args.length > 1)
-		{
+		if (args.length > 1) {
 			val = ScriptRuntime.toNumber(args[1]);
 		}
 
-		if (pos + bytes > byteLength)
-		{
+		if (pos + bytes > byteLength) {
 			throw ScriptRuntime.rangeError("offset out of range");
 		}
 
-		switch (bytes)
-		{
+		switch (bytes) {
 			case 4:
 				ByteIo.writeFloat32(arrayBuffer.buffer, offset + pos, val, littleEndian);
 				break;
@@ -302,15 +244,12 @@ public class NativeDataView
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(getClassName()))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(getClassName())) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				return js_constructor(args);
 			case Id_getInt8:
@@ -358,12 +297,10 @@ public class NativeDataView
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
+	protected void initPrototypeId(int id) {
 		String s;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				arity = 3;
 				s = "constructor";
@@ -441,8 +378,7 @@ public class NativeDataView
 	// #string_id_map#
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2014-12-08 17:26:24 PST
 		L0:
@@ -451,61 +387,43 @@ public class NativeDataView
 			String X = null;
 			int c;
 			L:
-			switch (s.length())
-			{
+			switch (s.length()) {
 				case 7:
 					c = s.charAt(0);
-					if (c == 'g')
-					{
+					if (c == 'g') {
 						X = "getInt8";
 						id = Id_getInt8;
-					}
-					else if (c == 's')
-					{
+					} else if (c == 's') {
 						X = "setInt8";
 						id = Id_setInt8;
 					}
 					break L;
 				case 8:
 					c = s.charAt(6);
-					if (c == '1')
-					{
+					if (c == '1') {
 						c = s.charAt(0);
-						if (c == 'g')
-						{
+						if (c == 'g') {
 							X = "getInt16";
 							id = Id_getInt16;
-						}
-						else if (c == 's')
-						{
+						} else if (c == 's') {
 							X = "setInt16";
 							id = Id_setInt16;
 						}
-					}
-					else if (c == '3')
-					{
+					} else if (c == '3') {
 						c = s.charAt(0);
-						if (c == 'g')
-						{
+						if (c == 'g') {
 							X = "getInt32";
 							id = Id_getInt32;
-						}
-						else if (c == 's')
-						{
+						} else if (c == 's') {
 							X = "setInt32";
 							id = Id_setInt32;
 						}
-					}
-					else if (c == 't')
-					{
+					} else if (c == 't') {
 						c = s.charAt(0);
-						if (c == 'g')
-						{
+						if (c == 'g') {
 							X = "getUint8";
 							id = Id_getUint8;
-						}
-						else if (c == 's')
-						{
+						} else if (c == 's') {
 							X = "setUint8";
 							id = Id_setUint8;
 						}
@@ -513,30 +431,21 @@ public class NativeDataView
 					break L;
 				case 9:
 					c = s.charAt(0);
-					if (c == 'g')
-					{
+					if (c == 'g') {
 						c = s.charAt(8);
-						if (c == '2')
-						{
+						if (c == '2') {
 							X = "getUint32";
 							id = Id_getUint32;
-						}
-						else if (c == '6')
-						{
+						} else if (c == '6') {
 							X = "getUint16";
 							id = Id_getUint16;
 						}
-					}
-					else if (c == 's')
-					{
+					} else if (c == 's') {
 						c = s.charAt(8);
-						if (c == '2')
-						{
+						if (c == '2') {
 							X = "setUint32";
 							id = Id_setUint32;
-						}
-						else if (c == '6')
-						{
+						} else if (c == '6') {
 							X = "setUint16";
 							id = Id_setUint16;
 						}
@@ -544,30 +453,21 @@ public class NativeDataView
 					break L;
 				case 10:
 					c = s.charAt(0);
-					if (c == 'g')
-					{
+					if (c == 'g') {
 						c = s.charAt(9);
-						if (c == '2')
-						{
+						if (c == '2') {
 							X = "getFloat32";
 							id = Id_getFloat32;
-						}
-						else if (c == '4')
-						{
+						} else if (c == '4') {
 							X = "getFloat64";
 							id = Id_getFloat64;
 						}
-					}
-					else if (c == 's')
-					{
+					} else if (c == 's') {
 						c = s.charAt(9);
-						if (c == '2')
-						{
+						if (c == '2') {
 							X = "setFloat32";
 							id = Id_setFloat32;
-						}
-						else if (c == '4')
-						{
+						} else if (c == '4') {
 							X = "setFloat64";
 							id = Id_setFloat64;
 						}
@@ -578,8 +478,7 @@ public class NativeDataView
 					id = Id_constructor;
 					break L;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;

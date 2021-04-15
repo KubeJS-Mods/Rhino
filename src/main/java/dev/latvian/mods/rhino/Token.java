@@ -17,10 +17,8 @@ package dev.latvian.mods.rhino;
  * @see Parser
  */
 
-public class Token
-{
-	public enum CommentType
-	{
+public class Token {
+	public enum CommentType {
 		LINE,
 		BLOCK_COMMENT,
 		JSDOC,
@@ -247,10 +245,8 @@ public class Token
 	 * hardcoded debugging flags in this file, it calls {@code #typeToName};
 	 * otherwise it returns a string whose value is the token number.
 	 */
-	public static String name(int token)
-	{
-		if (!printNames)
-		{
+	public static String name(int token) {
+		if (!printNames) {
 			return String.valueOf(token);
 		}
 		return typeToName(token);
@@ -263,10 +259,8 @@ public class Token
 	 * @param token the token code
 	 * @return the actual name for the token code
 	 */
-	public static String typeToName(int token)
-	{
-		switch (token)
-		{
+	public static String typeToName(int token) {
+		switch (token) {
 			case ERROR:
 				return "ERROR";
 			case EOF:
@@ -620,10 +614,8 @@ public class Token
 	 * @param token A token
 	 * @return the corresponding name string
 	 */
-	public static String keywordToName(int token)
-	{
-		switch (token)
-		{
+	public static String keywordToName(int token) {
+		switch (token) {
 			case Token.BREAK:
 				return "break";
 			case Token.CASE:
@@ -699,8 +691,7 @@ public class Token
 	 * @param code a potential token code
 	 * @return true if it's a known token
 	 */
-	public static boolean isValidToken(int code)
-	{
+	public static boolean isValidToken(int code) {
 		return code >= ERROR
 				&& code <= LAST_TOKEN;
 	}

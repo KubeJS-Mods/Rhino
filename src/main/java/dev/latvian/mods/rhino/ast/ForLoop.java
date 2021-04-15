@@ -15,8 +15,7 @@ import dev.latvian.mods.rhino.Token;
  * <pre><b>for</b> ( ExpressionNoInopt; Expressionopt ; Expressionopt ) Statement</pre>
  * <pre><b>for</b> ( <b>var</b> VariableDeclarationListNoIn; Expressionopt ; Expressionopt ) Statement</pre>
  */
-public class ForLoop extends Loop
-{
+public class ForLoop extends Loop {
 
 	private AstNode initializer;
 	private AstNode condition;
@@ -26,17 +25,14 @@ public class ForLoop extends Loop
 		type = Token.FOR;
 	}
 
-	public ForLoop()
-	{
+	public ForLoop() {
 	}
 
-	public ForLoop(int pos)
-	{
+	public ForLoop(int pos) {
 		super(pos);
 	}
 
-	public ForLoop(int pos, int len)
-	{
+	public ForLoop(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -46,8 +42,7 @@ public class ForLoop extends Loop
 	 * {@link Assignment}, or an {@link InfixExpression} of
 	 * type COMMA that chains multiple variable assignments.
 	 */
-	public AstNode getInitializer()
-	{
+	public AstNode getInitializer() {
 		return initializer;
 	}
 
@@ -60,8 +55,7 @@ public class ForLoop extends Loop
 	 *                    {@link EmptyExpression} if the initializer is not specified.
 	 * @throws IllegalArgumentException if condition is {@code null}
 	 */
-	public void setInitializer(AstNode initializer)
-	{
+	public void setInitializer(AstNode initializer) {
 		assertNotNull(initializer);
 		this.initializer = initializer;
 		initializer.setParent(this);
@@ -70,8 +64,7 @@ public class ForLoop extends Loop
 	/**
 	 * Returns loop condition
 	 */
-	public AstNode getCondition()
-	{
+	public AstNode getCondition() {
 		return condition;
 	}
 
@@ -82,8 +75,7 @@ public class ForLoop extends Loop
 	 *                  if the condition is missing.
 	 * @throws IllegalArgumentException} if condition is {@code null}
 	 */
-	public void setCondition(AstNode condition)
-	{
+	public void setCondition(AstNode condition) {
 		assertNotNull(condition);
 		this.condition = condition;
 		condition.setParent(this);
@@ -92,8 +84,7 @@ public class ForLoop extends Loop
 	/**
 	 * Returns loop increment expression
 	 */
-	public AstNode getIncrement()
-	{
+	public AstNode getIncrement() {
 		return increment;
 	}
 
@@ -105,16 +96,14 @@ public class ForLoop extends Loop
 	 *                  {@link EmptyExpression} if increment is {@code null}.
 	 * @throws IllegalArgumentException} if increment is {@code null}
 	 */
-	public void setIncrement(AstNode increment)
-	{
+	public void setIncrement(AstNode increment) {
 		assertNotNull(increment);
 		this.increment = increment;
 		increment.setParent(this);
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("for (");
@@ -124,23 +113,17 @@ public class ForLoop extends Loop
 		sb.append("; ");
 		sb.append(increment.toSource(0));
 		sb.append(") ");
-		if (this.getInlineComment() != null)
-		{
+		if (this.getInlineComment() != null) {
 			sb.append(this.getInlineComment().toSource()).append("\n");
 		}
-		if (body.getType() == Token.BLOCK)
-		{
+		if (body.getType() == Token.BLOCK) {
 			String bodySource = body.toSource(depth);
-			if (this.getInlineComment() == null)
-			{
+			if (this.getInlineComment() == null) {
 				bodySource = bodySource.trim();
 			}
 			sb.append(bodySource).append("\n");
-		}
-		else
-		{
-			if (this.getInlineComment() == null)
-			{
+		} else {
+			if (this.getInlineComment() == null) {
 				sb.append("\n");
 			}
 			sb.append(body.toSource(depth + 1));
@@ -153,10 +136,8 @@ public class ForLoop extends Loop
 	 * expression, the increment expression, and then the loop body.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			initializer.visit(v);
 			condition.visit(v);
 			increment.visit(v);

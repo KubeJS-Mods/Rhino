@@ -30,8 +30,7 @@ import dev.latvian.mods.rhino.Parser;
  *
  * @author Steve Yegge
  */
-public interface IdeErrorReporter extends ErrorReporter
-{
+public interface IdeErrorReporter extends ErrorReporter {
 
 	/**
 	 * Report a warning.<p>

@@ -14,8 +14,7 @@ package dev.latvian.mods.rhino;
  *
  * @author Mike McCabe
  */
-public class JavaScriptException extends RhinoException
-{
+public class JavaScriptException extends RhinoException {
 	private static final long serialVersionUID = -7666130513694669293L;
 
 	/**
@@ -23,22 +22,18 @@ public class JavaScriptException extends RhinoException
 	 *
 	 * @param value the JavaScript value thrown.
 	 */
-	public JavaScriptException(Object value, String sourceName, int lineNumber)
-	{
+	public JavaScriptException(Object value, String sourceName, int lineNumber) {
 		recordErrorOrigin(sourceName, lineNumber, null, 0);
 		this.value = value;
 		// Fill in fileName and lineNumber automatically when not specified
 		// explicitly, see Bugzilla issue #342807
 		if (value instanceof NativeError && Context.getContext()
-				.hasFeature(Context.FEATURE_LOCATION_INFORMATION_IN_ERROR))
-		{
+				.hasFeature(Context.FEATURE_LOCATION_INFORMATION_IN_ERROR)) {
 			NativeError error = (NativeError) value;
-			if (!error.has("fileName", error))
-			{
+			if (!error.has("fileName", error)) {
 				error.put("fileName", error, sourceName);
 			}
-			if (!error.has("lineNumber", error))
-			{
+			if (!error.has("lineNumber", error)) {
 				error.put("lineNumber", error, lineNumber);
 			}
 			// set stack property, see bug #549604
@@ -47,25 +42,17 @@ public class JavaScriptException extends RhinoException
 	}
 
 	@Override
-	public String details()
-	{
-		if (value == null)
-		{
+	public String details() {
+		if (value == null) {
 			return "null";
-		}
-		else if (value instanceof NativeError)
-		{
+		} else if (value instanceof NativeError) {
 			return value.toString();
 		}
-		try
-		{
+		try {
 			return ScriptRuntime.toString(value);
-		}
-		catch (RuntimeException rte)
-		{
+		} catch (RuntimeException rte) {
 			// ScriptRuntime.toString may throw a RuntimeException
-			if (value instanceof Scriptable)
-			{
+			if (value instanceof Scriptable) {
 				return ScriptRuntime.defaultObjectToString((Scriptable) value);
 			}
 			return value.toString();
@@ -75,8 +62,7 @@ public class JavaScriptException extends RhinoException
 	/**
 	 * @return the value wrapped by this exception
 	 */
-	public Object getValue()
-	{
+	public Object getValue() {
 		return value;
 	}
 

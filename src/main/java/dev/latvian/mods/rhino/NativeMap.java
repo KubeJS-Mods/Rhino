@@ -8,8 +8,7 @@ package dev.latvian.mods.rhino;
 
 import java.util.Iterator;
 
-public class NativeMap extends IdScriptableObject
-{
+public class NativeMap extends IdScriptableObject {
 	private static final long serialVersionUID = 1171922614280016891L;
 	private static final Object MAP_TAG = "Map";
 	static final String ITERATOR_TAG = "Map Iterator";
@@ -20,8 +19,7 @@ public class NativeMap extends IdScriptableObject
 
 	private boolean instanceOfMap = false;
 
-	static void init(Context cx, Scriptable scope, boolean sealed)
-	{
+	static void init(Context cx, Scriptable scope, boolean sealed) {
 		NativeMap obj = new NativeMap();
 		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, false);
 
@@ -31,36 +29,29 @@ public class NativeMap extends IdScriptableObject
 		desc.put("get", desc, obj.get(NativeSet.GETSIZE, obj));
 		obj.defineOwnProperty(cx, "size", desc);
 
-		if (sealed)
-		{
+		if (sealed) {
 			obj.sealObject();
 		}
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "Map";
 	}
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(MAP_TAG))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(MAP_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
-				if (thisObj == null)
-				{
+				if (thisObj == null) {
 					NativeMap nm = new NativeMap();
 					nm.instanceOfMap = true;
-					if (args.length > 0)
-					{
+					if (args.length > 0) {
 						loadFromIterable(cx, scope, nm, args[0]);
 					}
 					return nm;
@@ -94,95 +85,79 @@ public class NativeMap extends IdScriptableObject
 		throw new IllegalArgumentException("Map.prototype has no method: " + f.getFunctionName());
 	}
 
-	private Object js_set(Object k, Object v)
-	{
+	private Object js_set(Object k, Object v) {
 		// Map.get() does not distinguish between "not found" and a null value. So,
 		// replace true null here with a marker so that we can re-convert in "get".
 		final Object value = (v == null ? NULL_VALUE : v);
 		// Special handling of "negative zero" from the spec.
 		Object key = k;
 		if ((key instanceof Number) &&
-				((Number) key).doubleValue() == ScriptRuntime.negativeZero)
-		{
+				((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
 			key = ScriptRuntime.zeroObj;
 		}
 		entries.put(key, value);
 		return this;
 	}
 
-	private Object js_delete(Object arg)
-	{
+	private Object js_delete(Object arg) {
 		final Object e = entries.delete(arg);
 		return e != null;
 	}
 
-	private Object js_get(Object arg)
-	{
+	private Object js_get(Object arg) {
 		final Object val = entries.get(arg);
-		if (val == null)
-		{
+		if (val == null) {
 			return Undefined.instance;
 		}
-		if (val == NULL_VALUE)
-		{
+		if (val == NULL_VALUE) {
 			return null;
 		}
 		return val;
 	}
 
-	private Object js_has(Object arg)
-	{
+	private Object js_has(Object arg) {
 		return entries.has(arg);
 	}
 
-	private Object js_getSize()
-	{
+	private Object js_getSize() {
 		return entries.size();
 	}
 
-	private Object js_iterator(Scriptable scope, NativeCollectionIterator.Type type)
-	{
+	private Object js_iterator(Scriptable scope, NativeCollectionIterator.Type type) {
 		return new NativeCollectionIterator(scope, ITERATOR_TAG, type, entries.iterator());
 	}
 
-	private Object js_clear()
-	{
+	private Object js_clear() {
 		entries.clear();
 		return Undefined.instance;
 	}
 
-	private Object js_forEach(Context cx, Scriptable scope, Object arg1, Object arg2)
-	{
-		if (!(arg1 instanceof Callable))
-		{
+	private Object js_forEach(Context cx, Scriptable scope, Object arg1, Object arg2) {
+		if (!(arg1 instanceof Callable)) {
 			throw ScriptRuntime.typeError2("msg.isnt.function", arg1, ScriptRuntime.typeof(arg1));
 		}
 		final Callable f = (Callable) arg1;
 
 		boolean isStrict = cx.isStrictMode();
 		Iterator<Hashtable.Entry> i = entries.iterator();
-		while (i.hasNext())
-		{
+		while (i.hasNext()) {
 			// Per spec must convert every time so that primitives are always regenerated...
 			Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, arg2, scope);
 
-			if (thisObj == null && !isStrict)
-			{
+			if (thisObj == null && !isStrict) {
 				thisObj = scope;
 			}
-			if (thisObj == null)
-			{
+			if (thisObj == null) {
 				thisObj = Undefined.SCRIPTABLE_UNDEFINED;
 			}
 
 			final Hashtable.Entry e = i.next();
 			Object val = e.value;
-			if (val == NULL_VALUE)
-			{
+			if (val == NULL_VALUE) {
 				val = null;
 			}
 
-			f.call(cx, scope, thisObj, new Object[] {val, e.key, this});
+			f.call(cx, scope, thisObj, new Object[]{val, e.key, this});
 		}
 		return Undefined.instance;
 	}
@@ -191,17 +166,14 @@ public class NativeMap extends IdScriptableObject
 	 * If an "iterable" object was passed to the constructor, there are many many things
 	 * to do... Make this static because NativeWeakMap has the exact same requirement.
 	 */
-	static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject map, Object arg1)
-	{
-		if ((arg1 == null) || Undefined.instance.equals(arg1))
-		{
+	static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject map, Object arg1) {
+		if ((arg1 == null) || Undefined.instance.equals(arg1)) {
 			return;
 		}
 
 		// Call the "[Symbol.iterator]" property as a function.
 		final Object ito = ScriptRuntime.callIterator(arg1, cx, scope);
-		if (Undefined.instance.equals(ito))
-		{
+		if (Undefined.instance.equals(ito)) {
 			// Per spec, ignore if the iterator is undefined
 			return;
 		}
@@ -215,57 +187,44 @@ public class NativeMap extends IdScriptableObject
 		ScriptRuntime.lastStoredScriptable(cx);
 
 		// Finally, run through all the iterated values and add them!
-		try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito))
-		{
-			for (Object val : it)
-			{
+		try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
+			for (Object val : it) {
 				Scriptable sVal = ensureScriptable(val);
-				if (sVal instanceof Symbol)
-				{
+				if (sVal instanceof Symbol) {
 					throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(sVal));
 				}
 				Object finalKey = sVal.get(0, sVal);
-				if (finalKey == NOT_FOUND)
-				{
+				if (finalKey == NOT_FOUND) {
 					finalKey = Undefined.instance;
 				}
 				Object finalVal = sVal.get(1, sVal);
-				if (finalVal == NOT_FOUND)
-				{
+				if (finalVal == NOT_FOUND) {
 					finalVal = Undefined.instance;
 				}
-				set.call(cx, scope, map, new Object[] {finalKey, finalVal});
+				set.call(cx, scope, map, new Object[]{finalKey, finalVal});
 			}
 		}
 	}
 
-	private static NativeMap realThis(Scriptable thisObj, IdFunctionObject f)
-	{
-		if (thisObj == null)
-		{
+	private static NativeMap realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (thisObj == null) {
 			throw incompatibleCallError(f);
 		}
-		try
-		{
+		try {
 			final NativeMap nm = (NativeMap) thisObj;
-			if (!nm.instanceOfMap)
-			{
+			if (!nm.instanceOfMap) {
 				// Check for "Map internal data tag"
 				throw incompatibleCallError(f);
 			}
 			return nm;
-		}
-		catch (ClassCastException cce)
-		{
+		} catch (ClassCastException cce) {
 			throw incompatibleCallError(f);
 		}
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
-		switch (id)
-		{
+	protected void initPrototypeId(int id) {
+		switch (id) {
 			case SymbolId_getSize:
 				initPrototypeMethod(MAP_TAG, id, NativeSet.GETSIZE, "get size", 0);
 				return;
@@ -278,8 +237,7 @@ public class NativeMap extends IdScriptableObject
 
 		String s, fnName = null;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				arity = 0;
 				s = "constructor";
@@ -327,21 +285,17 @@ public class NativeMap extends IdScriptableObject
 	}
 
 	@Override
-	protected int findPrototypeId(Symbol k)
-	{
-		if (NativeSet.GETSIZE.equals(k))
-		{
+	protected int findPrototypeId(Symbol k) {
+		if (NativeSet.GETSIZE.equals(k)) {
 			return SymbolId_getSize;
 		}
-		if (SymbolKey.ITERATOR.equals(k))
-		{
+		if (SymbolKey.ITERATOR.equals(k)) {
 			// ECMA spec says that the "Symbol.iterator" property of the prototype has the
 			// "same value" as the "entries" property. We implement this by returning the
 			// ID of "entries" when the iterator symbol is accessed.
 			return Id_entries;
 		}
-		if (SymbolKey.TO_STRING_TAG.equals(k))
-		{
+		if (SymbolKey.TO_STRING_TAG.equals(k)) {
 			return SymbolId_toStringTag;
 		}
 		return 0;
@@ -350,8 +304,7 @@ public class NativeMap extends IdScriptableObject
 	// #string_id_map#
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2018-03-22 02:20:25 MDT
 		L0:
@@ -360,30 +313,21 @@ public class NativeMap extends IdScriptableObject
 			String X = null;
 			int c;
 			L:
-			switch (s.length())
-			{
+			switch (s.length()) {
 				case 3:
 					c = s.charAt(0);
-					if (c == 'g')
-					{
-						if (s.charAt(2) == 't' && s.charAt(1) == 'e')
-						{
+					if (c == 'g') {
+						if (s.charAt(2) == 't' && s.charAt(1) == 'e') {
 							id = Id_get;
 							break L0;
 						}
-					}
-					else if (c == 'h')
-					{
-						if (s.charAt(2) == 's' && s.charAt(1) == 'a')
-						{
+					} else if (c == 'h') {
+						if (s.charAt(2) == 's' && s.charAt(1) == 'a') {
 							id = Id_has;
 							break L0;
 						}
-					}
-					else if (c == 's')
-					{
-						if (s.charAt(2) == 't' && s.charAt(1) == 'e')
-						{
+					} else if (c == 's') {
+						if (s.charAt(2) == 't' && s.charAt(1) == 'e') {
 							id = Id_set;
 							break L0;
 						}
@@ -399,26 +343,20 @@ public class NativeMap extends IdScriptableObject
 					break L;
 				case 6:
 					c = s.charAt(0);
-					if (c == 'd')
-					{
+					if (c == 'd') {
 						X = "delete";
 						id = Id_delete;
-					}
-					else if (c == 'v')
-					{
+					} else if (c == 'v') {
 						X = "values";
 						id = Id_values;
 					}
 					break L;
 				case 7:
 					c = s.charAt(0);
-					if (c == 'e')
-					{
+					if (c == 'e') {
 						X = "entries";
 						id = Id_entries;
-					}
-					else if (c == 'f')
-					{
+					} else if (c == 'f') {
 						X = "forEach";
 						id = Id_forEach;
 					}
@@ -428,8 +366,7 @@ public class NativeMap extends IdScriptableObject
 					id = Id_constructor;
 					break L;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;

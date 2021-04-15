@@ -16,8 +16,7 @@ import java.util.Iterator;
  * switch between them when we need to so that we use the right data structure at the right time.
  */
 class SlotMapContainer
-		implements SlotMap
-{
+		implements SlotMap {
 
 	/**
 	 * Once the object has this many properties in it, we will replace the EmbeddedSlotMap
@@ -28,78 +27,63 @@ class SlotMapContainer
 
 	protected SlotMap map;
 
-	SlotMapContainer(int initialSize)
-	{
-		if (initialSize > LARGE_HASH_SIZE)
-		{
+	SlotMapContainer(int initialSize) {
+		if (initialSize > LARGE_HASH_SIZE) {
 			map = new HashSlotMap();
-		}
-		else
-		{
+		} else {
 			map = new EmbeddedSlotMap();
 		}
 	}
 
 	@Override
-	public int size()
-	{
+	public int size() {
 		return map.size();
 	}
 
-	public int dirtySize()
-	{
+	public int dirtySize() {
 		return map.size();
 	}
 
 	@Override
-	public boolean isEmpty()
-	{
+	public boolean isEmpty() {
 		return map.isEmpty();
 	}
 
 	@Override
-	public Slot get(Object key, int index, SlotAccess accessType)
-	{
-		if (accessType != SlotAccess.QUERY)
-		{
+	public Slot get(Object key, int index, SlotAccess accessType) {
+		if (accessType != SlotAccess.QUERY) {
 			checkMapSize();
 		}
 		return map.get(key, index, accessType);
 	}
 
 	@Override
-	public Slot query(Object key, int index)
-	{
+	public Slot query(Object key, int index) {
 		return map.query(key, index);
 	}
 
 	@Override
-	public void addSlot(Slot newSlot)
-	{
+	public void addSlot(Slot newSlot) {
 		checkMapSize();
 		map.addSlot(newSlot);
 	}
 
 	@Override
-	public void remove(Object key, int index)
-	{
+	public void remove(Object key, int index) {
 		map.remove(key, index);
 	}
 
 	@Override
-	public Iterator<Slot> iterator()
-	{
+	public Iterator<Slot> iterator() {
 		return map.iterator();
 	}
 
-	public long readLock()
-	{
+	public long readLock() {
 		// No locking in the default implementation
 		return 0L;
 	}
 
-	public void unlockRead(long stamp)
-	{
+	public void unlockRead(long stamp) {
 		// No locking in the default implementationock.unlockRead(stamp);
 	}
 
@@ -107,13 +91,10 @@ class SlotMapContainer
 	 * Before inserting a new item in the map, check and see if we need to expand from the embedded
 	 * map to a HashMap that is more robust against large numbers of hash collisions.
 	 */
-	protected void checkMapSize()
-	{
-		if ((map instanceof EmbeddedSlotMap) && map.size() >= LARGE_HASH_SIZE)
-		{
+	protected void checkMapSize() {
+		if ((map instanceof EmbeddedSlotMap) && map.size() >= LARGE_HASH_SIZE) {
 			SlotMap newMap = new HashSlotMap();
-			for (Slot s : map)
-			{
+			for (Slot s : map) {
 				newMap.addSlot(s);
 			}
 			map = newMap;

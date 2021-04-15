@@ -10,8 +10,7 @@ import java.io.Serializable;
  */
 
 public class SymbolKey
-		implements Symbol, Serializable
-{
+		implements Symbol, Serializable {
 	private static final long serialVersionUID = -6019782713330994754L;
 
 	// These are common SymbolKeys that are equivalent to well-known symbols
@@ -31,41 +30,33 @@ public class SymbolKey
 
 	private final String name;
 
-	public SymbolKey(String name)
-	{
+	public SymbolKey(String name) {
 		this.name = name;
 	}
 
-	public String getName()
-	{
+	public String getName() {
 		return name;
 	}
 
 	@Override
-	public int hashCode()
-	{
+	public int hashCode() {
 		return System.identityHashCode(this);
 	}
 
 	@Override
-	public boolean equals(Object o)
-	{
-		if (o instanceof SymbolKey)
-		{
+	public boolean equals(Object o) {
+		if (o instanceof SymbolKey) {
 			return o == this;
 		}
-		if (o instanceof NativeSymbol)
-		{
+		if (o instanceof NativeSymbol) {
 			return ((NativeSymbol) o).getKey() == this;
 		}
 		return false;
 	}
 
 	@Override
-	public String toString()
-	{
-		if (name == null)
-		{
+	public String toString() {
+		if (name == null) {
 			return "Symbol()";
 		}
 		return "Symbol(" + name + ')';

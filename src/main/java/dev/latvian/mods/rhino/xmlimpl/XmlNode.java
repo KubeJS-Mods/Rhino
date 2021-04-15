@@ -20,8 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class XmlNode implements Serializable
-{
+class XmlNode implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private static final String XML_NAMESPACES_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
@@ -30,56 +29,42 @@ class XmlNode implements Serializable
 
 	private static final boolean DOM_LEVEL_3 = true;
 
-	private static XmlNode getUserData(Node node)
-	{
-		if (DOM_LEVEL_3)
-		{
+	private static XmlNode getUserData(Node node) {
+		if (DOM_LEVEL_3) {
 			return (XmlNode) node.getUserData(USER_DATA_XMLNODE_KEY);
 		}
 		return null;
 	}
 
-	private static void setUserData(Node node, XmlNode wrap)
-	{
-		if (DOM_LEVEL_3)
-		{
+	private static void setUserData(Node node, XmlNode wrap) {
+		if (DOM_LEVEL_3) {
 			node.setUserData(USER_DATA_XMLNODE_KEY, wrap, wrap.events);
 		}
 	}
 
-	private static XmlNode createImpl(Node node)
-	{
-		if (node instanceof Document)
-		{
+	private static XmlNode createImpl(Node node) {
+		if (node instanceof Document) {
 			throw new IllegalArgumentException();
 		}
 		XmlNode rv = null;
-		if (getUserData(node) == null)
-		{
+		if (getUserData(node) == null) {
 			rv = new XmlNode();
 			rv.dom = node;
 			setUserData(node, rv);
-		}
-		else
-		{
+		} else {
 			rv = getUserData(node);
 		}
 		return rv;
 	}
 
-	static XmlNode newElementWithText(XmlProcessor processor, XmlNode reference, XmlNode.QName qname, String value)
-	{
-		if (reference instanceof org.w3c.dom.Document)
-		{
+	static XmlNode newElementWithText(XmlProcessor processor, XmlNode reference, XmlNode.QName qname, String value) {
+		if (reference instanceof org.w3c.dom.Document) {
 			throw new IllegalArgumentException("Cannot use Document node as reference");
 		}
 		Document document = null;
-		if (reference != null)
-		{
+		if (reference != null) {
 			document = reference.dom.getOwnerDocument();
-		}
-		else
-		{
+		} else {
 			document = processor.newDocument();
 		}
 		Node referenceDom = (reference != null) ? reference.dom : null;
@@ -88,39 +73,32 @@ class XmlNode implements Serializable
 				? document.createElementNS(null, qname.getLocalName())
 				: document.createElementNS(ns.getUri(),
 				qname.qualify(referenceDom));
-		if (value != null)
-		{
+		if (value != null) {
 			e.appendChild(document.createTextNode(value));
 		}
 		return XmlNode.createImpl(e);
 	}
 
-	static XmlNode createText(XmlProcessor processor, String value)
-	{
+	static XmlNode createText(XmlProcessor processor, String value) {
 		return createImpl(processor.newDocument().createTextNode(value));
 	}
 
-	static XmlNode createElementFromNode(Node node)
-	{
-		if (node instanceof Document)
-		{
+	static XmlNode createElementFromNode(Node node) {
+		if (node instanceof Document) {
 			node = ((Document) node).getDocumentElement();
 		}
 		return createImpl(node);
 	}
 
-	static XmlNode createElement(XmlProcessor processor, String namespaceUri, String xml) throws org.xml.sax.SAXException
-	{
+	static XmlNode createElement(XmlProcessor processor, String namespaceUri, String xml) throws org.xml.sax.SAXException {
 		return createImpl(processor.toXml(namespaceUri, xml));
 	}
 
-	static XmlNode createEmpty(XmlProcessor processor)
-	{
+	static XmlNode createEmpty(XmlProcessor processor) {
 		return createText(processor, "");
 	}
 
-	private static XmlNode copy(XmlNode other)
-	{
+	private static XmlNode copy(XmlNode other) {
 		return createImpl(other.dom.cloneNode(true));
 	}
 
@@ -130,12 +108,10 @@ class XmlNode implements Serializable
 
 	private XML xml;
 
-	private XmlNode()
-	{
+	private XmlNode() {
 	}
 
-	String debug()
-	{
+	String debug() {
 		XmlProcessor raw = new XmlProcessor();
 		raw.setIgnoreComments(false);
 		raw.setIgnoreProcessingInstructions(false);
@@ -145,55 +121,43 @@ class XmlNode implements Serializable
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return "XmlNode: type=" + dom.getNodeType() + " dom=" + dom.toString();
 	}
 
-	XML getXml()
-	{
+	XML getXml() {
 		return xml;
 	}
 
-	void setXml(XML xml)
-	{
+	void setXml(XML xml) {
 		this.xml = xml;
 	}
 
-	int getChildCount()
-	{
+	int getChildCount() {
 		return this.dom.getChildNodes().getLength();
 	}
 
-	XmlNode parent()
-	{
+	XmlNode parent() {
 		Node domParent = dom.getParentNode();
-		if (domParent instanceof Document)
-		{
+		if (domParent instanceof Document) {
 			return null;
 		}
-		if (domParent == null)
-		{
+		if (domParent == null) {
 			return null;
 		}
 		return createImpl(domParent);
 	}
 
-	int getChildIndex()
-	{
-		if (this.isAttributeType())
-		{
+	int getChildIndex() {
+		if (this.isAttributeType()) {
 			return -1;
 		}
-		if (parent() == null)
-		{
+		if (parent() == null) {
 			return -1;
 		}
 		org.w3c.dom.NodeList siblings = this.dom.getParentNode().getChildNodes();
-		for (int i = 0; i < siblings.getLength(); i++)
-		{
-			if (siblings.item(i) == dom)
-			{
+		for (int i = 0; i < siblings.getLength(); i++) {
+			if (siblings.item(i) == dom) {
 				return i;
 			}
 		}
@@ -201,169 +165,124 @@ class XmlNode implements Serializable
 		throw new RuntimeException("Unreachable.");
 	}
 
-	void removeChild(int index)
-	{
+	void removeChild(int index) {
 		this.dom.removeChild(this.dom.getChildNodes().item(index));
 	}
 
-	String toXmlString(XmlProcessor processor)
-	{
+	String toXmlString(XmlProcessor processor) {
 		return processor.ecmaToXmlString(this.dom);
 	}
 
-	String ecmaValue()
-	{
+	String ecmaValue() {
 		//    TODO    See ECMA 357 Section 9.1
-		if (isTextType())
-		{
+		if (isTextType()) {
 			return ((org.w3c.dom.Text) dom).getData();
-		}
-		else if (isAttributeType())
-		{
+		} else if (isAttributeType()) {
 			return ((org.w3c.dom.Attr) dom).getValue();
-		}
-		else if (isProcessingInstructionType())
-		{
+		} else if (isProcessingInstructionType()) {
 			return ((org.w3c.dom.ProcessingInstruction) dom).getData();
-		}
-		else if (isCommentType())
-		{
+		} else if (isCommentType()) {
 			return dom.getNodeValue();
-		}
-		else if (isElementType())
-		{
+		} else if (isElementType()) {
 			throw new RuntimeException("Unimplemented ecmaValue() for elements.");
-		}
-		else
-		{
+		} else {
 			throw new RuntimeException("Unimplemented for node " + dom);
 		}
 	}
 
-	void deleteMe()
-	{
-		if (dom instanceof Attr)
-		{
+	void deleteMe() {
+		if (dom instanceof Attr) {
 			Attr attr = (Attr) this.dom;
 			attr.getOwnerElement().getAttributes().removeNamedItemNS(attr.getNamespaceURI(), attr.getLocalName());
-		}
-		else
-		{
-			if (this.dom.getParentNode() != null)
-			{
+		} else {
+			if (this.dom.getParentNode() != null) {
 				this.dom.getParentNode().removeChild(this.dom);
-			}
-			else
-			{
+			} else {
 				//    This case can be exercised at least when executing the regression
 				//    tests under https://bugzilla.mozilla.org/show_bug.cgi?id=354145
 			}
 		}
 	}
 
-	void normalize()
-	{
+	void normalize() {
 		this.dom.normalize();
 	}
 
-	void insertChildAt(int index, XmlNode node)
-	{
+	void insertChildAt(int index, XmlNode node) {
 		Node parent = this.dom;
 		Node child = parent.getOwnerDocument().importNode(node.dom, true);
-		if (parent.getChildNodes().getLength() < index)
-		{
+		if (parent.getChildNodes().getLength() < index) {
 			//    TODO    Check ECMA for what happens here
 			throw new IllegalArgumentException("index=" + index + " length=" + parent.getChildNodes().getLength());
 		}
-		if (parent.getChildNodes().getLength() == index)
-		{
+		if (parent.getChildNodes().getLength() == index) {
 			parent.appendChild(child);
-		}
-		else
-		{
+		} else {
 			parent.insertBefore(child, parent.getChildNodes().item(index));
 		}
 	}
 
-	void insertChildrenAt(int index, XmlNode[] nodes)
-	{
-		for (int i = 0; i < nodes.length; i++)
-		{
+	void insertChildrenAt(int index, XmlNode[] nodes) {
+		for (int i = 0; i < nodes.length; i++) {
 			insertChildAt(index + i, nodes[i]);
 		}
 	}
 
-	XmlNode getChild(int index)
-	{
+	XmlNode getChild(int index) {
 		Node child = dom.getChildNodes().item(index);
 		return createImpl(child);
 	}
 
 	//    Helper method for XML.hasSimpleContent()
-	boolean hasChildElement()
-	{
+	boolean hasChildElement() {
 		org.w3c.dom.NodeList nodes = this.dom.getChildNodes();
-		for (int i = 0; i < nodes.getLength(); i++)
-		{
-			if (nodes.item(i).getNodeType() == org.w3c.dom.Node.ELEMENT_NODE)
-			{
+		for (int i = 0; i < nodes.getLength(); i++) {
+			if (nodes.item(i).getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	boolean isSameNode(XmlNode other)
-	{
+	boolean isSameNode(XmlNode other) {
 		//    TODO    May need to be changed if we allow XmlNode to refer to several Node objects
 		return this.dom == other.dom;
 	}
 
-	private String toUri(String ns)
-	{
+	private String toUri(String ns) {
 		return (ns == null) ? "" : ns;
 	}
 
-	private void addNamespaces(Namespaces rv, Element element)
-	{
-		if (element == null)
-		{
+	private void addNamespaces(Namespaces rv, Element element) {
+		if (element == null) {
 			throw new RuntimeException("element must not be null");
 		}
 		String myDefaultNamespace = toUri(element.lookupNamespaceURI(null));
 		String parentDefaultNamespace = "";
-		if (element.getParentNode() != null)
-		{
+		if (element.getParentNode() != null) {
 			parentDefaultNamespace = toUri(element.getParentNode().lookupNamespaceURI(null));
 		}
-		if (!myDefaultNamespace.equals(parentDefaultNamespace) || !(element.getParentNode() instanceof Element))
-		{
+		if (!myDefaultNamespace.equals(parentDefaultNamespace) || !(element.getParentNode() instanceof Element)) {
 			rv.declare(Namespace.create("", myDefaultNamespace));
 		}
 		NamedNodeMap attributes = element.getAttributes();
-		for (int i = 0; i < attributes.getLength(); i++)
-		{
+		for (int i = 0; i < attributes.getLength(); i++) {
 			Attr attr = (Attr) attributes.item(i);
-			if (attr.getPrefix() != null && attr.getPrefix().equals("xmlns"))
-			{
+			if (attr.getPrefix() != null && attr.getPrefix().equals("xmlns")) {
 				rv.declare(Namespace.create(attr.getLocalName(), attr.getValue()));
 			}
 		}
 	}
 
-	private Namespaces getAllNamespaces()
-	{
+	private Namespaces getAllNamespaces() {
 		Namespaces rv = new Namespaces();
 
 		Node target = this.dom;
-		if (target instanceof Attr)
-		{
+		if (target instanceof Attr) {
 			target = ((Attr) target).getOwnerElement();
 		}
-		while (target != null)
-		{
-			if (target instanceof Element)
-			{
+		while (target != null) {
+			if (target instanceof Element) {
 				addNamespaces(rv, (Element) target);
 			}
 			target = target.getParentNode();
@@ -373,31 +292,24 @@ class XmlNode implements Serializable
 		return rv;
 	}
 
-	Namespace[] getInScopeNamespaces()
-	{
+	Namespace[] getInScopeNamespaces() {
 		Namespaces rv = getAllNamespaces();
 		return rv.getNamespaces();
 	}
 
-	Namespace[] getNamespaceDeclarations()
-	{
+	Namespace[] getNamespaceDeclarations() {
 		//    ECMA357 13.4.4.24
-		if (this.dom instanceof Element)
-		{
+		if (this.dom instanceof Element) {
 			Namespaces rv = new Namespaces();
 			addNamespaces(rv, (Element) this.dom);
 			return rv.getNamespaces();
-		}
-		else
-		{
+		} else {
 			return new Namespace[0];
 		}
 	}
 
-	Namespace getNamespaceDeclaration(String prefix)
-	{
-		if (prefix.equals("") && dom instanceof Attr)
-		{
+	Namespace getNamespaceDeclaration(String prefix) {
+		if (prefix.equals("") && dom instanceof Attr) {
 			//    Default namespaces do not apply to attributes; see XML Namespaces section 5.2
 			return Namespace.create("", "");
 		}
@@ -405,73 +317,58 @@ class XmlNode implements Serializable
 		return rv.getNamespace(prefix);
 	}
 
-	Namespace getNamespaceDeclaration()
-	{
-		if (dom.getPrefix() == null)
-		{
+	Namespace getNamespaceDeclaration() {
+		if (dom.getPrefix() == null) {
 			return getNamespaceDeclaration("");
 		}
 		return getNamespaceDeclaration(dom.getPrefix());
 	}
 
-	static class XmlNodeUserDataHandler implements UserDataHandler, Serializable
-	{
+	static class XmlNodeUserDataHandler implements UserDataHandler, Serializable {
 		private static final long serialVersionUID = 4666895518900769588L;
 
-		public void handle(short operation, String key, Object data, Node src, Node dest)
-		{
+		@Override
+		public void handle(short operation, String key, Object data, Node src, Node dest) {
 		}
 	}
 
-	private static class Namespaces
-	{
+	private static class Namespaces {
 		private final Map<String, String> map = new HashMap<>();
 		private final Map<String, String> uriToPrefix = new HashMap<>();
 
-		Namespaces()
-		{
+		Namespaces() {
 		}
 
-		void declare(Namespace n)
-		{
-			if (map.get(n.prefix) == null)
-			{
+		void declare(Namespace n) {
+			if (map.get(n.prefix) == null) {
 				map.put(n.prefix, n.uri);
 			}
 			//    TODO    I think this is analogous to the other way, but have not really thought it through ... should local scope
 			//            matter more than outer scope?
-			if (uriToPrefix.get(n.uri) == null)
-			{
+			if (uriToPrefix.get(n.uri) == null) {
 				uriToPrefix.put(n.uri, n.prefix);
 			}
 		}
 
-		Namespace getNamespaceByUri(String uri)
-		{
-			if (uriToPrefix.get(uri) == null)
-			{
+		Namespace getNamespaceByUri(String uri) {
+			if (uriToPrefix.get(uri) == null) {
 				return null;
 			}
 			return Namespace.create(uri, uriToPrefix.get(uri));
 		}
 
-		Namespace getNamespace(String prefix)
-		{
-			if (map.get(prefix) == null)
-			{
+		Namespace getNamespace(String prefix) {
+			if (map.get(prefix) == null) {
 				return null;
 			}
 			return Namespace.create(prefix, map.get(prefix));
 		}
 
-		Namespace[] getNamespaces()
-		{
+		Namespace[] getNamespaces() {
 			ArrayList<Namespace> rv = new ArrayList<>();
-			for (Map.Entry<String, String> e : map.entrySet())
-			{
+			for (Map.Entry<String, String> e : map.entrySet()) {
 				Namespace n = Namespace.create(e.getKey(), e.getValue());
-				if (!n.isEmpty())
-				{
+				if (!n.isEmpty()) {
 					rv.add(n);
 				}
 			}
@@ -479,176 +376,136 @@ class XmlNode implements Serializable
 		}
 	}
 
-	final XmlNode copy()
-	{
+	final XmlNode copy() {
 		return copy(this);
 	}
 
 	//    Returns whether this node is capable of being a parent
-	final boolean isParentType()
-	{
+	final boolean isParentType() {
 		return isElementType();
 	}
 
-	final boolean isTextType()
-	{
+	final boolean isTextType() {
 		return dom.getNodeType() == Node.TEXT_NODE || dom.getNodeType() == Node.CDATA_SECTION_NODE;
 	}
 
-	final boolean isAttributeType()
-	{
+	final boolean isAttributeType() {
 		return dom.getNodeType() == Node.ATTRIBUTE_NODE;
 	}
 
-	final boolean isProcessingInstructionType()
-	{
+	final boolean isProcessingInstructionType() {
 		return dom.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE;
 	}
 
-	final boolean isCommentType()
-	{
+	final boolean isCommentType() {
 		return dom.getNodeType() == Node.COMMENT_NODE;
 	}
 
-	final boolean isElementType()
-	{
+	final boolean isElementType() {
 		return dom.getNodeType() == Node.ELEMENT_NODE;
 	}
 
-	final void renameNode(QName qname)
-	{
+	final void renameNode(QName qname) {
 		this.dom = dom.getOwnerDocument().renameNode(dom, qname.getNamespace().getUri(), qname.qualify(dom));
 	}
 
-	void invalidateNamespacePrefix()
-	{
-		if (!(dom instanceof Element))
-		{
+	void invalidateNamespacePrefix() {
+		if (!(dom instanceof Element)) {
 			throw new IllegalStateException();
 		}
 		String prefix = this.dom.getPrefix();
 		QName after = QName.create(this.dom.getNamespaceURI(), this.dom.getLocalName(), null);
 		renameNode(after);
 		NamedNodeMap attrs = this.dom.getAttributes();
-		for (int i = 0; i < attrs.getLength(); i++)
-		{
-			if (attrs.item(i).getPrefix().equals(prefix))
-			{
+		for (int i = 0; i < attrs.getLength(); i++) {
+			if (attrs.item(i).getPrefix().equals(prefix)) {
 				createImpl(attrs.item(i)).renameNode(QName.create(attrs.item(i).getNamespaceURI(), attrs.item(i).getLocalName(), null));
 			}
 		}
 	}
 
-	private void declareNamespace(Element e, String prefix, String uri)
-	{
-		if (prefix.length() > 0)
-		{
+	private void declareNamespace(Element e, String prefix, String uri) {
+		if (prefix.length() > 0) {
 			e.setAttributeNS(XML_NAMESPACES_NAMESPACE_URI, "xmlns:" + prefix, uri);
-		}
-		else
-		{
+		} else {
 			e.setAttribute("xmlns", uri);
 		}
 	}
 
-	void declareNamespace(String prefix, String uri)
-	{
-		if (!(dom instanceof Element))
-		{
+	void declareNamespace(String prefix, String uri) {
+		if (!(dom instanceof Element)) {
 			throw new IllegalStateException();
 		}
-		if (dom.lookupNamespaceURI(uri) != null && dom.lookupNamespaceURI(uri).equals(prefix))
-		{
+		if (dom.lookupNamespaceURI(uri) != null && dom.lookupNamespaceURI(uri).equals(prefix)) {
 			//    do nothing
-		}
-		else
-		{
+		} else {
 			Element e = (Element) dom;
 			declareNamespace(e, prefix, uri);
 		}
 	}
 
-	private Namespace getDefaultNamespace()
-	{
+	private Namespace getDefaultNamespace() {
 		String prefix = "";
 		String uri = (dom.lookupNamespaceURI(null) == null) ? "" : dom.lookupNamespaceURI(null);
 		return Namespace.create(prefix, uri);
 	}
 
-	private String getExistingPrefixFor(Namespace namespace)
-	{
-		if (getDefaultNamespace().getUri().equals(namespace.getUri()))
-		{
+	private String getExistingPrefixFor(Namespace namespace) {
+		if (getDefaultNamespace().getUri().equals(namespace.getUri())) {
 			return "";
 		}
 		return dom.lookupPrefix(namespace.getUri());
 	}
 
-	private Namespace getNodeNamespace()
-	{
+	private Namespace getNodeNamespace() {
 		String uri = dom.getNamespaceURI();
 		String prefix = dom.getPrefix();
-		if (uri == null)
-		{
+		if (uri == null) {
 			uri = "";
 		}
-		if (prefix == null)
-		{
+		if (prefix == null) {
 			prefix = "";
 		}
 		return Namespace.create(prefix, uri);
 	}
 
-	Namespace getNamespace()
-	{
+	Namespace getNamespace() {
 		return getNodeNamespace();
 	}
 
-	void removeNamespace(Namespace namespace)
-	{
+	void removeNamespace(Namespace namespace) {
 		Namespace current = getNodeNamespace();
 
 		//    Do not remove in-use namespace
-		if (namespace.is(current))
-		{
+		if (namespace.is(current)) {
 			return;
 		}
 		NamedNodeMap attrs = this.dom.getAttributes();
-		for (int i = 0; i < attrs.getLength(); i++)
-		{
+		for (int i = 0; i < attrs.getLength(); i++) {
 			XmlNode attr = XmlNode.createImpl(attrs.item(i));
-			if (namespace.is(attr.getNodeNamespace()))
-			{
+			if (namespace.is(attr.getNodeNamespace())) {
 				return;
 			}
 		}
 
 		//    TODO    I must confess I am not sure I understand the spec fully.  See ECMA357 13.4.4.31
 		String existingPrefix = getExistingPrefixFor(namespace);
-		if (existingPrefix != null)
-		{
-			if (namespace.isUnspecifiedPrefix())
-			{
+		if (existingPrefix != null) {
+			if (namespace.isUnspecifiedPrefix()) {
 				//    we should remove any namespace with this URI from scope; we do this by declaring a namespace with the same
 				//    prefix as the existing prefix and setting its URI to the default namespace
 				declareNamespace(existingPrefix, getDefaultNamespace().getUri());
-			}
-			else
-			{
-				if (existingPrefix.equals(namespace.getPrefix()))
-				{
+			} else {
+				if (existingPrefix.equals(namespace.getPrefix())) {
 					declareNamespace(existingPrefix, getDefaultNamespace().getUri());
 				}
 			}
-		}
-		else
-		{
+		} else {
 			//    the argument namespace is not declared in this scope, so do nothing.
 		}
 	}
 
-	private void setProcessingInstructionName(String localName)
-	{
+	private void setProcessingInstructionName(String localName) {
 		org.w3c.dom.ProcessingInstruction pi = (ProcessingInstruction) this.dom;
 		//    We cannot set the node name; Document.renameNode() only supports elements and attributes.  So we replace it
 		pi.getParentNode().replaceChild(
@@ -657,135 +514,106 @@ class XmlNode implements Serializable
 		);
 	}
 
-	final void setLocalName(String localName)
-	{
-		if (dom instanceof ProcessingInstruction)
-		{
+	final void setLocalName(String localName) {
+		if (dom instanceof ProcessingInstruction) {
 			setProcessingInstructionName(localName);
-		}
-		else
-		{
+		} else {
 			String prefix = dom.getPrefix();
-			if (prefix == null)
-			{
+			if (prefix == null) {
 				prefix = "";
 			}
 			this.dom = dom.getOwnerDocument().renameNode(dom, dom.getNamespaceURI(), QName.qualify(prefix, localName));
 		}
 	}
 
-	final QName getQname()
-	{
+	final QName getQname() {
 		String uri = (dom.getNamespaceURI()) == null ? "" : dom.getNamespaceURI();
 		String prefix = (dom.getPrefix() == null) ? "" : dom.getPrefix();
 		return QName.create(uri, dom.getLocalName(), prefix);
 	}
 
-	void addMatchingChildren(XMLList result, XmlNode.Filter filter)
-	{
+	void addMatchingChildren(XMLList result, XmlNode.Filter filter) {
 		Node node = this.dom;
 		NodeList children = node.getChildNodes();
-		for (int i = 0; i < children.getLength(); i++)
-		{
+		for (int i = 0; i < children.getLength(); i++) {
 			Node childnode = children.item(i);
 			XmlNode child = XmlNode.createImpl(childnode);
-			if (filter.accept(childnode))
-			{
+			if (filter.accept(childnode)) {
 				result.addToList(child);
 			}
 		}
 	}
 
-	XmlNode[] getMatchingChildren(Filter filter)
-	{
+	XmlNode[] getMatchingChildren(Filter filter) {
 		ArrayList<XmlNode> rv = new ArrayList<>();
 		NodeList nodes = this.dom.getChildNodes();
-		for (int i = 0; i < nodes.getLength(); i++)
-		{
+		for (int i = 0; i < nodes.getLength(); i++) {
 			Node node = nodes.item(i);
-			if (filter.accept(node))
-			{
+			if (filter.accept(node)) {
 				rv.add(createImpl(node));
 			}
 		}
 		return rv.toArray(new XmlNode[rv.size()]);
 	}
 
-	XmlNode[] getAttributes()
-	{
+	XmlNode[] getAttributes() {
 		NamedNodeMap attrs = this.dom.getAttributes();
 		//    TODO    Or could make callers handle null?
-		if (attrs == null)
-		{
+		if (attrs == null) {
 			throw new IllegalStateException("Must be element.");
 		}
 		XmlNode[] rv = new XmlNode[attrs.getLength()];
-		for (int i = 0; i < attrs.getLength(); i++)
-		{
+		for (int i = 0; i < attrs.getLength(); i++) {
 			rv[i] = createImpl(attrs.item(i));
 		}
 		return rv;
 	}
 
-	String getAttributeValue()
-	{
+	String getAttributeValue() {
 		return ((Attr) dom).getValue();
 	}
 
-	void setAttribute(QName name, String value)
-	{
-		if (!(dom instanceof Element))
-		{
+	void setAttribute(QName name, String value) {
+		if (!(dom instanceof Element)) {
 			throw new IllegalStateException("Can only set attribute on elements.");
 		}
 		name.setAttribute((Element) dom, value);
 	}
 
-	void replaceWith(XmlNode other)
-	{
+	void replaceWith(XmlNode other) {
 		Node replacement = other.dom;
-		if (replacement.getOwnerDocument() != this.dom.getOwnerDocument())
-		{
+		if (replacement.getOwnerDocument() != this.dom.getOwnerDocument()) {
 			replacement = this.dom.getOwnerDocument().importNode(replacement, true);
 		}
 		this.dom.getParentNode().replaceChild(replacement, this.dom);
 	}
 
-	String ecmaToXMLString(XmlProcessor processor)
-	{
-		if (this.isElementType())
-		{
+	String ecmaToXMLString(XmlProcessor processor) {
+		if (this.isElementType()) {
 			Element copy = (Element) this.dom.cloneNode(true);
 			Namespace[] inScope = this.getInScopeNamespaces();
-			for (int i = 0; i < inScope.length; i++)
-			{
+			for (int i = 0; i < inScope.length; i++) {
 				declareNamespace(copy, inScope[i].getPrefix(), inScope[i].getUri());
 			}
 			return processor.ecmaToXmlString(copy);
-		}
-		else
-		{
+		} else {
 			return processor.ecmaToXmlString(dom);
 		}
 	}
 
-	static class Namespace implements Serializable
-	{
+	static class Namespace implements Serializable {
 
 		/**
 		 * Serial version id for Namespace with fields prefix and uri
 		 */
 		private static final long serialVersionUID = 4073904386884677090L;
 
-		static Namespace create(String prefix, String uri)
-		{
-			if (prefix == null)
-			{
+		static Namespace create(String prefix, String uri) {
+			if (prefix == null) {
 				throw new IllegalArgumentException(
 						"Empty string represents default namespace prefix");
 			}
-			if (uri == null)
-			{
+			if (uri == null) {
 				throw new IllegalArgumentException(
 						"Namespace may not lack a URI");
 			}
@@ -795,14 +623,12 @@ class XmlNode implements Serializable
 			return rv;
 		}
 
-		static Namespace create(String uri)
-		{
+		static Namespace create(String uri) {
 			Namespace rv = new Namespace();
 			rv.uri = uri;
 
 			// Avoid null prefix for "" namespace
-			if (uri == null || uri.length() == 0)
-			{
+			if (uri == null || uri.length() == 0) {
 				rv.prefix = "";
 			}
 
@@ -814,78 +640,63 @@ class XmlNode implements Serializable
 		private String prefix;
 		private String uri;
 
-		private Namespace()
-		{
+		private Namespace() {
 		}
 
 		@Override
-		public String toString()
-		{
-			if (prefix == null)
-			{
+		public String toString() {
+			if (prefix == null) {
 				return "XmlNode.Namespace [" + uri + "]";
 			}
 			return "XmlNode.Namespace [" + prefix + "{" + uri + "}]";
 		}
 
-		boolean isUnspecifiedPrefix()
-		{
+		boolean isUnspecifiedPrefix() {
 			return prefix == null;
 		}
 
-		boolean is(Namespace other)
-		{
+		boolean is(Namespace other) {
 			return this.prefix != null && other.prefix != null && this.prefix.equals(other.prefix) && this.uri.equals(other.uri);
 		}
 
-		boolean isEmpty()
-		{
+		boolean isEmpty() {
 			return prefix != null && prefix.equals("") && uri.equals("");
 		}
 
-		boolean isDefault()
-		{
+		boolean isDefault() {
 			return prefix != null && prefix.equals("");
 		}
 
-		boolean isGlobal()
-		{
+		boolean isGlobal() {
 			return uri != null && uri.equals("");
 		}
 
 		//    Called by QName
 		//    TODO    Move functionality from QName lookupPrefix to here
-		private void setPrefix(String prefix)
-		{
-			if (prefix == null)
-			{
+		private void setPrefix(String prefix) {
+			if (prefix == null) {
 				throw new IllegalArgumentException();
 			}
 			this.prefix = prefix;
 		}
 
-		String getPrefix()
-		{
+		String getPrefix() {
 			return prefix;
 		}
 
-		String getUri()
-		{
+		String getUri() {
 			return uri;
 		}
 	}
 
 	//    TODO    Where is this class used?  No longer using it in QName implementation
-	static class QName implements Serializable
-	{
+	static class QName implements Serializable {
 		private static final long serialVersionUID = -6587069811691451077L;
 
-		static QName create(Namespace namespace, String localName)
-		{
+		static QName create(Namespace namespace, String localName) {
 			//    A null namespace indicates a wild-card match for any namespace
 			//    A null localName indicates "*" from the point of view of ECMA357
-			if (localName != null && localName.equals("*"))
-			{
+			if (localName != null && localName.equals("*")) {
 				throw new RuntimeException("* is not valid localName");
 			}
 			QName rv = new QName();
@@ -898,19 +709,15 @@ class XmlNode implements Serializable
 		 * @deprecated
 		 */
 		@Deprecated
-		static QName create(String uri, String localName, String prefix)
-		{
+		static QName create(String uri, String localName, String prefix) {
 			return create(Namespace.create(prefix, uri), localName);
 		}
 
-		static String qualify(String prefix, String localName)
-		{
-			if (prefix == null)
-			{
+		static String qualify(String prefix, String localName) {
+			if (prefix == null) {
 				throw new IllegalArgumentException("prefix must not be null");
 			}
-			if (prefix.length() > 0)
-			{
+			if (prefix.length() > 0) {
 				return prefix + ":" + localName;
 			}
 			return localName;
@@ -919,99 +726,78 @@ class XmlNode implements Serializable
 		private Namespace namespace;
 		private String localName;
 
-		private QName()
-		{
+		private QName() {
 		}
 
 		@Override
-		public String toString()
-		{
+		public String toString() {
 			return "XmlNode.QName [" + localName + "," + namespace + "]";
 		}
 
-		private boolean equals(String one, String two)
-		{
-			if (one == null && two == null)
-			{
+		private boolean equals(String one, String two) {
+			if (one == null && two == null) {
 				return true;
 			}
-			if (one == null || two == null)
-			{
+			if (one == null || two == null) {
 				return false;
 			}
 			return one.equals(two);
 		}
 
-		private boolean namespacesEqual(Namespace one, Namespace two)
-		{
-			if (one == null && two == null)
-			{
+		private boolean namespacesEqual(Namespace one, Namespace two) {
+			if (one == null && two == null) {
 				return true;
 			}
-			if (one == null || two == null)
-			{
+			if (one == null || two == null) {
 				return false;
 			}
 			return equals(one.getUri(), two.getUri());
 		}
 
-		final boolean equals(QName other)
-		{
-			if (!namespacesEqual(this.namespace, other.namespace))
-			{
+		final boolean equals(QName other) {
+			if (!namespacesEqual(this.namespace, other.namespace)) {
 				return false;
 			}
 			return equals(this.localName, other.localName);
 		}
 
 		@Override
-		public boolean equals(Object obj)
-		{
-			if (!(obj instanceof QName))
-			{
+		public boolean equals(Object obj) {
+			if (!(obj instanceof QName)) {
 				return false;
 			}
 			return equals((QName) obj);
 		}
 
 		@Override
-		public int hashCode()
-		{
+		public int hashCode() {
 			return localName == null ? 0 : localName.hashCode();
 		}
 
-		void lookupPrefix(org.w3c.dom.Node node)
-		{
-			if (node == null)
-			{
+		void lookupPrefix(org.w3c.dom.Node node) {
+			if (node == null) {
 				throw new IllegalArgumentException("node must not be null");
 			}
 			String prefix = node.lookupPrefix(namespace.getUri());
-			if (prefix == null)
-			{
+			if (prefix == null) {
 				//    check to see if we match the default namespace
 				String defaultNamespace = node.lookupNamespaceURI(null);
-				if (defaultNamespace == null)
-				{
+				if (defaultNamespace == null) {
 					defaultNamespace = "";
 				}
 				String nodeNamespace = namespace.getUri();
-				if (nodeNamespace.equals(defaultNamespace))
-				{
+				if (nodeNamespace.equals(defaultNamespace)) {
 					prefix = "";
 				}
 			}
 			int i = 0;
-			while (prefix == null)
-			{
+			while (prefix == null) {
 				String generatedPrefix = "e4x_" + i++;
 				String generatedUri = node.lookupNamespaceURI(generatedPrefix);
-				if (generatedUri == null)
-				{
+				if (generatedUri == null) {
 					prefix = generatedPrefix;
 					org.w3c.dom.Node top = node;
-					while (top.getParentNode() != null && top.getParentNode() instanceof org.w3c.dom.Element)
-					{
+					while (top.getParentNode() != null && top.getParentNode() instanceof org.w3c.dom.Element) {
 						top = top.getParentNode();
 					}
 					((org.w3c.dom.Element) top).setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:" + prefix, namespace.getUri());
@@ -1020,155 +806,117 @@ class XmlNode implements Serializable
 			namespace.setPrefix(prefix);
 		}
 
-		String qualify(org.w3c.dom.Node node)
-		{
-			if (namespace.getPrefix() == null)
-			{
-				if (node != null)
-				{
+		String qualify(org.w3c.dom.Node node) {
+			if (namespace.getPrefix() == null) {
+				if (node != null) {
 					lookupPrefix(node);
-				}
-				else
-				{
+				} else {
 					namespace.setPrefix("");
 				}
 			}
 			return qualify(namespace.getPrefix(), localName);
 		}
 
-		void setAttribute(org.w3c.dom.Element element, String value)
-		{
-			if (namespace.getPrefix() == null)
-			{
+		void setAttribute(org.w3c.dom.Element element, String value) {
+			if (namespace.getPrefix() == null) {
 				lookupPrefix(element);
 			}
 			element.setAttributeNS(namespace.getUri(), qualify(namespace.getPrefix(), localName), value);
 		}
 
-		Namespace getNamespace()
-		{
+		Namespace getNamespace() {
 			return namespace;
 		}
 
-		String getLocalName()
-		{
+		String getLocalName() {
 			return localName;
 		}
 	}
 
-	static class InternalList implements Serializable
-	{
+	static class InternalList implements Serializable {
 		private static final long serialVersionUID = -3633151157292048978L;
 		private final List<XmlNode> list;
 
-		InternalList()
-		{
+		InternalList() {
 			list = new ArrayList<>();
 		}
 
-		private void _add(XmlNode n)
-		{
+		private void _add(XmlNode n) {
 			list.add(n);
 		}
 
-		XmlNode item(int index)
-		{
+		XmlNode item(int index) {
 			return list.get(index);
 		}
 
-		void remove(int index)
-		{
+		void remove(int index) {
 			list.remove(index);
 		}
 
-		void add(InternalList other)
-		{
-			for (int i = 0; i < other.length(); i++)
-			{
+		void add(InternalList other) {
+			for (int i = 0; i < other.length(); i++) {
 				_add(other.item(i));
 			}
 		}
 
-		void add(InternalList from, int startInclusive, int endExclusive)
-		{
-			for (int i = startInclusive; i < endExclusive; i++)
-			{
+		void add(InternalList from, int startInclusive, int endExclusive) {
+			for (int i = startInclusive; i < endExclusive; i++) {
 				_add(from.item(i));
 			}
 		}
 
-		void add(XmlNode node)
-		{
+		void add(XmlNode node) {
 			_add(node);
 		}
 
 		/* TODO: was marked deprecated by original author */
-		void add(XML xml)
-		{
+		void add(XML xml) {
 			_add(xml.getAnnotation());
 		}
 
 		/* TODO: was marked deprecated by original author */
-		void addToList(Object toAdd)
-		{
-			if (toAdd instanceof Undefined)
-			{
+		void addToList(Object toAdd) {
+			if (toAdd instanceof Undefined) {
 				// Missing argument do nothing...
 				return;
 			}
 
-			if (toAdd instanceof XMLList)
-			{
+			if (toAdd instanceof XMLList) {
 				XMLList xmlSrc = (XMLList) toAdd;
-				for (int i = 0; i < xmlSrc.length(); i++)
-				{
+				for (int i = 0; i < xmlSrc.length(); i++) {
 					this._add((xmlSrc.item(i)).getAnnotation());
 				}
-			}
-			else if (toAdd instanceof XML)
-			{
+			} else if (toAdd instanceof XML) {
 				this._add(((XML) (toAdd)).getAnnotation());
-			}
-			else if (toAdd instanceof XmlNode)
-			{
+			} else if (toAdd instanceof XmlNode) {
 				this._add((XmlNode) toAdd);
 			}
 		}
 
-		int length()
-		{
+		int length() {
 			return list.size();
 		}
 	}
 
-	static abstract class Filter
-	{
-		static final Filter COMMENT = new Filter()
-		{
+	static abstract class Filter {
+		static final Filter COMMENT = new Filter() {
 			@Override
-			boolean accept(Node node)
-			{
+			boolean accept(Node node) {
 				return node.getNodeType() == Node.COMMENT_NODE;
 			}
 		};
-		static final Filter TEXT = new Filter()
-		{
+		static final Filter TEXT = new Filter() {
 			@Override
-			boolean accept(Node node)
-			{
+			boolean accept(Node node) {
 				return node.getNodeType() == Node.TEXT_NODE;
 			}
 		};
 
-		static Filter PROCESSING_INSTRUCTION(final XMLName name)
-		{
-			return new Filter()
-			{
+		static Filter PROCESSING_INSTRUCTION(final XMLName name) {
+			return new Filter() {
 				@Override
-				boolean accept(Node node)
-				{
-					if (node.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE)
-					{
+				boolean accept(Node node) {
+					if (node.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
 						ProcessingInstruction pi = (ProcessingInstruction) node;
 						return name.matchesLocalName(pi.getTarget());
 					}
@@ -1177,19 +925,15 @@ class XmlNode implements Serializable
 			};
 		}
 
-		static Filter ELEMENT = new Filter()
-		{
+		static Filter ELEMENT = new Filter() {
 			@Override
-			boolean accept(Node node)
-			{
+			boolean accept(Node node) {
 				return node.getNodeType() == Node.ELEMENT_NODE;
 			}
 		};
-		static Filter TRUE = new Filter()
-		{
+		static Filter TRUE = new Filter() {
 			@Override
-			boolean accept(Node node)
-			{
+			boolean accept(Node node) {
 				return true;
 			}
 		};
@@ -1198,8 +942,7 @@ class XmlNode implements Serializable
 	}
 
 	//    Support experimental Java interface
-	org.w3c.dom.Node toDomNode()
-	{
+	org.w3c.dom.Node toDomNode() {
 		return this.dom;
 	}
 }

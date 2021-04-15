@@ -14,8 +14,7 @@ package dev.latvian.mods.rhino;
  *
  * @param T the type of the return value of action execution
  */
-public interface ContextAction<T>
-{
+public interface ContextAction<T> {
 	/**
 	 * Execute action using the supplied Context instance.
 	 * When Rhino runtime calls the method, <code>cx</code> will be associated

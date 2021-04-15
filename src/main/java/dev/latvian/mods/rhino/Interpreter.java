@@ -17,8 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public final class Interpreter extends Icode implements Evaluator
-{
+public final class Interpreter extends Icode implements Evaluator {
 	// data for parsing
 	InterpreterData itsData;
 
@@ -35,8 +34,7 @@ public final class Interpreter extends Icode implements Evaluator
 	/**
 	 * Class to hold data corresponding to one interpreted call stack frame.
 	 */
-	private static class CallFrame implements Cloneable, Serializable
-	{
+	private static class CallFrame implements Cloneable, Serializable {
 		private static final long serialVersionUID = -2843792508994958978L;
 
 		// fields marked "final" in a comment are effectively final except when they're modified immediately after cloning.
@@ -83,8 +81,7 @@ public final class Interpreter extends Icode implements Evaluator
 		int savedCallOp;
 		Object throwable;
 
-		CallFrame(Context cx, Scriptable thisObj, InterpretedFunction fnOrScript, CallFrame parentFrame)
-		{
+		CallFrame(Context cx, Scriptable thisObj, InterpretedFunction fnOrScript, CallFrame parentFrame) {
 			idata = fnOrScript.idata;
 
 			debuggerFrame = cx.debugger != null ? cx.debugger.getFrame(cx, idata) : null;
@@ -98,8 +95,7 @@ public final class Interpreter extends Icode implements Evaluator
 
 			this.parentFrame = parentFrame;
 			frameIndex = (parentFrame == null) ? 0 : parentFrame.frameIndex + 1;
-			if (frameIndex > cx.getMaximumInterpreterStackDepth())
-			{
+			if (frameIndex > cx.getMaximumInterpreterStackDepth()) {
 				throw Context.reportRuntimeError("Exceeded maximum stack depth");
 			}
 
@@ -111,54 +107,40 @@ public final class Interpreter extends Icode implements Evaluator
 			savedStackTop = emptyStackTop;
 		}
 
-		void initializeArgs(Context cx, Scriptable callerScope, Object[] args, double[] argsDbl, int argShift, int argCount)
-		{
-			if (useActivation)
-			{
+		void initializeArgs(Context cx, Scriptable callerScope, Object[] args, double[] argsDbl, int argShift, int argCount) {
+			if (useActivation) {
 				// Copy args to new array to pass to enterActivationFunction
 				// or debuggerFrame.onEnter
-				if (argsDbl != null)
-				{
+				if (argsDbl != null) {
 					args = getArgsArray(args, argsDbl, argShift, argCount);
 				}
 				argShift = 0;
 				argsDbl = null;
 			}
 
-			if (idata.itsFunctionType != 0)
-			{
+			if (idata.itsFunctionType != 0) {
 				scope = fnOrScript.getParentScope();
 
-				if (useActivation)
-				{
-					if (idata.itsFunctionType == FunctionNode.ARROW_FUNCTION)
-					{
+				if (useActivation) {
+					if (idata.itsFunctionType == FunctionNode.ARROW_FUNCTION) {
 						scope = ScriptRuntime.createArrowFunctionActivation(fnOrScript, scope, args, idata.isStrict);
-					}
-					else
-					{
+					} else {
 						scope = ScriptRuntime.createFunctionActivation(fnOrScript, scope, args, idata.isStrict);
 					}
 				}
-			}
-			else
-			{
+			} else {
 				scope = callerScope;
 				ScriptRuntime.initScript(fnOrScript, thisObj, cx, scope,
 						fnOrScript.idata.evalScriptFlag);
 			}
 
-			if (idata.itsNestedFunctions != null)
-			{
-				if (idata.itsFunctionType != 0 && !idata.itsNeedsActivation)
-				{
+			if (idata.itsNestedFunctions != null) {
+				if (idata.itsFunctionType != 0 && !idata.itsNeedsActivation) {
 					Kit.codeBug();
 				}
-				for (int i = 0; i < idata.itsNestedFunctions.length; i++)
-				{
+				for (int i = 0; i < idata.itsNestedFunctions.length; i++) {
 					InterpreterData fdata = idata.itsNestedFunctions[i];
-					if (fdata.itsFunctionType == FunctionNode.FUNCTION_STATEMENT)
-					{
+					if (fdata.itsFunctionType == FunctionNode.FUNCTION_STATEMENT) {
 						initFunction(cx, scope, fnOrScript, i);
 					}
 				}
@@ -166,8 +148,7 @@ public final class Interpreter extends Icode implements Evaluator
 
 			final int maxFrameArray = idata.itsMaxFrameArray;
 			// TODO: move this check into InterpreterData construction
-			if (maxFrameArray != emptyStackTop + idata.itsMaxStack + 1)
-			{
+			if (maxFrameArray != emptyStackTop + idata.itsMaxStack + 1) {
 				Kit.codeBug();
 			}
 
@@ -178,46 +159,36 @@ public final class Interpreter extends Icode implements Evaluator
 			sDbl = new double[maxFrameArray];
 
 			int varCount = idata.getParamAndVarCount();
-			for (int i = 0; i < varCount; i++)
-			{
-				if (idata.getParamOrVarConst(i))
-				{
+			for (int i = 0; i < varCount; i++) {
+				if (idata.getParamOrVarConst(i)) {
 					stackAttributes[i] = ScriptableObject.CONST;
 				}
 			}
 			int definedArgs = idata.argCount;
-			if (definedArgs > argCount)
-			{
+			if (definedArgs > argCount) {
 				definedArgs = argCount;
 			}
 
 			// Fill the frame structure
 
 			System.arraycopy(args, argShift, stack, 0, definedArgs);
-			if (argsDbl != null)
-			{
+			if (argsDbl != null) {
 				System.arraycopy(argsDbl, argShift, sDbl, 0, definedArgs);
 			}
-			for (int i = definedArgs; i != idata.itsMaxVars; ++i)
-			{
+			for (int i = definedArgs; i != idata.itsMaxVars; ++i) {
 				stack[i] = Undefined.instance;
 			}
 		}
 
-		CallFrame cloneFrozen()
-		{
-			if (!frozen)
-			{
+		CallFrame cloneFrozen() {
+			if (!frozen) {
 				Kit.codeBug();
 			}
 
 			CallFrame copy;
-			try
-			{
+			try {
 				copy = (CallFrame) clone();
-			}
-			catch (CloneNotSupportedException ex)
-			{
+			} catch (CloneNotSupportedException ex) {
 				throw new IllegalStateException();
 			}
 
@@ -233,32 +204,26 @@ public final class Interpreter extends Icode implements Evaluator
 		}
 
 		@Override
-		public boolean equals(Object other)
-		{
+		public boolean equals(Object other) {
 			// Overridden for semantic equality comparison. These objects
 			// are typically exposed as NativeContinuation.implementation,
 			// comparing them allows establishing whether the continuations
 			// are semantically equal.
-			if (other instanceof CallFrame)
-			{
+			if (other instanceof CallFrame) {
 				// If the call is not within a Context with a top call, we force
 				// one. It is required as some objects within fully initialized
 				// global scopes (notably, XMLLibImpl) need to have a top scope
 				// in order to evaluate their attributes.
 				final Context cx = Context.enter();
-				try
-				{
-					if (ScriptRuntime.hasTopCall(cx))
-					{
+				try {
+					if (ScriptRuntime.hasTopCall(cx)) {
 						return equalsInTopScope(other);
 					}
 					final Scriptable top = ScriptableObject.getTopLevelScope(scope);
 					return (Boolean) ScriptRuntime.doTopCall(
 							(c, scope, thisObj, args) -> equalsInTopScope(other),
 							cx, top, top, ScriptRuntime.emptyArgs, isStrictTopFrame());
-				}
-				finally
-				{
+				} finally {
 					Context.exit();
 				}
 			}
@@ -266,8 +231,7 @@ public final class Interpreter extends Icode implements Evaluator
 		}
 
 		@Override
-		public int hashCode()
-		{
+		public int hashCode() {
 			// Overridden for consistency with equals.
 			// Trying to strike a balance between speed of calculation and
 			// distribution. Not hashing stack variables as those could have
@@ -275,8 +239,7 @@ public final class Interpreter extends Icode implements Evaluator
 			int depth = 0;
 			CallFrame f = this;
 			int h = 0;
-			do
-			{
+			do {
 				h = 31 * (31 * h + f.pc) + f.idata.icodeHashCode();
 				f = f.parentFrame;
 			}
@@ -284,53 +247,39 @@ public final class Interpreter extends Icode implements Evaluator
 			return h;
 		}
 
-		private Boolean equalsInTopScope(Object other)
-		{
+		private Boolean equalsInTopScope(Object other) {
 			return EqualObjectGraphs.withThreadLocal(eq -> equals(this, (CallFrame) other, eq));
 		}
 
-		private boolean isStrictTopFrame()
-		{
+		private boolean isStrictTopFrame() {
 			CallFrame f = this;
-			for (; ; )
-			{
+			for (; ; ) {
 				final CallFrame p = f.parentFrame;
-				if (p == null)
-				{
+				if (p == null) {
 					return f.idata.isStrict;
 				}
 				f = p;
 			}
 		}
 
-		private static Boolean equals(CallFrame f1, CallFrame f2, EqualObjectGraphs equal)
-		{
+		private static Boolean equals(CallFrame f1, CallFrame f2, EqualObjectGraphs equal) {
 			// Iterative instead of recursive, as interpreter stack depth can
 			// be larger than JVM stack depth.
-			for (; ; )
-			{
-				if (f1 == f2)
-				{
+			for (; ; ) {
+				if (f1 == f2) {
 					return Boolean.TRUE;
-				}
-				else if (f1 == null || f2 == null)
-				{
+				} else if (f1 == null || f2 == null) {
 					return Boolean.FALSE;
-				}
-				else if (!f1.fieldsEqual(f2, equal))
-				{
+				} else if (!f1.fieldsEqual(f2, equal)) {
 					return Boolean.FALSE;
-				}
-				else
-				{
+				} else {
 					f1 = f1.parentFrame;
 					f2 = f2.parentFrame;
 				}
 			}
 		}
 
-		private boolean fieldsEqual(CallFrame other, EqualObjectGraphs equal)
-		{
+		private boolean fieldsEqual(CallFrame other, EqualObjectGraphs equal) {
 			return frameIndex == other.frameIndex &&
 					pc == other.pc &&
 					compareIdata(idata, other.idata) &&
@@ -342,13 +291,11 @@ public final class Interpreter extends Icode implements Evaluator
 		}
 	}
 
-	private static boolean compareIdata(InterpreterData i1, InterpreterData i2)
-	{
+	private static boolean compareIdata(InterpreterData i1, InterpreterData i2) {
 		return i1 == i2 || Objects.equals(getEncodedSource(i1), getEncodedSource(i2));
 	}
 
-	private static final class ContinuationJump implements Serializable
-	{
+	private static final class ContinuationJump implements Serializable {
 		private static final long serialVersionUID = 7687739156004308247L;
 
 		CallFrame capturedFrame;
@@ -356,18 +303,14 @@ public final class Interpreter extends Icode implements Evaluator
 		Object result;
 		double resultDbl;
 
-		ContinuationJump(NativeContinuation c, CallFrame current)
-		{
+		ContinuationJump(NativeContinuation c, CallFrame current) {
 			this.capturedFrame = (CallFrame) c.getImplementation();
-			if (this.capturedFrame == null || current == null)
-			{
+			if (this.capturedFrame == null || current == null) {
 				// Continuation and current execution does not share
 				// any frames if there is nothing to capture or
 				// if there is no currently executed frames
 				this.branchFrame = null;
-			}
-			else
-			{
+			} else {
 				// Search for branch frame where parent frame chains starting
 				// from captured and current meet.
 				CallFrame chain1 = this.capturedFrame;
@@ -376,46 +319,39 @@ public final class Interpreter extends Icode implements Evaluator
 				// First work parents of chain1 or chain2 until the same
 				// frame depth.
 				int diff = chain1.frameIndex - chain2.frameIndex;
-				if (diff != 0)
-				{
-					if (diff < 0)
-					{
+				if (diff != 0) {
+					if (diff < 0) {
 						// swap to make sure that
 						// chain1.frameIndex > chain2.frameIndex and diff > 0
 						chain1 = current;
 						chain2 = this.capturedFrame;
 						diff = -diff;
 					}
-					do
-					{
+					do {
 						chain1 = chain1.parentFrame;
 					}
 					while (--diff != 0);
-					if (chain1.frameIndex != chain2.frameIndex)
-					{
+					if (chain1.frameIndex != chain2.frameIndex) {
 						Kit.codeBug();
 					}
 				}
 
 				// Now walk parents in parallel until a shared frame is found
 				// or until the root is reached.
-				while (chain1 != chain2 && chain1 != null)
-				{
+				while (chain1 != chain2 && chain1 != null) {
 					chain1 = chain1.parentFrame;
 					chain2 = chain2.parentFrame;
 				}
 
 				this.branchFrame = chain1;
-				if (this.branchFrame != null && !this.branchFrame.frozen)
-				{
+				if (this.branchFrame != null && !this.branchFrame.frozen) {
 					Kit.codeBug();
 				}
 			}
 		}
 	}
 
-	private static CallFrame captureFrameForGenerator(CallFrame frame)
-	{
+	private static CallFrame captureFrameForGenerator(CallFrame frame) {
 		frame.frozen = true;
 		CallFrame result = frame.cloneFrozen();
 		frame.frozen = false;
@@ -427,18 +363,15 @@ public final class Interpreter extends Icode implements Evaluator
 		return result;
 	}
 
-	static
-	{
+	static {
 		// Checks for byte code consistencies, good compiler can eliminate them
 
-		if (Token.LAST_BYTECODE_TOKEN > 127)
-		{
+		if (Token.LAST_BYTECODE_TOKEN > 127) {
 			String str = "Violation of Token.LAST_BYTECODE_TOKEN <= 127";
 			System.err.println(str);
 			throw new IllegalStateException(str);
 		}
-		if (MIN_ICODE < -128)
-		{
+		if (MIN_ICODE < -128) {
 			String str = "Violation of Interpreter.MIN_ICODE >= -128";
 			System.err.println(str);
 			throw new IllegalStateException(str);
@@ -449,18 +382,15 @@ public final class Interpreter extends Icode implements Evaluator
 	public Object compile(CompilerEnvirons compilerEnv,
 						  ScriptNode tree,
 						  String encodedSource,
-						  boolean returnFunction)
-	{
+						  boolean returnFunction) {
 		CodeGenerator cgen = new CodeGenerator();
 		itsData = cgen.compile(compilerEnv, tree, encodedSource, returnFunction);
 		return itsData;
 	}
 
 	@Override
-	public Script createScriptObject(Object bytecode, Object staticSecurityDomain)
-	{
-		if (bytecode != itsData)
-		{
+	public Script createScriptObject(Object bytecode, Object staticSecurityDomain) {
+		if (bytecode != itsData) {
 			Kit.codeBug();
 		}
 		return InterpretedFunction.createScript(itsData,
@@ -468,45 +398,37 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	@Override
-	public void setEvalScriptFlag(Script script)
-	{
+	public void setEvalScriptFlag(Script script) {
 		((InterpretedFunction) script).idata.evalScriptFlag = true;
 	}
 
 	@Override
 	public Function createFunctionObject(Context cx, Scriptable scope,
-										 Object bytecode, Object staticSecurityDomain)
-	{
-		if (bytecode != itsData)
-		{
+										 Object bytecode, Object staticSecurityDomain) {
+		if (bytecode != itsData) {
 			Kit.codeBug();
 		}
 		return InterpretedFunction.createFunction(cx, scope, itsData,
 				staticSecurityDomain);
 	}
 
-	private static int getShort(byte[] iCode, int pc)
-	{
+	private static int getShort(byte[] iCode, int pc) {
 		return (iCode[pc] << 8) | (iCode[pc + 1] & 0xFF);
 	}
 
-	private static int getIndex(byte[] iCode, int pc)
-	{
+	private static int getIndex(byte[] iCode, int pc) {
 		return ((iCode[pc] & 0xFF) << 8) | (iCode[pc + 1] & 0xFF);
 	}
 
-	private static int getInt(byte[] iCode, int pc)
-	{
+	private static int getInt(byte[] iCode, int pc) {
 		return (iCode[pc] << 24) | ((iCode[pc + 1] & 0xFF) << 16)
 				| ((iCode[pc + 2] & 0xFF) << 8) | (iCode[pc + 3] & 0xFF);
 	}
 
 	private static int getExceptionHandler(CallFrame frame,
-										   boolean onlyFinally)
-	{
+										   boolean onlyFinally) {
 		int[] exceptionTable = frame.idata.itsExceptionTable;
-		if (exceptionTable == null)
-		{
+		if (exceptionTable == null) {
 			// No exception handlers
 			return -1;
 		}
@@ -518,34 +440,27 @@ public final class Interpreter extends Icode implements Evaluator
 
 		// OPT: use binary search
 		int best = -1, bestStart = 0, bestEnd = 0;
-		for (int i = 0; i != exceptionTable.length; i += EXCEPTION_SLOT_SIZE)
-		{
+		for (int i = 0; i != exceptionTable.length; i += EXCEPTION_SLOT_SIZE) {
 			int start = exceptionTable[i + EXCEPTION_TRY_START_SLOT];
 			int end = exceptionTable[i + EXCEPTION_TRY_END_SLOT];
-			if (!(start <= pc && pc < end))
-			{
+			if (!(start <= pc && pc < end)) {
 				continue;
 			}
-			if (onlyFinally && exceptionTable[i + EXCEPTION_TYPE_SLOT] != 1)
-			{
+			if (onlyFinally && exceptionTable[i + EXCEPTION_TYPE_SLOT] != 1) {
 				continue;
 			}
-			if (best >= 0)
-			{
+			if (best >= 0) {
 				// Since handlers always nest and they never have shared end
 				// although they can share start  it is sufficient to compare
 				// handlers ends
-				if (bestEnd < end)
-				{
+				if (bestEnd < end) {
 					continue;
 				}
 				// Check the above assumption
-				if (bestStart > start)
-				{
+				if (bestStart > start) {
 					Kit.codeBug(); // should be nested
 				}
-				if (bestEnd == end)
-				{
+				if (bestEnd == end) {
 					Kit.codeBug();  // no ens sharing
 				}
 			}
@@ -556,10 +471,8 @@ public final class Interpreter extends Icode implements Evaluator
 		return best;
 	}
 
-	static void dumpICode(InterpreterData idata)
-	{
-		if (!Token.printICode)
-		{
+	static void dumpICode(InterpreterData idata) {
+		if (!Token.printICode) {
 			return;
 		}
 
@@ -572,8 +485,7 @@ public final class Interpreter extends Icode implements Evaluator
 		out.println("MaxStack = " + idata.itsMaxStack);
 
 		int indexReg = 0;
-		for (int pc = 0; pc < iCodeLength; )
-		{
+		for (int pc = 0; pc < iCodeLength; ) {
 			out.flush();
 			out.print(" [" + pc + "] ");
 			int token = iCode[pc];
@@ -581,11 +493,9 @@ public final class Interpreter extends Icode implements Evaluator
 			String tname = bytecodeName(token);
 			int old_pc = pc;
 			++pc;
-			switch (token)
-			{
+			switch (token) {
 				default:
-					if (icodeLength != 1)
-					{
+					if (icodeLength != 1) {
 						Kit.codeBug();
 					}
 					out.println(tname);
@@ -596,8 +506,7 @@ public final class Interpreter extends Icode implements Evaluator
 				case Token.IFEQ:
 				case Token.IFNE:
 				case Icode_IFEQ_POP:
-				case Icode_LEAVEDQ:
-				{
+				case Icode_LEAVEDQ: {
 					int newPC = pc + getShort(iCode, pc) - 1;
 					out.println(tname + " " + newPC);
 					pc += 2;
@@ -607,16 +516,14 @@ public final class Interpreter extends Icode implements Evaluator
 				case Icode_NAME_INC_DEC:
 				case Icode_PROP_INC_DEC:
 				case Icode_ELEM_INC_DEC:
-				case Icode_REF_INC_DEC:
-				{
+				case Icode_REF_INC_DEC: {
 					int incrDecrType = iCode[pc];
 					out.println(tname + " " + incrDecrType);
 					++pc;
 					break;
 				}
 
-				case Icode_CALLSPECIAL:
-				{
+				case Icode_CALLSPECIAL: {
 					int callType = iCode[pc] & 0xFF;
 					boolean isNew = (iCode[pc + 1] != 0);
 					int line = getIndex(iCode, pc + 2);
@@ -625,8 +532,7 @@ public final class Interpreter extends Icode implements Evaluator
 					break;
 				}
 
-				case Token.CATCH_SCOPE:
-				{
+				case Token.CATCH_SCOPE: {
 					boolean afterFisrtFlag = (iCode[pc] != 0);
 					out.println(tname + " " + afterFisrtFlag);
 					++pc;
@@ -654,56 +560,48 @@ public final class Interpreter extends Icode implements Evaluator
 				case Icode_YIELD_STAR:
 				case Icode_GENERATOR:
 				case Icode_GENERATOR_END:
-				case Icode_GENERATOR_RETURN:
-				{
+				case Icode_GENERATOR_RETURN: {
 					int line = getIndex(iCode, pc);
 					out.println(tname + " : " + line);
 					pc += 2;
 					break;
 				}
-				case Icode_SHORTNUMBER:
-				{
+				case Icode_SHORTNUMBER: {
 					int value = getShort(iCode, pc);
 					out.println(tname + " " + value);
 					pc += 2;
 					break;
 				}
-				case Icode_INTNUMBER:
-				{
+				case Icode_INTNUMBER: {
 					int value = getInt(iCode, pc);
 					out.println(tname + " " + value);
 					pc += 4;
 					break;
 				}
-				case Token.NUMBER:
-				{
+				case Token.NUMBER: {
 					double value = idata.itsDoubleTable[indexReg];
 					out.println(tname + " " + value);
 					break;
 				}
-				case Icode_LINE:
-				{
+				case Icode_LINE: {
 					int line = getIndex(iCode, pc);
 					out.println(tname + " : " + line);
 					pc += 2;
 					break;
 				}
-				case Icode_REG_STR1:
-				{
+				case Icode_REG_STR1: {
 					String str = strings[0xFF & iCode[pc]];
 					out.println(tname + " \"" + str + '"');
 					++pc;
 					break;
 				}
-				case Icode_REG_STR2:
-				{
+				case Icode_REG_STR2: {
 					String str = strings[getIndex(iCode, pc)];
 					out.println(tname + " \"" + str + '"');
 					pc += 2;
 					break;
 				}
-				case Icode_REG_STR4:
-				{
+				case Icode_REG_STR4: {
 					String str = strings[getInt(iCode, pc)];
 					out.println(tname + " \"" + str + '"');
 					pc += 4;
@@ -733,22 +631,19 @@ public final class Interpreter extends Icode implements Evaluator
 					indexReg = 5;
 					out.println(tname);
 					break;
-				case Icode_REG_IND1:
-				{
+				case Icode_REG_IND1: {
 					indexReg = 0xFF & iCode[pc];
 					out.println(tname + " " + indexReg);
 					++pc;
 					break;
 				}
-				case Icode_REG_IND2:
-				{
+				case Icode_REG_IND2: {
 					indexReg = getIndex(iCode, pc);
 					out.println(tname + " " + indexReg);
 					pc += 2;
 					break;
 				}
-				case Icode_REG_IND4:
-				{
+				case Icode_REG_IND4: {
 					indexReg = getInt(iCode, pc);
 					out.println(tname + " " + indexReg);
 					pc += 4;
@@ -762,20 +657,17 @@ public final class Interpreter extends Icode implements Evaluator
 					++pc;
 					break;
 			}
-			if (old_pc + icodeLength != pc)
-			{
+			if (old_pc + icodeLength != pc) {
 				Kit.codeBug();
 			}
 		}
 
 		int[] table = idata.itsExceptionTable;
-		if (table != null)
-		{
+		if (table != null) {
 			out.println("Exception handlers: "
 					+ table.length / EXCEPTION_SLOT_SIZE);
 			for (int i = 0; i != table.length;
-				 i += EXCEPTION_SLOT_SIZE)
-			{
+				 i += EXCEPTION_SLOT_SIZE) {
 				int tryStart = table[i + EXCEPTION_TRY_START_SLOT];
 				int tryEnd = table[i + EXCEPTION_TRY_END_SLOT];
 				int handlerStart = table[i + EXCEPTION_HANDLER_SLOT];
@@ -791,10 +683,8 @@ public final class Interpreter extends Icode implements Evaluator
 		out.flush();
 	}
 
-	private static int bytecodeSpan(int bytecode)
-	{
-		switch (bytecode)
-		{
+	private static int bytecodeSpan(int bytecode) {
+		switch (bytecode) {
 			case Token.THROW:
 			case Token.YIELD:
 			case Icode_YIELD_STAR:
@@ -873,27 +763,22 @@ public final class Interpreter extends Icode implements Evaluator
 				// line number
 				return 1 + 2;
 		}
-		if (!validBytecode(bytecode))
-		{
+		if (!validBytecode(bytecode)) {
 			throw Kit.codeBug();
 		}
 		return 1;
 	}
 
-	static int[] getLineNumbers(InterpreterData data)
-	{
+	static int[] getLineNumbers(InterpreterData data) {
 		UintMap presentLines = new UintMap();
 
 		byte[] iCode = data.itsICode;
 		int iCodeLength = iCode.length;
-		for (int pc = 0; pc != iCodeLength; )
-		{
+		for (int pc = 0; pc != iCodeLength; ) {
 			int bytecode = iCode[pc];
 			int span = bytecodeSpan(bytecode);
-			if (bytecode == Icode_LINE)
-			{
-				if (span != 3)
-				{
+			if (bytecode == Icode_LINE) {
+				if (span != 3) {
 					Kit.codeBug();
 				}
 				int line = getIndex(iCode, pc + 1);
@@ -906,11 +791,9 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	@Override
-	public void captureStackInfo(RhinoException ex)
-	{
+	public void captureStackInfo(RhinoException ex) {
 		Context cx = Context.getCurrentContext();
-		if (cx == null || cx.lastInterpreterFrame == null)
-		{
+		if (cx == null || cx.lastInterpreterFrame == null) {
 			// No interpreter invocations
 			ex.interpreterStackInfo = null;
 			ex.interpreterLineData = null;
@@ -919,16 +802,12 @@ public final class Interpreter extends Icode implements Evaluator
 		// has interpreter frame on the stack
 		CallFrame[] array;
 		if (cx.previousInterpreterInvocations == null
-				|| cx.previousInterpreterInvocations.size() == 0)
-		{
+				|| cx.previousInterpreterInvocations.size() == 0) {
 			array = new CallFrame[1];
-		}
-		else
-		{
+		} else {
 			int previousCount = cx.previousInterpreterInvocations.size();
 			if (cx.previousInterpreterInvocations.peek()
-					== cx.lastInterpreterFrame)
-			{
+					== cx.lastInterpreterFrame) {
 				// It can happen if exception was generated after
 				// frame was pushed to cx.previousInterpreterInvocations
 				// but before assignment to cx.lastInterpreterFrame.
@@ -941,8 +820,7 @@ public final class Interpreter extends Icode implements Evaluator
 		array[array.length - 1] = (CallFrame) cx.lastInterpreterFrame;
 
 		int interpreterFrameCount = 0;
-		for (int i = 0; i != array.length; ++i)
-		{
+		for (int i = 0; i != array.length; ++i) {
 			interpreterFrameCount += 1 + array[i].frameIndex;
 		}
 
@@ -950,19 +828,16 @@ public final class Interpreter extends Icode implements Evaluator
 		// Fill linePC with pc positions from all interpreter frames.
 		// Start from the most nested frame
 		int linePCIndex = interpreterFrameCount;
-		for (int i = array.length; i != 0; )
-		{
+		for (int i = array.length; i != 0; ) {
 			--i;
 			CallFrame frame = array[i];
-			while (frame != null)
-			{
+			while (frame != null) {
 				--linePCIndex;
 				linePC[linePCIndex] = frame.pcSourceLineStart;
 				frame = frame.parentFrame;
 			}
 		}
-		if (linePCIndex != 0)
-		{
+		if (linePCIndex != 0) {
 			Kit.codeBug();
 		}
 
@@ -971,16 +846,12 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	@Override
-	public String getSourcePositionFromStack(Context cx, int[] linep)
-	{
+	public String getSourcePositionFromStack(Context cx, int[] linep) {
 		CallFrame frame = (CallFrame) cx.lastInterpreterFrame;
 		InterpreterData idata = frame.idata;
-		if (frame.pcSourceLineStart >= 0)
-		{
+		if (frame.pcSourceLineStart >= 0) {
 			linep[0] = getIndex(idata.itsICode, frame.pcSourceLineStart);
-		}
-		else
-		{
+		} else {
 			linep[0] = 0;
 		}
 		return idata.itsSourceFile;
@@ -988,8 +859,7 @@ public final class Interpreter extends Icode implements Evaluator
 
 	@Override
 	public String getPatchedStack(RhinoException ex,
-								  String nativeStackTrace)
-	{
+								  String nativeStackTrace) {
 		String tag = "dev.latvian.mods.rhino.Interpreter.interpretLoop";
 		StringBuilder sb = new StringBuilder(nativeStackTrace.length() + 1000);
 		String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
@@ -999,23 +869,19 @@ public final class Interpreter extends Icode implements Evaluator
 		int arrayIndex = array.length;
 		int linePCIndex = linePC.length;
 		int offset = 0;
-		while (arrayIndex != 0)
-		{
+		while (arrayIndex != 0) {
 			--arrayIndex;
 			int pos = nativeStackTrace.indexOf(tag, offset);
-			if (pos < 0)
-			{
+			if (pos < 0) {
 				break;
 			}
 
 			// Skip tag length
 			pos += tag.length();
 			// Skip until the end of line
-			for (; pos != nativeStackTrace.length(); ++pos)
-			{
+			for (; pos != nativeStackTrace.length(); ++pos) {
 				char c = nativeStackTrace.charAt(pos);
-				if (c == '\n' || c == '\r')
-				{
+				if (c == '\n' || c == '\r') {
 					break;
 				}
 			}
@@ -1023,26 +889,22 @@ public final class Interpreter extends Icode implements Evaluator
 			offset = pos;
 
 			CallFrame frame = array[arrayIndex];
-			while (frame != null)
-			{
-				if (linePCIndex == 0)
-				{
+			while (frame != null) {
+				if (linePCIndex == 0) {
 					Kit.codeBug();
 				}
 				--linePCIndex;
 				InterpreterData idata = frame.idata;
 				sb.append(lineSeparator);
 				sb.append("\tat script");
-				if (idata.itsName != null && idata.itsName.length() != 0)
-				{
+				if (idata.itsName != null && idata.itsName.length() != 0) {
 					sb.append('.');
 					sb.append(idata.itsName);
 				}
 				sb.append('(');
 				sb.append(idata.itsSourceFile);
 				int pc = linePC[linePCIndex];
-				if (pc >= 0)
-				{
+				if (pc >= 0) {
 					// Include line info only if available
 					sb.append(':');
 					sb.append(getIndex(idata.itsICode, pc));
@@ -1057,17 +919,14 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	@Override
-	public List<String> getScriptStack(RhinoException ex)
-	{
+	public List<String> getScriptStack(RhinoException ex) {
 		ScriptStackElement[][] stack = getScriptStackElements(ex);
 		List<String> list = new ArrayList<>(stack.length);
 		String lineSeparator =
 				SecurityUtilities.getSystemProperty("line.separator");
-		for (ScriptStackElement[] group : stack)
-		{
+		for (ScriptStackElement[] group : stack) {
 			StringBuilder sb = new StringBuilder();
-			for (ScriptStackElement elem : group)
-			{
+			for (ScriptStackElement elem : group) {
 				elem.renderJavaStyle(sb);
 				sb.append(lineSeparator);
 			}
@@ -1076,10 +935,8 @@ public final class Interpreter extends Icode implements Evaluator
 		return list;
 	}
 
-	public ScriptStackElement[][] getScriptStackElements(RhinoException ex)
-	{
-		if (ex.interpreterStackInfo == null)
-		{
+	public ScriptStackElement[][] getScriptStackElements(RhinoException ex) {
+		if (ex.interpreterStackInfo == null) {
 			return null;
 		}
 
@@ -1089,15 +946,12 @@ public final class Interpreter extends Icode implements Evaluator
 		int[] linePC = ex.interpreterLineData;
 		int arrayIndex = array.length;
 		int linePCIndex = linePC.length;
-		while (arrayIndex != 0)
-		{
+		while (arrayIndex != 0) {
 			--arrayIndex;
 			CallFrame frame = array[arrayIndex];
 			List<ScriptStackElement> group = new ArrayList<>();
-			while (frame != null)
-			{
-				if (linePCIndex == 0)
-				{
+			while (frame != null) {
+				if (linePCIndex == 0) {
 					Kit.codeBug();
 				}
 				--linePCIndex;
@@ -1106,12 +960,10 @@ public final class Interpreter extends Icode implements Evaluator
 				String functionName = null;
 				int lineNumber = -1;
 				int pc = linePC[linePCIndex];
-				if (pc >= 0)
-				{
+				if (pc >= 0) {
 					lineNumber = getIndex(idata.itsICode, pc);
 				}
-				if (idata.itsName != null && idata.itsName.length() != 0)
-				{
+				if (idata.itsName != null && idata.itsName.length() != 0) {
 					functionName = idata.itsName;
 				}
 				frame = frame.parentFrame;
@@ -1122,10 +974,8 @@ public final class Interpreter extends Icode implements Evaluator
 		return list.toArray(new ScriptStackElement[list.size()][]);
 	}
 
-	static String getEncodedSource(InterpreterData idata)
-	{
-		if (idata.encodedSource == null)
-		{
+	static String getEncodedSource(InterpreterData idata) {
+		if (idata.encodedSource == null) {
 			return null;
 		}
 		return idata.encodedSource.substring(idata.encodedSourceStart,
@@ -1133,8 +983,7 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static void initFunction(Context cx, Scriptable scope,
-									 InterpretedFunction parent, int index)
-	{
+									 InterpretedFunction parent, int index) {
 		InterpretedFunction fn;
 		fn = InterpretedFunction.createFunction(cx, scope, parent, index);
 		ScriptRuntime.initFunction(cx, scope, fn, fn.idata.itsFunctionType,
@@ -1143,24 +992,18 @@ public final class Interpreter extends Icode implements Evaluator
 
 	static Object interpret(InterpretedFunction ifun,
 							Context cx, Scriptable scope,
-							Scriptable thisObj, Object[] args)
-	{
-		if (!ScriptRuntime.hasTopCall(cx))
-		{
+							Scriptable thisObj, Object[] args) {
+		if (!ScriptRuntime.hasTopCall(cx)) {
 			Kit.codeBug();
 		}
 
-		if (cx.interpreterSecurityDomain != ifun.securityDomain)
-		{
+		if (cx.interpreterSecurityDomain != ifun.securityDomain) {
 			Object savedDomain = cx.interpreterSecurityDomain;
 			cx.interpreterSecurityDomain = ifun.securityDomain;
-			try
-			{
+			try {
 				return ifun.securityController.callWithDomain(
 						ifun.securityDomain, cx, ifun, scope, thisObj, args);
-			}
-			finally
-			{
+			} finally {
 				cx.interpreterSecurityDomain = savedDomain;
 			}
 		}
@@ -1173,10 +1016,8 @@ public final class Interpreter extends Icode implements Evaluator
 		return interpretLoop(cx, frame, null);
 	}
 
-	static class GeneratorState
-	{
-		GeneratorState(int operation, Object value)
-		{
+	static class GeneratorState {
+		GeneratorState(int operation, Object value) {
 			this.operation = operation;
 			this.value = value;
 		}
@@ -1190,55 +1031,42 @@ public final class Interpreter extends Icode implements Evaluator
 										 Scriptable scope,
 										 int operation,
 										 Object savedState,
-										 Object value)
-	{
+										 Object value) {
 		CallFrame frame = (CallFrame) savedState;
 		GeneratorState generatorState = new GeneratorState(operation, value);
-		if (operation == NativeGenerator.GENERATOR_CLOSE)
-		{
-			try
-			{
+		if (operation == NativeGenerator.GENERATOR_CLOSE) {
+			try {
 				return interpretLoop(cx, frame, generatorState);
-			}
-			catch (RuntimeException e)
-			{
+			} catch (RuntimeException e) {
 				// Only propagate exceptions other than closingException
-				if (e != value)
-				{
+				if (e != value) {
 					throw e;
 				}
 			}
 			return Undefined.instance;
 		}
 		Object result = interpretLoop(cx, frame, generatorState);
-		if (generatorState.returnedException != null)
-		{
+		if (generatorState.returnedException != null) {
 			throw generatorState.returnedException;
 		}
 		return result;
 	}
 
 	public static Object restartContinuation(NativeContinuation c, Context cx,
-											 Scriptable scope, Object[] args)
-	{
-		if (!ScriptRuntime.hasTopCall(cx))
-		{
+											 Scriptable scope, Object[] args) {
+		if (!ScriptRuntime.hasTopCall(cx)) {
 			return ScriptRuntime.doTopCall(c, cx, scope, null, args, cx.isTopLevelStrict);
 		}
 
 		Object arg;
-		if (args.length == 0)
-		{
+		if (args.length == 0) {
 			arg = Undefined.instance;
-		}
-		else
-		{
+		} else {
 			arg = args[0];
 		}
 
 		CallFrame capturedFrame = (CallFrame) c.getImplementation();
-		if (capturedFrame == null)
-		{
+		if (capturedFrame == null) {
 			// No frames to restart
 			return arg;
 		}
@@ -1250,8 +1078,7 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static Object interpretLoop(Context cx, CallFrame frame,
-										Object throwable)
-	{
+										Object throwable) {
 		// throwable holds exception object to rethrow or catch
 		// It is also used for continuation restart in which case
 		// it holds ContinuationJump
@@ -1269,12 +1096,10 @@ public final class Interpreter extends Icode implements Evaluator
 		String stringReg = null;
 		int indexReg = -1;
 
-		if (cx.lastInterpreterFrame != null)
-		{
+		if (cx.lastInterpreterFrame != null) {
 			// save the top frame from the previous interpretLoop
 			// invocation on the stack
-			if (cx.previousInterpreterInvocations == null)
-			{
+			if (cx.previousInterpreterInvocations == null) {
 				cx.previousInterpreterInvocations = new ObjArray();
 			}
 			cx.previousInterpreterInvocations.push(cx.lastInterpreterFrame);
@@ -1288,18 +1113,14 @@ public final class Interpreter extends Icode implements Evaluator
 		// initializing indexReg.
 
 		GeneratorState generatorState = null;
-		if (throwable != null)
-		{
-			if (throwable instanceof GeneratorState)
-			{
+		if (throwable != null) {
+			if (throwable instanceof GeneratorState) {
 				generatorState = (GeneratorState) throwable;
 
 				// reestablish this call frame
 				enterFrame(cx, frame, ScriptRuntime.emptyArgs, true);
 				throwable = null;
-			}
-			else if (!(throwable instanceof ContinuationJump))
-			{
+			} else if (!(throwable instanceof ContinuationJump)) {
 				// It should be continuation
 				Kit.codeBug();
 			}
@@ -1309,14 +1130,11 @@ public final class Interpreter extends Icode implements Evaluator
 		double interpreterResultDbl = 0.0;
 
 		StateLoop:
-		for (; ; )
-		{
+		for (; ; ) {
 			withoutExceptions:
-			try
-			{
+			try {
 
-				if (throwable != null)
-				{
+				if (throwable != null) {
 					// Need to return both 'frame' and 'throwable' from
 					// 'processThrowable', so just added a 'throwable'
 					// member in 'frame'.
@@ -1324,11 +1142,8 @@ public final class Interpreter extends Icode implements Evaluator
 							instructionCounting);
 					throwable = frame.throwable;
 					frame.throwable = null;
-				}
-				else
-				{
-					if (generatorState == null && frame.frozen)
-					{
+				} else {
+					if (generatorState == null && frame.frozen) {
 						Kit.codeBug();
 					}
 				}
@@ -1353,8 +1168,7 @@ public final class Interpreter extends Icode implements Evaluator
 				cx.lastInterpreterFrame = frame;
 
 				Loop:
-				for (; ; )
-				{
+				for (; ; ) {
 
 					// Exception handler assumes that PC is already incremented
 					// pass the instruction start when it searches the
@@ -1364,23 +1178,17 @@ public final class Interpreter extends Icode implements Evaluator
 					{
 
 						// Back indent to ease implementation reading
-						switch (op)
-						{
-							case Icode_GENERATOR:
-							{
-								if (!frame.frozen)
-								{
+						switch (op) {
+							case Icode_GENERATOR: {
+								if (!frame.frozen) {
 									// First time encountering this opcode: create new generator
 									// object and return
 									frame.pc--; // we want to come back here when we resume
 									CallFrame generatorFrame = captureFrameForGenerator(frame);
 									generatorFrame.frozen = true;
-									if (cx.getLanguageVersion() >= Context.VERSION_ES6)
-									{
+									if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
 										frame.result = new ES6Generator(frame.scope, generatorFrame.fnOrScript, generatorFrame);
-									}
-									else
-									{
+									} else {
 										frame.result = new NativeGenerator(frame.scope,
 												generatorFrame.fnOrScript, generatorFrame);
 									}
@@ -1390,22 +1198,18 @@ public final class Interpreter extends Icode implements Evaluator
 							}
 							// fall through...
 							case Token.YIELD:
-							case Icode_YIELD_STAR:
-							{
-								if (!frame.frozen)
-								{
+							case Icode_YIELD_STAR: {
+								if (!frame.frozen) {
 									return freezeGenerator(cx, frame, stackTop, generatorState, op == Icode_YIELD_STAR);
 								}
 								Object obj = thawGenerator(frame, stackTop, generatorState, op);
-								if (obj != Scriptable.NOT_FOUND)
-								{
+								if (obj != Scriptable.NOT_FOUND) {
 									throwable = obj;
 									break withoutExceptions;
 								}
 								continue Loop;
 							}
-							case Icode_GENERATOR_END:
-							{
+							case Icode_GENERATOR_END: {
 								// throw StopIteration
 								frame.frozen = true;
 								int sourceLine = getIndex(iCode, frame.pc);
@@ -1414,8 +1218,7 @@ public final class Interpreter extends Icode implements Evaluator
 										frame.idata.itsSourceFile, sourceLine);
 								break Loop;
 							}
-							case Icode_GENERATOR_RETURN:
-							{
+							case Icode_GENERATOR_RETURN: {
 								// throw StopIteration with the value of "return"
 								frame.frozen = true;
 								frame.result = stack[stackTop];
@@ -1430,11 +1233,9 @@ public final class Interpreter extends Icode implements Evaluator
 										new JavaScriptException(si, frame.idata.itsSourceFile, sourceLine);
 								break Loop;
 							}
-							case Token.THROW:
-							{
+							case Token.THROW: {
 								Object value = stack[stackTop];
-								if (value == DBL_MRK)
-								{
+								if (value == DBL_MRK) {
 									value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								--stackTop;
@@ -1445,8 +1246,7 @@ public final class Interpreter extends Icode implements Evaluator
 										sourceLine);
 								break withoutExceptions;
 							}
-							case Token.RETHROW:
-							{
+							case Token.RETHROW: {
 								indexReg += frame.localShift;
 								throwable = stack[indexReg];
 								break withoutExceptions;
@@ -1454,20 +1254,17 @@ public final class Interpreter extends Icode implements Evaluator
 							case Token.GE:
 							case Token.LE:
 							case Token.GT:
-							case Token.LT:
-							{
+							case Token.LT: {
 								stackTop = doCompare(frame, op, stack, sDbl, stackTop);
 								continue Loop;
 							}
 							case Token.IN:
-							case Token.INSTANCEOF:
-							{
+							case Token.INSTANCEOF: {
 								stackTop = doInOrInstanceof(cx, op, stack, sDbl, stackTop);
 								continue Loop;
 							}
 							case Token.EQ:
-							case Token.NE:
-							{
+							case Token.NE: {
 								--stackTop;
 								boolean valBln = doEquals(stack, sDbl, stackTop);
 								valBln ^= (op == Token.NE);
@@ -1475,8 +1272,7 @@ public final class Interpreter extends Icode implements Evaluator
 								continue Loop;
 							}
 							case Token.SHEQ:
-							case Token.SHNE:
-							{
+							case Token.SHNE: {
 								--stackTop;
 								boolean valBln = doShallowEquals(stack, sDbl, stackTop);
 								valBln ^= (op == Token.SHNE);
@@ -1484,22 +1280,19 @@ public final class Interpreter extends Icode implements Evaluator
 								continue Loop;
 							}
 							case Token.IFNE:
-								if (stack_boolean(frame, stackTop--))
-								{
+								if (stack_boolean(frame, stackTop--)) {
 									frame.pc += 2;
 									continue Loop;
 								}
 								break jumplessRun;
 							case Token.IFEQ:
-								if (!stack_boolean(frame, stackTop--))
-								{
+								if (!stack_boolean(frame, stackTop--)) {
 									frame.pc += 2;
 									continue Loop;
 								}
 								break jumplessRun;
 							case Icode_IFEQ_POP:
-								if (!stack_boolean(frame, stackTop--))
-								{
+								if (!stack_boolean(frame, stackTop--)) {
 									frame.pc += 2;
 									continue Loop;
 								}
@@ -1513,43 +1306,35 @@ public final class Interpreter extends Icode implements Evaluator
 								sDbl[stackTop] = frame.pc + 2;
 								break jumplessRun;
 							case Icode_STARTSUB:
-								if (stackTop == frame.emptyStackTop + 1)
-								{
+								if (stackTop == frame.emptyStackTop + 1) {
 									// Call from Icode_GOSUB: store return PC address in the local
 									indexReg += frame.localShift;
 									stack[indexReg] = stack[stackTop];
 									sDbl[indexReg] = sDbl[stackTop];
 									--stackTop;
-								}
-								else
-								{
+								} else {
 									// Call from exception handler: exception object is already stored
 									// in the local
-									if (stackTop != frame.emptyStackTop)
-									{
+									if (stackTop != frame.emptyStackTop) {
 										Kit.codeBug();
 									}
 								}
 								continue Loop;
-							case Icode_RETSUB:
-							{
+							case Icode_RETSUB: {
 								// indexReg: local to store return address
-								if (instructionCounting)
-								{
+								if (instructionCounting) {
 									addInstructionCount(cx, frame, 0);
 								}
 								indexReg += frame.localShift;
 								Object value = stack[indexReg];
-								if (value != DBL_MRK)
-								{
+								if (value != DBL_MRK) {
 									// Invocation from exception handler, restore object to rethrow
 									throwable = value;
 									break withoutExceptions;
 								}
 								// Normal return from GOSUB
 								frame.pc = (int) sDbl[indexReg];
-								if (instructionCounting)
-								{
+								if (instructionCounting) {
 									frame.pcPrevBranch = frame.pc;
 								}
 								continue Loop;
@@ -1576,8 +1361,7 @@ public final class Interpreter extends Icode implements Evaluator
 								sDbl[stackTop + 2] = sDbl[stackTop];
 								stackTop += 2;
 								continue Loop;
-							case Icode_SWAP:
-							{
+							case Icode_SWAP: {
 								Object o = stack[stackTop];
 								stack[stackTop] = stack[stackTop - 1];
 								stack[stackTop - 1] = o;
@@ -1596,8 +1380,7 @@ public final class Interpreter extends Icode implements Evaluator
 							case Icode_RETUNDEF:
 								frame.result = undefined;
 								break Loop;
-							case Token.BITNOT:
-							{
+							case Token.BITNOT: {
 								int rIntValue = stack_int32(frame, stackTop);
 								stack[stackTop] = DBL_MRK;
 								sDbl[stackTop] = ~rIntValue;
@@ -1607,13 +1390,11 @@ public final class Interpreter extends Icode implements Evaluator
 							case Token.BITOR:
 							case Token.BITXOR:
 							case Token.LSH:
-							case Token.RSH:
-							{
+							case Token.RSH: {
 								stackTop = doBitOp(frame, op, stack, sDbl, stackTop);
 								continue Loop;
 							}
-							case Token.URSH:
-							{
+							case Token.URSH: {
 								double lDbl = stack_double(frame, stackTop - 1);
 								int rIntValue = stack_int32(frame, stackTop) & 0x1F;
 								stack[--stackTop] = DBL_MRK;
@@ -1621,12 +1402,10 @@ public final class Interpreter extends Icode implements Evaluator
 								continue Loop;
 							}
 							case Token.NEG:
-							case Token.POS:
-							{
+							case Token.POS: {
 								double rDbl = stack_double(frame, stackTop);
 								stack[stackTop] = DBL_MRK;
-								if (op == Token.NEG)
-								{
+								if (op == Token.NEG) {
 									rDbl = -rDbl;
 								}
 								sDbl[stackTop] = rDbl;
@@ -1639,8 +1418,7 @@ public final class Interpreter extends Icode implements Evaluator
 							case Token.SUB:
 							case Token.MUL:
 							case Token.DIV:
-							case Token.MOD:
-							{
+							case Token.MOD: {
 								stackTop = doArithmetic(frame, op, stack, sDbl, stackTop);
 								continue Loop;
 							}
@@ -1652,11 +1430,9 @@ public final class Interpreter extends Icode implements Evaluator
 								stack[++stackTop] = ScriptRuntime.bind(cx, frame.scope, stringReg);
 								continue Loop;
 							case Token.STRICT_SETNAME:
-							case Token.SETNAME:
-							{
+							case Token.SETNAME: {
 								Object rhs = stack[stackTop];
-								if (rhs == DBL_MRK)
-								{
+								if (rhs == DBL_MRK) {
 									rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								--stackTop;
@@ -1668,11 +1444,9 @@ public final class Interpreter extends Icode implements Evaluator
 												frame.scope, stringReg);
 								continue Loop;
 							}
-							case Icode_SETCONST:
-							{
+							case Icode_SETCONST: {
 								Object rhs = stack[stackTop];
-								if (rhs == DBL_MRK)
-								{
+								if (rhs == DBL_MRK) {
 									rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								--stackTop;
@@ -1681,55 +1455,45 @@ public final class Interpreter extends Icode implements Evaluator
 								continue Loop;
 							}
 							case Token.DELPROP:
-							case Icode_DELNAME:
-							{
+							case Icode_DELNAME: {
 								stackTop = doDelName(cx, frame, op, stack, sDbl, stackTop);
 								continue Loop;
 							}
-							case Token.GETPROPNOWARN:
-							{
+							case Token.GETPROPNOWARN: {
 								Object lhs = stack[stackTop];
-								if (lhs == DBL_MRK)
-								{
+								if (lhs == DBL_MRK) {
 									lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								stack[stackTop] = ScriptRuntime.getObjectPropNoWarn(lhs, stringReg,
 										cx, frame.scope);
 								continue Loop;
 							}
-							case Token.GETPROP:
-							{
+							case Token.GETPROP: {
 								Object lhs = stack[stackTop];
-								if (lhs == DBL_MRK)
-								{
+								if (lhs == DBL_MRK) {
 									lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								stack[stackTop] = ScriptRuntime.getObjectProp(lhs, stringReg,
 										cx, frame.scope);
 								continue Loop;
 							}
-							case Token.SETPROP:
-							{
+							case Token.SETPROP: {
 								Object rhs = stack[stackTop];
-								if (rhs == DBL_MRK)
-								{
+								if (rhs == DBL_MRK) {
 									rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								--stackTop;
 								Object lhs = stack[stackTop];
-								if (lhs == DBL_MRK)
-								{
+								if (lhs == DBL_MRK) {
 									lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								stack[stackTop] = ScriptRuntime.setObjectProp(lhs, stringReg, rhs,
 										cx, frame.scope);
 								continue Loop;
 							}
-							case Icode_PROP_INC_DEC:
-							{
+							case Icode_PROP_INC_DEC: {
 								Object lhs = stack[stackTop];
-								if (lhs == DBL_MRK)
-								{
+								if (lhs == DBL_MRK) {
 									lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								stack[stackTop] = ScriptRuntime.propIncrDecr(lhs, stringReg,
@@ -1738,32 +1502,26 @@ public final class Interpreter extends Icode implements Evaluator
 								++frame.pc;
 								continue Loop;
 							}
-							case Token.GETELEM:
-							{
+							case Token.GETELEM: {
 								stackTop = doGetElem(cx, frame, stack, sDbl, stackTop);
 								continue Loop;
 							}
-							case Token.SETELEM:
-							{
+							case Token.SETELEM: {
 								stackTop = doSetElem(cx, frame, stack, sDbl, stackTop);
 								continue Loop;
 							}
-							case Icode_ELEM_INC_DEC:
-							{
+							case Icode_ELEM_INC_DEC: {
 								stackTop = doElemIncDec(cx, frame, iCode, stack, sDbl, stackTop);
 								continue Loop;
 							}
-							case Token.GET_REF:
-							{
+							case Token.GET_REF: {
 								Ref ref = (Ref) stack[stackTop];
 								stack[stackTop] = ScriptRuntime.refGet(ref, cx);
 								continue Loop;
 							}
-							case Token.SET_REF:
-							{
+							case Token.SET_REF: {
 								Object value = stack[stackTop];
-								if (value == DBL_MRK)
-								{
+								if (value == DBL_MRK) {
 									value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								--stackTop;
@@ -1771,14 +1529,12 @@ public final class Interpreter extends Icode implements Evaluator
 								stack[stackTop] = ScriptRuntime.refSet(ref, value, cx, frame.scope);
 								continue Loop;
 							}
-							case Token.DEL_REF:
-							{
+							case Token.DEL_REF: {
 								Ref ref = (Ref) stack[stackTop];
 								stack[stackTop] = ScriptRuntime.refDel(ref, cx);
 								continue Loop;
 							}
-							case Icode_REF_INC_DEC:
-							{
+							case Icode_REF_INC_DEC: {
 								Ref ref = (Ref) stack[stackTop];
 								stack[stackTop] = ScriptRuntime.refIncrDecr(ref, cx, frame.scope,
 										iCode[frame.pc]);
@@ -1803,11 +1559,9 @@ public final class Interpreter extends Icode implements Evaluator
 								++stackTop;
 								stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
 								continue Loop;
-							case Icode_PROP_AND_THIS:
-							{
+							case Icode_PROP_AND_THIS: {
 								Object obj = stack[stackTop];
-								if (obj == DBL_MRK)
-								{
+								if (obj == DBL_MRK) {
 									obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								// stringReg: property
@@ -1817,16 +1571,13 @@ public final class Interpreter extends Icode implements Evaluator
 								stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
 								continue Loop;
 							}
-							case Icode_ELEM_AND_THIS:
-							{
+							case Icode_ELEM_AND_THIS: {
 								Object obj = stack[stackTop - 1];
-								if (obj == DBL_MRK)
-								{
+								if (obj == DBL_MRK) {
 									obj = ScriptRuntime.wrapNumber(sDbl[stackTop - 1]);
 								}
 								Object id = stack[stackTop];
-								if (id == DBL_MRK)
-								{
+								if (id == DBL_MRK) {
 									id = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								stack[stackTop - 1] = ScriptRuntime.getElemFunctionAndThis(obj, id, cx,
@@ -1834,11 +1585,9 @@ public final class Interpreter extends Icode implements Evaluator
 								stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
 								continue Loop;
 							}
-							case Icode_VALUE_AND_THIS:
-							{
+							case Icode_VALUE_AND_THIS: {
 								Object value = stack[stackTop];
-								if (value == DBL_MRK)
-								{
+								if (value == DBL_MRK) {
 									value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								stack[stackTop] = ScriptRuntime.getValueFunctionAndThis(value, cx);
@@ -1846,10 +1595,8 @@ public final class Interpreter extends Icode implements Evaluator
 								stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
 								continue Loop;
 							}
-							case Icode_CALLSPECIAL:
-							{
-								if (instructionCounting)
-								{
+							case Icode_CALLSPECIAL: {
+								if (instructionCounting) {
 									cx.instructionCount += INVOCATION_COST;
 								}
 								stackTop = doCallSpecial(cx, frame, stack, sDbl, stackTop, iCode, indexReg);
@@ -1857,10 +1604,8 @@ public final class Interpreter extends Icode implements Evaluator
 							}
 							case Token.CALL:
 							case Icode_TAIL_CALL:
-							case Token.REF_CALL:
-							{
-								if (instructionCounting)
-								{
+							case Token.REF_CALL: {
+								if (instructionCounting) {
 									cx.instructionCount += INVOCATION_COST;
 								}
 								// stack change: function thisObj arg0 .. argN -> result
@@ -1871,8 +1616,7 @@ public final class Interpreter extends Icode implements Evaluator
 								// are already Scriptable and Callable objects respectively
 								Callable fun = (Callable) stack[stackTop];
 								Scriptable funThisObj = (Scriptable) stack[stackTop + 1];
-								if (op == Token.REF_CALL)
-								{
+								if (op == Token.REF_CALL) {
 									Object[] outArgs = getArgsArray(stack, sDbl, stackTop + 2,
 											indexReg);
 									stack[stackTop] = ScriptRuntime.callRef(fun, funThisObj,
@@ -1880,18 +1624,14 @@ public final class Interpreter extends Icode implements Evaluator
 									continue Loop;
 								}
 								Scriptable calleeScope = frame.scope;
-								if (frame.useActivation)
-								{
+								if (frame.useActivation) {
 									calleeScope = ScriptableObject.getTopLevelScope(frame.scope);
 								}
-								if (fun instanceof InterpretedFunction)
-								{
+								if (fun instanceof InterpretedFunction) {
 									InterpretedFunction ifun = (InterpretedFunction) fun;
-									if (frame.fnOrScript.securityDomain == ifun.securityDomain)
-									{
+									if (frame.fnOrScript.securityDomain == ifun.securityDomain) {
 										CallFrame callParentFrame = frame;
-										if (op == Icode_TAIL_CALL)
-										{
+										if (op == Icode_TAIL_CALL) {
 											// In principle tail call can re-use the current
 											// frame and its stack arrays but it is hard to
 											// do properly. Any exceptions that can legally
@@ -1914,8 +1654,7 @@ public final class Interpreter extends Icode implements Evaluator
 										}
 										CallFrame calleeFrame = initFrame(cx, calleeScope, funThisObj, stack, sDbl,
 												stackTop + 2, indexReg, ifun, callParentFrame);
-										if (op != Icode_TAIL_CALL)
-										{
+										if (op != Icode_TAIL_CALL) {
 											frame.savedStackTop = stackTop;
 											frame.savedCallOp = op;
 										}
@@ -1924,20 +1663,16 @@ public final class Interpreter extends Icode implements Evaluator
 									}
 								}
 
-								if (fun instanceof NativeContinuation)
-								{
+								if (fun instanceof NativeContinuation) {
 									// Jump to the captured continuation
 									ContinuationJump cjump;
 									cjump = new ContinuationJump((NativeContinuation) fun, frame);
 
 									// continuation result is the first argument if any
 									// of continuation call
-									if (indexReg == 0)
-									{
+									if (indexReg == 0) {
 										cjump.result = undefined;
-									}
-									else
-									{
+									} else {
 										cjump.result = stack[stackTop + 2];
 										cjump.resultDbl = sDbl[stackTop + 2];
 									}
@@ -1947,25 +1682,20 @@ public final class Interpreter extends Icode implements Evaluator
 									break withoutExceptions;
 								}
 
-								if (fun instanceof IdFunctionObject)
-								{
+								if (fun instanceof IdFunctionObject) {
 									IdFunctionObject ifun = (IdFunctionObject) fun;
-									if (NativeContinuation.isContinuationConstructor(ifun))
-									{
+									if (NativeContinuation.isContinuationConstructor(ifun)) {
 										frame.stack[stackTop] = captureContinuation(cx,
 												frame.parentFrame, false);
 										continue Loop;
 									}
 									// Bug 405654 -- make best effort to keep Function.apply and
 									// Function.call within this interpreter loop invocation
-									if (BaseFunction.isApplyOrCall(ifun))
-									{
+									if (BaseFunction.isApplyOrCall(ifun)) {
 										Callable applyCallable = ScriptRuntime.getCallable(funThisObj);
-										if (applyCallable instanceof InterpretedFunction)
-										{
+										if (applyCallable instanceof InterpretedFunction) {
 											InterpretedFunction iApplyCallable = (InterpretedFunction) applyCallable;
-											if (frame.fnOrScript.securityDomain == iApplyCallable.securityDomain)
-											{
+											if (frame.fnOrScript.securityDomain == iApplyCallable.securityDomain) {
 												frame = initFrameForApplyOrCall(cx, frame, indexReg,
 														stack, sDbl, stackTop, op, calleeScope, ifun,
 														iApplyCallable);
@@ -1977,17 +1707,14 @@ public final class Interpreter extends Icode implements Evaluator
 
 								// Bug 447697 -- make best effort to keep __noSuchMethod__ within this
 								// interpreter loop invocation
-								if (fun instanceof ScriptRuntime.NoSuchMethodShim)
-								{
+								if (fun instanceof ScriptRuntime.NoSuchMethodShim) {
 									// get the shim and the actual method
 									ScriptRuntime.NoSuchMethodShim noSuchMethodShim = (ScriptRuntime.NoSuchMethodShim) fun;
 									Callable noSuchMethodMethod = noSuchMethodShim.noSuchMethodMethod;
 									// if the method is in fact an InterpretedFunction
-									if (noSuchMethodMethod instanceof InterpretedFunction)
-									{
+									if (noSuchMethodMethod instanceof InterpretedFunction) {
 										InterpretedFunction ifun = (InterpretedFunction) noSuchMethodMethod;
-										if (frame.fnOrScript.securityDomain == ifun.securityDomain)
-										{
+										if (frame.fnOrScript.securityDomain == ifun.securityDomain) {
 											frame = initFrameForNoSuchMethod(cx, frame, indexReg, stack, sDbl,
 													stackTop, op, funThisObj, calleeScope,
 													noSuchMethodShim, ifun);
@@ -2004,10 +1731,8 @@ public final class Interpreter extends Icode implements Evaluator
 
 								continue Loop;
 							}
-							case Token.NEW:
-							{
-								if (instructionCounting)
-								{
+							case Token.NEW: {
+								if (instructionCounting) {
 									cx.instructionCount += INVOCATION_COST;
 								}
 								// stack change: function arg0 .. argN -> newResult
@@ -2015,11 +1740,9 @@ public final class Interpreter extends Icode implements Evaluator
 								stackTop -= indexReg;
 
 								Object lhs = stack[stackTop];
-								if (lhs instanceof InterpretedFunction)
-								{
+								if (lhs instanceof InterpretedFunction) {
 									InterpretedFunction f = (InterpretedFunction) lhs;
-									if (frame.fnOrScript.securityDomain == f.securityDomain)
-									{
+									if (frame.fnOrScript.securityDomain == f.securityDomain) {
 										Scriptable newInstance = f.createObject(cx, frame.scope);
 										CallFrame calleeFrame = initFrame(cx, frame.scope, newInstance, stack, sDbl,
 												stackTop + 1, indexReg, f, frame);
@@ -2031,21 +1754,17 @@ public final class Interpreter extends Icode implements Evaluator
 										continue StateLoop;
 									}
 								}
-								if (!(lhs instanceof Function))
-								{
-									if (lhs == DBL_MRK)
-									{
+								if (!(lhs instanceof Function)) {
+									if (lhs == DBL_MRK) {
 										lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 									}
 									throw ScriptRuntime.notFunctionError(lhs);
 								}
 								Function fun = (Function) lhs;
 
-								if (fun instanceof IdFunctionObject)
-								{
+								if (fun instanceof IdFunctionObject) {
 									IdFunctionObject ifun = (IdFunctionObject) fun;
-									if (NativeContinuation.isContinuationConstructor(ifun))
-									{
+									if (NativeContinuation.isContinuationConstructor(ifun)) {
 										frame.stack[stackTop] =
 												captureContinuation(cx, frame.parentFrame, false);
 										continue Loop;
@@ -2056,11 +1775,9 @@ public final class Interpreter extends Icode implements Evaluator
 								stack[stackTop] = fun.construct(cx, frame.scope, outArgs);
 								continue Loop;
 							}
-							case Token.TYPEOF:
-							{
+							case Token.TYPEOF: {
 								Object lhs = stack[stackTop];
-								if (lhs == DBL_MRK)
-								{
+								if (lhs == DBL_MRK) {
 									lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								stack[stackTop] = ScriptRuntime.typeof(lhs);
@@ -2117,8 +1834,7 @@ public final class Interpreter extends Icode implements Evaluator
 							case Token.GETVAR:
 								stackTop = doGetVar(frame, stack, sDbl, stackTop, vars, varDbls, indexReg);
 								continue Loop;
-							case Icode_VAR_INC_DEC:
-							{
+							case Icode_VAR_INC_DEC: {
 								stackTop = doVarIncDec(cx, frame, stack, sDbl, stackTop,
 										vars, varDbls, varAttributes, indexReg);
 								continue Loop;
@@ -2151,11 +1867,9 @@ public final class Interpreter extends Icode implements Evaluator
 							case Icode_UNDEF:
 								stack[++stackTop] = undefined;
 								continue Loop;
-							case Token.ENTERWITH:
-							{
+							case Token.ENTERWITH: {
 								Object lhs = stack[stackTop];
-								if (lhs == DBL_MRK)
-								{
+								if (lhs == DBL_MRK) {
 									lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								--stackTop;
@@ -2165,8 +1879,7 @@ public final class Interpreter extends Icode implements Evaluator
 							case Token.LEAVEWITH:
 								frame.scope = ScriptRuntime.leaveWith(frame.scope);
 								continue Loop;
-							case Token.CATCH_SCOPE:
-							{
+							case Token.CATCH_SCOPE: {
 								// stack top: exception object
 								// stringReg: name of exception variable
 								// indexReg: local for exception scope
@@ -2176,12 +1889,9 @@ public final class Interpreter extends Icode implements Evaluator
 								boolean afterFirstScope = (frame.idata.itsICode[frame.pc] != 0);
 								Throwable caughtException = (Throwable) stack[stackTop + 1];
 								Scriptable lastCatchScope;
-								if (!afterFirstScope)
-								{
+								if (!afterFirstScope) {
 									lastCatchScope = null;
-								}
-								else
-								{
+								} else {
 									lastCatchScope = (Scriptable) stack[indexReg];
 								}
 								stack[indexReg] = ScriptRuntime.newCatchScope(caughtException,
@@ -2193,11 +1903,9 @@ public final class Interpreter extends Icode implements Evaluator
 							case Token.ENUM_INIT_KEYS:
 							case Token.ENUM_INIT_VALUES:
 							case Token.ENUM_INIT_ARRAY:
-							case Token.ENUM_INIT_VALUES_IN_ORDER:
-							{
+							case Token.ENUM_INIT_VALUES_IN_ORDER: {
 								Object lhs = stack[stackTop];
-								if (lhs == DBL_MRK)
-								{
+								if (lhs == DBL_MRK) {
 									lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								--stackTop;
@@ -2213,8 +1921,7 @@ public final class Interpreter extends Icode implements Evaluator
 								continue Loop;
 							}
 							case Token.ENUM_NEXT:
-							case Token.ENUM_ID:
-							{
+							case Token.ENUM_ID: {
 								indexReg += frame.localShift;
 								Object val = stack[indexReg];
 								++stackTop;
@@ -2223,44 +1930,37 @@ public final class Interpreter extends Icode implements Evaluator
 										: ScriptRuntime.enumId(val, cx);
 								continue Loop;
 							}
-							case Token.REF_SPECIAL:
-							{
+							case Token.REF_SPECIAL: {
 								//stringReg: name of special property
 								Object obj = stack[stackTop];
-								if (obj == DBL_MRK)
-								{
+								if (obj == DBL_MRK) {
 									obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								stack[stackTop] = ScriptRuntime.specialRef(obj, stringReg,
 										cx, frame.scope);
 								continue Loop;
 							}
-							case Token.REF_MEMBER:
-							{
+							case Token.REF_MEMBER: {
 								//indexReg: flags
 								stackTop = doRefMember(cx, stack, sDbl, stackTop, indexReg);
 								continue Loop;
 							}
-							case Token.REF_NS_MEMBER:
-							{
+							case Token.REF_NS_MEMBER: {
 								//indexReg: flags
 								stackTop = doRefNsMember(cx, stack, sDbl, stackTop, indexReg);
 								continue Loop;
 							}
-							case Token.REF_NAME:
-							{
+							case Token.REF_NAME: {
 								//indexReg: flags
 								Object name = stack[stackTop];
-								if (name == DBL_MRK)
-								{
+								if (name == DBL_MRK) {
 									name = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								stack[stackTop] = ScriptRuntime.nameRef(name, cx, frame.scope,
 										indexReg);
 								continue Loop;
 							}
-							case Token.REF_NS_NAME:
-							{
+							case Token.REF_NS_NAME: {
 								//indexReg: flags
 								stackTop = doRefNsName(cx, frame, stack, sDbl, stackTop, indexReg);
 								continue Loop;
@@ -2277,12 +1977,9 @@ public final class Interpreter extends Icode implements Evaluator
 								InterpretedFunction fn = InterpretedFunction.createFunction(cx, frame.scope,
 										frame.fnOrScript,
 										indexReg);
-								if (fn.idata.itsFunctionType == FunctionNode.ARROW_FUNCTION)
-								{
+								if (fn.idata.itsFunctionType == FunctionNode.ARROW_FUNCTION) {
 									stack[++stackTop] = new ArrowFunction(cx, frame.scope, fn, frame.thisObj);
-								}
-								else
-								{
+								} else {
 									stack[++stackTop] = fn;
 								}
 								continue Loop;
@@ -2305,11 +2002,9 @@ public final class Interpreter extends Icode implements Evaluator
 								stack[stackTop] = new Object[indexReg];
 								sDbl[stackTop] = 0;
 								continue Loop;
-							case Icode_LITERAL_SET:
-							{
+							case Icode_LITERAL_SET: {
 								Object value = stack[stackTop];
-								if (value == DBL_MRK)
-								{
+								if (value == DBL_MRK) {
 									value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								--stackTop;
@@ -2318,8 +2013,7 @@ public final class Interpreter extends Icode implements Evaluator
 								sDbl[stackTop] = i + 1;
 								continue Loop;
 							}
-							case Icode_LITERAL_GETTER:
-							{
+							case Icode_LITERAL_GETTER: {
 								Object value = stack[stackTop];
 								--stackTop;
 								int i = (int) sDbl[stackTop];
@@ -2328,8 +2022,7 @@ public final class Interpreter extends Icode implements Evaluator
 								sDbl[stackTop] = i + 1;
 								continue Loop;
 							}
-							case Icode_LITERAL_SETTER:
-							{
+							case Icode_LITERAL_SETTER: {
 								Object value = stack[stackTop];
 								--stackTop;
 								int i = (int) sDbl[stackTop];
@@ -2340,23 +2033,18 @@ public final class Interpreter extends Icode implements Evaluator
 							}
 							case Token.ARRAYLIT:
 							case Icode_SPARE_ARRAYLIT:
-							case Token.OBJECTLIT:
-							{
+							case Token.OBJECTLIT: {
 								Object[] data = (Object[]) stack[stackTop];
 								--stackTop;
 								int[] getterSetters = (int[]) stack[stackTop];
 								Object val;
-								if (op == Token.OBJECTLIT)
-								{
+								if (op == Token.OBJECTLIT) {
 									Object[] ids = (Object[]) frame.idata.literalIds[indexReg];
 									val = ScriptRuntime.newObjectLiteral(ids, data, getterSetters, cx,
 											frame.scope);
-								}
-								else
-								{
+								} else {
 									int[] skipIndexces = null;
-									if (op == Icode_SPARE_ARRAYLIT)
-									{
+									if (op == Icode_SPARE_ARRAYLIT) {
 										skipIndexces = (int[]) frame.idata.literalIds[indexReg];
 									}
 									val = ScriptRuntime.newArrayLiteral(data, skipIndexces, cx,
@@ -2365,23 +2053,19 @@ public final class Interpreter extends Icode implements Evaluator
 								stack[stackTop] = val;
 								continue Loop;
 							}
-							case Icode_ENTERDQ:
-							{
+							case Icode_ENTERDQ: {
 								Object lhs = stack[stackTop];
-								if (lhs == DBL_MRK)
-								{
+								if (lhs == DBL_MRK) {
 									lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								--stackTop;
 								frame.scope = ScriptRuntime.enterDotQuery(lhs, frame.scope);
 								continue Loop;
 							}
-							case Icode_LEAVEDQ:
-							{
+							case Icode_LEAVEDQ: {
 								boolean valBln = stack_boolean(frame, stackTop);
 								Object x = ScriptRuntime.updateDotQuery(valBln, frame.scope);
-								if (x != null)
-								{
+								if (x != null) {
 									stack[stackTop] = x;
 									frame.scope = ScriptRuntime.leaveDotQuery(frame.scope);
 									frame.pc += 2;
@@ -2391,44 +2075,36 @@ public final class Interpreter extends Icode implements Evaluator
 								--stackTop;
 								break jumplessRun;
 							}
-							case Token.DEFAULTNAMESPACE:
-							{
+							case Token.DEFAULTNAMESPACE: {
 								Object value = stack[stackTop];
-								if (value == DBL_MRK)
-								{
+								if (value == DBL_MRK) {
 									value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								stack[stackTop] = ScriptRuntime.setDefaultNamespace(value, cx);
 								continue Loop;
 							}
-							case Token.ESCXMLATTR:
-							{
+							case Token.ESCXMLATTR: {
 								Object value = stack[stackTop];
-								if (value != DBL_MRK)
-								{
+								if (value != DBL_MRK) {
 									stack[stackTop] = ScriptRuntime.escapeAttributeValue(value, cx);
 								}
 								continue Loop;
 							}
-							case Token.ESCXMLTEXT:
-							{
+							case Token.ESCXMLTEXT: {
 								Object value = stack[stackTop];
-								if (value != DBL_MRK)
-								{
+								if (value != DBL_MRK) {
 									stack[stackTop] = ScriptRuntime.escapeTextValue(value, cx);
 								}
 								continue Loop;
 							}
 							case Icode_DEBUGGER:
-								if (frame.debuggerFrame != null)
-								{
+								if (frame.debuggerFrame != null) {
 									frame.debuggerFrame.onDebuggerStatement(cx);
 								}
 								continue Loop;
 							case Icode_LINE:
 								frame.pcSourceLineStart = frame.pc;
-								if (frame.debuggerFrame != null)
-								{
+								if (frame.debuggerFrame != null) {
 									int line = getIndex(iCode, frame.pc);
 									frame.debuggerFrame.onLineChange(cx, line);
 								}
@@ -2498,23 +2174,18 @@ public final class Interpreter extends Icode implements Evaluator
 
 					// This should be reachable only for jump implementation
 					// when pc points to encoded target offset
-					if (instructionCounting)
-					{
+					if (instructionCounting) {
 						addInstructionCount(cx, frame, 2);
 					}
 					int offset = getShort(iCode, frame.pc);
-					if (offset != 0)
-					{
+					if (offset != 0) {
 						// -1 accounts for pc pointing to jump opcode + 1
 						frame.pc += offset - 1;
-					}
-					else
-					{
+					} else {
 						frame.pc = frame.idata.longJumps.
 								getExistingInt(frame.pc);
 					}
-					if (instructionCounting)
-					{
+					if (instructionCounting) {
 						frame.pcPrevBranch = frame.pc;
 					}
 					continue Loop;
@@ -2524,11 +2195,9 @@ public final class Interpreter extends Icode implements Evaluator
 				exitFrame(cx, frame, null);
 				interpreterResult = frame.result;
 				interpreterResultDbl = frame.resultDbl;
-				if (frame.parentFrame != null)
-				{
+				if (frame.parentFrame != null) {
 					frame = frame.parentFrame;
-					if (frame.frozen)
-					{
+					if (frame.frozen) {
 						frame = frame.cloneFrozen();
 					}
 					setCallResult(
@@ -2539,10 +2208,8 @@ public final class Interpreter extends Icode implements Evaluator
 				break StateLoop;
 
 			}  // end of interpreter withoutExceptions: try
-			catch (Throwable ex)
-			{
-				if (throwable != null)
-				{
+			catch (Throwable ex) {
+				if (throwable != null) {
 					// This is serious bug and it is better to track it ASAP
 					ex.printStackTrace(System.err);
 					throw new IllegalStateException();
@@ -2553,8 +2220,7 @@ public final class Interpreter extends Icode implements Evaluator
 			// This should be reachable only after above catch or from
 			// finally when it needs to propagate exception or from
 			// explicit throw
-			if (throwable == null)
-			{
+			if (throwable == null) {
 				Kit.codeBug();
 			}
 
@@ -2568,65 +2234,42 @@ public final class Interpreter extends Icode implements Evaluator
 
 			if (generatorState != null &&
 					generatorState.operation == NativeGenerator.GENERATOR_CLOSE &&
-					throwable == generatorState.value)
-			{
+					throwable == generatorState.value) {
 				exState = EX_FINALLY_STATE;
-			}
-			else if (throwable instanceof JavaScriptException)
-			{
+			} else if (throwable instanceof JavaScriptException) {
 				exState = EX_CATCH_STATE;
-			}
-			else if (throwable instanceof EcmaError)
-			{
+			} else if (throwable instanceof EcmaError) {
 				// an offical ECMA error object,
 				exState = EX_CATCH_STATE;
-			}
-			else if (throwable instanceof EvaluatorException)
-			{
+			} else if (throwable instanceof EvaluatorException) {
 				exState = EX_CATCH_STATE;
-			}
-			else if (throwable instanceof ContinuationPending)
-			{
+			} else if (throwable instanceof ContinuationPending) {
 				exState = EX_NO_JS_STATE;
-			}
-			else if (throwable instanceof RuntimeException)
-			{
+			} else if (throwable instanceof RuntimeException) {
 				exState = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)
 						? EX_CATCH_STATE
 						: EX_FINALLY_STATE;
-			}
-			else if (throwable instanceof Error)
-			{
+			} else if (throwable instanceof Error) {
 				exState = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)
 						? EX_CATCH_STATE
 						: EX_NO_JS_STATE;
-			}
-			else if (throwable instanceof ContinuationJump)
-			{
+			} else if (throwable instanceof ContinuationJump) {
 				// It must be ContinuationJump
 				exState = EX_FINALLY_STATE;
 				cjump = (ContinuationJump) throwable;
-			}
-			else
-			{
+			} else {
 				exState = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)
 						? EX_CATCH_STATE
 						: EX_FINALLY_STATE;
 			}
 
-			if (instructionCounting)
-			{
-				try
-				{
+			if (instructionCounting) {
+				try {
 					addInstructionCount(cx, frame, EXCEPTION_COST);
-				}
-				catch (RuntimeException ex)
-				{
+				} catch (RuntimeException ex) {
 					throwable = ex;
 					exState = EX_FINALLY_STATE;
-				}
-				catch (Error ex)
-				{
+				} catch (Error ex) {
 					// Error from instruction counting
 					//     => unconditionally terminate JS
 					throwable = ex;
@@ -2635,16 +2278,12 @@ public final class Interpreter extends Icode implements Evaluator
 				}
 			}
 			if (frame.debuggerFrame != null
-					&& throwable instanceof RuntimeException)
-			{
+					&& throwable instanceof RuntimeException) {
 				// Call debugger only for RuntimeException
 				RuntimeException rex = (RuntimeException) throwable;
-				try
-				{
+				try {
 					frame.debuggerFrame.onExceptionThrown(cx, rex);
-				}
-				catch (Throwable ex)
-				{
+				} catch (Throwable ex) {
 					// Any exception from debugger
 					//     => unconditionally terminate JS
 					throwable = ex;
@@ -2653,14 +2292,11 @@ public final class Interpreter extends Icode implements Evaluator
 				}
 			}
 
-			for (; ; )
-			{
-				if (exState != EX_NO_JS_STATE)
-				{
+			for (; ; ) {
+				if (exState != EX_NO_JS_STATE) {
 					boolean onlyFinally = (exState != EX_CATCH_STATE);
 					indexReg = getExceptionHandler(frame, onlyFinally);
-					if (indexReg >= 0)
-					{
+					if (indexReg >= 0) {
 						// We caught an exception, restart the loop
 						// with exception pending the processing at the loop
 						// start
@@ -2673,12 +2309,10 @@ public final class Interpreter extends Icode implements Evaluator
 				exitFrame(cx, frame, throwable);
 
 				frame = frame.parentFrame;
-				if (frame == null)
-				{
+				if (frame == null) {
 					break;
 				}
-				if (cjump != null && cjump.branchFrame == frame)
-				{
+				if (cjump != null && cjump.branchFrame == frame) {
 					// Continuation branch point was hit,
 					// restart the state loop to reenter continuation
 					indexReg = -1;
@@ -2687,15 +2321,12 @@ public final class Interpreter extends Icode implements Evaluator
 			}
 
 			// No more frames, rethrow the exception or deal with continuation
-			if (cjump != null)
-			{
-				if (cjump.branchFrame != null)
-				{
+			if (cjump != null) {
+				if (cjump.branchFrame != null) {
 					// The above loop should locate the top frame
 					Kit.codeBug();
 				}
-				if (cjump.capturedFrame != null)
-				{
+				if (cjump.capturedFrame != null) {
 					// Restarting detached continuation
 					indexReg = -1;
 					continue StateLoop;
@@ -2712,23 +2343,18 @@ public final class Interpreter extends Icode implements Evaluator
 		// Do cleanups/restorations before the final return or throw
 
 		if (cx.previousInterpreterInvocations != null
-				&& cx.previousInterpreterInvocations.size() != 0)
-		{
+				&& cx.previousInterpreterInvocations.size() != 0) {
 			cx.lastInterpreterFrame
 					= cx.previousInterpreterInvocations.pop();
-		}
-		else
-		{
+		} else {
 			// It was the last interpreter frame on the stack
 			cx.lastInterpreterFrame = null;
 			// Force GC of the value cx.previousInterpreterInvocations
 			cx.previousInterpreterInvocations = null;
 		}
 
-		if (throwable != null)
-		{
-			if (throwable instanceof RuntimeException)
-			{
+		if (throwable != null) {
+			if (throwable instanceof RuntimeException) {
 				throw (RuntimeException) throwable;
 			}
 			// Must be instance of Error or code bug
@@ -2741,26 +2367,20 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static int doInOrInstanceof(Context cx, int op, Object[] stack,
-										double[] sDbl, int stackTop)
-	{
+										double[] sDbl, int stackTop) {
 		Object rhs = stack[stackTop];
-		if (rhs == UniqueTag.DOUBLE_MARK)
-		{
+		if (rhs == UniqueTag.DOUBLE_MARK) {
 			rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		--stackTop;
 		Object lhs = stack[stackTop];
-		if (lhs == UniqueTag.DOUBLE_MARK)
-		{
+		if (lhs == UniqueTag.DOUBLE_MARK) {
 			lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		boolean valBln;
-		if (op == Token.IN)
-		{
+		if (op == Token.IN) {
 			valBln = ScriptRuntime.in(lhs, rhs, cx);
-		}
-		else
-		{
+		} else {
 			valBln = ScriptRuntime.instanceOf(lhs, rhs, cx);
 		}
 		stack[stackTop] = ScriptRuntime.wrapBoolean(valBln);
@@ -2768,8 +2388,7 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static int doCompare(CallFrame frame, int op, Object[] stack,
-								 double[] sDbl, int stackTop)
-	{
+								 double[] sDbl, int stackTop) {
 		--stackTop;
 		Object rhs = stack[stackTop + 1];
 		Object lhs = stack[stackTop];
@@ -2779,22 +2398,16 @@ public final class Interpreter extends Icode implements Evaluator
 			number_compare:
 			{
 				double rDbl, lDbl;
-				if (rhs == UniqueTag.DOUBLE_MARK)
-				{
+				if (rhs == UniqueTag.DOUBLE_MARK) {
 					rDbl = sDbl[stackTop + 1];
 					lDbl = stack_double(frame, stackTop);
-				}
-				else if (lhs == UniqueTag.DOUBLE_MARK)
-				{
+				} else if (lhs == UniqueTag.DOUBLE_MARK) {
 					rDbl = ScriptRuntime.toNumber(rhs);
 					lDbl = sDbl[stackTop];
-				}
-				else
-				{
+				} else {
 					break number_compare;
 				}
-				switch (op)
-				{
+				switch (op) {
 					case Token.GE:
 						valBln = (lDbl >= rDbl);
 						break object_compare;
@@ -2811,8 +2424,7 @@ public final class Interpreter extends Icode implements Evaluator
 						throw Kit.codeBug();
 				}
 			}
-			switch (op)
-			{
+			switch (op) {
 				case Token.GE:
 					valBln = ScriptRuntime.cmp_LE(rhs, lhs);
 					break;
@@ -2834,13 +2446,11 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static int doBitOp(CallFrame frame, int op, Object[] stack,
-							   double[] sDbl, int stackTop)
-	{
+							   double[] sDbl, int stackTop) {
 		int lIntValue = stack_int32(frame, stackTop - 1);
 		int rIntValue = stack_int32(frame, stackTop);
 		stack[--stackTop] = UniqueTag.DOUBLE_MARK;
-		switch (op)
-		{
+		switch (op) {
 			case Token.BITAND:
 				lIntValue &= rIntValue;
 				break;
@@ -2862,17 +2472,14 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static int doDelName(Context cx, CallFrame frame, int op,
-								 Object[] stack, double[] sDbl, int stackTop)
-	{
+								 Object[] stack, double[] sDbl, int stackTop) {
 		Object rhs = stack[stackTop];
-		if (rhs == UniqueTag.DOUBLE_MARK)
-		{
+		if (rhs == UniqueTag.DOUBLE_MARK) {
 			rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		--stackTop;
 		Object lhs = stack[stackTop];
-		if (lhs == UniqueTag.DOUBLE_MARK)
-		{
+		if (lhs == UniqueTag.DOUBLE_MARK) {
 			lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		stack[stackTop] = ScriptRuntime.delete(lhs, rhs, cx, frame.scope,
@@ -2881,22 +2488,17 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static int doGetElem(Context cx, CallFrame frame, Object[] stack,
-								 double[] sDbl, int stackTop)
-	{
+								 double[] sDbl, int stackTop) {
 		--stackTop;
 		Object lhs = stack[stackTop];
-		if (lhs == UniqueTag.DOUBLE_MARK)
-		{
+		if (lhs == UniqueTag.DOUBLE_MARK) {
 			lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		Object value;
 		Object id = stack[stackTop + 1];
-		if (id != UniqueTag.DOUBLE_MARK)
-		{
+		if (id != UniqueTag.DOUBLE_MARK) {
 			value = ScriptRuntime.getObjectElem(lhs, id, cx, frame.scope);
-		}
-		else
-		{
+		} else {
 			double d = sDbl[stackTop + 1];
 			value = ScriptRuntime.getObjectIndex(lhs, d, cx, frame.scope);
 		}
@@ -2905,27 +2507,21 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static int doSetElem(Context cx, CallFrame frame, Object[] stack,
-								 double[] sDbl, int stackTop)
-	{
+								 double[] sDbl, int stackTop) {
 		stackTop -= 2;
 		Object rhs = stack[stackTop + 2];
-		if (rhs == UniqueTag.DOUBLE_MARK)
-		{
+		if (rhs == UniqueTag.DOUBLE_MARK) {
 			rhs = ScriptRuntime.wrapNumber(sDbl[stackTop + 2]);
 		}
 		Object lhs = stack[stackTop];
-		if (lhs == UniqueTag.DOUBLE_MARK)
-		{
+		if (lhs == UniqueTag.DOUBLE_MARK) {
 			lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		Object value;
 		Object id = stack[stackTop + 1];
-		if (id != UniqueTag.DOUBLE_MARK)
-		{
+		if (id != UniqueTag.DOUBLE_MARK) {
 			value = ScriptRuntime.setObjectElem(lhs, id, rhs, cx, frame.scope);
-		}
-		else
-		{
+		} else {
 			double d = sDbl[stackTop + 1];
 			value = ScriptRuntime.setObjectIndex(lhs, d, rhs, cx, frame.scope);
 		}
@@ -2934,17 +2530,14 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static int doElemIncDec(Context cx, CallFrame frame, byte[] iCode,
-									Object[] stack, double[] sDbl, int stackTop)
-	{
+									Object[] stack, double[] sDbl, int stackTop) {
 		Object rhs = stack[stackTop];
-		if (rhs == UniqueTag.DOUBLE_MARK)
-		{
+		if (rhs == UniqueTag.DOUBLE_MARK) {
 			rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		--stackTop;
 		Object lhs = stack[stackTop];
-		if (lhs == UniqueTag.DOUBLE_MARK)
-		{
+		if (lhs == UniqueTag.DOUBLE_MARK) {
 			lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		stack[stackTop] = ScriptRuntime.elemIncrDecr(lhs, rhs, cx, frame.scope,
@@ -2956,30 +2549,25 @@ public final class Interpreter extends Icode implements Evaluator
 	private static int doCallSpecial(Context cx, CallFrame frame,
 									 Object[] stack, double[] sDbl,
 									 int stackTop, byte[] iCode,
-									 int indexReg)
-	{
+									 int indexReg) {
 		int callType = iCode[frame.pc] & 0xFF;
 		boolean isNew = (iCode[frame.pc + 1] != 0);
 		int sourceLine = getIndex(iCode, frame.pc + 2);
 
 		// indexReg: number of arguments
-		if (isNew)
-		{
+		if (isNew) {
 			// stack change: function arg0 .. argN -> newResult
 			stackTop -= indexReg;
 
 			Object function = stack[stackTop];
-			if (function == UniqueTag.DOUBLE_MARK)
-			{
+			if (function == UniqueTag.DOUBLE_MARK) {
 				function = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 			}
 			Object[] outArgs = getArgsArray(
 					stack, sDbl, stackTop + 1, indexReg);
 			stack[stackTop] = ScriptRuntime.newSpecial(
 					cx, function, outArgs, frame.scope, callType);
-		}
-		else
-		{
+		} else {
 			// stack change: function thisObj arg0 .. argN -> result
 			stackTop -= 1 + indexReg;
 
@@ -3001,38 +2589,28 @@ public final class Interpreter extends Icode implements Evaluator
 	private static int doSetConstVar(CallFrame frame, Object[] stack,
 									 double[] sDbl, int stackTop,
 									 Object[] vars, double[] varDbls,
-									 int[] varAttributes, int indexReg)
-	{
-		if (!frame.useActivation)
-		{
-			if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0)
-			{
+									 int[] varAttributes, int indexReg) {
+		if (!frame.useActivation) {
+			if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
 				throw Context.reportRuntimeError1("msg.var.redecl",
 						frame.idata.argNames[indexReg]);
 			}
 			if ((varAttributes[indexReg] & ScriptableObject.UNINITIALIZED_CONST)
-					!= 0)
-			{
+					!= 0) {
 				vars[indexReg] = stack[stackTop];
 				varAttributes[indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
 				varDbls[indexReg] = sDbl[stackTop];
 			}
-		}
-		else
-		{
+		} else {
 			Object val = stack[stackTop];
-			if (val == UniqueTag.DOUBLE_MARK)
-			{
+			if (val == UniqueTag.DOUBLE_MARK) {
 				val = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 			}
 			String stringReg = frame.idata.argNames[indexReg];
-			if (frame.scope instanceof ConstProperties)
-			{
+			if (frame.scope instanceof ConstProperties) {
 				ConstProperties cp = (ConstProperties) frame.scope;
 				cp.putConst(stringReg, frame.scope, val);
-			}
-			else
-			{
+			} else {
 				throw Kit.codeBug();
 			}
 		}
@@ -3042,21 +2620,15 @@ public final class Interpreter extends Icode implements Evaluator
 	private static int doSetVar(CallFrame frame, Object[] stack,
 								double[] sDbl, int stackTop,
 								Object[] vars, double[] varDbls,
-								int[] varAttributes, int indexReg)
-	{
-		if (!frame.useActivation)
-		{
-			if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0)
-			{
+								int[] varAttributes, int indexReg) {
+		if (!frame.useActivation) {
+			if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
 				vars[indexReg] = stack[stackTop];
 				varDbls[indexReg] = sDbl[stackTop];
 			}
-		}
-		else
-		{
+		} else {
 			Object val = stack[stackTop];
-			if (val == UniqueTag.DOUBLE_MARK)
-			{
+			if (val == UniqueTag.DOUBLE_MARK) {
 				val = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 			}
 			String stringReg = frame.idata.argNames[indexReg];
@@ -3068,16 +2640,12 @@ public final class Interpreter extends Icode implements Evaluator
 	private static int doGetVar(CallFrame frame, Object[] stack,
 								double[] sDbl, int stackTop,
 								Object[] vars, double[] varDbls,
-								int indexReg)
-	{
+								int indexReg) {
 		++stackTop;
-		if (!frame.useActivation)
-		{
+		if (!frame.useActivation) {
 			stack[stackTop] = vars[indexReg];
 			sDbl[stackTop] = varDbls[indexReg];
-		}
-		else
-		{
+		} else {
 			String stringReg = frame.idata.argNames[indexReg];
 			stack[stackTop] = frame.scope.get(stringReg, frame.scope);
 		}
@@ -3088,51 +2656,37 @@ public final class Interpreter extends Icode implements Evaluator
 								   Object[] stack, double[] sDbl,
 								   int stackTop, Object[] vars,
 								   double[] varDbls, int[] varAttributes,
-								   int indexReg)
-	{
+								   int indexReg) {
 		// indexReg : varindex
 		++stackTop;
 		int incrDecrMask = frame.idata.itsICode[frame.pc];
-		if (!frame.useActivation)
-		{
+		if (!frame.useActivation) {
 			Object varValue = vars[indexReg];
 			double d;
-			if (varValue == UniqueTag.DOUBLE_MARK)
-			{
+			if (varValue == UniqueTag.DOUBLE_MARK) {
 				d = varDbls[indexReg];
-			}
-			else
-			{
+			} else {
 				d = ScriptRuntime.toNumber(varValue);
 			}
 			double d2 = ((incrDecrMask & Node.DECR_FLAG) == 0)
 					? d + 1.0 : d - 1.0;
 			boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
-			if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0)
-			{
-				if (varValue != UniqueTag.DOUBLE_MARK)
-				{
+			if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
+				if (varValue != UniqueTag.DOUBLE_MARK) {
 					vars[indexReg] = UniqueTag.DOUBLE_MARK;
 				}
 				varDbls[indexReg] = d2;
 				stack[stackTop] = UniqueTag.DOUBLE_MARK;
 				sDbl[stackTop] = post ? d : d2;
-			}
-			else
-			{
-				if (post && varValue != UniqueTag.DOUBLE_MARK)
-				{
+			} else {
+				if (post && varValue != UniqueTag.DOUBLE_MARK) {
 					stack[stackTop] = varValue;
-				}
-				else
-				{
+				} else {
 					stack[stackTop] = UniqueTag.DOUBLE_MARK;
 					sDbl[stackTop] = post ? d : d2;
 				}
 			}
-		}
-		else
-		{
+		} else {
 			String varName = frame.idata.argNames[indexReg];
 			stack[stackTop] = ScriptRuntime.nameIncrDecr(frame.scope, varName,
 					cx, incrDecrMask);
@@ -3142,17 +2696,14 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static int doRefMember(Context cx, Object[] stack, double[] sDbl,
-								   int stackTop, int flags)
-	{
+								   int stackTop, int flags) {
 		Object elem = stack[stackTop];
-		if (elem == UniqueTag.DOUBLE_MARK)
-		{
+		if (elem == UniqueTag.DOUBLE_MARK) {
 			elem = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		--stackTop;
 		Object obj = stack[stackTop];
-		if (obj == UniqueTag.DOUBLE_MARK)
-		{
+		if (obj == UniqueTag.DOUBLE_MARK) {
 			obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		stack[stackTop] = ScriptRuntime.memberRef(obj, elem, cx, flags);
@@ -3160,23 +2711,19 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static int doRefNsMember(Context cx, Object[] stack, double[] sDbl,
-									 int stackTop, int flags)
-	{
+									 int stackTop, int flags) {
 		Object elem = stack[stackTop];
-		if (elem == UniqueTag.DOUBLE_MARK)
-		{
+		if (elem == UniqueTag.DOUBLE_MARK) {
 			elem = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		--stackTop;
 		Object ns = stack[stackTop];
-		if (ns == UniqueTag.DOUBLE_MARK)
-		{
+		if (ns == UniqueTag.DOUBLE_MARK) {
 			ns = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		--stackTop;
 		Object obj = stack[stackTop];
-		if (obj == UniqueTag.DOUBLE_MARK)
-		{
+		if (obj == UniqueTag.DOUBLE_MARK) {
 			obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		stack[stackTop] = ScriptRuntime.memberRef(obj, ns, elem, cx, flags);
@@ -3185,17 +2732,14 @@ public final class Interpreter extends Icode implements Evaluator
 
 	private static int doRefNsName(Context cx, CallFrame frame,
 								   Object[] stack, double[] sDbl,
-								   int stackTop, int flags)
-	{
+								   int stackTop, int flags) {
 		Object name = stack[stackTop];
-		if (name == UniqueTag.DOUBLE_MARK)
-		{
+		if (name == UniqueTag.DOUBLE_MARK) {
 			name = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		--stackTop;
 		Object ns = stack[stackTop];
-		if (ns == UniqueTag.DOUBLE_MARK)
-		{
+		if (ns == UniqueTag.DOUBLE_MARK) {
 			ns = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 		}
 		stack[stackTop] = ScriptRuntime.nameRef(ns, name, cx, frame.scope, flags);
@@ -3208,19 +2752,16 @@ public final class Interpreter extends Icode implements Evaluator
 	private static CallFrame initFrameForNoSuchMethod(Context cx,
 													  CallFrame frame, int indexReg, Object[] stack, double[] sDbl,
 													  int stackTop, int op, Scriptable funThisObj, Scriptable calleeScope,
-													  ScriptRuntime.NoSuchMethodShim noSuchMethodShim, InterpretedFunction ifun)
-	{
+													  ScriptRuntime.NoSuchMethodShim noSuchMethodShim, InterpretedFunction ifun) {
 		// create an args array from the stack
 		Object[] argsArray = null;
 		// exactly like getArgsArray except that the first argument
 		// is the method name from the shim
 		int shift = stackTop + 2;
 		Object[] elements = new Object[indexReg];
-		for (int i = 0; i < indexReg; ++i, ++shift)
-		{
+		for (int i = 0; i < indexReg; ++i, ++shift) {
 			Object val = stack[shift];
-			if (val == UniqueTag.DOUBLE_MARK)
-			{
+			if (val == UniqueTag.DOUBLE_MARK) {
 				val = ScriptRuntime.wrapNumber(sDbl[shift]);
 			}
 			elements[i] = val;
@@ -3231,8 +2772,7 @@ public final class Interpreter extends Icode implements Evaluator
 
 		// exactly the same as if it's a regular InterpretedFunction
 		CallFrame callParentFrame = frame;
-		if (op == Icode_TAIL_CALL)
-		{
+		if (op == Icode_TAIL_CALL) {
 			callParentFrame = frame.parentFrame;
 			exitFrame(cx, frame, null);
 		}
@@ -3240,8 +2780,7 @@ public final class Interpreter extends Icode implements Evaluator
 		// adjusted args array and shim's function
 		CallFrame calleeFrame = initFrame(cx, calleeScope, funThisObj, argsArray, null,
 				0, 2, ifun, callParentFrame);
-		if (op != Icode_TAIL_CALL)
-		{
+		if (op != Icode_TAIL_CALL) {
 			frame.savedStackTop = stackTop;
 			frame.savedCallOp = op;
 		}
@@ -3249,62 +2788,44 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static boolean doEquals(Object[] stack, double[] sDbl,
-									int stackTop)
-	{
+									int stackTop) {
 		Object rhs = stack[stackTop + 1];
 		Object lhs = stack[stackTop];
-		if (rhs == UniqueTag.DOUBLE_MARK)
-		{
-			if (lhs == UniqueTag.DOUBLE_MARK)
-			{
+		if (rhs == UniqueTag.DOUBLE_MARK) {
+			if (lhs == UniqueTag.DOUBLE_MARK) {
 				return (sDbl[stackTop] == sDbl[stackTop + 1]);
 			}
 			return ScriptRuntime.eqNumber(sDbl[stackTop + 1], lhs);
 		}
-		if (lhs == UniqueTag.DOUBLE_MARK)
-		{
+		if (lhs == UniqueTag.DOUBLE_MARK) {
 			return ScriptRuntime.eqNumber(sDbl[stackTop], rhs);
 		}
 		return ScriptRuntime.eq(lhs, rhs);
 	}
 
 	private static boolean doShallowEquals(Object[] stack, double[] sDbl,
-										   int stackTop)
-	{
+										   int stackTop) {
 		Object rhs = stack[stackTop + 1];
 		Object lhs = stack[stackTop];
 		final Object DBL_MRK = UniqueTag.DOUBLE_MARK;
 		double rdbl, ldbl;
-		if (rhs == DBL_MRK)
-		{
+		if (rhs == DBL_MRK) {
 			rdbl = sDbl[stackTop + 1];
-			if (lhs == DBL_MRK)
-			{
+			if (lhs == DBL_MRK) {
 				ldbl = sDbl[stackTop];
-			}
-			else if (lhs instanceof Number)
-			{
+			} else if (lhs instanceof Number) {
 				ldbl = ((Number) lhs).doubleValue();
-			}
-			else
-			{
+			} else {
 				return false;
 			}
-		}
-		else if (lhs == DBL_MRK)
-		{
+		} else if (lhs == DBL_MRK) {
 			ldbl = sDbl[stackTop];
-			if (rhs instanceof Number)
-			{
+			if (rhs instanceof Number) {
 				rdbl = ((Number) rhs).doubleValue();
-			}
-			else
-			{
+			} else {
 				return false;
 			}
-		}
-		else
-		{
+		} else {
 			return ScriptRuntime.shallowEq(lhs, rhs);
 		}
 		return (ldbl == rdbl);
@@ -3312,18 +2833,15 @@ public final class Interpreter extends Icode implements Evaluator
 
 	private static CallFrame processThrowable(Context cx, Object throwable,
 											  CallFrame frame, int indexReg,
-											  boolean instructionCounting)
-	{
+											  boolean instructionCounting) {
 		// Recovering from exception, indexReg contains
 		// the index of handler
 
-		if (indexReg >= 0)
-		{
+		if (indexReg >= 0) {
 			// Normal exception handler, transfer
 			// control appropriately
 
-			if (frame.frozen)
-			{
+			if (frame.frozen) {
 				// XXX Deal with exceptios!!!
 				frame = frame.cloneFrozen();
 			}
@@ -3331,8 +2849,7 @@ public final class Interpreter extends Icode implements Evaluator
 			int[] table = frame.idata.itsExceptionTable;
 
 			frame.pc = table[indexReg + EXCEPTION_HANDLER_SLOT];
-			if (instructionCounting)
-			{
+			if (instructionCounting) {
 				frame.pcPrevBranch = frame.pc;
 			}
 
@@ -3347,33 +2864,28 @@ public final class Interpreter extends Icode implements Evaluator
 			frame.stack[exLocal] = throwable;
 
 			throwable = null;
-		}
-		else
-		{
+		} else {
 			// Continuation restoration
 			ContinuationJump cjump = (ContinuationJump) throwable;
 
 			// Clear throwable to indicate that exceptions are OK
 			throwable = null;
 
-			if (cjump.branchFrame != frame)
-			{
+			if (cjump.branchFrame != frame) {
 				Kit.codeBug();
 			}
 
 			// Check that we have at least one frozen frame
 			// in the case of detached continuation restoration:
 			// unwind code ensure that
-			if (cjump.capturedFrame == null)
-			{
+			if (cjump.capturedFrame == null) {
 				Kit.codeBug();
 			}
 
 			// Need to rewind branchFrame, capturedFrame
 			// and all frames in between
 			int rewindCount = cjump.capturedFrame.frameIndex + 1;
-			if (cjump.branchFrame != null)
-			{
+			if (cjump.branchFrame != null) {
 				rewindCount -= cjump.branchFrame.frameIndex;
 			}
 
@@ -3381,16 +2893,12 @@ public final class Interpreter extends Icode implements Evaluator
 			CallFrame[] enterFrames = null;
 
 			CallFrame x = cjump.capturedFrame;
-			for (int i = 0; i != rewindCount; ++i)
-			{
-				if (!x.frozen)
-				{
+			for (int i = 0; i != rewindCount; ++i) {
+				if (!x.frozen) {
 					Kit.codeBug();
 				}
-				if (x.useActivation)
-				{
-					if (enterFrames == null)
-					{
+				if (x.useActivation) {
+					if (enterFrames == null) {
 						// Allocate enough space to store the rest
 						// of rewind frames in case all of them
 						// would require to enter
@@ -3403,8 +2911,7 @@ public final class Interpreter extends Icode implements Evaluator
 				x = x.parentFrame;
 			}
 
-			while (enterCount != 0)
-			{
+			while (enterCount != 0) {
 				// execute enter: walk enterFrames in the reverse
 				// order since they were stored starting from
 				// the capturedFrame, not branchFrame
@@ -3428,10 +2935,8 @@ public final class Interpreter extends Icode implements Evaluator
 	private static Object freezeGenerator(Context cx, CallFrame frame,
 										  int stackTop,
 										  GeneratorState generatorState,
-										  boolean yieldStar)
-	{
-		if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE)
-		{
+										  boolean yieldStar) {
+		if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
 			// Error: no yields when generator is closing
 			throw ScriptRuntime.typeError0("msg.yield.closing");
 		}
@@ -3445,38 +2950,32 @@ public final class Interpreter extends Icode implements Evaluator
 		final Object result = (frame.result != UniqueTag.DOUBLE_MARK)
 				? frame.result
 				: ScriptRuntime.wrapNumber(frame.resultDbl);
-		if (yieldStar)
-		{
+		if (yieldStar) {
 			return new ES6Generator.YieldStarResult(result);
 		}
 		return result;
 	}
 
 	private static Object thawGenerator(CallFrame frame, int stackTop,
-										GeneratorState generatorState, int op)
-	{
+										GeneratorState generatorState, int op) {
 		// we are resuming execution
 		frame.frozen = false;
 		int sourceLine = getIndex(frame.idata.itsICode, frame.pc);
 		frame.pc += 2; // skip line number data
-		if (generatorState.operation == NativeGenerator.GENERATOR_THROW)
-		{
+		if (generatorState.operation == NativeGenerator.GENERATOR_THROW) {
 			// processing a call to <generator>.throw(exception): must
 			// act as if exception was thrown from resumption point.
 			return new JavaScriptException(generatorState.value,
 					frame.idata.itsSourceFile,
 					sourceLine);
 		}
-		if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE)
-		{
+		if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
 			return generatorState.value;
 		}
-		if (generatorState.operation != NativeGenerator.GENERATOR_SEND)
-		{
+		if (generatorState.operation != NativeGenerator.GENERATOR_SEND) {
 			throw Kit.codeBug();
 		}
-		if ((op == Token.YIELD) || (op == Icode_YIELD_STAR))
-		{
+		if ((op == Token.YIELD) || (op == Icode_YIELD_STAR)) {
 			frame.stack[stackTop] = generatorState.value;
 		}
 		return Scriptable.NOT_FOUND;
@@ -3485,50 +2984,37 @@ public final class Interpreter extends Icode implements Evaluator
 	private static CallFrame initFrameForApplyOrCall(Context cx, CallFrame frame,
 													 int indexReg, Object[] stack, double[] sDbl, int stackTop, int op,
 													 Scriptable calleeScope, IdFunctionObject ifun,
-													 InterpretedFunction iApplyCallable)
-	{
+													 InterpretedFunction iApplyCallable) {
 		Scriptable applyThis;
-		if (indexReg != 0)
-		{
+		if (indexReg != 0) {
 			Object obj = stack[stackTop + 2];
-			if (obj == UniqueTag.DOUBLE_MARK)
-			{
+			if (obj == UniqueTag.DOUBLE_MARK) {
 				obj = ScriptRuntime.wrapNumber(sDbl[stackTop + 2]);
 			}
 			applyThis = ScriptRuntime.toObjectOrNull(cx, obj, frame.scope);
-		}
-		else
-		{
+		} else {
 			applyThis = null;
 		}
-		if (applyThis == null)
-		{
+		if (applyThis == null) {
 			// This covers the case of args[0] == (null|undefined) as well.
 			applyThis = ScriptRuntime.getTopCallScope(cx);
 		}
-		if (op == Icode_TAIL_CALL)
-		{
+		if (op == Icode_TAIL_CALL) {
 			exitFrame(cx, frame, null);
 			frame = frame.parentFrame;
-		}
-		else
-		{
+		} else {
 			frame.savedStackTop = stackTop;
 			frame.savedCallOp = op;
 		}
 		final CallFrame calleeFrame;
-		if (BaseFunction.isApply(ifun))
-		{
+		if (BaseFunction.isApply(ifun)) {
 			Object[] callArgs = indexReg < 2 ? ScriptRuntime.emptyArgs :
 					ScriptRuntime.getApplyArguments(cx, stack[stackTop + 3]);
 			calleeFrame = initFrame(cx, calleeScope, applyThis, callArgs, null, 0,
 					callArgs.length, iApplyCallable, frame);
-		}
-		else
-		{
+		} else {
 			// Shift args left
-			for (int i = 1; i < indexReg; ++i)
-			{
+			for (int i = 1; i < indexReg; ++i) {
 				stack[stackTop + 1 + i] = stack[stackTop + 2 + i];
 				sDbl[stackTop + 1 + i] = sDbl[stackTop + 2 + i];
 			}
@@ -3545,8 +3031,7 @@ public final class Interpreter extends Icode implements Evaluator
 									   Object[] args, double[] argsDbl,
 									   int argShift, int argCount,
 									   InterpretedFunction fnOrScript,
-									   CallFrame parentFrame)
-	{
+									   CallFrame parentFrame) {
 		CallFrame frame = new CallFrame(cx, thisObj, fnOrScript, parentFrame);
 		frame.initializeArgs(cx, callerScope, args, argsDbl, argShift, argCount);
 		enterFrame(cx, frame, args, false);
@@ -3554,19 +3039,14 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static void enterFrame(Context cx, CallFrame frame, Object[] args,
-								   boolean continuationRestart)
-	{
+								   boolean continuationRestart) {
 		boolean usesActivation = frame.idata.itsNeedsActivation;
 		boolean isDebugged = frame.debuggerFrame != null;
-		if (usesActivation || isDebugged)
-		{
+		if (usesActivation || isDebugged) {
 			Scriptable scope = frame.scope;
-			if (scope == null)
-			{
+			if (scope == null) {
 				Kit.codeBug();
-			}
-			else if (continuationRestart)
-			{
+			} else if (continuationRestart) {
 				// Walk the parent chain of frame.scope until a NativeCall is
 				// found. Normally, frame.scope is a NativeCall when called
 				// from initFrame() for a debugged or activatable function.
@@ -3575,14 +3055,11 @@ public final class Interpreter extends Icode implements Evaluator
 				// the continuation was captured within a "with" or "catch"
 				// block ("catch" implicitly uses NativeWith to create a scope
 				// to expose the exception variable).
-				for (; ; )
-				{
-					if (scope instanceof NativeWith)
-					{
+				for (; ; ) {
+					if (scope instanceof NativeWith) {
 						scope = scope.getParentScope();
 						if (scope == null || (frame.parentFrame != null &&
-								frame.parentFrame.scope == scope))
-						{
+								frame.parentFrame.scope == scope)) {
 							// If we get here, we didn't find a NativeCall in
 							// the call chain before reaching parent frame's
 							// scope. This should not be possible.
@@ -3590,73 +3067,53 @@ public final class Interpreter extends Icode implements Evaluator
 							break; // Never reached, but keeps the static analyzer
 							// happy about "scope" not being null 5 lines above.
 						}
-					}
-					else
-					{
+					} else {
 						break;
 					}
 				}
 			}
-			if (isDebugged)
-			{
+			if (isDebugged) {
 				frame.debuggerFrame.onEnter(cx, scope, frame.thisObj, args);
 			}
 			// Enter activation only when itsNeedsActivation true,
 			// since debugger should not interfere with activation
 			// chaining
-			if (usesActivation)
-			{
+			if (usesActivation) {
 				ScriptRuntime.enterActivationFunction(cx, scope);
 			}
 		}
 	}
 
 	private static void exitFrame(Context cx, CallFrame frame,
-								  Object throwable)
-	{
-		if (frame.idata.itsNeedsActivation)
-		{
+								  Object throwable) {
+		if (frame.idata.itsNeedsActivation) {
 			ScriptRuntime.exitActivationFunction(cx);
 		}
 
-		if (frame.debuggerFrame != null)
-		{
-			try
-			{
-				if (throwable instanceof Throwable)
-				{
+		if (frame.debuggerFrame != null) {
+			try {
+				if (throwable instanceof Throwable) {
 					frame.debuggerFrame.onExit(cx, true, throwable);
-				}
-				else
-				{
+				} else {
 					Object result;
 					ContinuationJump cjump = (ContinuationJump) throwable;
-					if (cjump == null)
-					{
+					if (cjump == null) {
 						result = frame.result;
-					}
-					else
-					{
+					} else {
 						result = cjump.result;
 					}
-					if (result == UniqueTag.DOUBLE_MARK)
-					{
+					if (result == UniqueTag.DOUBLE_MARK) {
 						double resultDbl;
-						if (cjump == null)
-						{
+						if (cjump == null) {
 							resultDbl = frame.resultDbl;
-						}
-						else
-						{
+						} else {
 							resultDbl = cjump.resultDbl;
 						}
 						result = ScriptRuntime.wrapNumber(resultDbl);
 					}
 					frame.debuggerFrame.onExit(cx, false, result);
 				}
-			}
-			catch (Throwable ex)
-			{
+			} catch (Throwable ex) {
 				System.err.println(
 						"RHINO USAGE WARNING: onExit terminated with exception");
 				ex.printStackTrace(System.err);
@@ -3666,43 +3123,33 @@ public final class Interpreter extends Icode implements Evaluator
 
 	private static void setCallResult(CallFrame frame,
 									  Object callResult,
-									  double callResultDbl)
-	{
-		if (frame.savedCallOp == Token.CALL)
-		{
+									  double callResultDbl) {
+		if (frame.savedCallOp == Token.CALL) {
 			frame.stack[frame.savedStackTop] = callResult;
 			frame.sDbl[frame.savedStackTop] = callResultDbl;
-		}
-		else if (frame.savedCallOp == Token.NEW)
-		{
+		} else if (frame.savedCallOp == Token.NEW) {
 			// If construct returns scriptable,
 			// then it replaces on stack top saved original instance
 			// of the object.
-			if (callResult instanceof Scriptable)
-			{
+			if (callResult instanceof Scriptable) {
 				frame.stack[frame.savedStackTop] = callResult;
 			}
-		}
-		else
-		{
+		} else {
 			Kit.codeBug();
 		}
 		frame.savedCallOp = 0;
 	}
 
-	public static NativeContinuation captureContinuation(Context cx)
-	{
+	public static NativeContinuation captureContinuation(Context cx) {
 		if (cx.lastInterpreterFrame == null ||
-				!(cx.lastInterpreterFrame instanceof CallFrame))
-		{
+				!(cx.lastInterpreterFrame instanceof CallFrame)) {
 			throw new IllegalStateException("Interpreter frames not found");
 		}
 		return captureContinuation(cx, (CallFrame) cx.lastInterpreterFrame, true);
 	}
 
 	private static NativeContinuation captureContinuation(Context cx, CallFrame frame,
-														  boolean requireContinuationsTopFrame)
-	{
+														  boolean requireContinuationsTopFrame) {
 		NativeContinuation c = new NativeContinuation();
 		ScriptRuntime.setObjectProtoAndParent(
 				c, ScriptRuntime.getTopCallScope(cx));
@@ -3710,25 +3157,19 @@ public final class Interpreter extends Icode implements Evaluator
 		// Make sure that all frames are frozen
 		CallFrame x = frame;
 		CallFrame outermost = frame;
-		while (x != null && !x.frozen)
-		{
+		while (x != null && !x.frozen) {
 			x.frozen = true;
 			// Allow to GC unused stack space
-			for (int i = x.savedStackTop + 1; i != x.stack.length; ++i)
-			{
+			for (int i = x.savedStackTop + 1; i != x.stack.length; ++i) {
 				// Allow to GC unused stack space
 				x.stack[i] = null;
 				x.stackAttributes[i] = ScriptableObject.EMPTY;
 			}
-			if (x.savedCallOp == Token.CALL)
-			{
+			if (x.savedCallOp == Token.CALL) {
 				// the call will always overwrite the stack top with the result
 				x.stack[x.savedStackTop] = null;
-			}
-			else
-			{
-				if (x.savedCallOp != Token.NEW)
-				{
+			} else {
+				if (x.savedCallOp != Token.NEW) {
 					Kit.codeBug();
 				}
 				// the new operator uses stack top to store the constructed
@@ -3739,15 +3180,12 @@ public final class Interpreter extends Icode implements Evaluator
 			x = x.parentFrame;
 		}
 
-		if (requireContinuationsTopFrame)
-		{
-			while (outermost.parentFrame != null)
-			{
+		if (requireContinuationsTopFrame) {
+			while (outermost.parentFrame != null) {
 				outermost = outermost.parentFrame;
 			}
 
-			if (!outermost.isContinuationsTopFrame)
-			{
+			if (!outermost.isContinuationsTopFrame) {
 				throw new IllegalStateException("Cannot capture continuation " +
 						"from JavaScript code not called directly by " +
 						"executeScriptWithContinuations or " +
@@ -3759,109 +3197,76 @@ public final class Interpreter extends Icode implements Evaluator
 		return c;
 	}
 
-	private static int stack_int32(CallFrame frame, int i)
-	{
+	private static int stack_int32(CallFrame frame, int i) {
 		Object x = frame.stack[i];
-		if (x == UniqueTag.DOUBLE_MARK)
-		{
+		if (x == UniqueTag.DOUBLE_MARK) {
 			return ScriptRuntime.toInt32(frame.sDbl[i]);
 		}
 		return ScriptRuntime.toInt32(x);
 	}
 
-	private static double stack_double(CallFrame frame, int i)
-	{
+	private static double stack_double(CallFrame frame, int i) {
 		Object x = frame.stack[i];
-		if (x != UniqueTag.DOUBLE_MARK)
-		{
+		if (x != UniqueTag.DOUBLE_MARK) {
 			return ScriptRuntime.toNumber(x);
 		}
 		return frame.sDbl[i];
 	}
 
-	private static boolean stack_boolean(CallFrame frame, int i)
-	{
+	private static boolean stack_boolean(CallFrame frame, int i) {
 		Object x = frame.stack[i];
-		if (Boolean.TRUE.equals(x))
-		{
+		if (Boolean.TRUE.equals(x)) {
 			return true;
-		}
-		else if (Boolean.FALSE.equals(x))
-		{
+		} else if (Boolean.FALSE.equals(x)) {
 			return false;
-		}
-		else if (x == UniqueTag.DOUBLE_MARK)
-		{
+		} else if (x == UniqueTag.DOUBLE_MARK) {
 			double d = frame.sDbl[i];
 			return !Double.isNaN(d) && d != 0.0;
-		}
-		else if (x == null || x == Undefined.instance)
-		{
+		} else if (x == null || x == Undefined.instance) {
 			return false;
-		}
-		else if (x instanceof Number)
-		{
+		} else if (x instanceof Number) {
 			double d = ((Number) x).doubleValue();
 			return (!Double.isNaN(d) && d != 0.0);
-		}
-		else
-		{
+		} else {
 			return ScriptRuntime.toBoolean(x);
 		}
 	}
 
 	private static void doAdd(Object[] stack, double[] sDbl, int stackTop,
-							  Context cx)
-	{
+							  Context cx) {
 		Object rhs = stack[stackTop + 1];
 		Object lhs = stack[stackTop];
 		double d;
 		boolean leftRightOrder;
-		if (rhs == UniqueTag.DOUBLE_MARK)
-		{
+		if (rhs == UniqueTag.DOUBLE_MARK) {
 			d = sDbl[stackTop + 1];
-			if (lhs == UniqueTag.DOUBLE_MARK)
-			{
+			if (lhs == UniqueTag.DOUBLE_MARK) {
 				sDbl[stackTop] += d;
 				return;
 			}
 			leftRightOrder = true;
 			// fallthrough to object + number code
-		}
-		else if (lhs == UniqueTag.DOUBLE_MARK)
-		{
+		} else if (lhs == UniqueTag.DOUBLE_MARK) {
 			d = sDbl[stackTop];
 			lhs = rhs;
 			leftRightOrder = false;
 			// fallthrough to object + number code
-		}
-		else
-		{
-			if (lhs instanceof Scriptable || rhs instanceof Scriptable)
-			{
+		} else {
+			if (lhs instanceof Scriptable || rhs instanceof Scriptable) {
 				stack[stackTop] = ScriptRuntime.add(lhs, rhs, cx);
 
 				// the next two else if branches are a bit more tricky
 				// to reduce method calls
-			}
-			else if (lhs instanceof CharSequence)
-			{
-				if (rhs instanceof CharSequence)
-				{
+			} else if (lhs instanceof CharSequence) {
+				if (rhs instanceof CharSequence) {
 					stack[stackTop] = new ConsString((CharSequence) lhs, (CharSequence) rhs);
-				}
-				else
-				{
+				} else {
 					stack[stackTop] = new ConsString((CharSequence) lhs, ScriptRuntime.toCharSequence(rhs));
 				}
-			}
-			else if (rhs instanceof CharSequence)
-			{
+			} else if (rhs instanceof CharSequence) {
 				stack[stackTop] = new ConsString(ScriptRuntime.toCharSequence(lhs), (CharSequence) rhs);
 
-			}
-			else
-			{
+			} else {
 				double lDbl = (lhs instanceof Number)
 						? ((Number) lhs).doubleValue() : ScriptRuntime.toNumber(lhs);
 				double rDbl = (rhs instanceof Number)
@@ -3873,31 +3278,22 @@ public final class Interpreter extends Icode implements Evaluator
 		}
 
 		// handle object(lhs) + number(d) code
-		if (lhs instanceof Scriptable)
-		{
+		if (lhs instanceof Scriptable) {
 			rhs = ScriptRuntime.wrapNumber(d);
-			if (!leftRightOrder)
-			{
+			if (!leftRightOrder) {
 				Object tmp = lhs;
 				lhs = rhs;
 				rhs = tmp;
 			}
 			stack[stackTop] = ScriptRuntime.add(lhs, rhs, cx);
-		}
-		else if (lhs instanceof CharSequence)
-		{
+		} else if (lhs instanceof CharSequence) {
 			CharSequence rstr = ScriptRuntime.numberToString(d, 10);
-			if (leftRightOrder)
-			{
+			if (leftRightOrder) {
 				stack[stackTop] = new ConsString((CharSequence) lhs, rstr);
-			}
-			else
-			{
+			} else {
 				stack[stackTop] = new ConsString(rstr, (CharSequence) lhs);
 			}
-		}
-		else
-		{
+		} else {
 			double lDbl = (lhs instanceof Number)
 					? ((Number) lhs).doubleValue() : ScriptRuntime.toNumber(lhs);
 			stack[stackTop] = UniqueTag.DOUBLE_MARK;
@@ -3906,14 +3302,12 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static int doArithmetic(CallFrame frame, int op, Object[] stack,
-									double[] sDbl, int stackTop)
-	{
+									double[] sDbl, int stackTop) {
 		double rDbl = stack_double(frame, stackTop);
 		--stackTop;
 		double lDbl = stack_double(frame, stackTop);
 		stack[stackTop] = UniqueTag.DOUBLE_MARK;
-		switch (op)
-		{
+		switch (op) {
 			case Token.SUB:
 				lDbl -= rDbl;
 				break;
@@ -3932,18 +3326,14 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static Object[] getArgsArray(Object[] stack, double[] sDbl,
-										 int shift, int count)
-	{
-		if (count == 0)
-		{
+										 int shift, int count) {
+		if (count == 0) {
 			return ScriptRuntime.emptyArgs;
 		}
 		Object[] args = new Object[count];
-		for (int i = 0; i != count; ++i, ++shift)
-		{
+		for (int i = 0; i != count; ++i, ++shift) {
 			Object val = stack[shift];
-			if (val == UniqueTag.DOUBLE_MARK)
-			{
+			if (val == UniqueTag.DOUBLE_MARK) {
 				val = ScriptRuntime.wrapNumber(sDbl[shift]);
 			}
 			args[i] = val;
@@ -3952,11 +3342,9 @@ public final class Interpreter extends Icode implements Evaluator
 	}
 
 	private static void addInstructionCount(Context cx, CallFrame frame,
-											int extra)
-	{
+											int extra) {
 		cx.instructionCount += frame.pc - frame.pcPrevBranch + extra;
-		if (cx.instructionCount > cx.instructionThreshold)
-		{
+		if (cx.instructionCount > cx.instructionThreshold) {
 			cx.observeInstructionCount(cx.instructionCount);
 			cx.instructionCount = 0;
 		}

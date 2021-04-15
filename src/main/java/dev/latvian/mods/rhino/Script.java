@@ -18,8 +18,7 @@ package dev.latvian.mods.rhino;
  * @since 1.3
  */
 
-public interface Script
-{
+public interface Script {
 
 	/**
 	 * Execute the script.

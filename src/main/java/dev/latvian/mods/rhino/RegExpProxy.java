@@ -12,8 +12,7 @@ package dev.latvian.mods.rhino;
  *
  * @author Norris Boyd
  */
-public interface RegExpProxy
-{
+public interface RegExpProxy {
 	// Types of regexp actions
 	int RA_MATCH = 1;
 	int RA_REPLACE = 2;

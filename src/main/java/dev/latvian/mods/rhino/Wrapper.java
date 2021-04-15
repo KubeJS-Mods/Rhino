@@ -15,8 +15,7 @@ package dev.latvian.mods.rhino;
  * Wrapper defines a single method that can be called to unwrap the object.
  */
 
-public interface Wrapper
-{
+public interface Wrapper {
 
 	/**
 	 * Unwrap the object by returning the wrapped value.

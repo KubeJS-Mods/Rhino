@@ -18,8 +18,7 @@ import java.util.List;
  * Base type for {@link AstRoot} and {@link FunctionNode} nodes, which need to
  * collect much of the same information.
  */
-public class ScriptNode extends Scope
-{
+public class ScriptNode extends Scope {
 
 	private int encodedSourceStart = -1;
 	private int encodedSourceEnd = -1;
@@ -47,12 +46,10 @@ public class ScriptNode extends Scope
 		this.type = Token.SCRIPT;
 	}
 
-	public ScriptNode()
-	{
+	public ScriptNode() {
 	}
 
-	public ScriptNode(int pos)
-	{
+	public ScriptNode(int pos) {
 		super(pos);
 	}
 
@@ -60,8 +57,7 @@ public class ScriptNode extends Scope
 	 * Returns the URI, path or descriptive text indicating the origin
 	 * of this script's source code.
 	 */
-	public String getSourceName()
-	{
+	public String getSourceName() {
 		return sourceName;
 	}
 
@@ -69,8 +65,7 @@ public class ScriptNode extends Scope
 	 * Sets the URI, path or descriptive text indicating the origin
 	 * of this script's source code.
 	 */
-	public void setSourceName(String sourceName)
-	{
+	public void setSourceName(String sourceName) {
 		this.sourceName = sourceName;
 	}
 
@@ -78,8 +73,7 @@ public class ScriptNode extends Scope
 	 * Returns the start offset of the encoded source.
 	 * Only valid if {@link #getEncodedSource} returns non-{@code null}.
 	 */
-	public int getEncodedSourceStart()
-	{
+	public int getEncodedSourceStart() {
 		return encodedSourceStart;
 	}
 
@@ -88,8 +82,7 @@ public class ScriptNode extends Scope
 	 *
 	 * @see #getEncodedSource
 	 */
-	public void setEncodedSourceStart(int start)
-	{
+	public void setEncodedSourceStart(int start) {
 		this.encodedSourceStart = start;
 	}
 
@@ -97,8 +90,7 @@ public class ScriptNode extends Scope
 	 * Returns the end offset of the encoded source.
 	 * Only valid if {@link #getEncodedSource} returns non-{@code null}.
 	 */
-	public int getEncodedSourceEnd()
-	{
+	public int getEncodedSourceEnd() {
 		return encodedSourceEnd;
 	}
 
@@ -107,8 +99,7 @@ public class ScriptNode extends Scope
 	 *
 	 * @see #getEncodedSource
 	 */
-	public void setEncodedSourceEnd(int end)
-	{
+	public void setEncodedSourceEnd(int end) {
 		this.encodedSourceEnd = end;
 	}
 
@@ -117,8 +108,7 @@ public class ScriptNode extends Scope
 	 *
 	 * @see #getEncodedSource
 	 */
-	public void setEncodedSourceBounds(int start, int end)
-	{
+	public void setEncodedSourceBounds(int start, int end) {
 		this.encodedSourceStart = start;
 		this.encodedSourceEnd = end;
 	}
@@ -128,8 +118,7 @@ public class ScriptNode extends Scope
 	 *
 	 * @see #getEncodedSource
 	 */
-	public void setEncodedSource(String encodedSource)
-	{
+	public void setEncodedSource(String encodedSource) {
 		this.encodedSource = encodedSource;
 	}
 
@@ -148,13 +137,11 @@ public class ScriptNode extends Scope
 	 *
 	 * @return the encoded source, or {@code null} if it was not recorded.
 	 */
-	public String getEncodedSource()
-	{
+	public String getEncodedSource() {
 		return encodedSource;
 	}
 
-	public int getBaseLineno()
-	{
+	public int getBaseLineno() {
 		return lineno;
 	}
 
@@ -163,42 +150,34 @@ public class ScriptNode extends Scope
 	 * This is a one-time operation, and throws an exception if the
 	 * line number has already been set.
 	 */
-	public void setBaseLineno(int lineno)
-	{
-		if (lineno < 0 || this.lineno >= 0)
-		{
+	public void setBaseLineno(int lineno) {
+		if (lineno < 0 || this.lineno >= 0) {
 			codeBug();
 		}
 		this.lineno = lineno;
 	}
 
-	public int getEndLineno()
-	{
+	public int getEndLineno() {
 		return endLineno;
 	}
 
-	public void setEndLineno(int lineno)
-	{
+	public void setEndLineno(int lineno) {
 		// One time action
-		if (lineno < 0 || endLineno >= 0)
-		{
+		if (lineno < 0 || endLineno >= 0) {
 			codeBug();
 		}
 		endLineno = lineno;
 	}
 
-	public int getFunctionCount()
-	{
+	public int getFunctionCount() {
 		return functions == null ? 0 : functions.size();
 	}
 
-	public FunctionNode getFunctionNode(int i)
-	{
+	public FunctionNode getFunctionNode(int i) {
 		return functions.get(i);
 	}
 
-	public List<FunctionNode> getFunctions()
-	{
+	public List<FunctionNode> getFunctions() {
 		return functions == null ? EMPTY_LIST : functions;
 	}
 
@@ -208,155 +187,124 @@ public class ScriptNode extends Scope
 	 *
 	 * @return the index of the function within its parent
 	 */
-	public int addFunction(FunctionNode fnNode)
-	{
-		if (fnNode == null)
-		{
+	public int addFunction(FunctionNode fnNode) {
+		if (fnNode == null) {
 			codeBug();
 		}
-		if (functions == null)
-		{
+		if (functions == null) {
 			functions = new ArrayList<>();
 		}
 		functions.add(fnNode);
 		return functions.size() - 1;
 	}
 
-	public int getRegexpCount()
-	{
+	public int getRegexpCount() {
 		return regexps == null ? 0 : regexps.size();
 	}
 
-	public String getRegexpString(int index)
-	{
+	public String getRegexpString(int index) {
 		return regexps.get(index).getValue();
 	}
 
-	public String getRegexpFlags(int index)
-	{
+	public String getRegexpFlags(int index) {
 		return regexps.get(index).getFlags();
 	}
 
 	/**
 	 * Called by IRFactory to add a RegExp to the regexp table.
 	 */
-	public void addRegExp(RegExpLiteral re)
-	{
-		if (re == null)
-		{
+	public void addRegExp(RegExpLiteral re) {
+		if (re == null) {
 			codeBug();
 		}
-		if (regexps == null)
-		{
+		if (regexps == null) {
 			regexps = new ArrayList<>();
 		}
 		regexps.add(re);
 		re.putIntProp(REGEXP_PROP, regexps.size() - 1);
 	}
 
-	public int getTemplateLiteralCount()
-	{
+	public int getTemplateLiteralCount() {
 		return templateLiterals == null ? 0 : templateLiterals.size();
 	}
 
-	public List<TemplateCharacters> getTemplateLiteralStrings(int index)
-	{
+	public List<TemplateCharacters> getTemplateLiteralStrings(int index) {
 		return templateLiterals.get(index).getTemplateStrings();
 	}
 
 	/**
 	 * Called by IRFactory to add a Template Literal to the templateLiterals table.
 	 */
-	public void addTemplateLiteral(TemplateLiteral templateLiteral)
-	{
-		if (templateLiteral == null)
-		{
+	public void addTemplateLiteral(TemplateLiteral templateLiteral) {
+		if (templateLiteral == null) {
 			codeBug();
 		}
-		if (templateLiterals == null)
-		{
+		if (templateLiterals == null) {
 			templateLiterals = new ArrayList<>();
 		}
 		templateLiterals.add(templateLiteral);
 		templateLiteral.putIntProp(TEMPLATE_LITERAL_PROP, templateLiterals.size() - 1);
 	}
 
-	public int getIndexForNameNode(Node nameNode)
-	{
-		if (variableNames == null)
-		{
+	public int getIndexForNameNode(Node nameNode) {
+		if (variableNames == null) {
 			codeBug();
 		}
 		Scope node = nameNode.getScope();
 		Symbol symbol = null;
-		if (node != null && nameNode instanceof Name)
-		{
+		if (node != null && nameNode instanceof Name) {
 			symbol = node.getSymbol(((Name) nameNode).getIdentifier());
 		}
 		return (symbol == null) ? -1 : symbol.getIndex();
 	}
 
-	public String getParamOrVarName(int index)
-	{
-		if (variableNames == null)
-		{
+	public String getParamOrVarName(int index) {
+		if (variableNames == null) {
 			codeBug();
 		}
 		return variableNames[index];
 	}
 
-	public int getParamCount()
-	{
+	public int getParamCount() {
 		return paramCount;
 	}
 
-	public int getParamAndVarCount()
-	{
-		if (variableNames == null)
-		{
+	public int getParamAndVarCount() {
+		if (variableNames == null) {
 			codeBug();
 		}
 		return symbols.size();
 	}
 
-	public String[] getParamAndVarNames()
-	{
-		if (variableNames == null)
-		{
+	public String[] getParamAndVarNames() {
+		if (variableNames == null) {
 			codeBug();
 		}
 		return variableNames;
 	}
 
-	public boolean[] getParamAndVarConst()
-	{
-		if (variableNames == null)
-		{
+	public boolean[] getParamAndVarConst() {
+		if (variableNames == null) {
 			codeBug();
 		}
 		return isConsts;
 	}
 
-	void addSymbol(Symbol symbol)
-	{
-		if (variableNames != null)
-		{
+	void addSymbol(Symbol symbol) {
+		if (variableNames != null) {
 			codeBug();
 		}
-		if (symbol.getDeclType() == Token.LP)
-		{
+		if (symbol.getDeclType() == Token.LP) {
 			paramCount++;
 		}
 		symbols.add(symbol);
 	}
 
-	public List<Symbol> getSymbols()
-	{
+	public List<Symbol> getSymbols() {
 		return symbols;
 	}
 
-	public void setSymbols(List<Symbol> symbols)
-	{
+	public void setSymbols(List<Symbol> symbols) {
 		this.symbols = symbols;
 	}
 
@@ -368,21 +316,16 @@ public class ScriptNode extends Scope
 	 *                         included nested block scope symbol tables. If false, just flatten the
 	 *                         script's or function's symbol table.
 	 */
-	public void flattenSymbolTable(boolean flattenAllTables)
-	{
-		if (!flattenAllTables)
-		{
+	public void flattenSymbolTable(boolean flattenAllTables) {
+		if (!flattenAllTables) {
 			List<Symbol> newSymbols = new ArrayList<>();
-			if (this.symbolTable != null)
-			{
+			if (this.symbolTable != null) {
 				// Just replace "symbols" with the symbols in this object's
 				// symbol table. Can't just work from symbolTable map since
 				// we need to retain duplicate parameters.
-				for (int i = 0; i < symbols.size(); i++)
-				{
+				for (int i = 0; i < symbols.size(); i++) {
 					Symbol symbol = symbols.get(i);
-					if (symbol.getContainingTable() == this)
-					{
+					if (symbol.getContainingTable() == this) {
 						newSymbols.add(symbol);
 					}
 				}
@@ -391,8 +334,7 @@ public class ScriptNode extends Scope
 		}
 		variableNames = new String[symbols.size()];
 		isConsts = new boolean[symbols.size()];
-		for (int i = 0; i < symbols.size(); i++)
-		{
+		for (int i = 0; i < symbols.size(); i++) {
 			Symbol symbol = symbols.get(i);
 			variableNames[i] = symbol.getName();
 			isConsts[i] = symbol.getDeclType() == Token.CONST;
@@ -400,44 +342,35 @@ public class ScriptNode extends Scope
 		}
 	}
 
-	public Object getCompilerData()
-	{
+	public Object getCompilerData() {
 		return compilerData;
 	}
 
-	public void setCompilerData(Object data)
-	{
+	public void setCompilerData(Object data) {
 		assertNotNull(data);
 		// Can only call once
-		if (compilerData != null)
-		{
+		if (compilerData != null) {
 			throw new IllegalStateException();
 		}
 		compilerData = data;
 	}
 
-	public String getNextTempName()
-	{
+	public String getNextTempName() {
 		return "$" + tempNumber++;
 	}
 
-	public void setInStrictMode(boolean inStrictMode)
-	{
+	public void setInStrictMode(boolean inStrictMode) {
 		this.inStrictMode = inStrictMode;
 	}
 
-	public boolean isInStrictMode()
-	{
+	public boolean isInStrictMode() {
 		return inStrictMode;
 	}
 
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
-			for (Node kid : this)
-			{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
+			for (Node kid : this) {
 				((AstNode) kid).visit(v);
 			}
 		}

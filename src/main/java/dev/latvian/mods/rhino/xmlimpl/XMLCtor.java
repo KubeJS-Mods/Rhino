@@ -13,8 +13,7 @@ import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.ScriptableObject;
 import dev.latvian.mods.rhino.Undefined;
 
-class XMLCtor extends IdFunctionObject
-{
+class XMLCtor extends IdFunctionObject {
 	static final long serialVersionUID = -8708195078359817341L;
 
 	private static final Object XMLCTOR_TAG = "XMLCtor";
@@ -22,18 +21,15 @@ class XMLCtor extends IdFunctionObject
 	private final XmlProcessor options;
 	//    private XMLLibImpl lib;
 
-	XMLCtor(XML xml, Object tag, int id, int arity)
-	{
+	XMLCtor(XML xml, Object tag, int id, int arity) {
 		super(xml, tag, id, arity);
 		//        this.lib = xml.lib;
 		this.options = xml.getProcessor();
 		activatePrototypeMap(MAX_FUNCTION_ID);
 	}
 
-	private void writeSetting(Scriptable target)
-	{
-		for (int i = 1; i <= MAX_INSTANCE_ID; ++i)
-		{
+	private void writeSetting(Scriptable target) {
+		for (int i = 1; i <= MAX_INSTANCE_ID; ++i) {
 			int id = super.getMaxInstanceId() + i;
 			String name = getInstanceIdName(id);
 			Object value = getInstanceIdValue(id);
@@ -41,31 +37,25 @@ class XMLCtor extends IdFunctionObject
 		}
 	}
 
-	private void readSettings(Scriptable source)
-	{
-		for (int i = 1; i <= MAX_INSTANCE_ID; ++i)
-		{
+	private void readSettings(Scriptable source) {
+		for (int i = 1; i <= MAX_INSTANCE_ID; ++i) {
 			int id = super.getMaxInstanceId() + i;
 			String name = getInstanceIdName(id);
 			Object value = ScriptableObject.getProperty(source, name);
-			if (value == Scriptable.NOT_FOUND)
-			{
+			if (value == Scriptable.NOT_FOUND) {
 				continue;
 			}
-			switch (i)
-			{
+			switch (i) {
 				case Id_ignoreComments:
 				case Id_ignoreProcessingInstructions:
 				case Id_ignoreWhitespace:
 				case Id_prettyPrinting:
-					if (!(value instanceof Boolean))
-					{
+					if (!(value instanceof Boolean)) {
 						continue;
 					}
 					break;
 				case Id_prettyIndent:
-					if (!(value instanceof Number))
-					{
+					if (!(value instanceof Number)) {
 						continue;
 					}
 					break;
@@ -88,14 +78,12 @@ class XMLCtor extends IdFunctionObject
 	MAX_INSTANCE_ID = 5;
 
 	@Override
-	protected int getMaxInstanceId()
-	{
+	protected int getMaxInstanceId() {
 		return super.getMaxInstanceId() + MAX_INSTANCE_ID;
 	}
 
 	@Override
-	protected int findInstanceIdInfo(String s)
-	{
+	protected int findInstanceIdInfo(String s) {
 		int id;
 		// #generated# Last update: 2007-08-20 09:01:10 EDT
 		L0:
@@ -104,21 +92,17 @@ class XMLCtor extends IdFunctionObject
 			String X = null;
 			int c;
 			L:
-			switch (s.length())
-			{
+			switch (s.length()) {
 				case 12:
 					X = "prettyIndent";
 					id = Id_prettyIndent;
 					break L;
 				case 14:
 					c = s.charAt(0);
-					if (c == 'i')
-					{
+					if (c == 'i') {
 						X = "ignoreComments";
 						id = Id_ignoreComments;
-					}
-					else if (c == 'p')
-					{
+					} else if (c == 'p') {
 						X = "prettyPrinting";
 						id = Id_prettyPrinting;
 					}
@@ -132,22 +116,19 @@ class XMLCtor extends IdFunctionObject
 					id = Id_ignoreProcessingInstructions;
 					break L;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;
 		}
 		// #/generated#
 
-		if (id == 0)
-		{
+		if (id == 0) {
 			return super.findInstanceIdInfo(s);
 		}
 
 		int attr;
-		switch (id)
-		{
+		switch (id) {
 			case Id_ignoreComments:
 			case Id_ignoreProcessingInstructions:
 			case Id_ignoreWhitespace:
@@ -164,10 +145,8 @@ class XMLCtor extends IdFunctionObject
 	// #/string_id_map#
 
 	@Override
-	protected String getInstanceIdName(int id)
-	{
-		switch (id - super.getMaxInstanceId())
-		{
+	protected String getInstanceIdName(int id) {
+		switch (id - super.getMaxInstanceId()) {
 			case Id_ignoreComments:
 				return "ignoreComments";
 			case Id_ignoreProcessingInstructions:
@@ -183,10 +162,8 @@ class XMLCtor extends IdFunctionObject
 	}
 
 	@Override
-	protected Object getInstanceIdValue(int id)
-	{
-		switch (id - super.getMaxInstanceId())
-		{
+	protected Object getInstanceIdValue(int id) {
+		switch (id - super.getMaxInstanceId()) {
 			case Id_ignoreComments:
 				return ScriptRuntime.wrapBoolean(options.isIgnoreComments());
 			case Id_ignoreProcessingInstructions:
@@ -202,10 +179,8 @@ class XMLCtor extends IdFunctionObject
 	}
 
 	@Override
-	protected void setInstanceIdValue(int id, Object value)
-	{
-		switch (id - super.getMaxInstanceId())
-		{
+	protected void setInstanceIdValue(int id, Object value) {
+		switch (id - super.getMaxInstanceId()) {
 			case Id_ignoreComments:
 				options.setIgnoreComments(ScriptRuntime.toBoolean(value));
 				return;
@@ -233,8 +208,7 @@ class XMLCtor extends IdFunctionObject
 			MAX_FUNCTION_ID = 3;
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2007-08-20 09:01:10 EDT
 		L0:
@@ -242,23 +216,17 @@ class XMLCtor extends IdFunctionObject
 			id = 0;
 			String X = null;
 			int s_length = s.length();
-			if (s_length == 8)
-			{
+			if (s_length == 8) {
 				X = "settings";
 				id = Id_settings;
-			}
-			else if (s_length == 11)
-			{
+			} else if (s_length == 11) {
 				X = "setSettings";
 				id = Id_setSettings;
-			}
-			else if (s_length == 15)
-			{
+			} else if (s_length == 15) {
 				X = "defaultSettings";
 				id = Id_defaultSettings;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;
@@ -269,12 +237,10 @@ class XMLCtor extends IdFunctionObject
 	// #/string_id_map#
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
+	protected void initPrototypeId(int id) {
 		String s;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_defaultSettings:
 				arity = 0;
 				s = "defaultSettings";
@@ -295,38 +261,29 @@ class XMLCtor extends IdFunctionObject
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(XMLCTOR_TAG))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(XMLCTOR_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
-		switch (id)
-		{
-			case Id_defaultSettings:
-			{
+		switch (id) {
+			case Id_defaultSettings: {
 				options.setDefault();
 				Scriptable obj = cx.newObject(scope);
 				writeSetting(obj);
 				return obj;
 			}
-			case Id_settings:
-			{
+			case Id_settings: {
 				Scriptable obj = cx.newObject(scope);
 				writeSetting(obj);
 				return obj;
 			}
-			case Id_setSettings:
-			{
+			case Id_setSettings: {
 				if (args.length == 0
 						|| args[0] == null
-						|| args[0] == Undefined.instance)
-				{
+						|| args[0] == Undefined.instance) {
 					options.setDefault();
-				}
-				else if (args[0] instanceof Scriptable)
-				{
+				} else if (args[0] instanceof Scriptable) {
 					readSettings((Scriptable) args[0]);
 				}
 				return Undefined.instance;
@@ -339,8 +296,7 @@ class XMLCtor extends IdFunctionObject
 	 * hasInstance for XML objects works differently than other objects; see ECMA357 13.4.3.10.
 	 */
 	@Override
-	public boolean hasInstance(Scriptable instance)
-	{
+	public boolean hasInstance(Scriptable instance) {
 		return (instance instanceof XML || instance instanceof XMLList);
 	}
 }

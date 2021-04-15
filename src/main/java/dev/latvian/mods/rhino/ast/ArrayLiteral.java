@@ -30,8 +30,7 @@ import java.util.List;
  *        <b>,</b>
  *        Elision <b>,</b></pre>
  */
-public class ArrayLiteral extends AstNode implements DestructuringForm
-{
+public class ArrayLiteral extends AstNode implements DestructuringForm {
 
 	private static final List<AstNode> NO_ELEMS =
 			Collections.unmodifiableList(new ArrayList<>());
@@ -45,17 +44,14 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 		type = Token.ARRAYLIT;
 	}
 
-	public ArrayLiteral()
-	{
+	public ArrayLiteral() {
 	}
 
-	public ArrayLiteral(int pos)
-	{
+	public ArrayLiteral(int pos) {
 		super(pos);
 	}
 
-	public ArrayLiteral(int pos, int len)
-	{
+	public ArrayLiteral(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -66,8 +62,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 	 * empty list.  Elisions are represented as {@link EmptyExpression}
 	 * nodes.
 	 */
-	public List<AstNode> getElements()
-	{
+	public List<AstNode> getElements() {
 		return elements != null ? elements : NO_ELEMS;
 	}
 
@@ -76,20 +71,14 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 	 *
 	 * @param elements the element list.  Can be {@code null}.
 	 */
-	public void setElements(List<AstNode> elements)
-	{
-		if (elements == null)
-		{
+	public void setElements(List<AstNode> elements) {
+		if (elements == null) {
 			this.elements = null;
-		}
-		else
-		{
-			if (this.elements != null)
-			{
+		} else {
+			if (this.elements != null) {
 				this.elements.clear();
 			}
-			for (AstNode e : elements)
-			{
+			for (AstNode e : elements) {
 				addElement(e);
 			}
 		}
@@ -102,11 +91,9 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 	 * @throws IllegalArgumentException if element is {@code null}.  To indicate
 	 *                                  an empty element, use an {@link EmptyExpression} node.
 	 */
-	public void addElement(AstNode element)
-	{
+	public void addElement(AstNode element) {
 		assertNotNull(element);
-		if (elements == null)
-		{
+		if (elements == null) {
 			elements = new ArrayList<>();
 		}
 		elements.add(element);
@@ -117,8 +104,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 	 * Returns the number of elements in this {@code Array} literal,
 	 * including empty elements.
 	 */
-	public int getSize()
-	{
+	public int getSize() {
 		return elements == null ? 0 : elements.size();
 	}
 
@@ -129,10 +115,8 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 	 * @return the element
 	 * @throws IndexOutOfBoundsException if the index is invalid
 	 */
-	public AstNode getElement(int index)
-	{
-		if (elements == null)
-		{
+	public AstNode getElement(int index) {
+		if (elements == null) {
 			throw new IndexOutOfBoundsException("no elements");
 		}
 		return elements.get(index);
@@ -141,8 +125,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 	/**
 	 * Returns destructuring length
 	 */
-	public int getDestructuringLength()
-	{
+	public int getDestructuringLength() {
 		return destructuringLength;
 	}
 
@@ -153,8 +136,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 	 * value supplied.  The difference is only meaningful in array literals
 	 * used in destructuring-assignment contexts.
 	 */
-	public void setDestructuringLength(int destructuringLength)
-	{
+	public void setDestructuringLength(int destructuringLength) {
 		this.destructuringLength = destructuringLength;
 	}
 
@@ -163,8 +145,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 	 *
 	 * @return the number of empty elements
 	 */
-	public int getSkipCount()
-	{
+	public int getSkipCount() {
 		return skipCount;
 	}
 
@@ -173,8 +154,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 	 *
 	 * @param count the count of empty elements
 	 */
-	public void setSkipCount(int count)
-	{
+	public void setSkipCount(int count) {
 		skipCount = count;
 	}
 
@@ -184,8 +164,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 	 * target of a destructuring assignment.
 	 */
 	@Override
-	public void setIsDestructuring(boolean destructuring)
-	{
+	public void setIsDestructuring(boolean destructuring) {
 		isDestructuring = destructuring;
 	}
 
@@ -195,19 +174,16 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 	 * iterator of a for..in loop, etc.
 	 */
 	@Override
-	public boolean isDestructuring()
-	{
+	public boolean isDestructuring() {
 		return isDestructuring;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("[");
-		if (elements != null)
-		{
+		if (elements != null) {
 			printList(elements, sb);
 		}
 		sb.append("]");
@@ -220,12 +196,9 @@ public class ArrayLiteral extends AstNode implements DestructuringForm
 	 * objects, so the callback will never be passed {@code null}.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
-			for (AstNode e : getElements())
-			{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
+			for (AstNode e : getElements()) {
 				e.visit(v);
 			}
 		}

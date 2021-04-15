@@ -27,8 +27,7 @@ package dev.latvian.mods.rhino;
  * @see ScriptableObject
  */
 
-public interface Scriptable
-{
+public interface Scriptable {
 
 	/**
 	 * Get the name of the set of objects implemented by this Java class.

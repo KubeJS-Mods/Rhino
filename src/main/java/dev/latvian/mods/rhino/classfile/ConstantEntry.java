@@ -6,8 +6,7 @@
 
 package dev.latvian.mods.rhino.classfile;
 
-final class ConstantEntry
-{
+final class ConstantEntry {
 	private final int type;
 	private final int intval;
 	private long longval;
@@ -15,8 +14,7 @@ final class ConstantEntry
 	private final String str2;
 	private final int hashcode;
 
-	ConstantEntry(int type, int intval, String str1, String str2)
-	{
+	ConstantEntry(int type, int intval, String str1, String str2) {
 		this.type = type;
 		this.intval = intval;
 		this.str1 = str1;
@@ -25,25 +23,20 @@ final class ConstantEntry
 	}
 
 	@Override
-	public int hashCode()
-	{
+	public int hashCode() {
 		return hashcode;
 	}
 
 	@Override
-	public boolean equals(Object obj)
-	{
-		if (!(obj instanceof ConstantEntry))
-		{
+	public boolean equals(Object obj) {
+		if (!(obj instanceof ConstantEntry)) {
 			return false;
 		}
 		ConstantEntry entry = (ConstantEntry) obj;
-		if (type != entry.type)
-		{
+		if (type != entry.type) {
 			return false;
 		}
-		switch (type)
-		{
+		switch (type) {
 			case ConstantPool.CONSTANT_Integer:
 			case ConstantPool.CONSTANT_Float:
 				return intval == entry.intval;

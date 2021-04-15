@@ -15,30 +15,25 @@ import dev.latvian.mods.rhino.Token;
  * <pre><i>Yield</i> :
  *   <b>yield</b> [<i>no LineTerminator here</i>] [non-paren Expression] ;</pre>
  */
-public class Yield extends AstNode
-{
+public class Yield extends AstNode {
 
 	private AstNode value;
 
-	public Yield()
-	{
+	public Yield() {
 		type = Token.YIELD;
 	}
 
-	public Yield(int pos)
-	{
+	public Yield(int pos) {
 		super(pos);
 		type = Token.YIELD;
 	}
 
-	public Yield(int pos, int len)
-	{
+	public Yield(int pos, int len) {
 		super(pos, len);
 		type = Token.YIELD;
 	}
 
-	public Yield(int pos, int len, AstNode value, boolean isStar)
-	{
+	public Yield(int pos, int len, AstNode value, boolean isStar) {
 		super(pos, len);
 		type = isStar ? Token.YIELD_STAR : Token.YIELD;
 		setValue(value);
@@ -47,8 +42,7 @@ public class Yield extends AstNode
 	/**
 	 * Returns yielded expression, {@code null} if none
 	 */
-	public AstNode getValue()
-	{
+	public AstNode getValue() {
 		return value;
 	}
 
@@ -57,18 +51,15 @@ public class Yield extends AstNode
 	 *
 	 * @param expr the value to yield. Can be {@code null}.
 	 */
-	public void setValue(AstNode expr)
-	{
+	public void setValue(AstNode expr) {
 		this.value = expr;
-		if (expr != null)
-		{
+		if (expr != null) {
 			expr.setParent(this);
 		}
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		return value == null
 				? "yield"
 				: "yield " + value.toSource(0);
@@ -78,10 +69,8 @@ public class Yield extends AstNode
 	 * Visits this node, and if present, the yielded value.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this) && value != null)
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this) && value != null) {
 			value.visit(v);
 		}
 	}

@@ -17,8 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Igor Bukanov
  * @since Rhino 1.5 Release 5
  */
-public class ClassCache implements Serializable
-{
+public class ClassCache implements Serializable {
 	private static final long serialVersionUID = -8866246036237312215L;
 	private static final Object AKEY = "ClassCache";
 	private volatile boolean cachingIsEnabled = true;
@@ -40,12 +39,10 @@ public class ClassCache implements Serializable
 	 * ClassCache if no ClassCache object was found.
 	 * @see #associate(ScriptableObject topScope)
 	 */
-	public static ClassCache get(Scriptable scope)
-	{
+	public static ClassCache get(Scriptable scope) {
 		ClassCache cache = (ClassCache)
 				ScriptableObject.getTopScopeValue(scope, AKEY);
-		if (cache == null)
-		{
+		if (cache == null) {
 			throw new RuntimeException("Can't find top level scope for " +
 					"ClassCache.get");
 		}
@@ -62,15 +59,12 @@ public class ClassCache implements Serializable
 	 * or false otherwise.
 	 * @see #get(Scriptable scope)
 	 */
-	public boolean associate(ScriptableObject topScope)
-	{
-		if (topScope.getParentScope() != null)
-		{
+	public boolean associate(ScriptableObject topScope) {
+		if (topScope.getParentScope() != null) {
 			// Can only associate cache with top level scope
 			throw new IllegalArgumentException();
 		}
-		if (this == topScope.associateValue(AKEY, this))
-		{
+		if (this == topScope.associateValue(AKEY, this)) {
 			associatedScope = topScope;
 			return true;
 		}
@@ -80,8 +74,7 @@ public class ClassCache implements Serializable
 	/**
 	 * Empty caches of generated Java classes and Java reflection information.
 	 */
-	public synchronized void clearCaches()
-	{
+	public synchronized void clearCaches() {
 		classTable = null;
 		classAdapterCache = null;
 		interfaceAdapterCache = null;
@@ -91,8 +84,7 @@ public class ClassCache implements Serializable
 	 * Check if generated Java classes and Java reflection information
 	 * is cached.
 	 */
-	public final boolean isCachingEnabled()
-	{
+	public final boolean isCachingEnabled() {
 		return cachingIsEnabled;
 	}
 
@@ -113,14 +105,11 @@ public class ClassCache implements Serializable
 	 * @param enabled if true, caching is enabled
 	 * @see #clearCaches()
 	 */
-	public synchronized void setCachingEnabled(boolean enabled)
-	{
-		if (enabled == cachingIsEnabled)
-		{
+	public synchronized void setCachingEnabled(boolean enabled) {
+		if (enabled == cachingIsEnabled) {
 			return;
 		}
-		if (!enabled)
-		{
+		if (!enabled) {
 			clearCaches();
 		}
 		cachingIsEnabled = enabled;
@@ -129,10 +118,8 @@ public class ClassCache implements Serializable
 	/**
 	 * @return a map from classes to associated JavaMembers objects
 	 */
-	Map<Class<?>, JavaMembers> getClassCacheMap()
-	{
-		if (classTable == null)
-		{
+	Map<Class<?>, JavaMembers> getClassCacheMap() {
+		if (classTable == null) {
 			// Use 1 as concurrency level here and for other concurrent hash maps
 			// as we don't expect high levels of sustained concurrent writes.
 			classTable = new ConcurrentHashMap<>(16, 0.75f, 1);
@@ -140,10 +127,8 @@ public class ClassCache implements Serializable
 		return classTable;
 	}
 
-	Map<JavaAdapter.JavaAdapterSignature, Class<?>> getInterfaceAdapterCacheMap()
-	{
-		if (classAdapterCache == null)
-		{
+	Map<JavaAdapter.JavaAdapterSignature, Class<?>> getInterfaceAdapterCacheMap() {
+		if (classAdapterCache == null) {
 			classAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);
 		}
 		return classAdapterCache;
@@ -153,32 +138,26 @@ public class ClassCache implements Serializable
 	 * Internal engine method to return serial number for generated classes
 	 * to ensure name uniqueness.
 	 */
-	public final synchronized int newClassSerialNumber()
-	{
+	public final synchronized int newClassSerialNumber() {
 		return ++generatedClassSerial;
 	}
 
-	Object getInterfaceAdapter(Class<?> cl)
-	{
+	Object getInterfaceAdapter(Class<?> cl) {
 		return interfaceAdapterCache == null
 				? null
 				: interfaceAdapterCache.get(cl);
 	}
 
-	synchronized void cacheInterfaceAdapter(Class<?> cl, Object iadapter)
-	{
-		if (cachingIsEnabled)
-		{
-			if (interfaceAdapterCache == null)
-			{
+	synchronized void cacheInterfaceAdapter(Class<?> cl, Object iadapter) {
+		if (cachingIsEnabled) {
+			if (interfaceAdapterCache == null) {
 				interfaceAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);
 			}
 			interfaceAdapterCache.put(cl, iadapter);
 		}
 	}
 
-	Scriptable getAssociatedScope()
-	{
+	Scriptable getAssociatedScope() {
 		return associatedScope;
 	}
 }

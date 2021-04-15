@@ -17,8 +17,7 @@ import java.util.WeakHashMap;
  * than the weak reference. That means that it is important that the "value"
  * that we put in the WeakHashMap here is not one that contains the key.
  */
-public class NativeWeakSet extends IdScriptableObject
-{
+public class NativeWeakSet extends IdScriptableObject {
 	private static final long serialVersionUID = 2065753364224029534L;
 
 	private static final Object MAP_TAG = "WeakSet";
@@ -27,37 +26,30 @@ public class NativeWeakSet extends IdScriptableObject
 
 	private transient WeakHashMap<Scriptable, Boolean> map = new WeakHashMap<>();
 
-	static void init(Scriptable scope, boolean sealed)
-	{
+	static void init(Scriptable scope, boolean sealed) {
 		NativeWeakSet m = new NativeWeakSet();
 		m.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "WeakSet";
 	}
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
+							 Scriptable thisObj, Object[] args) {
 
-		if (!f.hasTag(MAP_TAG))
-		{
+		if (!f.hasTag(MAP_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
-				if (thisObj == null)
-				{
+				if (thisObj == null) {
 					NativeWeakSet ns = new NativeWeakSet();
 					ns.instanceOfWeakSet = true;
-					if (args.length > 0)
-					{
+					if (args.length > 0) {
 						NativeSet.loadFromIterable(cx, scope, ns, args[0]);
 					}
 					return ns;
@@ -73,14 +65,12 @@ public class NativeWeakSet extends IdScriptableObject
 		throw new IllegalArgumentException("WeakMap.prototype has no method: " + f.getFunctionName());
 	}
 
-	private Object js_add(Object key)
-	{
+	private Object js_add(Object key) {
 		// As the spec says, only a true "Object" can be the key to a WeakSet.
 		// Use the default object equality here. ScriptableObject does not override
 		// equals or hashCode, which means that in effect we are only keying on object identity.
 		// This is all correct according to the ECMAscript spec.
-		if (!ScriptRuntime.isObject(key))
-		{
+		if (!ScriptRuntime.isObject(key)) {
 			throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(key));
 		}
 		// Add a value to the map, but don't make it the key -- otherwise the WeakHashMap
@@ -89,51 +79,39 @@ public class NativeWeakSet extends IdScriptableObject
 		return this;
 	}
 
-	private Object js_delete(Object key)
-	{
-		if (!ScriptRuntime.isObject(key))
-		{
+	private Object js_delete(Object key) {
+		if (!ScriptRuntime.isObject(key)) {
 			return Boolean.FALSE;
 		}
 		return map.remove(key) != null;
 	}
 
-	private Object js_has(Object key)
-	{
-		if (!ScriptRuntime.isObject(key))
-		{
+	private Object js_has(Object key) {
+		if (!ScriptRuntime.isObject(key)) {
 			return Boolean.FALSE;
 		}
 		return map.containsKey(key);
 	}
 
-	private static NativeWeakSet realThis(Scriptable thisObj, IdFunctionObject f)
-	{
-		if (thisObj == null)
-		{
+	private static NativeWeakSet realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (thisObj == null) {
 			throw incompatibleCallError(f);
 		}
-		try
-		{
+		try {
 			final NativeWeakSet ns = (NativeWeakSet) thisObj;
-			if (!ns.instanceOfWeakSet)
-			{
+			if (!ns.instanceOfWeakSet) {
 				// Check for "Set internal data tag"
 				throw incompatibleCallError(f);
 			}
 			return ns;
-		}
-		catch (ClassCastException cce)
-		{
+		} catch (ClassCastException cce) {
 			throw incompatibleCallError(f);
 		}
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
-		if (id == SymbolId_toStringTag)
-		{
+	protected void initPrototypeId(int id) {
+		if (id == SymbolId_toStringTag) {
 			initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG,
 					getClassName(), DONTENUM | READONLY);
 			return;
@@ -141,8 +119,7 @@ public class NativeWeakSet extends IdScriptableObject
 
 		String s, fnName = null;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				arity = 0;
 				s = "constructor";
@@ -166,10 +143,8 @@ public class NativeWeakSet extends IdScriptableObject
 	}
 
 	@Override
-	protected int findPrototypeId(Symbol k)
-	{
-		if (SymbolKey.TO_STRING_TAG.equals(k))
-		{
+	protected int findPrototypeId(Symbol k) {
+		if (SymbolKey.TO_STRING_TAG.equals(k)) {
 			return SymbolId_toStringTag;
 		}
 		return 0;
@@ -178,8 +153,7 @@ public class NativeWeakSet extends IdScriptableObject
 	// #string_id_map#
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2018-08-27 10:45:54 PDT
 		L0:
@@ -188,38 +162,27 @@ public class NativeWeakSet extends IdScriptableObject
 			String X = null;
 			int c;
 			int s_length = s.length();
-			if (s_length == 3)
-			{
+			if (s_length == 3) {
 				c = s.charAt(0);
-				if (c == 'a')
-				{
-					if (s.charAt(2) == 'd' && s.charAt(1) == 'd')
-					{
+				if (c == 'a') {
+					if (s.charAt(2) == 'd' && s.charAt(1) == 'd') {
 						id = Id_add;
 						break L0;
 					}
-				}
-				else if (c == 'h')
-				{
-					if (s.charAt(2) == 's' && s.charAt(1) == 'a')
-					{
+				} else if (c == 'h') {
+					if (s.charAt(2) == 's' && s.charAt(1) == 'a') {
 						id = Id_has;
 						break L0;
 					}
 				}
-			}
-			else if (s_length == 6)
-			{
+			} else if (s_length == 6) {
 				X = "delete";
 				id = Id_delete;
-			}
-			else if (s_length == 11)
-			{
+			} else if (s_length == 11) {
 				X = "constructor";
 				id = Id_constructor;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;
@@ -239,8 +202,7 @@ public class NativeWeakSet extends IdScriptableObject
 	// #/string_id_map#
 
 	private void readObject(ObjectInputStream stream)
-			throws IOException, ClassNotFoundException
-	{
+			throws IOException, ClassNotFoundException {
 		stream.defaultReadObject();
 		map = new WeakHashMap<>();
 	}

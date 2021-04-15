@@ -18,8 +18,7 @@ import java.util.List;
  * nodes, but for now it's just a set of expressions evaluated to produce a
  * string to pass to the {@code XML} constructor function.
  */
-public class XmlLiteral extends AstNode
-{
+public class XmlLiteral extends AstNode {
 
 	private final List<XmlFragment> fragments = new ArrayList<>();
 
@@ -27,25 +26,21 @@ public class XmlLiteral extends AstNode
 		type = Token.XML;
 	}
 
-	public XmlLiteral()
-	{
+	public XmlLiteral() {
 	}
 
-	public XmlLiteral(int pos)
-	{
+	public XmlLiteral(int pos) {
 		super(pos);
 	}
 
-	public XmlLiteral(int pos, int len)
-	{
+	public XmlLiteral(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Returns fragment list - a list of expression nodes.
 	 */
-	public List<XmlFragment> getFragments()
-	{
+	public List<XmlFragment> getFragments() {
 		return fragments;
 	}
 
@@ -56,12 +51,10 @@ public class XmlLiteral extends AstNode
 	 * @param fragments fragment list.  Replaces any existing fragments.
 	 * @throws IllegalArgumentException} if {@code fragments} is {@code null}
 	 */
-	public void setFragments(List<XmlFragment> fragments)
-	{
+	public void setFragments(List<XmlFragment> fragments) {
 		assertNotNull(fragments);
 		this.fragments.clear();
-		for (XmlFragment fragment : fragments)
-		{
+		for (XmlFragment fragment : fragments) {
 			addFragment(fragment);
 		}
 	}
@@ -71,19 +64,16 @@ public class XmlLiteral extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if {@code fragment} is {@code null}
 	 */
-	public void addFragment(XmlFragment fragment)
-	{
+	public void addFragment(XmlFragment fragment) {
 		assertNotNull(fragment);
 		fragments.add(fragment);
 		fragment.setParent(this);
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder(250);
-		for (XmlFragment frag : fragments)
-		{
+		for (XmlFragment frag : fragments) {
 			sb.append(frag.toSource(0));
 		}
 		return sb.toString();
@@ -93,12 +83,9 @@ public class XmlLiteral extends AstNode
 	 * Visits this node, then visits each child fragment in lexical order.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
-			for (XmlFragment frag : fragments)
-			{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
+			for (XmlFragment frag : fragments) {
 				frag.visit(v);
 			}
 		}

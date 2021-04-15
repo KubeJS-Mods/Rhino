@@ -12,31 +12,26 @@ import dev.latvian.mods.rhino.Token;
  * AST node representing an infix (binary operator) expression.
  * The operator is the node's {@link Token} type.
  */
-public class InfixExpression extends AstNode
-{
+public class InfixExpression extends AstNode {
 
 	protected AstNode left;
 	protected AstNode right;
 	protected int operatorPosition = -1;
 
-	public InfixExpression()
-	{
+	public InfixExpression() {
 	}
 
-	public InfixExpression(int pos)
-	{
+	public InfixExpression(int pos) {
 		super(pos);
 	}
 
-	public InfixExpression(int pos, int len)
-	{
+	public InfixExpression(int pos, int len) {
 		super(pos, len);
 	}
 
 	public InfixExpression(int pos, int len,
 						   AstNode left,
-						   AstNode right)
-	{
+						   AstNode right) {
 		super(pos, len);
 		setLeft(left);
 		setRight(right);
@@ -46,8 +41,7 @@ public class InfixExpression extends AstNode
 	 * Constructs a new {@code InfixExpression}.  Updates bounds to include
 	 * left and right nodes.
 	 */
-	public InfixExpression(AstNode left, AstNode right)
-	{
+	public InfixExpression(AstNode left, AstNode right) {
 		setLeftAndRight(left, right);
 	}
 
@@ -57,15 +51,13 @@ public class InfixExpression extends AstNode
 	 * @param operatorPos the <em>absolute</em> position of the operator
 	 */
 	public InfixExpression(int operator, AstNode left,
-						   AstNode right, int operatorPos)
-	{
+						   AstNode right, int operatorPos) {
 		setType(operator);
 		setOperatorPosition(operatorPos - left.getPosition());
 		setLeftAndRight(left, right);
 	}
 
-	public void setLeftAndRight(AstNode left, AstNode right)
-	{
+	public void setLeftAndRight(AstNode left, AstNode right) {
 		assertNotNull(left);
 		assertNotNull(right);
 		// compute our bounds while children have absolute positions
@@ -81,8 +73,7 @@ public class InfixExpression extends AstNode
 	/**
 	 * Returns operator token &ndash; alias for {@link #getType}
 	 */
-	public int getOperator()
-	{
+	public int getOperator() {
 		return getType();
 	}
 
@@ -93,10 +84,8 @@ public class InfixExpression extends AstNode
 	 * @throws IllegalArgumentException if operator is not a valid token
 	 *                                  code
 	 */
-	public void setOperator(int operator)
-	{
-		if (!Token.isValidToken(operator))
-		{
+	public void setOperator(int operator) {
+		if (!Token.isValidToken(operator)) {
 			throw new IllegalArgumentException("Invalid token: " + operator);
 		}
 		setType(operator);
@@ -105,8 +94,7 @@ public class InfixExpression extends AstNode
 	/**
 	 * Returns the left-hand side of the expression
 	 */
-	public AstNode getLeft()
-	{
+	public AstNode getLeft() {
 		return left;
 	}
 
@@ -117,8 +105,7 @@ public class InfixExpression extends AstNode
 	 * @param left the left-hand side of the expression
 	 * @throws IllegalArgumentException} if left is {@code null}
 	 */
-	public void setLeft(AstNode left)
-	{
+	public void setLeft(AstNode left) {
 		assertNotNull(left);
 		this.left = left;
 		// line number should agree with source position
@@ -133,8 +120,7 @@ public class InfixExpression extends AstNode
 	 * {@link AstNode} node, but can also be a {@link FunctionNode}
 	 * representing Function expressions.
 	 */
-	public AstNode getRight()
-	{
+	public AstNode getRight() {
 		return right;
 	}
 
@@ -144,8 +130,7 @@ public class InfixExpression extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if right is {@code null}
 	 */
-	public void setRight(AstNode right)
-	{
+	public void setRight(AstNode right) {
 		assertNotNull(right);
 		this.right = right;
 		right.setParent(this);
@@ -154,8 +139,7 @@ public class InfixExpression extends AstNode
 	/**
 	 * Returns relative offset of operator token
 	 */
-	public int getOperatorPosition()
-	{
+	public int getOperatorPosition() {
 		return operatorPosition;
 	}
 
@@ -164,17 +148,14 @@ public class InfixExpression extends AstNode
 	 *
 	 * @param operatorPosition offset in parent of operator token
 	 */
-	public void setOperatorPosition(int operatorPosition)
-	{
+	public void setOperatorPosition(int operatorPosition) {
 		this.operatorPosition = operatorPosition;
 	}
 
 	@Override
-	public boolean hasSideEffects()
-	{
+	public boolean hasSideEffects() {
 		// the null-checks are for malformed expressions in IDE-mode
-		switch (getType())
-		{
+		switch (getType()) {
 			case Token.COMMA:
 				return right != null && right.hasSideEffects();
 			case Token.AND:
@@ -187,8 +168,7 @@ public class InfixExpression extends AstNode
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append(left.toSource());
@@ -203,10 +183,8 @@ public class InfixExpression extends AstNode
 	 * Visits this node, the left operand, and the right operand.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			left.visit(v);
 			right.visit(v);
 		}

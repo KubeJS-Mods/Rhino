@@ -14,8 +14,7 @@ import dev.latvian.mods.rhino.Context;
  * Interface to implement if the application is interested in receiving debug
  * information.
  */
-public interface Debugger
-{
+public interface Debugger {
 
 	/**
 	 * Called when compilation of a particular function or script into internal

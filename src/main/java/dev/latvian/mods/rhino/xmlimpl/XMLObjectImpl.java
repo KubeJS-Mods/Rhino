@@ -23,125 +23,103 @@ import dev.latvian.mods.rhino.xml.XMLObject;
  *
  * @see XML
  */
-abstract class XMLObjectImpl extends XMLObject
-{
+abstract class XMLObjectImpl extends XMLObject {
 	private static final long serialVersionUID = -2553684605738101761L;
 	private static final Object XMLOBJECT_TAG = "XMLObject";
 	private XMLLibImpl lib;
 	private boolean prototypeFlag;
 
 	protected XMLObjectImpl(XMLLibImpl lib, Scriptable scope,
-							XMLObject prototype)
-	{
+							XMLObject prototype) {
 		initialize(lib, scope, prototype);
 	}
 
 	final void initialize(XMLLibImpl lib, Scriptable scope,
-						  XMLObject prototype)
-	{
+						  XMLObject prototype) {
 		setParentScope(scope);
 		setPrototype(prototype);
 		prototypeFlag = (prototype == null);
 		this.lib = lib;
 	}
 
-	final boolean isPrototype()
-	{
+	final boolean isPrototype() {
 		return prototypeFlag;
 	}
 
-	XMLLibImpl getLib()
-	{
+	XMLLibImpl getLib() {
 		return lib;
 	}
 
-	final XML newXML(XmlNode node)
-	{
+	final XML newXML(XmlNode node) {
 		return lib.newXML(node);
 	}
 
-	XML xmlFromNode(XmlNode node)
-	{
-		if (node.getXml() == null)
-		{
+	XML xmlFromNode(XmlNode node) {
+		if (node.getXml() == null) {
 			node.setXml(newXML(node));
 		}
 		return node.getXml();
 	}
 
-	final XMLList newXMLList()
-	{
+	final XMLList newXMLList() {
 		return lib.newXMLList();
 	}
 
-	final XMLList newXMLListFrom(Object o)
-	{
+	final XMLList newXMLListFrom(Object o) {
 		return lib.newXMLListFrom(o);
 	}
 
-	final XmlProcessor getProcessor()
-	{
+	final XmlProcessor getProcessor() {
 		return lib.getProcessor();
 	}
 
-	final QName newQName(String uri, String localName, String prefix)
-	{
+	final QName newQName(String uri, String localName, String prefix) {
 		return lib.newQName(uri, localName, prefix);
 	}
 
-	final QName newQName(XmlNode.QName name)
-	{
+	final QName newQName(XmlNode.QName name) {
 		return lib.newQName(name);
 	}
 
-	final Namespace createNamespace(XmlNode.Namespace declaration)
-	{
-		if (declaration == null)
-		{
+	final Namespace createNamespace(XmlNode.Namespace declaration) {
+		if (declaration == null) {
 			return null;
 		}
-		return lib.createNamespaces(new XmlNode.Namespace[] {declaration})[0];
+		return lib.createNamespaces(new XmlNode.Namespace[]{declaration})[0];
 	}
 
-	final Namespace[] createNamespaces(XmlNode.Namespace[] declarations)
-	{
+	final Namespace[] createNamespaces(XmlNode.Namespace[] declarations) {
 		return lib.createNamespaces(declarations);
 	}
 
 
 	@Override
-	public final Scriptable getPrototype()
-	{
+	public final Scriptable getPrototype() {
 		return super.getPrototype();
 	}
 
 	@Override
-	public final void setPrototype(Scriptable prototype)
-	{
+	public final void setPrototype(Scriptable prototype) {
 		super.setPrototype(prototype);
 	}
 
 	@Override
-	public final Scriptable getParentScope()
-	{
+	public final Scriptable getParentScope() {
 		return super.getParentScope();
 	}
 
 	@Override
-	public final void setParentScope(Scriptable parent)
-	{
+	public final void setParentScope(Scriptable parent) {
 		super.setParentScope(parent);
 	}
 
 	@Override
-	public final Object getDefaultValue(Class<?> hint)
-	{
+	public final Object getDefaultValue(Class<?> hint) {
 		return this.toString();
 	}
 
 	@Override
-	public final boolean hasInstance(Scriptable scriptable)
-	{
+	public final boolean hasInstance(Scriptable scriptable) {
 		return super.hasInstance(scriptable);
 	}
 
@@ -176,8 +154,7 @@ abstract class XMLObjectImpl extends XMLObject
 
 	abstract void addMatches(XMLList rv, XMLName name);
 
-	private XMLList getMatches(XMLName name)
-	{
+	private XMLList getMatches(XMLName name) {
 		XMLList rv = newXMLList();
 		addMatches(rv, name);
 		return rv;
@@ -241,8 +218,7 @@ abstract class XMLObjectImpl extends XMLObject
 	 * calls equivalentXml(value) and wrap the result as Boolean.
 	 */
 	@Override
-	protected final Object equivalentValues(Object value)
-	{
+	protected final Object equivalentValues(Object value) {
 		boolean result = equivalentXml(value);
 		return result ? Boolean.TRUE : Boolean.FALSE;
 	}
@@ -257,15 +233,12 @@ abstract class XMLObjectImpl extends XMLObject
 	 * Implementation of ECMAScript [[Has]]
 	 */
 	@Override
-	public final boolean has(Context cx, Object id)
-	{
-		if (cx == null)
-		{
+	public final boolean has(Context cx, Object id) {
+		if (cx == null) {
 			cx = Context.getCurrentContext();
 		}
 		XMLName xmlName = lib.toXMLNameOrIndex(cx, id);
-		if (xmlName == null)
-		{
+		if (xmlName == null) {
 			long index = ScriptRuntime.lastUint32Result(cx);
 			// XXX Fix this cast
 			return has((int) index, this);
@@ -274,8 +247,7 @@ abstract class XMLObjectImpl extends XMLObject
 	}
 
 	@Override
-	public boolean has(String name, Scriptable start)
-	{
+	public boolean has(String name, Scriptable start) {
 		Context cx = Context.getCurrentContext();
 		return hasXMLProperty(lib.toXMLNameFromString(cx, name));
 	}
@@ -284,20 +256,16 @@ abstract class XMLObjectImpl extends XMLObject
 	 * Implementation of ECMAScript [[Get]]
 	 */
 	@Override
-	public final Object get(Context cx, Object id)
-	{
-		if (cx == null)
-		{
+	public final Object get(Context cx, Object id) {
+		if (cx == null) {
 			cx = Context.getCurrentContext();
 		}
 		XMLName xmlName = lib.toXMLNameOrIndex(cx, id);
-		if (xmlName == null)
-		{
+		if (xmlName == null) {
 			long index = ScriptRuntime.lastUint32Result(cx);
 			// XXX Fix this cast
 			Object result = get((int) index, this);
-			if (result == Scriptable.NOT_FOUND)
-			{
+			if (result == Scriptable.NOT_FOUND) {
 				result = Undefined.instance;
 			}
 			return result;
@@ -306,8 +274,7 @@ abstract class XMLObjectImpl extends XMLObject
 	}
 
 	@Override
-	public Object get(String name, Scriptable start)
-	{
+	public Object get(String name, Scriptable start) {
 		Context cx = Context.getCurrentContext();
 		return getXMLProperty(lib.toXMLNameFromString(cx, name));
 	}
@@ -316,15 +283,12 @@ abstract class XMLObjectImpl extends XMLObject
 	 * Implementation of ECMAScript [[Put]]
 	 */
 	@Override
-	public final void put(Context cx, Object id, Object value)
-	{
-		if (cx == null)
-		{
+	public final void put(Context cx, Object id, Object value) {
+		if (cx == null) {
 			cx = Context.getCurrentContext();
 		}
 		XMLName xmlName = lib.toXMLNameOrIndex(cx, id);
-		if (xmlName == null)
-		{
+		if (xmlName == null) {
 			long index = ScriptRuntime.lastUint32Result(cx);
 			// XXX Fix this cast
 			put((int) index, this, value);
@@ -334,8 +298,7 @@ abstract class XMLObjectImpl extends XMLObject
 	}
 
 	@Override
-	public void put(String name, Scriptable start, Object value)
-	{
+	public void put(String name, Scriptable start, Object value) {
 		Context cx = Context.getCurrentContext();
 		putXMLProperty(lib.toXMLNameFromString(cx, name), value);
 	}
@@ -344,15 +307,12 @@ abstract class XMLObjectImpl extends XMLObject
 	 * Implementation of ECMAScript [[Delete]].
 	 */
 	@Override
-	public final boolean delete(Context cx, Object id)
-	{
-		if (cx == null)
-		{
+	public final boolean delete(Context cx, Object id) {
+		if (cx == null) {
 			cx = Context.getCurrentContext();
 		}
 		XMLName xmlName = lib.toXMLNameOrIndex(cx, id);
-		if (xmlName == null)
-		{
+		if (xmlName == null) {
 			long index = ScriptRuntime.lastUint32Result(cx);
 			// XXX Fix this
 			delete((int) index);
@@ -364,24 +324,18 @@ abstract class XMLObjectImpl extends XMLObject
 
 
 	@Override
-	public void delete(String name)
-	{
+	public void delete(String name) {
 		Context cx = Context.getCurrentContext();
 		deleteXMLProperty(lib.toXMLNameFromString(cx, name));
 	}
 
 	@Override
-	public Object getFunctionProperty(Context cx, int id)
-	{
-		if (isPrototype())
-		{
+	public Object getFunctionProperty(Context cx, int id) {
+		if (isPrototype()) {
 			return super.get(id, this);
-		}
-		else
-		{
+		} else {
 			Scriptable proto = getPrototype();
-			if (proto instanceof XMLObject)
-			{
+			if (proto instanceof XMLObject) {
 				return ((XMLObject) proto).getFunctionProperty(cx, id);
 			}
 		}
@@ -389,17 +343,12 @@ abstract class XMLObjectImpl extends XMLObject
 	}
 
 	@Override
-	public Object getFunctionProperty(Context cx, String name)
-	{
-		if (isPrototype())
-		{
+	public Object getFunctionProperty(Context cx, String name) {
+		if (isPrototype()) {
 			return super.get(name, this);
-		}
-		else
-		{
+		} else {
 			Scriptable proto = getPrototype();
-			if (proto instanceof XMLObject)
-			{
+			if (proto instanceof XMLObject) {
 				return ((XMLObject) proto).getFunctionProperty(cx, name);
 			}
 		}
@@ -408,12 +357,10 @@ abstract class XMLObjectImpl extends XMLObject
 
 	//    TODO    Can this be made more strongly typed?
 	@Override
-	public Ref memberRef(Context cx, Object elem, int memberTypeFlags)
-	{
+	public Ref memberRef(Context cx, Object elem, int memberTypeFlags) {
 		boolean attribute = (memberTypeFlags & Node.ATTRIBUTE_FLAG) != 0;
 		boolean descendants = (memberTypeFlags & Node.DESCENDANTS_FLAG) != 0;
-		if (!attribute && !descendants)
-		{
+		if (!attribute && !descendants) {
 			// Code generation would use ecma(Get|Has|Delete|Set) for
 			// normal name identifiers so one ATTRIBUTE_FLAG
 			// or DESCENDANTS_FLAG has to be set
@@ -430,8 +377,7 @@ abstract class XMLObjectImpl extends XMLObject
 	 */
 	@Override
 	public Ref memberRef(Context cx, Object namespace, Object elem,
-						 int memberTypeFlags)
-	{
+						 int memberTypeFlags) {
 		boolean attribute = (memberTypeFlags & Node.ATTRIBUTE_FLAG) != 0;
 		boolean descendants = (memberTypeFlags & Node.DESCENDANTS_FLAG) != 0;
 		XMLName rv = XMLName.create(lib.toNodeQName(cx, namespace, elem),
@@ -441,14 +387,12 @@ abstract class XMLObjectImpl extends XMLObject
 	}
 
 	@Override
-	public NativeWith enterWith(Scriptable scope)
-	{
+	public NativeWith enterWith(Scriptable scope) {
 		return new XMLWithScope(lib, scope, this);
 	}
 
 	@Override
-	public NativeWith enterDotQuery(Scriptable scope)
-	{
+	public NativeWith enterDotQuery(Scriptable scope) {
 		XMLWithScope xws = new XMLWithScope(lib, scope, this);
 		xws.initAsDotQuery();
 		return xws;
@@ -456,25 +400,19 @@ abstract class XMLObjectImpl extends XMLObject
 
 	@Override
 	public final Object addValues(Context cx, boolean thisIsLeft,
-								  Object value)
-	{
-		if (value instanceof XMLObject)
-		{
+								  Object value) {
+		if (value instanceof XMLObject) {
 			XMLObject v1, v2;
-			if (thisIsLeft)
-			{
+			if (thisIsLeft) {
 				v1 = this;
 				v2 = (XMLObject) value;
-			}
-			else
-			{
+			} else {
 				v1 = (XMLObject) value;
 				v2 = this;
 			}
 			return lib.addXMLObjects(cx, v1, v2);
 		}
-		if (value == Undefined.instance)
-		{
+		if (value == Undefined.instance) {
 			// both "xml + undefined" and "undefined + xml" gives String(xml)
 			return ScriptRuntime.toString(this);
 		}
@@ -488,8 +426,7 @@ abstract class XMLObjectImpl extends XMLObject
 	//
 	//
 
-	final void exportAsJSClass(boolean sealed)
-	{
+	final void exportAsJSClass(boolean sealed) {
 		prototypeFlag = true;
 		exportAsJSClass(MAX_PROTOTYPE_ID, getParentScope(), sealed);
 	}
@@ -542,8 +479,7 @@ abstract class XMLObjectImpl extends XMLObject
 	MAX_PROTOTYPE_ID = 41;
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2008-10-21 12:32:31 MESZ
 		L0:
@@ -552,22 +488,16 @@ abstract class XMLObjectImpl extends XMLObject
 			String X = null;
 			int c;
 			L:
-			switch (s.length())
-			{
+			switch (s.length()) {
 				case 4:
 					c = s.charAt(0);
-					if (c == 'c')
-					{
+					if (c == 'c') {
 						X = "copy";
 						id = Id_copy;
-					}
-					else if (c == 'n')
-					{
+					} else if (c == 'n') {
 						X = "name";
 						id = Id_name;
-					}
-					else if (c == 't')
-					{
+					} else if (c == 't') {
 						X = "text";
 						id = Id_text;
 					}
@@ -578,47 +508,35 @@ abstract class XMLObjectImpl extends XMLObject
 					break L;
 				case 6:
 					c = s.charAt(0);
-					if (c == 'l')
-					{
+					if (c == 'l') {
 						X = "length";
 						id = Id_length;
-					}
-					else if (c == 'p')
-					{
+					} else if (c == 'p') {
 						X = "parent";
 						id = Id_parent;
 					}
 					break L;
 				case 7:
 					c = s.charAt(0);
-					if (c == 'r')
-					{
+					if (c == 'r') {
 						X = "replace";
 						id = Id_replace;
-					}
-					else if (c == 's')
-					{
+					} else if (c == 's') {
 						X = "setName";
 						id = Id_setName;
-					}
-					else if (c == 'v')
-					{
+					} else if (c == 'v') {
 						X = "valueOf";
 						id = Id_valueOf;
 					}
 					break L;
 				case 8:
-					switch (s.charAt(2))
-					{
+					switch (s.charAt(2)) {
 						case 'S':
 							c = s.charAt(7);
-							if (c == 'e')
-							{
+							if (c == 'e') {
 								X = "toSource";
 								id = Id_toSource;
-							}
-							else if (c == 'g')
-							{
+							} else if (c == 'g') {
 								X = "toString";
 								id = Id_toString;
 							}
@@ -646,8 +564,7 @@ abstract class XMLObjectImpl extends XMLObject
 					}
 					break L;
 				case 9:
-					switch (s.charAt(2))
-					{
+					switch (s.charAt(2)) {
 						case 'c':
 							X = "localName";
 							id = Id_localName;
@@ -668,20 +585,16 @@ abstract class XMLObjectImpl extends XMLObject
 					break L;
 				case 10:
 					c = s.charAt(0);
-					if (c == 'a')
-					{
+					if (c == 'a') {
 						X = "attributes";
 						id = Id_attributes;
-					}
-					else if (c == 'c')
-					{
+					} else if (c == 'c') {
 						X = "childIndex";
 						id = Id_childIndex;
 					}
 					break L;
 				case 11:
-					switch (s.charAt(0))
-					{
+					switch (s.charAt(0)) {
 						case 'a':
 							X = "appendChild";
 							id = Id_appendChild;
@@ -706,26 +619,18 @@ abstract class XMLObjectImpl extends XMLObject
 					break L;
 				case 12:
 					c = s.charAt(0);
-					if (c == 'a')
-					{
+					if (c == 'a') {
 						X = "addNamespace";
 						id = Id_addNamespace;
-					}
-					else if (c == 'p')
-					{
+					} else if (c == 'p') {
 						X = "prependChild";
 						id = Id_prependChild;
-					}
-					else if (c == 's')
-					{
+					} else if (c == 's') {
 						c = s.charAt(3);
-						if (c == 'L')
-						{
+						if (c == 'L') {
 							X = "setLocalName";
 							id = Id_setLocalName;
-						}
-						else if (c == 'N')
-						{
+						} else if (c == 'N') {
 							X = "setNamespace";
 							id = Id_setNamespace;
 						}
@@ -741,31 +646,23 @@ abstract class XMLObjectImpl extends XMLObject
 					break L;
 				case 16:
 					c = s.charAt(0);
-					if (c == 'h')
-					{
+					if (c == 'h') {
 						X = "hasSimpleContent";
 						id = Id_hasSimpleContent;
-					}
-					else if (c == 'i')
-					{
+					} else if (c == 'i') {
 						X = "insertChildAfter";
 						id = Id_insertChildAfter;
 					}
 					break L;
 				case 17:
 					c = s.charAt(3);
-					if (c == 'C')
-					{
+					if (c == 'C') {
 						X = "hasComplexContent";
 						id = Id_hasComplexContent;
-					}
-					else if (c == 'c')
-					{
+					} else if (c == 'c') {
 						X = "inScopeNamespaces";
 						id = Id_inScopeNamespaces;
-					}
-					else if (c == 'e')
-					{
+					} else if (c == 'e') {
 						X = "insertChildBefore";
 						id = Id_insertChildBefore;
 					}
@@ -783,8 +680,7 @@ abstract class XMLObjectImpl extends XMLObject
 					id = Id_processingInstructions;
 					break L;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;
@@ -795,21 +691,15 @@ abstract class XMLObjectImpl extends XMLObject
 	// #/string_id_map#
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
+	protected void initPrototypeId(int id) {
 		String s;
 		int arity;
-		switch (id)
-		{
-			case Id_constructor:
-			{
+		switch (id) {
+			case Id_constructor: {
 				IdFunctionObject ctor;
-				if (this instanceof XML)
-				{
+				if (this instanceof XML) {
 					ctor = new XMLCtor((XML) this, XMLOBJECT_TAG, id, 1);
-				}
-				else
-				{
+				} else {
 					ctor = new IdFunctionObject(this, XMLOBJECT_TAG, id, 1);
 				}
 				initPrototypeConstructor(ctor);
@@ -983,221 +873,168 @@ abstract class XMLObjectImpl extends XMLObject
 		initPrototypeMethod(XMLOBJECT_TAG, id, s, arity);
 	}
 
-	private Object[] toObjectArray(Object[] typed)
-	{
+	private Object[] toObjectArray(Object[] typed) {
 		Object[] rv = new Object[typed.length];
-		for (int i = 0; i < rv.length; i++)
-		{
+		for (int i = 0; i < rv.length; i++) {
 			rv[i] = typed[i];
 		}
 		return rv;
 	}
 
-	private void xmlMethodNotFound(Object object, String name)
-	{
+	private void xmlMethodNotFound(Object object, String name) {
 		throw ScriptRuntime.notFunctionError(object, name);
 	}
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(XMLOBJECT_TAG))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(XMLOBJECT_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
-		if (id == Id_constructor)
-		{
+		if (id == Id_constructor) {
 			return jsConstructor(cx, thisObj == null, args);
 		}
 
 		// All (XML|XMLList).prototype methods require thisObj to be XML
-		if (!(thisObj instanceof XMLObjectImpl))
-		{
+		if (!(thisObj instanceof XMLObjectImpl)) {
 			throw incompatibleCallError(f);
 		}
 		XMLObjectImpl realThis = (XMLObjectImpl) thisObj;
 
 		XML xml = realThis.getXML();
-		switch (id)
-		{
-			case Id_appendChild:
-			{
-				if (xml == null)
-				{
+		switch (id) {
+			case Id_appendChild: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "appendChild");
 				}
 				return xml.appendChild(arg(args, 0));
 			}
-			case Id_addNamespace:
-			{
-				if (xml == null)
-				{
+			case Id_addNamespace: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "addNamespace");
 				}
 				Namespace ns = lib.castToNamespace(cx, arg(args, 0));
 				return xml.addNamespace(ns);
 			}
-			case Id_childIndex:
-			{
-				if (xml == null)
-				{
+			case Id_childIndex: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "childIndex");
 				}
 				return ScriptRuntime.wrapInt(xml.childIndex());
 			}
-			case Id_inScopeNamespaces:
-			{
-				if (xml == null)
-				{
+			case Id_inScopeNamespaces: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "inScopeNamespaces");
 				}
 				return cx.newArray(scope, toObjectArray(xml.inScopeNamespaces()));
 			}
-			case Id_insertChildAfter:
-			{
-				if (xml == null)
-				{
+			case Id_insertChildAfter: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "insertChildAfter");
 				}
 				Object arg0 = arg(args, 0);
-				if (arg0 == null || arg0 instanceof XML)
-				{
+				if (arg0 == null || arg0 instanceof XML) {
 					return xml.insertChildAfter((XML) arg0, arg(args, 1));
 				}
 				return Undefined.instance;
 			}
-			case Id_insertChildBefore:
-			{
-				if (xml == null)
-				{
+			case Id_insertChildBefore: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "insertChildBefore");
 				}
 				Object arg0 = arg(args, 0);
-				if (arg0 == null || arg0 instanceof XML)
-				{
+				if (arg0 == null || arg0 instanceof XML) {
 					return xml.insertChildBefore((XML) arg0, arg(args, 1));
 				}
 				return Undefined.instance;
 			}
-			case Id_localName:
-			{
-				if (xml == null)
-				{
+			case Id_localName: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "localName");
 				}
 				return xml.localName();
 			}
-			case Id_name:
-			{
-				if (xml == null)
-				{
+			case Id_name: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "name");
 				}
 				return xml.name();
 			}
-			case Id_namespace:
-			{
-				if (xml == null)
-				{
+			case Id_namespace: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "namespace");
 				}
 				String prefix = (args.length > 0) ? ScriptRuntime.toString(args[0]) : null;
 				Namespace rv = xml.namespace(prefix);
-				if (rv == null)
-				{
+				if (rv == null) {
 					return Undefined.instance;
-				}
-				else
-				{
+				} else {
 					return rv;
 				}
 			}
-			case Id_namespaceDeclarations:
-			{
-				if (xml == null)
-				{
+			case Id_namespaceDeclarations: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "namespaceDeclarations");
 				}
 				Namespace[] array = xml.namespaceDeclarations();
 				return cx.newArray(scope, toObjectArray(array));
 			}
-			case Id_nodeKind:
-			{
-				if (xml == null)
-				{
+			case Id_nodeKind: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "nodeKind");
 				}
 				return xml.nodeKind();
 			}
-			case Id_prependChild:
-			{
-				if (xml == null)
-				{
+			case Id_prependChild: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "prependChild");
 				}
 				return xml.prependChild(arg(args, 0));
 			}
-			case Id_removeNamespace:
-			{
-				if (xml == null)
-				{
+			case Id_removeNamespace: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "removeNamespace");
 				}
 				Namespace ns = lib.castToNamespace(cx, arg(args, 0));
 				return xml.removeNamespace(ns);
 			}
-			case Id_replace:
-			{
-				if (xml == null)
-				{
+			case Id_replace: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "replace");
 				}
 				XMLName xmlName = lib.toXMLNameOrIndex(cx, arg(args, 0));
 				Object arg1 = arg(args, 1);
-				if (xmlName == null)
-				{
+				if (xmlName == null) {
 					//    I refuse to believe that this number will exceed 2^31
 					int index = (int) ScriptRuntime.lastUint32Result(cx);
 					return xml.replace(index, arg1);
-				}
-				else
-				{
+				} else {
 					return xml.replace(xmlName, arg1);
 				}
 			}
-			case Id_setChildren:
-			{
-				if (xml == null)
-				{
+			case Id_setChildren: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "setChildren");
 				}
 				return xml.setChildren(arg(args, 0));
 			}
-			case Id_setLocalName:
-			{
-				if (xml == null)
-				{
+			case Id_setLocalName: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "setLocalName");
 				}
 				String localName;
 				Object arg = arg(args, 0);
-				if (arg instanceof QName)
-				{
+				if (arg instanceof QName) {
 					localName = ((QName) arg).localName();
-				}
-				else
-				{
+				} else {
 					localName = ScriptRuntime.toString(arg);
 				}
 				xml.setLocalName(localName);
 				return Undefined.instance;
 			}
-			case Id_setName:
-			{
-				if (xml == null)
-				{
+			case Id_setName: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "setName");
 				}
 				Object arg = (args.length != 0) ? args[0] : Undefined.instance;
@@ -1205,10 +1042,8 @@ abstract class XMLObjectImpl extends XMLObject
 				xml.setName(qname);
 				return Undefined.instance;
 			}
-			case Id_setNamespace:
-			{
-				if (xml == null)
-				{
+			case Id_setNamespace: {
+				if (xml == null) {
 					xmlMethodNotFound(realThis, "setNamespace");
 				}
 				Namespace ns = lib.castToNamespace(cx, arg(args, 0));
@@ -1216,24 +1051,19 @@ abstract class XMLObjectImpl extends XMLObject
 				return Undefined.instance;
 			}
 
-			case Id_attribute:
-			{
+			case Id_attribute: {
 				XMLName xmlName = XMLName.create(lib.toNodeQName(cx, arg(args, 0), true), true, false);
 				return realThis.getMatches(xmlName);
 			}
 			case Id_attributes:
 				return realThis.getMatches(XMLName.create(XmlNode.QName.create(null, null), true, false));
-			case Id_child:
-			{
+			case Id_child: {
 				XMLName xmlName = lib.toXMLNameOrIndex(cx, arg(args, 0));
-				if (xmlName == null)
-				{
+				if (xmlName == null) {
 					//    Two billion or so is a fine upper limit, so we cast to int
 					int index = (int) ScriptRuntime.lastUint32Result(cx);
 					return realThis.child(index);
-				}
-				else
-				{
+				} else {
 					return realThis.child(xmlName);
 				}
 			}
@@ -1246,20 +1076,17 @@ abstract class XMLObjectImpl extends XMLObject
 						realThis.contains(arg(args, 0)));
 			case Id_copy:
 				return realThis.copy();
-			case Id_descendants:
-			{
+			case Id_descendants: {
 				XmlNode.QName qname = (args.length == 0) ? XmlNode.QName.create(null, null) : lib.toNodeQName(cx, args[0], false);
 				return realThis.getMatches(XMLName.create(qname, false, true));
 			}
-			case Id_elements:
-			{
+			case Id_elements: {
 				XMLName xmlName = (args.length == 0)
 						? XMLName.formStar()
 						: lib.toXMLName(cx, args[0]);
 				return realThis.elements(xmlName);
 			}
-			case Id_hasOwnProperty:
-			{
+			case Id_hasOwnProperty: {
 				XMLName xmlName = lib.toXMLName(cx, arg(args, 0));
 				return ScriptRuntime.wrapBoolean(
 						realThis.hasOwnProperty(xmlName));
@@ -1275,15 +1102,13 @@ abstract class XMLObjectImpl extends XMLObject
 				return Undefined.instance;
 			case Id_parent:
 				return realThis.parent();
-			case Id_processingInstructions:
-			{
+			case Id_processingInstructions: {
 				XMLName xmlName = (args.length > 0)
 						? lib.toXMLName(cx, args[0])
 						: XMLName.formStar();
 				return realThis.processingInstructions(xmlName);
 			}
-			case Id_propertyIsEnumerable:
-			{
+			case Id_propertyIsEnumerable: {
 				return ScriptRuntime.wrapBoolean(
 						realThis.propertyIsEnumerable(arg(args, 0)));
 			}
@@ -1294,8 +1119,7 @@ abstract class XMLObjectImpl extends XMLObject
 			case Id_toSource:
 				int indent = ScriptRuntime.toInt32(args, 0);
 				return realThis.toSource(indent);
-			case Id_toXMLString:
-			{
+			case Id_toXMLString: {
 				return realThis.toXMLString();
 			}
 			case Id_valueOf:
@@ -1304,36 +1128,30 @@ abstract class XMLObjectImpl extends XMLObject
 		throw new IllegalArgumentException(String.valueOf(id));
 	}
 
-	private static Object arg(Object[] args, int i)
-	{
+	private static Object arg(Object[] args, int i) {
 		return (i < args.length) ? args[i] : Undefined.instance;
 	}
 
-	final XML newTextElementXML(XmlNode reference, XmlNode.QName qname, String value)
-	{
+	final XML newTextElementXML(XmlNode reference, XmlNode.QName qname, String value) {
 		return lib.newTextElementXML(reference, qname, value);
 	}
 
 	/* TODO: Hopefully this can be replaced with ecmaToXml below. */
-	final XML newXMLFromJs(Object inputObject)
-	{
+	final XML newXMLFromJs(Object inputObject) {
 		return lib.newXMLFromJs(inputObject);
 	}
 
-	final XML ecmaToXml(Object object)
-	{
+	final XML ecmaToXml(Object object) {
 		return lib.ecmaToXml(object);
 	}
 
-	final String ecmaEscapeAttributeValue(String s)
-	{
+	final String ecmaEscapeAttributeValue(String s) {
 		//    TODO    Check this
 		String quoted = lib.escapeAttributeValue(s);
 		return quoted.substring(1, quoted.length() - 1);
 	}
 
-	final XML createEmptyXML()
-	{
+	final XML createEmptyXML() {
 		return newXML(XmlNode.createEmpty(getProcessor()));
 	}
 }

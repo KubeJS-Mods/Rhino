@@ -35,8 +35,7 @@ package dev.latvian.mods.rhino.v8dtoa;
 // have the most significant bit of the significand set.
 // Multiplication and Subtraction do not normalize their results.
 // DiyFp are not designed to contain special doubles (NaN and Infinity).
-class DiyFp
-{
+class DiyFp {
 
 	private long f;
 	private int e;
@@ -45,20 +44,17 @@ class DiyFp
 	static final long kUint64MSB = 0x8000000000000000L;
 
 
-	DiyFp()
-	{
+	DiyFp() {
 		this.f = 0;
 		this.e = 0;
 	}
 
-	DiyFp(long f, int e)
-	{
+	DiyFp(long f, int e) {
 		this.f = f;
 		this.e = e;
 	}
 
-	private static boolean uint64_gte(long a, long b)
-	{
+	private static boolean uint64_gte(long a, long b) {
 		// greater-or-equal for unsigned int64 in java-style...
 		return (a == b) || ((a > b) ^ (a < 0) ^ (b < 0));
 	}
@@ -67,8 +63,7 @@ class DiyFp
 	// The exponents of both numbers must be the same and the significand of this
 	// must be bigger than the significand of other.
 	// The result will not be normalized.
-	void subtract(DiyFp other)
-	{
+	void subtract(DiyFp other) {
 		assert (e == other.e);
 		assert uint64_gte(f, other.f);
 		f -= other.f;
@@ -77,8 +72,7 @@ class DiyFp
 	// Returns a - b.
 	// The exponents of both numbers must be the same and this must be bigger
 	// than other. The result will not be normalized.
-	static DiyFp minus(DiyFp a, DiyFp b)
-	{
+	static DiyFp minus(DiyFp a, DiyFp b) {
 		DiyFp result = new DiyFp(a.f, a.e);
 		result.subtract(b);
 		return result;
@@ -86,8 +80,7 @@ class DiyFp
 
 
 	// this = this * other.
-	void multiply(DiyFp other)
-	{
+	void multiply(DiyFp other) {
 		// Simply "emulates" a 128 bit multiplication.
 		// However: the resulting number only contains 64 bits. The least
 		// significant 64 bits are only used for rounding the most significant 64
@@ -111,15 +104,13 @@ class DiyFp
 	}
 
 	// returns a * b;
-	static DiyFp times(DiyFp a, DiyFp b)
-	{
+	static DiyFp times(DiyFp a, DiyFp b) {
 		DiyFp result = new DiyFp(a.f, a.e);
 		result.multiply(b);
 		return result;
 	}
 
-	void normalize()
-	{
+	void normalize() {
 		assert (f != 0);
 		long f = this.f;
 		int e = this.e;
@@ -127,13 +118,11 @@ class DiyFp
 		// This method is mainly called for normalizing boundaries. In general
 		// boundaries need to be shifted by 10 bits. We thus optimize for this case.
 		final long k10MSBits = 0xFFC00000L << 32;
-		while ((f & k10MSBits) == 0)
-		{
+		while ((f & k10MSBits) == 0) {
 			f <<= 10;
 			e -= 10;
 		}
-		while ((f & kUint64MSB) == 0)
-		{
+		while ((f & kUint64MSB) == 0) {
 			f <<= 1;
 			e--;
 		}
@@ -141,36 +130,30 @@ class DiyFp
 		this.e = e;
 	}
 
-	static DiyFp normalize(DiyFp a)
-	{
+	static DiyFp normalize(DiyFp a) {
 		DiyFp result = new DiyFp(a.f, a.e);
 		result.normalize();
 		return result;
 	}
 
-	long f()
-	{
+	long f() {
 		return f;
 	}
 
-	int e()
-	{
+	int e() {
 		return e;
 	}
 
-	void setF(long new_value)
-	{
+	void setF(long new_value) {
 		f = new_value;
 	}
 
-	void setE(int new_value)
-	{
+	void setE(int new_value) {
 		e = new_value;
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return "[DiyFp f:" + f + ", e:" + e + "]";
 	}
 

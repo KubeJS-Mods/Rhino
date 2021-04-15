@@ -12,8 +12,7 @@ package dev.latvian.mods.rhino;
  * The class of exceptions raised by the engine as described in
  * ECMA edition 3. See section 15.11.6 in particular.
  */
-public class EcmaError extends RhinoException
-{
+public class EcmaError extends RhinoException {
 	private static final long serialVersionUID = -6261226256957286699L;
 
 	private final String errorName;
@@ -34,16 +33,14 @@ public class EcmaError extends RhinoException
 	 */
 	EcmaError(String errorName, String errorMessage,
 			  String sourceName, int lineNumber,
-			  String lineSource, int columnNumber)
-	{
+			  String lineSource, int columnNumber) {
 		recordErrorOrigin(sourceName, lineNumber, lineSource, columnNumber);
 		this.errorName = errorName;
 		this.errorMessage = errorMessage;
 	}
 
 	@Override
-	public String details()
-	{
+	public String details() {
 		return errorName + ": " + errorMessage;
 	}
 
@@ -59,8 +56,7 @@ public class EcmaError extends RhinoException
 	 *
 	 * @return the name of the error.
 	 */
-	public String getName()
-	{
+	public String getName() {
 		return errorName;
 	}
 
@@ -71,8 +67,7 @@ public class EcmaError extends RhinoException
 	 *
 	 * @return an implementation-defined string describing the error.
 	 */
-	public String getErrorMessage()
-	{
+	public String getErrorMessage() {
 		return errorMessage;
 	}
 }

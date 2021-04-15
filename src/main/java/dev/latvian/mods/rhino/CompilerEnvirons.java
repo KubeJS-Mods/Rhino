@@ -10,10 +10,8 @@ import dev.latvian.mods.rhino.ast.ErrorCollector;
 
 import java.util.Set;
 
-public class CompilerEnvirons
-{
-	public CompilerEnvirons()
-	{
+public class CompilerEnvirons {
+	public CompilerEnvirons() {
 		errorReporter = DefaultErrorReporter.instance;
 		languageVersion = Context.VERSION_DEFAULT;
 		generateDebugInfo = true;
@@ -28,8 +26,7 @@ public class CompilerEnvirons
 		allowSharpComments = false;
 	}
 
-	public void initFromContext(Context cx)
-	{
+	public void initFromContext(Context cx) {
 		setErrorReporter(cx.getErrorReporter());
 		languageVersion = cx.getLanguageVersion();
 		generateDebugInfo = (!cx.isGeneratingDebugChanged()
@@ -53,48 +50,39 @@ public class CompilerEnvirons
 		generateObserverCount = cx.generateObserverCount;
 	}
 
-	public final ErrorReporter getErrorReporter()
-	{
+	public final ErrorReporter getErrorReporter() {
 		return errorReporter;
 	}
 
-	public void setErrorReporter(ErrorReporter errorReporter)
-	{
-		if (errorReporter == null)
-		{
+	public void setErrorReporter(ErrorReporter errorReporter) {
+		if (errorReporter == null) {
 			throw new IllegalArgumentException();
 		}
 		this.errorReporter = errorReporter;
 	}
 
-	public final int getLanguageVersion()
-	{
+	public final int getLanguageVersion() {
 		return languageVersion;
 	}
 
-	public void setLanguageVersion(int languageVersion)
-	{
+	public void setLanguageVersion(int languageVersion) {
 		Context.checkLanguageVersion(languageVersion);
 		this.languageVersion = languageVersion;
 	}
 
-	public final boolean isGenerateDebugInfo()
-	{
+	public final boolean isGenerateDebugInfo() {
 		return generateDebugInfo;
 	}
 
-	public void setGenerateDebugInfo(boolean flag)
-	{
+	public void setGenerateDebugInfo(boolean flag) {
 		this.generateDebugInfo = flag;
 	}
 
-	public final boolean isReservedKeywordAsIdentifier()
-	{
+	public final boolean isReservedKeywordAsIdentifier() {
 		return reservedKeywordAsIdentifier;
 	}
 
-	public void setReservedKeywordAsIdentifier(boolean flag)
-	{
+	public void setReservedKeywordAsIdentifier(boolean flag) {
 		reservedKeywordAsIdentifier = flag;
 	}
 
@@ -102,64 +90,52 @@ public class CompilerEnvirons
 	 * Extension to ECMA: if 'function &lt;name&gt;' is not followed
 	 * by '(', assume &lt;name&gt; starts a {@code memberExpr}
 	 */
-	public final boolean isAllowMemberExprAsFunctionName()
-	{
+	public final boolean isAllowMemberExprAsFunctionName() {
 		return allowMemberExprAsFunctionName;
 	}
 
-	public void setAllowMemberExprAsFunctionName(boolean flag)
-	{
+	public void setAllowMemberExprAsFunctionName(boolean flag) {
 		allowMemberExprAsFunctionName = flag;
 	}
 
-	public final boolean isXmlAvailable()
-	{
+	public final boolean isXmlAvailable() {
 		return xmlAvailable;
 	}
 
-	public void setXmlAvailable(boolean flag)
-	{
+	public void setXmlAvailable(boolean flag) {
 		xmlAvailable = flag;
 	}
 
-	public final int getOptimizationLevel()
-	{
+	public final int getOptimizationLevel() {
 		return optimizationLevel;
 	}
 
-	public void setOptimizationLevel(int level)
-	{
+	public void setOptimizationLevel(int level) {
 		Context.checkOptimizationLevel(level);
 		this.optimizationLevel = level;
 	}
 
-	public final boolean isGeneratingSource()
-	{
+	public final boolean isGeneratingSource() {
 		return generatingSource;
 	}
 
-	public boolean getWarnTrailingComma()
-	{
+	public boolean getWarnTrailingComma() {
 		return warnTrailingComma;
 	}
 
-	public void setWarnTrailingComma(boolean warn)
-	{
+	public void setWarnTrailingComma(boolean warn) {
 		warnTrailingComma = warn;
 	}
 
-	public final boolean isStrictMode()
-	{
+	public final boolean isStrictMode() {
 		return strictMode;
 	}
 
-	public void setStrictMode(boolean strict)
-	{
+	public void setStrictMode(boolean strict) {
 		strictMode = strict;
 	}
 
-	public final boolean reportWarningAsError()
-	{
+	public final boolean reportWarningAsError() {
 		return warningAsError;
 	}
 
@@ -172,8 +148,7 @@ public class CompilerEnvirons
 	 * Note that code generated without source is not fully ECMA
 	 * conformant.
 	 */
-	public void setGeneratingSource(boolean generatingSource)
-	{
+	public void setGeneratingSource(boolean generatingSource) {
 		this.generatingSource = generatingSource;
 	}
 
@@ -181,8 +156,7 @@ public class CompilerEnvirons
 	 * @return true iff code will be generated with callbacks to enable
 	 * instruction thresholds
 	 */
-	public boolean isGenerateObserverCount()
-	{
+	public boolean isGenerateObserverCount() {
 		return generateObserverCount;
 	}
 
@@ -198,28 +172,23 @@ public class CompilerEnvirons
 	 * @param generateObserverCount if true, generated code will contain
 	 *                              calls to accumulate an estimate of the instructions executed.
 	 */
-	public void setGenerateObserverCount(boolean generateObserverCount)
-	{
+	public void setGenerateObserverCount(boolean generateObserverCount) {
 		this.generateObserverCount = generateObserverCount;
 	}
 
-	public boolean isRecordingComments()
-	{
+	public boolean isRecordingComments() {
 		return recordingComments;
 	}
 
-	public void setRecordingComments(boolean record)
-	{
+	public void setRecordingComments(boolean record) {
 		recordingComments = record;
 	}
 
-	public boolean isRecordingLocalJsDocComments()
-	{
+	public boolean isRecordingLocalJsDocComments() {
 		return recordingLocalJsDocComments;
 	}
 
-	public void setRecordingLocalJsDocComments(boolean record)
-	{
+	public void setRecordingLocalJsDocComments(boolean record) {
 		recordingLocalJsDocComments = record;
 	}
 
@@ -228,13 +197,11 @@ public class CompilerEnvirons
 	 * throw an exception, and the parser attempts to build a full syntax tree
 	 * from the input.  Useful for IDEs and other frontends.
 	 */
-	public void setRecoverFromErrors(boolean recover)
-	{
+	public void setRecoverFromErrors(boolean recover) {
 		recoverFromErrors = recover;
 	}
 
-	public boolean recoverFromErrors()
-	{
+	public boolean recoverFromErrors() {
 		return recoverFromErrors;
 	}
 
@@ -242,36 +209,30 @@ public class CompilerEnvirons
 	 * Puts the parser in "IDE" mode.  This enables some slightly more expensive
 	 * computations, such as figuring out helpful error bounds.
 	 */
-	public void setIdeMode(boolean ide)
-	{
+	public void setIdeMode(boolean ide) {
 		ideMode = ide;
 	}
 
-	public boolean isIdeMode()
-	{
+	public boolean isIdeMode() {
 		return ideMode;
 	}
 
-	public Set<String> getActivationNames()
-	{
+	public Set<String> getActivationNames() {
 		return activationNames;
 	}
 
-	public void setActivationNames(Set<String> activationNames)
-	{
+	public void setActivationNames(Set<String> activationNames) {
 		this.activationNames = activationNames;
 	}
 
 	/**
 	 * Mozilla sources use the C preprocessor.
 	 */
-	public void setAllowSharpComments(boolean allow)
-	{
+	public void setAllowSharpComments(boolean allow) {
 		allowSharpComments = allow;
 	}
 
-	public boolean getAllowSharpComments()
-	{
+	public boolean getAllowSharpComments() {
 		return allowSharpComments;
 	}
 
@@ -280,8 +241,7 @@ public class CompilerEnvirons
 	 * in an IDE environment.  Most features are enabled by default.
 	 * The {@link ErrorReporter} is set to an {@link ErrorCollector}.
 	 */
-	public static CompilerEnvirons ideEnvirons()
-	{
+	public static CompilerEnvirons ideEnvirons() {
 		CompilerEnvirons env = new CompilerEnvirons();
 		env.setRecoverFromErrors(true);
 		env.setRecordingComments(true);

@@ -61,8 +61,7 @@ import java.util.Map;
  * statements, as the distinction in JavaScript is not as clear-cut as in
  * Java or C++.
  */
-public abstract class AstNode extends Node implements Comparable<AstNode>
-{
+public abstract class AstNode extends Node implements Comparable<AstNode> {
 
 	protected int position = -1;
 	protected int length = 1;
@@ -83,8 +82,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	protected AstNode inlineComment;
 	private static final Map<Integer, String> operatorNames = new HashMap<>();
 
-	static
-	{
+	static {
 		operatorNames.put(Token.IN, "in");
 		operatorNames.put(Token.TYPEOF, "typeof");
 		operatorNames.put(Token.INSTANCEOF, "instanceof");
@@ -133,8 +131,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 		operatorNames.put(Token.VOID, "void");
 	}
 
-	public static class PositionComparator implements Comparator<AstNode>, Serializable
-	{
+	public static class PositionComparator implements Comparator<AstNode>, Serializable {
 		private static final long serialVersionUID = 1L;
 
 		/**
@@ -143,14 +140,12 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 		 * comparing siblings.
 		 */
 		@Override
-		public int compare(AstNode n1, AstNode n2)
-		{
+		public int compare(AstNode n1, AstNode n2) {
 			return n1.position - n2.position;
 		}
 	}
 
-	public AstNode()
-	{
+	public AstNode() {
 		super(Token.ERROR);
 	}
 
@@ -159,8 +154,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 *
 	 * @param pos the start position
 	 */
-	public AstNode(int pos)
-	{
+	public AstNode(int pos) {
 		this();
 		position = pos;
 	}
@@ -172,8 +166,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * @param len the number of characters spanned by the node in the source
 	 *            text
 	 */
-	public AstNode(int pos, int len)
-	{
+	public AstNode(int pos, int len) {
 		this();
 		position = pos;
 		length = len;
@@ -182,16 +175,14 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	/**
 	 * Returns relative position in parent
 	 */
-	public int getPosition()
-	{
+	public int getPosition() {
 		return position;
 	}
 
 	/**
 	 * Sets relative position in parent
 	 */
-	public void setPosition(int position)
-	{
+	public void setPosition(int position) {
 		this.position = position;
 	}
 
@@ -200,12 +191,10 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * Computes it by adding the node's relative position
 	 * to the relative positions of all its parents.
 	 */
-	public int getAbsolutePosition()
-	{
+	public int getAbsolutePosition() {
 		int pos = position;
 		AstNode parent = this.parent;
-		while (parent != null)
-		{
+		while (parent != null) {
 			pos += parent.getPosition();
 			parent = parent.getParent();
 		}
@@ -215,16 +204,14 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	/**
 	 * Returns node length
 	 */
-	public int getLength()
-	{
+	public int getLength() {
 		return length;
 	}
 
 	/**
 	 * Sets node length
 	 */
-	public void setLength(int length)
-	{
+	public void setLength(int length) {
 		this.length = length;
 	}
 
@@ -232,8 +219,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * Sets the node start and end positions.
 	 * Computes the length as ({@code end} - {@code position}).
 	 */
-	public void setBounds(int position, int end)
-	{
+	public void setBounds(int position, int end) {
 		setPosition(position);
 		setLength(end - position);
 	}
@@ -246,16 +232,14 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 *                       current node position is assumed to be absolute and is
 	 *                       decremented by parentPosition.
 	 */
-	public void setRelative(int parentPosition)
-	{
+	public void setRelative(int parentPosition) {
 		this.position -= parentPosition;
 	}
 
 	/**
 	 * Returns the node parent, or {@code null} if it has none
 	 */
-	public AstNode getParent()
-	{
+	public AstNode getParent() {
 		return parent;
 	}
 
@@ -265,22 +249,18 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 *
 	 * @param parent the new parent. Can be {@code null}.
 	 */
-	public void setParent(AstNode parent)
-	{
-		if (parent == this.parent)
-		{
+	public void setParent(AstNode parent) {
+		if (parent == this.parent) {
 			return;
 		}
 
 		// Convert position back to absolute.
-		if (this.parent != null)
-		{
+		if (this.parent != null) {
 			setRelative(-this.parent.getAbsolutePosition());
 		}
 
 		this.parent = parent;
-		if (parent != null)
-		{
+		if (parent != null) {
 			setRelative(parent.getAbsolutePosition());
 		}
 	}
@@ -294,8 +274,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * @param kid the child
 	 * @throws IllegalArgumentException if kid is {@code null}
 	 */
-	public void addChild(AstNode kid)
-	{
+	public void addChild(AstNode kid) {
 		assertNotNull(kid);
 		int end = kid.getPosition() + kid.getLength();
 		setLength(end - this.getPosition());
@@ -309,11 +288,9 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * @return the {@link AstRoot} at the root of this node's parent
 	 * chain, or {@code null} if the topmost parent is not an {@code AstRoot}.
 	 */
-	public AstRoot getAstRoot()
-	{
+	public AstRoot getAstRoot() {
 		AstNode parent = this;  // this node could be the AstRoot
-		while (parent != null && !(parent instanceof AstRoot))
-		{
+		while (parent != null && !(parent instanceof AstRoot)) {
 			parent = parent.getParent();
 		}
 		return (AstRoot) parent;
@@ -338,8 +315,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	/**
 	 * Prints the source indented to depth 0.
 	 */
-	public String toSource()
-	{
+	public String toSource() {
 		return this.toSource(0);
 	}
 
@@ -348,11 +324,9 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 *
 	 * @param indent the number of indentation steps
 	 */
-	public String makeIndent(int indent)
-	{
+	public String makeIndent(int indent) {
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < indent; i++)
-		{
+		for (int i = 0; i < indent; i++) {
 			sb.append("  ");
 		}
 		return sb.toString();
@@ -362,8 +336,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * Returns a short, descriptive name for the node, such as
 	 * "ArrayComprehension".
 	 */
-	public String shortName()
-	{
+	public String shortName() {
 		String classname = getClass().getName();
 		int last = classname.lastIndexOf(".");
 		return classname.substring(last + 1);
@@ -375,11 +348,9 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * @param op the token type, e.g. {@link Token#ADD} or {@link Token#TYPEOF}
 	 * @return the source operator string, such as "+" or "typeof"
 	 */
-	public static String operatorToString(int op)
-	{
+	public static String operatorToString(int op) {
 		String result = operatorNames.get(op);
-		if (result == null)
-		{
+		if (result == null) {
 			throw new IllegalArgumentException("Invalid operator: " + op);
 		}
 		return result;
@@ -406,10 +377,8 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 
 	// subclasses with potential side effects should override this
 	@Override
-	public boolean hasSideEffects()
-	{
-		switch (getType())
-		{
+	public boolean hasSideEffects() {
+		switch (getType()) {
 			case Token.ASSIGN:
 			case Token.ASSIGN_ADD:
 			case Token.ASSIGN_BITAND:
@@ -491,10 +460,8 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * @param arg any method argument
 	 * @throws IllegalArgumentException if the argument is {@code null}
 	 */
-	protected void assertNotNull(Object arg)
-	{
-		if (arg == null)
-		{
+	protected void assertNotNull(Object arg) {
+		if (arg == null) {
 			throw new IllegalArgumentException("arg cannot be null");
 		}
 	}
@@ -506,19 +473,14 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * @param sb    a {@link StringBuilder} into which to print
 	 */
 	protected <T extends AstNode> void printList(List<T> items,
-												 StringBuilder sb)
-	{
+												 StringBuilder sb) {
 		int max = items.size();
 		int count = 0;
-		for (AstNode item : items)
-		{
+		for (AstNode item : items) {
 			sb.append(item.toSource(0));
-			if (count++ < max - 1)
-			{
+			if (count++ < max - 1) {
 				sb.append(", ");
-			}
-			else if (item instanceof EmptyExpression)
-			{
+			} else if (item instanceof EmptyExpression) {
 				sb.append(",");
 			}
 		}
@@ -528,8 +490,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * @see Kit#codeBug
 	 */
 	public static RuntimeException codeBug()
-			throws RuntimeException
-	{
+			throws RuntimeException {
 		throw Kit.codeBug();
 	}
 
@@ -551,11 +512,9 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 *
 	 * @return the {@link FunctionNode} enclosing this node, else {@code null}
 	 */
-	public FunctionNode getEnclosingFunction()
-	{
+	public FunctionNode getEnclosingFunction() {
 		AstNode parent = this.getParent();
-		while (parent != null && !(parent instanceof FunctionNode))
-		{
+		while (parent != null && !(parent instanceof FunctionNode)) {
 			parent = parent.getParent();
 		}
 		return (FunctionNode) parent;
@@ -568,11 +527,9 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 *
 	 * @return the {@link Scope} enclosing this node, else {@code null}
 	 */
-	public Scope getEnclosingScope()
-	{
+	public Scope getEnclosingScope() {
 		AstNode parent = this.getParent();
-		while (parent != null && !(parent instanceof Scope))
-		{
+		while (parent != null && !(parent instanceof Scope)) {
 			parent = parent.getParent();
 		}
 		return (Scope) parent;
@@ -591,30 +548,24 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * on hashcode unless the nodes are the same per {@link #equals}.
 	 */
 	@Override
-	public int compareTo(AstNode other)
-	{
-		if (this.equals(other))
-		{
+	public int compareTo(AstNode other) {
+		if (this.equals(other)) {
 			return 0;
 		}
 		int abs1 = this.getAbsolutePosition();
 		int abs2 = other.getAbsolutePosition();
-		if (abs1 < abs2)
-		{
+		if (abs1 < abs2) {
 			return -1;
 		}
-		if (abs2 < abs1)
-		{
+		if (abs2 < abs1) {
 			return 1;
 		}
 		int len1 = this.getLength();
 		int len2 = other.getLength();
-		if (len1 < len2)
-		{
+		if (len1 < len2) {
 			return -1;
 		}
-		if (len2 < len1)
-		{
+		if (len2 < len1) {
 			return 1;
 		}
 		return this.hashCode() - other.hashCode();
@@ -626,40 +577,33 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 *
 	 * @return the node depth in the tree
 	 */
-	public int depth()
-	{
+	public int depth() {
 		return parent == null ? 0 : 1 + parent.depth();
 	}
 
-	protected static class DebugPrintVisitor implements NodeVisitor
-	{
+	protected static class DebugPrintVisitor implements NodeVisitor {
 		private final StringBuilder buffer;
 		private static final int DEBUG_INDENT = 2;
 
-		public DebugPrintVisitor(StringBuilder buf)
-		{
+		public DebugPrintVisitor(StringBuilder buf) {
 			buffer = buf;
 		}
 
 		@Override
-		public String toString()
-		{
+		public String toString() {
 			return buffer.toString();
 		}
 
-		private static String makeIndent(int depth)
-		{
+		private static String makeIndent(int depth) {
 			StringBuilder sb = new StringBuilder(DEBUG_INDENT * depth);
-			for (int i = 0; i < (DEBUG_INDENT * depth); i++)
-			{
+			for (int i = 0; i < (DEBUG_INDENT * depth); i++) {
 				sb.append(" ");
 			}
 			return sb.toString();
 		}
 
 		@Override
-		public boolean visit(AstNode node)
-		{
+		public boolean visit(AstNode node) {
 			int tt = node.getType();
 			String name = Token.typeToName(tt);
 			buffer.append(node.getAbsolutePosition()).append("\t");
@@ -667,12 +611,9 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 			buffer.append(name).append(" ");
 			buffer.append(node.getPosition()).append(" ");
 			buffer.append(node.getLength());
-			if (tt == Token.NAME)
-			{
+			if (tt == Token.NAME) {
 				buffer.append(" ").append(((Name) node).getIdentifier());
-			}
-			else if (tt == Token.STRING)
-			{
+			} else if (tt == Token.STRING) {
 				buffer.append(" ").append(((StringLiteral) node).getValue(true));
 			}
 			buffer.append("\n");
@@ -687,14 +628,11 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * @return the nearest line number, or -1 if none was found
 	 */
 	@Override
-	public int getLineno()
-	{
-		if (lineno != -1)
-		{
+	public int getLineno() {
+		if (lineno != -1) {
 			return lineno;
 		}
-		if (parent != null)
-		{
+		if (parent != null) {
 			return parent.getLineno();
 		}
 		return -1;
@@ -707,20 +645,17 @@ public abstract class AstNode extends Node implements Comparable<AstNode>
 	 * @return a very verbose indented printout of the tree.
 	 * The format of each line is:  abs-pos  name position length [identifier]
 	 */
-	public String debugPrint()
-	{
+	public String debugPrint() {
 		DebugPrintVisitor dpv = new DebugPrintVisitor(new StringBuilder(1000));
 		visit(dpv);
 		return dpv.toString();
 	}
 
-	public AstNode getInlineComment()
-	{
+	public AstNode getInlineComment() {
 		return inlineComment;
 	}
 
-	public void setInlineComment(AstNode inlineComment)
-	{
+	public void setInlineComment(AstNode inlineComment) {
 		this.inlineComment = inlineComment;
 	}
 }

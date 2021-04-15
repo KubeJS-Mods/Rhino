@@ -11,29 +11,24 @@ import dev.latvian.mods.rhino.Token;
 /**
  * AST node for the '.' operator.  Node type is {@link Token#GETPROP}.
  */
-public class PropertyGet extends InfixExpression
-{
+public class PropertyGet extends InfixExpression {
 
 	{
 		type = Token.GETPROP;
 	}
 
-	public PropertyGet()
-	{
+	public PropertyGet() {
 	}
 
-	public PropertyGet(int pos)
-	{
+	public PropertyGet(int pos) {
 		super(pos);
 	}
 
-	public PropertyGet(int pos, int len)
-	{
+	public PropertyGet(int pos, int len) {
 		super(pos, len);
 	}
 
-	public PropertyGet(int pos, int len, AstNode target, Name property)
-	{
+	public PropertyGet(int pos, int len, AstNode target, Name property) {
 		super(pos, len, target, property);
 	}
 
@@ -41,13 +36,11 @@ public class PropertyGet extends InfixExpression
 	 * Constructor.  Updates bounds to include left ({@code target}) and
 	 * right ({@code property}) nodes.
 	 */
-	public PropertyGet(AstNode target, Name property)
-	{
+	public PropertyGet(AstNode target, Name property) {
 		super(target, property);
 	}
 
-	public PropertyGet(AstNode target, Name property, int dotPosition)
-	{
+	public PropertyGet(AstNode target, Name property, int dotPosition) {
 		super(Token.GETPROP, target, property, dotPosition);
 	}
 
@@ -55,8 +48,7 @@ public class PropertyGet extends InfixExpression
 	 * Returns the object on which the property is being fetched.
 	 * Should never be {@code null}.
 	 */
-	public AstNode getTarget()
-	{
+	public AstNode getTarget() {
 		return getLeft();
 	}
 
@@ -67,16 +59,14 @@ public class PropertyGet extends InfixExpression
 	 *               to do the property lookup
 	 * @throws IllegalArgumentException} if {@code target} is {@code null}
 	 */
-	public void setTarget(AstNode target)
-	{
+	public void setTarget(AstNode target) {
 		setLeft(target);
 	}
 
 	/**
 	 * Returns the property being accessed.
 	 */
-	public Name getProperty()
-	{
+	public Name getProperty() {
 		return (Name) getRight();
 	}
 
@@ -85,14 +75,12 @@ public class PropertyGet extends InfixExpression
 	 *
 	 * @throws IllegalArgumentException} if {@code property} is {@code null}
 	 */
-	public void setProperty(Name property)
-	{
+	public void setProperty(Name property) {
 		setRight(property);
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append(getLeft().toSource(0));
@@ -105,10 +93,8 @@ public class PropertyGet extends InfixExpression
 	 * Visits this node, the target expression, and the property name.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			getTarget().visit(v);
 			getProperty().visit(v);
 		}

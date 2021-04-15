@@ -30,8 +30,7 @@ import java.util.List;
  *       StringLiteral
  *       NumericLiteral</pre>
  */
-public class ObjectLiteral extends AstNode implements DestructuringForm
-{
+public class ObjectLiteral extends AstNode implements DestructuringForm {
 
 	private static final List<ObjectProperty> NO_ELEMS =
 			Collections.unmodifiableList(new ArrayList<>());
@@ -43,17 +42,14 @@ public class ObjectLiteral extends AstNode implements DestructuringForm
 		type = Token.OBJECTLIT;
 	}
 
-	public ObjectLiteral()
-	{
+	public ObjectLiteral() {
 	}
 
-	public ObjectLiteral(int pos)
-	{
+	public ObjectLiteral(int pos) {
 		super(pos);
 	}
 
-	public ObjectLiteral(int pos, int len)
-	{
+	public ObjectLiteral(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -61,8 +57,7 @@ public class ObjectLiteral extends AstNode implements DestructuringForm
 	 * Returns the element list.  Returns an immutable empty list if there are
 	 * no elements.
 	 */
-	public List<ObjectProperty> getElements()
-	{
+	public List<ObjectProperty> getElements() {
 		return elements != null ? elements : NO_ELEMS;
 	}
 
@@ -72,20 +67,14 @@ public class ObjectLiteral extends AstNode implements DestructuringForm
 	 *
 	 * @param elements the element list.  Can be {@code null}.
 	 */
-	public void setElements(List<ObjectProperty> elements)
-	{
-		if (elements == null)
-		{
+	public void setElements(List<ObjectProperty> elements) {
+		if (elements == null) {
 			this.elements = null;
-		}
-		else
-		{
-			if (this.elements != null)
-			{
+		} else {
+			if (this.elements != null) {
 				this.elements.clear();
 			}
-			for (ObjectProperty o : elements)
-			{
+			for (ObjectProperty o : elements) {
 				addElement(o);
 			}
 		}
@@ -97,11 +86,9 @@ public class ObjectLiteral extends AstNode implements DestructuringForm
 	 * @param element the property node to append to the end of the list
 	 * @throws IllegalArgumentException} if element is {@code null}
 	 */
-	public void addElement(ObjectProperty element)
-	{
+	public void addElement(ObjectProperty element) {
 		assertNotNull(element);
-		if (elements == null)
-		{
+		if (elements == null) {
 			elements = new ArrayList<>();
 		}
 		elements.add(element);
@@ -114,8 +101,7 @@ public class ObjectLiteral extends AstNode implements DestructuringForm
 	 * target of a destructuring assignment.
 	 */
 	@Override
-	public void setIsDestructuring(boolean destructuring)
-	{
+	public void setIsDestructuring(boolean destructuring) {
 		isDestructuring = destructuring;
 	}
 
@@ -125,19 +111,16 @@ public class ObjectLiteral extends AstNode implements DestructuringForm
 	 * iterator of a for..in loop, etc.
 	 */
 	@Override
-	public boolean isDestructuring()
-	{
+	public boolean isDestructuring() {
 		return isDestructuring;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("{");
-		if (elements != null)
-		{
+		if (elements != null) {
 			printList(elements, sb);
 		}
 		sb.append("}");
@@ -149,12 +132,9 @@ public class ObjectLiteral extends AstNode implements DestructuringForm
 	 * (source) order.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
-			for (ObjectProperty prop : getElements())
-			{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
+			for (ObjectProperty prop : getElements()) {
 				prop.visit(v);
 			}
 		}

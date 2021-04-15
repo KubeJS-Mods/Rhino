@@ -7,24 +7,20 @@ import java.util.function.Function;
 /**
  * @author LatvianModder
  */
-public class DynamicMap<V> extends HashMap<String, V>
-{
+public class DynamicMap<V> extends HashMap<String, V> {
 	private final Function<String, ? extends V> objectFactory;
 
-	public DynamicMap(Function<String, ? extends V> f)
-	{
+	public DynamicMap(Function<String, ? extends V> f) {
 		objectFactory = f;
 	}
 
 	@Override
 	@Nonnull
-	public V get(Object key)
-	{
+	public V get(Object key) {
 		String k = key.toString();
 		V v = super.get(k);
 
-		if (v == null)
-		{
+		if (v == null) {
 			v = objectFactory.apply(k);
 			put(k, v);
 		}
@@ -33,8 +29,7 @@ public class DynamicMap<V> extends HashMap<String, V>
 	}
 
 	@Override
-	public boolean containsKey(Object name)
-	{
+	public boolean containsKey(Object name) {
 		return true;
 	}
 }

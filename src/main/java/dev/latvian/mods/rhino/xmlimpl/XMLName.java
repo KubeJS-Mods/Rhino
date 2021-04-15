@@ -13,30 +13,21 @@ import dev.latvian.mods.rhino.Ref;
 import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.Undefined;
 
-class XMLName extends Ref
-{
+class XMLName extends Ref {
 	static final long serialVersionUID = 3832176310755686977L;
 
-	private static boolean isNCNameStartChar(int c)
-	{
-		if ((c & ~0x7F) == 0)
-		{
+	private static boolean isNCNameStartChar(int c) {
+		if ((c & ~0x7F) == 0) {
 			// Optimize for ASCII and use A..Z < _ < a..z
-			if (c >= 'a')
-			{
+			if (c >= 'a') {
 				return c <= 'z';
-			}
-			else if (c >= 'A')
-			{
-				if (c <= 'Z')
-				{
+			} else if (c >= 'A') {
+				if (c <= 'Z') {
 					return true;
 				}
 				return c == '_';
 			}
-		}
-		else if ((c & ~0x1FFF) == 0)
-		{
+		} else if ((c & ~0x1FFF) == 0) {
 			return (0xC0 <= c && c <= 0xD6)
 					|| (0xD8 <= c && c <= 0xF6)
 					|| (0xF8 <= c && c <= 0x2FF)
@@ -52,34 +43,22 @@ class XMLName extends Ref
 				|| (0x10000 <= c && c <= 0xEFFFF);
 	}
 
-	private static boolean isNCNameChar(int c)
-	{
-		if ((c & ~0x7F) == 0)
-		{
+	private static boolean isNCNameChar(int c) {
+		if ((c & ~0x7F) == 0) {
 			// Optimize for ASCII and use - < . < 0..9 < A..Z < _ < a..z
-			if (c >= 'a')
-			{
+			if (c >= 'a') {
 				return c <= 'z';
-			}
-			else if (c >= 'A')
-			{
-				if (c <= 'Z')
-				{
+			} else if (c >= 'A') {
+				if (c <= 'Z') {
 					return true;
 				}
 				return c == '_';
-			}
-			else if (c >= '0')
-			{
+			} else if (c >= '0') {
 				return c <= '9';
-			}
-			else
-			{
+			} else {
 				return c == '-' || c == '.';
 			}
-		}
-		else if ((c & ~0x1FFF) == 0)
-		{
+		} else if ((c & ~0x1FFF) == 0) {
 			return isNCNameStartChar(c) || c == 0xB7
 					|| (0x300 <= c && c <= 0x36F);
 		}
@@ -88,17 +67,12 @@ class XMLName extends Ref
 
 	//    This means "accept" in the parsing sense
 	//    See ECMA357 13.1.2.1
-	static boolean accept(Object nameObj)
-	{
+	static boolean accept(Object nameObj) {
 		String name;
-		try
-		{
+		try {
 			name = ScriptRuntime.toString(nameObj);
-		}
-		catch (EcmaError ee)
-		{
-			if ("TypeError".equals(ee.getName()))
-			{
+		} catch (EcmaError ee) {
+			if ("TypeError".equals(ee.getName())) {
 				return false;
 			}
 			throw ee;
@@ -106,14 +80,10 @@ class XMLName extends Ref
 
 		// See http://w3.org/TR/xml-names11/#NT-NCName
 		int length = name.length();
-		if (length != 0)
-		{
-			if (isNCNameStartChar(name.charAt(0)))
-			{
-				for (int i = 1; i != length; ++i)
-				{
-					if (!isNCNameChar(name.charAt(i)))
-					{
+		if (length != 0) {
+			if (isNCNameStartChar(name.charAt(0))) {
+				for (int i = 1; i != length; ++i) {
+					if (!isNCNameChar(name.charAt(i))) {
 						return false;
 					}
 				}
@@ -129,12 +99,10 @@ class XMLName extends Ref
 	private boolean isDescendants;
 	private XMLObjectImpl xmlObject;
 
-	private XMLName()
-	{
+	private XMLName() {
 	}
 
-	static XMLName formStar()
-	{
+	static XMLName formStar() {
 		XMLName rv = new XMLName();
 		rv.qname = XmlNode.QName.create(null, null);
 		return rv;
@@ -144,10 +112,8 @@ class XMLName extends Ref
 	 * @deprecated
 	 */
 	@Deprecated
-	static XMLName formProperty(XmlNode.Namespace namespace, String localName)
-	{
-		if (localName != null && localName.equals("*"))
-		{
+	static XMLName formProperty(XmlNode.Namespace namespace, String localName) {
+		if (localName != null && localName.equals("*")) {
 			localName = null;
 		}
 		XMLName rv = new XMLName();
@@ -158,34 +124,26 @@ class XMLName extends Ref
 	/**
 	 * TODO: marked deprecated by original author
 	 */
-	static XMLName formProperty(String uri, String localName)
-	{
+	static XMLName formProperty(String uri, String localName) {
 		return formProperty(XmlNode.Namespace.create(uri), localName);
 	}
 
 	/**
 	 * TODO: marked deprecated by original implementor
 	 */
-	static XMLName create(String defaultNamespaceUri, String name)
-	{
-		if (name == null)
-		{
+	static XMLName create(String defaultNamespaceUri, String name) {
+		if (name == null) {
 			throw new IllegalArgumentException();
 		}
 
 		int l = name.length();
-		if (l != 0)
-		{
+		if (l != 0) {
 			char firstChar = name.charAt(0);
-			if (firstChar == '*')
-			{
-				if (l == 1)
-				{
+			if (firstChar == '*') {
+				if (l == 1) {
 					return XMLName.formStar();
 				}
-			}
-			else if (firstChar == '@')
-			{
+			} else if (firstChar == '@') {
 				XMLName xmlName = XMLName.formProperty("", name.substring(1));
 				xmlName.setAttributeName();
 				return xmlName;
@@ -195,8 +153,7 @@ class XMLName extends Ref
 		return XMLName.formProperty(defaultNamespaceUri, name);
 	}
 
-	static XMLName create(XmlNode.QName qname, boolean attribute, boolean descendants)
-	{
+	static XMLName create(XmlNode.QName qname, boolean attribute, boolean descendants) {
 		XMLName rv = new XMLName();
 		rv.qname = qname;
 		rv.isAttributeName = attribute;
@@ -204,47 +161,36 @@ class XMLName extends Ref
 		return rv;
 	}
 
-	void initXMLObject(XMLObjectImpl xmlObject)
-	{
-		if (xmlObject == null)
-		{
+	void initXMLObject(XMLObjectImpl xmlObject) {
+		if (xmlObject == null) {
 			throw new IllegalArgumentException();
 		}
-		if (this.xmlObject != null)
-		{
+		if (this.xmlObject != null) {
 			throw new IllegalStateException();
 		}
 		this.xmlObject = xmlObject;
 	}
 
-	String uri()
-	{
-		if (qname.getNamespace() == null)
-		{
+	String uri() {
+		if (qname.getNamespace() == null) {
 			return null;
 		}
 		return qname.getNamespace().getUri();
 	}
 
-	String localName()
-	{
-		if (qname.getLocalName() == null)
-		{
+	String localName() {
+		if (qname.getLocalName() == null) {
 			return "*";
 		}
 		return qname.getLocalName();
 	}
 
-	private void addDescendantChildren(XMLList list, XML target)
-	{
+	private void addDescendantChildren(XMLList list, XML target) {
 		XMLName xmlName = this;
-		if (target.isElement())
-		{
+		if (target.isElement()) {
 			XML[] children = target.getChildren();
-			for (int i = 0; i < children.length; i++)
-			{
-				if (xmlName.matches(children[i]))
-				{
+			for (int i = 0; i < children.length; i++) {
+				if (xmlName.matches(children[i])) {
 					list.addToList(children[i]);
 				}
 				addDescendantChildren(list, children[i]);
@@ -252,86 +198,63 @@ class XMLName extends Ref
 		}
 	}
 
-	void addMatchingAttributes(XMLList list, XML target)
-	{
+	void addMatchingAttributes(XMLList list, XML target) {
 		XMLName name = this;
-		if (target.isElement())
-		{
+		if (target.isElement()) {
 			XML[] attributes = target.getAttributes();
-			for (int i = 0; i < attributes.length; i++)
-			{
-				if (name.matches(attributes[i]))
-				{
+			for (int i = 0; i < attributes.length; i++) {
+				if (name.matches(attributes[i])) {
 					list.addToList(attributes[i]);
 				}
 			}
 		}
 	}
 
-	private void addDescendantAttributes(XMLList list, XML target)
-	{
-		if (target.isElement())
-		{
+	private void addDescendantAttributes(XMLList list, XML target) {
+		if (target.isElement()) {
 			addMatchingAttributes(list, target);
 			XML[] children = target.getChildren();
-			for (int i = 0; i < children.length; i++)
-			{
+			for (int i = 0; i < children.length; i++) {
 				addDescendantAttributes(list, children[i]);
 			}
 		}
 	}
 
-	XMLList matchDescendantAttributes(XMLList rv, XML target)
-	{
+	XMLList matchDescendantAttributes(XMLList rv, XML target) {
 		rv.setTargets(target, null);
 		addDescendantAttributes(rv, target);
 		return rv;
 	}
 
-	XMLList matchDescendantChildren(XMLList rv, XML target)
-	{
+	XMLList matchDescendantChildren(XMLList rv, XML target) {
 		rv.setTargets(target, null);
 		addDescendantChildren(rv, target);
 		return rv;
 	}
 
-	void addDescendants(XMLList rv, XML target)
-	{
+	void addDescendants(XMLList rv, XML target) {
 		XMLName xmlName = this;
-		if (xmlName.isAttributeName())
-		{
+		if (xmlName.isAttributeName()) {
 			matchDescendantAttributes(rv, target);
-		}
-		else
-		{
+		} else {
 			matchDescendantChildren(rv, target);
 		}
 	}
 
-	private void addAttributes(XMLList rv, XML target)
-	{
+	private void addAttributes(XMLList rv, XML target) {
 		addMatchingAttributes(rv, target);
 	}
 
-	void addMatches(XMLList rv, XML target)
-	{
-		if (isDescendants())
-		{
+	void addMatches(XMLList rv, XML target) {
+		if (isDescendants()) {
 			addDescendants(rv, target);
-		}
-		else if (isAttributeName())
-		{
+		} else if (isAttributeName()) {
 			addAttributes(rv, target);
-		}
-		else
-		{
+		} else {
 			XML[] children = target.getChildren();
-			if (children != null)
-			{
-				for (int i = 0; i < children.length; i++)
-				{
-					if (this.matches(children[i]))
-					{
+			if (children != null) {
+				for (int i = 0; i < children.length; i++) {
+					if (this.matches(children[i])) {
 						rv.addToList(children[i]);
 					}
 				}
@@ -340,83 +263,61 @@ class XMLName extends Ref
 		}
 	}
 
-	XMLList getMyValueOn(XML target)
-	{
+	XMLList getMyValueOn(XML target) {
 		XMLList rv = target.newXMLList();
 		addMatches(rv, target);
 		return rv;
 	}
 
-	void setMyValueOn(XML target, Object value)
-	{
+	void setMyValueOn(XML target, Object value) {
 		// Special-case checks for undefined and null
-		if (value == null)
-		{
+		if (value == null) {
 			value = "null";
-		}
-		else if (value instanceof Undefined)
-		{
+		} else if (value instanceof Undefined) {
 			value = "undefined";
 		}
 
 		XMLName xmlName = this;
 		// Get the named property
-		if (xmlName.isAttributeName())
-		{
+		if (xmlName.isAttributeName()) {
 			target.setAttribute(xmlName, value);
-		}
-		else if (xmlName.uri() == null && xmlName.localName().equals("*"))
-		{
+		} else if (xmlName.uri() == null && xmlName.localName().equals("*")) {
 			target.setChildren(value);
-		}
-		else
-		{
+		} else {
 			// Convert text into XML if needed.
 			XMLObjectImpl xmlValue = null;
 
-			if (value instanceof XMLObjectImpl)
-			{
+			if (value instanceof XMLObjectImpl) {
 				xmlValue = (XMLObjectImpl) value;
 
 				// Check for attribute type and convert to textNode
-				if (xmlValue instanceof XML)
-				{
-					if (((XML) xmlValue).isAttribute())
-					{
+				if (xmlValue instanceof XML) {
+					if (((XML) xmlValue).isAttribute()) {
 						xmlValue = target.makeXmlFromString(xmlName,
 								xmlValue.toString());
 					}
 				}
 
-				if (xmlValue instanceof XMLList)
-				{
-					for (int i = 0; i < xmlValue.length(); i++)
-					{
+				if (xmlValue instanceof XMLList) {
+					for (int i = 0; i < xmlValue.length(); i++) {
 						XML xml = ((XMLList) xmlValue).item(i);
 
-						if (xml.isAttribute())
-						{
+						if (xml.isAttribute()) {
 							((XMLList) xmlValue).replace(i, target.makeXmlFromString(xmlName, xml.toString()));
 						}
 					}
 				}
-			}
-			else
-			{
+			} else {
 				xmlValue = target.makeXmlFromString(xmlName, ScriptRuntime.toString(value));
 			}
 
 			XMLList matches = target.getPropertyList(xmlName);
 
-			if (matches.length() == 0)
-			{
+			if (matches.length() == 0) {
 				target.appendChild(xmlValue);
-			}
-			else
-			{
+			} else {
 				// Remove all other matches
-				for (int i = 1; i < matches.length(); i++)
-				{
+				for (int i = 1; i < matches.length(); i++) {
 					target.removeChild(matches.item(i).childIndex());
 				}
 
@@ -428,20 +329,16 @@ class XMLName extends Ref
 	}
 
 	@Override
-	public boolean has(Context cx)
-	{
-		if (xmlObject == null)
-		{
+	public boolean has(Context cx) {
+		if (xmlObject == null) {
 			return false;
 		}
 		return xmlObject.hasXMLProperty(this);
 	}
 
 	@Override
-	public Object get(Context cx)
-	{
-		if (xmlObject == null)
-		{
+	public Object get(Context cx) {
+		if (xmlObject == null) {
 			throw ScriptRuntime.undefReadError(Undefined.instance,
 					toString());
 		}
@@ -450,18 +347,15 @@ class XMLName extends Ref
 
 	@SuppressWarnings("deprecation")
 	@Override
-	public Object set(Context cx, Object value)
-	{
-		if (xmlObject == null)
-		{
+	public Object set(Context cx, Object value) {
+		if (xmlObject == null) {
 			throw ScriptRuntime.undefWriteError(Undefined.instance,
 					toString(),
 					value);
 		}
 		// Assignment to descendants causes parse error on bad reference
 		// and this should not be called
-		if (isDescendants)
-		{
+		if (isDescendants) {
 			throw Kit.codeBug();
 		}
 		xmlObject.putXMLProperty(this, value);
@@ -469,10 +363,8 @@ class XMLName extends Ref
 	}
 
 	@Override
-	public boolean delete(Context cx)
-	{
-		if (xmlObject == null)
-		{
+	public boolean delete(Context cx) {
+		if (xmlObject == null) {
 			return true;
 		}
 		xmlObject.deleteXMLProperty(this);
@@ -480,88 +372,65 @@ class XMLName extends Ref
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		//return qname.localName();
 		StringBuilder buff = new StringBuilder();
-		if (isDescendants)
-		{
+		if (isDescendants) {
 			buff.append("..");
 		}
-		if (isAttributeName)
-		{
+		if (isAttributeName) {
 			buff.append('@');
 		}
-		if (uri() == null)
-		{
+		if (uri() == null) {
 			buff.append('*');
-			if (localName().equals("*"))
-			{
+			if (localName().equals("*")) {
 				return buff.toString();
 			}
-		}
-		else
-		{
+		} else {
 			buff.append('"').append(uri()).append('"');
 		}
 		buff.append(':').append(localName());
 		return buff.toString();
 	}
 
-	final XmlNode.QName toQname()
-	{
+	final XmlNode.QName toQname() {
 		return this.qname;
 	}
 
-	final boolean matchesLocalName(String localName)
-	{
+	final boolean matchesLocalName(String localName) {
 		return localName().equals("*") || localName().equals(localName);
 	}
 
-	final boolean matchesElement(XmlNode.QName qname)
-	{
-		if (this.uri() == null || this.uri().equals(qname.getNamespace().getUri()))
-		{
+	final boolean matchesElement(XmlNode.QName qname) {
+		if (this.uri() == null || this.uri().equals(qname.getNamespace().getUri())) {
 			return this.localName().equals("*") || this.localName().equals(qname.getLocalName());
 		}
 		return false;
 	}
 
-	final boolean matches(XML node)
-	{
+	final boolean matches(XML node) {
 		XmlNode.QName qname = node.getNodeQname();
 		String nodeUri = null;
-		if (qname.getNamespace() != null)
-		{
+		if (qname.getNamespace() != null) {
 			nodeUri = qname.getNamespace().getUri();
 		}
-		if (isAttributeName)
-		{
-			if (node.isAttribute())
-			{
-				if (this.uri() == null || this.uri().equals(nodeUri))
-				{
+		if (isAttributeName) {
+			if (node.isAttribute()) {
+				if (this.uri() == null || this.uri().equals(nodeUri)) {
 					return this.localName().equals("*") || this.localName().equals(qname.getLocalName());
 				}
 				return false;
-			}
-			else
-			{
+			} else {
 				//    TODO    Could throw exception maybe, should not call this method on attribute name with arbitrary node type
 				//            unless we traverse all attributes and children habitually
 				return false;
 			}
-		}
-		else
-		{
-			if (this.uri() == null || ((node.isElement()) && this.uri().equals(nodeUri)))
-			{
-				if (localName().equals("*"))
-				{
+		} else {
+			if (this.uri() == null || ((node.isElement()) && this.uri().equals(nodeUri))) {
+				if (localName().equals("*")) {
 					return true;
 				}
-				if (node.isElement())
-				{
+				if (node.isElement()) {
 					return localName().equals(qname.getLocalName());
 				}
 			}
@@ -570,22 +439,19 @@ class XMLName extends Ref
 	}
 
 	/* TODO: marked deprecated by original author */
-	boolean isAttributeName()
-	{
+	boolean isAttributeName() {
 		return isAttributeName;
 	}
 
 	// TODO Fix whether this is an attribute XMLName at construction?
 	// Marked deprecated by original author
-	void setAttributeName()
-	{
+	void setAttributeName() {
 		//        if (isAttributeName) throw new IllegalStateException();
 		isAttributeName = true;
 	}
 
 	/* TODO: was marked deprecated by original author */
-	boolean isDescendants()
-	{
+	boolean isDescendants() {
 		return isDescendants;
 	}
 }

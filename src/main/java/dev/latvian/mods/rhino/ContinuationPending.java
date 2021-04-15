@@ -17,8 +17,7 @@ package dev.latvian.mods.rhino;
  *
  * @author Norris Boyd
  */
-public class ContinuationPending extends RuntimeException
-{
+public class ContinuationPending extends RuntimeException {
 	private static final long serialVersionUID = 4956008116771118856L;
 	private NativeContinuation continuationState;
 	private Object applicationState;
@@ -32,8 +31,7 @@ public class ContinuationPending extends RuntimeException
 	 *
 	 * @param continuationState Internal Continuation object
 	 */
-	protected ContinuationPending(NativeContinuation continuationState)
-	{
+	protected ContinuationPending(NativeContinuation continuationState) {
 		this.continuationState = continuationState;
 	}
 
@@ -44,8 +42,7 @@ public class ContinuationPending extends RuntimeException
 	 *
 	 * @return continuation object
 	 */
-	public Object getContinuation()
-	{
+	public Object getContinuation() {
 		return continuationState;
 	}
 
@@ -54,16 +51,14 @@ public class ContinuationPending extends RuntimeException
 	 *
 	 * @param continuation object
 	 */
-	public void setContinuation(NativeContinuation continuation)
-	{
+	public void setContinuation(NativeContinuation continuation) {
 		this.continuationState = continuation;
 	}
 
 	/**
 	 * @return internal continuation state
 	 */
-	NativeContinuation getContinuationState()
-	{
+	NativeContinuation getContinuationState() {
 		return continuationState;
 	}
 
@@ -73,16 +68,14 @@ public class ContinuationPending extends RuntimeException
 	 *
 	 * @param applicationState arbitrary application state
 	 */
-	public void setApplicationState(Object applicationState)
-	{
+	public void setApplicationState(Object applicationState) {
 		this.applicationState = applicationState;
 	}
 
 	/**
 	 * @return arbitrary application state
 	 */
-	public Object getApplicationState()
-	{
+	public Object getApplicationState() {
 		return applicationState;
 	}
 }

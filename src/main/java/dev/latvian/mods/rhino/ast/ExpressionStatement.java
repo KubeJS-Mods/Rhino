@@ -13,8 +13,7 @@ import dev.latvian.mods.rhino.Token;
  * {@link Token#EXPR_VOID} if inside a function, or else
  * {@link Token#EXPR_RESULT} if inside a script.
  */
-public class ExpressionStatement extends AstNode
-{
+public class ExpressionStatement extends AstNode {
 
 	private AstNode expr;
 
@@ -26,13 +25,11 @@ public class ExpressionStatement extends AstNode
 	 * Called by the parser to set node type to EXPR_RESULT
 	 * if this node is not within a Function.
 	 */
-	public void setHasResult()
-	{
+	public void setHasResult() {
 		type = Token.EXPR_RESULT;
 	}
 
-	public ExpressionStatement()
-	{
+	public ExpressionStatement() {
 	}
 
 	/**
@@ -46,11 +43,9 @@ public class ExpressionStatement extends AstNode
 	 * @param hasResult {@code true} if this expression has side
 	 *                  effects.  If true, sets node type to EXPR_RESULT, else to EXPR_VOID.
 	 */
-	public ExpressionStatement(AstNode expr, boolean hasResult)
-	{
+	public ExpressionStatement(AstNode expr, boolean hasResult) {
 		this(expr);
-		if (hasResult)
-		{
+		if (hasResult) {
 			setHasResult();
 		}
 	}
@@ -64,13 +59,11 @@ public class ExpressionStatement extends AstNode
 	 *
 	 * @param expr the wrapped expression
 	 */
-	public ExpressionStatement(AstNode expr)
-	{
+	public ExpressionStatement(AstNode expr) {
 		this(expr.getPosition(), expr.getLength(), expr);
 	}
 
-	public ExpressionStatement(int pos, int len)
-	{
+	public ExpressionStatement(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -82,8 +75,7 @@ public class ExpressionStatement extends AstNode
 	 *             and expr's parent is set to this node.
 	 * @throws IllegalArgumentException if {@code expr} is null
 	 */
-	public ExpressionStatement(int pos, int len, AstNode expr)
-	{
+	public ExpressionStatement(int pos, int len, AstNode expr) {
 		super(pos, len);
 		setExpression(expr);
 	}
@@ -91,8 +83,7 @@ public class ExpressionStatement extends AstNode
 	/**
 	 * Returns the wrapped expression
 	 */
-	public AstNode getExpression()
-	{
+	public AstNode getExpression() {
 		return expr;
 	}
 
@@ -101,8 +92,7 @@ public class ExpressionStatement extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if expression is {@code null}
 	 */
-	public void setExpression(AstNode expression)
-	{
+	public void setExpression(AstNode expression) {
 		assertNotNull(expression);
 		expr = expression;
 		expression.setParent(this);
@@ -116,19 +106,16 @@ public class ExpressionStatement extends AstNode
 	 *                               been set.
 	 */
 	@Override
-	public boolean hasSideEffects()
-	{
+	public boolean hasSideEffects() {
 		return type == Token.EXPR_RESULT || expr.hasSideEffects();
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(expr.toSource(depth));
 		sb.append(";");
-		if (this.getInlineComment() != null)
-		{
+		if (this.getInlineComment() != null) {
 			sb.append(this.getInlineComment().toSource(depth));
 		}
 		sb.append("\n");
@@ -139,10 +126,8 @@ public class ExpressionStatement extends AstNode
 	 * Visits this node, then the wrapped statement.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			expr.visit(v);
 		}
 	}

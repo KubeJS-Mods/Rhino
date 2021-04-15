@@ -13,28 +13,23 @@ import dev.latvian.mods.rhino.Token;
  * Node type, like {@link XmlLiteral}, is {@link Token#XML}.  The node length
  * includes the curly braces.
  */
-public class XmlExpression extends XmlFragment
-{
+public class XmlExpression extends XmlFragment {
 
 	private AstNode expression;
 	private boolean isXmlAttribute;
 
-	public XmlExpression()
-	{
+	public XmlExpression() {
 	}
 
-	public XmlExpression(int pos)
-	{
+	public XmlExpression(int pos) {
 		super(pos);
 	}
 
-	public XmlExpression(int pos, int len)
-	{
+	public XmlExpression(int pos, int len) {
 		super(pos, len);
 	}
 
-	public XmlExpression(int pos, AstNode expr)
-	{
+	public XmlExpression(int pos, AstNode expr) {
 		super(pos);
 		setExpression(expr);
 	}
@@ -42,8 +37,7 @@ public class XmlExpression extends XmlFragment
 	/**
 	 * Returns the expression embedded in {}
 	 */
-	public AstNode getExpression()
-	{
+	public AstNode getExpression() {
 		return expression;
 	}
 
@@ -52,8 +46,7 @@ public class XmlExpression extends XmlFragment
 	 *
 	 * @throws IllegalArgumentException if {@code expression} is {@code null}
 	 */
-	public void setExpression(AstNode expression)
-	{
+	public void setExpression(AstNode expression) {
 		assertNotNull(expression);
 		this.expression = expression;
 		expression.setParent(this);
@@ -62,22 +55,19 @@ public class XmlExpression extends XmlFragment
 	/**
 	 * Returns whether this is part of an xml attribute value
 	 */
-	public boolean isXmlAttribute()
-	{
+	public boolean isXmlAttribute() {
 		return isXmlAttribute;
 	}
 
 	/**
 	 * Sets whether this is part of an xml attribute value
 	 */
-	public void setIsXmlAttribute(boolean isXmlAttribute)
-	{
+	public void setIsXmlAttribute(boolean isXmlAttribute) {
 		this.isXmlAttribute = isXmlAttribute;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		return makeIndent(depth) + "{" + expression.toSource(depth) + "}";
 	}
 
@@ -85,10 +75,8 @@ public class XmlExpression extends XmlFragment
 	 * Visits this node, then the child expression.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			expression.visit(v);
 		}
 	}

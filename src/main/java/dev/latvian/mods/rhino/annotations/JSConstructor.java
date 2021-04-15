@@ -21,6 +21,5 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.CONSTRUCTOR, ElementType.METHOD})
-public @interface JSConstructor
-{
+public @interface JSConstructor {
 }

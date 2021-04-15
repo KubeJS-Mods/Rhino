@@ -30,20 +30,17 @@
 
 package dev.latvian.mods.rhino.v8dtoa;
 
-public class CachedPowers
-{
+public class CachedPowers {
 
 
 	static final double kD_1_LOG2_10 = 0.30102999566398114;  //  1 / lg(10)
 
-	static class CachedPower
-	{
+	static class CachedPower {
 		long significand;
 		short binaryExponent;
 		short decimalExponent;
 
-		CachedPower(long significand, short binaryExponent, short decimalExponent)
-		{
+		CachedPower(long significand, short binaryExponent, short decimalExponent) {
 			this.significand = significand;
 			this.binaryExponent = binaryExponent;
 			this.decimalExponent = decimalExponent;
@@ -51,8 +48,7 @@ public class CachedPowers
 	}
 
 
-	static int getCachedPower(int e, int alpha, int gamma, DiyFp c_mk)
-	{
+	static int getCachedPower(int e, int alpha, int gamma, DiyFp c_mk) {
 		int kQ = DiyFp.kSignificandSize;
 		double k = Math.ceil((alpha - e + kQ - 1) * kD_1_LOG2_10);
 		int index = (GRISU_CACHE_OFFSET + (int) k - 1) / CACHED_POWERS_SPACING + 1;

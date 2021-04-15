@@ -25,8 +25,7 @@ import java.util.List;
  * A standalone variable declaration in a statement context returns {@code true}
  * from its {@link #isStatement()} method.
  */
-public class VariableDeclaration extends AstNode
-{
+public class VariableDeclaration extends AstNode {
 
 	private final List<VariableInitializer> variables = new ArrayList<>();
 	private boolean isStatement;
@@ -35,25 +34,21 @@ public class VariableDeclaration extends AstNode
 		type = Token.VAR;
 	}
 
-	public VariableDeclaration()
-	{
+	public VariableDeclaration() {
 	}
 
-	public VariableDeclaration(int pos)
-	{
+	public VariableDeclaration(int pos) {
 		super(pos);
 	}
 
-	public VariableDeclaration(int pos, int len)
-	{
+	public VariableDeclaration(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Returns variable list.  Never {@code null}.
 	 */
-	public List<VariableInitializer> getVariables()
-	{
+	public List<VariableInitializer> getVariables() {
 		return variables;
 	}
 
@@ -62,12 +57,10 @@ public class VariableDeclaration extends AstNode
 	 *
 	 * @throws IllegalArgumentException if variables list is {@code null}
 	 */
-	public void setVariables(List<VariableInitializer> variables)
-	{
+	public void setVariables(List<VariableInitializer> variables) {
 		assertNotNull(variables);
 		this.variables.clear();
-		for (VariableInitializer vi : variables)
-		{
+		for (VariableInitializer vi : variables) {
 			addVariable(vi);
 		}
 	}
@@ -78,8 +71,7 @@ public class VariableDeclaration extends AstNode
 	 *
 	 * @throws IllegalArgumentException if v is {@code null}
 	 */
-	public void addVariable(VariableInitializer v)
-	{
+	public void addVariable(VariableInitializer v) {
 		assertNotNull(v);
 		variables.add(v);
 		v.setParent(this);
@@ -91,12 +83,10 @@ public class VariableDeclaration extends AstNode
 	 * @throws IllegalArgumentException if {@code declType} is invalid
 	 */
 	@Override
-	public Node setType(int type)
-	{
+	public Node setType(int type) {
 		if (type != Token.VAR
 				&& type != Token.CONST
-				&& type != Token.LET)
-		{
+				&& type != Token.LET) {
 			throw new IllegalArgumentException("invalid decl type: " + type);
 		}
 		return super.setType(type);
@@ -108,66 +98,55 @@ public class VariableDeclaration extends AstNode
 	 *
 	 * @return true if {@code declType} is {@link Token#VAR}
 	 */
-	public boolean isVar()
-	{
+	public boolean isVar() {
 		return type == Token.VAR;
 	}
 
 	/**
 	 * Returns true if this is a {@link Token#CONST} declaration.
 	 */
-	public boolean isConst()
-	{
+	public boolean isConst() {
 		return type == Token.CONST;
 	}
 
 	/**
 	 * Returns true if this is a {@link Token#LET} declaration.
 	 */
-	public boolean isLet()
-	{
+	public boolean isLet() {
 		return type == Token.LET;
 	}
 
 	/**
 	 * Returns true if this node represents a statement.
 	 */
-	public boolean isStatement()
-	{
+	public boolean isStatement() {
 		return isStatement;
 	}
 
 	/**
 	 * Set or unset the statement flag.
 	 */
-	public void setIsStatement(boolean isStatement)
-	{
+	public void setIsStatement(boolean isStatement) {
 		this.isStatement = isStatement;
 	}
 
-	private String declTypeName()
-	{
+	private String declTypeName() {
 		return Token.typeToName(type).toLowerCase();
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append(declTypeName());
 		sb.append(" ");
 		printList(variables, sb);
-		if (isStatement())
-		{
+		if (isStatement()) {
 			sb.append(";");
 		}
-		if (this.getInlineComment() != null)
-		{
+		if (this.getInlineComment() != null) {
 			sb.append(this.getInlineComment().toSource(depth)).append("\n");
-		}
-		else if (isStatement())
-		{
+		} else if (isStatement()) {
 			sb.append("\n");
 		}
 		return sb.toString();
@@ -177,12 +156,9 @@ public class VariableDeclaration extends AstNode
 	 * Visits this node, then each {@link VariableInitializer} child.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
-			for (AstNode var : variables)
-			{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
+			for (AstNode var : variables) {
 				var.visit(v);
 			}
 		}

@@ -9,20 +9,16 @@ package dev.latvian.mods.rhino.ast;
 /**
  *
  */
-public class GeneratorExpressionLoop extends ForInLoop
-{
+public class GeneratorExpressionLoop extends ForInLoop {
 
-	public GeneratorExpressionLoop()
-	{
+	public GeneratorExpressionLoop() {
 	}
 
-	public GeneratorExpressionLoop(int pos)
-	{
+	public GeneratorExpressionLoop(int pos) {
 		super(pos);
 	}
 
-	public GeneratorExpressionLoop(int pos, int len)
-	{
+	public GeneratorExpressionLoop(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -30,8 +26,7 @@ public class GeneratorExpressionLoop extends ForInLoop
 	 * Returns whether the loop is a for-each loop
 	 */
 	@Override
-	public boolean isForEach()
-	{
+	public boolean isForEach() {
 		return false;
 	}
 
@@ -39,14 +34,12 @@ public class GeneratorExpressionLoop extends ForInLoop
 	 * Sets whether the loop is a for-each loop
 	 */
 	@Override
-	public void setIsForEach(boolean isForEach)
-	{
+	public void setIsForEach(boolean isForEach) {
 		throw new UnsupportedOperationException("this node type does not support for each");
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		return makeIndent(depth)
 				+ " for "
 				+ (isForEach() ? "each " : "")
@@ -62,10 +55,8 @@ public class GeneratorExpressionLoop extends ForInLoop
 	 * There is no body-expression for this loop type.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			iterator.visit(v);
 			iteratedObject.visit(v);
 		}

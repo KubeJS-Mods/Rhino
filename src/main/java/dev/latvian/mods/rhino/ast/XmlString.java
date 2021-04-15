@@ -11,22 +11,18 @@ package dev.latvian.mods.rhino.ast;
  * node differs from a {@link StringLiteral} in that it does not have quotes for
  * delimiters.
  */
-public class XmlString extends XmlFragment
-{
+public class XmlString extends XmlFragment {
 
 	private String xml;
 
-	public XmlString()
-	{
+	public XmlString() {
 	}
 
-	public XmlString(int pos)
-	{
+	public XmlString(int pos) {
 		super(pos);
 	}
 
-	public XmlString(int pos, String s)
-	{
+	public XmlString(int pos, String s) {
 		super(pos);
 		setXml(s);
 	}
@@ -38,8 +34,7 @@ public class XmlString extends XmlFragment
 	 * @param s a string of xml text
 	 * @throws IllegalArgumentException} if {@code s} is {@code null}
 	 */
-	public void setXml(String s)
-	{
+	public void setXml(String s) {
 		assertNotNull(s);
 		xml = s;
 		setLength(s.length());
@@ -49,14 +44,12 @@ public class XmlString extends XmlFragment
 	 * Returns the xml string for this component.
 	 * Note that it may not be well-formed XML; it is a fragment.
 	 */
-	public String getXml()
-	{
+	public String getXml() {
 		return xml;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		return makeIndent(depth) + xml;
 	}
 
@@ -64,8 +57,7 @@ public class XmlString extends XmlFragment
 	 * Visits this node.  There are no children to visit.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
+	public void visit(NodeVisitor v) {
 		v.visit(this);
 	}
 }

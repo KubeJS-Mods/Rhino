@@ -18,13 +18,11 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 
-public class VMBridge_jdk18 extends VMBridge
-{
+public class VMBridge_jdk18 extends VMBridge {
 	private static final ThreadLocal<Object[]> contextLocal = new ThreadLocal<>();
 
 	@Override
-	protected Object getThreadContextHelper()
-	{
+	protected Object getThreadContextHelper() {
 		// To make subsequent batch calls to getContext/setContext faster
 		// associate permanently one element array with contextLocal
 		// so getContext/setContext would need just to read/write the first
@@ -35,8 +33,7 @@ public class VMBridge_jdk18 extends VMBridge
 		// https://bugzilla.mozilla.org/show_bug.cgi?id=281067#c5
 
 		Object[] storage = contextLocal.get();
-		if (storage == null)
-		{
+		if (storage == null) {
 			storage = new Object[1];
 			contextLocal.set(storage);
 		}
@@ -44,32 +41,25 @@ public class VMBridge_jdk18 extends VMBridge
 	}
 
 	@Override
-	protected Context getContext(Object contextHelper)
-	{
+	protected Context getContext(Object contextHelper) {
 		Object[] storage = (Object[]) contextHelper;
 		return (Context) storage[0];
 	}
 
 	@Override
-	protected void setContext(Object contextHelper, Context cx)
-	{
+	protected void setContext(Object contextHelper, Context cx) {
 		Object[] storage = (Object[]) contextHelper;
 		storage[0] = cx;
 	}
 
 	@Override
-	protected boolean tryToMakeAccessible(AccessibleObject accessible)
-	{
-		if (accessible.isAccessible())
-		{
+	protected boolean tryToMakeAccessible(AccessibleObject accessible) {
+		if (accessible.isAccessible()) {
 			return true;
 		}
-		try
-		{
+		try {
 			accessible.setAccessible(true);
-		}
-		catch (Exception ex)
-		{
+		} catch (Exception ex) {
 		}
 
 		return accessible.isAccessible();
@@ -77,19 +67,15 @@ public class VMBridge_jdk18 extends VMBridge
 
 	@Override
 	protected Object getInterfaceProxyHelper(ContextFactory cf,
-											 Class<?>[] interfaces)
-	{
+											 Class<?>[] interfaces) {
 		// XXX: How to handle interfaces array withclasses from different
 		// class loaders? Using cf.getApplicationClassLoader() ?
 		ClassLoader loader = interfaces[0].getClassLoader();
 		Class<?> cl = Proxy.getProxyClass(loader, interfaces);
 		Constructor<?> c;
-		try
-		{
+		try {
 			c = cl.getConstructor(InvocationHandler.class);
-		}
-		catch (NoSuchMethodException ex)
-		{
+		} catch (NoSuchMethodException ex) {
 			// Should not happen
 			throw new IllegalStateException(ex);
 		}
@@ -101,19 +87,16 @@ public class VMBridge_jdk18 extends VMBridge
 									   final ContextFactory cf,
 									   final InterfaceAdapter adapter,
 									   final Object target,
-									   final Scriptable topScope)
-	{
+									   final Scriptable topScope) {
 		Constructor<?> c = (Constructor<?>) proxyHelper;
 
 		InvocationHandler handler = (proxy, method, args) -> {
 			// In addition to methods declared in the interface, proxies
 			// also route some java.lang.Object methods through the
 			// invocation handler.
-			if (method.getDeclaringClass() == Object.class)
-			{
+			if (method.getDeclaringClass() == Object.class) {
 				String methodName = method.getName();
-				if (methodName.equals("equals"))
-				{
+				if (methodName.equals("equals")) {
 					Object other = args[0];
 					// Note: we could compare a proxy and its wrapped function
 					// as equal here but that would break symmetry of equal().
@@ -121,33 +104,24 @@ public class VMBridge_jdk18 extends VMBridge
 					// in ScriptableObject (see NativeJavaObject.coerceType())
 					return proxy == other;
 				}
-				if (methodName.equals("hashCode"))
-				{
+				if (methodName.equals("hashCode")) {
 					return target.hashCode();
 				}
-				if (methodName.equals("toString"))
-				{
+				if (methodName.equals("toString")) {
 					return "Proxy[" + target.toString() + "]";
 				}
 			}
 			return adapter.invoke(cf, target, topScope, proxy, method, args);
 		};
 		Object proxy;
-		try
-		{
+		try {
 			proxy = c.newInstance(handler);
-		}
-		catch (InvocationTargetException ex)
-		{
+		} catch (InvocationTargetException ex) {
 			throw Context.throwAsScriptRuntimeEx(ex);
-		}
-		catch (IllegalAccessException ex)
-		{
+		} catch (IllegalAccessException ex) {
 			// Should not happen
 			throw new IllegalStateException(ex);
-		}
-		catch (InstantiationException ex)
-		{
+		} catch (InstantiationException ex) {
 			// Should not happen
 			throw new IllegalStateException(ex);
 		}

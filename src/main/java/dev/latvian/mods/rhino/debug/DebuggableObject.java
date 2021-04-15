@@ -11,8 +11,7 @@ package dev.latvian.mods.rhino.debug;
 /**
  * This interface exposes debugging information from objects.
  */
-public interface DebuggableObject
-{
+public interface DebuggableObject {
 
 	/**
 	 * Returns an array of ids for the properties of the object.

@@ -44,8 +44,7 @@ import java.util.Map;
  * In this case the FunctionNode node will have no body but will have an
  * expression.
  */
-public class FunctionNode extends ScriptNode
-{
+public class FunctionNode extends ScriptNode {
 
 	/**
 	 * There are three types of functions that can be defined. The first
@@ -67,8 +66,7 @@ public class FunctionNode extends ScriptNode
 	public static final int FUNCTION_EXPRESSION_STATEMENT = 3;
 	public static final int ARROW_FUNCTION = 4;
 
-	public enum Form
-	{
+	public enum Form {
 		FUNCTION,
 		GETTER,
 		SETTER,
@@ -99,17 +97,14 @@ public class FunctionNode extends ScriptNode
 		type = Token.FUNCTION;
 	}
 
-	public FunctionNode()
-	{
+	public FunctionNode() {
 	}
 
-	public FunctionNode(int pos)
-	{
+	public FunctionNode(int pos) {
 		super(pos);
 	}
 
-	public FunctionNode(int pos, Name name)
-	{
+	public FunctionNode(int pos, Name name) {
 		super(pos);
 		setFunctionName(name);
 	}
@@ -119,8 +114,7 @@ public class FunctionNode extends ScriptNode
 	 *
 	 * @return function name, {@code null} for anonymous functions
 	 */
-	public Name getFunctionName()
-	{
+	public Name getFunctionName() {
 		return functionName;
 	}
 
@@ -129,11 +123,9 @@ public class FunctionNode extends ScriptNode
 	 *
 	 * @param name function name, {@code null} for anonymous functions
 	 */
-	public void setFunctionName(Name name)
-	{
+	public void setFunctionName(Name name) {
 		functionName = name;
-		if (name != null)
-		{
+		if (name != null) {
 			name.setParent(this);
 		}
 	}
@@ -143,8 +135,7 @@ public class FunctionNode extends ScriptNode
 	 *
 	 * @return the function name, {@code ""} if anonymous
 	 */
-	public String getName()
-	{
+	public String getName() {
 		return functionName != null ? functionName.getIdentifier() : "";
 	}
 
@@ -154,8 +145,7 @@ public class FunctionNode extends ScriptNode
 	 * @return the function parameter list.  Returns an immutable empty
 	 * list if there are no parameters.
 	 */
-	public List<AstNode> getParams()
-	{
+	public List<AstNode> getParams() {
 		return params != null ? params : NO_PARAMS;
 	}
 
@@ -165,20 +155,14 @@ public class FunctionNode extends ScriptNode
 	 *
 	 * @param params the function parameter list, or {@code null} if no params
 	 */
-	public void setParams(List<AstNode> params)
-	{
-		if (params == null)
-		{
+	public void setParams(List<AstNode> params) {
+		if (params == null) {
 			this.params = null;
-		}
-		else
-		{
-			if (this.params != null)
-			{
+		} else {
+			if (this.params != null) {
 				this.params.clear();
 			}
-			for (AstNode param : params)
-			{
+			for (AstNode param : params) {
 				addParam(param);
 			}
 		}
@@ -191,11 +175,9 @@ public class FunctionNode extends ScriptNode
 	 * @param param the parameter
 	 * @throws IllegalArgumentException if param is {@code null}
 	 */
-	public void addParam(AstNode param)
-	{
+	public void addParam(AstNode param) {
 		assertNotNull(param);
-		if (params == null)
-		{
+		if (params == null) {
 			params = new ArrayList<>();
 		}
 		params.add(param);
@@ -207,8 +189,7 @@ public class FunctionNode extends ScriptNode
 	 * of this Function node.  This provides a way during AST traversal
 	 * to disambiguate the function name node from the parameter nodes.
 	 */
-	public boolean isParam(AstNode node)
-	{
+	public boolean isParam(AstNode node) {
 		return params != null && params.contains(node);
 	}
 
@@ -218,8 +199,7 @@ public class FunctionNode extends ScriptNode
 	 *
 	 * @return the body.  Can be {@code null} only if the AST is malformed.
 	 */
-	public AstNode getBody()
-	{
+	public AstNode getBody() {
 		return body;
 	}
 
@@ -233,12 +213,10 @@ public class FunctionNode extends ScriptNode
 	 *             position is updated to be relative to this node.
 	 * @throws IllegalArgumentException if body is {@code null}
 	 */
-	public void setBody(AstNode body)
-	{
+	public void setBody(AstNode body) {
 		assertNotNull(body);
 		this.body = body;
-		if (Boolean.TRUE.equals(body.getProp(Node.EXPRESSION_CLOSURE_PROP)))
-		{
+		if (Boolean.TRUE.equals(body.getProp(Node.EXPRESSION_CLOSURE_PROP))) {
 			setIsExpressionClosure(true);
 		}
 		int absEnd = body.getPosition() + body.getLength();
@@ -250,40 +228,35 @@ public class FunctionNode extends ScriptNode
 	/**
 	 * Returns left paren position, -1 if missing
 	 */
-	public int getLp()
-	{
+	public int getLp() {
 		return lp;
 	}
 
 	/**
 	 * Sets left paren position
 	 */
-	public void setLp(int lp)
-	{
+	public void setLp(int lp) {
 		this.lp = lp;
 	}
 
 	/**
 	 * Returns right paren position, -1 if missing
 	 */
-	public int getRp()
-	{
+	public int getRp() {
 		return rp;
 	}
 
 	/**
 	 * Sets right paren position
 	 */
-	public void setRp(int rp)
-	{
+	public void setRp(int rp) {
 		this.rp = rp;
 	}
 
 	/**
 	 * Sets both paren positions
 	 */
-	public void setParens(int lp, int rp)
-	{
+	public void setParens(int lp, int rp) {
 		this.lp = lp;
 		this.rp = rp;
 	}
@@ -291,16 +264,14 @@ public class FunctionNode extends ScriptNode
 	/**
 	 * Returns whether this is a 1.8 function closure
 	 */
-	public boolean isExpressionClosure()
-	{
+	public boolean isExpressionClosure() {
 		return isExpressionClosure;
 	}
 
 	/**
 	 * Sets whether this is a 1.8 function closure
 	 */
-	public void setIsExpressionClosure(boolean isExpressionClosure)
-	{
+	public void setIsExpressionClosure(boolean isExpressionClosure) {
 		this.isExpressionClosure = isExpressionClosure;
 	}
 
@@ -314,71 +285,57 @@ public class FunctionNode extends ScriptNode
 	 * @return true if this function needs activation.  It could be needed
 	 * if there is a lexical closure, or in a number of other situations.
 	 */
-	public boolean requiresActivation()
-	{
+	public boolean requiresActivation() {
 		return needsActivation;
 	}
 
-	public void setRequiresActivation()
-	{
+	public void setRequiresActivation() {
 		needsActivation = true;
 	}
 
-	public boolean isGenerator()
-	{
+	public boolean isGenerator() {
 		return isGenerator;
 	}
 
-	public void setIsGenerator()
-	{
+	public void setIsGenerator() {
 		isGenerator = true;
 	}
 
-	public boolean isES6Generator()
-	{
+	public boolean isES6Generator() {
 		return isES6Generator;
 	}
 
-	public void setIsES6Generator()
-	{
+	public void setIsES6Generator() {
 		isES6Generator = true;
 		isGenerator = true;
 	}
 
-	public void addResumptionPoint(Node target)
-	{
-		if (generatorResumePoints == null)
-		{
+	public void addResumptionPoint(Node target) {
+		if (generatorResumePoints == null) {
 			generatorResumePoints = new ArrayList<>();
 		}
 		generatorResumePoints.add(target);
 	}
 
-	public List<Node> getResumptionPoints()
-	{
+	public List<Node> getResumptionPoints() {
 		return generatorResumePoints;
 	}
 
-	public Map<Node, int[]> getLiveLocals()
-	{
+	public Map<Node, int[]> getLiveLocals() {
 		return liveLocals;
 	}
 
-	public void addLiveLocals(Node node, int[] locals)
-	{
-		if (liveLocals == null)
-		{
+	public void addLiveLocals(Node node, int[] locals) {
+		if (liveLocals == null) {
 			liveLocals = new HashMap<>();
 		}
 		liveLocals.put(node, locals);
 	}
 
 	@Override
-	public int addFunction(FunctionNode fnNode)
-	{
+	public int addFunction(FunctionNode fnNode) {
 		int result = super.addFunction(fnNode);
-		if (getFunctionCount() > 0)
-		{
+		if (getFunctionCount() > 0) {
 			needsActivation = true;
 		}
 		return result;
@@ -387,48 +344,39 @@ public class FunctionNode extends ScriptNode
 	/**
 	 * Returns the function type (statement, expr, statement expr)
 	 */
-	public int getFunctionType()
-	{
+	public int getFunctionType() {
 		return functionType;
 	}
 
-	public void setFunctionType(int type)
-	{
+	public void setFunctionType(int type) {
 		functionType = type;
 	}
 
-	public boolean isMethod()
-	{
+	public boolean isMethod() {
 		return functionForm == Form.GETTER || functionForm == Form.SETTER || functionForm == Form.METHOD;
 	}
 
-	public boolean isGetterMethod()
-	{
+	public boolean isGetterMethod() {
 		return functionForm == Form.GETTER;
 	}
 
-	public boolean isSetterMethod()
-	{
+	public boolean isSetterMethod() {
 		return functionForm == Form.SETTER;
 	}
 
-	public boolean isNormalMethod()
-	{
+	public boolean isNormalMethod() {
 		return functionForm == Form.METHOD;
 	}
 
-	public void setFunctionIsGetterMethod()
-	{
+	public void setFunctionIsGetterMethod() {
 		functionForm = Form.GETTER;
 	}
 
-	public void setFunctionIsSetterMethod()
-	{
+	public void setFunctionIsSetterMethod() {
 		functionForm = Form.SETTER;
 	}
 
-	public void setFunctionIsNormalMethod()
-	{
+	public void setFunctionIsNormalMethod() {
 		functionForm = Form.METHOD;
 	}
 
@@ -442,84 +390,63 @@ public class FunctionNode extends ScriptNode
 	 * This extension is only available by setting the CompilerEnv option
 	 * "isAllowMemberExprAsFunctionName" in the Parser.
 	 */
-	public void setMemberExprNode(AstNode node)
-	{
+	public void setMemberExprNode(AstNode node) {
 		memberExprNode = node;
-		if (node != null)
-		{
+		if (node != null) {
 			node.setParent(this);
 		}
 	}
 
-	public AstNode getMemberExprNode()
-	{
+	public AstNode getMemberExprNode() {
 		return memberExprNode;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		boolean isArrow = functionType == ARROW_FUNCTION;
-		if (!isMethod())
-		{
+		if (!isMethod()) {
 			sb.append(makeIndent(depth));
-			if (!isArrow)
-			{
+			if (!isArrow) {
 				sb.append("function");
 			}
 		}
-		if (functionName != null)
-		{
+		if (functionName != null) {
 			sb.append(" ");
 			sb.append(functionName.toSource(0));
 		}
-		if (params == null)
-		{
+		if (params == null) {
 			sb.append("() ");
-		}
-		else if (isArrow && lp == -1)
-		{
+		} else if (isArrow && lp == -1) {
 			// no paren
 			printList(params, sb);
 			sb.append(" ");
-		}
-		else
-		{
+		} else {
 			sb.append("(");
 			printList(params, sb);
 			sb.append(") ");
 		}
-		if (isArrow)
-		{
+		if (isArrow) {
 			sb.append("=> ");
 		}
-		if (isExpressionClosure)
-		{
+		if (isExpressionClosure) {
 			AstNode body = getBody();
-			if (body.getLastChild() instanceof ReturnStatement)
-			{
+			if (body.getLastChild() instanceof ReturnStatement) {
 				// omit "return" keyword, just print the expression
 				body = ((ReturnStatement) body.getLastChild()).getReturnValue();
 				sb.append(body.toSource(0));
-				if (functionType == FUNCTION_STATEMENT)
-				{
+				if (functionType == FUNCTION_STATEMENT) {
 					sb.append(";");
 				}
-			}
-			else
-			{
+			} else {
 				// should never happen
 				sb.append(" ");
 				sb.append(body.toSource(0));
 			}
-		}
-		else
-		{
+		} else {
 			sb.append(getBody().toSource(depth).trim());
 		}
-		if (functionType == FUNCTION_STATEMENT || isMethod())
-		{
+		if (functionType == FUNCTION_STATEMENT || isMethod()) {
 			sb.append("\n");
 		}
 		return sb.toString();
@@ -531,23 +458,17 @@ public class FunctionNode extends ScriptNode
 	 * it is visited last.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
-			if (functionName != null)
-			{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
+			if (functionName != null) {
 				functionName.visit(v);
 			}
-			for (AstNode param : getParams())
-			{
+			for (AstNode param : getParams()) {
 				param.visit(v);
 			}
 			getBody().visit(v);
-			if (!isExpressionClosure)
-			{
-				if (memberExprNode != null)
-				{
+			if (!isExpressionClosure) {
+				if (memberExprNode != null) {
 					memberExprNode.visit(v);
 				}
 			}

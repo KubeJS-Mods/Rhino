@@ -10,8 +10,7 @@ import dev.latvian.mods.rhino.Token;
  * AST node for Template Literal Characters.
  * <p>Node type is {@link Token#TEMPLATE_CHARS}.</p>
  */
-public class TemplateCharacters extends AstNode
-{
+public class TemplateCharacters extends AstNode {
 	private String value;
 	private String rawValue;
 
@@ -19,17 +18,14 @@ public class TemplateCharacters extends AstNode
 		type = Token.TEMPLATE_CHARS;
 	}
 
-	public TemplateCharacters()
-	{
+	public TemplateCharacters() {
 	}
 
-	public TemplateCharacters(int pos)
-	{
+	public TemplateCharacters(int pos) {
 		super(pos);
 	}
 
-	public TemplateCharacters(int pos, int len)
-	{
+	public TemplateCharacters(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -38,8 +34,7 @@ public class TemplateCharacters extends AstNode
 	 *
 	 * @return the node's value
 	 */
-	public String getValue()
-	{
+	public String getValue() {
 		return value;
 	}
 
@@ -49,8 +44,7 @@ public class TemplateCharacters extends AstNode
 	 * @param value the node's value
 	 * @throws IllegalArgumentException} if value is {@code null}
 	 */
-	public void setValue(String value)
-	{
+	public void setValue(String value) {
 		assertNotNull(value);
 		this.value = value;
 	}
@@ -60,8 +54,7 @@ public class TemplateCharacters extends AstNode
 	 *
 	 * @return the node's raw-value
 	 */
-	public String getRawValue()
-	{
+	public String getRawValue() {
 		return rawValue;
 	}
 
@@ -71,15 +64,13 @@ public class TemplateCharacters extends AstNode
 	 * @param rawValue the node's raw-value
 	 * @throws IllegalArgumentException} if rawValue is {@code null}
 	 */
-	public void setRawValue(String rawValue)
-	{
+	public void setRawValue(String rawValue) {
 		assertNotNull(rawValue);
 		this.rawValue = rawValue;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		return new StringBuilder(makeIndent(depth))
 				.append(rawValue)
 				.toString();
@@ -89,8 +80,7 @@ public class TemplateCharacters extends AstNode
 	 * Visits this node.  There are no children to visit.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
+	public void visit(NodeVisitor v) {
 		v.visit(this);
 	}
 }

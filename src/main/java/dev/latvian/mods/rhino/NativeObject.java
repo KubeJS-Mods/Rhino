@@ -28,21 +28,18 @@ import java.util.function.Supplier;
  *
  * @author Norris Boyd
  */
-public class NativeObject extends IdScriptableObject implements Map, DataObject
-{
+public class NativeObject extends IdScriptableObject implements Map, DataObject {
 	private static final long serialVersionUID = -6345305608474346996L;
 
 	private static final Object OBJECT_TAG = "Object";
 
-	static void init(Scriptable scope, boolean sealed)
-	{
+	static void init(Scriptable scope, boolean sealed) {
 		NativeObject obj = new NativeObject();
 		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "Object";
 	}
 
@@ -55,19 +52,14 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 	*/
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		StringBuilder sb = new StringBuilder("{");
 		boolean first = true;
 
-		for (Map.Entry<?, ?> entry : entrySet())
-		{
-			if (first)
-			{
+		for (Map.Entry<?, ?> entry : entrySet()) {
+			if (first) {
 				first = false;
-			}
-			else
-			{
+			} else {
 				sb.append(", ");
 			}
 
@@ -80,12 +72,10 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 	}
 
 	@Override
-	protected void fillConstructorProperties(IdFunctionObject ctor)
-	{
+	protected void fillConstructorProperties(IdFunctionObject ctor) {
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getPrototypeOf,
 				"getPrototypeOf", 1);
-		if (Context.getCurrentContext().version >= Context.VERSION_ES6)
-		{
+		if (Context.getCurrentContext().version >= Context.VERSION_ES6) {
 			addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_setPrototypeOf,
 					"setPrototypeOf", 2);
 		}
@@ -123,12 +113,10 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
+	protected void initPrototypeId(int id) {
 		String s;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				arity = 1;
 				s = "constructor";
@@ -185,51 +173,40 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(OBJECT_TAG))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(OBJECT_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
-		switch (id)
-		{
-			case Id_constructor:
-			{
-				if (thisObj != null)
-				{
+		switch (id) {
+			case Id_constructor: {
+				if (thisObj != null) {
 					// BaseFunction.construct will set up parent, proto
 					return f.construct(cx, scope, args);
 				}
 				if (args.length == 0
 						|| args[0] == null
-						|| Undefined.isUndefined(args[0]))
-				{
+						|| Undefined.isUndefined(args[0])) {
 					return new NativeObject();
 				}
 				return ScriptRuntime.toObject(cx, scope, args[0]);
 			}
 
-			case Id_toLocaleString:
-			{
+			case Id_toLocaleString: {
 				Object toString = getProperty(thisObj, "toString");
-				if (!(toString instanceof Callable))
-				{
+				if (!(toString instanceof Callable)) {
 					throw ScriptRuntime.notFunctionError(toString);
 				}
 				Callable fun = (Callable) toString;
 				return fun.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
 			}
 
-			case Id_toString:
-			{
-				if (cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE))
-				{
+			case Id_toString: {
+				if (cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE)) {
 					String s = ScriptRuntime.defaultObjectToSource(cx, scope,
 							thisObj, args);
 					int L = s.length();
-					if (L != 0 && s.charAt(0) == '(' && s.charAt(L - 1) == ')')
-					{
+					if (L != 0 && s.charAt(0) == '(' && s.charAt(L - 1) == ')') {
 						// Strip () that surrounds toSource
 						s = s.substring(1, L - 1);
 					}
@@ -239,96 +216,70 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 			}
 
 			case Id_valueOf:
-				if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj)))
-				{
+				if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
 					throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
 				}
 				return thisObj;
 
-			case Id_hasOwnProperty:
-			{
-				if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj)))
-				{
+			case Id_hasOwnProperty: {
+				if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
 					throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
 				}
 				boolean result;
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (arg instanceof Symbol)
-				{
+				if (arg instanceof Symbol) {
 					result = ensureSymbolScriptable(thisObj).has((Symbol) arg, thisObj);
-				}
-				else
-				{
+				} else {
 					ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, arg);
-					if (s.stringId == null)
-					{
+					if (s.stringId == null) {
 						result = thisObj.has(s.index, thisObj);
-					}
-					else
-					{
+					} else {
 						result = thisObj.has(s.stringId, thisObj);
 					}
 				}
 				return ScriptRuntime.wrapBoolean(result);
 			}
 
-			case Id_propertyIsEnumerable:
-			{
-				if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj)))
-				{
+			case Id_propertyIsEnumerable: {
+				if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
 					throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
 				}
 
 				boolean result;
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 
-				if (arg instanceof Symbol)
-				{
+				if (arg instanceof Symbol) {
 					result = ((SymbolScriptable) thisObj).has((Symbol) arg, thisObj);
-					if (result && thisObj instanceof ScriptableObject)
-					{
+					if (result && thisObj instanceof ScriptableObject) {
 						ScriptableObject so = (ScriptableObject) thisObj;
 						int attrs = so.getAttributes((Symbol) arg);
 						result = ((attrs & DONTENUM) == 0);
 					}
-				}
-				else
-				{
+				} else {
 					ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, arg);
 					// When checking if a property is enumerable, a missing property should return "false" instead of
 					// throwing an exception.  See: https://github.com/mozilla/rhino/issues/415
-					try
-					{
-						if (s.stringId == null)
-						{
+					try {
+						if (s.stringId == null) {
 							result = thisObj.has(s.index, thisObj);
-							if (result && thisObj instanceof ScriptableObject)
-							{
+							if (result && thisObj instanceof ScriptableObject) {
 								ScriptableObject so = (ScriptableObject) thisObj;
 								int attrs = so.getAttributes(s.index);
 								result = ((attrs & DONTENUM) == 0);
 							}
-						}
-						else
-						{
+						} else {
 							result = thisObj.has(s.stringId, thisObj);
-							if (result && thisObj instanceof ScriptableObject)
-							{
+							if (result && thisObj instanceof ScriptableObject) {
 								ScriptableObject so = (ScriptableObject) thisObj;
 								int attrs = so.getAttributes(s.stringId);
 								result = ((attrs & DONTENUM) == 0);
 							}
 						}
-					}
-					catch (EvaluatorException ee)
-					{
+					} catch (EvaluatorException ee) {
 						if (ee.getMessage().startsWith(ScriptRuntime.getMessage1("msg.prop.not.found",
-								s.stringId == null ? Integer.toString(s.index) : s.stringId)))
-						{
+								s.stringId == null ? Integer.toString(s.index) : s.stringId))) {
 							result = false;
-						}
-						else
-						{
+						} else {
 							throw ee;
 						}
 					}
@@ -336,22 +287,17 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 				return ScriptRuntime.wrapBoolean(result);
 			}
 
-			case Id_isPrototypeOf:
-			{
-				if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj)))
-				{
+			case Id_isPrototypeOf: {
+				if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
 					throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
 				}
 
 				boolean result = false;
-				if (args.length != 0 && args[0] instanceof Scriptable)
-				{
+				if (args.length != 0 && args[0] instanceof Scriptable) {
 					Scriptable v = (Scriptable) args[0];
-					do
-					{
+					do {
 						v = v.getPrototype();
-						if (v == thisObj)
-						{
+						if (v == thisObj) {
 							result = true;
 							break;
 						}
@@ -365,15 +311,12 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 				return ScriptRuntime.defaultObjectToSource(cx, scope, thisObj,
 						args);
 			case Id___defineGetter__:
-			case Id___defineSetter__:
-			{
-				if (args.length < 2 || !(args[1] instanceof Callable))
-				{
+			case Id___defineSetter__: {
+				if (args.length < 2 || !(args[1] instanceof Callable)) {
 					Object badArg = (args.length >= 2 ? args[1] : Undefined.instance);
 					throw ScriptRuntime.notFunctionError(badArg);
 				}
-				if (!(thisObj instanceof ScriptableObject))
-				{
+				if (!(thisObj instanceof ScriptableObject)) {
 					throw Context.reportRuntimeError2(
 							"msg.extend.scriptable",
 							thisObj == null ? "null" : thisObj.getClass().getName(),
@@ -385,19 +328,16 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 				Callable getterOrSetter = (Callable) args[1];
 				boolean isSetter = (id == Id___defineSetter__);
 				so.setGetterOrSetter(s.stringId, index, getterOrSetter, isSetter);
-				if (so instanceof NativeArray)
-				{
+				if (so instanceof NativeArray) {
 					((NativeArray) so).setDenseOnly(false);
 				}
 			}
 			return Undefined.instance;
 
 			case Id___lookupGetter__:
-			case Id___lookupSetter__:
-			{
+			case Id___lookupSetter__: {
 				if (args.length < 1 ||
-						!(thisObj instanceof ScriptableObject))
-				{
+						!(thisObj instanceof ScriptableObject)) {
 					return Undefined.instance;
 				}
 
@@ -406,75 +346,59 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 				int index = s.stringId != null ? 0 : s.index;
 				boolean isSetter = (id == Id___lookupSetter__);
 				Object gs;
-				for (; ; )
-				{
+				for (; ; ) {
 					gs = so.getGetterOrSetter(s.stringId, index, isSetter);
-					if (gs != null)
-					{
+					if (gs != null) {
 						break;
 					}
 					// If there is no getter or setter for the object itself,
 					// how about the prototype?
 					Scriptable v = so.getPrototype();
-					if (v == null)
-					{
+					if (v == null) {
 						break;
 					}
-					if (v instanceof ScriptableObject)
-					{
+					if (v instanceof ScriptableObject) {
 						so = (ScriptableObject) v;
-					}
-					else
-					{
+					} else {
 						break;
 					}
 				}
-				if (gs != null)
-				{
+				if (gs != null) {
 					return gs;
 				}
 			}
 			return Undefined.instance;
 
-			case ConstructorId_getPrototypeOf:
-			{
+			case ConstructorId_getPrototypeOf: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				Scriptable obj = getCompatibleObject(cx, scope, arg);
 				return obj.getPrototype();
 			}
-			case ConstructorId_setPrototypeOf:
-			{
-				if (args.length < 2)
-				{
+			case ConstructorId_setPrototypeOf: {
+				if (args.length < 2) {
 					throw ScriptRuntime.typeError1("msg.incompat.call", "setPrototypeOf");
 				}
 				Scriptable proto = (args[1] == null) ? null : ensureScriptable(args[1]);
-				if (proto instanceof Symbol)
-				{
+				if (proto instanceof Symbol) {
 					throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(proto));
 				}
 
 				final Object arg0 = args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6)
-				{
+				if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
 					ScriptRuntimeES6.requireObjectCoercible(cx, arg0, f);
 				}
-				if (!(arg0 instanceof ScriptableObject))
-				{
+				if (!(arg0 instanceof ScriptableObject)) {
 					return arg0;
 				}
 				ScriptableObject obj = (ScriptableObject) arg0;
-				if (!obj.isExtensible())
-				{
+				if (!obj.isExtensible()) {
 					throw ScriptRuntime.typeError0("msg.not.extensible");
 				}
 
 				// cycle detection
 				Scriptable prototypeProto = proto;
-				while (prototypeProto != null)
-				{
-					if (prototypeProto == obj)
-					{
+				while (prototypeProto != null) {
+					if (prototypeProto == obj) {
 						throw ScriptRuntime.typeError1("msg.object.cyclic.prototype", obj.getClass().getSimpleName());
 					}
 					prototypeProto = prototypeProto.getPrototype();
@@ -482,47 +406,39 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 				obj.setPrototype(proto);
 				return obj;
 			}
-			case ConstructorId_keys:
-			{
+			case ConstructorId_keys: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				Scriptable obj = getCompatibleObject(cx, scope, arg);
 				Object[] ids = obj.getIds();
-				for (int i = 0; i < ids.length; i++)
-				{
+				for (int i = 0; i < ids.length; i++) {
 					ids[i] = ScriptRuntime.toString(ids[i]);
 				}
 				return cx.newArray(scope, ids);
 			}
-			case ConstructorId_getOwnPropertyNames:
-			{
+			case ConstructorId_getOwnPropertyNames: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				Scriptable s = getCompatibleObject(cx, scope, arg);
 				ScriptableObject obj = ensureScriptableObject(s);
 				Object[] ids = obj.getIds(true, false);
-				for (int i = 0; i < ids.length; i++)
-				{
+				for (int i = 0; i < ids.length; i++) {
 					ids[i] = ScriptRuntime.toString(ids[i]);
 				}
 				return cx.newArray(scope, ids);
 			}
-			case ConstructorId_getOwnPropertySymbols:
-			{
+			case ConstructorId_getOwnPropertySymbols: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				Scriptable s = getCompatibleObject(cx, scope, arg);
 				ScriptableObject obj = ensureScriptableObject(s);
 				Object[] ids = obj.getIds(true, true);
 				ArrayList<Object> syms = new ArrayList<>();
-				for (int i = 0; i < ids.length; i++)
-				{
-					if (ids[i] instanceof Symbol)
-					{
+				for (int i = 0; i < ids.length; i++) {
+					if (ids[i] instanceof Symbol) {
 						syms.add(ids[i]);
 					}
 				}
 				return cx.newArray(scope, syms.toArray());
 			}
-			case ConstructorId_getOwnPropertyDescriptor:
-			{
+			case ConstructorId_getOwnPropertyDescriptor: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				// TODO(norris): There's a deeper issue here if
 				// arg instanceof Scriptable. Should we create a new
@@ -533,8 +449,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 				Scriptable desc = obj.getOwnPropertyDescriptor(cx, nameArg);
 				return desc == null ? Undefined.instance : desc;
 			}
-			case ConstructorId_defineProperty:
-			{
+			case ConstructorId_defineProperty: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				ScriptableObject obj = ensureScriptableObject(arg);
 				Object name = args.length < 2 ? Undefined.instance : args[1];
@@ -543,24 +458,20 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 				obj.defineOwnProperty(cx, name, desc);
 				return obj;
 			}
-			case ConstructorId_isExtensible:
-			{
+			case ConstructorId_isExtensible: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				if (cx.getLanguageVersion() >= Context.VERSION_ES6
-						&& !(arg instanceof ScriptableObject))
-				{
+						&& !(arg instanceof ScriptableObject)) {
 					return Boolean.FALSE;
 				}
 
 				ScriptableObject obj = ensureScriptableObject(arg);
 				return obj.isExtensible();
 			}
-			case ConstructorId_preventExtensions:
-			{
+			case ConstructorId_preventExtensions: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				if (cx.getLanguageVersion() >= Context.VERSION_ES6
-						&& !(arg instanceof ScriptableObject))
-				{
+						&& !(arg instanceof ScriptableObject)) {
 					return arg;
 				}
 
@@ -568,8 +479,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 				obj.preventExtensions();
 				return obj;
 			}
-			case ConstructorId_defineProperties:
-			{
+			case ConstructorId_defineProperties: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				ScriptableObject obj = ensureScriptableObject(arg);
 				Object propsObj = args.length < 2 ? Undefined.instance : args[1];
@@ -577,8 +487,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 				obj.defineOwnProperties(cx, ensureScriptableObject(props));
 				return obj;
 			}
-			case ConstructorId_create:
-			{
+			case ConstructorId_create: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				Scriptable obj = (arg == null) ? null : ensureScriptable(arg);
 
@@ -586,88 +495,72 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 				newObject.setParentScope(scope);
 				newObject.setPrototype(obj);
 
-				if (args.length > 1 && !Undefined.isUndefined(args[1]))
-				{
+				if (args.length > 1 && !Undefined.isUndefined(args[1])) {
 					Scriptable props = Context.toObject(args[1], scope);
 					newObject.defineOwnProperties(cx, ensureScriptableObject(props));
 				}
 
 				return newObject;
 			}
-			case ConstructorId_isSealed:
-			{
+			case ConstructorId_isSealed: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				if (cx.getLanguageVersion() >= Context.VERSION_ES6
-						&& !(arg instanceof ScriptableObject))
-				{
+						&& !(arg instanceof ScriptableObject)) {
 					return Boolean.TRUE;
 				}
 
 				ScriptableObject obj = ensureScriptableObject(arg);
 
-				if (obj.isExtensible())
-				{
+				if (obj.isExtensible()) {
 					return Boolean.FALSE;
 				}
 
-				for (Object name : obj.getAllIds())
-				{
+				for (Object name : obj.getAllIds()) {
 					Object configurable = obj.getOwnPropertyDescriptor(cx, name).get("configurable");
-					if (Boolean.TRUE.equals(configurable))
-					{
+					if (Boolean.TRUE.equals(configurable)) {
 						return Boolean.FALSE;
 					}
 				}
 
 				return Boolean.TRUE;
 			}
-			case ConstructorId_isFrozen:
-			{
+			case ConstructorId_isFrozen: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				if (cx.getLanguageVersion() >= Context.VERSION_ES6
-						&& !(arg instanceof ScriptableObject))
-				{
+						&& !(arg instanceof ScriptableObject)) {
 					return Boolean.TRUE;
 				}
 
 				ScriptableObject obj = ensureScriptableObject(arg);
 
-				if (obj.isExtensible())
-				{
+				if (obj.isExtensible()) {
 					return Boolean.FALSE;
 				}
 
-				for (Object name : obj.getAllIds())
-				{
+				for (Object name : obj.getAllIds()) {
 					ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
-					if (Boolean.TRUE.equals(desc.get("configurable")))
-					{
+					if (Boolean.TRUE.equals(desc.get("configurable"))) {
 						return Boolean.FALSE;
 					}
-					if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable")))
-					{
+					if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable"))) {
 						return Boolean.FALSE;
 					}
 				}
 
 				return Boolean.TRUE;
 			}
-			case ConstructorId_seal:
-			{
+			case ConstructorId_seal: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				if (cx.getLanguageVersion() >= Context.VERSION_ES6
-						&& !(arg instanceof ScriptableObject))
-				{
+						&& !(arg instanceof ScriptableObject)) {
 					return arg;
 				}
 
 				ScriptableObject obj = ensureScriptableObject(arg);
 
-				for (Object name : obj.getAllIds())
-				{
+				for (Object name : obj.getAllIds()) {
 					ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
-					if (Boolean.TRUE.equals(desc.get("configurable")))
-					{
+					if (Boolean.TRUE.equals(desc.get("configurable"))) {
 						desc.put("configurable", desc, Boolean.FALSE);
 						obj.defineOwnProperty(cx, name, desc, false);
 					}
@@ -676,26 +569,21 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 
 				return obj;
 			}
-			case ConstructorId_freeze:
-			{
+			case ConstructorId_freeze: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				if (cx.getLanguageVersion() >= Context.VERSION_ES6
-						&& !(arg instanceof ScriptableObject))
-				{
+						&& !(arg instanceof ScriptableObject)) {
 					return arg;
 				}
 
 				ScriptableObject obj = ensureScriptableObject(arg);
 
-				for (Object name : obj.getIds(true, true))
-				{
+				for (Object name : obj.getIds(true, true)) {
 					ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
-					if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable")))
-					{
+					if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable"))) {
 						desc.put("writable", desc, Boolean.FALSE);
 					}
-					if (Boolean.TRUE.equals(desc.get("configurable")))
-					{
+					if (Boolean.TRUE.equals(desc.get("configurable"))) {
 						desc.put("configurable", desc, Boolean.FALSE);
 					}
 					obj.defineOwnProperty(cx, name, desc, false);
@@ -705,37 +593,27 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 				return obj;
 			}
 
-			case ConstructorId_assign:
-			{
-				if (args.length < 1)
-				{
+			case ConstructorId_assign: {
+				if (args.length < 1) {
 					throw ScriptRuntime.typeError1("msg.incompat.call", "assign");
 				}
 				Scriptable targetObj = ScriptRuntime.toObject(cx, thisObj, args[0]);
-				for (int i = 1; i < args.length; i++)
-				{
-					if ((args[i] == null) || Undefined.isUndefined(args[i]))
-					{
+				for (int i = 1; i < args.length; i++) {
+					if ((args[i] == null) || Undefined.isUndefined(args[i])) {
 						continue;
 					}
 					Scriptable sourceObj = ScriptRuntime.toObject(cx, thisObj, args[i]);
 					Object[] ids = sourceObj.getIds();
-					for (Object key : ids)
-					{
-						if (key instanceof String)
-						{
+					for (Object key : ids) {
+						if (key instanceof String) {
 							Object val = sourceObj.get((String) key, sourceObj);
-							if ((val != NOT_FOUND) && !Undefined.isUndefined(val))
-							{
+							if ((val != NOT_FOUND) && !Undefined.isUndefined(val)) {
 								targetObj.put((String) key, targetObj, val);
 							}
-						}
-						else if (key instanceof Number)
-						{
+						} else if (key instanceof Number) {
 							int ii = ScriptRuntime.toInt32(key);
 							Object val = sourceObj.get(ii, sourceObj);
-							if ((val != NOT_FOUND) && !Undefined.isUndefined(val))
-							{
+							if ((val != NOT_FOUND) && !Undefined.isUndefined(val)) {
 								targetObj.put(ii, targetObj, val);
 							}
 						}
@@ -744,8 +622,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 				return targetObj;
 			}
 
-			case ConstructorId_is:
-			{
+			case ConstructorId_is: {
 				Object a1 = args.length < 1 ? Undefined.instance : args[0];
 				Object a2 = args.length < 2 ? Undefined.instance : args[1];
 				return ScriptRuntime.wrapBoolean(ScriptRuntime.same(a1, a2));
@@ -757,10 +634,8 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 		}
 	}
 
-	private static Scriptable getCompatibleObject(Context cx, Scriptable scope, Object arg)
-	{
-		if (cx.getLanguageVersion() >= Context.VERSION_ES6)
-		{
+	private static Scriptable getCompatibleObject(Context cx, Scriptable scope, Object arg) {
+		if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
 			Scriptable s = ScriptRuntime.toObject(cx, scope, arg);
 			return ensureScriptable(s);
 		}
@@ -770,27 +645,20 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 	// methods implementing java.util.Map
 
 	@Override
-	public boolean containsKey(Object key)
-	{
-		if (key instanceof String)
-		{
+	public boolean containsKey(Object key) {
+		if (key instanceof String) {
 			return has((String) key, this);
-		}
-		else if (key instanceof Number)
-		{
+		} else if (key instanceof Number) {
 			return has(((Number) key).intValue(), this);
 		}
 		return false;
 	}
 
 	@Override
-	public boolean containsValue(Object value)
-	{
-		for (Object obj : values())
-		{
+	public boolean containsValue(Object value) {
+		for (Object obj : values()) {
 			if (value == obj ||
-					value != null && value.equals(obj))
-			{
+					value != null && value.equals(obj)) {
 				return true;
 			}
 		}
@@ -798,104 +666,83 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 	}
 
 	@Override
-	public Object remove(Object key)
-	{
+	public Object remove(Object key) {
 		Object value = get(key);
-		if (key instanceof String)
-		{
+		if (key instanceof String) {
 			delete((String) key);
-		}
-		else if (key instanceof Number)
-		{
+		} else if (key instanceof Number) {
 			delete(((Number) key).intValue());
 		}
 		return value;
 	}
 
 	@Override
-	public Set<Object> keySet()
-	{
+	public Set<Object> keySet() {
 		return new KeySet();
 	}
 
 	@Override
-	public Collection<Object> values()
-	{
+	public Collection<Object> values() {
 		return new ValueCollection();
 	}
 
 	@Override
-	public Set<Map.Entry<Object, Object>> entrySet()
-	{
+	public Set<Map.Entry<Object, Object>> entrySet() {
 		return new EntrySet();
 	}
 
 	@Override
-	public Object put(Object key, Object value)
-	{
+	public Object put(Object key, Object value) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void putAll(Map m)
-	{
+	public void putAll(Map m) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void clear()
-	{
+	public void clear() {
 		throw new UnsupportedOperationException();
 	}
 
 
-	class EntrySet extends AbstractSet<Entry<Object, Object>>
-	{
+	class EntrySet extends AbstractSet<Entry<Object, Object>> {
 		@Override
-		public Iterator<Entry<Object, Object>> iterator()
-		{
-			return new Iterator<Map.Entry<Object, Object>>()
-			{
+		public Iterator<Entry<Object, Object>> iterator() {
+			return new Iterator<Map.Entry<Object, Object>>() {
 				final Object[] ids = getIds();
 				Object key = null;
 				int index = 0;
 
 				@Override
-				public boolean hasNext()
-				{
+				public boolean hasNext() {
 					return index < ids.length;
 				}
 
 				@Override
-				public Map.Entry<Object, Object> next()
-				{
+				public Map.Entry<Object, Object> next() {
 					final Object ekey = key = ids[index++];
 					final Object value = get(key);
-					return new Map.Entry<Object, Object>()
-					{
+					return new Map.Entry<Object, Object>() {
 						@Override
-						public Object getKey()
-						{
+						public Object getKey() {
 							return ekey;
 						}
 
 						@Override
-						public Object getValue()
-						{
+						public Object getValue() {
 							return value;
 						}
 
 						@Override
-						public Object setValue(Object value)
-						{
+						public Object setValue(Object value) {
 							throw new UnsupportedOperationException();
 						}
 
 						@Override
-						public boolean equals(Object other)
-						{
-							if (!(other instanceof Map.Entry))
-							{
+						public boolean equals(Object other) {
+							if (!(other instanceof Map.Entry)) {
 								return false;
 							}
 							Map.Entry<?, ?> e = (Map.Entry<?, ?>) other;
@@ -904,25 +751,21 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 						}
 
 						@Override
-						public int hashCode()
-						{
+						public int hashCode() {
 							return (ekey == null ? 0 : ekey.hashCode()) ^
 									(value == null ? 0 : value.hashCode());
 						}
 
 						@Override
-						public String toString()
-						{
+						public String toString() {
 							return ekey + "=" + value;
 						}
 					};
 				}
 
 				@Override
-				public void remove()
-				{
-					if (key == null)
-					{
+				public void remove() {
+					if (key == null) {
 						throw new IllegalStateException();
 					}
 					NativeObject.this.remove(key);
@@ -932,55 +775,43 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 		}
 
 		@Override
-		public int size()
-		{
+		public int size() {
 			return NativeObject.this.size();
 		}
 	}
 
-	class KeySet extends AbstractSet<Object>
-	{
+	class KeySet extends AbstractSet<Object> {
 
 		@Override
-		public boolean contains(Object key)
-		{
+		public boolean contains(Object key) {
 			return containsKey(key);
 		}
 
 		@Override
-		public Iterator<Object> iterator()
-		{
-			return new Iterator<Object>()
-			{
+		public Iterator<Object> iterator() {
+			return new Iterator<Object>() {
 				final Object[] ids = getIds();
 				Object key;
 				int index = 0;
 
 				@Override
-				public boolean hasNext()
-				{
+				public boolean hasNext() {
 					return index < ids.length;
 				}
 
 				@Override
-				public Object next()
-				{
-					try
-					{
+				public Object next() {
+					try {
 						return (key = ids[index++]);
-					}
-					catch (ArrayIndexOutOfBoundsException e)
-					{
+					} catch (ArrayIndexOutOfBoundsException e) {
 						key = null;
 						throw new NoSuchElementException();
 					}
 				}
 
 				@Override
-				public void remove()
-				{
-					if (key == null)
-					{
+				public void remove() {
+					if (key == null) {
 						throw new IllegalStateException();
 					}
 					NativeObject.this.remove(key);
@@ -990,41 +821,33 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 		}
 
 		@Override
-		public int size()
-		{
+		public int size() {
 			return NativeObject.this.size();
 		}
 	}
 
-	class ValueCollection extends AbstractCollection<Object>
-	{
+	class ValueCollection extends AbstractCollection<Object> {
 
 		@Override
-		public Iterator<Object> iterator()
-		{
-			return new Iterator<Object>()
-			{
+		public Iterator<Object> iterator() {
+			return new Iterator<Object>() {
 				final Object[] ids = getIds();
 				Object key;
 				int index = 0;
 
 				@Override
-				public boolean hasNext()
-				{
+				public boolean hasNext() {
 					return index < ids.length;
 				}
 
 				@Override
-				public Object next()
-				{
+				public Object next() {
 					return get((key = ids[index++]));
 				}
 
 				@Override
-				public void remove()
-				{
-					if (key == null)
-					{
+				public void remove() {
+					if (key == null) {
 						throw new IllegalStateException();
 					}
 					NativeObject.this.remove(key);
@@ -1034,8 +857,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 		}
 
 		@Override
-		public int size()
-		{
+		public int size() {
 			return NativeObject.this.size();
 		}
 	}
@@ -1044,8 +866,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 	// #string_id_map#
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2007-05-09 08:15:55 EDT
 		L0:
@@ -1054,21 +875,17 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 			String X = null;
 			int c;
 			L:
-			switch (s.length())
-			{
+			switch (s.length()) {
 				case 7:
 					X = "valueOf";
 					id = Id_valueOf;
 					break L;
 				case 8:
 					c = s.charAt(3);
-					if (c == 'o')
-					{
+					if (c == 'o') {
 						X = "toSource";
 						id = Id_toSource;
-					}
-					else if (c == 't')
-					{
+					} else if (c == 't') {
 						X = "toString";
 						id = Id_toString;
 					}
@@ -1083,43 +900,31 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 					break L;
 				case 14:
 					c = s.charAt(0);
-					if (c == 'h')
-					{
+					if (c == 'h') {
 						X = "hasOwnProperty";
 						id = Id_hasOwnProperty;
-					}
-					else if (c == 't')
-					{
+					} else if (c == 't') {
 						X = "toLocaleString";
 						id = Id_toLocaleString;
 					}
 					break L;
 				case 16:
 					c = s.charAt(2);
-					if (c == 'd')
-					{
+					if (c == 'd') {
 						c = s.charAt(8);
-						if (c == 'G')
-						{
+						if (c == 'G') {
 							X = "__defineGetter__";
 							id = Id___defineGetter__;
-						}
-						else if (c == 'S')
-						{
+						} else if (c == 'S') {
 							X = "__defineSetter__";
 							id = Id___defineSetter__;
 						}
-					}
-					else if (c == 'l')
-					{
+					} else if (c == 'l') {
 						c = s.charAt(8);
-						if (c == 'G')
-						{
+						if (c == 'G') {
 							X = "__lookupGetter__";
 							id = Id___lookupGetter__;
-						}
-						else if (c == 'S')
-						{
+						} else if (c == 'S') {
 							X = "__lookupSetter__";
 							id = Id___lookupSetter__;
 						}
@@ -1130,8 +935,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 					id = Id_propertyIsEnumerable;
 					break L;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;
@@ -1174,23 +978,17 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 			MAX_PROTOTYPE_ID = 12;
 
 	@Override
-	public <T> T createDataObject(Supplier<T> instanceFactory)
-	{
+	public <T> T createDataObject(Supplier<T> instanceFactory) {
 		T inst = instanceFactory.get();
 
-		try
-		{
-			for (Field field : inst.getClass().getFields())
-			{
-				if (Modifier.isPublic(field.getModifiers()) && !Modifier.isTransient(field.getModifiers()) && has(field.getName(), this))
-				{
+		try {
+			for (Field field : inst.getClass().getFields()) {
+				if (Modifier.isPublic(field.getModifiers()) && !Modifier.isTransient(field.getModifiers()) && has(field.getName(), this)) {
 					field.setAccessible(true);
 					field.set(inst, get(field.getName(), this));
 				}
 			}
-		}
-		catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 
@@ -1198,14 +996,12 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject
 	}
 
 	@Override
-	public <T> List<T> createDataObjectList(Supplier<T> instanceFactory)
-	{
+	public <T> List<T> createDataObjectList(Supplier<T> instanceFactory) {
 		return Collections.singletonList(createDataObject(instanceFactory));
 	}
 
 	@Override
-	public boolean isDataObjectList()
-	{
+	public boolean isDataObjectList() {
 		return false;
 	}
 

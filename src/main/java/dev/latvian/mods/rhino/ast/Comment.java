@@ -38,8 +38,7 @@ import dev.latvian.mods.rhino.Token;
  * parent, but Comments are always stored directly in the AstRoot node, so
  * they are also effectively absolute offsets.
  */
-public class Comment extends AstNode
-{
+public class Comment extends AstNode {
 
 	private String value;
 	private Token.CommentType commentType;
@@ -56,8 +55,7 @@ public class Comment extends AstNode
 	 * @param type  the comment type
 	 * @param value the value of the comment, as a string
 	 */
-	public Comment(int pos, int len, Token.CommentType type, String value)
-	{
+	public Comment(int pos, int len, Token.CommentType type, String value) {
 		super(pos, len);
 		commentType = type;
 		this.value = value;
@@ -66,8 +64,7 @@ public class Comment extends AstNode
 	/**
 	 * Returns the comment style
 	 */
-	public Token.CommentType getCommentType()
-	{
+	public Token.CommentType getCommentType() {
 		return commentType;
 	}
 
@@ -77,16 +74,14 @@ public class Comment extends AstNode
 	 * @param type the comment style, a
 	 *             {@link Token.CommentType}
 	 */
-	public void setCommentType(Token.CommentType type)
-	{
+	public void setCommentType(Token.CommentType type) {
 		this.commentType = type;
 	}
 
 	/**
 	 * Returns a string of the comment value.
 	 */
-	public String getValue()
-	{
+	public String getValue() {
 		return value;
 	}
 
@@ -95,20 +90,17 @@ public class Comment extends AstNode
 	 *
 	 * @param commentString
 	 */
-	public void setValue(String commentString)
-	{
+	public void setValue(String commentString) {
 		this.value = commentString;
 		this.setLength(this.value.length());
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder(getLength() + 10);
 		sb.append(makeIndent(depth));
 		sb.append(value);
-		if (Token.CommentType.BLOCK_COMMENT == this.getCommentType())
-		{
+		if (Token.CommentType.BLOCK_COMMENT == this.getCommentType()) {
 			sb.append("\n");
 		}
 		return sb.toString();
@@ -119,8 +111,7 @@ public class Comment extends AstNode
 	 * but comply with the {@link AstNode#visit} interface.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
+	public void visit(NodeVisitor v) {
 		v.visit(this);
 	}
 }

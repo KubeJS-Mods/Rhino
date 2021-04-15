@@ -14,6 +14,5 @@ package dev.latvian.mods.rhino;
  * @since 1.7.8
  */
 
-public interface Symbol
-{
+public interface Symbol {
 }

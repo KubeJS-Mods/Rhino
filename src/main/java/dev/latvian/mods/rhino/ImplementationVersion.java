@@ -11,49 +11,38 @@ import java.util.jar.Manifest;
  * This class is a singleton that just exists to serve up the implementation version. This should
  * encourage that it's safely but lazily loaded just once per VM.
  */
-public class ImplementationVersion
-{
+public class ImplementationVersion {
 
 	private String versionString;
 
 	private static final ImplementationVersion version = new ImplementationVersion();
 
-	public static String get()
-	{
+	public static String get() {
 		return version.versionString;
 	}
 
-	private ImplementationVersion()
-	{
+	private ImplementationVersion() {
 		Enumeration<URL> urls;
-		try
-		{
+		try {
 			urls = ImplementationVersion.class.getClassLoader()
 					.getResources("META-INF/MANIFEST.MF");
-		}
-		catch (IOException ioe)
-		{
+		} catch (IOException ioe) {
 			return;
 		}
 
 		// There will be many manifests in the world -- enumerate all of them until we find the right one.
-		while (urls.hasMoreElements())
-		{
+		while (urls.hasMoreElements()) {
 			URL metaUrl = urls.nextElement();
-			try (InputStream is = metaUrl.openStream())
-			{
+			try (InputStream is = metaUrl.openStream()) {
 				Manifest mf = new Manifest(is);
 				Attributes attrs = mf.getMainAttributes();
-				if ("Mozilla Rhino".equals(attrs.getValue("Implementation-Title")))
-				{
+				if ("Mozilla Rhino".equals(attrs.getValue("Implementation-Title"))) {
 					versionString =
 							"Rhino " + attrs.getValue("Implementation-Version") + " " +
 									attrs.getValue("Built-Date").replaceAll("-", " ");
 					return;
 				}
-			}
-			catch (IOException e)
-			{
+			} catch (IOException e) {
 				// Ignore this unlikely event
 			}
 		}

@@ -12,27 +12,23 @@ package dev.latvian.mods.rhino;
  *
  * @author Norris Boyd
  */
-public final class NativeGenerator extends IdScriptableObject
-{
+public final class NativeGenerator extends IdScriptableObject {
 	private static final long serialVersionUID = 1645892441041347273L;
 
 	private static final Object GENERATOR_TAG = "Generator";
 
-	static NativeGenerator init(ScriptableObject scope, boolean sealed)
-	{
+	static NativeGenerator init(ScriptableObject scope, boolean sealed) {
 		// Generator
 		// Can't use "NativeGenerator().exportAsJSClass" since we don't want
 		// to define "Generator" as a constructor in the top-level scope.
 
 		NativeGenerator prototype = new NativeGenerator();
-		if (scope != null)
-		{
+		if (scope != null) {
 			prototype.setParentScope(scope);
 			prototype.setPrototype(getObjectPrototype(scope));
 		}
 		prototype.activatePrototypeMap(MAX_PROTOTYPE_ID);
-		if (sealed)
-		{
+		if (sealed) {
 			prototype.sealObject();
 		}
 
@@ -40,8 +36,7 @@ public final class NativeGenerator extends IdScriptableObject
 		// Generator instances, but don't have a generator constructor
 		// to use to find the prototype. Use the "associateValue"
 		// approach instead.
-		if (scope != null)
-		{
+		if (scope != null) {
 			scope.associateValue(GENERATOR_TAG, prototype);
 		}
 
@@ -51,13 +46,11 @@ public final class NativeGenerator extends IdScriptableObject
 	/**
 	 * Only for constructing the prototype object.
 	 */
-	private NativeGenerator()
-	{
+	private NativeGenerator() {
 	}
 
 	public NativeGenerator(Scriptable scope, NativeFunction function,
-						   Object savedState)
-	{
+						   Object savedState) {
 		this.function = function;
 		this.savedState = savedState;
 		// Set parent and prototype properties. Since we don't have a
@@ -75,18 +68,15 @@ public final class NativeGenerator extends IdScriptableObject
 			GENERATOR_CLOSE = 2;
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "Generator";
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
+	protected void initPrototypeId(int id) {
 		String s;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_close:
 				arity = 1;
 				s = "close";
@@ -115,23 +105,19 @@ public final class NativeGenerator extends IdScriptableObject
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(GENERATOR_TAG))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(GENERATOR_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
 
-		if (!(thisObj instanceof NativeGenerator))
-		{
+		if (!(thisObj instanceof NativeGenerator)) {
 			throw incompatibleCallError(f);
 		}
 
 		NativeGenerator generator = (NativeGenerator) thisObj;
 
-		switch (id)
-		{
+		switch (id) {
 
 			case Id_close:
 				// need to run any pending finally clauses
@@ -144,11 +130,9 @@ public final class NativeGenerator extends IdScriptableObject
 				return generator.resume(cx, scope, GENERATOR_SEND,
 						Undefined.instance);
 
-			case Id_send:
-			{
+			case Id_send: {
 				Object arg = args.length > 0 ? args[0] : Undefined.instance;
-				if (generator.firstTime && !arg.equals(Undefined.instance))
-				{
+				if (generator.firstTime && !arg.equals(Undefined.instance)) {
 					throw ScriptRuntime.typeError0("msg.send.newborn");
 				}
 				return generator.resume(cx, scope, GENERATOR_SEND, arg);
@@ -167,63 +151,46 @@ public final class NativeGenerator extends IdScriptableObject
 	}
 
 	private Object resume(Context cx, Scriptable scope, int operation,
-						  Object value)
-	{
-		if (savedState == null)
-		{
-			if (operation == GENERATOR_CLOSE)
-			{
+						  Object value) {
+		if (savedState == null) {
+			if (operation == GENERATOR_CLOSE) {
 				return Undefined.instance;
 			}
 			Object thrown;
-			if (operation == GENERATOR_THROW)
-			{
+			if (operation == GENERATOR_THROW) {
 				thrown = value;
-			}
-			else
-			{
+			} else {
 				thrown = NativeIterator.getStopIterationObject(scope);
 			}
 			throw new JavaScriptException(thrown, lineSource, lineNumber);
 		}
-		try
-		{
-			synchronized (this)
-			{
+		try {
+			synchronized (this) {
 				// generator execution is necessarily single-threaded and
 				// non-reentrant.
 				// See https://bugzilla.mozilla.org/show_bug.cgi?id=349263
-				if (locked)
-				{
+				if (locked) {
 					throw ScriptRuntime.typeError0("msg.already.exec.gen");
 				}
 				locked = true;
 			}
 			return function.resumeGenerator(cx, scope, operation, savedState,
 					value);
-		}
-		catch (GeneratorClosedException e)
-		{
+		} catch (GeneratorClosedException e) {
 			// On closing a generator in the compile path, the generator
 			// throws a special exception. This ensures execution of all pending
 			// finalizers and will not get caught by user code.
 			return Undefined.instance;
-		}
-		catch (RhinoException e)
-		{
+		} catch (RhinoException e) {
 			lineNumber = e.lineNumber();
 			lineSource = e.lineSource();
 			savedState = null;
 			throw e;
-		}
-		finally
-		{
-			synchronized (this)
-			{
+		} finally {
+			synchronized (this) {
 				locked = false;
 			}
-			if (operation == GENERATOR_CLOSE)
-			{
+			if (operation == GENERATOR_CLOSE) {
 				savedState = null;
 			}
 		}
@@ -232,8 +199,7 @@ public final class NativeGenerator extends IdScriptableObject
 	// #string_id_map#
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2007-06-14 13:13:03 EDT
 		L0:
@@ -242,41 +208,29 @@ public final class NativeGenerator extends IdScriptableObject
 			String X = null;
 			int c;
 			int s_length = s.length();
-			if (s_length == 4)
-			{
+			if (s_length == 4) {
 				c = s.charAt(0);
-				if (c == 'n')
-				{
+				if (c == 'n') {
 					X = "next";
 					id = Id_next;
-				}
-				else if (c == 's')
-				{
+				} else if (c == 's') {
 					X = "send";
 					id = Id_send;
 				}
-			}
-			else if (s_length == 5)
-			{
+			} else if (s_length == 5) {
 				c = s.charAt(0);
-				if (c == 'c')
-				{
+				if (c == 'c') {
 					X = "close";
 					id = Id_close;
-				}
-				else if (c == 't')
-				{
+				} else if (c == 't') {
 					X = "throw";
 					id = Id_throw;
 				}
-			}
-			else if (s_length == 12)
-			{
+			} else if (s_length == 12) {
 				X = "__iterator__";
 				id = Id___iterator__;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;
@@ -301,8 +255,7 @@ public final class NativeGenerator extends IdScriptableObject
 	private boolean firstTime = true;
 	private boolean locked;
 
-	public static class GeneratorClosedException extends RuntimeException
-	{
+	public static class GeneratorClosedException extends RuntimeException {
 		private static final long serialVersionUID = 2561315658662379681L;
 	}
 }

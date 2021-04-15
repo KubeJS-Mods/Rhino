@@ -8,8 +8,7 @@ package dev.latvian.mods.rhino.v8dtoa;
 
 import java.util.Arrays;
 
-public class FastDtoaBuilder
-{
+public class FastDtoaBuilder {
 
 	// allocate buffer for generated digits + extra notation + padding zeroes
 	final char[] chars = new char[FastDtoa.kFastDtoaMaximalLength + 8];
@@ -17,41 +16,32 @@ public class FastDtoaBuilder
 	int point;
 	boolean formatted = false;
 
-	void append(char c)
-	{
+	void append(char c) {
 		chars[end++] = c;
 	}
 
-	void decreaseLast()
-	{
+	void decreaseLast() {
 		chars[end - 1]--;
 	}
 
-	public void reset()
-	{
+	public void reset() {
 		end = 0;
 		formatted = false;
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return "[chars:" + new String(chars, 0, end) + ", point:" + point + "]";
 	}
 
-	public String format()
-	{
-		if (!formatted)
-		{
+	public String format() {
+		if (!formatted) {
 			// check for minus sign
 			int firstDigit = chars[0] == '-' ? 1 : 0;
 			int decPoint = point - firstDigit;
-			if (decPoint < -5 || decPoint > 21)
-			{
+			if (decPoint < -5 || decPoint > 21) {
 				toExponentialFormat(firstDigit, decPoint);
-			}
-			else
-			{
+			} else {
 				toFixedFormat(firstDigit, decPoint);
 			}
 			formatted = true;
@@ -60,44 +50,34 @@ public class FastDtoaBuilder
 
 	}
 
-	private void toFixedFormat(int firstDigit, int decPoint)
-	{
-		if (point < end)
-		{
+	private void toFixedFormat(int firstDigit, int decPoint) {
+		if (point < end) {
 			// insert decimal point
-			if (decPoint > 0)
-			{
+			if (decPoint > 0) {
 				// >= 1, split decimals and insert point
 				System.arraycopy(chars, point, chars, point + 1, end - point);
 				chars[point] = '.';
 				end++;
-			}
-			else
-			{
+			} else {
 				// < 1,
 				int target = firstDigit + 2 - decPoint;
 				System.arraycopy(chars, firstDigit, chars, target, end - firstDigit);
 				chars[firstDigit] = '0';
 				chars[firstDigit + 1] = '.';
-				if (decPoint < 0)
-				{
+				if (decPoint < 0) {
 					Arrays.fill(chars, firstDigit + 2, target, '0');
 				}
 				end += 2 - decPoint;
 			}
-		}
-		else if (point > end)
-		{
+		} else if (point > end) {
 			// large integer, add trailing zeroes
 			Arrays.fill(chars, end, point, '0');
 			end += point - end;
 		}
 	}
 
-	private void toExponentialFormat(int firstDigit, int decPoint)
-	{
-		if (end - firstDigit > 1)
-		{
+	private void toExponentialFormat(int firstDigit, int decPoint) {
+		if (end - firstDigit > 1) {
 			// insert decimal point if more than one digit was produced
 			int dot = firstDigit + 1;
 			System.arraycopy(chars, dot, chars, dot + 1, end - dot);
@@ -107,8 +87,7 @@ public class FastDtoaBuilder
 		chars[end++] = 'e';
 		char sign = '+';
 		int exp = decPoint - 1;
-		if (exp < 0)
-		{
+		if (exp < 0) {
 			sign = '-';
 			exp = -exp;
 		}
@@ -118,13 +97,11 @@ public class FastDtoaBuilder
 		end = charPos + 1;
 
 		// code below is needed because Integer.getChars() is not public
-		for (; ; )
-		{
+		for (; ; ) {
 			int r = exp % 10;
 			chars[charPos--] = digits[r];
 			exp = exp / 10;
-			if (exp == 0)
-			{
+			if (exp == 0) {
 				break;
 			}
 		}

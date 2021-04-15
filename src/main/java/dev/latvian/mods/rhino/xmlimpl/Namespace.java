@@ -16,8 +16,7 @@ import dev.latvian.mods.rhino.Undefined;
 /**
  * Class Namespace
  */
-class Namespace extends IdScriptableObject
-{
+class Namespace extends IdScriptableObject {
 	static final long serialVersionUID = -5765755238131301744L;
 
 	private static final Object NAMESPACE_TAG = "Namespace";
@@ -25,12 +24,10 @@ class Namespace extends IdScriptableObject
 	private Namespace prototype;
 	private XmlNode.Namespace ns;
 
-	private Namespace()
-	{
+	private Namespace() {
 	}
 
-	static Namespace create(Scriptable scope, Namespace prototype, XmlNode.Namespace namespace)
-	{
+	static Namespace create(Scriptable scope, Namespace prototype, XmlNode.Namespace namespace) {
 		Namespace rv = new Namespace();
 		rv.setParentScope(scope);
 		rv.prototype = prototype;
@@ -39,63 +36,51 @@ class Namespace extends IdScriptableObject
 		return rv;
 	}
 
-	final XmlNode.Namespace getDelegate()
-	{
+	final XmlNode.Namespace getDelegate() {
 		return ns;
 	}
 
-	public void exportAsJSClass(boolean sealed)
-	{
+	public void exportAsJSClass(boolean sealed) {
 		exportAsJSClass(MAX_PROTOTYPE_ID, this.getParentScope(), sealed);
 	}
 
-	public String uri()
-	{
+	public String uri() {
 		return ns.getUri();
 	}
 
-	public String prefix()
-	{
+	public String prefix() {
 		return ns.getPrefix();
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return uri();
 	}
 
-	public String toLocaleString()
-	{
+	public String toLocaleString() {
 		return toString();
 	}
 
-	private boolean equals(Namespace n)
-	{
+	private boolean equals(Namespace n) {
 		return uri().equals(n.uri());
 	}
 
 	@Override
-	public boolean equals(Object obj)
-	{
-		if (!(obj instanceof Namespace))
-		{
+	public boolean equals(Object obj) {
+		if (!(obj instanceof Namespace)) {
 			return false;
 		}
 		return equals((Namespace) obj);
 	}
 
 	@Override
-	public int hashCode()
-	{
+	public int hashCode() {
 		return uri().hashCode();
 	}
 
 	@Override
-	protected Object equivalentValues(Object value)
-	{
-		if (!(value instanceof Namespace))
-		{
+	protected Object equivalentValues(Object value) {
+		if (!(value instanceof Namespace)) {
 			return Scriptable.NOT_FOUND;
 		}
 		boolean result = equals((Namespace) value);
@@ -103,14 +88,12 @@ class Namespace extends IdScriptableObject
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "Namespace";
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> hint)
-	{
+	public Object getDefaultValue(Class<?> hint) {
 		return uri();
 	}
 
@@ -121,14 +104,12 @@ class Namespace extends IdScriptableObject
 			MAX_INSTANCE_ID = 2;
 
 	@Override
-	protected int getMaxInstanceId()
-	{
+	protected int getMaxInstanceId() {
 		return super.getMaxInstanceId() + MAX_INSTANCE_ID;
 	}
 
 	@Override
-	protected int findInstanceIdInfo(String s)
-	{
+	protected int findInstanceIdInfo(String s) {
 		int id;
 		// #generated# Last update: 2007-08-20 08:23:22 EDT
 		L0:
@@ -136,32 +117,26 @@ class Namespace extends IdScriptableObject
 			id = 0;
 			String X = null;
 			int s_length = s.length();
-			if (s_length == 3)
-			{
+			if (s_length == 3) {
 				X = "uri";
 				id = Id_uri;
-			}
-			else if (s_length == 6)
-			{
+			} else if (s_length == 6) {
 				X = "prefix";
 				id = Id_prefix;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;
 		}
 		// #/generated#
 
-		if (id == 0)
-		{
+		if (id == 0) {
 			return super.findInstanceIdInfo(s);
 		}
 
 		int attr;
-		switch (id)
-		{
+		switch (id) {
 			case Id_prefix:
 			case Id_uri:
 				attr = PERMANENT | READONLY;
@@ -174,10 +149,8 @@ class Namespace extends IdScriptableObject
 	// #/string_id_map#
 
 	@Override
-	protected String getInstanceIdName(int id)
-	{
-		switch (id - super.getMaxInstanceId())
-		{
+	protected String getInstanceIdName(int id) {
+		switch (id - super.getMaxInstanceId()) {
 			case Id_prefix:
 				return "prefix";
 			case Id_uri:
@@ -187,13 +160,10 @@ class Namespace extends IdScriptableObject
 	}
 
 	@Override
-	protected Object getInstanceIdValue(int id)
-	{
-		switch (id - super.getMaxInstanceId())
-		{
+	protected Object getInstanceIdValue(int id) {
+		switch (id - super.getMaxInstanceId()) {
 			case Id_prefix:
-				if (ns.getPrefix() == null)
-				{
+				if (ns.getPrefix() == null) {
 					return Undefined.instance;
 				}
 				return ns.getPrefix();
@@ -212,8 +182,7 @@ class Namespace extends IdScriptableObject
 			MAX_PROTOTYPE_ID = 3;
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2007-08-20 08:23:22 EDT
 		L0:
@@ -222,27 +191,20 @@ class Namespace extends IdScriptableObject
 			String X = null;
 			int c;
 			int s_length = s.length();
-			if (s_length == 8)
-			{
+			if (s_length == 8) {
 				c = s.charAt(3);
-				if (c == 'o')
-				{
+				if (c == 'o') {
 					X = "toSource";
 					id = Id_toSource;
-				}
-				else if (c == 't')
-				{
+				} else if (c == 't') {
 					X = "toString";
 					id = Id_toString;
 				}
-			}
-			else if (s_length == 11)
-			{
+			} else if (s_length == 11) {
 				X = "constructor";
 				id = Id_constructor;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;
@@ -253,12 +215,10 @@ class Namespace extends IdScriptableObject
 	// #/string_id_map#
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
+	protected void initPrototypeId(int id) {
 		String s;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				arity = 2;
 				s = "constructor";
@@ -282,15 +242,12 @@ class Namespace extends IdScriptableObject
 							 Context cx,
 							 Scriptable scope,
 							 Scriptable thisObj,
-							 Object[] args)
-	{
-		if (!f.hasTag(NAMESPACE_TAG))
-		{
+							 Object[] args) {
+		if (!f.hasTag(NAMESPACE_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				return jsConstructor(cx, (thisObj == null), args);
 			case Id_toString:
@@ -301,59 +258,45 @@ class Namespace extends IdScriptableObject
 		throw new IllegalArgumentException(String.valueOf(id));
 	}
 
-	private Namespace realThis(Scriptable thisObj, IdFunctionObject f)
-	{
-		if (!(thisObj instanceof Namespace))
-		{
+	private Namespace realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (!(thisObj instanceof Namespace)) {
 			throw incompatibleCallError(f);
 		}
 		return (Namespace) thisObj;
 	}
 
-	Namespace newNamespace(String uri)
-	{
+	Namespace newNamespace(String uri) {
 		Namespace prototype = (this.prototype == null) ? this : this.prototype;
 		return create(this.getParentScope(), prototype, XmlNode.Namespace.create(uri));
 	}
 
-	Namespace newNamespace(String prefix, String uri)
-	{
-		if (prefix == null)
-		{
+	Namespace newNamespace(String prefix, String uri) {
+		if (prefix == null) {
 			return newNamespace(uri);
 		}
 		Namespace prototype = (this.prototype == null) ? this : this.prototype;
 		return create(this.getParentScope(), prototype, XmlNode.Namespace.create(prefix, uri));
 	}
 
-	Namespace constructNamespace(Object uriValue)
-	{
+	Namespace constructNamespace(Object uriValue) {
 		String prefix;
 		String uri;
 
-		if (uriValue instanceof Namespace)
-		{
+		if (uriValue instanceof Namespace) {
 			Namespace ns = (Namespace) uriValue;
 			prefix = ns.prefix();
 			uri = ns.uri();
-		}
-		else if (uriValue instanceof QName)
-		{
+		} else if (uriValue instanceof QName) {
 			QName qname = (QName) uriValue;
 			uri = qname.uri();
-			if (uri != null)
-			{
+			if (uri != null) {
 				//    TODO    Is there a way to push this back into QName so that we can make prefix() private?
 				prefix = qname.prefix();
-			}
-			else
-			{
+			} else {
 				uri = qname.toString();
 				prefix = null;
 			}
-		}
-		else
-		{
+		} else {
 			uri = ScriptRuntime.toString(uriValue);
 			prefix = (uri.length() == 0) ? "" : null;
 		}
@@ -361,94 +304,67 @@ class Namespace extends IdScriptableObject
 		return newNamespace(prefix, uri);
 	}
 
-	Namespace castToNamespace(Object namespaceObj)
-	{
-		if (namespaceObj instanceof Namespace)
-		{
+	Namespace castToNamespace(Object namespaceObj) {
+		if (namespaceObj instanceof Namespace) {
 			return (Namespace) namespaceObj;
 		}
 		return constructNamespace(namespaceObj);
 	}
 
-	private Namespace constructNamespace(Object prefixValue, Object uriValue)
-	{
+	private Namespace constructNamespace(Object prefixValue, Object uriValue) {
 		String prefix;
 		String uri;
 
-		if (uriValue instanceof QName)
-		{
+		if (uriValue instanceof QName) {
 			QName qname = (QName) uriValue;
 			uri = qname.uri();
-			if (uri == null)
-			{
+			if (uri == null) {
 				uri = qname.toString();
 			}
-		}
-		else
-		{
+		} else {
 			uri = ScriptRuntime.toString(uriValue);
 		}
 
-		if (uri.length() == 0)
-		{
-			if (prefixValue == Undefined.instance)
-			{
+		if (uri.length() == 0) {
+			if (prefixValue == Undefined.instance) {
 				prefix = "";
-			}
-			else
-			{
+			} else {
 				prefix = ScriptRuntime.toString(prefixValue);
-				if (prefix.length() != 0)
-				{
+				if (prefix.length() != 0) {
 					throw ScriptRuntime.typeError(
 							"Illegal prefix '" + prefix + "' for 'no namespace'.");
 				}
 			}
-		}
-		else if (prefixValue == Undefined.instance)
-		{
+		} else if (prefixValue == Undefined.instance) {
 			prefix = "";
-		}
-		else if (!XMLName.accept(prefixValue))
-		{
+		} else if (!XMLName.accept(prefixValue)) {
 			prefix = "";
-		}
-		else
-		{
+		} else {
 			prefix = ScriptRuntime.toString(prefixValue);
 		}
 
 		return newNamespace(prefix, uri);
 	}
 
-	private Namespace constructNamespace()
-	{
+	private Namespace constructNamespace() {
 		return newNamespace("", "");
 	}
 
-	private Object jsConstructor(Context cx, boolean inNewExpr, Object[] args)
-	{
-		if (!inNewExpr && args.length == 1)
-		{
+	private Object jsConstructor(Context cx, boolean inNewExpr, Object[] args) {
+		if (!inNewExpr && args.length == 1) {
 			return castToNamespace(args[0]);
 		}
 
-		if (args.length == 0)
-		{
+		if (args.length == 0) {
 			return constructNamespace();
-		}
-		else if (args.length == 1)
-		{
+		} else if (args.length == 1) {
 			return constructNamespace(args[0]);
-		}
-		else
-		{
+		} else {
 			return constructNamespace(args[0], args[1]);
 		}
 	}
 
-	private String js_toSource()
-	{
+	private String js_toSource() {
 		StringBuilder sb = new StringBuilder();
 		sb.append('(');
 		toSourceImpl(ns.getPrefix(), ns.getUri(), sb);
@@ -456,21 +372,15 @@ class Namespace extends IdScriptableObject
 		return sb.toString();
 	}
 
-	static void toSourceImpl(String prefix, String uri, StringBuilder sb)
-	{
+	static void toSourceImpl(String prefix, String uri, StringBuilder sb) {
 		sb.append("new Namespace(");
-		if (uri.length() == 0)
-		{
-			if (!"".equals(prefix))
-			{
+		if (uri.length() == 0) {
+			if (!"".equals(prefix)) {
 				throw new IllegalArgumentException(prefix);
 			}
-		}
-		else
-		{
+		} else {
 			sb.append('\'');
-			if (prefix != null)
-			{
+			if (prefix != null) {
 				sb.append(ScriptRuntime.escapeString(prefix, '\''));
 				sb.append("', '");
 			}

@@ -18,8 +18,7 @@ package dev.latvian.mods.rhino;
  */
 
 public interface SlotMap
-		extends Iterable<ScriptableObject.Slot>
-{
+		extends Iterable<ScriptableObject.Slot> {
 
 	/**
 	 * Return the size of the map.

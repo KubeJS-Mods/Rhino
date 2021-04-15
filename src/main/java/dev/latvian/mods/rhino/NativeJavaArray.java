@@ -19,33 +19,27 @@ import java.lang.reflect.Array;
 
 public class NativeJavaArray
 		extends NativeJavaObject
-		implements SymbolScriptable
-{
+		implements SymbolScriptable {
 	private static final long serialVersionUID = -924022554283675333L;
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "JavaArray";
 	}
 
-	public static NativeJavaArray wrap(Scriptable scope, Object array)
-	{
+	public static NativeJavaArray wrap(Scriptable scope, Object array) {
 		return new NativeJavaArray(scope, array);
 	}
 
 	@Override
-	public Object unwrap()
-	{
+	public Object unwrap() {
 		return array;
 	}
 
-	public NativeJavaArray(Scriptable scope, Object array)
-	{
+	public NativeJavaArray(Scriptable scope, Object array) {
 		super(scope, null, ScriptRuntime.ObjectClass);
 		Class<?> cl = array.getClass();
-		if (!cl.isArray())
-		{
+		if (!cl.isArray()) {
 			throw new RuntimeException("Array expected");
 		}
 		this.array = array;
@@ -54,34 +48,28 @@ public class NativeJavaArray
 	}
 
 	@Override
-	public boolean has(String id, Scriptable start)
-	{
+	public boolean has(String id, Scriptable start) {
 		return id.equals("length") || super.has(id, start);
 	}
 
 	@Override
-	public boolean has(int index, Scriptable start)
-	{
+	public boolean has(int index, Scriptable start) {
 		return 0 <= index && index < length;
 	}
 
 	@Override
-	public boolean has(Symbol key, Scriptable start)
-	{
+	public boolean has(Symbol key, Scriptable start) {
 		return SymbolKey.IS_CONCAT_SPREADABLE.equals(key);
 	}
 
 	@Override
-	public Object get(String id, Scriptable start)
-	{
-		if (id.equals("length"))
-		{
+	public Object get(String id, Scriptable start) {
+		if (id.equals("length")) {
 			return length;
 		}
 		Object result = super.get(id, start);
 		if (result == NOT_FOUND &&
-				!ScriptableObject.hasProperty(getPrototype(), id))
-		{
+				!ScriptableObject.hasProperty(getPrototype(), id)) {
 			throw Context.reportRuntimeError2(
 					"msg.java.member.not.found", array.getClass().getName(), id);
 		}
@@ -89,10 +77,8 @@ public class NativeJavaArray
 	}
 
 	@Override
-	public Object get(int index, Scriptable start)
-	{
-		if (0 <= index && index < length)
-		{
+	public Object get(int index, Scriptable start) {
+		if (0 <= index && index < length) {
 			Context cx = Context.getContext();
 			Object obj = Array.get(array, index);
 			return cx.getWrapFactory().wrap(cx, this, obj, cls);
@@ -101,35 +87,27 @@ public class NativeJavaArray
 	}
 
 	@Override
-	public Object get(Symbol key, Scriptable start)
-	{
-		if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key))
-		{
+	public Object get(Symbol key, Scriptable start) {
+		if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key)) {
 			return Boolean.TRUE;
 		}
 		return NOT_FOUND;
 	}
 
 	@Override
-	public void put(String id, Scriptable start, Object value)
-	{
+	public void put(String id, Scriptable start, Object value) {
 		// Ignore assignments to "length"--it's readonly.
-		if (!id.equals("length"))
-		{
+		if (!id.equals("length")) {
 			throw Context.reportRuntimeError1(
 					"msg.java.array.member.not.found", id);
 		}
 	}
 
 	@Override
-	public void put(int index, Scriptable start, Object value)
-	{
-		if (0 <= index && index < length)
-		{
+	public void put(int index, Scriptable start, Object value) {
+		if (0 <= index && index < length) {
 			Array.set(array, index, Context.jsToJava(value, cls));
-		}
-		else
-		{
+		} else {
 			throw Context.reportRuntimeError2(
 					"msg.java.array.index.out.of.bounds", String.valueOf(index),
 					String.valueOf(length - 1));
@@ -137,46 +115,37 @@ public class NativeJavaArray
 	}
 
 	@Override
-	public void delete(Symbol key)
-	{
+	public void delete(Symbol key) {
 		// All symbols are read-only
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> hint)
-	{
-		if (hint == null || hint == ScriptRuntime.StringClass)
-		{
+	public Object getDefaultValue(Class<?> hint) {
+		if (hint == null || hint == ScriptRuntime.StringClass) {
 			return array.toString();
 		}
-		if (hint == ScriptRuntime.BooleanClass)
-		{
+		if (hint == ScriptRuntime.BooleanClass) {
 			return Boolean.TRUE;
 		}
-		if (hint == ScriptRuntime.NumberClass)
-		{
+		if (hint == ScriptRuntime.NumberClass) {
 			return ScriptRuntime.NaNobj;
 		}
 		return this;
 	}
 
 	@Override
-	public Object[] getIds()
-	{
+	public Object[] getIds() {
 		Object[] result = new Object[length];
 		int i = length;
-		while (--i >= 0)
-		{
+		while (--i >= 0) {
 			result[i] = i;
 		}
 		return result;
 	}
 
 	@Override
-	public boolean hasInstance(Scriptable value)
-	{
-		if (!(value instanceof Wrapper))
-		{
+	public boolean hasInstance(Scriptable value) {
+		if (!(value instanceof Wrapper)) {
 			return false;
 		}
 		Object instance = ((Wrapper) value).unwrap();
@@ -184,10 +153,8 @@ public class NativeJavaArray
 	}
 
 	@Override
-	public Scriptable getPrototype()
-	{
-		if (prototype == null)
-		{
+	public Scriptable getPrototype() {
+		if (prototype == null) {
 			prototype =
 					ScriptableObject.getArrayPrototype(this.getParentScope());
 		}

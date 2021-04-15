@@ -30,32 +30,27 @@ package dev.latvian.mods.rhino.ast;
  * is an {@code XmlRef} that is part of an infix '&lt;' expression
  * whose parent is an {@code XmlDotQuery} node.
  */
-public abstract class XmlRef extends AstNode
-{
+public abstract class XmlRef extends AstNode {
 
 	protected Name namespace;
 	protected int atPos = -1;
 	protected int colonPos = -1;
 
-	public XmlRef()
-	{
+	public XmlRef() {
 	}
 
-	public XmlRef(int pos)
-	{
+	public XmlRef(int pos) {
 		super(pos);
 	}
 
-	public XmlRef(int pos, int len)
-	{
+	public XmlRef(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Return the namespace.  May be {@code @null}.
 	 */
-	public Name getNamespace()
-	{
+	public Name getNamespace() {
 		return namespace;
 	}
 
@@ -63,11 +58,9 @@ public abstract class XmlRef extends AstNode
 	 * Sets namespace, and sets its parent to this node.
 	 * Can be {@code null}.
 	 */
-	public void setNamespace(Name namespace)
-	{
+	public void setNamespace(Name namespace) {
 		this.namespace = namespace;
-		if (namespace != null)
-		{
+		if (namespace != null) {
 			namespace.setParent(this);
 		}
 	}
@@ -75,8 +68,7 @@ public abstract class XmlRef extends AstNode
 	/**
 	 * Returns {@code true} if this expression began with an {@code @}-token.
 	 */
-	public boolean isAttributeAccess()
-	{
+	public boolean isAttributeAccess() {
 		return atPos >= 0;
 	}
 
@@ -84,16 +76,14 @@ public abstract class XmlRef extends AstNode
 	 * Returns position of {@code @}-token, or -1 if this is not
 	 * an attribute-access expression.
 	 */
-	public int getAtPos()
-	{
+	public int getAtPos() {
 		return atPos;
 	}
 
 	/**
 	 * Sets position of {@code @}-token, or -1
 	 */
-	public void setAtPos(int atPos)
-	{
+	public void setAtPos(int atPos) {
 		this.atPos = atPos;
 	}
 
@@ -101,16 +91,14 @@ public abstract class XmlRef extends AstNode
 	 * Returns position of {@code ::} token, or -1 if not present.
 	 * It will only be present if the namespace node is non-{@code null}.
 	 */
-	public int getColonPos()
-	{
+	public int getColonPos() {
 		return colonPos;
 	}
 
 	/**
 	 * Sets position of {@code ::} token, or -1 if not present
 	 */
-	public void setColonPos(int colonPos)
-	{
+	public void setColonPos(int colonPos) {
 		this.colonPos = colonPos;
 	}
 }

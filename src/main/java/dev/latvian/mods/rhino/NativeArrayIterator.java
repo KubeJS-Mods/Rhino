@@ -6,10 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
-public final class NativeArrayIterator extends ES6Iterator
-{
-	public enum ARRAY_ITERATOR_TYPE
-	{
+public final class NativeArrayIterator extends ES6Iterator {
+	public enum ARRAY_ITERATOR_TYPE {
 		ENTRIES,
 		KEYS,
 		VALUES
@@ -20,21 +18,18 @@ public final class NativeArrayIterator extends ES6Iterator
 
 	private ARRAY_ITERATOR_TYPE type;
 
-	static void init(ScriptableObject scope, boolean sealed)
-	{
+	static void init(ScriptableObject scope, boolean sealed) {
 		init(scope, sealed, new NativeArrayIterator(), ITERATOR_TAG);
 	}
 
 	/**
 	 * Only for constructing the prototype object.
 	 */
-	private NativeArrayIterator()
-	{
+	private NativeArrayIterator() {
 		super();
 	}
 
-	public NativeArrayIterator(Scriptable scope, Scriptable arrayLike, ARRAY_ITERATOR_TYPE type)
-	{
+	public NativeArrayIterator(Scriptable scope, Scriptable arrayLike, ARRAY_ITERATOR_TYPE type) {
 		super(scope, ITERATOR_TAG);
 		this.index = 0;
 		this.arrayLike = arrayLike;
@@ -42,34 +37,28 @@ public final class NativeArrayIterator extends ES6Iterator
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "Array Iterator";
 	}
 
 	@Override
-	protected boolean isDone(Context cx, Scriptable scope)
-	{
+	protected boolean isDone(Context cx, Scriptable scope) {
 		return index >= NativeArray.getLengthProperty(cx, arrayLike, false);
 	}
 
 	@Override
-	protected Object nextValue(Context cx, Scriptable scope)
-	{
-		if (type == ARRAY_ITERATOR_TYPE.KEYS)
-		{
+	protected Object nextValue(Context cx, Scriptable scope) {
+		if (type == ARRAY_ITERATOR_TYPE.KEYS) {
 			return index++;
 		}
 
 		Object value = arrayLike.get(index, arrayLike);
-		if (value == NOT_FOUND)
-		{
+		if (value == NOT_FOUND) {
 			value = Undefined.instance;
 		}
 
-		if (type == ARRAY_ITERATOR_TYPE.ENTRIES)
-		{
-			value = cx.newArray(scope, new Object[] {index, value});
+		if (type == ARRAY_ITERATOR_TYPE.ENTRIES) {
+			value = cx.newArray(scope, new Object[]{index, value});
 		}
 
 		index++;
@@ -77,8 +66,7 @@ public final class NativeArrayIterator extends ES6Iterator
 	}
 
 	@Override
-	protected String getTag()
-	{
+	protected String getTag() {
 		return ITERATOR_TAG;
 	}
 

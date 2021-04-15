@@ -20,26 +20,22 @@ import dev.latvian.mods.rhino.Token;
  * type {@link Token#DEFAULTNAMESPACE}, wrapped with an
  * {@link ExpressionStatement}.
  */
-public class UnaryExpression extends AstNode
-{
+public class UnaryExpression extends AstNode {
 
 	private AstNode operand;
 	private boolean isPostfix;
 
-	public UnaryExpression()
-	{
+	public UnaryExpression() {
 	}
 
-	public UnaryExpression(int pos)
-	{
+	public UnaryExpression(int pos) {
 		super(pos);
 	}
 
 	/**
 	 * Constructs a new postfix UnaryExpression
 	 */
-	public UnaryExpression(int pos, int len)
-	{
+	public UnaryExpression(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -47,8 +43,7 @@ public class UnaryExpression extends AstNode
 	 * Constructs a new prefix UnaryExpression.
 	 */
 	public UnaryExpression(int operator, int operatorPosition,
-						   AstNode operand)
-	{
+						   AstNode operand) {
 		this(operator, operatorPosition, operand, false);
 	}
 
@@ -64,8 +59,7 @@ public class UnaryExpression extends AstNode
 	 * @throws IllegalArgumentException} if {@code operand} is {@code null}
 	 */
 	public UnaryExpression(int operator, int operatorPosition,
-						   AstNode operand, boolean postFix)
-	{
+						   AstNode operand, boolean postFix) {
 		assertNotNull(operand);
 		int beg = postFix ? operand.getPosition() : operatorPosition;
 		// JavaScript only has ++ and -- postfix operators, so length is 2
@@ -81,8 +75,7 @@ public class UnaryExpression extends AstNode
 	/**
 	 * Returns operator token &ndash; alias for {@link #getType}
 	 */
-	public int getOperator()
-	{
+	public int getOperator() {
 		return type;
 	}
 
@@ -93,17 +86,14 @@ public class UnaryExpression extends AstNode
 	 * @throws IllegalArgumentException if operator is not a valid
 	 *                                  Token code
 	 */
-	public void setOperator(int operator)
-	{
-		if (!Token.isValidToken(operator))
-		{
+	public void setOperator(int operator) {
+		if (!Token.isValidToken(operator)) {
 			throw new IllegalArgumentException("Invalid token: " + operator);
 		}
 		setType(operator);
 	}
 
-	public AstNode getOperand()
-	{
+	public AstNode getOperand() {
 		return operand;
 	}
 
@@ -112,8 +102,7 @@ public class UnaryExpression extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if {@code operand} is {@code null}
 	 */
-	public void setOperand(AstNode operand)
-	{
+	public void setOperand(AstNode operand) {
 		assertNotNull(operand);
 		this.operand = operand;
 		operand.setParent(this);
@@ -122,44 +111,37 @@ public class UnaryExpression extends AstNode
 	/**
 	 * Returns whether the operator is postfix
 	 */
-	public boolean isPostfix()
-	{
+	public boolean isPostfix() {
 		return isPostfix;
 	}
 
 	/**
 	 * Returns whether the operator is prefix
 	 */
-	public boolean isPrefix()
-	{
+	public boolean isPrefix() {
 		return !isPostfix;
 	}
 
 	/**
 	 * Sets whether the operator is postfix
 	 */
-	public void setIsPostfix(boolean isPostfix)
-	{
+	public void setIsPostfix(boolean isPostfix) {
 		this.isPostfix = isPostfix;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		int type = getType();
-		if (!isPostfix)
-		{
+		if (!isPostfix) {
 			sb.append(operatorToString(type));
-			if (type == Token.TYPEOF || type == Token.DELPROP || type == Token.VOID)
-			{
+			if (type == Token.TYPEOF || type == Token.DELPROP || type == Token.VOID) {
 				sb.append(" ");
 			}
 		}
 		sb.append(operand.toSource());
-		if (isPostfix)
-		{
+		if (isPostfix) {
 			sb.append(operatorToString(type));
 		}
 		return sb.toString();
@@ -169,10 +151,8 @@ public class UnaryExpression extends AstNode
 	 * Visits this node, then the operand.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			operand.visit(v);
 		}
 	}

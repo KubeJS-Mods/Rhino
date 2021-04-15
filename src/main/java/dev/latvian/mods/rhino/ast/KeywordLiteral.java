@@ -18,20 +18,16 @@ import dev.latvian.mods.rhino.Token;
  * {@link Token#FALSE}, or
  * {@link Token#DEBUGGER}.
  */
-public class KeywordLiteral extends AstNode
-{
+public class KeywordLiteral extends AstNode {
 
-	public KeywordLiteral()
-	{
+	public KeywordLiteral() {
 	}
 
-	public KeywordLiteral(int pos)
-	{
+	public KeywordLiteral(int pos) {
 		super(pos);
 	}
 
-	public KeywordLiteral(int pos, int len)
-	{
+	public KeywordLiteral(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -40,8 +36,7 @@ public class KeywordLiteral extends AstNode
 	 *
 	 * @param nodeType the token type
 	 */
-	public KeywordLiteral(int pos, int len, int nodeType)
-	{
+	public KeywordLiteral(int pos, int len, int nodeType) {
 		super(pos, len);
 		setType(nodeType);
 	}
@@ -52,14 +47,12 @@ public class KeywordLiteral extends AstNode
 	 * @throws IllegalArgumentException if {@code nodeType} is unsupported
 	 */
 	@Override
-	public KeywordLiteral setType(int nodeType)
-	{
+	public KeywordLiteral setType(int nodeType) {
 		if (!(nodeType == Token.THIS
 				|| nodeType == Token.NULL
 				|| nodeType == Token.TRUE
 				|| nodeType == Token.FALSE
-				|| nodeType == Token.DEBUGGER))
-		{
+				|| nodeType == Token.DEBUGGER)) {
 			throw new IllegalArgumentException("Invalid node type: "
 					+ nodeType);
 		}
@@ -71,18 +64,15 @@ public class KeywordLiteral extends AstNode
 	 * Returns true if the token type is {@link Token#TRUE} or
 	 * {@link Token#FALSE}.
 	 */
-	public boolean isBooleanLiteral()
-	{
+	public boolean isBooleanLiteral() {
 		return type == Token.TRUE || type == Token.FALSE;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
-		switch (getType())
-		{
+		switch (getType()) {
 			case Token.THIS:
 				sb.append("this");
 				break;
@@ -109,8 +99,7 @@ public class KeywordLiteral extends AstNode
 	 * Visits this node.  There are no children to visit.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
+	public void visit(NodeVisitor v) {
 		v.visit(this);
 	}
 }

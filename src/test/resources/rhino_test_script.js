@@ -4,7 +4,7 @@ console.info(y(5))
 console.info(sqTest(8))
 
 events.listen('test', event => {
-  console.info('TEEST: ' + event)
+	console.info('TEEST: ' + event)
 })
 
 const numbers = [49, 1, 48, 521]
@@ -14,12 +14,12 @@ console.info(numbers)
 console.info({test: 'abc', d: []})
 
 function Rectangle(w, h) {
-  this.width = w;
-  this.height = h;
+	this.width = w;
+	this.height = h;
 }
 
 Rectangle.prototype.toString = function dogToString() {
-  return this.width + 'x' + this.height;
+	return this.width + 'x' + this.height;
 };
 
 console.info("Rectangle: ")
@@ -32,21 +32,21 @@ console.info(events.abcd)
 events.abc = 'hello'
 
 for (n of numbers) {
-  console.info('Numbers: ' + n)
+	console.info('Numbers: ' + n)
 }
 
 console.info(newMath)
 console.info(newMath.pow)
 console.info(newMath.pow(3, 4))
 
-const { pow } = newMath
+const {pow} = newMath
 
 console.info(pow(3, 5))
 
 events.testData({someString: 'abc'})
 
 for (n of events.numberList) {
-  console.info('Event numbers: ' + n)
+	console.info('Event numbers: ' + n)
 }
 
 console.info(events.dynamicMap.awudh.awdhauwhd);
@@ -73,5 +73,16 @@ events.testWrapper2(['rhino:array_test_1', 'rhino:array_test_2'])
 events.testWrapper3([[['a', 'b', 'c']], [['d', 'e', 'f']]])
 
 events.listen('abc', v => {
-  events.testWrapper('rhino:test', 5, 409, 4)
+	events.testWrapper('rhino:test', 5, 409, 4)
 })
+
+/*
+console.info(java)
+console.info(java.lang)
+console.info(java.lang.Math)
+console.info(java.lang.Math.PI)
+console.info(java.lang.Math.pow(3.0, 5.0))
+
+var JMath = java.lang.Math
+console.info(JMath.PI)
+*/

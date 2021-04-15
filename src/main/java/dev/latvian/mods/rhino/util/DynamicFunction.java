@@ -9,25 +9,21 @@ import javax.annotation.Nullable;
 /**
  * @author LatvianModder
  */
-public class DynamicFunction extends BaseFunction
-{
+public class DynamicFunction extends BaseFunction {
 	@FunctionalInterface
-	public interface Callback
-	{
+	public interface Callback {
 		@Nullable
 		Object call(Object[] args);
 	}
 
 	private final Callback function;
 
-	public DynamicFunction(Callback f)
-	{
+	public DynamicFunction(Callback f) {
 		function = f;
 	}
 
 	@Override
-	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
-	{
+	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		return function.call(args);
 	}
 }

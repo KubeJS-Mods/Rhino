@@ -14,8 +14,7 @@ import java.util.List;
 /**
  *
  */
-public class GeneratorExpression extends Scope
-{
+public class GeneratorExpression extends Scope {
 
 	private AstNode result;
 	private final List<GeneratorExpressionLoop> loops =
@@ -29,25 +28,21 @@ public class GeneratorExpression extends Scope
 		type = Token.GENEXPR;
 	}
 
-	public GeneratorExpression()
-	{
+	public GeneratorExpression() {
 	}
 
-	public GeneratorExpression(int pos)
-	{
+	public GeneratorExpression(int pos) {
 		super(pos);
 	}
 
-	public GeneratorExpression(int pos, int len)
-	{
+	public GeneratorExpression(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Returns result expression node (just after opening bracket)
 	 */
-	public AstNode getResult()
-	{
+	public AstNode getResult() {
 		return result;
 	}
 
@@ -56,8 +51,7 @@ public class GeneratorExpression extends Scope
 	 *
 	 * @throws IllegalArgumentException if result is {@code null}
 	 */
-	public void setResult(AstNode result)
-	{
+	public void setResult(AstNode result) {
 		assertNotNull(result);
 		this.result = result;
 		result.setParent(this);
@@ -66,8 +60,7 @@ public class GeneratorExpression extends Scope
 	/**
 	 * Returns loop list
 	 */
-	public List<GeneratorExpressionLoop> getLoops()
-	{
+	public List<GeneratorExpressionLoop> getLoops() {
 		return loops;
 	}
 
@@ -76,12 +69,10 @@ public class GeneratorExpression extends Scope
 	 *
 	 * @throws IllegalArgumentException if loops is {@code null}
 	 */
-	public void setLoops(List<GeneratorExpressionLoop> loops)
-	{
+	public void setLoops(List<GeneratorExpressionLoop> loops) {
 		assertNotNull(loops);
 		this.loops.clear();
-		for (GeneratorExpressionLoop acl : loops)
-		{
+		for (GeneratorExpressionLoop acl : loops) {
 			addLoop(acl);
 		}
 	}
@@ -91,8 +82,7 @@ public class GeneratorExpression extends Scope
 	 *
 	 * @throws IllegalArgumentException if acl is {@code null}
 	 */
-	public void addLoop(GeneratorExpressionLoop acl)
-	{
+	public void addLoop(GeneratorExpressionLoop acl) {
 		assertNotNull(acl);
 		loops.add(acl);
 		acl.setParent(this);
@@ -101,8 +91,7 @@ public class GeneratorExpression extends Scope
 	/**
 	 * Returns filter expression, or {@code null} if not present
 	 */
-	public AstNode getFilter()
-	{
+	public AstNode getFilter() {
 		return filter;
 	}
 
@@ -110,11 +99,9 @@ public class GeneratorExpression extends Scope
 	 * Sets filter expression, and sets its parent to this node.
 	 * Can be {@code null}.
 	 */
-	public void setFilter(AstNode filter)
-	{
+	public void setFilter(AstNode filter) {
 		this.filter = filter;
-		if (filter != null)
-		{
+		if (filter != null) {
 			filter.setParent(this);
 		}
 	}
@@ -122,63 +109,54 @@ public class GeneratorExpression extends Scope
 	/**
 	 * Returns position of 'if' keyword, -1 if not present
 	 */
-	public int getIfPosition()
-	{
+	public int getIfPosition() {
 		return ifPosition;
 	}
 
 	/**
 	 * Sets position of 'if' keyword
 	 */
-	public void setIfPosition(int ifPosition)
-	{
+	public void setIfPosition(int ifPosition) {
 		this.ifPosition = ifPosition;
 	}
 
 	/**
 	 * Returns filter left paren position, or -1 if no filter
 	 */
-	public int getFilterLp()
-	{
+	public int getFilterLp() {
 		return lp;
 	}
 
 	/**
 	 * Sets filter left paren position, or -1 if no filter
 	 */
-	public void setFilterLp(int lp)
-	{
+	public void setFilterLp(int lp) {
 		this.lp = lp;
 	}
 
 	/**
 	 * Returns filter right paren position, or -1 if no filter
 	 */
-	public int getFilterRp()
-	{
+	public int getFilterRp() {
 		return rp;
 	}
 
 	/**
 	 * Sets filter right paren position, or -1 if no filter
 	 */
-	public void setFilterRp(int rp)
-	{
+	public void setFilterRp(int rp) {
 		this.rp = rp;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder(250);
 		sb.append("(");
 		sb.append(result.toSource(0));
-		for (GeneratorExpressionLoop loop : loops)
-		{
+		for (GeneratorExpressionLoop loop : loops) {
 			sb.append(loop.toSource(0));
 		}
-		if (filter != null)
-		{
+		if (filter != null) {
 			sb.append(" if (");
 			sb.append(filter.toSource(0));
 			sb.append(")");
@@ -192,19 +170,15 @@ public class GeneratorExpression extends Scope
 	 * filter.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (!v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (!v.visit(this)) {
 			return;
 		}
 		result.visit(v);
-		for (GeneratorExpressionLoop loop : loops)
-		{
+		for (GeneratorExpressionLoop loop : loops) {
 			loop.visit(v);
 		}
-		if (filter != null)
-		{
+		if (filter != null) {
 			filter.visit(v);
 		}
 	}

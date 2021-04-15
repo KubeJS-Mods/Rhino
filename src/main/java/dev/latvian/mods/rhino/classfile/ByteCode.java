@@ -13,8 +13,7 @@ package dev.latvian.mods.rhino.classfile;
  *
  * @author Roger Lawrence
  */
-public class ByteCode
-{
+public class ByteCode {
 
 	/**
 	 * The byte opcodes defined by the Java Virtual Machine.

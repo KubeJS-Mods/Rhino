@@ -14,8 +14,7 @@ import dev.latvian.mods.rhino.Token;
  * <pre><i>BreakStatement</i> :
  *   <b>break</b> [<i>no LineTerminator here</i>] [Identifier] ;</pre>
  */
-public class BreakStatement extends Jump
-{
+public class BreakStatement extends Jump {
 
 	private Name breakLabel;
 	private AstNode target;
@@ -24,18 +23,15 @@ public class BreakStatement extends Jump
 		type = Token.BREAK;
 	}
 
-	public BreakStatement()
-	{
+	public BreakStatement() {
 	}
 
-	public BreakStatement(int pos)
-	{
+	public BreakStatement(int pos) {
 		// can't call super (Jump) for historical reasons
 		position = pos;
 	}
 
-	public BreakStatement(int pos, int len)
-	{
+	public BreakStatement(int pos, int len) {
 		position = pos;
 		length = len;
 	}
@@ -46,8 +42,7 @@ public class BreakStatement extends Jump
 	 * @return the break label.  {@code null} if the source code did
 	 * not specify a specific break label via "break &lt;target&gt;".
 	 */
-	public Name getBreakLabel()
-	{
+	public Name getBreakLabel() {
 		return breakLabel;
 	}
 
@@ -58,11 +53,9 @@ public class BreakStatement extends Jump
 	 * @param label the break label, or {@code null} if the statement is
 	 *              just the "break" keyword by itself.
 	 */
-	public void setBreakLabel(Name label)
-	{
+	public void setBreakLabel(Name label) {
 		breakLabel = label;
-		if (label != null)
-		{
+		if (label != null) {
 			label.setParent(this);
 		}
 	}
@@ -73,8 +66,7 @@ public class BreakStatement extends Jump
 	 * @return the break target.  Only {@code null} if the source
 	 * code has an error in it.
 	 */
-	public AstNode getBreakTarget()
-	{
+	public AstNode getBreakTarget() {
 		return target;
 	}
 
@@ -84,21 +76,18 @@ public class BreakStatement extends Jump
 	 * @param target the statement to break to
 	 * @throws IllegalArgumentException if target is {@code null}
 	 */
-	public void setBreakTarget(Jump target)
-	{
+	public void setBreakTarget(Jump target) {
 		assertNotNull(target);
 		this.target = target;
 		setJumpStatement(target);
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("break");
-		if (breakLabel != null)
-		{
+		if (breakLabel != null) {
 			sb.append(" ");
 			sb.append(breakLabel.toSource(0));
 		}
@@ -110,10 +99,8 @@ public class BreakStatement extends Jump
 	 * Visits this node, then visits the break label if non-{@code null}.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this) && breakLabel != null)
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this) && breakLabel != null) {
 			breakLabel.visit(v);
 		}
 	}

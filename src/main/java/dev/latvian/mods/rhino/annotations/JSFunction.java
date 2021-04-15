@@ -20,7 +20,6 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface JSFunction
-{
+public @interface JSFunction {
 	String value() default "";
 }

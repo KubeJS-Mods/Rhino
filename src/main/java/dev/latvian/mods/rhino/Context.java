@@ -52,8 +52,7 @@ import java.util.Set;
  * @see Scriptable
  */
 
-public class Context
-{
+public class Context {
 	/**
 	 * Language versions.
 	 *
@@ -364,26 +363,6 @@ public class Context
 	public static final Object[] emptyArgs = ScriptRuntime.emptyArgs;
 
 	/**
-	 * Creates a new Context. The context will be associated with the {@link
-	 * ContextFactory#getGlobal() global context factory}.
-	 * <p>
-	 * Note that the Context must be associated with a thread before
-	 * it can be used to execute a script.
-	 *
-	 * @deprecated this constructor is deprecated because it creates a
-	 * dependency on a static singleton context factory. Use
-	 * {@link ContextFactory#enter()} or
-	 * {@link ContextFactory#call(ContextAction)} instead. If you subclass
-	 * this class, consider using {@link #Context(ContextFactory)} constructor
-	 * instead in the subclasses' constructors.
-	 */
-	@Deprecated
-	public Context()
-	{
-		this(ContextFactory.getGlobal());
-	}
-
-	/**
 	 * Creates a new context. Provided as a preferred super constructor for
 	 * subclasses in place of the deprecated default public constructor.
 	 *
@@ -393,10 +372,8 @@ public class Context
 	 *                otherwise use its factory's services.
 	 * @throws IllegalArgumentException if factory parameter is null.
 	 */
-	protected Context(ContextFactory factory)
-	{
-		if (factory == null)
-		{
+	protected Context(ContextFactory factory) {
+		if (factory == null) {
 			throw new IllegalArgumentException("factory == null");
 		}
 		this.factory = factory;
@@ -417,8 +394,7 @@ public class Context
 	 * @see ContextFactory#enterContext()
 	 * @see ContextFactory#call(ContextAction)
 	 */
-	public static Context getCurrentContext()
-	{
+	public static Context getCurrentContext() {
 		Object helper = VMBridge.instance.getThreadContextHelper();
 		return VMBridge.instance.getContext(helper);
 	}
@@ -431,38 +407,31 @@ public class Context
 	 * @see #getCurrentContext()
 	 * @see #exit()
 	 */
-	public static Context enter()
-	{
+	public static Context enter() {
 		return enter(null, ContextFactory.getGlobal());
 	}
 
-	static Context enter(Context cx, ContextFactory factory)
-	{
+	public static Context enterWithNewFactory() {
+		return enter(null, new ContextFactory());
+	}
+
+	static Context enter(Context cx, ContextFactory factory) {
 		Object helper = VMBridge.instance.getThreadContextHelper();
 		Context old = VMBridge.instance.getContext(helper);
-		if (old != null)
-		{
+		if (old != null) {
 			cx = old;
-		}
-		else
-		{
-			if (cx == null)
-			{
+		} else {
+			if (cx == null) {
 				cx = factory.makeContext();
-				if (cx.enterCount != 0)
-				{
+				if (cx.enterCount != 0) {
 					throw new IllegalStateException("factory.makeContext() returned Context instance already associated with some thread");
 				}
 				factory.onContextCreated(cx);
-				if (factory.isSealed() && !cx.isSealed())
-				{
+				if (factory.isSealed() && !cx.isSealed()) {
 					cx.seal(null);
 				}
-			}
-			else
-			{
-				if (cx.enterCount != 0)
-				{
+			} else {
+				if (cx.enterCount != 0) {
 					throw new IllegalStateException("can not use Context instance already associated with some thread");
 				}
 			}
@@ -484,21 +453,17 @@ public class Context
 	 *
 	 * @see ContextFactory#enterContext()
 	 */
-	public static void exit()
-	{
+	public static void exit() {
 		Object helper = VMBridge.instance.getThreadContextHelper();
 		Context cx = VMBridge.instance.getContext(helper);
-		if (cx == null)
-		{
+		if (cx == null) {
 			throw new IllegalStateException(
 					"Calling Context.exit without previous Context.enter");
 		}
-		if (cx.enterCount < 1)
-		{
+		if (cx.enterCount < 1) {
 			Kit.codeBug();
 		}
-		if (--cx.enterCount == 0)
-		{
+		if (--cx.enterCount == 0) {
 			VMBridge.instance.setContext(helper, null);
 			cx.factory.onContextReleased(cx);
 		}
@@ -522,10 +487,8 @@ public class Context
 	 */
 	public static Object call(ContextFactory factory, final Callable callable,
 							  final Scriptable scope, final Scriptable thisObj,
-							  final Object[] args)
-	{
-		if (factory == null)
-		{
+							  final Object[] args) {
+		if (factory == null) {
 			factory = ContextFactory.getGlobal();
 		}
 		return call(factory, cx -> callable.call(cx, scope, thisObj, args));
@@ -534,15 +497,11 @@ public class Context
 	/**
 	 * The method implements {@link ContextFactory#call(ContextAction)} logic.
 	 */
-	static <T> T call(ContextFactory factory, ContextAction<T> action)
-	{
+	static <T> T call(ContextFactory factory, ContextAction<T> action) {
 		Context cx = enter(null, factory);
-		try
-		{
+		try {
 			return action.run(cx);
-		}
-		finally
-		{
+		} finally {
 			exit();
 		}
 	}
@@ -550,8 +509,7 @@ public class Context
 	/**
 	 * Return {@link ContextFactory} instance used to create this Context.
 	 */
-	public final ContextFactory getFactory()
-	{
+	public final ContextFactory getFactory() {
 		return factory;
 	}
 
@@ -562,8 +520,7 @@ public class Context
 	 *
 	 * @see #seal(Object sealKey)
 	 */
-	public final boolean isSealed()
-	{
+	public final boolean isSealed() {
 		return sealed;
 	}
 
@@ -579,10 +536,8 @@ public class Context
 	 * @see #isSealed()
 	 * @see #unseal(Object)
 	 */
-	public final void seal(Object sealKey)
-	{
-		if (sealed)
-		{
+	public final void seal(Object sealKey) {
+		if (sealed) {
 			onSealedMutation();
 		}
 		sealed = true;
@@ -598,26 +553,21 @@ public class Context
 	 * @see #isSealed()
 	 * @see #seal(Object sealKey)
 	 */
-	public final void unseal(Object sealKey)
-	{
-		if (sealKey == null)
-		{
+	public final void unseal(Object sealKey) {
+		if (sealKey == null) {
 			throw new IllegalArgumentException();
 		}
-		if (this.sealKey != sealKey)
-		{
+		if (this.sealKey != sealKey) {
 			throw new IllegalArgumentException();
 		}
-		if (!sealed)
-		{
+		if (!sealed) {
 			throw new IllegalStateException();
 		}
 		sealed = false;
 		this.sealKey = null;
 	}
 
-	static void onSealedMutation()
-	{
+	static void onSealedMutation() {
 		throw new IllegalStateException();
 	}
 
@@ -629,8 +579,7 @@ public class Context
 	 *
 	 * @return an integer that is one of VERSION_1_0, VERSION_1_1, etc.
 	 */
-	public final int getLanguageVersion()
-	{
+	public final int getLanguageVersion() {
 		return version;
 	}
 
@@ -644,16 +593,13 @@ public class Context
 	 *
 	 * @param version the version as specified by VERSION_1_0, VERSION_1_1, etc.
 	 */
-	public void setLanguageVersion(int version)
-	{
-		if (sealed)
-		{
+	public void setLanguageVersion(int version) {
+		if (sealed) {
 			onSealedMutation();
 		}
 		checkLanguageVersion(version);
 		Object listeners = propertyListeners;
-		if (listeners != null && version != this.version)
-		{
+		if (listeners != null && version != this.version) {
 			firePropertyChangeImpl(listeners, languageVersionProperty,
 					this.version,
 					version);
@@ -661,10 +607,8 @@ public class Context
 		this.version = version;
 	}
 
-	public static boolean isValidLanguageVersion(int version)
-	{
-		switch (version)
-		{
+	public static boolean isValidLanguageVersion(int version) {
+		switch (version) {
 			case VERSION_DEFAULT:
 			case VERSION_1_0:
 			case VERSION_1_1:
@@ -681,10 +625,8 @@ public class Context
 		return false;
 	}
 
-	public static void checkLanguageVersion(int version)
-	{
-		if (isValidLanguageVersion(version))
-		{
+	public static void checkLanguageVersion(int version) {
+		if (isValidLanguageVersion(version)) {
 			return;
 		}
 		throw new IllegalArgumentException("Bad language version: " + version);
@@ -706,8 +648,7 @@ public class Context
 	 * @return a string that encodes the product, language version, release
 	 * number, and date.
 	 */
-	public final String getImplementationVersion()
-	{
+	public final String getImplementationVersion() {
 		return ImplementationVersion.get();
 	}
 
@@ -716,10 +657,8 @@ public class Context
 	 *
 	 * @see ErrorReporter
 	 */
-	public final ErrorReporter getErrorReporter()
-	{
-		if (errorReporter == null)
-		{
+	public final ErrorReporter getErrorReporter() {
+		if (errorReporter == null) {
 			return DefaultErrorReporter.instance;
 		}
 		return errorReporter;
@@ -731,24 +670,19 @@ public class Context
 	 * @return the previous error reporter
 	 * @see ErrorReporter
 	 */
-	public final ErrorReporter setErrorReporter(ErrorReporter reporter)
-	{
-		if (sealed)
-		{
+	public final ErrorReporter setErrorReporter(ErrorReporter reporter) {
+		if (sealed) {
 			onSealedMutation();
 		}
-		if (reporter == null)
-		{
+		if (reporter == null) {
 			throw new IllegalArgumentException();
 		}
 		ErrorReporter old = getErrorReporter();
-		if (reporter == old)
-		{
+		if (reporter == old) {
 			return old;
 		}
 		Object listeners = propertyListeners;
-		if (listeners != null)
-		{
+		if (listeners != null) {
 			firePropertyChangeImpl(listeners, errorReporterProperty,
 					old, reporter);
 		}
@@ -763,10 +697,8 @@ public class Context
 	 * @see java.util.Locale
 	 */
 
-	public final Locale getLocale()
-	{
-		if (locale == null)
-		{
+	public final Locale getLocale() {
+		if (locale == null) {
 			locale = Locale.getDefault();
 		}
 		return locale;
@@ -777,10 +709,8 @@ public class Context
 	 *
 	 * @see java.util.Locale
 	 */
-	public final Locale setLocale(Locale loc)
-	{
-		if (sealed)
-		{
+	public final Locale setLocale(Locale loc) {
+		if (sealed) {
 			onSealedMutation();
 		}
 		Locale result = locale;
@@ -796,10 +726,8 @@ public class Context
 	 * @see java.beans.PropertyChangeEvent
 	 * @see #removePropertyChangeListener(java.beans.PropertyChangeListener)
 	 */
-	public final void addPropertyChangeListener(PropertyChangeListener l)
-	{
-		if (sealed)
-		{
+	public final void addPropertyChangeListener(PropertyChangeListener l) {
+		if (sealed) {
 			onSealedMutation();
 		}
 		propertyListeners = Kit.addListener(propertyListeners, l);
@@ -813,10 +741,8 @@ public class Context
 	 * @see java.beans.PropertyChangeEvent
 	 * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
 	 */
-	public final void removePropertyChangeListener(PropertyChangeListener l)
-	{
-		if (sealed)
-		{
+	public final void removePropertyChangeListener(PropertyChangeListener l) {
+		if (sealed) {
 			onSealedMutation();
 		}
 		propertyListeners = Kit.removeListener(propertyListeners, l);
@@ -834,27 +760,21 @@ public class Context
 	 * @see java.beans.PropertyChangeEvent
 	 */
 	final void firePropertyChange(String property, Object oldValue,
-								  Object newValue)
-	{
+								  Object newValue) {
 		Object listeners = propertyListeners;
-		if (listeners != null)
-		{
+		if (listeners != null) {
 			firePropertyChangeImpl(listeners, property, oldValue, newValue);
 		}
 	}
 
 	private void firePropertyChangeImpl(Object listeners, String property,
-										Object oldValue, Object newValue)
-	{
-		for (int i = 0; ; ++i)
-		{
+										Object oldValue, Object newValue) {
+		for (int i = 0; ; ++i) {
 			Object l = Kit.getListener(listeners, i);
-			if (l == null)
-			{
+			if (l == null) {
 				break;
 			}
-			if (l instanceof PropertyChangeListener)
-			{
+			if (l instanceof PropertyChangeListener) {
 				PropertyChangeListener pcl = (PropertyChangeListener) l;
 				pcl.propertyChange(new PropertyChangeEvent(
 						this, property, oldValue, newValue));
@@ -874,15 +794,11 @@ public class Context
 	 */
 	public static void reportWarning(String message, String sourceName,
 									 int lineno, String lineSource,
-									 int lineOffset)
-	{
+									 int lineOffset) {
 		Context cx = Context.getContext();
-		if (cx.hasFeature(FEATURE_WARNING_AS_ERROR))
-		{
+		if (cx.hasFeature(FEATURE_WARNING_AS_ERROR)) {
 			reportError(message, sourceName, lineno, lineSource, lineOffset);
-		}
-		else
-		{
+		} else {
 			cx.getErrorReporter().warning(message, sourceName, lineno,
 					lineSource, lineOffset);
 		}
@@ -894,15 +810,13 @@ public class Context
 	 * @param message the warning message to report
 	 * @see ErrorReporter
 	 */
-	public static void reportWarning(String message)
-	{
+	public static void reportWarning(String message) {
 		int[] linep = {0};
 		String filename = getSourcePositionFromStack(linep);
 		Context.reportWarning(message, filename, linep[0], null, 0);
 	}
 
-	public static void reportWarning(String message, Throwable t)
-	{
+	public static void reportWarning(String message, Throwable t) {
 		int[] linep = {0};
 		String filename = getSourcePositionFromStack(linep);
 		Writer sw = new StringWriter();
@@ -925,16 +839,12 @@ public class Context
 	 */
 	public static void reportError(String message, String sourceName,
 								   int lineno, String lineSource,
-								   int lineOffset)
-	{
+								   int lineOffset) {
 		Context cx = getCurrentContext();
-		if (cx != null)
-		{
+		if (cx != null) {
 			cx.getErrorReporter().error(message, sourceName, lineno,
 					lineSource, lineOffset);
-		}
-		else
-		{
+		} else {
 			throw new EvaluatorException(message, sourceName, lineno,
 					lineSource, lineOffset);
 		}
@@ -946,8 +856,7 @@ public class Context
 	 * @param message the error message to report
 	 * @see ErrorReporter
 	 */
-	public static void reportError(String message)
-	{
+	public static void reportError(String message) {
 		int[] linep = {0};
 		String filename = getSourcePositionFromStack(linep);
 		Context.reportError(message, filename, linep[0], null, 0);
@@ -969,11 +878,9 @@ public class Context
 														String sourceName,
 														int lineno,
 														String lineSource,
-														int lineOffset)
-	{
+														int lineOffset) {
 		Context cx = getCurrentContext();
-		if (cx != null)
-		{
+		if (cx != null) {
 			return cx.getErrorReporter().
 					runtimeError(message, sourceName, lineno,
 							lineSource, lineOffset);
@@ -981,38 +888,33 @@ public class Context
 		throw new EvaluatorException(message, sourceName, lineno, lineSource, lineOffset);
 	}
 
-	static EvaluatorException reportRuntimeError0(String messageId)
-	{
+	static EvaluatorException reportRuntimeError0(String messageId) {
 		String msg = ScriptRuntime.getMessage0(messageId);
 		return reportRuntimeError(msg);
 	}
 
 	static EvaluatorException reportRuntimeError1(String messageId,
-												  Object arg1)
-	{
+												  Object arg1) {
 		String msg = ScriptRuntime.getMessage1(messageId, arg1);
 		return reportRuntimeError(msg);
 	}
 
 	static EvaluatorException reportRuntimeError2(String messageId,
-												  Object arg1, Object arg2)
-	{
+												  Object arg1, Object arg2) {
 		String msg = ScriptRuntime.getMessage2(messageId, arg1, arg2);
 		return reportRuntimeError(msg);
 	}
 
 	static EvaluatorException reportRuntimeError3(String messageId,
 												  Object arg1, Object arg2,
-												  Object arg3)
-	{
+												  Object arg3) {
 		String msg = ScriptRuntime.getMessage3(messageId, arg1, arg2, arg3);
 		return reportRuntimeError(msg);
 	}
 
 	static EvaluatorException reportRuntimeError4(String messageId,
 												  Object arg1, Object arg2,
-												  Object arg3, Object arg4)
-	{
+												  Object arg3, Object arg4) {
 		String msg
 				= ScriptRuntime.getMessage4(messageId, arg1, arg2, arg3, arg4);
 		return reportRuntimeError(msg);
@@ -1024,8 +926,7 @@ public class Context
 	 * @param message the error message to report
 	 * @see ErrorReporter
 	 */
-	public static EvaluatorException reportRuntimeError(String message)
-	{
+	public static EvaluatorException reportRuntimeError(String message) {
 		int[] linep = {0};
 		String filename = getSourcePositionFromStack(linep);
 		return Context.reportRuntimeError(message, filename, linep[0], null, 0);
@@ -1045,8 +946,7 @@ public class Context
 	 *
 	 * @return the initialized scope
 	 */
-	public final ScriptableObject initStandardObjects()
-	{
+	public final ScriptableObject initStandardObjects() {
 		return initStandardObjects(null, false);
 	}
 
@@ -1072,8 +972,7 @@ public class Context
 	 *
 	 * @return the initialized scope
 	 */
-	public final ScriptableObject initSafeStandardObjects()
-	{
+	public final ScriptableObject initSafeStandardObjects() {
 		return initSafeStandardObjects(null, false);
 	}
 
@@ -1095,8 +994,7 @@ public class Context
 	 * argument if it is not null or newly allocated scope object which
 	 * is an instance {@link ScriptableObject}.
 	 */
-	public final Scriptable initStandardObjects(ScriptableObject scope)
-	{
+	public final Scriptable initStandardObjects(ScriptableObject scope) {
 		return initStandardObjects(scope, false);
 	}
 
@@ -1126,8 +1024,7 @@ public class Context
 	 * argument if it is not null or newly allocated scope object which
 	 * is an instance {@link ScriptableObject}.
 	 */
-	public final Scriptable initSafeStandardObjects(ScriptableObject scope)
-	{
+	public final Scriptable initSafeStandardObjects(ScriptableObject scope) {
 		return initSafeStandardObjects(scope, false);
 	}
 
@@ -1159,8 +1056,7 @@ public class Context
 	 * @since 1.4R3
 	 */
 	public ScriptableObject initStandardObjects(ScriptableObject scope,
-												boolean sealed)
-	{
+												boolean sealed) {
 		return ScriptRuntime.initStandardObjects(this, scope, sealed);
 	}
 
@@ -1200,16 +1096,14 @@ public class Context
 	 * @since 1.7.6
 	 */
 	public ScriptableObject initSafeStandardObjects(ScriptableObject scope,
-													boolean sealed)
-	{
+													boolean sealed) {
 		return ScriptRuntime.initSafeStandardObjects(this, scope, sealed);
 	}
 
 	/**
 	 * Get the singleton object that represents the JavaScript Undefined value.
 	 */
-	public static Object getUndefinedValue()
-	{
+	public static Object getUndefinedValue() {
 		return Undefined.instance;
 	}
 
@@ -1232,12 +1126,10 @@ public class Context
 	 */
 	public final Object evaluateString(Scriptable scope, String source,
 									   String sourceName, int lineno,
-									   Object securityDomain)
-	{
+									   Object securityDomain) {
 		Script script = compileString(source, sourceName, lineno,
 				securityDomain);
-		if (script != null)
-		{
+		if (script != null) {
 			return script.exec(this, scope);
 		}
 		return null;
@@ -1262,12 +1154,10 @@ public class Context
 	public final Object evaluateReader(Scriptable scope, Reader in,
 									   String sourceName, int lineno,
 									   Object securityDomain)
-			throws IOException
-	{
+			throws IOException {
 		Script script = compileReader(in, sourceName, lineno,
 				securityDomain);
-		if (script != null)
-		{
+		if (script != null) {
 			return script.exec(this, scope);
 		}
 		return null;
@@ -1288,11 +1178,9 @@ public class Context
 	 */
 	public Object executeScriptWithContinuations(Script script,
 												 Scriptable scope)
-			throws ContinuationPending
-	{
+			throws ContinuationPending {
 		if (!(script instanceof InterpretedFunction) ||
-				!((InterpretedFunction) script).isScript())
-		{
+				!((InterpretedFunction) script).isScript()) {
 			// Can only be applied to scripts
 			throw new IllegalArgumentException("Script argument was not" +
 					" a script or was not created by interpreted mode ");
@@ -1317,16 +1205,13 @@ public class Context
 	 */
 	public Object callFunctionWithContinuations(Callable function,
 												Scriptable scope, Object[] args)
-			throws ContinuationPending
-	{
-		if (!(function instanceof InterpretedFunction))
-		{
+			throws ContinuationPending {
+		if (!(function instanceof InterpretedFunction)) {
 			// Can only be applied to scripts
 			throw new IllegalArgumentException("Function argument was not" +
 					" created by interpreted mode ");
 		}
-		if (ScriptRuntime.hasTopCall(this))
-		{
+		if (ScriptRuntime.hasTopCall(this)) {
 			throw new IllegalStateException("Cannot have any pending top " +
 					"calls when executing a script with continuations");
 		}
@@ -1350,8 +1235,7 @@ public class Context
 	 * @return A ContinuationPending exception that must be thrown
 	 * @since 1.7 Release 2
 	 */
-	public ContinuationPending captureContinuation()
-	{
+	public ContinuationPending captureContinuation() {
 		return new ContinuationPending(
 				Interpreter.captureContinuation(this));
 	}
@@ -1375,8 +1259,7 @@ public class Context
 	 */
 	public Object resumeContinuation(Object continuation,
 									 Scriptable scope, Object functionResult)
-			throws ContinuationPending
-	{
+			throws ContinuationPending {
 		Object[] args = {functionResult};
 		return Interpreter.restartContinuation(
 				(NativeContinuation) continuation,
@@ -1399,8 +1282,7 @@ public class Context
 	 * @return whether the source is ready for compilation
 	 * @since 1.4 Release 2
 	 */
-	public final boolean stringIsCompilableUnit(String source)
-	{
+	public final boolean stringIsCompilableUnit(String source) {
 		boolean errorseen = false;
 		CompilerEnvirons compilerEnv = new CompilerEnvirons();
 		compilerEnv.initFromContext(this);
@@ -1408,12 +1290,9 @@ public class Context
 		// going to throw away the result.
 		compilerEnv.setGeneratingSource(false);
 		Parser p = new Parser(compilerEnv, DefaultErrorReporter.instance);
-		try
-		{
+		try {
 			p.parse(source, null, 1);
-		}
-		catch (EvaluatorException ee)
-		{
+		} catch (EvaluatorException ee) {
 			errorseen = true;
 		}
 		// Return false only if an error occurred as a result of reading past
@@ -1441,10 +1320,8 @@ public class Context
 	 */
 	public final Script compileReader(Reader in, String sourceName,
 									  int lineno, Object securityDomain)
-			throws IOException
-	{
-		if (lineno < 0)
-		{
+			throws IOException {
+		if (lineno < 0) {
 			// For compatibility IllegalArgumentException can not be thrown here
 			lineno = 0;
 		}
@@ -1471,10 +1348,8 @@ public class Context
 	 */
 	public final Script compileString(String source,
 									  String sourceName, int lineno,
-									  Object securityDomain)
-	{
-		if (lineno < 0)
-		{
+									  Object securityDomain) {
+		if (lineno < 0) {
 			// For compatibility IllegalArgumentException can not be thrown here
 			lineno = 0;
 		}
@@ -1486,16 +1361,12 @@ public class Context
 							   Evaluator compiler,
 							   ErrorReporter compilationErrorReporter,
 							   String sourceName, int lineno,
-							   Object securityDomain)
-	{
-		try
-		{
+							   Object securityDomain) {
+		try {
 			return (Script) compileImpl(null, source, sourceName, lineno,
 					securityDomain, false,
 					compiler, compilationErrorReporter);
-		}
-		catch (IOException ioe)
-		{
+		} catch (IOException ioe) {
 			// Should not happen when dealing with source as string
 			throw new RuntimeException(ioe);
 		}
@@ -1520,8 +1391,7 @@ public class Context
 	 */
 	public final Function compileFunction(Scriptable scope, String source,
 										  String sourceName, int lineno,
-										  Object securityDomain)
-	{
+										  Object securityDomain) {
 		return compileFunction(scope, source, null, null, sourceName, lineno,
 				securityDomain);
 	}
@@ -1530,16 +1400,12 @@ public class Context
 								   Evaluator compiler,
 								   ErrorReporter compilationErrorReporter,
 								   String sourceName, int lineno,
-								   Object securityDomain)
-	{
-		try
-		{
+								   Object securityDomain) {
+		try {
 			return (Function) compileImpl(scope, source, sourceName,
 					lineno, securityDomain, true,
 					compiler, compilationErrorReporter);
-		}
-		catch (IOException ioe)
-		{
+		} catch (IOException ioe) {
 			// Should never happen because we just made the reader
 			// from a String
 			throw new RuntimeException(ioe);
@@ -1555,8 +1421,7 @@ public class Context
 	 * @param indent the number of spaces to indent the result
 	 * @return a string representing the script source
 	 */
-	public final String decompileScript(Script script, int indent)
-	{
+	public final String decompileScript(Script script, int indent) {
 		NativeFunction scriptImpl = (NativeFunction) script;
 		return scriptImpl.decompile(indent, 0);
 	}
@@ -1574,10 +1439,8 @@ public class Context
 	 * @param indent the number of spaces to indent the result
 	 * @return a string representing the function source
 	 */
-	public final String decompileFunction(Function fun, int indent)
-	{
-		if (fun instanceof BaseFunction)
-		{
+	public final String decompileFunction(Function fun, int indent) {
+		if (fun instanceof BaseFunction) {
 			return ((BaseFunction) fun).decompile(indent, 0);
 		}
 
@@ -1597,10 +1460,8 @@ public class Context
 	 * @param indent the number of spaces to indent the result
 	 * @return a string representing the function body source.
 	 */
-	public final String decompileFunctionBody(Function fun, int indent)
-	{
-		if (fun instanceof BaseFunction)
-		{
+	public final String decompileFunctionBody(Function fun, int indent) {
+		if (fun instanceof BaseFunction) {
 			BaseFunction bf = (BaseFunction) fun;
 			return bf.decompile(indent, Decompiler.ONLY_BODY_FLAG);
 		}
@@ -1617,8 +1478,7 @@ public class Context
 	 *              against
 	 * @return the new object
 	 */
-	public Scriptable newObject(Scriptable scope)
-	{
+	public Scriptable newObject(Scriptable scope) {
 		NativeObject result = new NativeObject();
 		ScriptRuntime.setBuiltinProtoAndParent(result, scope,
 				TopLevel.Builtins.Object);
@@ -1635,8 +1495,7 @@ public class Context
 	 * @param constructorName the name of the constructor to call
 	 * @return the new object
 	 */
-	public Scriptable newObject(Scriptable scope, String constructorName)
-	{
+	public Scriptable newObject(Scriptable scope, String constructorName) {
 		return newObject(scope, constructorName, ScriptRuntime.emptyArgs);
 	}
 
@@ -1660,8 +1519,7 @@ public class Context
 	 * @return the new object
 	 */
 	public Scriptable newObject(Scriptable scope, String constructorName,
-								Object[] args)
-	{
+								Object[] args) {
 		return ScriptRuntime.newObject(this, scope, constructorName, args);
 	}
 
@@ -1674,8 +1532,7 @@ public class Context
 	 *               additional properties added dynamically).
 	 * @return the new array object
 	 */
-	public Scriptable newArray(Scriptable scope, int length)
-	{
+	public Scriptable newArray(Scriptable scope, int length) {
 		NativeArray result = new NativeArray(length);
 		ScriptRuntime.setBuiltinProtoAndParent(result, scope,
 				TopLevel.Builtins.Array);
@@ -1692,10 +1549,8 @@ public class Context
 	 *                 SomeObjectSubclass[].
 	 * @return the new array object.
 	 */
-	public Scriptable newArray(Scriptable scope, Object[] elements)
-	{
-		if (elements.getClass().getComponentType() != ScriptRuntime.ObjectClass)
-		{
+	public Scriptable newArray(Scriptable scope, Object[] elements) {
+		if (elements.getClass().getComponentType() != ScriptRuntime.ObjectClass) {
 			throw new IllegalArgumentException();
 		}
 		NativeArray result = new NativeArray(elements);
@@ -1722,8 +1577,7 @@ public class Context
 	 * @return a Java array of objects
 	 * @since 1.4 release 2
 	 */
-	public final Object[] getElements(Scriptable object)
-	{
+	public final Object[] getElements(Scriptable object) {
 		return ScriptRuntime.getArrayElements(object);
 	}
 
@@ -1736,8 +1590,7 @@ public class Context
 	 * @return the corresponding boolean value converted using
 	 * the ECMA rules
 	 */
-	public static boolean toBoolean(Object value)
-	{
+	public static boolean toBoolean(Object value) {
 		return ScriptRuntime.toBoolean(value);
 	}
 
@@ -1752,8 +1605,7 @@ public class Context
 	 * @return the corresponding double value converted using
 	 * the ECMA rules
 	 */
-	public static double toNumber(Object value)
-	{
+	public static double toNumber(Object value) {
 		return ScriptRuntime.toNumber(value);
 	}
 
@@ -1767,8 +1619,7 @@ public class Context
 	 * @return the corresponding String value converted using
 	 * the ECMA rules
 	 */
-	public static String toString(Object value)
-	{
+	public static String toString(Object value) {
 		return ScriptRuntime.toString(value);
 	}
 
@@ -1789,8 +1640,7 @@ public class Context
 	 *              Boolean, and String
 	 * @return new JavaScript object
 	 */
-	public static Scriptable toObject(Object value, Scriptable scope)
-	{
+	public static Scriptable toObject(Object value, Scriptable scope) {
 		return ScriptRuntime.toObject(scope, value);
 	}
 
@@ -1822,18 +1672,12 @@ public class Context
 	 * @param scope top scope object
 	 * @return value suitable to pass to any API that takes JavaScript values.
 	 */
-	public static Object javaToJS(Object value, Scriptable scope)
-	{
-		if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Scriptable)
-		{
+	public static Object javaToJS(Object value, Scriptable scope) {
+		if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Scriptable) {
 			return value;
-		}
-		else if (value instanceof Character)
-		{
+		} else if (value instanceof Character) {
 			return String.valueOf(((Character) value).charValue());
-		}
-		else
-		{
+		} else {
 			Context cx = Context.getContext();
 			return cx.getWrapFactory().wrap(cx, scope, value, null);
 		}
@@ -1852,8 +1696,7 @@ public class Context
 	 * @throws EvaluatorException if the conversion cannot be performed
 	 */
 	public static Object jsToJava(Object value, Class<?> desiredType)
-			throws EvaluatorException
-	{
+			throws EvaluatorException {
 		return NativeJavaObject.coerceTypeImpl(desiredType, value);
 	}
 
@@ -1875,24 +1718,19 @@ public class Context
 	 * @throws EvaluatorException
 	 * @throws EcmaError
 	 */
-	public static RuntimeException throwAsScriptRuntimeEx(Throwable e)
-	{
-		while ((e instanceof InvocationTargetException))
-		{
+	public static RuntimeException throwAsScriptRuntimeEx(Throwable e) {
+		while ((e instanceof InvocationTargetException)) {
 			e = ((InvocationTargetException) e).getTargetException();
 		}
 		// special handling of Error so scripts would not catch them
-		if (e instanceof Error)
-		{
+		if (e instanceof Error) {
 			Context cx = getContext();
 			if (cx == null ||
-					!cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS))
-			{
+					!cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
 				throw (Error) e;
 			}
 		}
-		if (e instanceof RhinoException)
-		{
+		if (e instanceof RhinoException) {
 			throw (RhinoException) e;
 		}
 		throw new WrappedException(e);
@@ -1903,8 +1741,7 @@ public class Context
 	 *
 	 * @since 1.3
 	 */
-	public final boolean isGeneratingDebug()
-	{
+	public final boolean isGeneratingDebug() {
 		return generatingDebug;
 	}
 
@@ -1916,15 +1753,12 @@ public class Context
 	 *
 	 * @since 1.3
 	 */
-	public final void setGeneratingDebug(boolean generatingDebug)
-	{
-		if (sealed)
-		{
+	public final void setGeneratingDebug(boolean generatingDebug) {
+		if (sealed) {
 			onSealedMutation();
 		}
 		generatingDebugChanged = true;
-		if (generatingDebug && getOptimizationLevel() > 0)
-		{
+		if (generatingDebug && getOptimizationLevel() > 0) {
 			setOptimizationLevel(0);
 		}
 		this.generatingDebug = generatingDebug;
@@ -1935,8 +1769,7 @@ public class Context
 	 *
 	 * @since 1.3
 	 */
-	public final boolean isGeneratingSource()
-	{
+	public final boolean isGeneratingSource() {
 		return generatingSource;
 	}
 
@@ -1951,10 +1784,8 @@ public class Context
 	 *
 	 * @since 1.3
 	 */
-	public final void setGeneratingSource(boolean generatingSource)
-	{
-		if (sealed)
-		{
+	public final void setGeneratingSource(boolean generatingSource) {
+		if (sealed) {
 			onSealedMutation();
 		}
 		this.generatingSource = generatingSource;
@@ -1968,8 +1799,7 @@ public class Context
 	 *
 	 * @since 1.3
 	 */
-	public final int getOptimizationLevel()
-	{
+	public final int getOptimizationLevel() {
 		return optimizationLevel;
 	}
 
@@ -1990,34 +1820,27 @@ public class Context
 	 *                          optimization to perform
 	 * @since 1.3
 	 */
-	public final void setOptimizationLevel(int optimizationLevel)
-	{
-		if (sealed)
-		{
+	public final void setOptimizationLevel(int optimizationLevel) {
+		if (sealed) {
 			onSealedMutation();
 		}
-		if (optimizationLevel == -2)
-		{
+		if (optimizationLevel == -2) {
 			// To be compatible with Cocoon fork
 			optimizationLevel = -1;
 		}
 		checkOptimizationLevel(optimizationLevel);
-		if (codegenClass == null)
-		{
+		if (codegenClass == null) {
 			optimizationLevel = -1;
 		}
 		this.optimizationLevel = optimizationLevel;
 	}
 
-	public static boolean isValidOptimizationLevel(int optimizationLevel)
-	{
+	public static boolean isValidOptimizationLevel(int optimizationLevel) {
 		return -1 <= optimizationLevel && optimizationLevel <= 9;
 	}
 
-	public static void checkOptimizationLevel(int optimizationLevel)
-	{
-		if (isValidOptimizationLevel(optimizationLevel))
-		{
+	public static void checkOptimizationLevel(int optimizationLevel) {
+		if (isValidOptimizationLevel(optimizationLevel)) {
 			return;
 		}
 		throw new IllegalArgumentException(
@@ -2038,8 +1861,7 @@ public class Context
 	 *
 	 * @return The current maximum interpreter stack depth.
 	 */
-	public final int getMaximumInterpreterStackDepth()
-	{
+	public final int getMaximumInterpreterStackDepth() {
 		return maximumInterpreterStackDepth;
 	}
 
@@ -2060,18 +1882,14 @@ public class Context
 	 *                                  -1
 	 * @throws IllegalArgumentException if the new depth is not at least 1
 	 */
-	public final void setMaximumInterpreterStackDepth(int max)
-	{
-		if (sealed)
-		{
+	public final void setMaximumInterpreterStackDepth(int max) {
+		if (sealed) {
 			onSealedMutation();
 		}
-		if (optimizationLevel != -1)
-		{
+		if (optimizationLevel != -1) {
 			throw new IllegalStateException("Cannot set maximumInterpreterStackDepth when optimizationLevel != -1");
 		}
-		if (max < 1)
-		{
+		if (max < 1) {
 			throw new IllegalArgumentException("Cannot set maximumInterpreterStackDepth to less than 1");
 		}
 		maximumInterpreterStackDepth = max;
@@ -2089,22 +1907,17 @@ public class Context
 	 * @see SecurityController#initGlobal(SecurityController controller)
 	 * @see SecurityController#hasGlobal()
 	 */
-	public final void setSecurityController(SecurityController controller)
-	{
-		if (sealed)
-		{
+	public final void setSecurityController(SecurityController controller) {
+		if (sealed) {
 			onSealedMutation();
 		}
-		if (controller == null)
-		{
+		if (controller == null) {
 			throw new IllegalArgumentException();
 		}
-		if (securityController != null)
-		{
+		if (securityController != null) {
 			throw new SecurityException("Can not overwrite existing SecurityController object");
 		}
-		if (SecurityController.hasGlobal())
-		{
+		if (SecurityController.hasGlobal()) {
 			throw new SecurityException("Can not overwrite existing global SecurityController object");
 		}
 		securityController = controller;
@@ -2119,18 +1932,14 @@ public class Context
 	 * @throws SecurityException if there is already a ClassShutter
 	 *                           object for this Context
 	 */
-	public synchronized final void setClassShutter(ClassShutter shutter)
-	{
-		if (sealed)
-		{
+	public synchronized final void setClassShutter(ClassShutter shutter) {
+		if (sealed) {
 			onSealedMutation();
 		}
-		if (shutter == null)
-		{
+		if (shutter == null) {
 			throw new IllegalArgumentException();
 		}
-		if (hasClassShutter)
-		{
+		if (hasClassShutter) {
 			throw new SecurityException("Cannot overwrite existing " +
 					"ClassShutter object");
 		}
@@ -2138,37 +1947,30 @@ public class Context
 		hasClassShutter = true;
 	}
 
-	final synchronized ClassShutter getClassShutter()
-	{
+	final synchronized ClassShutter getClassShutter() {
 		return classShutter;
 	}
 
-	public interface ClassShutterSetter
-	{
+	public interface ClassShutterSetter {
 		void setClassShutter(ClassShutter shutter);
 
 		ClassShutter getClassShutter();
 	}
 
-	public final synchronized ClassShutterSetter getClassShutterSetter()
-	{
-		if (hasClassShutter)
-		{
+	public final synchronized ClassShutterSetter getClassShutterSetter() {
+		if (hasClassShutter) {
 			return null;
 		}
 		hasClassShutter = true;
-		return new ClassShutterSetter()
-		{
+		return new ClassShutterSetter() {
 
 			@Override
-			public void setClassShutter(ClassShutter shutter)
-			{
+			public void setClassShutter(ClassShutter shutter) {
 				classShutter = shutter;
 			}
 
 			@Override
-			public ClassShutter getClassShutter()
-			{
+			public ClassShutter getClassShutter() {
 				return classShutter;
 			}
 		};
@@ -2190,10 +1992,8 @@ public class Context
 	 * @param key the key used to lookup the value
 	 * @return a value previously stored using putThreadLocal.
 	 */
-	public final Object getThreadLocal(Object key)
-	{
-		if (threadLocalMap == null)
-		{
+	public final Object getThreadLocal(Object key) {
+		if (threadLocalMap == null) {
 			return null;
 		}
 		return threadLocalMap.get(key);
@@ -2206,14 +2006,11 @@ public class Context
 	 * @param key   the key used to index the value
 	 * @param value the value to save
 	 */
-	public synchronized final void putThreadLocal(Object key, Object value)
-	{
-		if (sealed)
-		{
+	public synchronized final void putThreadLocal(Object key, Object value) {
+		if (sealed) {
 			onSealedMutation();
 		}
-		if (threadLocalMap == null)
-		{
+		if (threadLocalMap == null) {
 			threadLocalMap = new HashMap<>();
 		}
 		threadLocalMap.put(key, value);
@@ -2225,14 +2022,11 @@ public class Context
 	 * @param key the key for the entry to remove.
 	 * @since 1.5 release 2
 	 */
-	public final void removeThreadLocal(Object key)
-	{
-		if (sealed)
-		{
+	public final void removeThreadLocal(Object key) {
+		if (sealed) {
 			onSealedMutation();
 		}
-		if (threadLocalMap == null)
-		{
+		if (threadLocalMap == null) {
 			return;
 		}
 		threadLocalMap.remove(key);
@@ -2247,14 +2041,11 @@ public class Context
 	 * @see WrapFactory
 	 * @since 1.5 Release 4
 	 */
-	public final void setWrapFactory(WrapFactory wrapFactory)
-	{
-		if (sealed)
-		{
+	public final void setWrapFactory(WrapFactory wrapFactory) {
+		if (sealed) {
 			onSealedMutation();
 		}
-		if (wrapFactory == null)
-		{
+		if (wrapFactory == null) {
 			throw new IllegalArgumentException();
 		}
 		this.wrapFactory = wrapFactory;
@@ -2266,10 +2057,8 @@ public class Context
 	 * @see WrapFactory
 	 * @since 1.5 Release 4
 	 */
-	public final WrapFactory getWrapFactory()
-	{
-		if (wrapFactory == null)
-		{
+	public final WrapFactory getWrapFactory() {
+		if (wrapFactory == null) {
 			wrapFactory = new WrapFactory();
 		}
 		return wrapFactory;
@@ -2280,8 +2069,7 @@ public class Context
 	 *
 	 * @return the debugger, or null if none is attached.
 	 */
-	public final Debugger getDebugger()
-	{
+	public final Debugger getDebugger() {
 		return debugger;
 	}
 
@@ -2290,8 +2078,7 @@ public class Context
 	 *
 	 * @return the debugger data, or null if debugger is not attached
 	 */
-	public final Object getDebuggerContextData()
-	{
+	public final Object getDebuggerContextData() {
 		return debuggerData;
 	}
 
@@ -2303,10 +2090,8 @@ public class Context
 	 * @param contextData arbitrary object that debugger can use to store
 	 *                    per Context data.
 	 */
-	public final void setDebugger(Debugger debugger, Object contextData)
-	{
-		if (sealed)
-		{
+	public final void setDebugger(Debugger debugger, Object contextData) {
+		if (sealed) {
 			onSealedMutation();
 		}
 		this.debugger = debugger;
@@ -2318,10 +2103,8 @@ public class Context
 	 * If callable supports DebuggableScript implementation, the method
 	 * returns it. Otherwise null is returned.
 	 */
-	public static DebuggableScript getDebuggableView(Script script)
-	{
-		if (script instanceof NativeFunction)
-		{
+	public static DebuggableScript getDebuggableView(Script script) {
+		if (script instanceof NativeFunction) {
 			return ((NativeFunction) script).getDebuggableView();
 		}
 		return null;
@@ -2353,8 +2136,7 @@ public class Context
 	 * @see #FEATURE_WARNING_AS_ERROR
 	 * @see #FEATURE_ENHANCED_JAVA_ACCESS
 	 */
-	public boolean hasFeature(int featureIndex)
-	{
+	public boolean hasFeature(int featureIndex) {
 		ContextFactory f = getFactory();
 		return f.hasFeature(this, featureIndex);
 	}
@@ -2370,8 +2152,7 @@ public class Context
 	 * @return An XMLLib.Factory. Should not return <code>null</code> if
 	 * {@link #FEATURE_E4X} is enabled. See {@link #hasFeature}.
 	 */
-	public XMLLib.Factory getE4xImplementationFactory()
-	{
+	public XMLLib.Factory getE4xImplementationFactory() {
 		return getFactory().getE4xImplementationFactory();
 	}
 
@@ -2383,8 +2164,7 @@ public class Context
 	 * of script instructions, <code>observeInstructionCount()</code> will
 	 * be called.
 	 */
-	public final int getInstructionObserverThreshold()
-	{
+	public final int getInstructionObserverThreshold() {
 		return instructionThreshold;
 	}
 
@@ -2404,14 +2184,11 @@ public class Context
 	 *
 	 * @param threshold The instruction threshold
 	 */
-	public final void setInstructionObserverThreshold(int threshold)
-	{
-		if (sealed)
-		{
+	public final void setInstructionObserverThreshold(int threshold) {
+		if (sealed) {
 			onSealedMutation();
 		}
-		if (threshold < 0)
-		{
+		if (threshold < 0) {
 			throw new IllegalArgumentException();
 		}
 		instructionThreshold = threshold;
@@ -2430,8 +2207,7 @@ public class Context
 	 * @param generateObserverCount if true, generated code will contain
 	 *                              calls to accumulate an estimate of the instructions executed.
 	 */
-	public void setGenerateObserverCount(boolean generateObserverCount)
-	{
+	public void setGenerateObserverCount(boolean generateObserverCount) {
 		this.generateObserverCount = generateObserverCount;
 	}
 
@@ -2454,8 +2230,7 @@ public class Context
 	 * @throws Error to terminate the script
 	 * @see #setOptimizationLevel(int)
 	 */
-	protected void observeInstructionCount(int instructionCount)
-	{
+	protected void observeInstructionCount(int instructionCount) {
 		ContextFactory f = getFactory();
 		f.observeInstructionCount(this, instructionCount);
 	}
@@ -2465,25 +2240,20 @@ public class Context
 	 * The method calls {@link ContextFactory#createClassLoader(ClassLoader)}
 	 * using the result of {@link #getFactory()}.
 	 */
-	public GeneratedClassLoader createClassLoader(ClassLoader parent)
-	{
+	public GeneratedClassLoader createClassLoader(ClassLoader parent) {
 		ContextFactory f = getFactory();
 		return f.createClassLoader(parent);
 	}
 
-	public final ClassLoader getApplicationClassLoader()
-	{
-		if (applicationClassLoader == null)
-		{
+	public final ClassLoader getApplicationClassLoader() {
+		if (applicationClassLoader == null) {
 			ContextFactory f = getFactory();
 			ClassLoader loader = f.getApplicationClassLoader();
-			if (loader == null)
-			{
+			if (loader == null) {
 				ClassLoader threadLoader
 						= Thread.currentThread().getContextClassLoader();
 				if (threadLoader != null
-						&& Kit.testIfCanLoadRhinoClasses(threadLoader))
-				{
+						&& Kit.testIfCanLoadRhinoClasses(threadLoader)) {
 					// Thread.getContextClassLoader is not cached since
 					// its caching prevents it from GC which may lead to
 					// a memory leak and hides updates to
@@ -2494,12 +2264,9 @@ public class Context
 				// try to use the loader of ContextFactory or Context
 				// subclasses.
 				Class<?> fClass = f.getClass();
-				if (fClass != ScriptRuntime.ContextFactoryClass)
-				{
+				if (fClass != ScriptRuntime.ContextFactoryClass) {
 					loader = fClass.getClassLoader();
-				}
-				else
-				{
+				} else {
 					loader = getClass().getClassLoader();
 				}
 			}
@@ -2508,20 +2275,16 @@ public class Context
 		return applicationClassLoader;
 	}
 
-	public final void setApplicationClassLoader(ClassLoader loader)
-	{
-		if (sealed)
-		{
+	public final void setApplicationClassLoader(ClassLoader loader) {
+		if (sealed) {
 			onSealedMutation();
 		}
-		if (loader == null)
-		{
+		if (loader == null) {
 			// restore default behaviour
 			applicationClassLoader = null;
 			return;
 		}
-		if (!Kit.testIfCanLoadRhinoClasses(loader))
-		{
+		if (!Kit.testIfCanLoadRhinoClasses(loader)) {
 			throw new IllegalArgumentException(
 					"Loader can not resolve Rhino classes");
 		}
@@ -2534,11 +2297,9 @@ public class Context
 	 * Internal method that reports an error for missing calls to
 	 * enter().
 	 */
-	static Context getContext()
-	{
+	static Context getContext() {
 		Context cx = getCurrentContext();
-		if (cx == null)
-		{
+		if (cx == null) {
 			throw new RuntimeException(
 					"No Context associated with current Thread");
 		}
@@ -2550,28 +2311,23 @@ public class Context
 							   Object securityDomain, boolean returnFunction,
 							   Evaluator compiler,
 							   ErrorReporter compilationErrorReporter)
-			throws IOException
-	{
-		if (sourceName == null)
-		{
+			throws IOException {
+		if (sourceName == null) {
 			sourceName = "unnamed script";
 		}
-		if (securityDomain != null && getSecurityController() == null)
-		{
+		if (securityDomain != null && getSecurityController() == null) {
 			throw new IllegalArgumentException(
 					"securityDomain should be null if setSecurityController() was never called");
 		}
 
 		// scope should be given if and only if compiling function
-		if ((scope == null) == returnFunction)
-		{
+		if ((scope == null) == returnFunction) {
 			Kit.codeBug();
 		}
 
 		CompilerEnvirons compilerEnv = new CompilerEnvirons();
 		compilerEnv.initFromContext(this);
-		if (compilationErrorReporter == null)
-		{
+		if (compilationErrorReporter == null) {
 			compilationErrorReporter = compilerEnv.getErrorReporter();
 		}
 
@@ -2579,17 +2335,13 @@ public class Context
 				compilerEnv, compilationErrorReporter, returnFunction);
 
 		Object bytecode;
-		try
-		{
-			if (compiler == null)
-			{
+		try {
+			if (compiler == null) {
 				compiler = createCompiler();
 			}
 
 			bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
-		}
-		catch (ClassFileFormatException e)
-		{
+		} catch (ClassFileFormatException e) {
 			// we hit some class file limit, fall back to interpreter or report
 
 			// we have to recreate the tree because the compile call might have changed the tree already
@@ -2599,30 +2351,22 @@ public class Context
 			bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
 		}
 
-		if (debugger != null)
-		{
-			if (sourceString == null)
-			{
+		if (debugger != null) {
+			if (sourceString == null) {
 				Kit.codeBug();
 			}
-			if (bytecode instanceof DebuggableScript)
-			{
+			if (bytecode instanceof DebuggableScript) {
 				DebuggableScript dscript = (DebuggableScript) bytecode;
 				notifyDebugger_r(this, dscript, sourceString);
-			}
-			else
-			{
+			} else {
 				throw new RuntimeException("NOT SUPPORTED");
 			}
 		}
 
 		Object result;
-		if (returnFunction)
-		{
+		if (returnFunction) {
 			result = compiler.createFunctionObject(this, scope, bytecode, securityDomain);
-		}
-		else
-		{
+		} else {
 			result = compiler.createScriptObject(bytecode, securityDomain);
 		}
 
@@ -2631,25 +2375,20 @@ public class Context
 
 	private ScriptNode parse(String sourceString, String sourceName, int lineno,
 							 CompilerEnvirons compilerEnv, ErrorReporter compilationErrorReporter,
-							 boolean returnFunction) throws IOException
-	{
+							 boolean returnFunction) throws IOException {
 		Parser p = new Parser(compilerEnv, compilationErrorReporter);
-		if (returnFunction)
-		{
+		if (returnFunction) {
 			p.calledByCompileFunction = true;
 		}
-		if (isStrictMode())
-		{
+		if (isStrictMode()) {
 			p.setDefaultUseStrictDirective(true);
 		}
 
 		AstRoot ast = p.parse(sourceString, sourceName, lineno);
-		if (returnFunction)
-		{
+		if (returnFunction) {
 			// parser no longer adds function to script node
 			if (!(ast.getFirstChild() != null
-					&& ast.getFirstChild().getType() == Token.FUNCTION))
-			{
+					&& ast.getFirstChild().getType() == Token.FUNCTION)) {
 				// XXX: the check just looks for the first child
 				// and allows for more nodes after it for compatibility
 				// with sources like function() {};;;
@@ -2664,11 +2403,9 @@ public class Context
 	}
 
 	private static void notifyDebugger_r(Context cx, DebuggableScript dscript,
-										 String debugSource)
-	{
+										 String debugSource) {
 		cx.debugger.handleCompilationDone(cx, dscript, debugSource);
-		for (int i = 0; i != dscript.getFunctionCount(); ++i)
-		{
+		for (int i = 0; i != dscript.getFunctionCount(); ++i) {
 			notifyDebugger_r(cx, dscript.getFunction(i), debugSource);
 		}
 	}
@@ -2678,37 +2415,29 @@ public class Context
 	private static final Class<?> interpreterClass = Kit.classOrNull(
 			"dev.latvian.mods.rhino.Interpreter");
 
-	private Evaluator createCompiler()
-	{
+	private Evaluator createCompiler() {
 		Evaluator result = null;
-		if (optimizationLevel >= 0 && codegenClass != null)
-		{
+		if (optimizationLevel >= 0 && codegenClass != null) {
 			result = (Evaluator) Kit.newInstanceOrNull(codegenClass);
 		}
-		if (result == null)
-		{
+		if (result == null) {
 			result = createInterpreter();
 		}
 		return result;
 	}
 
-	static Evaluator createInterpreter()
-	{
+	static Evaluator createInterpreter() {
 		return (Evaluator) Kit.newInstanceOrNull(interpreterClass);
 	}
 
-	public static String getSourcePositionFromStack(int[] linep)
-	{
+	public static String getSourcePositionFromStack(int[] linep) {
 		Context cx = getCurrentContext();
-		if (cx == null)
-		{
+		if (cx == null) {
 			return null;
 		}
-		if (cx.lastInterpreterFrame != null)
-		{
+		if (cx.lastInterpreterFrame != null) {
 			Evaluator evaluator = createInterpreter();
-			if (evaluator != null)
-			{
+			if (evaluator != null) {
 				return evaluator.getSourcePositionFromStack(cx, linep);
 			}
 		}
@@ -2717,14 +2446,11 @@ public class Context
 		 * number from an enclosing frame.
 		 */
 		StackTraceElement[] stackTrace = new Throwable().getStackTrace();
-		for (StackTraceElement st : stackTrace)
-		{
+		for (StackTraceElement st : stackTrace) {
 			String file = st.getFileName();
-			if (!(file == null || file.endsWith(".java")))
-			{
+			if (!(file == null || file.endsWith(".java"))) {
 				int line = st.getLineNumber();
-				if (line >= 0)
-				{
+				if (line >= 0) {
 					linep[0] = line;
 					return file;
 				}
@@ -2734,38 +2460,31 @@ public class Context
 		return null;
 	}
 
-	RegExpProxy getRegExpProxy()
-	{
-		if (regExpProxy == null)
-		{
+	RegExpProxy getRegExpProxy() {
+		if (regExpProxy == null) {
 			Class<?> cl = Kit.classOrNull(
 					"dev.latvian.mods.rhino.regexp.RegExpImpl");
-			if (cl != null)
-			{
+			if (cl != null) {
 				regExpProxy = (RegExpProxy) Kit.newInstanceOrNull(cl);
 			}
 		}
 		return regExpProxy;
 	}
 
-	final boolean isVersionECMA1()
-	{
+	final boolean isVersionECMA1() {
 		return version == VERSION_DEFAULT || version >= VERSION_1_3;
 	}
 
 	// The method must NOT be public or protected
-	SecurityController getSecurityController()
-	{
+	SecurityController getSecurityController() {
 		SecurityController global = SecurityController.global();
-		if (global != null)
-		{
+		if (global != null) {
 			return global;
 		}
 		return securityController;
 	}
 
-	public final boolean isGeneratingDebugChanged()
-	{
+	public final boolean isGeneratingDebugChanged() {
 		return generatingDebugChanged;
 	}
 
@@ -2775,14 +2494,11 @@ public class Context
 	 *
 	 * @param name the name of the object to add to the list
 	 */
-	public void addActivationName(String name)
-	{
-		if (sealed)
-		{
+	public void addActivationName(String name) {
+		if (sealed) {
 			onSealedMutation();
 		}
-		if (activationNames == null)
-		{
+		if (activationNames == null) {
 			activationNames = new HashSet<>();
 		}
 		activationNames.add(name);
@@ -2795,8 +2511,7 @@ public class Context
 	 * @param name the name of the object to test
 	 * @return true if an function activation object is needed.
 	 */
-	public final boolean isActivationNeeded(String name)
-	{
+	public final boolean isActivationNeeded(String name) {
 		return activationNames != null && activationNames.contains(name);
 	}
 
@@ -2806,35 +2521,28 @@ public class Context
 	 *
 	 * @param name the name of the object to remove from the list
 	 */
-	public void removeActivationName(String name)
-	{
-		if (sealed)
-		{
+	public void removeActivationName(String name) {
+		if (sealed) {
 			onSealedMutation();
 		}
-		if (activationNames != null)
-		{
+		if (activationNames != null) {
 			activationNames.remove(name);
 		}
 	}
 
-	public final boolean isStrictMode()
-	{
+	public final boolean isStrictMode() {
 		return isTopLevelStrict || (currentActivationCall != null && currentActivationCall.isStrict);
 	}
 
-	public TypeWrappers getTypeWrappers()
-	{
-		if (factory.typeWrappers == null)
-		{
+	public TypeWrappers getTypeWrappers() {
+		if (factory.typeWrappers == null) {
 			factory.typeWrappers = new TypeWrappers();
 		}
 
 		return factory.typeWrappers;
 	}
 
-	public boolean hasTypeWrappers()
-	{
+	public boolean hasTypeWrappers() {
 		return factory.typeWrappers != null;
 	}
 

@@ -14,8 +14,7 @@ import dev.latvian.mods.rhino.Token;
  * <pre><i>ThrowStatement</i> :
  *      <b>throw</b> [<i>no LineTerminator here</i>] Expression ;</pre>
  */
-public class ThrowStatement extends AstNode
-{
+public class ThrowStatement extends AstNode {
 
 	private AstNode expression;
 
@@ -23,33 +22,27 @@ public class ThrowStatement extends AstNode
 		type = Token.THROW;
 	}
 
-	public ThrowStatement()
-	{
+	public ThrowStatement() {
 	}
 
-	public ThrowStatement(int pos)
-	{
+	public ThrowStatement(int pos) {
 		super(pos);
 	}
 
-	public ThrowStatement(int pos, int len)
-	{
+	public ThrowStatement(int pos, int len) {
 		super(pos, len);
 	}
 
-	public ThrowStatement(AstNode expr)
-	{
+	public ThrowStatement(AstNode expr) {
 		setExpression(expr);
 	}
 
-	public ThrowStatement(int pos, AstNode expr)
-	{
+	public ThrowStatement(int pos, AstNode expr) {
 		super(pos, expr.getLength());
 		setExpression(expr);
 	}
 
-	public ThrowStatement(int pos, int len, AstNode expr)
-	{
+	public ThrowStatement(int pos, int len, AstNode expr) {
 		super(pos, len);
 		setExpression(expr);
 	}
@@ -57,8 +50,7 @@ public class ThrowStatement extends AstNode
 	/**
 	 * Returns the expression being thrown
 	 */
-	public AstNode getExpression()
-	{
+	public AstNode getExpression() {
 		return expression;
 	}
 
@@ -68,16 +60,14 @@ public class ThrowStatement extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if expression is {@code null}
 	 */
-	public void setExpression(AstNode expression)
-	{
+	public void setExpression(AstNode expression) {
 		assertNotNull(expression);
 		this.expression = expression;
 		expression.setParent(this);
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("throw");
@@ -91,10 +81,8 @@ public class ThrowStatement extends AstNode
 	 * Visits this node, then the thrown expression.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			expression.visit(v);
 		}
 	}

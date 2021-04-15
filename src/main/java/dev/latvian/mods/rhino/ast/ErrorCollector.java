@@ -21,8 +21,7 @@ import java.util.List;
  *
  * @author Steve Yegge
  */
-public class ErrorCollector implements IdeErrorReporter
-{
+public class ErrorCollector implements IdeErrorReporter {
 
 	private final List<ParseProblem> errors = new ArrayList<>();
 
@@ -34,8 +33,7 @@ public class ErrorCollector implements IdeErrorReporter
 	 */
 	@Override
 	public void warning(String message, String sourceName, int line,
-						String lineSource, int lineOffset)
-	{
+						String lineSource, int lineOffset) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -43,8 +41,7 @@ public class ErrorCollector implements IdeErrorReporter
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void warning(String message, String sourceName, int offset, int length)
-	{
+	public void warning(String message, String sourceName, int offset, int length) {
 		errors.add(new ParseProblem(ParseProblem.Type.Warning,
 				message, sourceName,
 				offset, length));
@@ -58,8 +55,7 @@ public class ErrorCollector implements IdeErrorReporter
 	 */
 	@Override
 	public void error(String message, String sourceName, int line,
-					  String lineSource, int lineOffset)
-	{
+					  String lineSource, int lineOffset) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -68,8 +64,7 @@ public class ErrorCollector implements IdeErrorReporter
 	 */
 	@Override
 	public void error(String message, String sourceName,
-					  int fileOffset, int length)
-	{
+					  int fileOffset, int length) {
 		errors.add(new ParseProblem(ParseProblem.Type.Error,
 				message, sourceName,
 				fileOffset, length));
@@ -81,25 +76,21 @@ public class ErrorCollector implements IdeErrorReporter
 	@Override
 	public EvaluatorException runtimeError(String message, String sourceName,
 										   int line, String lineSource,
-										   int lineOffset)
-	{
+										   int lineOffset) {
 		throw new UnsupportedOperationException();
 	}
 
 	/**
 	 * Returns the list of errors and warnings produced during parsing.
 	 */
-	public List<ParseProblem> getErrors()
-	{
+	public List<ParseProblem> getErrors() {
 		return errors;
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		StringBuilder sb = new StringBuilder(errors.size() * 100);
-		for (ParseProblem pp : errors)
-		{
+		for (ParseProblem pp : errors) {
 			sb.append(pp.toString()).append("\n");
 		}
 		return sb.toString();

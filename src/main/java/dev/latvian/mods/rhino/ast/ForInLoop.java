@@ -16,8 +16,7 @@ import dev.latvian.mods.rhino.Token;
  * <pre><b>for</b> ( LeftHandSideExpression <b>of</b> Expression ) Statement</pre>
  * <pre><b>for</b> ( ForDeclaration <b>of</b> Expression ) Statement</pre>
  */
-public class ForInLoop extends Loop
-{
+public class ForInLoop extends Loop {
 
 	protected AstNode iterator;
 	protected AstNode iteratedObject;
@@ -30,25 +29,21 @@ public class ForInLoop extends Loop
 		type = Token.FOR;
 	}
 
-	public ForInLoop()
-	{
+	public ForInLoop() {
 	}
 
-	public ForInLoop(int pos)
-	{
+	public ForInLoop(int pos) {
 		super(pos);
 	}
 
-	public ForInLoop(int pos, int len)
-	{
+	public ForInLoop(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Returns loop iterator expression
 	 */
-	public AstNode getIterator()
-	{
+	public AstNode getIterator() {
 		return iterator;
 	}
 
@@ -58,8 +53,7 @@ public class ForInLoop extends Loop
 	 *
 	 * @throws IllegalArgumentException if {@code iterator} is {@code null}
 	 */
-	public void setIterator(AstNode iterator)
-	{
+	public void setIterator(AstNode iterator) {
 		assertNotNull(iterator);
 		this.iterator = iterator;
 		iterator.setParent(this);
@@ -68,8 +62,7 @@ public class ForInLoop extends Loop
 	/**
 	 * Returns object being iterated over
 	 */
-	public AstNode getIteratedObject()
-	{
+	public AstNode getIteratedObject() {
 		return iteratedObject;
 	}
 
@@ -78,8 +71,7 @@ public class ForInLoop extends Loop
 	 *
 	 * @throws IllegalArgumentException if {@code object} is {@code null}
 	 */
-	public void setIteratedObject(AstNode object)
-	{
+	public void setIteratedObject(AstNode object) {
 		assertNotNull(object);
 		this.iteratedObject = object;
 		object.setParent(this);
@@ -88,40 +80,35 @@ public class ForInLoop extends Loop
 	/**
 	 * Returns whether the loop is a for-each loop
 	 */
-	public boolean isForEach()
-	{
+	public boolean isForEach() {
 		return isForEach;
 	}
 
 	/**
 	 * Sets whether the loop is a for-each loop
 	 */
-	public void setIsForEach(boolean isForEach)
-	{
+	public void setIsForEach(boolean isForEach) {
 		this.isForEach = isForEach;
 	}
 
 	/**
 	 * Returns whether the loop is a for-of loop
 	 */
-	public boolean isForOf()
-	{
+	public boolean isForOf() {
 		return isForOf;
 	}
 
 	/**
 	 * Sets whether the loop is a for-each loop
 	 */
-	public void setIsForOf(boolean isForOf)
-	{
+	public void setIsForOf(boolean isForOf) {
 		this.isForOf = isForOf;
 	}
 
 	/**
 	 * Returns position of "in" or "of" keyword
 	 */
-	public int getInPosition()
-	{
+	public int getInPosition() {
 		return inPosition;
 	}
 
@@ -131,16 +118,14 @@ public class ForInLoop extends Loop
 	 * @param inPosition position of "in" or "of" keyword,
 	 *                   or -1 if not present (e.g. in presence of a syntax error)
 	 */
-	public void setInPosition(int inPosition)
-	{
+	public void setInPosition(int inPosition) {
 		this.inPosition = inPosition;
 	}
 
 	/**
 	 * Returns position of "each" keyword
 	 */
-	public int getEachPosition()
-	{
+	public int getEachPosition() {
 		return eachPosition;
 	}
 
@@ -150,39 +135,30 @@ public class ForInLoop extends Loop
 	 * @param eachPosition position of "each" keyword,
 	 *                     or -1 if not present.
 	 */
-	public void setEachPosition(int eachPosition)
-	{
+	public void setEachPosition(int eachPosition) {
 		this.eachPosition = eachPosition;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("for ");
-		if (isForEach())
-		{
+		if (isForEach()) {
 			sb.append("each ");
 		}
 		sb.append("(");
 		sb.append(iterator.toSource(0));
-		if (isForOf)
-		{
+		if (isForOf) {
 			sb.append(" of ");
-		}
-		else
-		{
+		} else {
 			sb.append(" in ");
 		}
 		sb.append(iteratedObject.toSource(0));
 		sb.append(") ");
-		if (body.getType() == Token.BLOCK)
-		{
+		if (body.getType() == Token.BLOCK) {
 			sb.append(body.toSource(depth).trim()).append("\n");
-		}
-		else
-		{
+		} else {
 			sb.append("\n").append(body.toSource(depth + 1));
 		}
 		return sb.toString();
@@ -192,10 +168,8 @@ public class ForInLoop extends Loop
 	 * Visits this node, the iterator, the iterated object, and the body.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			iterator.visit(v);
 			iteratedObject.visit(v);
 			body.visit(v);

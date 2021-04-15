@@ -13,10 +13,8 @@ package dev.latvian.mods.rhino.classfile;
  * outputs stack map frames at the start of every super block except the method
  * start.
  */
-final class SuperBlock
-{
-	SuperBlock(int index, int start, int end, int[] initialLocals)
-	{
+final class SuperBlock {
+	SuperBlock(int index, int start, int end, int[] initialLocals) {
 		this.index = index;
 		this.start = start;
 		this.end = end;
@@ -27,13 +25,11 @@ final class SuperBlock
 		isInQueue = false;
 	}
 
-	int getIndex()
-	{
+	int getIndex() {
 		return index;
 	}
 
-	int[] getLocals()
-	{
+	int[] getLocals() {
 		int[] copy = new int[locals.length];
 		System.arraycopy(locals, 0, copy, 0, locals.length);
 		return copy;
@@ -48,68 +44,54 @@ final class SuperBlock
 	 * because they occupy two words. For writing purposes, these are not
 	 * useful.
 	 */
-	int[] getTrimmedLocals()
-	{
+	int[] getTrimmedLocals() {
 		int last = locals.length - 1;
 		// Exclude all of the trailing TOPs not bound to a DOUBLE/LONG
 		while (last >= 0 && locals[last] == TypeInfo.TOP &&
-				!TypeInfo.isTwoWords(locals[last - 1]))
-		{
+				!TypeInfo.isTwoWords(locals[last - 1])) {
 			last--;
 		}
 		last++;
 		// Exclude trailing TOPs following a DOUBLE/LONG
 		int size = last;
-		for (int i = 0; i < last; i++)
-		{
-			if (TypeInfo.isTwoWords(locals[i]))
-			{
+		for (int i = 0; i < last; i++) {
+			if (TypeInfo.isTwoWords(locals[i])) {
 				size--;
 			}
 		}
 		int[] copy = new int[size];
-		for (int i = 0, j = 0; i < size; i++, j++)
-		{
+		for (int i = 0, j = 0; i < size; i++, j++) {
 			copy[i] = locals[j];
-			if (TypeInfo.isTwoWords(locals[j]))
-			{
+			if (TypeInfo.isTwoWords(locals[j])) {
 				j++;
 			}
 		}
 		return copy;
 	}
 
-	int[] getStack()
-	{
+	int[] getStack() {
 		int[] copy = new int[stack.length];
 		System.arraycopy(stack, 0, copy, 0, stack.length);
 		return copy;
 	}
 
 	boolean merge(int[] locals, int localsTop, int[] stack, int stackTop,
-				  ConstantPool pool)
-	{
-		if (!isInitialized)
-		{
+				  ConstantPool pool) {
+		if (!isInitialized) {
 			System.arraycopy(locals, 0, this.locals, 0, localsTop);
 			this.stack = new int[stackTop];
 			System.arraycopy(stack, 0, this.stack, 0, stackTop);
 			isInitialized = true;
 			return true;
-		}
-		else if (this.locals.length == localsTop &&
-				this.stack.length == stackTop)
-		{
+		} else if (this.locals.length == localsTop &&
+				this.stack.length == stackTop) {
 			boolean localsChanged = mergeState(this.locals, locals, localsTop,
 					pool);
 			boolean stackChanged = mergeState(this.stack, stack, stackTop,
 					pool);
 			return localsChanged || stackChanged;
-		}
-		else
-		{
-			if (ClassFileWriter.StackMapTable.DEBUGSTACKMAP)
-			{
+		} else {
+			if (ClassFileWriter.StackMapTable.DEBUGSTACKMAP) {
 				System.out.println("bad merge");
 				System.out.println("current type state:");
 				TypeInfo.print(this.locals, this.stack, pool);
@@ -129,55 +111,45 @@ final class SuperBlock
 	 * array is always the same size).
 	 */
 	private static boolean mergeState(int[] current, int[] incoming, int size,
-									  ConstantPool pool)
-	{
+									  ConstantPool pool) {
 		boolean changed = false;
-		for (int i = 0; i < size; i++)
-		{
+		for (int i = 0; i < size; i++) {
 			int currentType = current[i];
 
 			current[i] = TypeInfo.merge(current[i], incoming[i], pool);
-			if (currentType != current[i])
-			{
+			if (currentType != current[i]) {
 				changed = true;
 			}
 		}
 		return changed;
 	}
 
-	int getStart()
-	{
+	int getStart() {
 		return start;
 	}
 
-	int getEnd()
-	{
+	int getEnd() {
 		return end;
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return "sb " + index;
 	}
 
-	boolean isInitialized()
-	{
+	boolean isInitialized() {
 		return isInitialized;
 	}
 
-	void setInitialized(boolean b)
-	{
+	void setInitialized(boolean b) {
 		isInitialized = b;
 	}
 
-	boolean isInQueue()
-	{
+	boolean isInQueue() {
 		return isInQueue;
 	}
 
-	void setInQueue(boolean b)
-	{
+	void setInQueue(boolean b) {
 		isInQueue = b;
 	}
 

@@ -10,8 +10,7 @@ import dev.latvian.mods.rhino.ObjArray;
 import dev.latvian.mods.rhino.Token;
 import dev.latvian.mods.rhino.ast.ScriptNode;
 
-class Optimizer
-{
+class Optimizer {
 
 	static final int NoType = 0;
 	static final int NumberType = 1;
@@ -19,21 +18,17 @@ class Optimizer
 
 	// It is assumed that (NumberType | AnyType) == AnyType
 
-	void optimize(ScriptNode scriptOrFn)
-	{
+	void optimize(ScriptNode scriptOrFn) {
 		//  run on one function at a time for now
 		int functionCount = scriptOrFn.getFunctionCount();
-		for (int i = 0; i != functionCount; ++i)
-		{
+		for (int i = 0; i != functionCount; ++i) {
 			OptFunctionNode f = OptFunctionNode.get(scriptOrFn, i);
 			optimizeFunction(f);
 		}
 	}
 
-	private void optimizeFunction(OptFunctionNode theFunction)
-	{
-		if (theFunction.fnode.requiresActivation())
-		{
+	private void optimizeFunction(OptFunctionNode theFunction) {
+		if (theFunction.fnode.requiresActivation()) {
 			return;
 		}
 
@@ -47,8 +42,7 @@ class Optimizer
 
 		Block.runFlowAnalyzes(theFunction, theStatementNodes);
 
-		if (!theFunction.fnode.requiresActivation())
-		{
+		if (!theFunction.fnode.requiresActivation()) {
 			/*
 			 * Now that we know which local vars are in fact always
 			 * Numbers, we re-write the tree to take advantage of
@@ -57,8 +51,7 @@ class Optimizer
 			 * generate non-object code.
 			 */
 			parameterUsedInNumberContext = false;
-			for (Node theStatementNode : theStatementNodes)
-			{
+			for (Node theStatementNode : theStatementNodes) {
 				rewriteForNumberVariables(theStatementNode, NumberType);
 			}
 			theFunction.setParameterNumberContext(parameterUsedInNumberContext);
@@ -98,25 +91,19 @@ class Optimizer
 			was a double value). If the node is a parameter in a directCall
 			function, mark it as being referenced in this context.
 	*/
-	private void markDCPNumberContext(Node n)
-	{
-		if (inDirectCallFunction && n.getType() == Token.GETVAR)
-		{
+	private void markDCPNumberContext(Node n) {
+		if (inDirectCallFunction && n.getType() == Token.GETVAR) {
 			int varIndex = theFunction.getVarIndex(n);
-			if (theFunction.isParameter(varIndex))
-			{
+			if (theFunction.isParameter(varIndex)) {
 				parameterUsedInNumberContext = true;
 			}
 		}
 	}
 
-	private boolean convertParameter(Node n)
-	{
-		if (inDirectCallFunction && n.getType() == Token.GETVAR)
-		{
+	private boolean convertParameter(Node n) {
+		if (inDirectCallFunction && n.getType() == Token.GETVAR) {
 			int varIndex = theFunction.getVarIndex(n);
-			if (theFunction.isParameter(varIndex))
-			{
+			if (theFunction.isParameter(varIndex)) {
 				n.removeProp(Node.ISNUMBER_PROP);
 				return true;
 			}
@@ -124,16 +111,12 @@ class Optimizer
 		return false;
 	}
 
-	private int rewriteForNumberVariables(Node n, int desired)
-	{
-		switch (n.getType())
-		{
-			case Token.EXPR_VOID:
-			{
+	private int rewriteForNumberVariables(Node n, int desired) {
+		switch (n.getType()) {
+			case Token.EXPR_VOID: {
 				Node child = n.getFirstChild();
 				int type = rewriteForNumberVariables(child, NumberType);
-				if (type == NumberType)
-				{
+				if (type == NumberType) {
 					n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
 				}
 				return NoType;
@@ -142,18 +125,14 @@ class Optimizer
 				n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
 				return NumberType;
 
-			case Token.GETVAR:
-			{
+			case Token.GETVAR: {
 				int varIndex = theFunction.getVarIndex(n);
 				if (inDirectCallFunction
 						&& theFunction.isParameter(varIndex)
-						&& desired == NumberType)
-				{
+						&& desired == NumberType) {
 					n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
 					return NumberType;
-				}
-				else if (theFunction.isNumberVar(varIndex))
-				{
+				} else if (theFunction.isNumberVar(varIndex)) {
 					n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
 					return NumberType;
 				}
@@ -161,41 +140,32 @@ class Optimizer
 			}
 
 			case Token.INC:
-			case Token.DEC:
-			{
+			case Token.DEC: {
 				Node child = n.getFirstChild();
 				int type = rewriteForNumberVariables(child, NumberType);
-				if (child.getType() == Token.GETVAR)
-				{
-					if (type == NumberType && !convertParameter(child))
-					{
+				if (child.getType() == Token.GETVAR) {
+					if (type == NumberType && !convertParameter(child)) {
 						n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
 						markDCPNumberContext(child);
 						return NumberType;
 					}
 					return NoType;
-				}
-				else if (child.getType() == Token.GETELEM
-						|| child.getType() == Token.GETPROP)
-				{
+				} else if (child.getType() == Token.GETELEM
+						|| child.getType() == Token.GETPROP) {
 					return type;
 				}
 				return NoType;
 			}
 			case Token.SETVAR:
-			case Token.SETCONSTVAR:
-			{
+			case Token.SETCONSTVAR: {
 				Node lChild = n.getFirstChild();
 				Node rChild = lChild.getNext();
 				int rType = rewriteForNumberVariables(rChild, NumberType);
 				int varIndex = theFunction.getVarIndex(n);
 				if (inDirectCallFunction
-						&& theFunction.isParameter(varIndex))
-				{
-					if (rType == NumberType)
-					{
-						if (!convertParameter(rChild))
-						{
+						&& theFunction.isParameter(varIndex)) {
+					if (rType == NumberType) {
+						if (!convertParameter(rChild)) {
 							n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
 							return NumberType;
 						}
@@ -203,11 +173,8 @@ class Optimizer
 						return NoType;
 					}
 					return rType;
-				}
-				else if (theFunction.isNumberVar(varIndex))
-				{
-					if (rType != NumberType)
-					{
+				} else if (theFunction.isNumberVar(varIndex)) {
+					if (rType != NumberType) {
 						n.removeChild(rChild);
 						n.addChildToBack(
 								new Node(Token.TO_DOUBLE, rChild));
@@ -215,13 +182,9 @@ class Optimizer
 					n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
 					markDCPNumberContext(rChild);
 					return NumberType;
-				}
-				else
-				{
-					if (rType == NumberType)
-					{
-						if (!convertParameter(rChild))
-						{
+				} else {
+					if (rType == NumberType) {
+						if (!convertParameter(rChild)) {
 							n.removeChild(rChild);
 							n.addChildToBack(
 									new Node(Token.TO_OBJECT, rChild));
@@ -233,8 +196,7 @@ class Optimizer
 			case Token.LE:
 			case Token.LT:
 			case Token.GE:
-			case Token.GT:
-			{
+			case Token.GT: {
 				Node lChild = n.getFirstChild();
 				Node rChild = lChild.getNext();
 				int lType = rewriteForNumberVariables(lChild, NumberType);
@@ -242,41 +204,25 @@ class Optimizer
 				markDCPNumberContext(lChild);
 				markDCPNumberContext(rChild);
 
-				if (convertParameter(lChild))
-				{
-					if (convertParameter(rChild))
-					{
+				if (convertParameter(lChild)) {
+					if (convertParameter(rChild)) {
 						return NoType;
-					}
-					else if (rType == NumberType)
-					{
+					} else if (rType == NumberType) {
 						n.putIntProp(Node.ISNUMBER_PROP, Node.RIGHT);
 					}
-				}
-				else if (convertParameter(rChild))
-				{
-					if (lType == NumberType)
-					{
+				} else if (convertParameter(rChild)) {
+					if (lType == NumberType) {
 						n.putIntProp(Node.ISNUMBER_PROP, Node.LEFT);
 					}
-				}
-				else
-				{
-					if (lType == NumberType)
-					{
-						if (rType == NumberType)
-						{
+				} else {
+					if (lType == NumberType) {
+						if (rType == NumberType) {
 							n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
-						}
-						else
-						{
+						} else {
 							n.putIntProp(Node.ISNUMBER_PROP, Node.LEFT);
 						}
-					}
-					else
-					{
-						if (rType == NumberType)
-						{
+					} else {
+						if (rType == NumberType) {
 							n.putIntProp(Node.ISNUMBER_PROP, Node.RIGHT);
 						}
 					}
@@ -285,49 +231,34 @@ class Optimizer
 				return NoType;
 			}
 
-			case Token.ADD:
-			{
+			case Token.ADD: {
 				Node lChild = n.getFirstChild();
 				Node rChild = lChild.getNext();
 				int lType = rewriteForNumberVariables(lChild, NumberType);
 				int rType = rewriteForNumberVariables(rChild, NumberType);
 
 
-				if (convertParameter(lChild))
-				{
-					if (convertParameter(rChild))
-					{
+				if (convertParameter(lChild)) {
+					if (convertParameter(rChild)) {
 						return NoType;
 					}
-					if (rType == NumberType)
-					{
+					if (rType == NumberType) {
 						n.putIntProp(Node.ISNUMBER_PROP, Node.RIGHT);
 					}
-				}
-				else
-				{
-					if (convertParameter(rChild))
-					{
-						if (lType == NumberType)
-						{
+				} else {
+					if (convertParameter(rChild)) {
+						if (lType == NumberType) {
 							n.putIntProp(Node.ISNUMBER_PROP, Node.LEFT);
 						}
-					}
-					else
-					{
-						if (lType == NumberType)
-						{
-							if (rType == NumberType)
-							{
+					} else {
+						if (lType == NumberType) {
+							if (rType == NumberType) {
 								n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
 								return NumberType;
 							}
 							n.putIntProp(Node.ISNUMBER_PROP, Node.LEFT);
-						}
-						else
-						{
-							if (rType == NumberType)
-							{
+						} else {
+							if (rType == NumberType) {
 								n.putIntProp(Node.ISNUMBER_PROP,
 										Node.RIGHT);
 							}
@@ -345,23 +276,19 @@ class Optimizer
 			case Token.SUB:
 			case Token.MUL:
 			case Token.DIV:
-			case Token.MOD:
-			{
+			case Token.MOD: {
 				Node lChild = n.getFirstChild();
 				Node rChild = lChild.getNext();
 				int lType = rewriteForNumberVariables(lChild, NumberType);
 				int rType = rewriteForNumberVariables(rChild, NumberType);
 				markDCPNumberContext(lChild);
 				markDCPNumberContext(rChild);
-				if (lType == NumberType)
-				{
-					if (rType == NumberType)
-					{
+				if (lType == NumberType) {
+					if (rType == NumberType) {
 						n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
 						return NumberType;
 					}
-					if (!convertParameter(rChild))
-					{
+					if (!convertParameter(rChild)) {
 						n.removeChild(rChild);
 						n.addChildToBack(
 								new Node(Token.TO_DOUBLE, rChild));
@@ -369,10 +296,8 @@ class Optimizer
 					}
 					return NumberType;
 				}
-				if (rType == NumberType)
-				{
-					if (!convertParameter(lChild))
-					{
+				if (rType == NumberType) {
+					if (!convertParameter(lChild)) {
 						n.removeChild(lChild);
 						n.addChildToFront(
 								new Node(Token.TO_DOUBLE, lChild));
@@ -380,14 +305,12 @@ class Optimizer
 					}
 					return NumberType;
 				}
-				if (!convertParameter(lChild))
-				{
+				if (!convertParameter(lChild)) {
 					n.removeChild(lChild);
 					n.addChildToFront(
 							new Node(Token.TO_DOUBLE, lChild));
 				}
-				if (!convertParameter(rChild))
-				{
+				if (!convertParameter(rChild)) {
 					n.removeChild(rChild);
 					n.addChildToBack(
 							new Node(Token.TO_DOUBLE, rChild));
@@ -396,26 +319,21 @@ class Optimizer
 				return NumberType;
 			}
 			case Token.SETELEM:
-			case Token.SETELEM_OP:
-			{
+			case Token.SETELEM_OP: {
 				Node arrayBase = n.getFirstChild();
 				Node arrayIndex = arrayBase.getNext();
 				Node rValue = arrayIndex.getNext();
 				int baseType = rewriteForNumberVariables(arrayBase, NumberType);
-				if (baseType == NumberType)
-				{
-					if (!convertParameter(arrayBase))
-					{
+				if (baseType == NumberType) {
+					if (!convertParameter(arrayBase)) {
 						n.removeChild(arrayBase);
 						n.addChildToFront(
 								new Node(Token.TO_OBJECT, arrayBase));
 					}
 				}
 				int indexType = rewriteForNumberVariables(arrayIndex, NumberType);
-				if (indexType == NumberType)
-				{
-					if (!convertParameter(arrayIndex))
-					{
+				if (indexType == NumberType) {
+					if (!convertParameter(arrayIndex)) {
 						// setting the ISNUMBER_PROP signals the codegen
 						// to use the OptRuntime.setObjectIndex that takes
 						// a double index
@@ -423,10 +341,8 @@ class Optimizer
 					}
 				}
 				int rValueType = rewriteForNumberVariables(rValue, NumberType);
-				if (rValueType == NumberType)
-				{
-					if (!convertParameter(rValue))
-					{
+				if (rValueType == NumberType) {
+					if (!convertParameter(rValue)) {
 						n.removeChild(rValue);
 						n.addChildToBack(
 								new Node(Token.TO_OBJECT, rValue));
@@ -434,25 +350,20 @@ class Optimizer
 				}
 				return NoType;
 			}
-			case Token.GETELEM:
-			{
+			case Token.GETELEM: {
 				Node arrayBase = n.getFirstChild();
 				Node arrayIndex = arrayBase.getNext();
 				int baseType = rewriteForNumberVariables(arrayBase, NumberType);
-				if (baseType == NumberType)
-				{
-					if (!convertParameter(arrayBase))
-					{
+				if (baseType == NumberType) {
+					if (!convertParameter(arrayBase)) {
 						n.removeChild(arrayBase);
 						n.addChildToFront(
 								new Node(Token.TO_OBJECT, arrayBase));
 					}
 				}
 				int indexType = rewriteForNumberVariables(arrayIndex, NumberType);
-				if (indexType == NumberType)
-				{
-					if (!convertParameter(arrayIndex))
-					{
+				if (indexType == NumberType) {
+					if (!convertParameter(arrayIndex)) {
 						// setting the ISNUMBER_PROP signals the codegen
 						// to use the OptRuntime.getObjectIndex that takes
 						// a double index
@@ -461,8 +372,7 @@ class Optimizer
 				}
 				return NoType;
 			}
-			case Token.CALL:
-			{
+			case Token.CALL: {
 				Node child = n.getFirstChild(); // the function node
 				// must be an object
 				rewriteAsObjectChildren(child, child.getFirstChild());
@@ -470,55 +380,42 @@ class Optimizer
 
 				OptFunctionNode target
 						= (OptFunctionNode) n.getProp(Node.DIRECTCALL_PROP);
-				if (target != null)
-				{
+				if (target != null) {
 /*
     we leave each child as a Number if it can be. The codegen will
     handle moving the pairs of parameters.
 */
-					while (child != null)
-					{
+					while (child != null) {
 						int type = rewriteForNumberVariables(child, NumberType);
-						if (type == NumberType)
-						{
+						if (type == NumberType) {
 							markDCPNumberContext(child);
 						}
 						child = child.getNext();
 					}
-				}
-				else
-				{
+				} else {
 					rewriteAsObjectChildren(n, child);
 				}
 				return NoType;
 			}
-			default:
-			{
+			default: {
 				rewriteAsObjectChildren(n, n.getFirstChild());
 				return NoType;
 			}
 		}
 	}
 
-	private void rewriteAsObjectChildren(Node n, Node child)
-	{
+	private void rewriteAsObjectChildren(Node n, Node child) {
 		// Force optimized children to be objects
-		while (child != null)
-		{
+		while (child != null) {
 			Node nextChild = child.getNext();
 			int type = rewriteForNumberVariables(child, NoType);
-			if (type == NumberType)
-			{
-				if (!convertParameter(child))
-				{
+			if (type == NumberType) {
+				if (!convertParameter(child)) {
 					n.removeChild(child);
 					Node nuChild = new Node(Token.TO_OBJECT, child);
-					if (nextChild == null)
-					{
+					if (nextChild == null) {
 						n.addChildToBack(nuChild);
-					}
-					else
-					{
+					} else {
 						n.addChildBefore(nuChild, nextChild);
 					}
 				}
@@ -527,23 +424,18 @@ class Optimizer
 		}
 	}
 
-	private static void buildStatementList_r(Node node, ObjArray statements)
-	{
+	private static void buildStatementList_r(Node node, ObjArray statements) {
 		int type = node.getType();
 		if (type == Token.BLOCK
 				|| type == Token.LOCAL_BLOCK
 				|| type == Token.LOOP
-				|| type == Token.FUNCTION)
-		{
+				|| type == Token.FUNCTION) {
 			Node child = node.getFirstChild();
-			while (child != null)
-			{
+			while (child != null) {
 				buildStatementList_r(child, statements);
 				child = child.getNext();
 			}
-		}
-		else
-		{
+		} else {
 			statements.add(node);
 		}
 	}

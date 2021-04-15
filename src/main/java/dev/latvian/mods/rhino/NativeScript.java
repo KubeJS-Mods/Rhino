@@ -20,20 +20,17 @@ package dev.latvian.mods.rhino;
  * @since 1.3
  */
 
-class NativeScript extends BaseFunction
-{
+class NativeScript extends BaseFunction {
 	private static final long serialVersionUID = -6795101161980121700L;
 
 	private static final Object SCRIPT_TAG = "Script";
 
-	static void init(Scriptable scope, boolean sealed)
-	{
+	static void init(Scriptable scope, boolean sealed) {
 		NativeScript obj = new NativeScript(null);
 		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
 
-	private NativeScript(Script script)
-	{
+	private NativeScript(Script script) {
 		this.script = script;
 	}
 
@@ -41,57 +38,47 @@ class NativeScript extends BaseFunction
 	 * Returns the name of this JavaScript class, "Script".
 	 */
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "Script";
 	}
 
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args)
-	{
-		if (script != null)
-		{
+					   Object[] args) {
+		if (script != null) {
 			return script.exec(cx, scope);
 		}
 		return Undefined.instance;
 	}
 
 	@Override
-	public Scriptable construct(Context cx, Scriptable scope, Object[] args)
-	{
+	public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
 		throw Context.reportRuntimeError0("msg.script.is.not.constructor");
 	}
 
 	@Override
-	public int getLength()
-	{
+	public int getLength() {
 		return 0;
 	}
 
 	@Override
-	public int getArity()
-	{
+	public int getArity() {
 		return 0;
 	}
 
 	@Override
-	String decompile(int indent, int flags)
-	{
-		if (script instanceof NativeFunction)
-		{
+	String decompile(int indent, int flags) {
+		if (script instanceof NativeFunction) {
 			return ((NativeFunction) script).decompile(indent, flags);
 		}
 		return super.decompile(indent, flags);
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
+	protected void initPrototypeId(int id) {
 		String s;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				arity = 1;
 				s = "constructor";
@@ -116,17 +103,13 @@ class NativeScript extends BaseFunction
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(SCRIPT_TAG))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(SCRIPT_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
-		switch (id)
-		{
-			case Id_constructor:
-			{
+		switch (id) {
+			case Id_constructor: {
 				String source = (args.length == 0)
 						? ""
 						: ScriptRuntime.toString(args[0]);
@@ -136,25 +119,21 @@ class NativeScript extends BaseFunction
 				return nscript;
 			}
 
-			case Id_toString:
-			{
+			case Id_toString: {
 				NativeScript real = realThis(thisObj, f);
 				Script realScript = real.script;
-				if (realScript == null)
-				{
+				if (realScript == null) {
 					return "";
 				}
 				return cx.decompileScript(realScript, 0);
 			}
 
-			case Id_exec:
-			{
+			case Id_exec: {
 				throw Context.reportRuntimeError1(
 						"msg.cant.call.indirect", "exec");
 			}
 
-			case Id_compile:
-			{
+			case Id_compile: {
 				NativeScript real = realThis(thisObj, f);
 				String source = ScriptRuntime.toString(args, 0);
 				real.script = compile(cx, source);
@@ -164,21 +143,17 @@ class NativeScript extends BaseFunction
 		throw new IllegalArgumentException(String.valueOf(id));
 	}
 
-	private static NativeScript realThis(Scriptable thisObj, IdFunctionObject f)
-	{
-		if (!(thisObj instanceof NativeScript))
-		{
+	private static NativeScript realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (!(thisObj instanceof NativeScript)) {
 			throw incompatibleCallError(f);
 		}
 		return (NativeScript) thisObj;
 	}
 
-	private static Script compile(Context cx, String source)
-	{
+	private static Script compile(Context cx, String source) {
 		int[] linep = {0};
 		String filename = Context.getSourcePositionFromStack(linep);
-		if (filename == null)
-		{
+		if (filename == null) {
 			filename = "<Script object>";
 			linep[0] = 1;
 		}
@@ -191,8 +166,7 @@ class NativeScript extends BaseFunction
 	// #string_id_map#
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2007-05-09 08:16:01 EDT
 		L0:
@@ -200,8 +174,7 @@ class NativeScript extends BaseFunction
 			id = 0;
 			String X = null;
 			L:
-			switch (s.length())
-			{
+			switch (s.length()) {
 				case 4:
 					X = "exec";
 					id = Id_exec;
@@ -219,8 +192,7 @@ class NativeScript extends BaseFunction
 					id = Id_constructor;
 					break L;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;

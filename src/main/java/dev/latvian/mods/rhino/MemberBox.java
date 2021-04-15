@@ -24,8 +24,7 @@ import java.lang.reflect.Modifier;
  * @author Igor Bukanov
  */
 
-final class MemberBox implements Serializable
-{
+final class MemberBox implements Serializable {
 	private static final long serialVersionUID = 6358550398665688245L;
 
 	private transient Member memberObject;
@@ -34,92 +33,74 @@ final class MemberBox implements Serializable
 	transient boolean vararg;
 
 
-	MemberBox(Method method)
-	{
+	MemberBox(Method method) {
 		init(method);
 	}
 
-	MemberBox(Constructor<?> constructor)
-	{
+	MemberBox(Constructor<?> constructor) {
 		init(constructor);
 	}
 
-	private void init(Method method)
-	{
+	private void init(Method method) {
 		this.memberObject = method;
 		this.argTypes = method.getParameterTypes();
 		this.vararg = method.isVarArgs();
 	}
 
-	private void init(Constructor<?> constructor)
-	{
+	private void init(Constructor<?> constructor) {
 		this.memberObject = constructor;
 		this.argTypes = constructor.getParameterTypes();
 		this.vararg = constructor.isVarArgs();
 	}
 
-	Method method()
-	{
+	Method method() {
 		return (Method) memberObject;
 	}
 
-	Constructor<?> ctor()
-	{
+	Constructor<?> ctor() {
 		return (Constructor<?>) memberObject;
 	}
 
-	Member member()
-	{
+	Member member() {
 		return memberObject;
 	}
 
-	boolean isMethod()
-	{
+	boolean isMethod() {
 		return memberObject instanceof Method;
 	}
 
-	boolean isCtor()
-	{
+	boolean isCtor() {
 		return memberObject instanceof Constructor;
 	}
 
-	boolean isStatic()
-	{
+	boolean isStatic() {
 		return Modifier.isStatic(memberObject.getModifiers());
 	}
 
-	boolean isPublic()
-	{
+	boolean isPublic() {
 		return Modifier.isPublic(memberObject.getModifiers());
 	}
 
-	String getName()
-	{
+	String getName() {
 		return memberObject.getName();
 	}
 
-	Class<?> getDeclaringClass()
-	{
+	Class<?> getDeclaringClass() {
 		return memberObject.getDeclaringClass();
 	}
 
-	String toJavaDeclaration()
-	{
+	String toJavaDeclaration() {
 		StringBuilder sb = new StringBuilder();
-		if (isMethod())
-		{
+		if (isMethod()) {
 			Method method = method();
 			sb.append(method.getReturnType());
 			sb.append(' ');
 			sb.append(method.getName());
-		}
-		else
-		{
+		} else {
 			Constructor<?> ctor = ctor();
 			String name = ctor.getDeclaringClass().getName();
 			int lastDot = name.lastIndexOf('.');
-			if (lastDot >= 0)
-			{
+			if (lastDot >= 0) {
 				name = name.substring(lastDot + 1);
 			}
 			sb.append(name);
@@ -129,135 +110,92 @@ final class MemberBox implements Serializable
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return memberObject.toString();
 	}
 
-	Object invoke(Object target, Object[] args)
-	{
+	Object invoke(Object target, Object[] args) {
 		Method method = method();
-		try
-		{
-			try
-			{
+		try {
+			try {
 				return method.invoke(target, args);
-			}
-			catch (IllegalAccessException ex)
-			{
+			} catch (IllegalAccessException ex) {
 				Method accessible = searchAccessibleMethod(method, argTypes);
-				if (accessible != null)
-				{
+				if (accessible != null) {
 					memberObject = accessible;
 					method = accessible;
-				}
-				else
-				{
-					if (!VMBridge.instance.tryToMakeAccessible(method))
-					{
+				} else {
+					if (!VMBridge.instance.tryToMakeAccessible(method)) {
 						throw Context.throwAsScriptRuntimeEx(ex);
 					}
 				}
 				// Retry after recovery
 				return method.invoke(target, args);
 			}
-		}
-		catch (InvocationTargetException ite)
-		{
+		} catch (InvocationTargetException ite) {
 			// Must allow ContinuationPending exceptions to propagate unhindered
 			Throwable e = ite;
-			do
-			{
+			do {
 				e = ((InvocationTargetException) e).getTargetException();
 			}
 			while ((e instanceof InvocationTargetException));
-			if (e instanceof ContinuationPending)
-			{
+			if (e instanceof ContinuationPending) {
 				throw (ContinuationPending) e;
 			}
 			throw Context.throwAsScriptRuntimeEx(e);
-		}
-		catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			throw Context.throwAsScriptRuntimeEx(ex);
 		}
 	}
 
-	Object newInstance(Object[] args)
-	{
+	Object newInstance(Object[] args) {
 		Constructor<?> ctor = ctor();
-		try
-		{
-			try
-			{
+		try {
+			try {
 				return ctor.newInstance(args);
-			}
-			catch (IllegalAccessException ex)
-			{
-				if (!VMBridge.instance.tryToMakeAccessible(ctor))
-				{
+			} catch (IllegalAccessException ex) {
+				if (!VMBridge.instance.tryToMakeAccessible(ctor)) {
 					throw Context.throwAsScriptRuntimeEx(ex);
 				}
 			}
 			return ctor.newInstance(args);
-		}
-		catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			throw Context.throwAsScriptRuntimeEx(ex);
 		}
 	}
 
-	private static Method searchAccessibleMethod(Method method, Class<?>[] params)
-	{
+	private static Method searchAccessibleMethod(Method method, Class<?>[] params) {
 		int modifiers = method.getModifiers();
-		if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers))
-		{
+		if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers)) {
 			Class<?> c = method.getDeclaringClass();
-			if (!Modifier.isPublic(c.getModifiers()))
-			{
+			if (!Modifier.isPublic(c.getModifiers())) {
 				String name = method.getName();
 				Class<?>[] intfs = c.getInterfaces();
-				for (int i = 0, N = intfs.length; i != N; ++i)
-				{
+				for (int i = 0, N = intfs.length; i != N; ++i) {
 					Class<?> intf = intfs[i];
-					if (Modifier.isPublic(intf.getModifiers()))
-					{
-						try
-						{
+					if (Modifier.isPublic(intf.getModifiers())) {
+						try {
 							return intf.getMethod(name, params);
-						}
-						catch (NoSuchMethodException ex)
-						{
-						}
-						catch (SecurityException ex)
-						{
+						} catch (NoSuchMethodException ex) {
+						} catch (SecurityException ex) {
 						}
 					}
 				}
-				for (; ; )
-				{
+				for (; ; ) {
 					c = c.getSuperclass();
-					if (c == null)
-					{
+					if (c == null) {
 						break;
 					}
-					if (Modifier.isPublic(c.getModifiers()))
-					{
-						try
-						{
+					if (Modifier.isPublic(c.getModifiers())) {
+						try {
 							Method m = c.getMethod(name, params);
 							int mModifiers = m.getModifiers();
 							if (Modifier.isPublic(mModifiers)
-									&& !Modifier.isStatic(mModifiers))
-							{
+									&& !Modifier.isStatic(mModifiers)) {
 								return m;
 							}
-						}
-						catch (NoSuchMethodException ex)
-						{
-						}
-						catch (SecurityException ex)
-						{
+						} catch (NoSuchMethodException ex) {
+						} catch (SecurityException ex) {
 						}
 					}
 				}
@@ -267,23 +205,18 @@ final class MemberBox implements Serializable
 	}
 
 	private void readObject(ObjectInputStream in)
-			throws IOException, ClassNotFoundException
-	{
+			throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 		Member member = readMember(in);
-		if (member instanceof Method)
-		{
+		if (member instanceof Method) {
 			init((Method) member);
-		}
-		else
-		{
+		} else {
 			init((Constructor<?>) member);
 		}
 	}
 
 	private void writeObject(ObjectOutputStream out)
-			throws IOException
-	{
+			throws IOException {
 		out.defaultWriteObject();
 		writeMember(out, memberObject);
 	}
@@ -296,27 +229,21 @@ final class MemberBox implements Serializable
 	 * recreate upon deserialization.
 	 */
 	private static void writeMember(ObjectOutputStream out, Member member)
-			throws IOException
-	{
-		if (member == null)
-		{
+			throws IOException {
+		if (member == null) {
 			out.writeBoolean(false);
 			return;
 		}
 		out.writeBoolean(true);
-		if (!(member instanceof Method || member instanceof Constructor))
-		{
+		if (!(member instanceof Method || member instanceof Constructor)) {
 			throw new IllegalArgumentException("not Method or Constructor");
 		}
 		out.writeBoolean(member instanceof Method);
 		out.writeObject(member.getName());
 		out.writeObject(member.getDeclaringClass());
-		if (member instanceof Method)
-		{
+		if (member instanceof Method) {
 			writeParameters(out, ((Method) member).getParameterTypes());
-		}
-		else
-		{
+		} else {
 			writeParameters(out, ((Constructor<?>) member).getParameterTypes());
 		}
 	}
@@ -325,26 +252,20 @@ final class MemberBox implements Serializable
 	 * Reads a Method or a Constructor from the stream.
 	 */
 	private static Member readMember(ObjectInputStream in)
-			throws IOException, ClassNotFoundException
-	{
-		if (!in.readBoolean())
-		{
+			throws IOException, ClassNotFoundException {
+		if (!in.readBoolean()) {
 			return null;
 		}
 		boolean isMethod = in.readBoolean();
 		String name = (String) in.readObject();
 		Class<?> declaring = (Class<?>) in.readObject();
 		Class<?>[] parms = readParameters(in);
-		try
-		{
-			if (isMethod)
-			{
+		try {
+			if (isMethod) {
 				return declaring.getMethod(name, parms);
 			}
 			return declaring.getConstructor(parms);
-		}
-		catch (NoSuchMethodException e)
-		{
+		} catch (NoSuchMethodException e) {
 			throw new IOException("Cannot find member: " + e);
 		}
 	}
@@ -368,24 +289,19 @@ final class MemberBox implements Serializable
 	 * found upon deserialization by the default Java implementation.
 	 */
 	private static void writeParameters(ObjectOutputStream out, Class<?>[] parms)
-			throws IOException
-	{
+			throws IOException {
 		out.writeShort(parms.length);
 		outer:
-		for (int i = 0; i < parms.length; i++)
-		{
+		for (int i = 0; i < parms.length; i++) {
 			Class<?> parm = parms[i];
 			boolean primitive = parm.isPrimitive();
 			out.writeBoolean(primitive);
-			if (!primitive)
-			{
+			if (!primitive) {
 				out.writeObject(parm);
 				continue;
 			}
-			for (int j = 0; j < primitives.length; j++)
-			{
-				if (parm.equals(primitives[j]))
-				{
+			for (int j = 0; j < primitives.length; j++) {
+				if (parm.equals(primitives[j])) {
 					out.writeByte(j);
 					continue outer;
 				}
@@ -399,13 +315,10 @@ final class MemberBox implements Serializable
 	 * Reads an array of parameter types from the stream.
 	 */
 	private static Class<?>[] readParameters(ObjectInputStream in)
-			throws IOException, ClassNotFoundException
-	{
+			throws IOException, ClassNotFoundException {
 		Class<?>[] result = new Class[in.readShort()];
-		for (int i = 0; i < result.length; i++)
-		{
-			if (!in.readBoolean())
-			{
+		for (int i = 0; i < result.length; i++) {
+			if (!in.readBoolean()) {
 				result[i] = (Class<?>) in.readObject();
 				continue;
 			}

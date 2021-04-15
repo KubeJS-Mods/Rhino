@@ -9,8 +9,7 @@ package dev.latvian.mods.rhino;
 /**
  * Object that can allows assignments to the result of function calls.
  */
-public interface RefCallable extends Callable
-{
+public interface RefCallable extends Callable {
 	/**
 	 * Perform function call in reference context.
 	 * The args array reference should not be stored in any object that is

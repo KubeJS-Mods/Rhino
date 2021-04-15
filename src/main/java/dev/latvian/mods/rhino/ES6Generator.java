@@ -6,24 +6,20 @@
 
 package dev.latvian.mods.rhino;
 
-public final class ES6Generator extends IdScriptableObject
-{
+public final class ES6Generator extends IdScriptableObject {
 	private static final long serialVersionUID = 1645892441041347273L;
 
 	private static final Object GENERATOR_TAG = "Generator";
 
-	static ES6Generator init(ScriptableObject scope, boolean sealed)
-	{
+	static ES6Generator init(ScriptableObject scope, boolean sealed) {
 
 		ES6Generator prototype = new ES6Generator();
-		if (scope != null)
-		{
+		if (scope != null) {
 			prototype.setParentScope(scope);
 			prototype.setPrototype(getObjectPrototype(scope));
 		}
 		prototype.activatePrototypeMap(MAX_PROTOTYPE_ID);
-		if (sealed)
-		{
+		if (sealed) {
 			prototype.sealObject();
 		}
 
@@ -31,8 +27,7 @@ public final class ES6Generator extends IdScriptableObject
 		// Generator instances, but don't have a generator constructor
 		// to use to find the prototype. Use the "associateValue"
 		// approach instead.
-		if (scope != null)
-		{
+		if (scope != null) {
 			scope.associateValue(GENERATOR_TAG, prototype);
 		}
 
@@ -42,13 +37,11 @@ public final class ES6Generator extends IdScriptableObject
 	/**
 	 * Only for constructing the prototype object.
 	 */
-	private ES6Generator()
-	{
+	private ES6Generator() {
 	}
 
 	public ES6Generator(Scriptable scope, NativeFunction function,
-						Object savedState)
-	{
+						Object savedState) {
 		this.function = function;
 		this.savedState = savedState;
 		// Set parent and prototype properties. Since we don't have a
@@ -62,24 +55,20 @@ public final class ES6Generator extends IdScriptableObject
 	}
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return "Generator";
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
-		if (id == SymbolId_iterator)
-		{
+	protected void initPrototypeId(int id) {
+		if (id == SymbolId_iterator) {
 			initPrototypeMethod(GENERATOR_TAG, id, SymbolKey.ITERATOR, "[Symbol.iterator]", 0);
 			return;
 		}
 
 		String s;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_next:
 				arity = 1;
 				s = "next";
@@ -100,39 +89,32 @@ public final class ES6Generator extends IdScriptableObject
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(GENERATOR_TAG))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(GENERATOR_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
 
-		if (!(thisObj instanceof ES6Generator))
-		{
+		if (!(thisObj instanceof ES6Generator)) {
 			throw incompatibleCallError(f);
 		}
 
 		ES6Generator generator = (ES6Generator) thisObj;
 		Object value = args.length >= 1 ? args[0] : Undefined.instance;
 
-		switch (id)
-		{
+		switch (id) {
 			case Id_return:
-				if (generator.delegee == null)
-				{
+				if (generator.delegee == null) {
 					return generator.resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_CLOSE, value);
 				}
 				return generator.resumeDelegeeReturn(cx, scope, value);
 			case Id_next:
-				if (generator.delegee == null)
-				{
+				if (generator.delegee == null) {
 					return generator.resumeLocal(cx, scope, value);
 				}
 				return generator.resumeDelegee(cx, scope, value);
 			case Id_throw:
-				if (generator.delegee == null)
-				{
+				if (generator.delegee == null) {
 					return generator.resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, value);
 				}
 				return generator.resumeDelegeeThrow(cx, scope, value);
@@ -143,20 +125,17 @@ public final class ES6Generator extends IdScriptableObject
 		}
 	}
 
-	private Scriptable resumeDelegee(Context cx, Scriptable scope, Object value)
-	{
-		try
-		{
+	private Scriptable resumeDelegee(Context cx, Scriptable scope, Object value) {
+		try {
 			// Be super-careful and only pass an arg to next if it expects one
-			Object[] nextArgs = Undefined.instance.equals(value) ? ScriptRuntime.emptyArgs : new Object[] {value};
+			Object[] nextArgs = Undefined.instance.equals(value) ? ScriptRuntime.emptyArgs : new Object[]{value};
 
 			Callable nextFn = ScriptRuntime.getPropFunctionAndThis(delegee, ES6Iterator.NEXT_METHOD, cx, scope);
 			Scriptable nextThis = ScriptRuntime.lastStoredScriptable(cx);
 			Object nr = nextFn.call(cx, scope, nextThis, nextArgs);
 
 			Scriptable nextResult = ScriptableObject.ensureScriptable(nr);
-			if (ScriptRuntime.isIteratorDone(cx, nextResult))
-			{
+			if (ScriptRuntime.isIteratorDone(cx, nextResult)) {
 				// Iterator is "done".
 				delegee = null;
 				// Return a result to the original generator
@@ -165,9 +144,7 @@ public final class ES6Generator extends IdScriptableObject
 			// Otherwise, we have a normal result and should continue
 			return nextResult;
 
-		}
-		catch (RhinoException re)
-		{
+		} catch (RhinoException re) {
 			// Exceptions from the delegee should be handled by the enclosing
 			// generator, including if they're because functions can't be found.
 			delegee = null;
@@ -175,27 +152,21 @@ public final class ES6Generator extends IdScriptableObject
 		}
 	}
 
-	private Scriptable resumeDelegeeThrow(Context cx, Scriptable scope, Object value)
-	{
+	private Scriptable resumeDelegeeThrow(Context cx, Scriptable scope, Object value) {
 		boolean returnCalled = false;
-		try
-		{
+		try {
 			// Delegate to "throw" method. If it's not defined we'll get an error here.
 			Callable throwFn = ScriptRuntime.getPropFunctionAndThis(delegee, "throw", cx, scope);
 			Scriptable nextThis = ScriptRuntime.lastStoredScriptable(cx);
-			Object throwResult = throwFn.call(cx, scope, nextThis, new Object[] {value});
+			Object throwResult = throwFn.call(cx, scope, nextThis, new Object[]{value});
 
-			if (ScriptRuntime.isIteratorDone(cx, throwResult))
-			{
+			if (ScriptRuntime.isIteratorDone(cx, throwResult)) {
 				// Iterator is "done".
-				try
-				{
+				try {
 					// Return a result to the original generator, but first optionally call "return"
 					returnCalled = true;
 					callReturnOptionally(cx, scope, Undefined.instance);
-				}
-				finally
-				{
+				} finally {
 					delegee = null;
 				}
 				return resumeLocal(cx, scope,
@@ -204,50 +175,35 @@ public final class ES6Generator extends IdScriptableObject
 			// Otherwise, we have a normal result and should continue
 			return ensureScriptable(throwResult);
 
-		}
-		catch (RhinoException re)
-		{
+		} catch (RhinoException re) {
 			// Handle all exceptions, including missing methods, by delegating to original.
-			try
-			{
-				if (!returnCalled)
-				{
-					try
-					{
+			try {
+				if (!returnCalled) {
+					try {
 						callReturnOptionally(cx, scope, Undefined.instance);
-					}
-					catch (RhinoException re2)
-					{
+					} catch (RhinoException re2) {
 						return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, re2);
 					}
 				}
-			}
-			finally
-			{
+			} finally {
 				delegee = null;
 			}
 			return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, re);
 		}
 	}
 
-	private Scriptable resumeDelegeeReturn(Context cx, Scriptable scope, Object value)
-	{
-		try
-		{
+	private Scriptable resumeDelegeeReturn(Context cx, Scriptable scope, Object value) {
+		try {
 			// Call "return" but don't throw if it can't be found
 			Object retResult = callReturnOptionally(cx, scope, value);
-			if (retResult != null)
-			{
-				if (ScriptRuntime.isIteratorDone(cx, retResult))
-				{
+			if (retResult != null) {
+				if (ScriptRuntime.isIteratorDone(cx, retResult)) {
 					// Iterator is "done".
 					delegee = null;
 					// Return a result to the original generator
 					return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_CLOSE,
 							ScriptRuntime.getObjectPropNoWarn(retResult, ES6Iterator.VALUE_PROPERTY, cx, scope));
-				}
-				else
-				{
+				} else {
 					// Not actually done yet!
 					return ensureScriptable(retResult);
 				}
@@ -257,9 +213,7 @@ public final class ES6Generator extends IdScriptableObject
 			delegee = null;
 			return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_CLOSE, value);
 
-		}
-		catch (RhinoException re)
-		{
+		} catch (RhinoException re) {
 			// Exceptions from the delegee should be handled by the enclosing
 			// generator, including if they're because functions can't be found.
 			delegee = null;
@@ -267,54 +221,42 @@ public final class ES6Generator extends IdScriptableObject
 		}
 	}
 
-	private Scriptable resumeLocal(Context cx, Scriptable scope, Object value)
-	{
-		if (state == State.COMPLETED)
-		{
+	private Scriptable resumeLocal(Context cx, Scriptable scope, Object value) {
+		if (state == State.COMPLETED) {
 			return ES6Iterator.makeIteratorResult(cx, scope, Boolean.TRUE);
 		}
-		if (state == State.EXECUTING)
-		{
+		if (state == State.EXECUTING) {
 			throw ScriptRuntime.typeError0("msg.generator.executing");
 		}
 
 		Scriptable result = ES6Iterator.makeIteratorResult(cx, scope, Boolean.FALSE);
 		state = State.EXECUTING;
 
-		try
-		{
+		try {
 			Object r = function.resumeGenerator(cx, scope,
 					NativeGenerator.GENERATOR_SEND, savedState, value);
 
-			if (r instanceof YieldStarResult)
-			{
+			if (r instanceof YieldStarResult) {
 				// This special result tells us that we are executing a "yield *"
 				state = State.SUSPENDED_YIELD;
 				YieldStarResult ysResult = (YieldStarResult) r;
-				try
-				{
+				try {
 					delegee = ScriptRuntime.callIterator(ysResult.getResult(), cx, scope);
-				}
-				catch (RhinoException re)
-				{
+				} catch (RhinoException re) {
 					// Need to handle exceptions if the iterator cannot be called.
 					return resumeAbruptLocal(cx, scope,
 							NativeGenerator.GENERATOR_THROW, re);
 				}
 
 				Scriptable delResult;
-				try
-				{
+				try {
 					// Re-execute but update state in case we end up back here
 					// Value shall be Undefined based on the very complex spec!
 					delResult = resumeDelegee(cx, scope, Undefined.instance);
-				}
-				finally
-				{
+				} finally {
 					state = State.EXECUTING;
 				}
-				if (ScriptRuntime.isIteratorDone(cx, delResult))
-				{
+				if (ScriptRuntime.isIteratorDone(cx, delResult)) {
 					state = State.COMPLETED;
 				}
 				return delResult;
@@ -322,67 +264,47 @@ public final class ES6Generator extends IdScriptableObject
 
 			ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY, r);
 
-		}
-		catch (NativeGenerator.GeneratorClosedException gce)
-		{
+		} catch (NativeGenerator.GeneratorClosedException gce) {
 			state = State.COMPLETED;
-		}
-		catch (JavaScriptException jse)
-		{
+		} catch (JavaScriptException jse) {
 			state = State.COMPLETED;
-			if (jse.getValue() instanceof NativeIterator.StopIteration)
-			{
+			if (jse.getValue() instanceof NativeIterator.StopIteration) {
 				ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY,
 						((NativeIterator.StopIteration) jse.getValue()).getValue());
-			}
-			else
-			{
+			} else {
 				lineNumber = jse.lineNumber();
 				lineSource = jse.lineSource();
-				if (jse.getValue() instanceof RhinoException)
-				{
+				if (jse.getValue() instanceof RhinoException) {
 					throw (RhinoException) jse.getValue();
 				}
 				throw jse;
 			}
-		}
-		catch (RhinoException re)
-		{
+		} catch (RhinoException re) {
 			lineNumber = re.lineNumber();
 			lineSource = re.lineSource();
 			throw re;
-		}
-		finally
-		{
-			if (state == State.COMPLETED)
-			{
+		} finally {
+			if (state == State.COMPLETED) {
 				ScriptableObject.putProperty(result, ES6Iterator.DONE_PROPERTY, Boolean.TRUE);
-			}
-			else
-			{
+			} else {
 				state = State.SUSPENDED_YIELD;
 			}
 		}
 		return result;
 	}
 
-	private Scriptable resumeAbruptLocal(Context cx, Scriptable scope, int op, Object value)
-	{
-		if (state == State.EXECUTING)
-		{
+	private Scriptable resumeAbruptLocal(Context cx, Scriptable scope, int op, Object value) {
+		if (state == State.EXECUTING) {
 			throw ScriptRuntime.typeError0("msg.generator.executing");
 		}
-		if (state == State.SUSPENDED_START)
-		{
+		if (state == State.SUSPENDED_START) {
 			// Throw right away if we never started
 			state = State.COMPLETED;
 		}
 
 		Scriptable result = ES6Iterator.makeIteratorResult(cx, scope, Boolean.FALSE);
-		if (state == State.COMPLETED)
-		{
-			if (op == NativeGenerator.GENERATOR_THROW)
-			{
+		if (state == State.COMPLETED) {
+			if (op == NativeGenerator.GENERATOR_THROW) {
 				throw new JavaScriptException(value, lineSource, lineNumber);
 			}
 			ScriptableObject.putProperty(result, ES6Iterator.DONE_PROPERTY, Boolean.TRUE);
@@ -392,69 +314,48 @@ public final class ES6Generator extends IdScriptableObject
 		state = State.EXECUTING;
 
 		Object throwValue = value;
-		if (op == NativeGenerator.GENERATOR_CLOSE)
-		{
-			if (!(value instanceof NativeGenerator.GeneratorClosedException))
-			{
+		if (op == NativeGenerator.GENERATOR_CLOSE) {
+			if (!(value instanceof NativeGenerator.GeneratorClosedException)) {
 				throwValue = new NativeGenerator.GeneratorClosedException();
 			}
-		}
-		else
-		{
-			if (value instanceof JavaScriptException)
-			{
+		} else {
+			if (value instanceof JavaScriptException) {
 				throwValue = ((JavaScriptException) value).getValue();
-			}
-			else if (value instanceof RhinoException)
-			{
+			} else if (value instanceof RhinoException) {
 				throwValue = ScriptRuntime.wrapException((Throwable) value, scope, cx);
 			}
 		}
 
-		try
-		{
+		try {
 			Object r = function.resumeGenerator(cx, scope, op, savedState, throwValue);
 			ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY, r);
 			// If we get here without an exception we can still run.
 			state = State.SUSPENDED_YIELD;
 
-		}
-		catch (NativeGenerator.GeneratorClosedException gce)
-		{
+		} catch (NativeGenerator.GeneratorClosedException gce) {
 			state = State.COMPLETED;
-		}
-		catch (JavaScriptException jse)
-		{
+		} catch (JavaScriptException jse) {
 			state = State.COMPLETED;
-			if (jse.getValue() instanceof NativeIterator.StopIteration)
-			{
+			if (jse.getValue() instanceof NativeIterator.StopIteration) {
 				ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY,
 						((NativeIterator.StopIteration) jse.getValue()).getValue());
-			}
-			else
-			{
+			} else {
 				lineNumber = jse.lineNumber();
 				lineSource = jse.lineSource();
-				if (jse.getValue() instanceof RhinoException)
-				{
+				if (jse.getValue() instanceof RhinoException) {
 					throw (RhinoException) jse.getValue();
 				}
 				throw jse;
 			}
-		}
-		catch (RhinoException re)
-		{
+		} catch (RhinoException re) {
 			state = State.COMPLETED;
 			lineNumber = re.lineNumber();
 			lineSource = re.lineSource();
 			throw re;
-		}
-		finally
-		{
+		} finally {
 			// After an abrupt completion we are always, umm, complete,
 			// and we will never delegate to the delegee again
-			if (state == State.COMPLETED)
-			{
+			if (state == State.COMPLETED) {
 				delegee = null;
 				ScriptableObject.putProperty(result, ES6Iterator.DONE_PROPERTY, Boolean.TRUE);
 			}
@@ -462,17 +363,14 @@ public final class ES6Generator extends IdScriptableObject
 		return result;
 	}
 
-	private Object callReturnOptionally(Context cx, Scriptable scope, Object value)
-	{
+	private Object callReturnOptionally(Context cx, Scriptable scope, Object value) {
 		Object[] retArgs = Undefined.instance.equals(value) ? ScriptRuntime.emptyArgs
-				: new Object[] {value};
+				: new Object[]{value};
 		// Delegate to "return" method. If it's not defined we ignore it
 		Object retFnObj = ScriptRuntime.getObjectPropNoWarn(
 				delegee, ES6Iterator.RETURN_METHOD, cx, scope);
-		if (!Undefined.instance.equals(retFnObj))
-		{
-			if (!(retFnObj instanceof Callable))
-			{
+		if (!Undefined.instance.equals(retFnObj)) {
+			if (!(retFnObj instanceof Callable)) {
 				throw ScriptRuntime.typeError2("msg.isnt.function", ES6Iterator.RETURN_METHOD,
 						ScriptRuntime.typeof(retFnObj));
 			}
@@ -482,10 +380,8 @@ public final class ES6Generator extends IdScriptableObject
 	}
 
 	@Override
-	protected int findPrototypeId(Symbol k)
-	{
-		if (SymbolKey.ITERATOR.equals(k))
-		{
+	protected int findPrototypeId(Symbol k) {
+		if (SymbolKey.ITERATOR.equals(k)) {
 			return SymbolId_iterator;
 		}
 		return 0;
@@ -494,8 +390,7 @@ public final class ES6Generator extends IdScriptableObject
 	// #string_id_map#
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2017-08-04 17:30:46 PDT
 		L0:
@@ -503,23 +398,17 @@ public final class ES6Generator extends IdScriptableObject
 			id = 0;
 			String X = null;
 			int s_length = s.length();
-			if (s_length == 4)
-			{
+			if (s_length == 4) {
 				X = "next";
 				id = Id_next;
-			}
-			else if (s_length == 5)
-			{
+			} else if (s_length == 5) {
 				X = "throw";
 				id = Id_throw;
-			}
-			else if (s_length == 6)
-			{
+			} else if (s_length == 6) {
 				X = "return";
 				id = Id_return;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;
@@ -544,25 +433,21 @@ public final class ES6Generator extends IdScriptableObject
 	private State state = State.SUSPENDED_START;
 	private Object delegee;
 
-	enum State
-	{
+	enum State {
 		SUSPENDED_START,
 		SUSPENDED_YIELD,
 		EXECUTING,
 		COMPLETED
 	}
 
-	public static final class YieldStarResult
-	{
+	public static final class YieldStarResult {
 		private final Object result;
 
-		public YieldStarResult(Object result)
-		{
+		public YieldStarResult(Object result) {
 			this.result = result;
 		}
 
-		Object getResult()
-		{
+		Object getResult() {
 			return result;
 		}
 	}

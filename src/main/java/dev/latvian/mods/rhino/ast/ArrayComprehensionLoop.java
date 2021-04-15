@@ -14,20 +14,16 @@ import dev.latvian.mods.rhino.Token;
  * {@link ForInLoop}, except that it has no body statement.
  * Node type is {@link Token#FOR}.
  */
-public class ArrayComprehensionLoop extends ForInLoop
-{
+public class ArrayComprehensionLoop extends ForInLoop {
 
-	public ArrayComprehensionLoop()
-	{
+	public ArrayComprehensionLoop() {
 	}
 
-	public ArrayComprehensionLoop(int pos)
-	{
+	public ArrayComprehensionLoop(int pos) {
 		super(pos);
 	}
 
-	public ArrayComprehensionLoop(int pos, int len)
-	{
+	public ArrayComprehensionLoop(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -37,8 +33,7 @@ public class ArrayComprehensionLoop extends ForInLoop
 	 * @return loop body (always {@code null} for this node type)
 	 */
 	@Override
-	public AstNode getBody()
-	{
+	public AstNode getBody() {
 		return null;
 	}
 
@@ -49,14 +44,12 @@ public class ArrayComprehensionLoop extends ForInLoop
 	 * @throws UnsupportedOperationException
 	 */
 	@Override
-	public void setBody(AstNode body)
-	{
+	public void setBody(AstNode body) {
 		throw new UnsupportedOperationException("this node type has no body");
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		return makeIndent(depth)
 				+ " for "
 				+ (isForEach() ? "each " : "")
@@ -72,10 +65,8 @@ public class ArrayComprehensionLoop extends ForInLoop
 	 * There is no body-expression for this loop type.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			iterator.visit(v);
 			iteratedObject.visit(v);
 		}

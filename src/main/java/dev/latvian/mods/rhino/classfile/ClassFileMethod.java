@@ -6,11 +6,9 @@
 
 package dev.latvian.mods.rhino.classfile;
 
-final class ClassFileMethod
-{
+final class ClassFileMethod {
 	ClassFileMethod(String name, short nameIndex, String type, short typeIndex,
-					short flags)
-	{
+					short flags) {
 		itsName = name;
 		itsNameIndex = nameIndex;
 		itsType = type;
@@ -18,13 +16,11 @@ final class ClassFileMethod
 		itsFlags = flags;
 	}
 
-	void setCodeAttribute(byte[] codeAttribute)
-	{
+	void setCodeAttribute(byte[] codeAttribute) {
 		itsCodeAttribute = codeAttribute;
 	}
 
-	int write(byte[] data, int offset)
-	{
+	int write(byte[] data, int offset) {
 		offset = ClassFileWriter.putInt16(itsFlags, data, offset);
 		offset = ClassFileWriter.putInt16(itsNameIndex, data, offset);
 		offset = ClassFileWriter.putInt16(itsTypeIndex, data, offset);
@@ -36,23 +32,19 @@ final class ClassFileMethod
 		return offset;
 	}
 
-	int getWriteSize()
-	{
+	int getWriteSize() {
 		return 2 * 4 + itsCodeAttribute.length;
 	}
 
-	String getName()
-	{
+	String getName() {
 		return itsName;
 	}
 
-	String getType()
-	{
+	String getType() {
 		return itsType;
 	}
 
-	short getFlags()
-	{
+	short getFlags() {
 		return itsFlags;
 	}
 

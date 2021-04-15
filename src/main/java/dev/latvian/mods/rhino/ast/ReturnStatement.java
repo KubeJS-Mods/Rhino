@@ -14,8 +14,7 @@ import dev.latvian.mods.rhino.Token;
  * <pre><i>ReturnStatement</i> :
  *      <b>return</b> [<i>no LineTerminator here</i>] [Expression] ;</pre>
  */
-public class ReturnStatement extends AstNode
-{
+public class ReturnStatement extends AstNode {
 
 	private AstNode returnValue;
 
@@ -23,22 +22,18 @@ public class ReturnStatement extends AstNode
 		type = Token.RETURN;
 	}
 
-	public ReturnStatement()
-	{
+	public ReturnStatement() {
 	}
 
-	public ReturnStatement(int pos)
-	{
+	public ReturnStatement(int pos) {
 		super(pos);
 	}
 
-	public ReturnStatement(int pos, int len)
-	{
+	public ReturnStatement(int pos, int len) {
 		super(pos, len);
 	}
 
-	public ReturnStatement(int pos, int len, AstNode returnValue)
-	{
+	public ReturnStatement(int pos, int len, AstNode returnValue) {
 		super(pos, len);
 		setReturnValue(returnValue);
 	}
@@ -46,8 +41,7 @@ public class ReturnStatement extends AstNode
 	/**
 	 * Returns return value, {@code null} if return value is void
 	 */
-	public AstNode getReturnValue()
-	{
+	public AstNode getReturnValue() {
 		return returnValue;
 	}
 
@@ -55,23 +49,19 @@ public class ReturnStatement extends AstNode
 	 * Sets return value expression, and sets its parent to this node.
 	 * Can be {@code null}.
 	 */
-	public void setReturnValue(AstNode returnValue)
-	{
+	public void setReturnValue(AstNode returnValue) {
 		this.returnValue = returnValue;
-		if (returnValue != null)
-		{
+		if (returnValue != null) {
 			returnValue.setParent(this);
 		}
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("return");
-		if (returnValue != null)
-		{
+		if (returnValue != null) {
 			sb.append(" ");
 			sb.append(returnValue.toSource(0));
 		}
@@ -83,10 +73,8 @@ public class ReturnStatement extends AstNode
 	 * Visits this node, then the return value if specified.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this) && returnValue != null)
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this) && returnValue != null) {
 			returnValue.visit(v);
 		}
 	}

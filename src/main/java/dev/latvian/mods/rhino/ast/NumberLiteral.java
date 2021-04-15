@@ -11,8 +11,7 @@ import dev.latvian.mods.rhino.Token;
 /**
  * AST node for a Number literal. Node type is {@link Token#NUMBER}.
  */
-public class NumberLiteral extends AstNode
-{
+public class NumberLiteral extends AstNode {
 
 	private String value;
 	private double number;
@@ -21,25 +20,21 @@ public class NumberLiteral extends AstNode
 		type = Token.NUMBER;
 	}
 
-	public NumberLiteral()
-	{
+	public NumberLiteral() {
 	}
 
-	public NumberLiteral(int pos)
-	{
+	public NumberLiteral(int pos) {
 		super(pos);
 	}
 
-	public NumberLiteral(int pos, int len)
-	{
+	public NumberLiteral(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Constructor.  Sets the length to the length of the {@code value} string.
 	 */
-	public NumberLiteral(int pos, String value)
-	{
+	public NumberLiteral(int pos, String value) {
 		super(pos);
 		setValue(value);
 		setLength(value.length());
@@ -48,14 +43,12 @@ public class NumberLiteral extends AstNode
 	/**
 	 * Constructor.  Sets the length to the length of the {@code value} string.
 	 */
-	public NumberLiteral(int pos, String value, double number)
-	{
+	public NumberLiteral(int pos, String value, double number) {
 		this(pos, value);
 		setDouble(number);
 	}
 
-	public NumberLiteral(double number)
-	{
+	public NumberLiteral(double number) {
 		setDouble(number);
 		setValue(Double.toString(number));
 	}
@@ -63,8 +56,7 @@ public class NumberLiteral extends AstNode
 	/**
 	 * Returns the node's string value (the original source token)
 	 */
-	public String getValue()
-	{
+	public String getValue() {
 		return value;
 	}
 
@@ -73,8 +65,7 @@ public class NumberLiteral extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if value is {@code null}
 	 */
-	public void setValue(String value)
-	{
+	public void setValue(String value) {
 		assertNotNull(value);
 		this.value = value;
 	}
@@ -82,22 +73,19 @@ public class NumberLiteral extends AstNode
 	/**
 	 * Gets the {@code double} value.
 	 */
-	public double getNumber()
-	{
+	public double getNumber() {
 		return number;
 	}
 
 	/**
 	 * Sets the node's {@code double} value.
 	 */
-	public void setNumber(double value)
-	{
+	public void setNumber(double value) {
 		number = value;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		return makeIndent(depth) + (value == null ? "<null>" : value);
 	}
 
@@ -105,8 +93,7 @@ public class NumberLiteral extends AstNode
 	 * Visits this node.  There are no children to visit.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
+	public void visit(NodeVisitor v) {
 		v.visit(this);
 	}
 }

@@ -13,8 +13,7 @@ import dev.latvian.mods.rhino.Token;
  * AST node for a single- or double-quoted string literal.
  * Node type is {@link Token#STRING}.
  */
-public class StringLiteral extends AstNode
-{
+public class StringLiteral extends AstNode {
 
 	private String value;
 	private char quoteChar;
@@ -23,12 +22,10 @@ public class StringLiteral extends AstNode
 		type = Token.STRING;
 	}
 
-	public StringLiteral()
-	{
+	public StringLiteral() {
 	}
 
-	public StringLiteral(int pos)
-	{
+	public StringLiteral(int pos) {
 		super(pos);
 	}
 
@@ -37,8 +34,7 @@ public class StringLiteral extends AstNode
 	 *
 	 * @param len the length <em>including</em> the enclosing quotes
 	 */
-	public StringLiteral(int pos, int len)
-	{
+	public StringLiteral(int pos, int len) {
 		super(pos, len);
 	}
 
@@ -48,18 +44,15 @@ public class StringLiteral extends AstNode
 	 * @return the node's value, a {@link String} of unescaped characters
 	 * that includes the delimiter quotes.
 	 */
-	public String getValue()
-	{
+	public String getValue() {
 		return value;
 	}
 
 	/**
 	 * Returns the string value, optionally including the enclosing quotes.
 	 */
-	public String getValue(boolean includeQuotes)
-	{
-		if (!includeQuotes)
-		{
+	public String getValue(boolean includeQuotes) {
+		if (!includeQuotes) {
 			return value;
 		}
 		return quoteChar + value + quoteChar;
@@ -71,8 +64,7 @@ public class StringLiteral extends AstNode
 	 * @param value the node's value
 	 * @throws IllegalArgumentException} if value is {@code null}
 	 */
-	public void setValue(String value)
-	{
+	public void setValue(String value) {
 		assertNotNull(value);
 		this.value = value;
 	}
@@ -80,19 +72,16 @@ public class StringLiteral extends AstNode
 	/**
 	 * Returns the character used as the delimiter for this string.
 	 */
-	public char getQuoteCharacter()
-	{
+	public char getQuoteCharacter() {
 		return quoteChar;
 	}
 
-	public void setQuoteCharacter(char c)
-	{
+	public void setQuoteCharacter(char c) {
 		quoteChar = c;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		return new StringBuilder(makeIndent(depth))
 				.append(quoteChar)
 				.append(ScriptRuntime.escapeString(value, quoteChar))
@@ -104,8 +93,7 @@ public class StringLiteral extends AstNode
 	 * Visits this node.  There are no children to visit.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
+	public void visit(NodeVisitor v) {
 		v.visit(this);
 	}
 }

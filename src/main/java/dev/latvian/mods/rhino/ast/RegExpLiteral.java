@@ -12,8 +12,7 @@ import dev.latvian.mods.rhino.Token;
  * AST node for a RegExp literal.
  * Node type is {@link Token#REGEXP}.
  */
-public class RegExpLiteral extends AstNode
-{
+public class RegExpLiteral extends AstNode {
 
 	private String value;
 	private String flags;
@@ -22,25 +21,21 @@ public class RegExpLiteral extends AstNode
 		type = Token.REGEXP;
 	}
 
-	public RegExpLiteral()
-	{
+	public RegExpLiteral() {
 	}
 
-	public RegExpLiteral(int pos)
-	{
+	public RegExpLiteral(int pos) {
 		super(pos);
 	}
 
-	public RegExpLiteral(int pos, int len)
-	{
+	public RegExpLiteral(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Returns the regexp string without delimiters
 	 */
-	public String getValue()
-	{
+	public String getValue() {
 		return value;
 	}
 
@@ -49,8 +44,7 @@ public class RegExpLiteral extends AstNode
 	 *
 	 * @throws IllegalArgumentException} if value is {@code null}
 	 */
-	public void setValue(String value)
-	{
+	public void setValue(String value) {
 		assertNotNull(value);
 		this.value = value;
 	}
@@ -58,22 +52,19 @@ public class RegExpLiteral extends AstNode
 	/**
 	 * Returns regexp flags, {@code null} or "" if no flags specified
 	 */
-	public String getFlags()
-	{
+	public String getFlags() {
 		return flags;
 	}
 
 	/**
 	 * Sets regexp flags.  Can be {@code null} or "".
 	 */
-	public void setFlags(String flags)
-	{
+	public void setFlags(String flags) {
 		this.flags = flags;
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		return makeIndent(depth) + "/" + value + "/"
 				+ (flags == null ? "" : flags);
 	}
@@ -82,8 +73,7 @@ public class RegExpLiteral extends AstNode
 	 * Visits this node.  There are no children to visit.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
+	public void visit(NodeVisitor v) {
 		v.visit(this);
 	}
 }

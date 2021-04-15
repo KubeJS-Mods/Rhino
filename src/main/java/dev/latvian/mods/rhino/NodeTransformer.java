@@ -21,38 +21,31 @@ import java.util.List;
  * @see Node
  */
 
-public class NodeTransformer
-{
+public class NodeTransformer {
 
-	public NodeTransformer()
-	{
+	public NodeTransformer() {
 	}
 
-	public final void transform(ScriptNode tree, CompilerEnvirons env)
-	{
+	public final void transform(ScriptNode tree, CompilerEnvirons env) {
 		transform(tree, false, env);
 	}
 
-	public final void transform(ScriptNode tree, boolean inStrictMode, CompilerEnvirons env)
-	{
+	public final void transform(ScriptNode tree, boolean inStrictMode, CompilerEnvirons env) {
 		boolean useStrictMode = inStrictMode;
 		// Support strict mode inside a function only for "ES6" language level
 		// and above. Otherwise, we will end up breaking backward compatibility for
 		// many existing scripts.
-		if ((env.getLanguageVersion() >= Context.VERSION_ES6) && tree.isInStrictMode())
-		{
+		if ((env.getLanguageVersion() >= Context.VERSION_ES6) && tree.isInStrictMode()) {
 			useStrictMode = true;
 		}
 		transformCompilationUnit(tree, useStrictMode);
-		for (int i = 0; i != tree.getFunctionCount(); ++i)
-		{
+		for (int i = 0; i != tree.getFunctionCount(); ++i) {
 			FunctionNode fn = tree.getFunctionNode(i);
 			transform(fn, useStrictMode, env);
 		}
 	}
 
-	private void transformCompilationUnit(ScriptNode tree, boolean inStrictMode)
-	{
+	private void transformCompilationUnit(ScriptNode tree, boolean inStrictMode) {
 		loops = new ObjArray();
 		loopEnds = new ObjArray();
 
@@ -65,8 +58,7 @@ public class NodeTransformer
 		tree.flattenSymbolTable(!createScopeObjects);
 
 		//uncomment to print tree before transformation
-		if (Token.printTrees)
-		{
+		if (Token.printTrees) {
 			System.out.println(tree.toStringTree(tree));
 		}
 		transformCompilationUnit_r(tree, tree, tree, createScopeObjects,
@@ -77,24 +69,18 @@ public class NodeTransformer
 											final Node parent,
 											Scope scope,
 											boolean createScopeObjects,
-											boolean inStrictMode)
-	{
+											boolean inStrictMode) {
 		Node node = null;
 		siblingLoop:
-		for (; ; )
-		{
+		for (; ; ) {
 			Node previous = null;
-			if (node == null)
-			{
+			if (node == null) {
 				node = parent.getFirstChild();
-			}
-			else
-			{
+			} else {
 				previous = node;
 				node = node.getNext();
 			}
-			if (node == null)
-			{
+			if (node == null) {
 				break;
 			}
 
@@ -102,19 +88,16 @@ public class NodeTransformer
 			if (createScopeObjects &&
 					(type == Token.BLOCK || type == Token.LOOP ||
 							type == Token.ARRAYCOMP) &&
-					(node instanceof Scope))
-			{
+					(node instanceof Scope)) {
 				Scope newScope = (Scope) node;
-				if (newScope.getSymbolTable() != null)
-				{
+				if (newScope.getSymbolTable() != null) {
 					// transform to let statement so we get a with statement
 					// created to contain scoped let variables
 					Node let = new Node(type == Token.ARRAYCOMP ? Token.LETEXPR
 							: Token.LET);
 					Node innerLet = new Node(Token.LET);
 					let.addChildToBack(innerLet);
-					for (String name : newScope.getSymbolTable().keySet())
-					{
+					for (String name : newScope.getSymbolTable().keySet()) {
 						innerLet.addChildToBack(Node.newString(Token.NAME, name));
 					}
 					newScope.setSymbolTable(null); // so we don't transform again
@@ -125,8 +108,7 @@ public class NodeTransformer
 				}
 			}
 
-			switch (type)
-			{
+			switch (type) {
 
 				case Token.LABEL:
 				case Token.SWITCH:
@@ -135,24 +117,20 @@ public class NodeTransformer
 					loopEnds.push(((Jump) node).target);
 					break;
 
-				case Token.WITH:
-				{
+				case Token.WITH: {
 					loops.push(node);
 					Node leave = node.getNext();
-					if (leave.getType() != Token.LEAVEWITH)
-					{
+					if (leave.getType() != Token.LEAVEWITH) {
 						Kit.codeBug();
 					}
 					loopEnds.push(leave);
 					break;
 				}
 
-				case Token.TRY:
-				{
+				case Token.TRY: {
 					Jump jump = (Jump) node;
 					Node finallytarget = jump.getFinally();
-					if (finallytarget != null)
-					{
+					if (finallytarget != null) {
 						hasFinally = true;
 						loops.push(node);
 						loopEnds.push(finallytarget);
@@ -162,8 +140,7 @@ public class NodeTransformer
 
 				case Token.TARGET:
 				case Token.LEAVEWITH:
-					if (!loopEnds.isEmpty() && loopEnds.peek() == node)
-					{
+					if (!loopEnds.isEmpty() && loopEnds.peek() == node) {
 						loopEnds.pop();
 						loops.pop();
 					}
@@ -174,12 +151,10 @@ public class NodeTransformer
 					((FunctionNode) tree).addResumptionPoint(node);
 					break;
 
-				case Token.RETURN:
-				{
+				case Token.RETURN: {
 					boolean isGenerator = tree.getType() == Token.FUNCTION
 							&& ((FunctionNode) tree).isGenerator();
-					if (isGenerator)
-					{
+					if (isGenerator) {
 						node.putIntProp(Node.GENERATOR_END_PROP, 1);
 					}
 					/* If we didn't support try/finally, it wouldn't be
@@ -189,48 +164,37 @@ public class NodeTransformer
 					 * block gets the correct scope... which could mean
 					 * that some LEAVEWITH nodes are necessary.
 					 */
-					if (!hasFinally)
-					{
+					if (!hasFinally) {
 						break;     // skip the whole mess.
 					}
 					Node unwindBlock = null;
-					for (int i = loops.size() - 1; i >= 0; i--)
-					{
+					for (int i = loops.size() - 1; i >= 0; i--) {
 						Node n = (Node) loops.get(i);
 						int elemtype = n.getType();
-						if (elemtype == Token.TRY || elemtype == Token.WITH)
-						{
+						if (elemtype == Token.TRY || elemtype == Token.WITH) {
 							Node unwind;
-							if (elemtype == Token.TRY)
-							{
+							if (elemtype == Token.TRY) {
 								Jump jsrnode = new Jump(Token.JSR);
 								Node jsrtarget = ((Jump) n).getFinally();
 								jsrnode.target = jsrtarget;
 								unwind = jsrnode;
-							}
-							else
-							{
+							} else {
 								unwind = new Node(Token.LEAVEWITH);
 							}
-							if (unwindBlock == null)
-							{
+							if (unwindBlock == null) {
 								unwindBlock = new Node(Token.BLOCK,
 										node.getLineno());
 							}
 							unwindBlock.addChildToBack(unwind);
 						}
 					}
-					if (unwindBlock != null)
-					{
+					if (unwindBlock != null) {
 						Node returnNode = node;
 						Node returnExpr = returnNode.getFirstChild();
 						node = replaceCurrent(parent, previous, node, unwindBlock);
-						if (returnExpr == null || isGenerator)
-						{
+						if (returnExpr == null || isGenerator) {
 							unwindBlock.addChildToBack(returnNode);
-						}
-						else
-						{
+						} else {
 							Node store = new Node(Token.EXPR_RESULT, returnExpr);
 							unwindBlock.addChildToFront(store);
 							returnNode = new Node(Token.RETURN_RESULT);
@@ -247,19 +211,15 @@ public class NodeTransformer
 				}
 
 				case Token.BREAK:
-				case Token.CONTINUE:
-				{
+				case Token.CONTINUE: {
 					Jump jump = (Jump) node;
 					Jump jumpStatement = jump.getJumpStatement();
-					if (jumpStatement == null)
-					{
+					if (jumpStatement == null) {
 						Kit.codeBug();
 					}
 
-					for (int i = loops.size(); ; )
-					{
-						if (i == 0)
-						{
+					for (int i = loops.size(); ; ) {
+						if (i == 0) {
 							// Parser/IRFactory ensure that break/continue
 							// always has a jump statement associated with it
 							// which should be found
@@ -267,20 +227,16 @@ public class NodeTransformer
 						}
 						--i;
 						Node n = (Node) loops.get(i);
-						if (n == jumpStatement)
-						{
+						if (n == jumpStatement) {
 							break;
 						}
 
 						int elemtype = n.getType();
-						if (elemtype == Token.WITH)
-						{
+						if (elemtype == Token.WITH) {
 							Node leave = new Node(Token.LEAVEWITH);
 							previous = addBeforeCurrent(parent, previous, node,
 									leave);
-						}
-						else if (elemtype == Token.TRY)
-						{
+						} else if (elemtype == Token.TRY) {
 							Jump tryNode = (Jump) n;
 							Jump jsrFinally = new Jump(Token.JSR);
 							jsrFinally.target = tryNode.getFinally();
@@ -289,12 +245,9 @@ public class NodeTransformer
 						}
 					}
 
-					if (type == Token.BREAK)
-					{
+					if (type == Token.BREAK) {
 						jump.target = jumpStatement.target;
-					}
-					else
-					{
+					} else {
 						jump.target = jumpStatement.getContinue();
 					}
 					jump.setType(Token.GOTO);
@@ -311,11 +264,9 @@ public class NodeTransformer
 					break;
 
 				case Token.LETEXPR:
-				case Token.LET:
-				{
+				case Token.LET: {
 					Node child = node.getFirstChild();
-					if (child.getType() == Token.LET)
-					{
+					if (child.getType() == Token.LET) {
 						// We have a let statement or expression rather than a
 						// let declaration
 						boolean createWith = tree.getType() != Token.FUNCTION
@@ -327,19 +278,15 @@ public class NodeTransformer
 				}
 				/* fall through */
 				case Token.CONST:
-				case Token.VAR:
-				{
+				case Token.VAR: {
 					Node result = new Node(Token.BLOCK);
-					for (Node cursor = node.getFirstChild(); cursor != null; )
-					{
+					for (Node cursor = node.getFirstChild(); cursor != null; ) {
 						// Move cursor to next before createAssignment gets chance
 						// to change n.next
 						Node n = cursor;
 						cursor = cursor.getNext();
-						if (n.getType() == Token.NAME)
-						{
-							if (!n.hasChildren())
-							{
+						if (n.getType() == Token.NAME) {
+							if (!n.hasChildren()) {
 								continue;
 							}
 							Node init = n.getFirstChild();
@@ -349,13 +296,10 @@ public class NodeTransformer
 									Token.SETCONST :
 									Token.SETNAME,
 									n, init);
-						}
-						else
-						{
+						} else {
 							// May be a destructuring assignment already transformed
 							// to a LETEXPR
-							if (n.getType() != Token.LETEXPR)
-							{
+							if (n.getType() != Token.LETEXPR) {
 								throw Kit.codeBug();
 							}
 						}
@@ -366,118 +310,89 @@ public class NodeTransformer
 					break;
 				}
 
-				case Token.TYPEOFNAME:
-				{
+				case Token.TYPEOFNAME: {
 					Scope defining = scope.getDefiningScope(node.getString());
-					if (defining != null)
-					{
+					if (defining != null) {
 						node.setScope(defining);
 					}
 				}
 				break;
 
 				case Token.TYPEOF:
-				case Token.IFNE:
-				{
+				case Token.IFNE: {
 					/* We want to suppress warnings for undefined property o.p
 					 * for the following constructs: typeof o.p, if (o.p),
 					 * if (!o.p), if (o.p == undefined), if (undefined == o.p)
 					 */
 					Node child = node.getFirstChild();
-					if (type == Token.IFNE)
-					{
-						while (child.getType() == Token.NOT)
-						{
+					if (type == Token.IFNE) {
+						while (child.getType() == Token.NOT) {
 							child = child.getFirstChild();
 						}
 						if (child.getType() == Token.EQ ||
-								child.getType() == Token.NE)
-						{
+								child.getType() == Token.NE) {
 							Node first = child.getFirstChild();
 							Node last = child.getLastChild();
 							if (first.getType() == Token.NAME &&
-									first.getString().equals("undefined"))
-							{
+									first.getString().equals("undefined")) {
 								child = last;
-							}
-							else if (last.getType() == Token.NAME &&
-									last.getString().equals("undefined"))
-							{
+							} else if (last.getType() == Token.NAME &&
+									last.getString().equals("undefined")) {
 								child = first;
 							}
 						}
 					}
-					if (child.getType() == Token.GETPROP)
-					{
+					if (child.getType() == Token.GETPROP) {
 						child.setType(Token.GETPROPNOWARN);
 					}
 					break;
 				}
 
 				case Token.SETNAME:
-					if (inStrictMode)
-					{
+					if (inStrictMode) {
 						node.setType(Token.STRICT_SETNAME);
 					}
 					/* fall through */
 				case Token.NAME:
 				case Token.SETCONST:
-				case Token.DELPROP:
-				{
+				case Token.DELPROP: {
 					// Turn name to var for faster access if possible
-					if (createScopeObjects)
-					{
+					if (createScopeObjects) {
 						break;
 					}
 					Node nameSource;
-					if (type == Token.NAME)
-					{
+					if (type == Token.NAME) {
 						nameSource = node;
-					}
-					else
-					{
+					} else {
 						nameSource = node.getFirstChild();
-						if (nameSource.getType() != Token.BINDNAME)
-						{
-							if (type == Token.DELPROP)
-							{
+						if (nameSource.getType() != Token.BINDNAME) {
+							if (type == Token.DELPROP) {
 								break;
 							}
 							throw Kit.codeBug();
 						}
 					}
-					if (nameSource.getScope() != null)
-					{
+					if (nameSource.getScope() != null) {
 						break; // already have a scope set
 					}
 					String name = nameSource.getString();
 					Scope defining = scope.getDefiningScope(name);
-					if (defining != null)
-					{
+					if (defining != null) {
 						nameSource.setScope(defining);
-						if (type == Token.NAME)
-						{
+						if (type == Token.NAME) {
 							node.setType(Token.GETVAR);
-						}
-						else if (type == Token.SETNAME ||
-								type == Token.STRICT_SETNAME)
-						{
+						} else if (type == Token.SETNAME ||
+								type == Token.STRICT_SETNAME) {
 							node.setType(Token.SETVAR);
 							nameSource.setType(Token.STRING);
-						}
-						else if (type == Token.SETCONST)
-						{
+						} else if (type == Token.SETCONST) {
 							node.setType(Token.SETCONSTVAR);
 							nameSource.setType(Token.STRING);
-						}
-						else if (type == Token.DELPROP)
-						{
+						} else if (type == Token.DELPROP) {
 							// Local variables are by definition permanent
 							Node n = new Node(Token.FALSE);
 							node = replaceCurrent(parent, previous, node, n);
-						}
-						else
-						{
+						} else {
 							throw Kit.codeBug();
 						}
 					}
@@ -491,17 +406,14 @@ public class NodeTransformer
 		}
 	}
 
-	protected void visitNew(Node node, ScriptNode tree)
-	{
+	protected void visitNew(Node node, ScriptNode tree) {
 	}
 
-	protected void visitCall(Node node, ScriptNode tree)
-	{
+	protected void visitCall(Node node, ScriptNode tree) {
 	}
 
 	protected Node visitLet(boolean createWith, Node parent, Node previous,
-							Node scopeNode)
-	{
+							Node scopeNode) {
 		Node vars = scopeNode.getFirstChild();
 		Node body = vars.getNext();
 		scopeNode.removeChild(vars);
@@ -509,57 +421,46 @@ public class NodeTransformer
 		boolean isExpression = scopeNode.getType() == Token.LETEXPR;
 		Node result;
 		Node newVars;
-		if (createWith)
-		{
+		if (createWith) {
 			result = new Node(isExpression ? Token.WITHEXPR : Token.BLOCK);
 			result = replaceCurrent(parent, previous, scopeNode, result);
 			ArrayList<Object> list = new ArrayList<>();
 			Node objectLiteral = new Node(Token.OBJECTLIT);
-			for (Node v = vars.getFirstChild(); v != null; v = v.getNext())
-			{
+			for (Node v = vars.getFirstChild(); v != null; v = v.getNext()) {
 				Node current = v;
-				if (current.getType() == Token.LETEXPR)
-				{
+				if (current.getType() == Token.LETEXPR) {
 					// destructuring in let expr, e.g. let ([x, y] = [3, 4]) {}
 					List<?> destructuringNames = (List<?>)
 							current.getProp(Node.DESTRUCTURING_NAMES);
 					Node c = current.getFirstChild();
-					if (c.getType() != Token.LET)
-					{
+					if (c.getType() != Token.LET) {
 						throw Kit.codeBug();
 					}
 					// Add initialization code to front of body
-					if (isExpression)
-					{
+					if (isExpression) {
 						body = new Node(Token.COMMA, c.getNext(), body);
-					}
-					else
-					{
+					} else {
 						body = new Node(Token.BLOCK,
 								new Node(Token.EXPR_VOID, c.getNext()),
 								body);
 					}
 					// Update "list" and "objectLiteral" for the variables
 					// defined in the destructuring assignment
-					if (destructuringNames != null)
-					{
+					if (destructuringNames != null) {
 						list.addAll(destructuringNames);
-						for (int i = 0; i < destructuringNames.size(); i++)
-						{
+						for (int i = 0; i < destructuringNames.size(); i++) {
 							objectLiteral.addChildToBack(
 									new Node(Token.VOID, Node.newNumber(0.0)));
 						}
 					}
 					current = c.getFirstChild(); // should be a NAME, checked below
 				}
-				if (current.getType() != Token.NAME)
-				{
+				if (current.getType() != Token.NAME) {
 					throw Kit.codeBug();
 				}
 				list.add(ScriptRuntime.getIndexObject(current.getString()));
 				Node init = current.getFirstChild();
-				if (init == null)
-				{
+				if (init == null) {
 					init = new Node(Token.VOID, Node.newNumber(0.0));
 				}
 				objectLiteral.addChildToBack(init);
@@ -569,30 +470,22 @@ public class NodeTransformer
 			result.addChildToBack(newVars);
 			result.addChildToBack(new Node(Token.WITH, body));
 			result.addChildToBack(new Node(Token.LEAVEWITH));
-		}
-		else
-		{
+		} else {
 			result = new Node(isExpression ? Token.COMMA : Token.BLOCK);
 			result = replaceCurrent(parent, previous, scopeNode, result);
 			newVars = new Node(Token.COMMA);
-			for (Node v = vars.getFirstChild(); v != null; v = v.getNext())
-			{
+			for (Node v = vars.getFirstChild(); v != null; v = v.getNext()) {
 				Node current = v;
-				if (current.getType() == Token.LETEXPR)
-				{
+				if (current.getType() == Token.LETEXPR) {
 					// destructuring in let expr, e.g. let ([x, y] = [3, 4]) {}
 					Node c = current.getFirstChild();
-					if (c.getType() != Token.LET)
-					{
+					if (c.getType() != Token.LET) {
 						throw Kit.codeBug();
 					}
 					// Add initialization code to front of body
-					if (isExpression)
-					{
+					if (isExpression) {
 						body = new Node(Token.COMMA, c.getNext(), body);
-					}
-					else
-					{
+					} else {
 						body = new Node(Token.BLOCK,
 								new Node(Token.EXPR_VOID, c.getNext()),
 								body);
@@ -602,40 +495,33 @@ public class NodeTransformer
 							(Scope) scopeNode);
 					current = c.getFirstChild(); // should be a NAME, checked below
 				}
-				if (current.getType() != Token.NAME)
-				{
+				if (current.getType() != Token.NAME) {
 					throw Kit.codeBug();
 				}
 				Node stringNode = Node.newString(current.getString());
 				stringNode.setScope((Scope) scopeNode);
 				Node init = current.getFirstChild();
-				if (init == null)
-				{
+				if (init == null) {
 					init = new Node(Token.VOID, Node.newNumber(0.0));
 				}
 				newVars.addChildToBack(new Node(Token.SETVAR, stringNode, init));
 			}
-			if (isExpression)
-			{
+			if (isExpression) {
 				result.addChildToBack(newVars);
 				scopeNode.setType(Token.COMMA);
 				result.addChildToBack(scopeNode);
 				scopeNode.addChildToBack(body);
-				if (body instanceof Scope)
-				{
+				if (body instanceof Scope) {
 					Scope scopeParent = ((Scope) body).getParentScope();
 					((Scope) body).setParentScope((Scope) scopeNode);
 					((Scope) scopeNode).setParentScope(scopeParent);
 				}
-			}
-			else
-			{
+			} else {
 				result.addChildToBack(new Node(Token.EXPR_VOID, newVars));
 				scopeNode.setType(Token.BLOCK);
 				result.addChildToBack(scopeNode);
 				scopeNode.addChildrenToBack(body);
-				if (body instanceof Scope)
-				{
+				if (body instanceof Scope) {
 					Scope scopeParent = ((Scope) body).getParentScope();
 					((Scope) body).setParentScope((Scope) scopeNode);
 					((Scope) scopeNode).setParentScope(scopeParent);
@@ -646,20 +532,14 @@ public class NodeTransformer
 	}
 
 	private static Node addBeforeCurrent(Node parent, Node previous,
-										 Node current, Node toAdd)
-	{
-		if (previous == null)
-		{
-			if (!(current == parent.getFirstChild()))
-			{
+										 Node current, Node toAdd) {
+		if (previous == null) {
+			if (!(current == parent.getFirstChild())) {
 				Kit.codeBug();
 			}
 			parent.addChildToFront(toAdd);
-		}
-		else
-		{
-			if (!(current == previous.getNext()))
-			{
+		} else {
+			if (!(current == previous.getNext())) {
 				Kit.codeBug();
 			}
 			parent.addChildAfter(toAdd, previous);
@@ -668,24 +548,17 @@ public class NodeTransformer
 	}
 
 	private static Node replaceCurrent(Node parent, Node previous,
-									   Node current, Node replacement)
-	{
-		if (previous == null)
-		{
-			if (!(current == parent.getFirstChild()))
-			{
+									   Node current, Node replacement) {
+		if (previous == null) {
+			if (!(current == parent.getFirstChild())) {
 				Kit.codeBug();
 			}
 			parent.replaceChild(current, replacement);
-		}
-		else if (previous.next == current)
-		{
+		} else if (previous.next == current) {
 			// Check cachedPrev.next == current is necessary due to possible
 			// tree mutations
 			parent.replaceChildAfter(previous, replacement);
-		}
-		else
-		{
+		} else {
 			parent.replaceChild(current, replacement);
 		}
 		return replacement;

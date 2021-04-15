@@ -14,8 +14,7 @@ import java.util.List;
  * Abstraction of evaluation, which can be implemented either by an
  * interpreter or compiler.
  */
-public interface Evaluator
-{
+public interface Evaluator {
 
 	/**
 	 * Compile the script or function from intermediate representation

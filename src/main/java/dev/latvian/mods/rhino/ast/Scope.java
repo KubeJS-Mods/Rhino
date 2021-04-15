@@ -19,8 +19,7 @@ import java.util.Map;
  * Represents a scope in the lexical scope chain.  Base type for
  * all {@link AstNode} implementations that can introduce a new scope.
  */
-public class Scope extends Jump
-{
+public class Scope extends Jump {
 
 	// Use LinkedHashMap so that the iteration order is the insertion order
 	protected Map<String, Symbol> symbolTable;
@@ -33,31 +32,26 @@ public class Scope extends Jump
 		this.type = Token.BLOCK;
 	}
 
-	public Scope()
-	{
+	public Scope() {
 	}
 
-	public Scope(int pos)
-	{
+	public Scope(int pos) {
 		this.position = pos;
 	}
 
-	public Scope(int pos, int len)
-	{
+	public Scope(int pos, int len) {
 		this(pos);
 		this.length = len;
 	}
 
-	public Scope getParentScope()
-	{
+	public Scope getParentScope() {
 		return parentScope;
 	}
 
 	/**
 	 * Sets parent scope
 	 */
-	public void setParentScope(Scope parentScope)
-	{
+	public void setParentScope(Scope parentScope) {
 		this.parentScope = parentScope;
 		this.top = parentScope == null ? (ScriptNode) this : parentScope.top;
 	}
@@ -65,8 +59,7 @@ public class Scope extends Jump
 	/**
 	 * Used only for code generation.
 	 */
-	public void clearParentScope()
-	{
+	public void clearParentScope() {
 		this.parentScope = null;
 	}
 
@@ -75,8 +68,7 @@ public class Scope extends Jump
 	 *
 	 * @return the list of scopes we enclose, or {@code null} if none
 	 */
-	public List<Scope> getChildScopes()
-	{
+	public List<Scope> getChildScopes() {
 		return childScopes;
 	}
 
@@ -87,10 +79,8 @@ public class Scope extends Jump
 	 * @throws IllegalStateException if the child's parent scope is
 	 *                               non-{@code null}
 	 */
-	public void addChildScope(Scope child)
-	{
-		if (childScopes == null)
-		{
+	public void addChildScope(Scope child) {
+		if (childScopes == null) {
 			childScopes = new ArrayList<>();
 		}
 		childScopes.add(child);
@@ -106,19 +96,15 @@ public class Scope extends Jump
 	 * @param newScope the scope that will replace this one on the
 	 *                 scope stack.
 	 */
-	public void replaceWith(Scope newScope)
-	{
-		if (childScopes != null)
-		{
-			for (Scope kid : childScopes)
-			{
+	public void replaceWith(Scope newScope) {
+		if (childScopes != null) {
+			for (Scope kid : childScopes) {
 				newScope.addChildScope(kid);  // sets kid's parent
 			}
 			childScopes.clear();
 			childScopes = null;
 		}
-		if (symbolTable != null && !symbolTable.isEmpty())
-		{
+		if (symbolTable != null && !symbolTable.isEmpty()) {
 			joinScopes(this, newScope);
 		}
 	}
@@ -126,16 +112,14 @@ public class Scope extends Jump
 	/**
 	 * Returns current script or function scope
 	 */
-	public ScriptNode getTop()
-	{
+	public ScriptNode getTop() {
 		return top;
 	}
 
 	/**
 	 * Sets top current script or function scope
 	 */
-	public void setTop(ScriptNode top)
-	{
+	public void setTop(ScriptNode top) {
 		this.top = top;
 	}
 
@@ -145,8 +129,7 @@ public class Scope extends Jump
 	 * scope contained by the new node.
 	 * Useful for injecting a new scope in a scope chain.
 	 */
-	public static Scope splitScope(Scope scope)
-	{
+	public static Scope splitScope(Scope scope) {
 		Scope result = new Scope(scope.getType());
 		result.symbolTable = scope.symbolTable;
 		scope.symbolTable = null;
@@ -161,16 +144,13 @@ public class Scope extends Jump
 	/**
 	 * Copies all symbols from source scope to dest scope.
 	 */
-	public static void joinScopes(Scope source, Scope dest)
-	{
+	public static void joinScopes(Scope source, Scope dest) {
 		Map<String, Symbol> src = source.ensureSymbolTable();
 		Map<String, Symbol> dst = dest.ensureSymbolTable();
-		if (!Collections.disjoint(src.keySet(), dst.keySet()))
-		{
+		if (!Collections.disjoint(src.keySet(), dst.keySet())) {
 			codeBug();
 		}
-		for (Map.Entry<String, Symbol> entry : src.entrySet())
-		{
+		for (Map.Entry<String, Symbol> entry : src.entrySet()) {
 			Symbol sym = entry.getValue();
 			sym.setContainingTable(dest);
 			dst.put(entry.getKey(), sym);
@@ -184,13 +164,10 @@ public class Scope extends Jump
 	 * @return this {@link Scope}, one of its parent scopes, or {@code null} if
 	 * the name is not defined any this scope chain
 	 */
-	public Scope getDefiningScope(String name)
-	{
-		for (Scope s = this; s != null; s = s.parentScope)
-		{
+	public Scope getDefiningScope(String name) {
+		for (Scope s = this; s != null; s = s.parentScope) {
 			Map<String, Symbol> symbolTable = s.getSymbolTable();
-			if (symbolTable != null && symbolTable.containsKey(name))
-			{
+			if (symbolTable != null && symbolTable.containsKey(name)) {
 				return s;
 			}
 		}
@@ -203,18 +180,15 @@ public class Scope extends Jump
 	 * @param name the symbol name
 	 * @return the Symbol, or {@code null} if not found
 	 */
-	public Symbol getSymbol(String name)
-	{
+	public Symbol getSymbol(String name) {
 		return symbolTable == null ? null : symbolTable.get(name);
 	}
 
 	/**
 	 * Enters a symbol into this scope.
 	 */
-	public void putSymbol(Symbol symbol)
-	{
-		if (symbol.getName() == null)
-		{
+	public void putSymbol(Symbol symbol) {
+		if (symbol.getName() == null) {
 			throw new IllegalArgumentException("null symbol name");
 		}
 		ensureSymbolTable();
@@ -228,23 +202,19 @@ public class Scope extends Jump
 	 *
 	 * @return the symbol table.  May be {@code null}.
 	 */
-	public Map<String, Symbol> getSymbolTable()
-	{
+	public Map<String, Symbol> getSymbolTable() {
 		return symbolTable;
 	}
 
 	/**
 	 * Sets the symbol table for this scope.  May be {@code null}.
 	 */
-	public void setSymbolTable(Map<String, Symbol> table)
-	{
+	public void setSymbolTable(Map<String, Symbol> table) {
 		symbolTable = table;
 	}
 
-	private Map<String, Symbol> ensureSymbolTable()
-	{
-		if (symbolTable == null)
-		{
+	private Map<String, Symbol> ensureSymbolTable() {
+		if (symbolTable == null) {
 			symbolTable = new LinkedHashMap<>(5);
 		}
 		return symbolTable;
@@ -258,12 +228,10 @@ public class Scope extends Jump
 	 *                            in the child list, e.g. if this method is called after the code
 	 *                            generator begins the tree transformation.
 	 */
-	public List<AstNode> getStatements()
-	{
+	public List<AstNode> getStatements() {
 		List<AstNode> stmts = new ArrayList<>();
 		Node n = getFirstChild();
-		while (n != null)
-		{
+		while (n != null) {
 			stmts.add((AstNode) n);
 			n = n.getNext();
 		}
@@ -271,17 +239,14 @@ public class Scope extends Jump
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("{\n");
-		for (Node kid : this)
-		{
+		for (Node kid : this) {
 			AstNode astNodeKid = (AstNode) kid;
 			sb.append(astNodeKid.toSource(depth + 1));
-			if (astNodeKid.getType() == Token.COMMENT)
-			{
+			if (astNodeKid.getType() == Token.COMMENT) {
 				sb.append("\n");
 			}
 		}
@@ -291,12 +256,9 @@ public class Scope extends Jump
 	}
 
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
-			for (Node kid : this)
-			{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
+			for (Node kid : this) {
 				((AstNode) kid).visit(v);
 			}
 		}

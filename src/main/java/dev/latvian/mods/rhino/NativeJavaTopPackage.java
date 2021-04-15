@@ -20,8 +20,7 @@ package dev.latvian.mods.rhino;
  */
 
 public class NativeJavaTopPackage
-		extends NativeJavaPackage implements Function, IdFunctionCall
-{
+		extends NativeJavaPackage implements Function, IdFunctionCall {
 	private static final long serialVersionUID = -1455787259477709999L;
 
 	// we know these are packages so we can skip the class check
@@ -37,36 +36,29 @@ public class NativeJavaTopPackage
 			{"javax", "swing"}
 	};
 
-	NativeJavaTopPackage(ClassLoader loader)
-	{
+	NativeJavaTopPackage(ClassLoader loader) {
 		super(true, "", loader);
 	}
 
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args)
-	{
+					   Object[] args) {
 		return construct(cx, scope, args);
 	}
 
 	@Override
-	public Scriptable construct(Context cx, Scriptable scope, Object[] args)
-	{
+	public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
 		ClassLoader loader = null;
-		if (args.length != 0)
-		{
+		if (args.length != 0) {
 			Object arg = args[0];
-			if (arg instanceof Wrapper)
-			{
+			if (arg instanceof Wrapper) {
 				arg = ((Wrapper) arg).unwrap();
 			}
-			if (arg instanceof ClassLoader)
-			{
+			if (arg instanceof ClassLoader) {
 				loader = (ClassLoader) arg;
 			}
 		}
-		if (loader == null)
-		{
+		if (loader == null) {
 			Context.reportRuntimeError0("msg.not.classloader");
 			return null;
 		}
@@ -75,18 +67,15 @@ public class NativeJavaTopPackage
 		return pkg;
 	}
 
-	public static void init(Context cx, Scriptable scope, boolean sealed)
-	{
+	public static void init(Context cx, Scriptable scope, boolean sealed) {
 		ClassLoader loader = cx.getApplicationClassLoader();
 		final NativeJavaTopPackage top = new NativeJavaTopPackage(loader);
 		top.setPrototype(getObjectPrototype(scope));
 		top.setParentScope(scope);
 
-		for (int i = 0; i != commonPackages.length; i++)
-		{
+		for (int i = 0; i != commonPackages.length; i++) {
 			NativeJavaPackage parent = top;
-			for (int j = 0; j != commonPackages[i].length; j++)
-			{
+			for (int j = 0; j != commonPackages[i].length; j++) {
 				parent = parent.forcePackage(commonPackages[i][j], scope);
 			}
 		}
@@ -100,8 +89,7 @@ public class NativeJavaTopPackage
 		// that are underneath.
 		String[] topNames = ScriptRuntime.getTopPackageNames();
 		NativeJavaPackage[] topPackages = new NativeJavaPackage[topNames.length];
-		for (int i = 0; i < topNames.length; i++)
-		{
+		for (int i = 0; i < topNames.length; i++) {
 			topPackages[i] = (NativeJavaPackage) top.get(topNames[i], top);
 		}
 
@@ -109,14 +97,12 @@ public class NativeJavaTopPackage
 		// a ScriptableObject.
 		ScriptableObject global = (ScriptableObject) scope;
 
-		if (sealed)
-		{
+		if (sealed) {
 			getClass.sealObject();
 		}
 		getClass.exportAsScopeProperty();
 		global.defineProperty("Packages", top, DONTENUM);
-		for (int i = 0; i < topNames.length; i++)
-		{
+		for (int i = 0; i < topNames.length; i++) {
 			global.defineProperty(topNames[i], topPackages[i],
 					DONTENUM);
 		}
@@ -124,42 +110,34 @@ public class NativeJavaTopPackage
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (f.hasTag(FTAG))
-		{
-			if (f.methodId() == Id_getClass)
-			{
+							 Scriptable thisObj, Object[] args) {
+		if (f.hasTag(FTAG)) {
+			if (f.methodId() == Id_getClass) {
 				return js_getClass(cx, scope, args);
 			}
 		}
 		throw f.unknown();
 	}
 
-	private Scriptable js_getClass(Context cx, Scriptable scope, Object[] args)
-	{
-		if (args.length > 0 && args[0] instanceof Wrapper)
-		{
+	private Scriptable js_getClass(Context cx, Scriptable scope, Object[] args) {
+		if (args.length > 0 && args[0] instanceof Wrapper) {
 			Scriptable result = this;
 			Class<?> cl = ((Wrapper) args[0]).unwrap().getClass();
 			// Evaluate the class name by getting successive properties of
 			// the string to find the appropriate NativeJavaClass object
 			String name = cl.getName();
 			int offset = 0;
-			for (; ; )
-			{
+			for (; ; ) {
 				int index = name.indexOf('.', offset);
 				String propName = index == -1
 						? name.substring(offset)
 						: name.substring(offset, index);
 				Object prop = result.get(propName, result);
-				if (!(prop instanceof Scriptable))
-				{
+				if (!(prop instanceof Scriptable)) {
 					break;  // fall through to error
 				}
 				result = (Scriptable) prop;
-				if (index == -1)
-				{
+				if (index == -1) {
 					return result;
 				}
 				offset = index + 1;

@@ -18,56 +18,47 @@ import java.util.LinkedHashMap;
  */
 
 public class HashSlotMap
-		implements SlotMap
-{
+		implements SlotMap {
 
 	private final LinkedHashMap<Object, ScriptableObject.Slot> map =
 			new LinkedHashMap<>();
 
 	@Override
-	public int size()
-	{
+	public int size() {
 		return map.size();
 	}
 
 	@Override
-	public boolean isEmpty()
-	{
+	public boolean isEmpty() {
 		return map.isEmpty();
 	}
 
 	@Override
-	public ScriptableObject.Slot query(Object key, int index)
-	{
+	public ScriptableObject.Slot query(Object key, int index) {
 		Object name = key == null ? String.valueOf(index) : key;
 		return map.get(name);
 	}
 
 	@Override
-	public ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType)
-	{
+	public ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType) {
 		Object name = key == null ? String.valueOf(index) : key;
 		ScriptableObject.Slot slot = map.get(name);
-		switch (accessType)
-		{
+		switch (accessType) {
 			case QUERY:
 				return slot;
 			case MODIFY:
 			case MODIFY_CONST:
-				if (slot != null)
-				{
+				if (slot != null) {
 					return slot;
 				}
 				break;
 			case MODIFY_GETTER_SETTER:
-				if (slot instanceof ScriptableObject.GetterSlot)
-				{
+				if (slot instanceof ScriptableObject.GetterSlot) {
 					return slot;
 				}
 				break;
 			case CONVERT_ACCESSOR_TO_DATA:
-				if (!(slot instanceof ScriptableObject.GetterSlot))
-				{
+				if (!(slot instanceof ScriptableObject.GetterSlot)) {
 					return slot;
 				}
 				break;
@@ -77,29 +68,20 @@ public class HashSlotMap
 	}
 
 	private ScriptableObject.Slot createSlot(Object key, int index,
-											 Object name, ScriptableObject.SlotAccess accessType)
-	{
+											 Object name, ScriptableObject.SlotAccess accessType) {
 		ScriptableObject.Slot slot = map.get(name);
-		if (slot != null)
-		{
+		if (slot != null) {
 			ScriptableObject.Slot newSlot;
 
 			if (accessType == ScriptableObject.SlotAccess.MODIFY_GETTER_SETTER
-					&& !(slot instanceof ScriptableObject.GetterSlot))
-			{
+					&& !(slot instanceof ScriptableObject.GetterSlot)) {
 				newSlot = new ScriptableObject.GetterSlot(name, slot.indexOrHash, slot.getAttributes());
-			}
-			else if (accessType == ScriptableObject.SlotAccess.CONVERT_ACCESSOR_TO_DATA
-					&& (slot instanceof ScriptableObject.GetterSlot))
-			{
+			} else if (accessType == ScriptableObject.SlotAccess.CONVERT_ACCESSOR_TO_DATA
+					&& (slot instanceof ScriptableObject.GetterSlot)) {
 				newSlot = new ScriptableObject.Slot(name, slot.indexOrHash, slot.getAttributes());
-			}
-			else if (accessType == ScriptableObject.SlotAccess.MODIFY_CONST)
-			{
+			} else if (accessType == ScriptableObject.SlotAccess.MODIFY_CONST) {
 				return null;
-			}
-			else
-			{
+			} else {
 				return slot;
 			}
 			newSlot.value = slot.value;
@@ -110,8 +92,7 @@ public class HashSlotMap
 		ScriptableObject.Slot newSlot = (accessType == ScriptableObject.SlotAccess.MODIFY_GETTER_SETTER
 				? new ScriptableObject.GetterSlot(key, index, 0)
 				: new ScriptableObject.Slot(key, index, 0));
-		if (accessType == ScriptableObject.SlotAccess.MODIFY_CONST)
-		{
+		if (accessType == ScriptableObject.SlotAccess.MODIFY_CONST) {
 			newSlot.setAttributes(ScriptableObject.CONST);
 		}
 		addSlot(newSlot);
@@ -119,25 +100,20 @@ public class HashSlotMap
 	}
 
 	@Override
-	public void addSlot(ScriptableObject.Slot newSlot)
-	{
+	public void addSlot(ScriptableObject.Slot newSlot) {
 		Object name = newSlot.name == null ? String.valueOf(newSlot.indexOrHash) : newSlot.name;
 		map.put(name, newSlot);
 	}
 
 	@Override
-	public void remove(Object key, int index)
-	{
+	public void remove(Object key, int index) {
 		Object name = key == null ? String.valueOf(index) : key;
 		ScriptableObject.Slot slot = map.get(name);
-		if (slot != null)
-		{
+		if (slot != null) {
 			// non-configurable
-			if ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0)
-			{
+			if ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0) {
 				Context cx = Context.getContext();
-				if (cx.isStrictMode())
-				{
+				if (cx.isStrictMode()) {
 					throw ScriptRuntime.typeError1("msg.delete.property.with.configurable.false", key);
 				}
 				return;
@@ -147,8 +123,7 @@ public class HashSlotMap
 	}
 
 	@Override
-	public Iterator<ScriptableObject.Slot> iterator()
-	{
+	public Iterator<ScriptableObject.Slot> iterator() {
 		return map.values().iterator();
 	}
 }

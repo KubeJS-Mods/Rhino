@@ -6,35 +6,28 @@
 
 package dev.latvian.mods.rhino.classfile;
 
-final class FieldOrMethodRef
-{
-	FieldOrMethodRef(String className, String name, String type)
-	{
+final class FieldOrMethodRef {
+	FieldOrMethodRef(String className, String name, String type) {
 		this.className = className;
 		this.name = name;
 		this.type = type;
 	}
 
-	public String getClassName()
-	{
+	public String getClassName() {
 		return className;
 	}
 
-	public String getName()
-	{
+	public String getName() {
 		return name;
 	}
 
-	public String getType()
-	{
+	public String getType() {
 		return type;
 	}
 
 	@Override
-	public boolean equals(Object obj)
-	{
-		if (!(obj instanceof FieldOrMethodRef))
-		{
+	public boolean equals(Object obj) {
+		if (!(obj instanceof FieldOrMethodRef)) {
 			return false;
 		}
 		FieldOrMethodRef x = (FieldOrMethodRef) obj;
@@ -44,10 +37,8 @@ final class FieldOrMethodRef
 	}
 
 	@Override
-	public int hashCode()
-	{
-		if (hashCode == -1)
-		{
+	public int hashCode() {
+		if (hashCode == -1) {
 			int h1 = className.hashCode();
 			int h2 = name.hashCode();
 			int h3 = type.hashCode();

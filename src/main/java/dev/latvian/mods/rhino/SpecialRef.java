@@ -6,8 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
-class SpecialRef extends Ref
-{
+class SpecialRef extends Ref {
 	private static final long serialVersionUID = -7521596632456797847L;
 
 	private static final int SPECIAL_NONE = 0;
@@ -18,38 +17,29 @@ class SpecialRef extends Ref
 	private final int type;
 	private final String name;
 
-	private SpecialRef(Scriptable target, int type, String name)
-	{
+	private SpecialRef(Scriptable target, int type, String name) {
 		this.target = target;
 		this.type = type;
 		this.name = name;
 	}
 
 	static Ref createSpecial(Context cx, Scriptable scope, Object object,
-							 String name)
-	{
+							 String name) {
 		Scriptable target = ScriptRuntime.toObjectOrNull(cx, object, scope);
-		if (target == null)
-		{
+		if (target == null) {
 			throw ScriptRuntime.undefReadError(object, name);
 		}
 
 		int type;
-		if (name.equals("__proto__"))
-		{
+		if (name.equals("__proto__")) {
 			type = SPECIAL_PROTO;
-		}
-		else if (name.equals("__parent__"))
-		{
+		} else if (name.equals("__parent__")) {
 			type = SPECIAL_PARENT;
-		}
-		else
-		{
+		} else {
 			throw new IllegalArgumentException(name);
 		}
 
-		if (!cx.hasFeature(Context.FEATURE_PARENT_PROTO_PROPERTIES))
-		{
+		if (!cx.hasFeature(Context.FEATURE_PARENT_PROTO_PROPERTIES)) {
 			// Clear special after checking for valid name!
 			type = SPECIAL_NONE;
 		}
@@ -58,10 +48,8 @@ class SpecialRef extends Ref
 	}
 
 	@Override
-	public Object get(Context cx)
-	{
-		switch (type)
-		{
+	public Object get(Context cx) {
+		switch (type) {
 			case SPECIAL_NONE:
 				return ScriptRuntime.getObjectProp(target, name, cx);
 			case SPECIAL_PROTO:
@@ -75,70 +63,52 @@ class SpecialRef extends Ref
 
 	@Override
 	@Deprecated
-	public Object set(Context cx, Object value)
-	{
+	public Object set(Context cx, Object value) {
 		throw new IllegalStateException();
 	}
 
 	@Override
-	public Object set(Context cx, Scriptable scope, Object value)
-	{
-		switch (type)
-		{
+	public Object set(Context cx, Scriptable scope, Object value) {
+		switch (type) {
 			case SPECIAL_NONE:
 				return ScriptRuntime.setObjectProp(target, name, value, cx);
 			case SPECIAL_PROTO:
-			case SPECIAL_PARENT:
-			{
+			case SPECIAL_PARENT: {
 				Scriptable obj = ScriptRuntime.toObjectOrNull(cx, value, scope);
-				if (obj != null)
-				{
+				if (obj != null) {
 					// Check that obj does not contain on its prototype/scope
 					// chain to prevent cycles
 					Scriptable search = obj;
-					do
-					{
-						if (search == target)
-						{
+					do {
+						if (search == target) {
 							throw Context.reportRuntimeError1(
 									"msg.cyclic.value", name);
 						}
-						if (type == SPECIAL_PROTO)
-						{
+						if (type == SPECIAL_PROTO) {
 							search = search.getPrototype();
-						}
-						else
-						{
+						} else {
 							search = search.getParentScope();
 						}
 					}
 					while (search != null);
 				}
-				if (type == SPECIAL_PROTO)
-				{
+				if (type == SPECIAL_PROTO) {
 					if (target instanceof ScriptableObject
 							&& !((ScriptableObject) target).isExtensible()
-							&& cx.getLanguageVersion() >= Context.VERSION_1_8)
-					{
+							&& cx.getLanguageVersion() >= Context.VERSION_1_8) {
 						throw ScriptRuntime.typeError0("msg.not.extensible");
 					}
 
-					if (cx.getLanguageVersion() >= Context.VERSION_ES6)
-					{
+					if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
 						if ((value != null && !"object".equals(ScriptRuntime.typeof(value))) ||
-								!"object".equals(ScriptRuntime.typeof(target)))
-						{
+								!"object".equals(ScriptRuntime.typeof(target))) {
 							return Undefined.instance;
 						}
 						target.setPrototype(obj);
-					}
-					else
-					{
+					} else {
 						target.setPrototype(obj);
 					}
-				}
-				else
-				{
+				} else {
 					target.setParentScope(obj);
 				}
 				return obj;
@@ -149,20 +119,16 @@ class SpecialRef extends Ref
 	}
 
 	@Override
-	public boolean has(Context cx)
-	{
-		if (type == SPECIAL_NONE)
-		{
+	public boolean has(Context cx) {
+		if (type == SPECIAL_NONE) {
 			return ScriptRuntime.hasObjectElem(target, name, cx);
 		}
 		return true;
 	}
 
 	@Override
-	public boolean delete(Context cx)
-	{
-		if (type == SPECIAL_NONE)
-		{
+	public boolean delete(Context cx) {
+		if (type == SPECIAL_NONE) {
 			return ScriptRuntime.deleteObjectElem(target, name, cx);
 		}
 		return false;

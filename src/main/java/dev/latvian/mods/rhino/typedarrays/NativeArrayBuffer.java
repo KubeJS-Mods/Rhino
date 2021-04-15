@@ -19,8 +19,7 @@ import dev.latvian.mods.rhino.Undefined;
  */
 
 public class NativeArrayBuffer
-		extends IdScriptableObject
-{
+		extends IdScriptableObject {
 	private static final long serialVersionUID = 3110411773054879549L;
 
 	public static final String CLASS_NAME = "ArrayBuffer";
@@ -30,13 +29,11 @@ public class NativeArrayBuffer
 	final byte[] buffer;
 
 	@Override
-	public String getClassName()
-	{
+	public String getClassName() {
 		return CLASS_NAME;
 	}
 
-	public static void init(Context cx, Scriptable scope, boolean sealed)
-	{
+	public static void init(Context cx, Scriptable scope, boolean sealed) {
 		NativeArrayBuffer na = new NativeArrayBuffer();
 		na.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
@@ -44,42 +41,33 @@ public class NativeArrayBuffer
 	/**
 	 * Create an empty buffer.
 	 */
-	public NativeArrayBuffer()
-	{
+	public NativeArrayBuffer() {
 		buffer = EMPTY_BUF;
 	}
 
 	/**
 	 * Create a buffer of the specified length in bytes.
 	 */
-	public NativeArrayBuffer(double len)
-	{
-		if (len >= Integer.MAX_VALUE)
-		{
+	public NativeArrayBuffer(double len) {
+		if (len >= Integer.MAX_VALUE) {
 			throw ScriptRuntime.rangeError("length parameter (" + len + ") is too large ");
 		}
-		if (len == Double.NEGATIVE_INFINITY)
-		{
+		if (len == Double.NEGATIVE_INFINITY) {
 			throw ScriptRuntime.rangeError("Negative array length " + len);
 		}
 
 		// support rounding
-		if (len <= -1)
-		{
+		if (len <= -1) {
 			throw ScriptRuntime.rangeError("Negative array length " + len);
 		}
 
 		int intLen = ScriptRuntime.toInt32(len);
-		if (intLen < 0)
-		{
+		if (intLen < 0) {
 			throw ScriptRuntime.rangeError("Negative array length " + len);
 		}
-		if (intLen == 0)
-		{
+		if (intLen == 0) {
 			buffer = EMPTY_BUF;
-		}
-		else
-		{
+		} else {
 			buffer = new byte[intLen];
 		}
 	}
@@ -87,8 +75,7 @@ public class NativeArrayBuffer
 	/**
 	 * Get the number of bytes in the buffer.
 	 */
-	public int getLength()
-	{
+	public int getLength() {
 		return buffer.length;
 	}
 
@@ -96,8 +83,7 @@ public class NativeArrayBuffer
 	 * Return the actual bytes that back the buffer. This is a reference to the real buffer,
 	 * so changes to bytes here will be reflected in the actual object and all its views.
 	 */
-	public byte[] getBuffer()
-	{
+	public byte[] getBuffer() {
 		return buffer;
 	}
 
@@ -113,8 +99,7 @@ public class NativeArrayBuffer
 	 * @param s the position where the new buffer will start
 	 * @param e the position where it will end
 	 */
-	public NativeArrayBuffer slice(double s, double e)
-	{
+	public NativeArrayBuffer slice(double s, double e) {
 		// Handle negative start as relative to start
 		// Clamp as per the spec to between 0 and length
 		int end = ScriptRuntime.toInt32(Math.max(0, Math.min(buffer.length, (e < 0 ? buffer.length + e : e))));
@@ -130,15 +115,12 @@ public class NativeArrayBuffer
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args)
-	{
-		if (!f.hasTag(CLASS_NAME))
-		{
+							 Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(CLASS_NAME)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
-		switch (id)
-		{
+		switch (id) {
 			case ConstructorId_isView:
 				return (isArg(args, 0) && (args[0] instanceof NativeArrayBufferView));
 
@@ -155,27 +137,22 @@ public class NativeArrayBuffer
 		throw new IllegalArgumentException(String.valueOf(id));
 	}
 
-	private static NativeArrayBuffer realThis(Scriptable thisObj, IdFunctionObject f)
-	{
-		if (!(thisObj instanceof NativeArrayBuffer))
-		{
+	private static NativeArrayBuffer realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (!(thisObj instanceof NativeArrayBuffer)) {
 			throw incompatibleCallError(f);
 		}
 		return (NativeArrayBuffer) thisObj;
 	}
 
-	private static boolean isArg(Object[] args, int i)
-	{
+	private static boolean isArg(Object[] args, int i) {
 		return ((args.length > i) && !Undefined.instance.equals(args[i]));
 	}
 
 	@Override
-	protected void initPrototypeId(int id)
-	{
+	protected void initPrototypeId(int id) {
 		String s;
 		int arity;
-		switch (id)
-		{
+		switch (id) {
 			case Id_constructor:
 				arity = 1;
 				s = "constructor";
@@ -193,8 +170,7 @@ public class NativeArrayBuffer
 	// #string_id_map#
 
 	@Override
-	protected int findPrototypeId(String s)
-	{
+	protected int findPrototypeId(String s) {
 		int id;
 		// #generated# Last update: 2018-07-20 08:21:54 MESZ
 		L0:
@@ -202,18 +178,14 @@ public class NativeArrayBuffer
 			id = 0;
 			String X = null;
 			int s_length = s.length();
-			if (s_length == 5)
-			{
+			if (s_length == 5) {
 				X = "slice";
 				id = Id_slice;
-			}
-			else if (s_length == 11)
-			{
+			} else if (s_length == 11) {
 				X = "constructor";
 				id = Id_constructor;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 			break L0;
@@ -235,44 +207,36 @@ public class NativeArrayBuffer
 	private static final int ConstructorId_isView = -1;
 
 	@Override
-	protected void fillConstructorProperties(IdFunctionObject ctor)
-	{
+	protected void fillConstructorProperties(IdFunctionObject ctor) {
 		addIdFunctionProperty(ctor, CLASS_NAME, ConstructorId_isView, "isView", 1);
 	}
 
 	// Properties here
 
 	@Override
-	protected int getMaxInstanceId()
-	{
+	protected int getMaxInstanceId() {
 		return MAX_INSTANCE_ID;
 	}
 
 	@Override
-	protected String getInstanceIdName(int id)
-	{
-		if (id == Id_byteLength)
-		{
+	protected String getInstanceIdName(int id) {
+		if (id == Id_byteLength) {
 			return "byteLength";
 		}
 		return super.getInstanceIdName(id);
 	}
 
 	@Override
-	protected Object getInstanceIdValue(int id)
-	{
-		if (id == Id_byteLength)
-		{
+	protected Object getInstanceIdValue(int id) {
+		if (id == Id_byteLength) {
 			return ScriptRuntime.wrapInt(buffer.length);
 		}
 		return super.getInstanceIdValue(id);
 	}
 
 	@Override
-	protected int findInstanceIdInfo(String s)
-	{
-		if ("byteLength".equals(s))
-		{
+	protected int findInstanceIdInfo(String s) {
+		if ("byteLength".equals(s)) {
 			return instanceIdInfo(READONLY | PERMANENT, Id_byteLength);
 		}
 		return super.findInstanceIdInfo(s);

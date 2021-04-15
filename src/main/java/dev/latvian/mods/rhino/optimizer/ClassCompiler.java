@@ -24,16 +24,13 @@ import dev.latvian.mods.rhino.ast.ScriptNode;
  * @author Igor Bukanov
  */
 
-public class ClassCompiler
-{
+public class ClassCompiler {
 	/**
 	 * Construct ClassCompiler that uses the specified compiler environment
 	 * when generating classes.
 	 */
-	public ClassCompiler(CompilerEnvirons compilerEnv)
-	{
-		if (compilerEnv == null)
-		{
+	public ClassCompiler(CompilerEnvirons compilerEnv) {
+		if (compilerEnv == null) {
 			throw new IllegalArgumentException();
 		}
 		this.compilerEnv = compilerEnv;
@@ -48,8 +45,7 @@ public class ClassCompiler
 	 * class. The class name should be fully qulified name and include the
 	 * package name like in <code>org.foo.Bar</code>.
 	 */
-	public void setMainMethodClass(String className)
-	{
+	public void setMainMethodClass(String className) {
 		// XXX Should this check for a valid class name?
 		mainMethodClassName = className;
 	}
@@ -59,24 +55,21 @@ public class ClassCompiler
 	 *
 	 * @see #setMainMethodClass(String)
 	 */
-	public String getMainMethodClass()
-	{
+	public String getMainMethodClass() {
 		return mainMethodClassName;
 	}
 
 	/**
 	 * Get the compiler environment the compiler uses.
 	 */
-	public CompilerEnvirons getCompilerEnv()
-	{
+	public CompilerEnvirons getCompilerEnv() {
 		return compilerEnv;
 	}
 
 	/**
 	 * Get the class that the generated target will extend.
 	 */
-	public Class<?> getTargetExtends()
-	{
+	public Class<?> getTargetExtends() {
 		return targetExtends;
 	}
 
@@ -85,16 +78,14 @@ public class ClassCompiler
 	 *
 	 * @param extendsClass the class it extends
 	 */
-	public void setTargetExtends(Class<?> extendsClass)
-	{
+	public void setTargetExtends(Class<?> extendsClass) {
 		targetExtends = extendsClass;
 	}
 
 	/**
 	 * Get the interfaces that the generated target will implement.
 	 */
-	public Class<?>[] getTargetImplements()
-	{
+	public Class<?>[] getTargetImplements() {
 		return targetImplements == null ? null : targetImplements.clone();
 	}
 
@@ -104,8 +95,7 @@ public class ClassCompiler
 	 * @param implementsClasses an array of Class objects, one for each
 	 *                          interface the target will extend
 	 */
-	public void setTargetImplements(Class<?>[] implementsClasses)
-	{
+	public void setTargetImplements(Class<?>[] implementsClasses) {
 		targetImplements = implementsClasses == null ? null : implementsClasses.clone();
 	}
 
@@ -117,8 +107,7 @@ public class ClassCompiler
 	 * but this can be overridden.
 	 */
 	protected String makeAuxiliaryClassName(String mainClassName,
-											String auxMarker)
-	{
+											String auxMarker) {
 		return mainClassName + auxMarker;
 	}
 
@@ -138,8 +127,7 @@ public class ClassCompiler
 	public Object[] compileToClassFiles(String source,
 										String sourceLocation,
 										int lineno,
-										String mainClassName)
-	{
+										String mainClassName) {
 		Parser p = new Parser(compilerEnv);
 		AstRoot ast = p.parse(source, sourceLocation, lineno);
 		IRFactory irf = new IRFactory(compilerEnv);
@@ -154,12 +142,9 @@ public class ClassCompiler
 		Class<?>[] interfaces = getTargetImplements();
 		String scriptClassName;
 		boolean isPrimary = (interfaces == null && superClass == null);
-		if (isPrimary)
-		{
+		if (isPrimary) {
 			scriptClassName = mainClassName;
-		}
-		else
-		{
+		} else {
 			scriptClassName = makeAuxiliaryClassName(mainClassName, "1");
 		}
 
@@ -170,23 +155,19 @@ public class ClassCompiler
 				tree, tree.getEncodedSource(),
 				false);
 
-		if (isPrimary)
-		{
-			return new Object[] {scriptClassName, scriptClassBytes};
+		if (isPrimary) {
+			return new Object[]{scriptClassName, scriptClassBytes};
 		}
 		int functionCount = tree.getFunctionCount();
 		ObjToIntMap functionNames = new ObjToIntMap(functionCount);
-		for (int i = 0; i != functionCount; ++i)
-		{
+		for (int i = 0; i != functionCount; ++i) {
 			FunctionNode ofn = tree.getFunctionNode(i);
 			String name = ofn.getName();
-			if (name != null && name.length() != 0)
-			{
+			if (name != null && name.length() != 0) {
 				functionNames.put(name, ofn.getParamCount());
 			}
 		}
-		if (superClass == null)
-		{
+		if (superClass == null) {
 			superClass = ScriptRuntime.ObjectClass;
 		}
 		byte[] mainClassBytes
@@ -194,7 +175,7 @@ public class ClassCompiler
 				functionNames, mainClassName,
 				superClass, interfaces, scriptClassName);
 
-		return new Object[] {mainClassName, mainClassBytes,
+		return new Object[]{mainClassName, mainClassBytes,
 				scriptClassName, scriptClassBytes};
 	}
 

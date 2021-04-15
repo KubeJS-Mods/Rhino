@@ -9,8 +9,7 @@ package dev.latvian.mods.rhino;
 /**
  * Additional interpreter-specific codes
  */
-abstract class Icode
-{
+abstract class Icode {
 
 	static final int
 
@@ -145,25 +144,20 @@ abstract class Icode
 	// Last icode
 	MIN_ICODE = -67;
 
-	static String bytecodeName(int bytecode)
-	{
-		if (!validBytecode(bytecode))
-		{
+	static String bytecodeName(int bytecode) {
+		if (!validBytecode(bytecode)) {
 			throw new IllegalArgumentException(String.valueOf(bytecode));
 		}
 
-		if (!Token.printICode)
-		{
+		if (!Token.printICode) {
 			return String.valueOf(bytecode);
 		}
 
-		if (validTokenCode(bytecode))
-		{
+		if (validTokenCode(bytecode)) {
 			return Token.name(bytecode);
 		}
 
-		switch (bytecode)
-		{
+		switch (bytecode) {
 			case Icode_DUP:
 				return "DUP";
 			case Icode_DUP2:
@@ -304,19 +298,16 @@ abstract class Icode
 		throw new IllegalStateException(String.valueOf(bytecode));
 	}
 
-	static boolean validIcode(int icode)
-	{
+	static boolean validIcode(int icode) {
 		return MIN_ICODE <= icode && icode <= 0;
 	}
 
-	static boolean validTokenCode(int token)
-	{
+	static boolean validTokenCode(int token) {
 		return Token.FIRST_BYTECODE_TOKEN <= token
 				&& token <= Token.LAST_BYTECODE_TOKEN;
 	}
 
-	static boolean validBytecode(int bytecode)
-	{
+	static boolean validBytecode(int bytecode) {
 		return validIcode(bytecode) || validTokenCode(bytecode);
 	}
 }

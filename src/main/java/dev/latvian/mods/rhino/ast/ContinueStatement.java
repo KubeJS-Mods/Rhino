@@ -15,8 +15,7 @@ import dev.latvian.mods.rhino.Token;
  * <pre><i>ContinueStatement</i> :
  *   <b>continue</b> [<i>no LineTerminator here</i>] [Identifier] ;</pre>
  */
-public class ContinueStatement extends Jump
-{
+public class ContinueStatement extends Jump {
 
 	private Name label;
 	private Loop target;
@@ -25,35 +24,29 @@ public class ContinueStatement extends Jump
 		type = Token.CONTINUE;
 	}
 
-	public ContinueStatement()
-	{
+	public ContinueStatement() {
 	}
 
-	public ContinueStatement(int pos)
-	{
+	public ContinueStatement(int pos) {
 		this(pos, -1);
 	}
 
-	public ContinueStatement(int pos, int len)
-	{
+	public ContinueStatement(int pos, int len) {
 		// can't call super (Jump) for historical reasons
 		position = pos;
 		length = len;
 	}
 
-	public ContinueStatement(Name label)
-	{
+	public ContinueStatement(Name label) {
 		setLabel(label);
 	}
 
-	public ContinueStatement(int pos, Name label)
-	{
+	public ContinueStatement(int pos, Name label) {
 		this(pos);
 		setLabel(label);
 	}
 
-	public ContinueStatement(int pos, int len, Name label)
-	{
+	public ContinueStatement(int pos, int len, Name label) {
 		this(pos, len);
 		setLabel(label);
 	}
@@ -61,8 +54,7 @@ public class ContinueStatement extends Jump
 	/**
 	 * Returns continue target
 	 */
-	public Loop getTarget()
-	{
+	public Loop getTarget() {
 		return target;
 	}
 
@@ -73,8 +65,7 @@ public class ContinueStatement extends Jump
 	 * @param target continue target
 	 * @throws IllegalArgumentException if target is {@code null}
 	 */
-	public void setTarget(Loop target)
-	{
+	public void setTarget(Loop target) {
 		assertNotNull(target);
 		this.target = target;
 		setJumpStatement(target);
@@ -86,8 +77,7 @@ public class ContinueStatement extends Jump
 	 * @return the continue label.  Will be {@code null} if the statement
 	 * consisted only of the keyword "continue".
 	 */
-	public Name getLabel()
-	{
+	public Name getLabel() {
 		return label;
 	}
 
@@ -97,23 +87,19 @@ public class ContinueStatement extends Jump
 	 *
 	 * @param label the continue label, or {@code null} if not present.
 	 */
-	public void setLabel(Name label)
-	{
+	public void setLabel(Name label) {
 		this.label = label;
-		if (label != null)
-		{
+		if (label != null) {
 			label.setParent(this);
 		}
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append("continue");
-		if (label != null)
-		{
+		if (label != null) {
 			sb.append(" ");
 			sb.append(label.toSource(0));
 		}
@@ -125,10 +111,8 @@ public class ContinueStatement extends Jump
 	 * Visits this node, then visits the label if non-{@code null}.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this) && label != null)
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this) && label != null) {
 			label.visit(v);
 		}
 	}

@@ -26,55 +26,46 @@ import dev.latvian.mods.rhino.Undefined;
  * @author Brendan Eich
  * @author Norris Boyd
  */
-class NativeRegExpCtor extends BaseFunction
-{
+class NativeRegExpCtor extends BaseFunction {
 	private static final long serialVersionUID = -5733330028285400526L;
 
-	NativeRegExpCtor()
-	{
+	NativeRegExpCtor() {
 	}
 
 	@Override
-	public String getFunctionName()
-	{
+	public String getFunctionName() {
 		return "RegExp";
 	}
 
 	@Override
-	public int getLength()
-	{
+	public int getLength() {
 		return 2;
 	}
 
 	@Override
-	public int getArity()
-	{
+	public int getArity() {
 		return 2;
 	}
 
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args)
-	{
+					   Object[] args) {
 		if (args.length > 0 && args[0] instanceof NativeRegExp &&
-				(args.length == 1 || args[1] == Undefined.instance))
-		{
+				(args.length == 1 || args[1] == Undefined.instance)) {
 			return args[0];
 		}
 		return construct(cx, scope, args);
 	}
 
 	@Override
-	public Scriptable construct(Context cx, Scriptable scope, Object[] args)
-	{
+	public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
 		NativeRegExp re = new NativeRegExp();
 		re.compile(cx, scope, args);
 		ScriptRuntime.setBuiltinProtoAndParent(re, scope, TopLevel.Builtins.RegExp);
 		return re;
 	}
 
-	private static RegExpImpl getImpl()
-	{
+	private static RegExpImpl getImpl() {
 		Context cx = Context.getCurrentContext();
 		return (RegExpImpl) ScriptRuntime.getRegExpProxy(cx);
 	}
@@ -116,14 +107,12 @@ class NativeRegExpCtor extends BaseFunction
 	MAX_INSTANCE_ID = DOLLAR_ID_BASE + 9;
 
 	@Override
-	protected int getMaxInstanceId()
-	{
+	protected int getMaxInstanceId() {
 		return super.getMaxInstanceId() + MAX_INSTANCE_ID;
 	}
 
 	@Override
-	protected int findInstanceIdInfo(String s)
-	{
+	protected int findInstanceIdInfo(String s) {
 		int id;
 		// #generated# Last update: 2001-05-24 16:09:31 GMT+02:00
 		L0:
@@ -132,112 +121,95 @@ class NativeRegExpCtor extends BaseFunction
 			String X = null;
 			int c;
 			L:
-			switch (s.length())
-			{
+			switch (s.length()) {
 				case 2:
-					switch (s.charAt(1))
-					{
+					switch (s.charAt(1)) {
 						case '&':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_AMPERSAND;
 								break L0;
 							}
 							break L;
 						case '\'':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_QUOTE;
 								break L0;
 							}
 							break L;
 						case '*':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_STAR;
 								break L0;
 							}
 							break L;
 						case '+':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_PLUS;
 								break L0;
 							}
 							break L;
 						case '1':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_DOLLAR_1;
 								break L0;
 							}
 							break L;
 						case '2':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_DOLLAR_2;
 								break L0;
 							}
 							break L;
 						case '3':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_DOLLAR_3;
 								break L0;
 							}
 							break L;
 						case '4':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_DOLLAR_4;
 								break L0;
 							}
 							break L;
 						case '5':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_DOLLAR_5;
 								break L0;
 							}
 							break L;
 						case '6':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_DOLLAR_6;
 								break L0;
 							}
 							break L;
 						case '7':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_DOLLAR_7;
 								break L0;
 							}
 							break L;
 						case '8':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_DOLLAR_8;
 								break L0;
 							}
 							break L;
 						case '9':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_DOLLAR_9;
 								break L0;
 							}
 							break L;
 						case '_':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_UNDERSCORE;
 								break L0;
 							}
 							break L;
 						case '`':
-							if (s.charAt(0) == '$')
-							{
+							if (s.charAt(0) == '$') {
 								id = Id_BACK_QUOTE;
 								break L0;
 							}
@@ -250,18 +222,13 @@ class NativeRegExpCtor extends BaseFunction
 					break L;
 				case 9:
 					c = s.charAt(4);
-					if (c == 'M')
-					{
+					if (c == 'M') {
 						X = "lastMatch";
 						id = Id_lastMatch;
-					}
-					else if (c == 'P')
-					{
+					} else if (c == 'P') {
 						X = "lastParen";
 						id = Id_lastParen;
-					}
-					else if (c == 'i')
-					{
+					} else if (c == 'i') {
 						X = "multiline";
 						id = Id_multiline;
 					}
@@ -275,21 +242,18 @@ class NativeRegExpCtor extends BaseFunction
 					id = Id_rightContext;
 					break L;
 			}
-			if (X != null && X != s && !X.equals(s))
-			{
+			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
 			}
 		}
 		// #/generated#
 
-		if (id == 0)
-		{
+		if (id == 0) {
 			return super.findInstanceIdInfo(s);
 		}
 
 		int attr;
-		switch (id)
-		{
+		switch (id) {
 			case Id_multiline:
 				attr = multilineAttr;
 				break;
@@ -313,13 +277,10 @@ class NativeRegExpCtor extends BaseFunction
 	// #/string_id_map#
 
 	@Override
-	protected String getInstanceIdName(int id)
-	{
+	protected String getInstanceIdName(int id) {
 		int shifted = id - super.getMaxInstanceId();
-		if (1 <= shifted && shifted <= MAX_INSTANCE_ID)
-		{
-			switch (shifted)
-			{
+		if (1 <= shifted && shifted <= MAX_INSTANCE_ID) {
+			switch (shifted) {
 				case Id_multiline:
 					return "multiline";
 				case Id_STAR:
@@ -359,15 +320,12 @@ class NativeRegExpCtor extends BaseFunction
 	}
 
 	@Override
-	protected Object getInstanceIdValue(int id)
-	{
+	protected Object getInstanceIdValue(int id) {
 		int shifted = id - super.getMaxInstanceId();
-		if (1 <= shifted && shifted <= MAX_INSTANCE_ID)
-		{
+		if (1 <= shifted && shifted <= MAX_INSTANCE_ID) {
 			RegExpImpl impl = getImpl();
 			Object stringResult;
-			switch (shifted)
-			{
+			switch (shifted) {
 				case Id_multiline:
 				case Id_STAR:
 					return ScriptRuntime.wrapBoolean(impl.multiline);
@@ -397,8 +355,7 @@ class NativeRegExpCtor extends BaseFunction
 					stringResult = impl.rightContext;
 					break;
 
-				default:
-				{
+				default: {
 					// Must be one of $1..$9, convert to 0..8
 					int substring_number = shifted - DOLLAR_ID_BASE - 1;
 					stringResult = impl.getParenSubString(substring_number);
@@ -411,11 +368,9 @@ class NativeRegExpCtor extends BaseFunction
 	}
 
 	@Override
-	protected void setInstanceIdValue(int id, Object value)
-	{
+	protected void setInstanceIdValue(int id, Object value) {
 		int shifted = id - super.getMaxInstanceId();
-		switch (shifted)
-		{
+		switch (shifted) {
 			case Id_multiline:
 			case Id_STAR:
 				getImpl().multiline = ScriptRuntime.toBoolean(value);
@@ -437,8 +392,7 @@ class NativeRegExpCtor extends BaseFunction
 				return;
 			default:
 				int substring_number = shifted - DOLLAR_ID_BASE - 1;
-				if (0 <= substring_number && substring_number <= 8)
-				{
+				if (0 <= substring_number && substring_number <= 8) {
 					return;
 				}
 		}
@@ -446,11 +400,9 @@ class NativeRegExpCtor extends BaseFunction
 	}
 
 	@Override
-	protected void setInstanceIdAttributes(int id, int attr)
-	{
+	protected void setInstanceIdAttributes(int id, int attr) {
 		int shifted = id - super.getMaxInstanceId();
-		switch (shifted)
-		{
+		switch (shifted) {
 			case Id_multiline:
 				multilineAttr = attr;
 				return;
@@ -476,8 +428,7 @@ class NativeRegExpCtor extends BaseFunction
 				return;
 			default:
 				int substring_number = shifted - DOLLAR_ID_BASE - 1;
-				if (0 <= substring_number && substring_number <= 8)
-				{
+				if (0 <= substring_number && substring_number <= 8) {
 					// non-configurable + non-writable
 					return;
 				}

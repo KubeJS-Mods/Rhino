@@ -23,8 +23,7 @@ import java.util.NoSuchElementException;
  * @author Norris Boyd
  * @author Mike McCabe
  */
-public class Node implements Iterable<Node>
-{
+public class Node implements Iterable<Node> {
 	public static final int
 			FUNCTION_PROP = 1,
 			LOCAL_PROP = 2,
@@ -88,28 +87,24 @@ public class Node implements Iterable<Node>
 			ATTRIBUTE_FLAG = 0x2, // x.@y or x..@y
 			DESCENDANTS_FLAG = 0x4; // x..y or x..@i
 
-	private static class PropListItem
-	{
+	private static class PropListItem {
 		PropListItem next;
 		int type;
 		int intValue;
 		Object objectValue;
 	}
 
-	public Node(int nodeType)
-	{
+	public Node(int nodeType) {
 		type = nodeType;
 	}
 
-	public Node(int nodeType, Node child)
-	{
+	public Node(int nodeType, Node child) {
 		type = nodeType;
 		first = last = child;
 		child.next = null;
 	}
 
-	public Node(int nodeType, Node left, Node right)
-	{
+	public Node(int nodeType, Node left, Node right) {
 		type = nodeType;
 		first = left;
 		last = right;
@@ -117,8 +112,7 @@ public class Node implements Iterable<Node>
 		right.next = null;
 	}
 
-	public Node(int nodeType, Node left, Node mid, Node right)
-	{
+	public Node(int nodeType, Node left, Node mid, Node right) {
 		type = nodeType;
 		first = left;
 		last = right;
@@ -127,60 +121,51 @@ public class Node implements Iterable<Node>
 		right.next = null;
 	}
 
-	public Node(int nodeType, int line)
-	{
+	public Node(int nodeType, int line) {
 		type = nodeType;
 		lineno = line;
 	}
 
-	public Node(int nodeType, Node child, int line)
-	{
+	public Node(int nodeType, Node child, int line) {
 		this(nodeType, child);
 		lineno = line;
 	}
 
-	public Node(int nodeType, Node left, Node right, int line)
-	{
+	public Node(int nodeType, Node left, Node right, int line) {
 		this(nodeType, left, right);
 		lineno = line;
 	}
 
-	public Node(int nodeType, Node left, Node mid, Node right, int line)
-	{
+	public Node(int nodeType, Node left, Node mid, Node right, int line) {
 		this(nodeType, left, mid, right);
 		lineno = line;
 	}
 
-	public static Node newNumber(double number)
-	{
+	public static Node newNumber(double number) {
 		NumberLiteral n = new NumberLiteral();
 		n.setNumber(number);
 		return n;
 	}
 
-	public static Node newString(String str)
-	{
+	public static Node newString(String str) {
 		return newString(Token.STRING, str);
 	}
 
-	public static Node newString(int type, String str)
-	{
+	public static Node newString(int type, String str) {
 		Name name = new Name();
 		name.setIdentifier(str);
 		name.setType(type);
 		return name;
 	}
 
-	public int getType()
-	{
+	public int getType() {
 		return type;
 	}
 
 	/**
 	 * Sets the node type and returns this node.
 	 */
-	public Node setType(int type)
-	{
+	public Node setType(int type) {
 		this.type = type;
 		return this;
 	}
@@ -191,11 +176,9 @@ public class Node implements Iterable<Node>
 	 * @return the comment string or {@code null} if no JsDoc is attached to
 	 * this node
 	 */
-	public String getJsDoc()
-	{
+	public String getJsDoc() {
 		Comment comment = getJsDocNode();
-		if (comment != null)
-		{
+		if (comment != null) {
 			return comment.getValue();
 		}
 		return null;
@@ -207,82 +190,66 @@ public class Node implements Iterable<Node>
 	 * @return the Comment or {@code null} if no JsDoc is attached to
 	 * this node
 	 */
-	public Comment getJsDocNode()
-	{
+	public Comment getJsDocNode() {
 		return (Comment) getProp(JSDOC_PROP);
 	}
 
 	/**
 	 * Sets the JsDoc comment string attached to this node.
 	 */
-	public void setJsDocNode(Comment jsdocNode)
-	{
+	public void setJsDocNode(Comment jsdocNode) {
 		putProp(JSDOC_PROP, jsdocNode);
 	}
 
-	public boolean hasChildren()
-	{
+	public boolean hasChildren() {
 		return first != null;
 	}
 
-	public Node getFirstChild()
-	{
+	public Node getFirstChild() {
 		return first;
 	}
 
-	public Node getLastChild()
-	{
+	public Node getLastChild() {
 		return last;
 	}
 
-	public Node getNext()
-	{
+	public Node getNext() {
 		return next;
 	}
 
-	public Node getChildBefore(Node child)
-	{
-		if (child == first)
-		{
+	public Node getChildBefore(Node child) {
+		if (child == first) {
 			return null;
 		}
 		Node n = first;
-		while (n.next != child)
-		{
+		while (n.next != child) {
 			n = n.next;
-			if (n == null)
-			{
+			if (n == null) {
 				throw new RuntimeException("node is not a child");
 			}
 		}
 		return n;
 	}
 
-	public Node getLastSibling()
-	{
+	public Node getLastSibling() {
 		Node n = this;
-		while (n.next != null)
-		{
+		while (n.next != null) {
 			n = n.next;
 		}
 		return n;
 	}
 
-	public void addChildToFront(Node child)
-	{
+	public void addChildToFront(Node child) {
 		child.next = first;
 		first = child;
-		if (last == null)
-		{
+		if (last == null) {
 			last = child;
 		}
 	}
 
-	public void addChildToBack(Node child)
-	{
+	public void addChildToBack(Node child) {
 		child.next = null;
-		if (last == null)
-		{
+		if (last == null) {
 			first = last = child;
 			return;
 		}
@@ -290,26 +257,21 @@ public class Node implements Iterable<Node>
 		last = child;
 	}
 
-	public void addChildrenToFront(Node children)
-	{
+	public void addChildrenToFront(Node children) {
 		Node lastSib = children.getLastSibling();
 		lastSib.next = first;
 		first = children;
-		if (last == null)
-		{
+		if (last == null) {
 			last = lastSib;
 		}
 	}
 
-	public void addChildrenToBack(Node children)
-	{
-		if (last != null)
-		{
+	public void addChildrenToBack(Node children) {
+		if (last != null) {
 			last.next = children;
 		}
 		last = children.getLastSibling();
-		if (first == null)
-		{
+		if (first == null) {
 			first = children;
 		}
 	}
@@ -317,15 +279,12 @@ public class Node implements Iterable<Node>
 	/**
 	 * Add 'child' before 'node'.
 	 */
-	public void addChildBefore(Node newChild, Node node)
-	{
-		if (newChild.next != null)
-		{
+	public void addChildBefore(Node newChild, Node node) {
+		if (newChild.next != null) {
 			throw new RuntimeException(
 					"newChild had siblings in addChildBefore");
 		}
-		if (first == node)
-		{
+		if (first == node) {
 			newChild.next = first;
 			first = newChild;
 			return;
@@ -337,72 +296,56 @@ public class Node implements Iterable<Node>
 	/**
 	 * Add 'child' after 'node'.
 	 */
-	public void addChildAfter(Node newChild, Node node)
-	{
-		if (newChild.next != null)
-		{
+	public void addChildAfter(Node newChild, Node node) {
+		if (newChild.next != null) {
 			throw new RuntimeException(
 					"newChild had siblings in addChildAfter");
 		}
 		newChild.next = node.next;
 		node.next = newChild;
-		if (last == node)
-		{
+		if (last == node) {
 			last = newChild;
 		}
 	}
 
-	public void removeChild(Node child)
-	{
+	public void removeChild(Node child) {
 		Node prev = getChildBefore(child);
-		if (prev == null)
-		{
+		if (prev == null) {
 			first = first.next;
-		}
-		else
-		{
+		} else {
 			prev.next = child.next;
 		}
-		if (child == last)
-		{
+		if (child == last) {
 			last = prev;
 		}
 		child.next = null;
 	}
 
-	public void replaceChild(Node child, Node newChild)
-	{
+	public void replaceChild(Node child, Node newChild) {
 		newChild.next = child.next;
-		if (child == first)
-		{
+		if (child == first) {
 			first = newChild;
-		}
-		else
-		{
+		} else {
 			Node prev = getChildBefore(child);
 			prev.next = newChild;
 		}
-		if (child == last)
-		{
+		if (child == last) {
 			last = newChild;
 		}
 		child.next = null;
 	}
 
-	public void replaceChildAfter(Node prevChild, Node newChild)
-	{
+	public void replaceChildAfter(Node prevChild, Node newChild) {
 		Node child = prevChild.next;
 		newChild.next = child.next;
 		prevChild.next = newChild;
-		if (child == last)
-		{
+		if (child == last) {
 			last = newChild;
 		}
 		child.next = null;
 	}
 
-	public void removeChildren()
-	{
+	public void removeChildren() {
 		first = last = null;
 	}
 
@@ -413,29 +356,24 @@ public class Node implements Iterable<Node>
 	 * thread-safe.  If anyone changes the child list before the iterator
 	 * finishes, the results are undefined and probably bad.
 	 */
-	public class NodeIterator implements Iterator<Node>
-	{
+	public class NodeIterator implements Iterator<Node> {
 		private Node cursor;  // points to node to be returned next
 		private Node prev = NOT_SET;
 		private Node prev2;
 		private boolean removed = false;
 
-		public NodeIterator()
-		{
+		public NodeIterator() {
 			cursor = Node.this.first;
 		}
 
 		@Override
-		public boolean hasNext()
-		{
+		public boolean hasNext() {
 			return cursor != null;
 		}
 
 		@Override
-		public Node next()
-		{
-			if (cursor == null)
-			{
+		public Node next() {
+			if (cursor == null) {
 				throw new NoSuchElementException();
 			}
 			removed = false;
@@ -446,28 +384,20 @@ public class Node implements Iterable<Node>
 		}
 
 		@Override
-		public void remove()
-		{
-			if (prev == NOT_SET)
-			{
+		public void remove() {
+			if (prev == NOT_SET) {
 				throw new IllegalStateException("next() has not been called");
 			}
-			if (removed)
-			{
+			if (removed) {
 				throw new IllegalStateException(
 						"remove() already called for current element");
 			}
-			if (prev == first)
-			{
+			if (prev == first) {
 				first = prev.next;
-			}
-			else if (prev == last)
-			{
+			} else if (prev == last) {
 				prev2.next = null;
 				last = prev2;
-			}
-			else
-			{
+			} else {
 				prev2.next = cursor;
 			}
 		}
@@ -477,19 +407,15 @@ public class Node implements Iterable<Node>
 	 * Returns an {@link java.util.Iterator} over the node's children.
 	 */
 	@Override
-	public Iterator<Node> iterator()
-	{
+	public Iterator<Node> iterator() {
 		return new NodeIterator();
 	}
 
-	private static final String propToString(int propType)
-	{
-		if (Token.printTrees)
-		{
+	private static final String propToString(int propType) {
+		if (Token.printTrees) {
 			// If Context.printTrees is false, the compiler
 			// can remove all these strings.
-			switch (propType)
-			{
+			switch (propType) {
 				case FUNCTION_PROP:
 					return "function";
 				case LOCAL_PROP:
@@ -546,21 +472,17 @@ public class Node implements Iterable<Node>
 		return null;
 	}
 
-	private PropListItem lookupProperty(int propType)
-	{
+	private PropListItem lookupProperty(int propType) {
 		PropListItem x = propListHead;
-		while (x != null && propType != x.type)
-		{
+		while (x != null && propType != x.type) {
 			x = x.next;
 		}
 		return x;
 	}
 
-	private PropListItem ensureProperty(int propType)
-	{
+	private PropListItem ensureProperty(int propType) {
 		PropListItem item = lookupProperty(propType);
-		if (item == null)
-		{
+		if (item == null) {
 			item = new PropListItem();
 			item.type = propType;
 			item.next = propListHead;
@@ -569,77 +491,59 @@ public class Node implements Iterable<Node>
 		return item;
 	}
 
-	public void removeProp(int propType)
-	{
+	public void removeProp(int propType) {
 		PropListItem x = propListHead;
-		if (x != null)
-		{
+		if (x != null) {
 			PropListItem prev = null;
-			while (x.type != propType)
-			{
+			while (x.type != propType) {
 				prev = x;
 				x = x.next;
-				if (x == null)
-				{
+				if (x == null) {
 					return;
 				}
 			}
-			if (prev == null)
-			{
+			if (prev == null) {
 				propListHead = x.next;
-			}
-			else
-			{
+			} else {
 				prev.next = x.next;
 			}
 		}
 	}
 
-	public Object getProp(int propType)
-	{
+	public Object getProp(int propType) {
 		PropListItem item = lookupProperty(propType);
-		if (item == null)
-		{
+		if (item == null) {
 			return null;
 		}
 		return item.objectValue;
 	}
 
-	public int getIntProp(int propType, int defaultValue)
-	{
+	public int getIntProp(int propType, int defaultValue) {
 		PropListItem item = lookupProperty(propType);
-		if (item == null)
-		{
+		if (item == null) {
 			return defaultValue;
 		}
 		return item.intValue;
 	}
 
-	public int getExistingIntProp(int propType)
-	{
+	public int getExistingIntProp(int propType) {
 		PropListItem item = lookupProperty(propType);
-		if (item == null)
-		{
+		if (item == null) {
 			Kit.codeBug();
 		}
 		return item.intValue;
 	}
 
-	public void putProp(int propType, Object prop)
-	{
-		if (prop == null)
-		{
+	public void putProp(int propType, Object prop) {
+		if (prop == null) {
 			removeProp(propType);
-		}
-		else
-		{
+		} else {
 			PropListItem item = ensureProperty(propType);
 			item.objectValue = prop;
 		}
 	}
 
-	public void putIntProp(int propType, int prop)
-	{
+	public void putIntProp(int propType, int prop) {
 		PropListItem item = ensureProperty(propType);
 		item.intValue = prop;
 	}
@@ -649,44 +553,37 @@ public class Node implements Iterable<Node>
 	 *
 	 * @return the line number
 	 */
-	public int getLineno()
-	{
+	public int getLineno() {
 		return lineno;
 	}
 
-	public void setLineno(int lineno)
-	{
+	public void setLineno(int lineno) {
 		this.lineno = lineno;
 	}
 
 	/**
 	 * Can only be called when <code>getType() == Token.NUMBER</code>
 	 */
-	public final double getDouble()
-	{
+	public final double getDouble() {
 		return ((NumberLiteral) this).getNumber();
 	}
 
-	public final void setDouble(double number)
-	{
+	public final void setDouble(double number) {
 		((NumberLiteral) this).setNumber(number);
 	}
 
 	/**
 	 * Can only be called when node has String context.
 	 */
-	public final String getString()
-	{
+	public final String getString() {
 		return ((Name) this).getIdentifier();
 	}
 
 	/**
 	 * Can only be called when node has String context.
 	 */
-	public final void setString(String s)
-	{
-		if (s == null)
-		{
+	public final void setString(String s) {
+		if (s == null) {
 			Kit.codeBug();
 		}
 		((Name) this).setIdentifier(s);
@@ -695,45 +592,36 @@ public class Node implements Iterable<Node>
 	/**
 	 * Can only be called when node has String context.
 	 */
-	public Scope getScope()
-	{
+	public Scope getScope() {
 		return this.getScope();
 	}
 
 	/**
 	 * Can only be called when node has String context.
 	 */
-	public void setScope(Scope s)
-	{
-		if (s == null)
-		{
+	public void setScope(Scope s) {
+		if (s == null) {
 			Kit.codeBug();
 		}
-		if (!(this instanceof Name))
-		{
+		if (!(this instanceof Name)) {
 			throw Kit.codeBug();
 		}
 		this.setScope(s);
 	}
 
-	public static Node newTarget()
-	{
+	public static Node newTarget() {
 		return new Node(Token.TARGET);
 	}
 
-	public final int labelId()
-	{
-		if ((type != Token.TARGET) && (type != Token.YIELD) && (type != Token.YIELD_STAR))
-		{
+	public final int labelId() {
+		if ((type != Token.TARGET) && (type != Token.YIELD) && (type != Token.YIELD_STAR)) {
 			Kit.codeBug();
 		}
 		return getIntProp(LABEL_ID_PROP, -1);
 	}
 
-	public void labelId(int labelId)
-	{
-		if ((type != Token.TARGET) && (type != Token.YIELD) && (type != Token.YIELD_STAR))
-		{
+	public void labelId(int labelId) {
+		if ((type != Token.TARGET) && (type != Token.YIELD) && (type != Token.YIELD_STAR)) {
 			Kit.codeBug();
 		}
 		putIntProp(LABEL_ID_PROP, labelId);
@@ -805,8 +693,7 @@ public class Node implements Iterable<Node>
 	 *
 	 * @return true if the function satisfies strict mode requirement.
 	 */
-	public boolean hasConsistentReturnUsage()
-	{
+	public boolean hasConsistentReturnUsage() {
 		int n = endCheck();
 		return (n & END_RETURNS_VALUE) == 0 ||
 				(n & (END_DROPS_OFF | END_RETURNS | END_YIELDS)) == 0;
@@ -818,8 +705,7 @@ public class Node implements Iterable<Node>
 	 *
 	 * @return logical OR of END_* flags
 	 */
-	private int endCheckIf()
-	{
+	private int endCheckIf() {
 		Node th, el;
 		int rv = END_UNREACHED;
 
@@ -828,12 +714,9 @@ public class Node implements Iterable<Node>
 
 		rv = th.endCheck();
 
-		if (el != null)
-		{
+		if (el != null) {
 			rv |= el.endCheck();
-		}
-		else
-		{
+		} else {
 			rv |= END_DROPS_OFF;
 		}
 
@@ -848,8 +731,7 @@ public class Node implements Iterable<Node>
 	 *
 	 * @return logical OR of END_* flags
 	 */
-	private int endCheckSwitch()
-	{
+	private int endCheckSwitch() {
 		int rv = END_UNREACHED;
 
 		// examine the cases
@@ -886,8 +768,7 @@ public class Node implements Iterable<Node>
 	 *
 	 * @return logical OR of END_* flags
 	 */
-	private int endCheckTry()
-	{
+	private int endCheckTry() {
 		int rv = END_UNREACHED;
 
 		// a TryStatement isn't a jump - needs rewriting
@@ -939,8 +820,7 @@ public class Node implements Iterable<Node>
 	 *
 	 * @return logical OR of END_* flags
 	 */
-	private int endCheckLoop()
-	{
+	private int endCheckLoop() {
 		Node n;
 		int rv = END_UNREACHED;
 
@@ -949,12 +829,10 @@ public class Node implements Iterable<Node>
 		// satisfy.
 		// The target of the predicate is the loop-body for all 4 kinds of
 		// loops.
-		for (n = first; n.next != last; n = n.next)
-		{
+		for (n = first; n.next != last; n = n.next) {
 			/* skip */
 		}
-		if (n.type != Token.IFEQ)
-		{
+		if (n.type != Token.IFEQ) {
 			return END_DROPS_OFF;
 		}
 
@@ -962,8 +840,7 @@ public class Node implements Iterable<Node>
 		rv = ((Jump) n).target.next.endCheck();
 
 		// check to see if the loop condition is true
-		if (n.first.type == Token.TRUE)
-		{
+		if (n.first.type == Token.TRUE) {
 			rv &= ~END_DROPS_OFF;
 		}
 
@@ -980,15 +857,13 @@ public class Node implements Iterable<Node>
 	 *
 	 * @return logical OR of END_* flags
 	 */
-	private int endCheckBlock()
-	{
+	private int endCheckBlock() {
 		Node n;
 		int rv = END_DROPS_OFF;
 
 		// check each statment and if the statement can continue onto the next
 		// one, then check the next statement
-		for (n = first; ((rv & END_DROPS_OFF) != 0) && n != null; n = n.next)
-		{
+		for (n = first; ((rv & END_DROPS_OFF) != 0) && n != null; n = n.next) {
 			rv &= ~END_DROPS_OFF;
 			rv |= n.endCheck();
 		}
@@ -1003,8 +878,7 @@ public class Node implements Iterable<Node>
 	 *
 	 * @return logical OR of END_* flags
 	 */
-	private int endCheckLabel()
-	{
+	private int endCheckLabel() {
 		int rv = END_UNREACHED;
 
 		rv = next.endCheck();
@@ -1019,8 +893,7 @@ public class Node implements Iterable<Node>
 	 *
 	 * @return logical OR of END_* flags
 	 */
-	private int endCheckBreak()
-	{
+	private int endCheckBreak() {
 		Node n = ((Jump) this).getJumpStatement();
 		n.putIntProp(CONTROL_BLOCK_PROP, END_DROPS_OFF);
 		return END_UNREACHED;
@@ -1036,16 +909,13 @@ public class Node implements Iterable<Node>
 	 *
 	 * @return logical OR of END_* flags
 	 */
-	private int endCheck()
-	{
-		switch (type)
-		{
+	private int endCheck() {
+		switch (type) {
 			case Token.BREAK:
 				return endCheckBreak();
 
 			case Token.EXPR_VOID:
-				if (this.first != null)
-				{
+				if (this.first != null) {
 					return first.endCheck();
 				}
 				return END_DROPS_OFF;
@@ -1059,15 +929,13 @@ public class Node implements Iterable<Node>
 				return END_UNREACHED;
 
 			case Token.RETURN:
-				if (this.first != null)
-				{
+				if (this.first != null) {
 					return END_RETURNS_VALUE;
 				}
 				return END_RETURNS;
 
 			case Token.TARGET:
-				if (next != null)
-				{
+				if (next != null) {
 					return next.endCheck();
 				}
 				return END_DROPS_OFF;
@@ -1078,13 +946,11 @@ public class Node implements Iterable<Node>
 			case Token.LOCAL_BLOCK:
 			case Token.BLOCK:
 				// there are several special kinds of blocks
-				if (first == null)
-				{
+				if (first == null) {
 					return END_DROPS_OFF;
 				}
 
-				switch (first.type)
-				{
+				switch (first.type) {
 					case Token.LABEL:
 						return first.endCheckLabel();
 
@@ -1106,14 +972,11 @@ public class Node implements Iterable<Node>
 		}
 	}
 
-	public boolean hasSideEffects()
-	{
-		switch (type)
-		{
+	public boolean hasSideEffects() {
+		switch (type) {
 			case Token.EXPR_VOID:
 			case Token.COMMA:
-				if (last != null)
-				{
+				if (last != null) {
 					return last.hasSideEffects();
 				}
 				return true;
@@ -1121,8 +984,7 @@ public class Node implements Iterable<Node>
 			case Token.HOOK:
 				if (first == null ||
 						first.next == null ||
-						first.next.next == null)
-				{
+						first.next.next == null) {
 					Kit.codeBug();
 				}
 				return first.next.hasSideEffects() &&
@@ -1130,8 +992,7 @@ public class Node implements Iterable<Node>
 
 			case Token.AND:
 			case Token.OR:
-				if (first == null || last == null)
-				{
+				if (first == null || last == null) {
 					Kit.codeBug();
 				}
 				return first.hasSideEffects() || last.hasSideEffects();
@@ -1219,37 +1080,28 @@ public class Node implements Iterable<Node>
 	 * be writing any given block to the class file simultaneously. Therefore,
 	 * an unlabeling will never occur in the middle of a block.
 	 */
-	public void resetTargets()
-	{
-		if (type == Token.FINALLY)
-		{
+	public void resetTargets() {
+		if (type == Token.FINALLY) {
 			resetTargets_r();
-		}
-		else
-		{
+		} else {
 			Kit.codeBug();
 		}
 	}
 
-	private void resetTargets_r()
-	{
-		if (type == Token.TARGET || type == Token.YIELD || type == Token.YIELD_STAR)
-		{
+	private void resetTargets_r() {
+		if (type == Token.TARGET || type == Token.YIELD || type == Token.YIELD_STAR) {
 			labelId(-1);
 		}
 		Node child = first;
-		while (child != null)
-		{
+		while (child != null) {
 			child.resetTargets_r();
 			child = child.next;
 		}
 	}
 
 	@Override
-	public String toString()
-	{
-		if (Token.printTrees)
-		{
+	public String toString() {
+		if (Token.printTrees) {
 			StringBuilder sb = new StringBuilder();
 			toString(new ObjToIntMap(), sb);
 			return sb.toString();
@@ -1257,30 +1109,22 @@ public class Node implements Iterable<Node>
 		return String.valueOf(type);
 	}
 
-	private void toString(ObjToIntMap printIds, StringBuilder sb)
-	{
-		if (Token.printTrees)
-		{
+	private void toString(ObjToIntMap printIds, StringBuilder sb) {
+		if (Token.printTrees) {
 			sb.append(Token.name(type));
-			if (this instanceof Name)
-			{
+			if (this instanceof Name) {
 				sb.append(' ');
 				sb.append(getString());
 				Scope scope = getScope();
-				if (scope != null)
-				{
+				if (scope != null) {
 					sb.append("[scope: ");
 					appendPrintId(scope, printIds, sb);
 					sb.append("]");
 				}
-			}
-			else if (this instanceof Scope)
-			{
-				if (this instanceof ScriptNode)
-				{
+			} else if (this instanceof Scope) {
+				if (this instanceof ScriptNode) {
 					ScriptNode sof = (ScriptNode) this;
-					if (this instanceof FunctionNode)
-					{
+					if (this instanceof FunctionNode) {
 						FunctionNode fn = (FunctionNode) this;
 						sb.append(' ');
 						sb.append(fn.getName());
@@ -1296,92 +1140,71 @@ public class Node implements Iterable<Node>
 					sb.append(sof.getEndLineno());
 					sb.append(']');
 				}
-				if (((Scope) this).getSymbolTable() != null)
-				{
+				if (((Scope) this).getSymbolTable() != null) {
 					sb.append(" [scope ");
 					appendPrintId(this, printIds, sb);
 					sb.append(": ");
 					Iterator<String> iter =
 							((Scope) this).getSymbolTable().keySet().iterator();
-					while (iter.hasNext())
-					{
+					while (iter.hasNext()) {
 						sb.append(iter.next());
 						sb.append(" ");
 					}
 					sb.append("]");
 				}
-			}
-			else if (this instanceof Jump)
-			{
+			} else if (this instanceof Jump) {
 				Jump jump = (Jump) this;
-				if (type == Token.BREAK || type == Token.CONTINUE)
-				{
+				if (type == Token.BREAK || type == Token.CONTINUE) {
 					sb.append(" [label: ");
 					appendPrintId(jump.getJumpStatement(), printIds, sb);
 					sb.append(']');
-				}
-				else if (type == Token.TRY)
-				{
+				} else if (type == Token.TRY) {
 					Node catchNode = jump.target;
 					Node finallyTarget = jump.getFinally();
-					if (catchNode != null)
-					{
+					if (catchNode != null) {
 						sb.append(" [catch: ");
 						appendPrintId(catchNode, printIds, sb);
 						sb.append(']');
 					}
-					if (finallyTarget != null)
-					{
+					if (finallyTarget != null) {
 						sb.append(" [finally: ");
 						appendPrintId(finallyTarget, printIds, sb);
 						sb.append(']');
 					}
-				}
-				else if (type == Token.LABEL || type == Token.LOOP
-						|| type == Token.SWITCH)
-				{
+				} else if (type == Token.LABEL || type == Token.LOOP
+						|| type == Token.SWITCH) {
 					sb.append(" [break: ");
 					appendPrintId(jump.target, printIds, sb);
 					sb.append(']');
-					if (type == Token.LOOP)
-					{
+					if (type == Token.LOOP) {
 						sb.append(" [continue: ");
 						appendPrintId(jump.getContinue(), printIds, sb);
 						sb.append(']');
 					}
-				}
-				else
-				{
+				} else {
 					sb.append(" [target: ");
 					appendPrintId(jump.target, printIds, sb);
 					sb.append(']');
 				}
-			}
-			else if (type == Token.NUMBER)
-			{
+			} else if (type == Token.NUMBER) {
 				sb.append(' ');
 				sb.append(getDouble());
-			}
-			else if (type == Token.TARGET)
-			{
+			} else if (type == Token.TARGET) {
 				sb.append(' ');
 				appendPrintId(this, printIds, sb);
 			}
-			if (lineno != -1)
-			{
+			if (lineno != -1) {
 				sb.append(' ');
 				sb.append(lineno);
 			}
 
-			for (PropListItem x = propListHead; x != null; x = x.next)
-			{
+			for (PropListItem x = propListHead; x != null; x = x.next) {
 				int type = x.type;
 				sb.append(" [");
 				sb.append(propToString(type));
 				sb.append(": ");
 				String value;
-				switch (type)
-				{
+				switch (type) {
 					case TARGETBLOCK_PROP: // can't add this as it recurses
 						value = "target block property";
 						break;
@@ -1389,8 +1212,7 @@ public class Node implements Iterable<Node>
 						value = "last local block";
 						break;
 					case ISNUMBER_PROP:
-						switch (x.intValue)
-						{
+						switch (x.intValue) {
 							case BOTH:
 								value = "both";
 								break;
@@ -1405,8 +1227,7 @@ public class Node implements Iterable<Node>
 						}
 						break;
 					case SPECIALCALL_PROP:
-						switch (x.intValue)
-						{
+						switch (x.intValue) {
 							case SPECIALCALL_EVAL:
 								value = "eval";
 								break;
@@ -1418,15 +1239,12 @@ public class Node implements Iterable<Node>
 								throw Kit.codeBug();
 						}
 						break;
-					case OBJECT_IDS_PROP:
-					{
+					case OBJECT_IDS_PROP: {
 						Object[] a = (Object[]) x.objectValue;
 						value = "[";
-						for (int i = 0; i < a.length; i++)
-						{
+						for (int i = 0; i < a.length; i++) {
 							value += a[i].toString();
-							if (i + 1 < a.length)
-							{
+							if (i + 1 < a.length) {
 								value += ", ";
 							}
 						}
@@ -1435,12 +1253,9 @@ public class Node implements Iterable<Node>
 					}
 					default:
 						Object obj = x.objectValue;
-						if (obj != null)
-						{
+						if (obj != null) {
 							value = obj.toString();
-						}
-						else
-						{
+						} else {
 							value = String.valueOf(x.intValue);
 						}
 						break;
@@ -1451,10 +1266,8 @@ public class Node implements Iterable<Node>
 		}
 	}
 
-	public String toStringTree(ScriptNode treeTop)
-	{
-		if (Token.printTrees)
-		{
+	public String toStringTree(ScriptNode treeTop) {
+		if (Token.printTrees) {
 			StringBuilder sb = new StringBuilder();
 			toStringTreeHelper(treeTop, this, null, 0, sb);
 			return sb.toString();
@@ -1464,66 +1277,49 @@ public class Node implements Iterable<Node>
 
 	private static void toStringTreeHelper(ScriptNode treeTop, Node n,
 										   ObjToIntMap printIds,
-										   int level, StringBuilder sb)
-	{
-		if (Token.printTrees)
-		{
-			if (printIds == null)
-			{
+										   int level, StringBuilder sb) {
+		if (Token.printTrees) {
+			if (printIds == null) {
 				printIds = new ObjToIntMap();
 				generatePrintIds(treeTop, printIds);
 			}
-			for (int i = 0; i != level; ++i)
-			{
+			for (int i = 0; i != level; ++i) {
 				sb.append("    ");
 			}
 			n.toString(printIds, sb);
 			sb.append('\n');
 			for (Node cursor = n.getFirstChild(); cursor != null;
-				 cursor = cursor.getNext())
-			{
-				if (cursor.getType() == Token.FUNCTION)
-				{
+				 cursor = cursor.getNext()) {
+				if (cursor.getType() == Token.FUNCTION) {
 					int fnIndex = cursor.getExistingIntProp(Node.FUNCTION_PROP);
 					FunctionNode fn = treeTop.getFunctionNode(fnIndex);
 					toStringTreeHelper(fn, fn, null, level + 1, sb);
-				}
-				else
-				{
+				} else {
 					toStringTreeHelper(treeTop, cursor, printIds, level + 1, sb);
 				}
 			}
 		}
 	}
 
-	private static void generatePrintIds(Node n, ObjToIntMap map)
-	{
-		if (Token.printTrees)
-		{
+	private static void generatePrintIds(Node n, ObjToIntMap map) {
+		if (Token.printTrees) {
 			map.put(n, map.size());
 			for (Node cursor = n.getFirstChild(); cursor != null;
-				 cursor = cursor.getNext())
-			{
+				 cursor = cursor.getNext()) {
 				generatePrintIds(cursor, map);
 			}
 		}
 	}
 
 	private static void appendPrintId(Node n, ObjToIntMap printIds,
-									  StringBuilder sb)
-	{
-		if (Token.printTrees)
-		{
-			if (n != null)
-			{
+									  StringBuilder sb) {
+		if (Token.printTrees) {
+			if (n != null) {
 				int id = printIds.get(n, -1);
 				sb.append('#');
-				if (id != -1)
-				{
+				if (id != -1) {
 					sb.append(id + 1);
-				}
-				else
-				{
+				} else {
 					sb.append("<not_available>");
 				}
 			}

@@ -22,8 +22,7 @@ import java.util.NoSuchElementException;
  * when the caller is done iterating.
  */
 public class IteratorLikeIterable
-		implements Iterable<Object>, Closeable
-{
+		implements Iterable<Object>, Closeable {
 	private final Context cx;
 	private final Scriptable scope;
 	private final Callable next;
@@ -31,8 +30,7 @@ public class IteratorLikeIterable
 	private final Scriptable iterator;
 	private boolean closed;
 
-	public IteratorLikeIterable(Context cx, Scriptable scope, Object target)
-	{
+	public IteratorLikeIterable(Context cx, Scriptable scope, Object target) {
 		this.cx = cx;
 		this.scope = scope;
 		// This will throw if "next" is not a function or undefined
@@ -40,60 +38,48 @@ public class IteratorLikeIterable
 		iterator = ScriptRuntime.lastStoredScriptable(cx);
 		Object retObj = ScriptRuntime.getObjectPropNoWarn(target, ES6Iterator.RETURN_PROPERTY, cx, scope);
 		// We only care about "return" if it is not null or undefined
-		if ((retObj != null) && !Undefined.isUndefined(retObj))
-		{
-			if (!(retObj instanceof Callable))
-			{
+		if ((retObj != null) && !Undefined.isUndefined(retObj)) {
+			if (!(retObj instanceof Callable)) {
 				throw ScriptRuntime.notFunctionError(target, retObj, ES6Iterator.RETURN_PROPERTY);
 			}
 			returnFunc = (Callable) retObj;
-		}
-		else
-		{
+		} else {
 			returnFunc = null;
 		}
 	}
 
 	@Override
-	public void close()
-	{
-		if (!closed)
-		{
+	public void close() {
+		if (!closed) {
 			closed = true;
-			if (returnFunc != null)
-			{
+			if (returnFunc != null) {
 				returnFunc.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
 			}
 		}
 	}
 
 	@Override
-	public Itr iterator()
-	{
+	public Itr iterator() {
 		return new Itr();
 	}
 
 	public final class Itr
-			implements Iterator<Object>
-	{
+			implements Iterator<Object> {
 		private Object nextVal;
 		private boolean isDone;
 
 		@Override
-		public boolean hasNext()
-		{
+		public boolean hasNext() {
 			Object val = next.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
 			// This will throw if "val" is not an object. 
 			// "getObjectPropNoWarn" won't, so do this as follows.
 			Object doneval = ScriptableObject.getProperty(
 					ScriptableObject.ensureScriptable(val), ES6Iterator.DONE_PROPERTY);
-			if (doneval == Scriptable.NOT_FOUND)
-			{
+			if (doneval == Scriptable.NOT_FOUND) {
 				doneval = Undefined.instance;
 			}
 			// It's OK if done is undefined.
-			if (ScriptRuntime.toBoolean(doneval))
-			{
+			if (ScriptRuntime.toBoolean(doneval)) {
 				isDone = true;
 				return false;
 			}
@@ -102,10 +88,8 @@ public class IteratorLikeIterable
 		}
 
 		@Override
-		public Object next()
-		{
-			if (isDone)
-			{
+		public Object next() {
+			if (isDone) {
 				throw new NoSuchElementException();
 			}
 			return nextVal;

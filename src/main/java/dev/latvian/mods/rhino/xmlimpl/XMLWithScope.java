@@ -10,8 +10,7 @@ import dev.latvian.mods.rhino.NativeWith;
 import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.xml.XMLObject;
 
-final class XMLWithScope extends NativeWith
-{
+final class XMLWithScope extends NativeWith {
 	private static final long serialVersionUID = -696429282095170887L;
 
 	private final XMLLibImpl lib;
@@ -19,14 +18,12 @@ final class XMLWithScope extends NativeWith
 	private XMLList _xmlList;
 	private XMLObject _dqPrototype;
 
-	XMLWithScope(XMLLibImpl lib, Scriptable parent, XMLObject prototype)
-	{
+	XMLWithScope(XMLLibImpl lib, Scriptable parent, XMLObject prototype) {
 		super(parent, prototype);
 		this.lib = lib;
 	}
 
-	void initAsDotQuery()
-	{
+	void initAsDotQuery() {
 		XMLObject prototype = (XMLObject) getPrototype();
 		// XMLWithScope also handles the .(xxx) DotQuery for XML
 		// basically DotQuery is a for/in/with statement and in
@@ -37,11 +34,9 @@ final class XMLWithScope extends NativeWith
 		// is a element of the lhs (XMLList).
 		_currIndex = 0;
 		_dqPrototype = prototype;
-		if (prototype instanceof XMLList)
-		{
+		if (prototype instanceof XMLList) {
 			XMLList xl = (XMLList) prototype;
-			if (xl.length() > 0)
-			{
+			if (xl.length() > 0) {
 				setPrototype((Scriptable) (xl.get(0, null)));
 			}
 		}
@@ -51,15 +46,13 @@ final class XMLWithScope extends NativeWith
 	}
 
 	@Override
-	protected Object updateDotQuery(boolean value)
-	{
+	protected Object updateDotQuery(boolean value) {
 		// Return null to continue looping
 
 		XMLObject seed = _dqPrototype;
 		XMLList xmlL = _xmlList;
 
-		if (seed instanceof XMLList)
-		{
+		if (seed instanceof XMLList) {
 			// We're a list so keep testing each element of the list if the
 			// result on the top of stack is true then that element is added
 			// to our result list.  If false, we try the next element.
@@ -67,14 +60,12 @@ final class XMLWithScope extends NativeWith
 
 			int idx = _currIndex;
 
-			if (value)
-			{
+			if (value) {
 				xmlL.addToList(orgXmlL.get(idx, null));
 			}
 
 			// More elements to test?
-			if (++idx < orgXmlL.length())
-			{
+			if (++idx < orgXmlL.length()) {
 				// Yes, set our new index, get the next element and
 				// reset the expression to run with this object as
 				// the WITH selector.
@@ -84,13 +75,10 @@ final class XMLWithScope extends NativeWith
 				// continue looping
 				return null;
 			}
-		}
-		else
-		{
+		} else {
 			// If we're not a XMLList then there's no looping
 			// just return DQPrototype if the result is true.
-			if (value)
-			{
+			if (value) {
 				xmlL.addToList(seed);
 			}
 		}

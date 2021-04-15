@@ -22,8 +22,7 @@ import dev.latvian.mods.rhino.Token;
  *        LogicalORExpressionNoIn ? AssignmentExpression
  *                                : AssignmentExpressionNoIn</pre>
  */
-public class ConditionalExpression extends AstNode
-{
+public class ConditionalExpression extends AstNode {
 
 	private AstNode testExpression;
 	private AstNode trueExpression;
@@ -35,25 +34,21 @@ public class ConditionalExpression extends AstNode
 		type = Token.HOOK;
 	}
 
-	public ConditionalExpression()
-	{
+	public ConditionalExpression() {
 	}
 
-	public ConditionalExpression(int pos)
-	{
+	public ConditionalExpression(int pos) {
 		super(pos);
 	}
 
-	public ConditionalExpression(int pos, int len)
-	{
+	public ConditionalExpression(int pos, int len) {
 		super(pos, len);
 	}
 
 	/**
 	 * Returns test expression
 	 */
-	public AstNode getTestExpression()
-	{
+	public AstNode getTestExpression() {
 		return testExpression;
 	}
 
@@ -63,8 +58,7 @@ public class ConditionalExpression extends AstNode
 	 * @param testExpression test expression
 	 * @throws IllegalArgumentException if testExpression is {@code null}
 	 */
-	public void setTestExpression(AstNode testExpression)
-	{
+	public void setTestExpression(AstNode testExpression) {
 		assertNotNull(testExpression);
 		this.testExpression = testExpression;
 		testExpression.setParent(this);
@@ -73,8 +67,7 @@ public class ConditionalExpression extends AstNode
 	/**
 	 * Returns expression to evaluate if test is true
 	 */
-	public AstNode getTrueExpression()
-	{
+	public AstNode getTrueExpression() {
 		return trueExpression;
 	}
 
@@ -85,8 +78,7 @@ public class ConditionalExpression extends AstNode
 	 * @param trueExpression expression to evaluate if test is true
 	 * @throws IllegalArgumentException if expression is {@code null}
 	 */
-	public void setTrueExpression(AstNode trueExpression)
-	{
+	public void setTrueExpression(AstNode trueExpression) {
 		assertNotNull(trueExpression);
 		this.trueExpression = trueExpression;
 		trueExpression.setParent(this);
@@ -95,8 +87,7 @@ public class ConditionalExpression extends AstNode
 	/**
 	 * Returns expression to evaluate if test is false
 	 */
-	public AstNode getFalseExpression()
-	{
+	public AstNode getFalseExpression() {
 		return falseExpression;
 	}
 
@@ -108,8 +99,7 @@ public class ConditionalExpression extends AstNode
 	 * @throws IllegalArgumentException if {@code falseExpression}
 	 *                                  is {@code null}
 	 */
-	public void setFalseExpression(AstNode falseExpression)
-	{
+	public void setFalseExpression(AstNode falseExpression) {
 		assertNotNull(falseExpression);
 		this.falseExpression = falseExpression;
 		falseExpression.setParent(this);
@@ -118,8 +108,7 @@ public class ConditionalExpression extends AstNode
 	/**
 	 * Returns position of ? token
 	 */
-	public int getQuestionMarkPosition()
-	{
+	public int getQuestionMarkPosition() {
 		return questionMarkPosition;
 	}
 
@@ -128,16 +117,14 @@ public class ConditionalExpression extends AstNode
 	 *
 	 * @param questionMarkPosition position of ? token
 	 */
-	public void setQuestionMarkPosition(int questionMarkPosition)
-	{
+	public void setQuestionMarkPosition(int questionMarkPosition) {
 		this.questionMarkPosition = questionMarkPosition;
 	}
 
 	/**
 	 * Returns position of : token
 	 */
-	public int getColonPosition()
-	{
+	public int getColonPosition() {
 		return colonPosition;
 	}
 
@@ -146,18 +133,15 @@ public class ConditionalExpression extends AstNode
 	 *
 	 * @param colonPosition position of : token
 	 */
-	public void setColonPosition(int colonPosition)
-	{
+	public void setColonPosition(int colonPosition) {
 		this.colonPosition = colonPosition;
 	}
 
 	@Override
-	public boolean hasSideEffects()
-	{
+	public boolean hasSideEffects() {
 		if (testExpression == null
 				|| trueExpression == null
-				|| falseExpression == null)
-		{
+				|| falseExpression == null) {
 			codeBug();
 		}
 		return trueExpression.hasSideEffects()
@@ -165,8 +149,7 @@ public class ConditionalExpression extends AstNode
 	}
 
 	@Override
-	public String toSource(int depth)
-	{
+	public String toSource(int depth) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(makeIndent(depth));
 		sb.append(testExpression.toSource(depth));
@@ -182,10 +165,8 @@ public class ConditionalExpression extends AstNode
 	 * and the false-expression.
 	 */
 	@Override
-	public void visit(NodeVisitor v)
-	{
-		if (v.visit(this))
-		{
+	public void visit(NodeVisitor v) {
+		if (v.visit(this)) {
 			testExpression.visit(v);
 			trueExpression.visit(v);
 			falseExpression.visit(v);
