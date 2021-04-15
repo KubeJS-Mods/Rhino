@@ -27,8 +27,7 @@ import java.util.Set;
 public class NativeJavaPackage extends ScriptableObject {
 	private static final long serialVersionUID = 7445054382212031523L;
 
-	NativeJavaPackage(boolean internalUsage, String packageName,
-					  ClassLoader classLoader) {
+	public NativeJavaPackage(boolean internalUsage, String packageName, ClassLoader classLoader) {
 		this.packageName = packageName;
 		this.classLoader = classLoader;
 	}

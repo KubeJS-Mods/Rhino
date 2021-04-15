@@ -19,8 +19,7 @@ package dev.latvian.mods.rhino;
  * @see NativeJavaClass
  */
 
-public class NativeJavaTopPackage
-		extends NativeJavaPackage implements Function, IdFunctionCall {
+public class NativeJavaTopPackage extends NativeJavaPackage implements Function, IdFunctionCall {
 	private static final long serialVersionUID = -1455787259477709999L;
 
 	// we know these are packages so we can skip the class check
