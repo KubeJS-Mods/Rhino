@@ -888,33 +888,33 @@ public class Context {
 		throw new EvaluatorException(message, sourceName, lineno, lineSource, lineOffset);
 	}
 
-	static EvaluatorException reportRuntimeError0(String messageId) {
+	public static EvaluatorException reportRuntimeError0(String messageId) {
 		String msg = ScriptRuntime.getMessage0(messageId);
 		return reportRuntimeError(msg);
 	}
 
-	static EvaluatorException reportRuntimeError1(String messageId,
-												  Object arg1) {
+	public static EvaluatorException reportRuntimeError1(String messageId,
+														 Object arg1) {
 		String msg = ScriptRuntime.getMessage1(messageId, arg1);
 		return reportRuntimeError(msg);
 	}
 
-	static EvaluatorException reportRuntimeError2(String messageId,
-												  Object arg1, Object arg2) {
+	public static EvaluatorException reportRuntimeError2(String messageId,
+														 Object arg1, Object arg2) {
 		String msg = ScriptRuntime.getMessage2(messageId, arg1, arg2);
 		return reportRuntimeError(msg);
 	}
 
-	static EvaluatorException reportRuntimeError3(String messageId,
-												  Object arg1, Object arg2,
-												  Object arg3) {
+	public static EvaluatorException reportRuntimeError3(String messageId,
+														 Object arg1, Object arg2,
+														 Object arg3) {
 		String msg = ScriptRuntime.getMessage3(messageId, arg1, arg2, arg3);
 		return reportRuntimeError(msg);
 	}
 
-	static EvaluatorException reportRuntimeError4(String messageId,
-												  Object arg1, Object arg2,
-												  Object arg3, Object arg4) {
+	public static EvaluatorException reportRuntimeError4(String messageId,
+														 Object arg1, Object arg2,
+														 Object arg3, Object arg4) {
 		String msg
 				= ScriptRuntime.getMessage4(messageId, arg1, arg2, arg3, arg4);
 		return reportRuntimeError(msg);
@@ -1947,7 +1947,7 @@ public class Context {
 		hasClassShutter = true;
 	}
 
-	final synchronized ClassShutter getClassShutter() {
+	public final synchronized ClassShutter getClassShutter() {
 		return classShutter;
 	}
 
