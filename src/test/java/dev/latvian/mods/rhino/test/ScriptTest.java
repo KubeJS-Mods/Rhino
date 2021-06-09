@@ -62,7 +62,7 @@ public class ScriptTest {
 
 			sb.append(": ");
 			sb.append(ex.details());
-			System.err.println(sb.toString());
+			System.err.println(sb);
 
 			ex.printStackTrace();
 		} catch (Exception ex) {
@@ -105,6 +105,7 @@ public class ScriptTest {
 	public static class EventsJS {
 		public Consumer<Object> lastCallback;
 		private final DynamicMap<DynamicMap<Integer>> dynamicMap0 = new DynamicMap<>(s1 -> new DynamicMap<>(s2 -> s1.hashCode() + s2.hashCode()));
+		public Identifier someIdField = null;
 
 		public void listen(String id, Consumer<Object> callback) {
 			lastCallback = callback;
@@ -151,6 +152,11 @@ public class ScriptTest {
 			return new int[]{20, 94, 3034, -3030};
 		}
 
+		public int setNumberList(int[] i) {
+			System.out.println("Set number list: " + Arrays.toString(i));
+			return 0;
+		}
+
 		public DynamicMap<DynamicMap<Integer>> getDynamicMap() {
 			return dynamicMap0;
 		}
@@ -168,6 +174,10 @@ public class ScriptTest {
 		@RemapForJS("testWrapper3")
 		public void testWrapper123(Identifier[][][] item) {
 			System.out.println("Testing wrapper: " + Arrays.asList(item));
+		}
+
+		public void setSomeId(Identifier id) {
+			System.out.println("Some ID set to: " + id);
 		}
 	}
 }

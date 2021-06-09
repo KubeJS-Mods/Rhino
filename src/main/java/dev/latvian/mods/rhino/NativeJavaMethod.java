@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
-
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -97,7 +95,7 @@ public class NativeJavaMethod extends BaseFunction {
 			sb.append("() {");
 		}
 		sb.append("/*\n");
-		sb.append(toString());
+		sb.append(this);
 		sb.append(justbody ? "*/\n" : "*/}\n");
 		return sb.toString();
 	}
@@ -182,6 +180,7 @@ public class NativeJavaMethod extends BaseFunction {
 				Object arg = args[i];
 				Object coerced = arg;
 
+				/*
 				if (arg != null) {
 					TypeWrapperFactory<?> factory = argTypes[i] != null && cx.hasTypeWrappers() ? cx.getTypeWrappers().getWrapperFactory(argTypes[i], arg) : null;
 
@@ -189,6 +188,7 @@ public class NativeJavaMethod extends BaseFunction {
 						coerced = factory.wrap(arg);
 					}
 				}
+				 */
 
 				coerced = Context.jsToJava(coerced, argTypes[i]);
 
@@ -367,7 +367,7 @@ public class NativeJavaMethod extends BaseFunction {
 							++worseCount;
 						}
 					} else {
-						int preference = preferSignature(args, member.argTypes,
+						int preference = preferSignature(cx, args, member.argTypes,
 								member.vararg,
 								bestFit.argTypes,
 								bestFit.vararg);
@@ -495,7 +495,7 @@ public class NativeJavaMethod extends BaseFunction {
 	 * Returns one of PREFERENCE_EQUAL, PREFERENCE_FIRST_ARG,
 	 * PREFERENCE_SECOND_ARG, or PREFERENCE_AMBIGUOUS.
 	 */
-	private static int preferSignature(Object[] args,
+	private static int preferSignature(Context cx, Object[] args,
 									   Class<?>[] sig1,
 									   boolean vararg1,
 									   Class<?>[] sig2,
@@ -511,8 +511,8 @@ public class NativeJavaMethod extends BaseFunction {
 
 			// Determine which of type1, type2 is easier to convert from arg.
 
-			int rank1 = NativeJavaObject.getConversionWeight(arg, type1);
-			int rank2 = NativeJavaObject.getConversionWeight(arg, type2);
+			int rank1 = NativeJavaObject.getConversionWeight(cx, arg, type1);
+			int rank2 = NativeJavaObject.getConversionWeight(cx, arg, type2);
 
 			int preference;
 			if (rank1 < rank2) {

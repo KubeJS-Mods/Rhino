@@ -364,9 +364,7 @@ final class NativeString extends IdScriptableObject {
 					if (args.length > 0) {
 						thisObj = ScriptRuntime.toObject(cx, scope, ScriptRuntime.toCharSequence(args[0]));
 						Object[] newArgs = new Object[args.length - 1];
-						for (int i = 0; i < newArgs.length; i++) {
-							newArgs[i] = args[i + 1];
-						}
+						System.arraycopy(args, 1, newArgs, 0, newArgs.length);
 						args = newArgs;
 					} else {
 						thisObj = ScriptRuntime.toObject(cx, scope, ScriptRuntime.toCharSequence(thisObj));

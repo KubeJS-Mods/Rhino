@@ -49,6 +49,8 @@ for (n of events.numberList) {
 	console.info('Event numbers: ' + n)
 }
 
+events.numberList = [4948]
+
 console.info(events.dynamicMap.awudh.awdhauwhd);
 console.info(events.dynamicMap.awuwadawdawdh.fhhue);
 
@@ -75,6 +77,11 @@ events.testWrapper3([[['a', 'b', 'c']], [['d', 'e', 'f']]])
 events.listen('abc', v => {
 	events.testWrapper('rhino:test', 5, 409, 4)
 })
+
+events.setSomeId('some:id1')
+events.someId = 'some:id2'
+events.someIdField = 'some:id3'
+console.info(events.someIdField)
 
 /*
 console.info(java)

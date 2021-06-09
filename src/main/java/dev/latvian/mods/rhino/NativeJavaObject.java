@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -242,13 +244,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	 * function, but for now I'll hide behind precedent.
 	 */
 	public static boolean canConvert(Context cx, Object fromObj, Class<?> to) {
-		if (cx.hasTypeWrappers() && cx.getTypeWrappers().getWrapperFactory(to, fromObj) != null) {
-			return true;
-		}
-
-		int weight = getConversionWeight(fromObj, to);
-
-		return (weight < CONVERSION_NONE);
+		return getConversionWeight(cx, fromObj, to) < CONVERSION_NONE;
 	}
 
 	private static final int JSTYPE_UNDEFINED = 0; // undefined type
@@ -274,7 +270,11 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	 * <a href="http://www.mozilla.org/js/liveconnect/lc3_method_overloading.html">
 	 * "preferred method conversions" from Live Connect 3</a>
 	 */
-	static int getConversionWeight(Object fromObj, Class<?> to) {
+	static int getConversionWeight(Context cx, Object fromObj, Class<?> to) {
+		if (cx.hasTypeWrappers() && cx.getTypeWrappers().getWrapperFactory(to, fromObj) != null) {
+			return CONVERSION_NONTRIVIAL;
+		}
+
 		int fromCode = getJSTypeCode(fromObj);
 
 		switch (fromCode) {
@@ -475,7 +475,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 			case JSTYPE_NULL:
 				// raise error if type.isPrimitive()
 				if (type.isPrimitive()) {
-					reportConversionError(value, type);
+					return reportConversionError(value, type);
 				}
 				return null;
 
@@ -484,8 +484,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 						type == ScriptRuntime.ObjectClass) {
 					return "undefined";
 				}
-				reportConversionError("undefined", type);
-				break;
+				return reportConversionError("undefined", type, value);
 
 			case JSTYPE_BOOLEAN:
 				// Under LC3, only JS Booleans can be coerced into a Boolean value
@@ -496,10 +495,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 				} else if (type == ScriptRuntime.StringClass) {
 					return value.toString();
 				} else {
-					reportConversionError(value, type);
+					return reportConversionError(value, type);
 				}
-				break;
-
 			case JSTYPE_NUMBER:
 				if (type == ScriptRuntime.StringClass) {
 					return ScriptRuntime.toString(value);
@@ -518,9 +515,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 						ScriptRuntime.NumberClass.isAssignableFrom(type)) {
 					return coerceToNumber(type, value);
 				} else {
-					reportConversionError(value, type);
+					return reportConversionError(value, type);
 				}
-				break;
 
 			case JSTYPE_STRING:
 				if (type == ScriptRuntime.StringClass || type.isInstance(value)) {
@@ -539,9 +535,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 						|| ScriptRuntime.NumberClass.isAssignableFrom(type)) {
 					return coerceToNumber(type, value);
 				} else {
-					reportConversionError(value, type);
+					return reportConversionError(value, type);
 				}
-				break;
 
 			case JSTYPE_JAVA_CLASS:
 				if (value instanceof Wrapper) {
@@ -554,9 +549,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 				} else if (type == ScriptRuntime.StringClass) {
 					return value.toString();
 				} else {
-					reportConversionError(value, type);
+					return reportConversionError(value, type);
 				}
-				break;
 
 			case JSTYPE_JAVA_OBJECT:
 			case JSTYPE_JAVA_ARRAY:
@@ -565,7 +559,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 				}
 				if (type.isPrimitive()) {
 					if (type == Boolean.TYPE) {
-						reportConversionError(value, type);
+						return reportConversionError(value, type);
 					}
 					return coerceToNumber(type, value);
 				}
@@ -575,15 +569,13 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 				if (type.isInstance(value)) {
 					return value;
 				}
-				reportConversionError(value, type);
-				break;
-
+				return reportConversionError(value, type);
 			case JSTYPE_OBJECT:
 				if (type == ScriptRuntime.StringClass) {
 					return ScriptRuntime.toString(value);
 				} else if (type.isPrimitive()) {
 					if (type == Boolean.TYPE) {
-						reportConversionError(value, type);
+						return reportConversionError(value, type);
 					}
 					return coerceToNumber(type, value);
 				} else if (type.isInstance(value)) {
@@ -605,7 +597,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 							Array.set(Result, i, coerceTypeImpl(
 									arrayType, array.get(i, array)));
 						} catch (EvaluatorException ee) {
-							reportConversionError(value, type);
+							return reportConversionError(value, type);
 						}
 					}
 
@@ -615,16 +607,15 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 					if (type.isInstance(value)) {
 						return value;
 					}
-					reportConversionError(value, type);
+					return reportConversionError(value, type);
 				} else if (type.isInterface() && (value instanceof NativeObject
 						|| value instanceof NativeFunction
 						|| value instanceof ArrowFunction)) {
 					// Try to use function/object as implementation of Java interface.
 					return createInterfaceAdapter(type, (ScriptableObject) value);
 				} else {
-					reportConversionError(value, type);
+					return reportConversionError(value, type);
 				}
-				break;
 		}
 
 		return value;
@@ -805,12 +796,22 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 		return (long) d;
 	}
 
-	static void reportConversionError(Object value, Class<?> type) {
+	static Object reportConversionError(Object value, Class<?> type) {
+		return reportConversionError(value, type, value);
+	}
+
+	static Object reportConversionError(Object value, Class<?> type, Object stringValue) {
+		TypeWrapperFactory<?> typeWrapper = Context.getCurrentContext().getTypeWrappers().getWrapperFactory(type, value);
+
+		if (typeWrapper != null) {
+			return typeWrapper.wrap(value);
+		}
+
 		// It uses String.valueOf(value), not value.toString() since
 		// value can be null, bug 282447.
 		throw Context.reportRuntimeError2(
 				"msg.conversion.not.allowed",
-				String.valueOf(value),
+				String.valueOf(stringValue),
 				JavaMembers.javaSignature(type));
 	}
 
