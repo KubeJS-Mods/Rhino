@@ -46,7 +46,9 @@ final class NativeString extends IdScriptableObject {
 
 	private static final int
 			Id_length = 1,
-			MAX_INSTANCE_ID = 1;
+			Id_namespace = 2,
+			Id_path = 3,
+			MAX_INSTANCE_ID = Id_path;
 
 	@Override
 	protected int getMaxInstanceId() {
@@ -55,26 +57,49 @@ final class NativeString extends IdScriptableObject {
 
 	@Override
 	protected int findInstanceIdInfo(String s) {
-		if (s.equals("length")) {
-			return instanceIdInfo(DONTENUM | READONLY | PERMANENT, Id_length);
+		switch (s) {
+			case "length":
+				return instanceIdInfo(DONTENUM | READONLY | PERMANENT, Id_length);
+			case "namespace":
+				return instanceIdInfo(DONTENUM | READONLY | PERMANENT, Id_namespace);
+			case "path":
+				return instanceIdInfo(DONTENUM | READONLY | PERMANENT, Id_path);
 		}
 		return super.findInstanceIdInfo(s);
 	}
 
 	@Override
 	protected String getInstanceIdName(int id) {
-		if (id == Id_length) {
-			return "length";
+		switch (id) {
+			case Id_length:
+				return "length";
+			case Id_namespace:
+				return "namespace";
+			case Id_path:
+				return "path";
+			default:
+				return super.getInstanceIdName(id);
 		}
-		return super.getInstanceIdName(id);
 	}
 
 	@Override
 	protected Object getInstanceIdValue(int id) {
-		if (id == Id_length) {
-			return ScriptRuntime.wrapInt(string.length());
+		switch (id) {
+			case Id_length:
+				return ScriptRuntime.wrapInt(string.length());
+			case Id_namespace: {
+				String str = ScriptRuntime.toString(string);
+				int colon = str.indexOf(':');
+				return colon == -1 ? str : str.substring(0, colon);
+			}
+			case Id_path: {
+				String str = ScriptRuntime.toString(string);
+				int colon = str.indexOf(':');
+				return colon == -1 ? str : str.substring(colon + 1);
+			}
+			default:
+				return super.getInstanceIdValue(id);
 		}
-		return super.getInstanceIdValue(id);
 	}
 
 	@Override
@@ -327,14 +352,6 @@ final class NativeString extends IdScriptableObject {
 			case Id_trimEnd:
 				arity = 0;
 				s = "trimEnd";
-				break;
-			case Id_namespace:
-				arity = 0;
-				s = "namespace";
-				break;
-			case Id_path:
-				arity = 0;
-				s = "path";
 				break;
 			default:
 				throw new IllegalArgumentException(String.valueOf(id));
@@ -662,16 +679,6 @@ final class NativeString extends IdScriptableObject {
 					}
 
 					return str.substring(start, end);
-				}
-				case Id_namespace: {
-					String str = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
-					int colon = str.indexOf(':');
-					return colon == -1 ? str : str.substring(0, colon);
-				}
-				case Id_path: {
-					String str = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
-					int colon = str.indexOf(':');
-					return colon == -1 ? str : str.substring(colon + 1);
 				}
 				case Id_normalize: {
 					if (args.length == 0 || Undefined.isUndefined(args[0])) {
@@ -1215,9 +1222,6 @@ final class NativeString extends IdScriptableObject {
 					} else if (c == 't') {
 						X = "trim";
 						id = Id_trim;
-					} else if (c == 'p') {
-						X = "path";
-						id = Id_path;
 					}
 					break L;
 				case 5:
@@ -1491,9 +1495,7 @@ final class NativeString extends IdScriptableObject {
 			SymbolId_iterator = 48,
 			Id_trimStart = 49,
 			Id_trimEnd = 50,
-			Id_namespace = 51,
-			Id_path = 52,
-			MAX_PROTOTYPE_ID = Id_path;
+			MAX_PROTOTYPE_ID = Id_trimEnd;
 
 	// #/string_id_map#
 
