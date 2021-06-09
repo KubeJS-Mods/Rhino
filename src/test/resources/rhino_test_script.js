@@ -83,6 +83,12 @@ events.someId = 'some:id2'
 events.someIdField = 'some:id3'
 console.info(events.someIdField)
 
+console.info('Namepace and Path check')
+let nsPathTest = 'some:id4'
+console.info(nsPathTest.namespace())
+console.info(nsPathTest.path())
+console.info(nsPathTest.charAt(2))
+
 /*
 console.info(java)
 console.info(java.lang)

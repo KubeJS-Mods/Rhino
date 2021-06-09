@@ -328,6 +328,14 @@ final class NativeString extends IdScriptableObject {
 				arity = 0;
 				s = "trimEnd";
 				break;
+			case Id_namespace:
+				arity = 0;
+				s = "namespace";
+				break;
+			case Id_path:
+				arity = 0;
+				s = "path";
+				break;
 			default:
 				throw new IllegalArgumentException(String.valueOf(id));
 		}
@@ -654,6 +662,16 @@ final class NativeString extends IdScriptableObject {
 					}
 
 					return str.substring(start, end);
+				}
+				case Id_namespace: {
+					String str = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
+					int colon = str.indexOf(':');
+					return colon == -1 ? str : str.substring(0, colon);
+				}
+				case Id_path: {
+					String str = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
+					int colon = str.indexOf(':');
+					return colon == -1 ? str : str.substring(colon + 1);
 				}
 				case Id_normalize: {
 					if (args.length == 0 || Undefined.isUndefined(args[0])) {
@@ -1197,6 +1215,9 @@ final class NativeString extends IdScriptableObject {
 					} else if (c == 't') {
 						X = "trim";
 						id = Id_trim;
+					} else if (c == 'p') {
+						X = "path";
+						id = Id_path;
 					}
 					break L;
 				case 5:
@@ -1347,6 +1368,10 @@ final class NativeString extends IdScriptableObject {
 							X = "substring";
 							id = Id_substring;
 							break L;
+						case 's':
+							X = "namespace";
+							id = Id_namespace;
+							break L;
 					}
 					break L;
 				case 10:
@@ -1466,7 +1491,9 @@ final class NativeString extends IdScriptableObject {
 			SymbolId_iterator = 48,
 			Id_trimStart = 49,
 			Id_trimEnd = 50,
-			MAX_PROTOTYPE_ID = Id_trimEnd;
+			Id_namespace = 51,
+			Id_path = 52,
+			MAX_PROTOTYPE_ID = Id_path;
 
 	// #/string_id_map#
 
