@@ -84,6 +84,10 @@ public class ScriptTest {
 		public void info(Object o) {
 			System.out.println(o);
 		}
+
+		public void infoClass(Object o) {
+			System.out.println(o.getClass().getName());
+		}
 	}
 
 	public static class Rect {
@@ -105,7 +109,7 @@ public class ScriptTest {
 	public static class EventsJS {
 		public Consumer<Object> lastCallback;
 		private final DynamicMap<DynamicMap<Integer>> dynamicMap0 = new DynamicMap<>(s1 -> new DynamicMap<>(s2 -> s1.hashCode() + s2.hashCode()));
-		public Identifier someIdField = null;
+		public final Identifier someIdField = null;
 
 		public void listen(String id, Consumer<Object> callback) {
 			lastCallback = callback;

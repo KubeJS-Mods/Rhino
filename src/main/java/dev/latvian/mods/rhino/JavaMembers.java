@@ -148,14 +148,17 @@ class JavaMembers {
 				throw Context.reportRuntimeError1(str, name);
 			}
 			Field field = (Field) member;
+			int fieldModifiers = field.getModifiers();
+
+			if (Modifier.isFinal(fieldModifiers)) {
+				// treat Java final the same as JavaScript [[READONLY]]
+				throw Context.throwAsScriptRuntimeEx(new IllegalAccessException("Can't modify final field " + field.getName()));
+			}
+
 			Object javaValue = Context.jsToJava(value, field.getType());
 			try {
 				field.set(javaObject, javaValue);
 			} catch (IllegalAccessException accessEx) {
-				if ((field.getModifiers() & Modifier.FINAL) != 0) {
-					// treat Java final the same as JavaScript [[READONLY]]
-					return;
-				}
 				throw Context.throwAsScriptRuntimeEx(accessEx);
 			} catch (IllegalArgumentException argEx) {
 				throw Context.reportRuntimeError3(
