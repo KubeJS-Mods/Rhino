@@ -109,7 +109,7 @@ public class ScriptTest {
 	public static class EventsJS {
 		public Consumer<Object> lastCallback;
 		private final DynamicMap<DynamicMap<Integer>> dynamicMap0 = new DynamicMap<>(s1 -> new DynamicMap<>(s2 -> s1.hashCode() + s2.hashCode()));
-		public final Identifier someIdField = null;
+		public Identifier someIdField = null;
 
 		public void listen(String id, Consumer<Object> callback) {
 			lastCallback = callback;
@@ -178,6 +178,10 @@ public class ScriptTest {
 		@RemapForJS("testWrapper3")
 		public void testWrapper123(Identifier[][][] item) {
 			System.out.println("Testing wrapper: " + Arrays.asList(item));
+		}
+
+		public void setSomeId(String id) {
+			System.out.println("Some ID set to (String): " + id);
 		}
 
 		public void setSomeId(Identifier id) {
