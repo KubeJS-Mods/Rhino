@@ -9,7 +9,6 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
-import dev.latvian.mods.rhino.xml.XMLLib;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -319,34 +318,6 @@ public class ContextFactory {
 			return false;
 		}
 	}
-
-	/**
-	 * Provides a default
-	 * {@link XMLLib.Factory XMLLib.Factory}
-	 * to be used by the <code>Context</code> instances produced by this
-	 * factory. See {@link Context#getE4xImplementationFactory} for details.
-	 * <p>
-	 * May return null, in which case E4X functionality is not supported in
-	 * Rhino.
-	 * <p>
-	 * The default implementation now prefers the DOM3 E4X implementation.
-	 */
-	protected XMLLib.Factory
-	getE4xImplementationFactory() {
-		// Must provide default implementation, rather than abstract method,
-		// so that past implementors of ContextFactory do not fail at runtime
-		// upon invocation of this method.
-		// Note that the default implementation returns null if we
-		// neither have XMLBeans nor a DOM3 implementation present.
-
-		if (isDom3Present()) {
-			return XMLLib.Factory.create(
-					"dev.latvian.mods.rhino.xmlimpl.XMLLibImpl"
-			);
-		}
-		return null;
-	}
-
 
 	/**
 	 * Create class loader for generated classes.

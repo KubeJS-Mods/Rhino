@@ -14,7 +14,6 @@ import dev.latvian.mods.rhino.classfile.ClassFileWriter.ClassFileFormatException
 import dev.latvian.mods.rhino.debug.DebuggableScript;
 import dev.latvian.mods.rhino.debug.Debugger;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
-import dev.latvian.mods.rhino.xml.XMLLib;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -52,6 +51,7 @@ import java.util.Set;
  * @see Scriptable
  */
 
+@SuppressWarnings("ThrowableNotThrown")
 public class Context {
 	/**
 	 * Language versions.
@@ -2080,21 +2080,6 @@ public class Context {
 	}
 
 	/**
-	 * Returns an object which specifies an E4X implementation to use within
-	 * this <code>Context</code>. Note that the XMLLib.Factory interface should
-	 * be considered experimental.
-	 * <p>
-	 * The default implementation uses the implementation provided by this
-	 * <code>Context</code>'s {@link ContextFactory}.
-	 *
-	 * @return An XMLLib.Factory. Should not return <code>null</code> if
-	 * {@link #FEATURE_E4X} is enabled. See {@link #hasFeature}.
-	 */
-	public XMLLib.Factory getE4xImplementationFactory() {
-		return getFactory().getE4xImplementationFactory();
-	}
-
-	/**
 	 * Get threshold of executed instructions counter that triggers call to
 	 * <code>observeInstructionCount()</code>.
 	 * When the threshold is zero, instruction counting is disabled,
@@ -2166,7 +2151,6 @@ public class Context {
 	 * @param instructionCount amount of script instruction executed since
 	 *                         last call to <code>observeInstructionCount</code>
 	 * @throws Error to terminate the script
-	 * @see #setOptimizationLevel(int)
 	 */
 	protected void observeInstructionCount(int instructionCount) {
 		ContextFactory f = getFactory();
@@ -2479,7 +2463,6 @@ public class Context {
 	Scriptable topCallScope;
 	boolean isContinuationsTopCall;
 	NativeCall currentActivationCall;
-	XMLLib cachedXMLLib;
 	BaseFunction typeErrorThrower;
 
 	// for Objects, Arrays to tag themselves as being printed out,

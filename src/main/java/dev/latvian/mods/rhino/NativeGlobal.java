@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.xml.XMLLib;
-
 import java.io.Serializable;
 
 /**
@@ -165,11 +163,15 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 				}
 
 				case Id_isXMLName: {
+					/*
 					Object name = (args.length == 0)
 							? Undefined.instance : args[0];
 					XMLLib xmlLib = XMLLib.extractFromScope(scope);
 					return ScriptRuntime.wrapBoolean(
 							xmlLib.isXMLName(cx, name));
+					 */
+
+					return ScriptRuntime.wrapBoolean(false);
 				}
 
 				case Id_parseFloat:
@@ -488,8 +490,9 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 	 * Direct calls are executed via ScriptRuntime.callSpecial().
 	 */
 	private static Object js_eval(Context cx, Scriptable scope, Object[] args) {
-		Scriptable global = ScriptableObject.getTopLevelScope(scope);
-		return ScriptRuntime.evalSpecial(cx, global, global, args, "eval code", 1);
+		//Scriptable global = ScriptableObject.getTopLevelScope(scope);
+		//return ScriptRuntime.evalSpecial(cx, global, global, args, "eval code", 1);
+		throw new RuntimeException("eval is not allowed!");
 	}
 
 	static boolean isEvalFunction(Object functionObj) {
