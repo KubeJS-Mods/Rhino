@@ -1697,7 +1697,8 @@ public class Context {
 	 */
 	public static Object jsToJava(Object value, Class<?> desiredType)
 			throws EvaluatorException {
-		return NativeJavaObject.coerceTypeImpl(desiredType, value);
+		Context cx = getCurrentContext();
+		return NativeJavaObject.coerceTypeImpl(cx.hasTypeWrappers() ? cx.getTypeWrappers() : null, desiredType, value);
 	}
 
 	/**

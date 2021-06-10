@@ -7,6 +7,7 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.ast.FunctionNode;
+import dev.latvian.mods.rhino.util.SpecialEquality;
 import dev.latvian.mods.rhino.v8dtoa.DoubleConversion;
 import dev.latvian.mods.rhino.v8dtoa.FastDtoa;
 import dev.latvian.mods.rhino.xml.XMLLib;
@@ -2880,7 +2881,11 @@ public class ScriptRuntime {
 	 * See ECMA 11.9
 	 */
 	public static boolean eq(Object x, Object y) {
-		if (x == null || x == Undefined.instance) {
+		if (x instanceof SpecialEquality) {
+			return ((SpecialEquality) x).specialEquals(y, false);
+		} else if (y instanceof SpecialEquality) {
+			return ((SpecialEquality) y).specialEquals(x, false);
+		} else if (x == null || x == Undefined.instance) {
 			if (y == null || y == Undefined.instance) {
 				return true;
 			}
@@ -3071,15 +3076,18 @@ public class ScriptRuntime {
 	}
 
 	public static boolean shallowEq(Object x, Object y) {
-		if (x == y) {
+		if (x instanceof SpecialEquality) {
+			return ((SpecialEquality) x).specialEquals(y, true);
+		} else if (y instanceof SpecialEquality) {
+			return ((SpecialEquality) y).specialEquals(x, true);
+		} else if (x == y) {
 			if (!(x instanceof Number)) {
 				return true;
 			}
 			// NaN check
 			double d = ((Number) x).doubleValue();
 			return !Double.isNaN(d);
-		}
-		if (x == null || x == Undefined.instance || x == Undefined.SCRIPTABLE_UNDEFINED) {
+		} else if (x == null || x == Undefined.instance || x == Undefined.SCRIPTABLE_UNDEFINED) {
 			return (x == Undefined.instance && y == Undefined.SCRIPTABLE_UNDEFINED)
 					|| (x == Undefined.SCRIPTABLE_UNDEFINED && y == Undefined.instance);
 		} else if (x instanceof Number) {
@@ -3087,9 +3095,9 @@ public class ScriptRuntime {
 				return ((Number) x).doubleValue() == ((Number) y).doubleValue();
 			}
 		} else if (x instanceof CharSequence) {
-			if (y instanceof CharSequence) {
-				return x.toString().equals(y.toString());
-			}
+			return x.toString().equals(String.valueOf(y));
+		} else if (y instanceof CharSequence) {
+			return y.toString().equals(String.valueOf(x));
 		} else if (x instanceof Boolean) {
 			if (y instanceof Boolean) {
 				return x.equals(y);

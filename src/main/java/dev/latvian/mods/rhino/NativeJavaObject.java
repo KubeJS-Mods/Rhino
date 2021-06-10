@@ -7,6 +7,8 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
+import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -465,9 +467,15 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	 * Type-munging for field setting and method invocation.
 	 * Conforms to LC3 specification
 	 */
-	static Object coerceTypeImpl(Class<?> type, Object value) {
+	static Object coerceTypeImpl(@Nullable TypeWrappers typeWrappers, Class<?> type, Object value) {
 		if (value == null || value.getClass() == type) {
 			return value;
+		}
+
+		TypeWrapperFactory<?> typeWrapper = typeWrappers == null ? null : typeWrappers.getWrapperFactory(type, value);
+
+		if (typeWrapper != null) {
+			return typeWrapper.wrap(value);
 		}
 
 		switch (getJSTypeCode(value)) {
@@ -594,8 +602,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 					Object Result = Array.newInstance(arrayType, (int) length);
 					for (int i = 0; i < length; ++i) {
 						try {
-							Array.set(Result, i, coerceTypeImpl(
-									arrayType, array.get(i, array)));
+							Array.set(Result, i, coerceTypeImpl(typeWrappers, arrayType, array.get(i, array)));
 						} catch (EvaluatorException ee) {
 							return reportConversionError(value, type);
 						}
@@ -801,12 +808,6 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	}
 
 	static Object reportConversionError(Object value, Class<?> type, Object stringValue) {
-		TypeWrapperFactory<?> typeWrapper = Context.getCurrentContext().getTypeWrappers().getWrapperFactory(type, value);
-
-		if (typeWrapper != null) {
-			return typeWrapper.wrap(value);
-		}
-
 		// It uses String.valueOf(value), not value.toString() since
 		// value can be null, bug 282447.
 		throw Context.reportRuntimeError2(

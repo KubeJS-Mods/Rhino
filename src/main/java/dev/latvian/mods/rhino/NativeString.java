@@ -90,7 +90,7 @@ final class NativeString extends IdScriptableObject {
 			case Id_namespace: {
 				String str = ScriptRuntime.toString(string);
 				int colon = str.indexOf(':');
-				return colon == -1 ? str : str.substring(0, colon);
+				return colon == -1 ? "minecraft" : str.substring(0, colon);
 			}
 			case Id_path: {
 				String str = ScriptRuntime.toString(string);

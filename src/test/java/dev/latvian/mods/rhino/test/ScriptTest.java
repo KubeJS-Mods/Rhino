@@ -15,6 +15,7 @@ import dev.latvian.mods.rhino.util.RemapForJS;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class ScriptTest {
 				return type != ClassShutter.TYPE_CLASS_IN_PACKAGE || !fullClassName.startsWith("java.net");
 			});
 
-			cx.getTypeWrappers().register(Identifier.class, o -> !"rhino:array_test_1".equals(o), Identifier::new);
+			cx.getTypeWrappers().register(ResourceLocation.class, o -> !"rhino:array_test_1".equals(o), ResourceLocation::new);
 
 			Scriptable scope = cx.initStandardObjects();
 
@@ -44,6 +45,7 @@ public class ScriptTest {
 
 			ScriptableObject.putProperty(scope, "newMath", Context.javaToJS(new NativeJavaClass(scope, Math.class), scope));
 			ScriptableObject.putProperty(scope, "Rect", new NativeJavaClass(scope, Rect.class));
+			ScriptableObject.putProperty(scope, "ResourceLocation", new NativeJavaClass(scope, ResourceLocation.class));
 
 			ScriptableObject.putProperty(scope, "events", Context.javaToJS(eventsJS, scope));
 			ScriptableObject.putProperty(scope, "sqTest", Context.javaToJS(new DynamicFunction(o -> ((Number) o[0]).doubleValue() * ((Number) o[0]).doubleValue()), scope));
@@ -71,7 +73,9 @@ public class ScriptTest {
 			Context.exit();
 		}
 
-		eventsJS.lastCallback.accept(48);
+		for (Consumer<Object> consumer : eventsJS.lastCallback) {
+			consumer.accept(48);
+		}
 	}
 
 	public static class ConsoleJS {
@@ -107,12 +111,12 @@ public class ScriptTest {
 	}
 
 	public static class EventsJS {
-		public Consumer<Object> lastCallback;
+		public List<Consumer<Object>> lastCallback = new ArrayList<>();
 		private final DynamicMap<DynamicMap<Integer>> dynamicMap0 = new DynamicMap<>(s1 -> new DynamicMap<>(s2 -> s1.hashCode() + s2.hashCode()));
-		public Identifier someIdField = null;
+		public ResourceLocation someIdField = null;
 
 		public void listen(String id, Consumer<Object> callback) {
-			lastCallback = callback;
+			lastCallback.add(callback);
 			System.out.println(id + ": " + callback);
 
 			callback.accept(309);
@@ -166,17 +170,17 @@ public class ScriptTest {
 		}
 
 		@RemapForJS("testWrapper")
-		public void testWrapper123(Identifier item, int a, int b, int c) {
+		public void testWrapper123(ResourceLocation item, int a, int b, int c) {
 			System.out.println("Testing wrapper: " + item + ", " + a + ", " + b + ", " + c);
 		}
 
 		@RemapForJS("testWrapper2")
-		public void testWrapper123(Identifier[] item) {
+		public void testWrapper123(ResourceLocation[] item) {
 			System.out.println("Testing wrapper: " + Arrays.asList(item));
 		}
 
 		@RemapForJS("testWrapper3")
-		public void testWrapper123(Identifier[][][] item) {
+		public void testWrapper123(ResourceLocation[][][] item) {
 			System.out.println("Testing wrapper: " + Arrays.asList(item));
 		}
 
@@ -184,7 +188,7 @@ public class ScriptTest {
 			System.out.println("Some ID set to (String): " + id);
 		}
 
-		public void setSomeId(Identifier id) {
+		public void setSomeId(ResourceLocation id) {
 			System.out.println("Some ID set to: " + id);
 		}
 	}
