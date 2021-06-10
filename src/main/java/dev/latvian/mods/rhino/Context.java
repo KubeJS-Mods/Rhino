@@ -378,7 +378,6 @@ public class Context {
 		}
 		this.factory = factory;
 		version = VERSION_DEFAULT;
-		optimizationLevel = codegenClass != null ? 0 : -1;
 		maximumInterpreterStackDepth = Integer.MAX_VALUE;
 	}
 
@@ -1759,9 +1758,6 @@ public class Context {
 			onSealedMutation();
 		}
 		generatingDebugChanged = true;
-		if (generatingDebug && getOptimizationLevel() > 0) {
-			setOptimizationLevel(0);
-		}
 		this.generatingDebug = generatingDebug;
 	}
 
@@ -1790,62 +1786,6 @@ public class Context {
 			onSealedMutation();
 		}
 		this.generatingSource = generatingSource;
-	}
-
-	/**
-	 * Get the current optimization level.
-	 * <p>
-	 * The optimization level is expressed as an integer between -1 and
-	 * 9.
-	 *
-	 * @since 1.3
-	 */
-	public final int getOptimizationLevel() {
-		return optimizationLevel;
-	}
-
-	/**
-	 * Set the current optimization level.
-	 * <p>
-	 * The optimization level is expected to be an integer between -1 and
-	 * 9. Any negative values will be interpreted as -1, and any values
-	 * greater than 9 will be interpreted as 9.
-	 * An optimization level of -1 indicates that interpretive mode will
-	 * always be used. Levels 0 through 9 indicate that class files may
-	 * be generated. Higher optimization levels trade off compile time
-	 * performance for runtime performance.
-	 * The optimizer level can't be set greater than -1 if the optimizer
-	 * package doesn't exist at run time.
-	 *
-	 * @param optimizationLevel an integer indicating the level of
-	 *                          optimization to perform
-	 * @since 1.3
-	 */
-	public final void setOptimizationLevel(int optimizationLevel) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		if (optimizationLevel == -2) {
-			// To be compatible with Cocoon fork
-			optimizationLevel = -1;
-		}
-		checkOptimizationLevel(optimizationLevel);
-		if (codegenClass == null) {
-			optimizationLevel = -1;
-		}
-		this.optimizationLevel = optimizationLevel;
-	}
-
-	public static boolean isValidOptimizationLevel(int optimizationLevel) {
-		return -1 <= optimizationLevel && optimizationLevel <= 9;
-	}
-
-	public static void checkOptimizationLevel(int optimizationLevel) {
-		if (isValidOptimizationLevel(optimizationLevel)) {
-			return;
-		}
-		throw new IllegalArgumentException(
-				"Optimization level outside [-1..9]: " + optimizationLevel);
 	}
 
 	/**
@@ -1886,9 +1826,6 @@ public class Context {
 	public final void setMaximumInterpreterStackDepth(int max) {
 		if (sealed) {
 			onSealedMutation();
-		}
-		if (optimizationLevel != -1) {
-			throw new IllegalStateException("Cannot set maximumInterpreterStackDepth when optimizationLevel != -1");
 		}
 		if (max < 1) {
 			throw new IllegalArgumentException("Cannot set maximumInterpreterStackDepth to less than 1");
@@ -2411,24 +2348,12 @@ public class Context {
 		}
 	}
 
-	private static final Class<?> codegenClass = Kit.classOrNull(
-			"dev.latvian.mods.rhino.optimizer.Codegen");
-	private static final Class<?> interpreterClass = Kit.classOrNull(
-			"dev.latvian.mods.rhino.Interpreter");
-
 	private Evaluator createCompiler() {
-		Evaluator result = null;
-		if (optimizationLevel >= 0 && codegenClass != null) {
-			result = (Evaluator) Kit.newInstanceOrNull(codegenClass);
-		}
-		if (result == null) {
-			result = createInterpreter();
-		}
-		return result;
+		return createInterpreter();
 	}
 
 	static Evaluator createInterpreter() {
-		return (Evaluator) Kit.newInstanceOrNull(interpreterClass);
+		return new Interpreter();
 	}
 
 	public static String getSourcePositionFromStack(int[] linep) {
@@ -2576,7 +2501,6 @@ public class Context {
 	private boolean generatingDebugChanged;
 	private boolean generatingSource = true;
 	boolean useDynamicScope;
-	private int optimizationLevel;
 	private int maximumInterpreterStackDepth;
 	private WrapFactory wrapFactory;
 	Debugger debugger;

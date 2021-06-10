@@ -18,7 +18,6 @@ public class CompilerEnvirons {
 		reservedKeywordAsIdentifier = true;
 		allowMemberExprAsFunctionName = false;
 		xmlAvailable = true;
-		optimizationLevel = 0;
 		generatingSource = true;
 		strictMode = false;
 		warningAsError = false;
@@ -40,8 +39,6 @@ public class CompilerEnvirons {
 		warningAsError = cx.hasFeature(Context.FEATURE_WARNING_AS_ERROR);
 		xmlAvailable
 				= cx.hasFeature(Context.FEATURE_E4X);
-
-		optimizationLevel = cx.getOptimizationLevel();
 
 		generatingSource = cx.isGeneratingSource();
 		activationNames = cx.activationNames;
@@ -104,15 +101,6 @@ public class CompilerEnvirons {
 
 	public void setXmlAvailable(boolean flag) {
 		xmlAvailable = flag;
-	}
-
-	public final int getOptimizationLevel() {
-		return optimizationLevel;
-	}
-
-	public void setOptimizationLevel(int level) {
-		Context.checkOptimizationLevel(level);
-		this.optimizationLevel = level;
 	}
 
 	public final boolean isGeneratingSource() {
@@ -261,7 +249,6 @@ public class CompilerEnvirons {
 	private boolean reservedKeywordAsIdentifier;
 	private boolean allowMemberExprAsFunctionName;
 	private boolean xmlAvailable;
-	private int optimizationLevel;
 	private boolean generatingSource;
 	private boolean strictMode;
 	private boolean warningAsError;
