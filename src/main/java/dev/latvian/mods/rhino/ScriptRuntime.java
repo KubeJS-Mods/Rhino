@@ -2875,11 +2875,7 @@ public class ScriptRuntime {
 	 * See ECMA 11.9
 	 */
 	public static boolean eq(Object x, Object y) {
-		if (x instanceof SpecialEquality) {
-			return ((SpecialEquality) x).specialEquals(y, false);
-		} else if (y instanceof SpecialEquality) {
-			return ((SpecialEquality) y).specialEquals(x, false);
-		} else if (x == null || x == Undefined.instance) {
+		if (x == null || x == Undefined.instance) {
 			if (y == null || y == Undefined.instance) {
 				return true;
 			}
@@ -2890,10 +2886,21 @@ public class ScriptRuntime {
 				}
 			}
 			return false;
-		} else if (x instanceof Number) {
-			return eqNumber(((Number) x).doubleValue(), y);
 		} else if (x == y) {
 			return true;
+		}
+
+		Object x1 = Wrapper.unwrapped(x);
+		Object y1 = Wrapper.unwrapped(y);
+
+		if (x1 == y1) {
+			return true;
+		} else if (x1 instanceof SpecialEquality) {
+			return ((SpecialEquality) x1).specialEquals(y1, false);
+		} else if (y1 instanceof SpecialEquality) {
+			return ((SpecialEquality) y1).specialEquals(x1, false);
+		} else if (x instanceof Number) {
+			return eqNumber(((Number) x).doubleValue(), y);
 		} else if (x instanceof CharSequence) {
 			return eqString((CharSequence) x, y);
 		} else if (x instanceof Boolean) {
@@ -2925,12 +2932,7 @@ public class ScriptRuntime {
 				if (x instanceof Wrapper && y instanceof Wrapper) {
 					// See bug 413838. Effectively an extension to ECMA for
 					// the LiveConnect case.
-					Object unwrappedX = ((Wrapper) x).unwrap();
-					Object unwrappedY = ((Wrapper) y).unwrap();
-					return unwrappedX == unwrappedY ||
-							(isPrimitive(unwrappedX) &&
-									isPrimitive(unwrappedY) &&
-									eq(unwrappedX, unwrappedY));
+					return x1 == y1 || (isPrimitive(x1) && isPrimitive(y1) && eq(x1, y1));
 				}
 				return false;
 			} else if (y instanceof Boolean) {
@@ -3070,11 +3072,7 @@ public class ScriptRuntime {
 	}
 
 	public static boolean shallowEq(Object x, Object y) {
-		if (x instanceof SpecialEquality) {
-			return ((SpecialEquality) x).specialEquals(y, true);
-		} else if (y instanceof SpecialEquality) {
-			return ((SpecialEquality) y).specialEquals(x, true);
-		} else if (x == y) {
+		if (x == y) {
 			if (!(x instanceof Number)) {
 				return true;
 			}
@@ -3084,6 +3082,17 @@ public class ScriptRuntime {
 		} else if (x == null || x == Undefined.instance || x == Undefined.SCRIPTABLE_UNDEFINED) {
 			return (x == Undefined.instance && y == Undefined.SCRIPTABLE_UNDEFINED)
 					|| (x == Undefined.SCRIPTABLE_UNDEFINED && y == Undefined.instance);
+		}
+
+		Object x1 = Wrapper.unwrapped(x);
+		Object y1 = Wrapper.unwrapped(y);
+
+		if (x1 == y1) {
+			return true;
+		} else if (x1 instanceof SpecialEquality) {
+			return ((SpecialEquality) x1).specialEquals(y1, true);
+		} else if (y1 instanceof SpecialEquality) {
+			return ((SpecialEquality) y1).specialEquals(x1, true);
 		} else if (x instanceof Number) {
 			if (y instanceof Number) {
 				return ((Number) x).doubleValue() == ((Number) y).doubleValue();
@@ -3098,7 +3107,7 @@ public class ScriptRuntime {
 			}
 		} else if (x instanceof Scriptable) {
 			if (x instanceof Wrapper && y instanceof Wrapper) {
-				return ((Wrapper) x).unwrap() == ((Wrapper) y).unwrap();
+				return x1 == y1;
 			}
 		} else {
 			warnAboutNonJSObject(x);

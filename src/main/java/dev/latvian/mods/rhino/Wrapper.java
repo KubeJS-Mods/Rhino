@@ -23,4 +23,8 @@ public interface Wrapper {
 	 * @return a wrapped value
 	 */
 	Object unwrap();
+
+	static Object unwrapped(Object o) {
+		return o instanceof Wrapper ? ((Wrapper) o).unwrap() : o;
+	}
 }
