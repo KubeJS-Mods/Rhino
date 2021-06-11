@@ -93,6 +93,21 @@ ${a + "z"} ${b.toLowerCase()}`
 
 	console.info(`${customBlock}: ${eq}, ${seq}`)
 
+	const constTest = 20
+	console.info(constTest)
+
+	if (true) {
+		const constTest2 = 30
+		console.info(constTest2)
+	}
+
+	if (true) {
+		const constTest2 = 40
+		console.info(constTest2)
+	}
+
+	console.info(constTest2)
+
 	/*
 	console.info(java)
 	console.info(java.lang)
