@@ -240,8 +240,10 @@ public final class NativeJSON extends IdScriptableObject {
 				Object v = replacerArray.get(i, replacerArray);
 				if (v instanceof String || v instanceof Number) {
 					propertyList.add(v);
-				} else if (v instanceof NativeString || v instanceof NativeNumber) {
+				} else if (v instanceof NativeString) {
 					propertyList.add(ScriptRuntime.toString(v));
+				} else if (v instanceof NativeNumber) {
+					propertyList.add(ScriptRuntime.toNumber(v));
 				}
 			}
 		}
