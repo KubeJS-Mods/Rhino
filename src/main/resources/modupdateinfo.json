@@ -1,0 +1,13 @@
+{
+	"updates": [
+		{
+			"type": "maven",
+			"repositories": [
+				"https://maven.saps.dev/minecraft/"
+			],
+			"group": "dev.latvian.mods",
+			"artifact": "rhino",
+			"version": "[1605,)"
+		}
+	]
+}
