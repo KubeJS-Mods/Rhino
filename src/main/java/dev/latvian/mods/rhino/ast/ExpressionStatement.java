@@ -110,18 +110,6 @@ public class ExpressionStatement extends AstNode {
 		return type == Token.EXPR_RESULT || expr.hasSideEffects();
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(expr.toSource(depth));
-		sb.append(";");
-		if (this.getInlineComment() != null) {
-			sb.append(this.getInlineComment().toSource(depth));
-		}
-		sb.append("\n");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then the wrapped statement.
 	 */

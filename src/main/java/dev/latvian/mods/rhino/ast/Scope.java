@@ -239,23 +239,6 @@ public class Scope extends Jump {
 	}
 
 	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append("{\n");
-		for (Node kid : this) {
-			AstNode astNodeKid = (AstNode) kid;
-			sb.append(astNodeKid.toSource(depth + 1));
-			if (astNodeKid.getType() == Token.COMMENT) {
-				sb.append("\n");
-			}
-		}
-		sb.append(makeIndent(depth));
-		sb.append("}\n");
-		return sb.toString();
-	}
-
-	@Override
 	public void visit(NodeVisitor v) {
 		if (v.visit(this)) {
 			for (Node kid : this) {

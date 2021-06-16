@@ -69,11 +69,6 @@ public class TemplateCharacters extends AstNode {
 		this.rawValue = rawValue;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		return new StringBuilder(makeIndent(depth)).append(rawValue).toString();
-	}
-
 	/**
 	 * Visits this node.  There are no children to visit.
 	 */

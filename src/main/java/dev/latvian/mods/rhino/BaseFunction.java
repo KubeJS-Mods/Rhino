@@ -323,18 +323,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 			}
 
 			case Id_toSource: {
-				BaseFunction realf = realFunction(thisObj, f);
-				int indent = 0;
-				int flags = Decompiler.TO_SOURCE_FLAG;
-				if (args.length != 0) {
-					indent = ScriptRuntime.toInt32(args[0]);
-					if (indent >= 0) {
-						flags = 0;
-					} else {
-						indent = 0;
-					}
-				}
-				return realf.decompile(indent, flags);
+				return "not_supported";
 			}
 
 			case Id_apply:

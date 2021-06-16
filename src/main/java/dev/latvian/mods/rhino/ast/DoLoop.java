@@ -66,21 +66,6 @@ public class DoLoop extends Loop {
 		this.whilePosition = whilePosition;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append("do ");
-		if (this.getInlineComment() != null) {
-			sb.append(this.getInlineComment().toSource(depth + 1)).append("\n");
-		}
-		sb.append(body.toSource(depth).trim());
-		sb.append(" while (");
-		sb.append(condition.toSource(0));
-		sb.append(");\n");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, the body, and then the while-expression.
 	 */

@@ -6,7 +6,6 @@
 
 package dev.latvian.mods.rhino.ast;
 
-import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.Token;
 
 /**
@@ -78,11 +77,6 @@ public class StringLiteral extends AstNode {
 
 	public void setQuoteCharacter(char c) {
 		quoteChar = c;
-	}
-
-	@Override
-	public String toSource(int depth) {
-		return new StringBuilder(makeIndent(depth)).append(quoteChar).append(ScriptRuntime.escapeString(value, quoteChar)).append(quoteChar).toString();
 	}
 
 	/**

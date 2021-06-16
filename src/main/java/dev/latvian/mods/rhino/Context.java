@@ -69,11 +69,6 @@ public class Context {
 	public static final int VERSION_UNKNOWN = -1;
 
 	/**
-	 * The default version.
-	 */
-	public static final int VERSION_DEFAULT = 0;
-
-	/**
 	 * JavaScript 1.0
 	 */
 	public static final int VERSION_1_0 = 100;
@@ -124,6 +119,11 @@ public class Context {
 	public static final int VERSION_ES6 = 200;
 
 	/**
+	 * The default version.
+	 */
+	public static final int VERSION_DEFAULT = VERSION_ES6;
+
+	/**
 	 * Controls behaviour of <code>Date.prototype.getYear()</code>.
 	 * If <code>hasFeature(FEATURE_NON_ECMA_GET_YEAR)</code> returns true,
 	 * Date.prototype.getYear subtructs 1900 only if 1900 &lt;= date &lt; 2000.
@@ -152,21 +152,6 @@ public class Context {
 	 * By default {@link #hasFeature(int)} returns false.
 	 */
 	public static final int FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER = 3;
-
-	/**
-	 * Control if <code>toString()</code> should returns the same result
-	 * as  <code>toSource()</code> when applied to objects and arrays.
-	 * If <code>hasFeature(FEATURE_TO_STRING_AS_SOURCE)</code> returns true,
-	 * calling <code>toString()</code> on JS objects gives the same result as
-	 * calling <code>toSource()</code>. That is it returns JS source with code
-	 * to create an object with all enumeratable fields of the original object
-	 * instead of printing <code>[object <i>result of
-	 * {@link Scriptable#getClassName()}</i>]</code>.
-	 * <p>
-	 * By default {@link #hasFeature(int)} returns true only if
-	 * the current JS version is set to {@link #VERSION_1_2}.
-	 */
-	public static final int FEATURE_TO_STRING_AS_SOURCE = 4;
 
 	/**
 	 * Control if properties <code>__proto__</code> and <code>__parent__</code>
@@ -583,7 +568,6 @@ public class Context {
 
 	public static boolean isValidLanguageVersion(int version) {
 		switch (version) {
-			case VERSION_DEFAULT:
 			case VERSION_1_0:
 			case VERSION_1_1:
 			case VERSION_1_2:

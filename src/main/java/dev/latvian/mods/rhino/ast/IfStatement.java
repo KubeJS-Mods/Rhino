@@ -146,45 +146,6 @@ public class IfStatement extends AstNode {
 		this.rp = rp;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		String pad = makeIndent(depth);
-		StringBuilder sb = new StringBuilder(32);
-		sb.append(pad);
-		sb.append("if (");
-		sb.append(condition.toSource(0));
-		sb.append(") ");
-		if (this.getInlineComment() != null) {
-			sb.append("    ").append(this.getInlineComment().toSource()).append("\n");
-		}
-		if (thenPart.getType() != Token.BLOCK) {
-			if (this.getInlineComment() == null) {
-				sb.append("\n");
-			}
-			sb.append(makeIndent(depth + 1));
-		}
-		sb.append(thenPart.toSource(depth).trim());
-		if (elsePart != null) {
-			if (thenPart.getType() != Token.BLOCK) {
-				sb.append("\n").append(pad).append("else ");
-			} else {
-				sb.append(" else ");
-			}
-			if (this.getElseKeyWordInlineComment() != null) {
-				sb.append("    ").append(this.getElseKeyWordInlineComment().toSource()).append("\n");
-			}
-			if (elsePart.getType() != Token.BLOCK && elsePart.getType() != Token.IF) {
-				if (this.getElseKeyWordInlineComment() == null) {
-					sb.append("\n");
-				}
-				sb.append(makeIndent(depth + 1));
-			}
-			sb.append(elsePart.toSource(depth).trim());
-		}
-		sb.append("\n");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, the condition, the then-part, and
 	 * if supplied, the else-part.

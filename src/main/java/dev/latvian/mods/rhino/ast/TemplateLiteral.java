@@ -132,22 +132,6 @@ public class TemplateLiteral extends AstNode {
 		return elements.get(index);
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append("`");
-		for (AstNode e : getElements()) {
-			if (e.getType() == Token.TEMPLATE_CHARS) {
-				sb.append(e.toSource(0));
-			} else {
-				sb.append("${").append(e.toSource(0)).append("}");
-			}
-		}
-		sb.append("`");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node.
 	 */

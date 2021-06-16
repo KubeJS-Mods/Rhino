@@ -141,7 +141,7 @@ final class NativeNumber extends IdScriptableObject {
 			}
 
 			case Id_toSource:
-				return "(new Number(" + ScriptRuntime.toString(value) + "))";
+				return "not_supported";
 
 			case Id_valueOf:
 				return ScriptRuntime.wrapNumber(value);

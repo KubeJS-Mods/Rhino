@@ -49,11 +49,6 @@ public class Decompiler {
 	public static final int ONLY_BODY_FLAG = 1 << 0;
 
 	/**
-	 * Flag to indicate that the decompilation generates toSource result.
-	 */
-	public static final int TO_SOURCE_FLAG = 1 << 1;
-
-	/**
 	 * Decompilation property to specify initial ident value.
 	 */
 	public static final int INITIAL_INDENT_PROP = 1;
@@ -269,7 +264,6 @@ public class Decompiler {
 
 		StringBuilder result = new StringBuilder();
 		boolean justFunctionBody = (0 != (flags & Decompiler.ONLY_BODY_FLAG));
-		boolean toSource = (0 != (flags & Decompiler.TO_SOURCE_FLAG));
 
 		// Spew tokens in source, for debugging.
 		// as TYPE number char
@@ -302,16 +296,10 @@ public class Decompiler {
 			topFunctionType = source.charAt(i + 1);
 		}
 
-		if (!toSource) {
-			// add an initial newline to exactly match js.
-			result.append('\n');
-			for (int j = 0; j < indent; j++) {
-				result.append(' ');
-			}
-		} else {
-			if (topFunctionType == FunctionNode.FUNCTION_EXPRESSION) {
-				result.append('(');
-			}
+		// add an initial newline to exactly match js.
+		result.append('\n');
+		for (int j = 0; j < indent; j++) {
+			result.append(' ');
 		}
 
 		while (i < length) {
@@ -424,9 +412,6 @@ public class Decompiler {
 					break;
 
 				case Token.EOL: {
-					if (toSource) {
-						break;
-					}
 					boolean newLine = true;
 					if (!afterFirstEOL) {
 						afterFirstEOL = true;
@@ -809,15 +794,9 @@ public class Decompiler {
 			++i;
 		}
 
-		if (!toSource) {
-			// add that trailing newline if it's an outermost function.
-			if (!justFunctionBody) {
-				result.append('\n');
-			}
-		} else {
-			if (topFunctionType == FunctionNode.FUNCTION_EXPRESSION) {
-				result.append(')');
-			}
+		// add that trailing newline if it's an outermost function.
+		if (!justFunctionBody) {
+			result.append('\n');
 		}
 
 		return result.toString();

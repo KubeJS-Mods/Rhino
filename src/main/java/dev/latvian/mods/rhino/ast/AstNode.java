@@ -13,7 +13,6 @@ import dev.latvian.mods.rhino.Token;
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -297,42 +296,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 	}
 
 	/**
-	 * Emits source code for this node.  Callee is responsible for calling this
-	 * function recursively on children, incrementing indent as appropriate.<p>
-	 * <p>
-	 * Note: if the parser was in error-recovery mode, some AST nodes may have
-	 * {@code null} children that are expected to be non-{@code null}
-	 * when no errors are present.  In this situation, the behavior of the
-	 * {@code toSource} method is undefined: {@code toSource}
-	 * implementations may assume that the AST node is error-free, since it is
-	 * intended to be invoked only at runtime after a successful parse.<p>
-	 *
-	 * @param depth the current recursion depth, typically beginning at 0
-	 *              when called on the root node.
-	 */
-	public abstract String toSource(int depth);
-
-	/**
-	 * Prints the source indented to depth 0.
-	 */
-	public String toSource() {
-		return this.toSource(0);
-	}
-
-	/**
-	 * Constructs an indentation string.
-	 *
-	 * @param indent the number of indentation steps
-	 */
-	public String makeIndent(int indent) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < indent; i++) {
-			sb.append("  ");
-		}
-		return sb.toString();
-	}
-
-	/**
 	 * Returns a short, descriptive name for the node, such as
 	 * "ArrayComprehension".
 	 */
@@ -463,25 +426,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 	protected void assertNotNull(Object arg) {
 		if (arg == null) {
 			throw new IllegalArgumentException("arg cannot be null");
-		}
-	}
-
-	/**
-	 * Prints a comma-separated item list into a {@link StringBuilder}.
-	 *
-	 * @param items a list to print
-	 * @param sb    a {@link StringBuilder} into which to print
-	 */
-	protected <T extends AstNode> void printList(List<T> items, StringBuilder sb) {
-		int max = items.size();
-		int count = 0;
-		for (AstNode item : items) {
-			sb.append(item.toSource(0));
-			if (count++ < max - 1) {
-				sb.append(", ");
-			} else if (item instanceof EmptyExpression) {
-				sb.append(",");
-			}
 		}
 	}
 

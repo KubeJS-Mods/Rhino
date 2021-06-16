@@ -95,17 +95,6 @@ public class Comment extends AstNode {
 		this.setLength(this.value.length());
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder(getLength() + 10);
-		sb.append(makeIndent(depth));
-		sb.append(value);
-		if (Token.CommentType.BLOCK_COMMENT == this.getCommentType()) {
-			sb.append("\n");
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Comment nodes are not visited during normal visitor traversals,
 	 * but comply with the {@link AstNode#visit} interface.

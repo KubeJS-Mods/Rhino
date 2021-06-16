@@ -381,13 +381,13 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				}
 
 				case Id_toString:
-					return toStringHelper(cx, scope, thisObj, cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE), false);
+					return toStringHelper(cx, scope, thisObj, false);
 
 				case Id_toLocaleString:
-					return toStringHelper(cx, scope, thisObj, false, true);
+					return toStringHelper(cx, scope, thisObj, true);
 
 				case Id_toSource:
-					return toStringHelper(cx, scope, thisObj, true, false);
+					return "not_supported";
 
 				case Id_join:
 					return js_join(cx, scope, thisObj, args);
@@ -990,7 +990,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		}
 	}
 
-	private static String toStringHelper(Context cx, Scriptable scope, Scriptable thisObj, boolean toSource, boolean toLocale) {
+	private static String toStringHelper(Context cx, Scriptable scope, Scriptable thisObj, boolean toLocale) {
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
 		/* It's probably redundant to handle long lengths in this
@@ -1003,12 +1003,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		// whether to return '4,unquoted,5' or '[4, "quoted", 5]'
 		String separator;
 
-		if (toSource) {
-			result.append('[');
-			separator = ", ";
-		} else {
-			separator = ",";
-		}
+		separator = ",";
 
 		boolean haslast = false;
 		long i = 0;
@@ -1031,19 +1026,18 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				cx.iterating.put(o, 0);
 
 				// make toSource print null and undefined values in recent versions
-				boolean skipUndefinedAndNull = !toSource || cx.getLanguageVersion() < Context.VERSION_1_5;
 				for (i = 0; i < length; i++) {
 					if (i > 0) {
 						result.append(separator);
 					}
 					Object elem = getRawElem(o, i);
-					if (elem == NOT_FOUND || (skipUndefinedAndNull && (elem == null || elem == Undefined.instance))) {
+					if (elem == NOT_FOUND || elem == null || elem == Undefined.instance) {
 						haslast = false;
 						continue;
 					}
 					haslast = true;
 
-					if (toSource) {
+					if (false) {
 						result.append(ScriptRuntime.uneval(cx, scope, elem));
 
 					} else if (elem instanceof String) {
@@ -1071,7 +1065,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			}
 		}
 
-		if (toSource) {
+		if (false) {
 			//for [,,].length behavior; we want toString to be symmetric.
 			if (!haslast && i > 0) {
 				result.append(", ]");

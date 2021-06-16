@@ -139,31 +139,6 @@ public class ForInLoop extends Loop {
 		this.eachPosition = eachPosition;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append("for ");
-		if (isForEach()) {
-			sb.append("each ");
-		}
-		sb.append("(");
-		sb.append(iterator.toSource(0));
-		if (isForOf) {
-			sb.append(" of ");
-		} else {
-			sb.append(" in ");
-		}
-		sb.append(iteratedObject.toSource(0));
-		sb.append(") ");
-		if (body.getType() == Token.BLOCK) {
-			sb.append(body.toSource(depth).trim()).append("\n");
-		} else {
-			sb.append("\n").append(body.toSource(depth + 1));
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, the iterator, the iterated object, and the body.
 	 */

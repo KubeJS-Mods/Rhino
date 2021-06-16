@@ -8,7 +8,6 @@ package dev.latvian.mods.rhino.ast;
 
 import dev.latvian.mods.rhino.CompilerEnvirons;
 import dev.latvian.mods.rhino.ErrorReporter;
-import dev.latvian.mods.rhino.Node;
 import dev.latvian.mods.rhino.Parser;
 import dev.latvian.mods.rhino.Token;
 
@@ -112,18 +111,6 @@ public class AstRoot extends ScriptNode {
 		visitComments(visitor);
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		for (Node node : this) {
-			sb.append(((AstNode) node).toSource(depth));
-			if (node.getType() == Token.COMMENT) {
-				sb.append("\n");
-			}
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * A debug-printer that includes comments (at the end).
 	 */
@@ -132,24 +119,5 @@ public class AstRoot extends ScriptNode {
 		DebugPrintVisitor dpv = new DebugPrintVisitor(new StringBuilder(1000));
 		visitAll(dpv);
 		return dpv.toString();
-	}
-
-	/**
-	 * Debugging function to check that the parser has set the parent
-	 * link for every node in the tree.
-	 *
-	 * @throws IllegalStateException if a parent link is missing
-	 */
-	public void checkParentLinks() {
-		this.visit(node -> {
-			int type = node.getType();
-			if (type == Token.SCRIPT) {
-				return true;
-			}
-			if (node.getParent() == null) {
-				throw new IllegalStateException("No parent for node: " + node + "\n" + node.toSource(0));
-			}
-			return true;
-		});
 	}
 }

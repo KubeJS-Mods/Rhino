@@ -84,11 +84,6 @@ public class NumberLiteral extends AstNode {
 		number = value;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		return makeIndent(depth) + (value == null ? "<null>" : value);
-	}
-
 	/**
 	 * Visits this node.  There are no children to visit.
 	 */

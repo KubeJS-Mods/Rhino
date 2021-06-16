@@ -114,16 +114,6 @@ public class LabeledStatement extends AstNode {
 		return true;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		for (Label label : labels) {
-			sb.append(label.toSource(depth));  // prints newline
-		}
-		sb.append(statement.toSource(depth + 1));
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then each label in the label-list, and finally the
 	 * statement.

@@ -48,11 +48,6 @@ public class ArrayComprehensionLoop extends ForInLoop {
 		throw new UnsupportedOperationException("this node type has no body");
 	}
 
-	@Override
-	public String toSource(int depth) {
-		return makeIndent(depth) + " for " + (isForEach() ? "each " : "") + "(" + iterator.toSource(0) + (isForOf() ? " of " : " in ") + iteratedObject.toSource(0) + ")";
-	}
-
 	/**
 	 * Visits the iterator expression and the iterated object expression.
 	 * There is no body-expression for this loop type.

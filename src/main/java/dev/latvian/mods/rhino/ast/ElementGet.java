@@ -117,17 +117,6 @@ public class ElementGet extends AstNode {
 		this.rb = rb;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append(target.toSource(0));
-		sb.append("[");
-		sb.append(element.toSource(0));
-		sb.append("]");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, the target, and the index expression.
 	 */

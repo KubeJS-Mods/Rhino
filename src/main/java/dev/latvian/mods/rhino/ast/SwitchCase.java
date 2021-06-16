@@ -117,32 +117,6 @@ public class SwitchCase extends AstNode {
 		statement.setParent(this);
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		if (expression == null) {
-			sb.append("default:\n");
-		} else {
-			sb.append("case ");
-			sb.append(expression.toSource(0));
-			sb.append(":");
-			if (this.getInlineComment() != null) {
-				sb.append(this.getInlineComment().toSource(depth + 1));
-			}
-			sb.append("\n");
-		}
-		if (statements != null) {
-			for (AstNode s : statements) {
-				sb.append(s.toSource(depth + 1));
-				if (s.getType() == Token.COMMENT && ((Comment) s).getCommentType() == Token.CommentType.LINE) {
-					sb.append("\n");
-				}
-			}
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then the case expression if present, then
 	 * each statement (if any are specified).

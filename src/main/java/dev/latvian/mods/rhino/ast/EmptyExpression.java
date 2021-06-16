@@ -30,11 +30,6 @@ public class EmptyExpression extends AstNode {
 		super(pos, len);
 	}
 
-	@Override
-	public String toSource(int depth) {
-		return makeIndent(depth);
-	}
-
 	/**
 	 * Visits this node.  There are no children.
 	 */

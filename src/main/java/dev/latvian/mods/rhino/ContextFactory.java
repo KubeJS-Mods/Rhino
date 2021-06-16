@@ -244,10 +244,6 @@ public class ContextFactory {
 			case Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER:
 				return true;
 
-			case Context.FEATURE_TO_STRING_AS_SOURCE:
-				version = cx.getLanguageVersion();
-				return version == Context.VERSION_1_2;
-
 			case Context.FEATURE_PARENT_PROTO_PROPERTIES:
 				return true;
 

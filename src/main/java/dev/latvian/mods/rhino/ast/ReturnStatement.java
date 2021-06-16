@@ -56,19 +56,6 @@ public class ReturnStatement extends AstNode {
 		}
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append("return");
-		if (returnValue != null) {
-			sb.append(" ");
-			sb.append(returnValue.toSource(0));
-		}
-		sb.append(";\n");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then the return value if specified.
 	 */

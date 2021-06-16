@@ -155,9 +155,4 @@ public class Jump extends AstNode {
 	public void visit(NodeVisitor visitor) {
 		throw new UnsupportedOperationException(this.toString());
 	}
-
-	@Override
-	public String toSource(int depth) {
-		throw new UnsupportedOperationException(this.toString());
-	}
 }

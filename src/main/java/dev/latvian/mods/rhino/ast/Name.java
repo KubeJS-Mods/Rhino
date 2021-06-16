@@ -140,11 +140,6 @@ public class Name extends AstNode {
 		return identifier == null ? 0 : identifier.length();
 	}
 
-	@Override
-	public String toSource(int depth) {
-		return makeIndent(depth) + (identifier == null ? "<null>" : identifier);
-	}
-
 	/**
 	 * Visits this node.  There are no children to visit.
 	 */

@@ -182,15 +182,6 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 
 			case Id_toString: {
-				if (cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE)) {
-					String s = ScriptRuntime.defaultObjectToSource(cx, scope, thisObj, args);
-					int L = s.length();
-					if (L != 0 && s.charAt(0) == '(' && s.charAt(L - 1) == ')') {
-						// Strip () that surrounds toSource
-						s = s.substring(1, L - 1);
-					}
-					return s;
-				}
 				return ScriptRuntime.defaultObjectToString(thisObj);
 			}
 

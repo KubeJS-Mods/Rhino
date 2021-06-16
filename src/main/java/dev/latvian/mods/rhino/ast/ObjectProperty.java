@@ -99,22 +99,4 @@ public class ObjectProperty extends InfixExpression {
 	public boolean isMethod() {
 		return isGetterMethod() || isSetterMethod() || isNormalMethod();
 	}
-
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("\n");
-		sb.append(makeIndent(depth + 1));
-		if (isGetterMethod()) {
-			sb.append("get ");
-		} else if (isSetterMethod()) {
-			sb.append("set ");
-		}
-		sb.append(left.toSource(getType() == Token.COLON ? 0 : depth));
-		if (type == Token.COLON) {
-			sb.append(": ");
-		}
-		sb.append(right.toSource(getType() == Token.COLON ? 0 : depth + 1));
-		return sb.toString();
-	}
 }

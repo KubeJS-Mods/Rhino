@@ -151,24 +151,6 @@ public class SwitchStatement extends Jump {
 		this.rp = rp;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		String pad = makeIndent(depth);
-		StringBuilder sb = new StringBuilder();
-		sb.append(pad);
-		sb.append("switch (");
-		sb.append(expression.toSource(0));
-		sb.append(") {\n");
-		if (cases != null) {
-			for (SwitchCase sc : cases) {
-				sb.append(sc.toSource(depth + 1));
-			}
-		}
-		sb.append(pad);
-		sb.append("}\n");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then the switch-expression, then the cases
 	 * in lexical order.

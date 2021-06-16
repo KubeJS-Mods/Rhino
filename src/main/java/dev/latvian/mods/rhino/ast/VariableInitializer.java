@@ -103,18 +103,6 @@ public class VariableInitializer extends AstNode {
 		}
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append(target.toSource(0));
-		if (initializer != null) {
-			sb.append(" = ");
-			sb.append(initializer.toSource(0));
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then the target expression, then the initializer
 	 * expression if present.

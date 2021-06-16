@@ -431,8 +431,7 @@ final class NativeString extends IdScriptableObject {
 					return cs instanceof String ? cs : cs.toString();
 
 				case Id_toSource: {
-					CharSequence s = realThis(thisObj, f).string;
-					return "(new String(\"" + ScriptRuntime.escapeString(s.toString()) + "\"))";
+					return "not_supported";
 				}
 
 				case Id_charAt:

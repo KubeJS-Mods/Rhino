@@ -141,22 +141,6 @@ public class FunctionCall extends AstNode {
 		this.rp = rp;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append(target.toSource(0));
-		sb.append("(");
-		if (arguments != null) {
-			printList(arguments, sb);
-		}
-		sb.append(")");
-		if (this.getInlineComment() != null) {
-			sb.append(this.getInlineComment().toSource(depth)).append("\n");
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, the target object, and the arguments.
 	 */

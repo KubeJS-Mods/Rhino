@@ -107,7 +107,7 @@ final class NativeBoolean extends IdScriptableObject {
 				return value ? "true" : "false";
 
 			case Id_toSource:
-				return value ? "(new Boolean(true))" : "(new Boolean(false))";
+				return "not_supported";
 
 			case Id_valueOf:
 				return ScriptRuntime.wrapBoolean(value);

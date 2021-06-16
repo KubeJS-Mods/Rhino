@@ -82,19 +82,6 @@ public class BreakStatement extends Jump {
 		setJumpStatement(target);
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append("break");
-		if (breakLabel != null) {
-			sb.append(" ");
-			sb.append(breakLabel.toSource(0));
-		}
-		sb.append(";\n");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then visits the break label if non-{@code null}.
 	 */

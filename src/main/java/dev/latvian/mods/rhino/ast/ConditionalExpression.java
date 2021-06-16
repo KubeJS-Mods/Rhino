@@ -145,18 +145,6 @@ public class ConditionalExpression extends AstNode {
 		return trueExpression.hasSideEffects() && falseExpression.hasSideEffects();
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append(testExpression.toSource(depth));
-		sb.append(" ? ");
-		sb.append(trueExpression.toSource(0));
-		sb.append(" : ");
-		sb.append(falseExpression.toSource(0));
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then the test-expression, the true-expression,
 	 * and the false-expression.

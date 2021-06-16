@@ -153,21 +153,6 @@ public class CatchClause extends AstNode {
 		this.ifPosition = ifPosition;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append("catch (");
-		sb.append(varName.toSource(0));
-		if (catchCondition != null) {
-			sb.append(" if ");
-			sb.append(catchCondition.toSource(0));
-		}
-		sb.append(") ");
-		sb.append(body.toSource(0));
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, the catch var name node, the condition if
 	 * non-{@code null}, and the catch body.

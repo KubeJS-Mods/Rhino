@@ -148,23 +148,6 @@ public class ArrayComprehension extends Scope {
 		this.rp = rp;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder(250);
-		sb.append("[");
-		sb.append(result.toSource(0));
-		for (ArrayComprehensionLoop loop : loops) {
-			sb.append(loop.toSource(0));
-		}
-		if (filter != null) {
-			sb.append(" if (");
-			sb.append(filter.toSource(0));
-			sb.append(")");
-		}
-		sb.append("]");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, the result expression, the loops, and the optional
 	 * filter.

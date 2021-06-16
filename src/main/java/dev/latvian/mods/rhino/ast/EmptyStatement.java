@@ -28,13 +28,6 @@ public class EmptyStatement extends AstNode {
 		super(pos, len);
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth)).append(";\n");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node.  There are no children.
 	 */

@@ -397,57 +397,6 @@ public class FunctionNode extends ScriptNode {
 		return memberExprNode;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		boolean isArrow = functionType == ARROW_FUNCTION;
-		if (!isMethod()) {
-			sb.append(makeIndent(depth));
-			if (!isArrow) {
-				sb.append("function");
-			}
-		}
-		if (functionName != null) {
-			sb.append(" ");
-			sb.append(functionName.toSource(0));
-		}
-		if (params == null) {
-			sb.append("() ");
-		} else if (isArrow && lp == -1) {
-			// no paren
-			printList(params, sb);
-			sb.append(" ");
-		} else {
-			sb.append("(");
-			printList(params, sb);
-			sb.append(") ");
-		}
-		if (isArrow) {
-			sb.append("=> ");
-		}
-		if (isExpressionClosure) {
-			AstNode body = getBody();
-			if (body.getLastChild() instanceof ReturnStatement) {
-				// omit "return" keyword, just print the expression
-				body = ((ReturnStatement) body.getLastChild()).getReturnValue();
-				sb.append(body.toSource(0));
-				if (functionType == FUNCTION_STATEMENT) {
-					sb.append(";");
-				}
-			} else {
-				// should never happen
-				sb.append(" ");
-				sb.append(body.toSource(0));
-			}
-		} else {
-			sb.append(getBody().toSource(depth).trim());
-		}
-		if (functionType == FUNCTION_STATEMENT || isMethod()) {
-			sb.append("\n");
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, the function name node if supplied,
 	 * the parameters, and the body.  If there is a member-expr node,

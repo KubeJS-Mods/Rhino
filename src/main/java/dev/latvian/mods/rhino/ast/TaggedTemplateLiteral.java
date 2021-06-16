@@ -46,15 +46,6 @@ public class TaggedTemplateLiteral extends AstNode {
 		this.templateLiteral = templateLiteral;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append(target.toSource(0));
-		sb.append(templateLiteral.toSource(0));
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node.
 	 */

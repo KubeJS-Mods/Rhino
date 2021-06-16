@@ -899,73 +899,7 @@ public class ScriptRuntime {
 	}
 
 	static String defaultObjectToSource(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		boolean toplevel, iterating;
-		if (cx.iterating == null) {
-			toplevel = true;
-			iterating = false;
-			cx.iterating = new ObjToIntMap(31);
-		} else {
-			toplevel = false;
-			iterating = cx.iterating.has(thisObj);
-		}
-
-		StringBuilder result = new StringBuilder(128);
-		if (toplevel) {
-			result.append("(");
-		}
-		result.append('{');
-
-		// Make sure cx.iterating is set to null when done
-		// so we don't leak memory
-		try {
-			if (!iterating) {
-				cx.iterating.intern(thisObj); // stop recursion.
-				Object[] ids = thisObj.getIds();
-				for (int i = 0; i < ids.length; i++) {
-					Object id = ids[i];
-					Object value;
-					if (id instanceof Integer) {
-						int intId = (Integer) id;
-						value = thisObj.get(intId, thisObj);
-						if (value == Scriptable.NOT_FOUND) {
-							continue;   // a property has been removed
-						}
-						if (i > 0) {
-							result.append(", ");
-						}
-						result.append(intId);
-					} else {
-						String strId = (String) id;
-						value = thisObj.get(strId, thisObj);
-						if (value == Scriptable.NOT_FOUND) {
-							continue;   // a property has been removed
-						}
-						if (i > 0) {
-							result.append(", ");
-						}
-						if (ScriptRuntime.isValidIdentifierName(strId, cx, cx.isStrictMode())) {
-							result.append(strId);
-						} else {
-							result.append('\'');
-							result.append(ScriptRuntime.escapeString(strId, '\''));
-							result.append('\'');
-						}
-					}
-					result.append(':');
-					result.append(ScriptRuntime.uneval(cx, scope, value));
-				}
-			}
-		} finally {
-			if (toplevel) {
-				cx.iterating = null;
-			}
-		}
-
-		result.append('}');
-		if (toplevel) {
-			result.append(')');
-		}
-		return result.toString();
+		return "not_supported";
 	}
 
 	public static Scriptable toObject(Scriptable scope, Object val) {

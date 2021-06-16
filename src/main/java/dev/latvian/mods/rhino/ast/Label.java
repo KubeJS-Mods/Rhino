@@ -60,15 +60,6 @@ public class Label extends Jump {
 		this.name = name;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append(name);
-		sb.append(":\n");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this label.  There are no children to visit.
 	 */

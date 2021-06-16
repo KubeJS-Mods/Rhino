@@ -58,11 +58,6 @@ public class Yield extends AstNode {
 		}
 	}
 
-	@Override
-	public String toSource(int depth) {
-		return value == null ? "yield" : "yield " + value.toSource(0);
-	}
-
 	/**
 	 * Visits this node, and if present, the yielded value.
 	 */

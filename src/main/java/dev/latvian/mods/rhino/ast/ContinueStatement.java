@@ -94,19 +94,6 @@ public class ContinueStatement extends Jump {
 		}
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append("continue");
-		if (label != null) {
-			sb.append(" ");
-			sb.append(label.toSource(0));
-		}
-		sb.append(";\n");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then visits the label if non-{@code null}.
 	 */

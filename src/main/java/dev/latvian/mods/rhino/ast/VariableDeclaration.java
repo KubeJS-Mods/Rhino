@@ -132,24 +132,6 @@ public class VariableDeclaration extends AstNode {
 		return Token.typeToName(type).toLowerCase();
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append(declTypeName());
-		sb.append(" ");
-		printList(variables, sb);
-		if (isStatement()) {
-			sb.append(";");
-		}
-		if (this.getInlineComment() != null) {
-			sb.append(this.getInlineComment().toSource(depth)).append("\n");
-		} else if (isStatement()) {
-			sb.append("\n");
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then each {@link VariableInitializer} child.
 	 */

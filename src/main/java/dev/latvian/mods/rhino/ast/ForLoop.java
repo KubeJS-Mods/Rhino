@@ -102,35 +102,6 @@ public class ForLoop extends Loop {
 		increment.setParent(this);
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append("for (");
-		sb.append(initializer.toSource(0));
-		sb.append("; ");
-		sb.append(condition.toSource(0));
-		sb.append("; ");
-		sb.append(increment.toSource(0));
-		sb.append(") ");
-		if (this.getInlineComment() != null) {
-			sb.append(this.getInlineComment().toSource()).append("\n");
-		}
-		if (body.getType() == Token.BLOCK) {
-			String bodySource = body.toSource(depth);
-			if (this.getInlineComment() == null) {
-				bodySource = bodySource.trim();
-			}
-			sb.append(bodySource).append("\n");
-		} else {
-			if (this.getInlineComment() == null) {
-				sb.append("\n");
-			}
-			sb.append(body.toSource(depth + 1));
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, the initializer expression, the loop condition
 	 * expression, the increment expression, and then the loop body.

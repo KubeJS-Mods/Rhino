@@ -108,28 +108,6 @@ public class WithStatement extends AstNode {
 		this.rp = rp;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append("with (");
-		sb.append(expression.toSource(0));
-		sb.append(") ");
-		if (this.getInlineComment() != null) {
-			sb.append(this.getInlineComment().toSource(depth + 1));
-		}
-		if (statement.getType() == Token.BLOCK) {
-			if (this.getInlineComment() != null) {
-				sb.append("\n");
-			}
-			sb.append(statement.toSource(depth).trim());
-			sb.append("\n");
-		} else {
-			sb.append("\n").append(statement.toSource(depth + 1));
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then the with-object, then the body statement.
 	 */

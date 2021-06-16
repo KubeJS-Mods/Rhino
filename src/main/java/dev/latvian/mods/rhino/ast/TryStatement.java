@@ -136,25 +136,6 @@ public class TryStatement extends AstNode {
 		this.finallyPosition = finallyPosition;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder(250);
-		sb.append(makeIndent(depth));
-		sb.append("try ");
-		if (this.getInlineComment() != null) {
-			sb.append(this.getInlineComment().toSource(depth + 1)).append("\n");
-		}
-		sb.append(tryBlock.toSource(depth).trim());
-		for (CatchClause cc : getCatchClauses()) {
-			sb.append(cc.toSource(depth));
-		}
-		if (finallyBlock != null) {
-			sb.append(" finally ");
-			sb.append(finallyBlock.toSource(depth));
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then the try-block, then any catch clauses,
 	 * and then any finally block.

@@ -125,24 +125,6 @@ public class UnaryExpression extends AstNode {
 		this.isPostfix = isPostfix;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		int type = getType();
-		if (!isPostfix) {
-			sb.append(operatorToString(type));
-			if (type == Token.TYPEOF || type == Token.DELPROP || type == Token.VOID) {
-				sb.append(" ");
-			}
-		}
-		sb.append(operand.toSource());
-		if (isPostfix) {
-			sb.append(operatorToString(type));
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then the operand.
 	 */

@@ -124,20 +124,6 @@ public class LetNode extends Scope {
 		this.rp = rp;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		String pad = makeIndent(depth);
-		StringBuilder sb = new StringBuilder();
-		sb.append(pad);
-		sb.append("let (");
-		printList(variables.getVariables(), sb);
-		sb.append(") ");
-		if (body != null) {
-			sb.append(body.toSource(depth));
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, the variable list, and if present, the body
 	 * expression or statement.

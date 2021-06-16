@@ -64,24 +64,6 @@ public class NewExpression extends FunctionCall {
 		}
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append("new ");
-		sb.append(target.toSource(0));
-		sb.append("(");
-		if (arguments != null) {
-			printList(arguments, sb);
-		}
-		sb.append(")");
-		if (initializer != null) {
-			sb.append(" ");
-			sb.append(initializer.toSource(0));
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, the target, and each argument.  If there is
 	 * a trailing initializer node, visits that last.

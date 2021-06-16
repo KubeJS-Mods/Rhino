@@ -15,18 +15,9 @@ events.listen('abc', event => {
 	}
 
 	let someArray = [
-		'packagedexcrafting:ender_crafter',
-		'prefab:block_compressed_stone',
-		'prefab:block_double_compressed_stone',
-		'prefab:block_triple_compressed_stone',
-		'prefab:block_compressed_dirt',
-		'prefab:block_double_compressed_dirt',
 		'prefab:block_compressed_obsidian',
 		/prefab:.*_obsidian/,
-		'prefab:glass_slab',
-		'prefab:glass_stairs',
 		{id: 'thermal:redprint'},
-		'thermal:lock',
 	]
 
 	someArray.forEach(i => {

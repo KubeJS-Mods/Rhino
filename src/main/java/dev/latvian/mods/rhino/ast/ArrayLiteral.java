@@ -177,18 +177,6 @@ public class ArrayLiteral extends AstNode implements DestructuringForm {
 		return isDestructuring;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(makeIndent(depth));
-		sb.append("[");
-		if (elements != null) {
-			printList(elements, sb);
-		}
-		sb.append("]");
-		return sb.toString();
-	}
-
 	/**
 	 * Visits this node, then visits its element expressions in order.
 	 * Any empty elements are represented by {@link EmptyExpression}

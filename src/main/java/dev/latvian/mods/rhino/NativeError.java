@@ -143,7 +143,7 @@ final class NativeError extends IdScriptableObject {
 				return js_toString(thisObj);
 
 			case Id_toSource:
-				return js_toSource(cx, scope, thisObj);
+				return "not_supported";
 
 			case ConstructorId_captureStackTrace:
 				js_captureStackTrace(cx, thisObj, args);
@@ -238,44 +238,6 @@ final class NativeError extends IdScriptableObject {
 		} else {
 			return name + ": " + msg;
 		}
-	}
-
-	private static String js_toSource(Context cx, Scriptable scope, Scriptable thisObj) {
-		// Emulation of SpiderMonkey behavior
-		Object name = getProperty(thisObj, "name");
-		Object message = getProperty(thisObj, "message");
-		Object fileName = getProperty(thisObj, "fileName");
-		Object lineNumber = getProperty(thisObj, "lineNumber");
-
-		StringBuilder sb = new StringBuilder();
-		sb.append("(new ");
-		if (name == NOT_FOUND) {
-			name = Undefined.instance;
-		}
-		sb.append(ScriptRuntime.toString(name));
-		sb.append("(");
-		if (message != NOT_FOUND || fileName != NOT_FOUND || lineNumber != NOT_FOUND) {
-			if (message == NOT_FOUND) {
-				message = "";
-			}
-			sb.append(ScriptRuntime.uneval(cx, scope, message));
-			if (fileName != NOT_FOUND || lineNumber != NOT_FOUND) {
-				sb.append(", ");
-				if (fileName == NOT_FOUND) {
-					fileName = "";
-				}
-				sb.append(ScriptRuntime.uneval(cx, scope, fileName));
-				if (lineNumber != NOT_FOUND) {
-					int line = ScriptRuntime.toInt32(lineNumber);
-					if (line != 0) {
-						sb.append(", ");
-						sb.append(ScriptRuntime.toString(line));
-					}
-				}
-			}
-		}
-		sb.append("))");
-		return sb.toString();
 	}
 
 	private static void js_captureStackTrace(Context cx, Scriptable thisObj, Object[] args) {

@@ -45,11 +45,6 @@ public class ErrorNode extends AstNode {
 		this.message = message;
 	}
 
-	@Override
-	public String toSource(int depth) {
-		return "";
-	}
-
 	/**
 	 * Error nodes are not visited during normal visitor traversals,
 	 * but comply with the {@link AstNode#visit} interface.

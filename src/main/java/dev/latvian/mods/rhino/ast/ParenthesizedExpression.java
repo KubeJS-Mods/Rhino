@@ -60,11 +60,6 @@ public class ParenthesizedExpression extends AstNode {
 		expression.setParent(this);
 	}
 
-	@Override
-	public String toSource(int depth) {
-		return makeIndent(depth) + "(" + expression.toSource(0) + ")";
-	}
-
 	/**
 	 * Visits this node, then the child expression.
 	 */
