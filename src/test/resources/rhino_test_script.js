@@ -1,10 +1,27 @@
-console.info('Hello!')
-const y = x => x * x
-console.info(y(5))
-console.info(sqTest(8))
-
 events.listen('abc', event => {
+	console.info('Hello!')
+	const y = x => x * x
+	console.info(y(5))
 	console.info(sqTest(8))
+
+	let someArray = [
+		'packagedexcrafting:ender_crafter',
+		'prefab:block_compressed_stone',
+		'prefab:block_double_compressed_stone',
+		'prefab:block_triple_compressed_stone',
+		'prefab:block_compressed_dirt',
+		'prefab:block_double_compressed_dirt',
+		'prefab:block_compressed_obsidian',
+		'prefab:block_double_compressed_obsidian',
+		'prefab:glass_slab',
+		'prefab:glass_stairs',
+		'thermal:redprint',
+		'thermal:lock',
+	]
+
+	someArray.forEach(i => {
+		console.infoClass({output: i})
+	})
 
 	const numbers = [49, 1, 48, 521]
 	numbers.sort()
@@ -92,21 +109,7 @@ ${a + "z"} ${b.toLowerCase()}`
 	let seq = customBlock === 'kubejs:custom_block'
 
 	console.info(`${customBlock}: ${eq}, ${seq}`)
-
-	const constTest = 20
-	console.info(constTest)
-
-	if (true) {
-		const constTest2 = 30
-		console.info(constTest2)
-	}
-
-	if (true) {
-		const constTest2 = 40
-		console.info(constTest2)
-	}
-
-	console.info(constTest2)
+	console.infoClass(event)
 
 	/*
 	console.info(java)
