@@ -44,10 +44,6 @@ public class RegExpImpl implements RegExpProxy {
 		switch (actionType) {
 			case RA_MATCH: {
 				int optarg = Integer.MAX_VALUE;
-				if (cx.getLanguageVersion() < Context.VERSION_1_6) {
-					optarg = 1;
-				}
-
 				NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
 				Object rval = matchOrReplace(cx, scope, thisObj, args, this, data, re);
 				return data.arrayobj == null ? rval : data.arrayobj;
@@ -55,22 +51,12 @@ public class RegExpImpl implements RegExpProxy {
 
 			case RA_SEARCH: {
 				int optarg = Integer.MAX_VALUE;
-				if (cx.getLanguageVersion() < Context.VERSION_1_6) {
-					optarg = 1;
-				}
-
 				NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
 				return matchOrReplace(cx, scope, thisObj, args, this, data, re);
 			}
 
 			case RA_REPLACE: {
 				boolean useRE = args.length > 0 && args[0] instanceof NativeRegExp;
-
-				// ignore other parameters
-				if (cx.getLanguageVersion() < Context.VERSION_1_6) {
-					useRE |= args.length > 2;
-				}
-
 				NativeRegExp re = null;
 				String search = null;
 				if (useRE) {
@@ -83,7 +69,7 @@ public class RegExpImpl implements RegExpProxy {
 				Object arg1 = args.length < 2 ? Undefined.instance : args[1];
 				String repstr = null;
 				Function lambda = null;
-				if (arg1 instanceof Function && (cx.getLanguageVersion() < Context.VERSION_ES6 || !(arg1 instanceof NativeRegExp))) {
+				if (arg1 instanceof Function && (!(arg1 instanceof NativeRegExp))) {
 					lambda = (Function) arg1;
 				} else {
 					repstr = ScriptRuntime.toString(arg1);
@@ -210,7 +196,6 @@ public class RegExpImpl implements RegExpProxy {
 		int length = target.length();
 		int result;
 
-		int version = cx.getLanguageVersion();
 		NativeRegExp re = (NativeRegExp) reObj;
 		again:
 		while (true) {  // imitating C label
@@ -246,12 +231,7 @@ public class RegExpImpl implements RegExpProxy {
 					 * sep->length to our return value.
 					 */
 					if (i == length) {
-						if (version == Context.VERSION_1_2) {
-							matchlen[0] = 1;
-							result = i;
-						} else {
-							result = -1;
-						}
+						result = -1;
 						break;
 					}
 					i++;
@@ -384,12 +364,6 @@ public class RegExpImpl implements RegExpProxy {
 		}
 
 		/* Allow a real backslash (literal "\\") to escape "$1" etc. */
-		int version = cx.getLanguageVersion();
-		if (version != Context.VERSION_DEFAULT && version <= Context.VERSION_1_4) {
-			if (dp > 0 && da.charAt(dp - 1) == '\\') {
-				return null;
-			}
-		}
 		int daL = da.length();
 		if (dp + 1 >= daL) {
 			return null;
@@ -398,40 +372,24 @@ public class RegExpImpl implements RegExpProxy {
 		dc = da.charAt(dp + 1);
 		if (NativeRegExp.isDigit(dc)) {
 			int cp;
-			if (version != Context.VERSION_DEFAULT && version <= Context.VERSION_1_4) {
-				if (dc == '0') {
-					return null;
-				}
-				/* Check for overflow to avoid gobbling arbitrary decimal digits. */
-				num = 0;
-				cp = dp;
-				while (++cp < daL && NativeRegExp.isDigit(dc = da.charAt(cp))) {
+			int parenCount = (res.parens == null) ? 0 : res.parens.length;
+			num = dc - '0';
+			if (num > parenCount) {
+				return null;
+			}
+			cp = dp + 2;
+			if ((dp + 2) < daL) {
+				dc = da.charAt(dp + 2);
+				if (NativeRegExp.isDigit(dc)) {
 					tmp = 10 * num + (dc - '0');
-					if (tmp < num) {
-						break;
-					}
-					num = tmp;
-				}
-			} else {  /* ECMA 3, 1-9 or 01-99 */
-				int parenCount = (res.parens == null) ? 0 : res.parens.length;
-				num = dc - '0';
-				if (num > parenCount) {
-					return null;
-				}
-				cp = dp + 2;
-				if ((dp + 2) < daL) {
-					dc = da.charAt(dp + 2);
-					if (NativeRegExp.isDigit(dc)) {
-						tmp = 10 * num + (dc - '0');
-						if (tmp <= parenCount) {
-							cp++;
-							num = tmp;
-						}
+					if (tmp <= parenCount) {
+						cp++;
+						num = tmp;
 					}
 				}
-				if (num == 0) {
-					return null;  /* $0 or $00 is not valid */
-				}
+			}
+			if (num == 0) {
+				return null;  /* $0 or $00 is not valid */
 			}
 			/* Adjust num from 1 $n-origin to 0 array-index-origin. */
 			num--;
@@ -448,17 +406,6 @@ public class RegExpImpl implements RegExpProxy {
 			case '+':
 				return res.lastParen;
 			case '`':
-				if (version == Context.VERSION_1_2) {
-					/*
-					 * JS1.2 imitated the Perl4 bug where left context at each step
-					 * in an iterative use of a global regexp started from last match,
-					 * not from the start of the target string.  But Perl4 does start
-					 * $` at the beginning of the target string when it is used in a
-					 * substitution, so we emulate that special case here.
-					 */
-					res.leftContext.index = 0;
-					res.leftContext.length = res.lastMatch.index;
-				}
 				return res.leftContext;
 			case '\'':
 				return res.rightContext;
@@ -554,8 +501,7 @@ public class RegExpImpl implements RegExpProxy {
 		int len = 0;
 		boolean[] matched = {false};
 		String[][] parens = {null};
-		int version = cx.getLanguageVersion();
-		while ((match = find_split(cx, scope, target, separator, version, reProxy, re, ip, matchlen, matched, parens)) >= 0) {
+		while ((match = find_split(cx, scope, target, separator, reProxy, re, ip, matchlen, matched, parens)) >= 0) {
 			if ((limited && len >= limit) || (match > target.length())) {
 				break;
 			}
@@ -586,16 +532,6 @@ public class RegExpImpl implements RegExpProxy {
 				matched[0] = false;
 			}
 			ip[0] = match + matchlen[0];
-
-			if (version < Context.VERSION_1_3 && version != Context.VERSION_DEFAULT) {
-				/*
-				 * Deviate from ECMA to imitate Perl, which omits a final
-				 * split unless a limit argument is given and big enough.
-				 */
-				if (!limited && ip[0] == target.length()) {
-					break;
-				}
-			}
 		}
 		return result;
 	}
@@ -612,44 +548,9 @@ public class RegExpImpl implements RegExpProxy {
 	 * separator occurrence if found, or the string length if no
 	 * separator is found.
 	 */
-	private static int find_split(Context cx, Scriptable scope, String target, String separator, int version, RegExpProxy reProxy, Scriptable re, int[] ip, int[] matchlen, boolean[] matched, String[][] parensp) {
+	private static int find_split(Context cx, Scriptable scope, String target, String separator, RegExpProxy reProxy, Scriptable re, int[] ip, int[] matchlen, boolean[] matched, String[][] parensp) {
 		int i = ip[0];
 		int length = target.length();
-
-		/*
-		 * Perl4 special case for str.split(' '), only if the user has selected
-		 * JavaScript1.2 explicitly.  Split on whitespace, and skip leading w/s.
-		 * Strange but true, apparently modeled after awk.
-		 */
-		if (version == Context.VERSION_1_2 && re == null && separator.length() == 1 && separator.charAt(0) == ' ') {
-			/* Skip leading whitespace if at front of str. */
-			if (i == 0) {
-				while (i < length && Character.isWhitespace(target.charAt(i))) {
-					i++;
-				}
-				ip[0] = i;
-			}
-
-			/* Don't delimit whitespace at end of string. */
-			if (i == length) {
-				return -1;
-			}
-
-			/* Skip over the non-whitespace chars. */
-			while (i < length && !Character.isWhitespace(target.charAt(i))) {
-				i++;
-			}
-
-			/* Now skip the next run of whitespace. */
-			int j = i;
-			while (j < length && Character.isWhitespace(target.charAt(j))) {
-				j++;
-			}
-
-			/* Update matchlen to count delimiter chars. */
-			matchlen[0] = j - i;
-			return i;
-		}
 
 		/*
 		 * Stop if past end of string.  If at end of string, we will
@@ -675,15 +576,6 @@ public class RegExpImpl implements RegExpProxy {
 		}
 
 		/*
-		 * Deviate from ECMA by never splitting an empty string by any separator
-		 * string into a non-empty array (an array of length 1 that contains the
-		 * empty string).
-		 */
-		if (version != Context.VERSION_DEFAULT && version < Context.VERSION_1_3 && length == 0) {
-			return -1;
-		}
-
-		/*
 		 * Special case: if sep is the empty string, split str into
 		 * one character substrings.  Let our caller worry about
 		 * whether to split once at end of string into an empty
@@ -694,13 +586,6 @@ public class RegExpImpl implements RegExpProxy {
 		 * to include an additional null string at the end of the substring list.
 		 */
 		if (separator.length() == 0) {
-			if (version == Context.VERSION_1_2) {
-				if (i == length) {
-					matchlen[0] = 1;
-					return i;
-				}
-				return i + 1;
-			}
 			return (i == length) ? -1 : i + 1;
 		}
 

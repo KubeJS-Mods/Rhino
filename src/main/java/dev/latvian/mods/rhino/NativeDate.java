@@ -363,13 +363,7 @@ final class NativeDate extends IdScriptableObject {
 					}
 					t = YearFromTime(t);
 					if (id == Id_getYear) {
-						if (cx.hasFeature(Context.FEATURE_NON_ECMA_GET_YEAR)) {
-							if (1900 <= t && t < 2000) {
-								t -= 1900;
-							}
-						} else {
-							t -= 1900;
-						}
+						t -= 1900;
 					}
 				}
 				return ScriptRuntime.wrapNumber(t);

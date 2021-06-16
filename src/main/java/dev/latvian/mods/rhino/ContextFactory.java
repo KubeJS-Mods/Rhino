@@ -62,9 +62,6 @@ import java.security.PrivilegedAction;
  *     {
  *         // Turn on maximum compatibility with MSIE scripts
  *         switch (featureIndex) {
- *             case {@link Context#FEATURE_NON_ECMA_GET_YEAR}:
- *                 return true;
- *
  *             case {@link Context#FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME}:
  *                 return true;
  *
@@ -221,23 +218,7 @@ public class ContextFactory {
 	 * additional subclasses.
 	 */
 	protected boolean hasFeature(Context cx, int featureIndex) {
-		int version;
 		switch (featureIndex) {
-			case Context.FEATURE_NON_ECMA_GET_YEAR:
-				/*
-				 * During the great date rewrite of 1.3, we tried to track the
-				 * evolving ECMA standard, which then had a definition of
-				 * getYear which always subtracted 1900.  Which we
-				 * implemented, not realizing that it was incompatible with
-				 * the old behavior...  now, rather than thrash the behavior
-				 * yet again, we've decided to leave it with the - 1900
-				 * behavior and point people to the getFullYear method.  But
-				 * we try to protect existing scripts that have specified a
-				 * version...
-				 */
-				version = cx.getLanguageVersion();
-				return (version == Context.VERSION_1_0 || version == Context.VERSION_1_1 || version == Context.VERSION_1_2);
-
 			case Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME:
 				return false;
 
@@ -270,12 +251,6 @@ public class ContextFactory {
 
 			case Context.FEATURE_V8_EXTENSIONS:
 				return true;
-
-			case Context.FEATURE_OLD_UNDEF_NULL_THIS:
-				return cx.getLanguageVersion() <= Context.VERSION_1_7;
-
-			case Context.FEATURE_ENUMERATE_IDS_FIRST:
-				return cx.getLanguageVersion() >= Context.VERSION_ES6;
 
 			case Context.FEATURE_THREAD_SAFE_OBJECTS:
 				return false;

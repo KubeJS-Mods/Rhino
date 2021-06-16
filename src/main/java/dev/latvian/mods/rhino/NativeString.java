@@ -473,10 +473,8 @@ final class NativeString extends IdScriptableObject {
 					if (id == Id_startsWith) {
 						return idx == 0;
 					}
-					if (id == Id_endsWith) {
-						return idx != -1;
-					}
-					// fallthrough
+					return idx != -1;
+				// fallthrough
 
 				case Id_padStart:
 				case Id_padEnd:
@@ -748,11 +746,7 @@ final class NativeString extends IdScriptableObject {
 	@Override
 	public int getAttributes(int index) {
 		if (0 <= index && index < string.length()) {
-			int attribs = READONLY | PERMANENT;
-			if (Context.getContext().getLanguageVersion() < Context.VERSION_ES6) {
-				attribs |= DONTENUM;
-			}
-			return attribs;
+			return READONLY | PERMANENT;
 		}
 		return super.getAttributes(index);
 	}
@@ -761,7 +755,7 @@ final class NativeString extends IdScriptableObject {
 	protected Object[] getIds(boolean nonEnumerable, boolean getSymbols) {
 		// In ES6, Strings have entries in the property map for each character.
 		Context cx = Context.getCurrentContext();
-		if ((cx != null) && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
+		if ((cx != null)) {
 			Object[] sids = super.getIds(nonEnumerable, getSymbols);
 			Object[] a = new Object[sids.length + string.length()];
 			int i;
@@ -776,7 +770,7 @@ final class NativeString extends IdScriptableObject {
 
 	@Override
 	protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
-		if (!(id instanceof Symbol) && (cx != null) && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
+		if (!(id instanceof Symbol) && (cx != null)) {
 			ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, id);
 			if (s.stringId == null && 0 <= s.index && s.index < string.length()) {
 				String value = String.valueOf(string.charAt(s.index));
@@ -879,14 +873,9 @@ final class NativeString extends IdScriptableObject {
 
 			// swap if end < start
 			if (end < start) {
-				if (cx.getLanguageVersion() != Context.VERSION_1_2) {
-					double temp = start;
-					start = end;
-					end = temp;
-				} else {
-					// Emulate old JDK1.0 java.lang.String.substring()
-					end = start;
-				}
+				double temp = start;
+				start = end;
+				end = temp;
 			}
 		}
 		return target.subSequence((int) start, (int) end);
@@ -1033,8 +1022,8 @@ final class NativeString extends IdScriptableObject {
 	}
 
 	/**
-	 * @see https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padstart
-	 * @see https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padend
+	 * @see <a href='https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padstart'>padstart</a>
+	 * @see <a href='https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padend'>padend</a>
 	 */
 	private static String js_pad(Context cx, Scriptable thisObj, IdFunctionObject f, Object[] args, boolean atStart) {
 		String pad = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));

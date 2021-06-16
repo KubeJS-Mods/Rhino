@@ -24,11 +24,7 @@ public final class NativeIterator extends IdScriptableObject {
 		iterator.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 
 		// Generator
-		if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-			ES6Generator.init(scope, sealed);
-		} else {
-			NativeGenerator.init(scope, sealed);
-		}
+		ES6Generator.init(scope, sealed);
 
 		// StopIteration
 		NativeObject obj = new StopIteration();

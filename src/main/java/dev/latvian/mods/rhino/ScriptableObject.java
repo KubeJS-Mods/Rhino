@@ -2792,7 +2792,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		}
 
 		Context cx = Context.getCurrentContext();
-		if ((cx != null) && cx.hasFeature(Context.FEATURE_ENUMERATE_IDS_FIRST)) {
+		if (cx != null) {
 			// Move all the numeric IDs to the front in numeric order
 			Arrays.sort(result, KEY_COMPARATOR);
 		}

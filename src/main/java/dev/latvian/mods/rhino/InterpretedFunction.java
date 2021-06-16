@@ -128,11 +128,6 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	}
 
 	@Override
-	protected int getLanguageVersion() {
-		return idata.languageVersion;
-	}
-
-	@Override
 	protected int getParamCount() {
 		return idata.argCount;
 	}

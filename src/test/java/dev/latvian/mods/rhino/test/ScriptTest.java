@@ -23,7 +23,6 @@ public class ScriptTest {
 
 		try {
 			Context cx = Context.enter();
-			cx.setLanguageVersion(Context.VERSION_ES6);
 
 			cx.setClassShutter((fullClassName, type) -> {
 				System.out.println("-- Checking class permissions " + fullClassName + " / " + type);

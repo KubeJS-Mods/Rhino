@@ -35,7 +35,7 @@ public class NodeTransformer {
 		// Support strict mode inside a function only for "ES6" language level
 		// and above. Otherwise, we will end up breaking backward compatibility for
 		// many existing scripts.
-		if ((env.getLanguageVersion() >= Context.VERSION_ES6) && tree.isInStrictMode()) {
+		if (tree.isInStrictMode()) {
 			useStrictMode = true;
 		}
 		transformCompilationUnit(tree, useStrictMode);

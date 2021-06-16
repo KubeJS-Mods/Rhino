@@ -53,84 +53,8 @@ import java.util.Set;
 
 @SuppressWarnings("ThrowableNotThrown")
 public class Context {
-	/**
-	 * Language versions.
-	 *
-	 * All integral values are reserved for future version numbers.
-	 */
 
-	/**
-	 * The unknown version.
-	 * <p>Be aware, this version will not support many of the newer
-	 * language features and will not change in the future.</p>
-	 * <p>Please use one of the other constants like VERSION_ES6 to
-	 * get support for recent language features.</p>
-	 */
-	public static final int VERSION_UNKNOWN = -1;
-
-	/**
-	 * JavaScript 1.0
-	 */
-	public static final int VERSION_1_0 = 100;
-
-	/**
-	 * JavaScript 1.1
-	 */
-	public static final int VERSION_1_1 = 110;
-
-	/**
-	 * JavaScript 1.2
-	 */
-	public static final int VERSION_1_2 = 120;
-
-	/**
-	 * JavaScript 1.3
-	 */
-	public static final int VERSION_1_3 = 130;
-
-	/**
-	 * JavaScript 1.4
-	 */
-	public static final int VERSION_1_4 = 140;
-
-	/**
-	 * JavaScript 1.5
-	 */
-	public static final int VERSION_1_5 = 150;
-
-	/**
-	 * JavaScript 1.6
-	 */
-	public static final int VERSION_1_6 = 160;
-
-	/**
-	 * JavaScript 1.7
-	 */
-	public static final int VERSION_1_7 = 170;
-
-	/**
-	 * JavaScript 1.8
-	 */
-	public static final int VERSION_1_8 = 180;
-
-	/**
-	 * ECMAScript 6.
-	 */
 	public static final int VERSION_ES6 = 200;
-
-	/**
-	 * The default version.
-	 */
-	public static final int VERSION_DEFAULT = VERSION_ES6;
-
-	/**
-	 * Controls behaviour of <code>Date.prototype.getYear()</code>.
-	 * If <code>hasFeature(FEATURE_NON_ECMA_GET_YEAR)</code> returns true,
-	 * Date.prototype.getYear subtructs 1900 only if 1900 &lt;= date &lt; 2000.
-	 * The default behavior of {@link #hasFeature(int)} is always to subtruct
-	 * 1900 as rquired by ECMAScript B.2.4.
-	 */
-	public static final int FEATURE_NON_ECMA_GET_YEAR = 1;
 
 	/**
 	 * Control if member expression as function name extension is available.
@@ -275,24 +199,6 @@ public class Context {
 	public static final int FEATURE_V8_EXTENSIONS = 14;
 
 	/**
-	 * Defines how an undefined  "this" parameter is handled in certain calls. Previously Rhino
-	 * would convert an undefined "this" to null, whereas recent specs call for it to be treated
-	 * differently. Default is to be set if language version &lt;= 1.7.
-	 *
-	 * @since 1.7.7
-	 */
-	public static final int FEATURE_OLD_UNDEF_NULL_THIS = 15;
-
-	/**
-	 * If set, then the order of property key enumeration will be first numeric keys in numeric order,
-	 * followed by string keys in order of creation, and finally Symbol keys, as specified in ES6.
-	 * Default is true for language version &gt;= "ES6" and false otherwise.
-	 *
-	 * @since 1.7.7.1
-	 */
-	public static final int FEATURE_ENUMERATE_IDS_FIRST = 16;
-
-	/**
 	 * If set, then all objects will have a thread-safe property map. (Note that this doesn't make
 	 * everything else that they do thread-safe -- that depends on the specific implementation.
 	 * If not set, users should not share Rhino objects between threads, unless the "sync"
@@ -342,7 +248,6 @@ public class Context {
 			throw new IllegalArgumentException("factory == null");
 		}
 		this.factory = factory;
-		version = VERSION_DEFAULT;
 		maximumInterpreterStackDepth = Integer.MAX_VALUE;
 	}
 
@@ -532,62 +437,13 @@ public class Context {
 		throw new IllegalStateException();
 	}
 
-	/**
-	 * Get the current language version.
-	 * <p>
-	 * The language version number affects JavaScript semantics as detailed
-	 * in the overview documentation.
-	 *
-	 * @return an integer that is one of VERSION_1_0, VERSION_1_1, etc.
-	 */
-	public final int getLanguageVersion() {
-		return version;
-	}
-
-	/**
-	 * Set the language version.
-	 *
-	 * <p>
-	 * Setting the language version will affect functions and scripts compiled
-	 * subsequently. See the overview documentation for version-specific
-	 * behavior.
-	 *
-	 * @param version the version as specified by VERSION_1_0, VERSION_1_1, etc.
-	 */
+	@Deprecated
 	public void setLanguageVersion(int version) {
 		if (sealed) {
 			onSealedMutation();
 		}
-		checkLanguageVersion(version);
-		Object listeners = propertyListeners;
-		if (listeners != null && version != this.version) {
-			firePropertyChangeImpl(listeners, languageVersionProperty, this.version, version);
-		}
-		this.version = version;
-	}
 
-	public static boolean isValidLanguageVersion(int version) {
-		switch (version) {
-			case VERSION_1_0:
-			case VERSION_1_1:
-			case VERSION_1_2:
-			case VERSION_1_3:
-			case VERSION_1_4:
-			case VERSION_1_5:
-			case VERSION_1_6:
-			case VERSION_1_7:
-			case VERSION_1_8:
-			case VERSION_ES6:
-				return true;
-		}
-		return false;
-	}
-
-	public static void checkLanguageVersion(int version) {
-		if (isValidLanguageVersion(version)) {
-			return;
-		}
-		throw new IllegalArgumentException("Bad language version: " + version);
+		System.out.println("Context#setLanguageVersion(v) is deprecated!");
 	}
 
 	/**
@@ -1947,7 +1803,6 @@ public class Context {
 	 * @see #FEATURE_NON_ECMA_GET_YEAR
 	 * @see #FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME
 	 * @see #FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER
-	 * @see #FEATURE_TO_STRING_AS_SOURCE
 	 * @see #FEATURE_PARENT_PROTO_PROPERTIES
 	 * @see #FEATURE_DYNAMIC_SCOPE
 	 * @see #FEATURE_STRICT_VARS
@@ -2247,10 +2102,6 @@ public class Context {
 		return regExpProxy;
 	}
 
-	final boolean isVersionECMA1() {
-		return version == VERSION_DEFAULT || version >= VERSION_1_3;
-	}
-
 	// The method must NOT be public or protected
 	SecurityController getSecurityController() {
 		SecurityController global = SecurityController.global();
@@ -2337,8 +2188,6 @@ public class Context {
 	ObjToIntMap iterating;
 
 	Object interpreterSecurityDomain;
-
-	int version;
 
 	private SecurityController securityController;
 	private boolean hasClassShutter;

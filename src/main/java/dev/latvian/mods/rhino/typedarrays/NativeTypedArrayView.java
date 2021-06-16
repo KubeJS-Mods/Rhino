@@ -258,7 +258,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 		int id = f.methodId();
 		switch (id) {
 			case Id_constructor:
-				if (thisObj != null && cx.getLanguageVersion() >= Context.VERSION_ES6) {
+				if (thisObj != null) {
 					throw ScriptRuntime.typeError1("msg.only.from.new", getClassName());
 				}
 				return js_constructor(cx, scope, args);
@@ -310,12 +310,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 				NativeTypedArrayView<T> self = realThis(thisObj, f);
 				int start = isArg(args, 0) ? ScriptRuntime.toInt32(args[0]) : 0;
 				int end = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : self.length;
-
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6 || args.length > 0) {
-					return self.js_subarray(cx, scope, start, end);
-				}
-
-				throw ScriptRuntime.constructError("Error", "invalid arguments");
+				return self.js_subarray(cx, scope, start, end);
 
 			case SymbolId_iterator:
 				return new NativeArrayIterator(scope, thisObj, ARRAY_ITERATOR_TYPE.VALUES);

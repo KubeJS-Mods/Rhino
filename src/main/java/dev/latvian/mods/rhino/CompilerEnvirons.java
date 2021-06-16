@@ -13,7 +13,6 @@ import java.util.Set;
 public class CompilerEnvirons {
 	public CompilerEnvirons() {
 		errorReporter = DefaultErrorReporter.instance;
-		languageVersion = Context.VERSION_DEFAULT;
 		generateDebugInfo = true;
 		reservedKeywordAsIdentifier = true;
 		allowMemberExprAsFunctionName = false;
@@ -26,7 +25,6 @@ public class CompilerEnvirons {
 
 	public void initFromContext(Context cx) {
 		setErrorReporter(cx.getErrorReporter());
-		languageVersion = cx.getLanguageVersion();
 		generateDebugInfo = (!cx.isGeneratingDebugChanged() || cx.isGeneratingDebug());
 		reservedKeywordAsIdentifier = cx.hasFeature(Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER);
 		allowMemberExprAsFunctionName = cx.hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME);
@@ -49,15 +47,6 @@ public class CompilerEnvirons {
 			throw new IllegalArgumentException();
 		}
 		this.errorReporter = errorReporter;
-	}
-
-	public final int getLanguageVersion() {
-		return languageVersion;
-	}
-
-	public void setLanguageVersion(int languageVersion) {
-		Context.checkLanguageVersion(languageVersion);
-		this.languageVersion = languageVersion;
 	}
 
 	public final boolean isGenerateDebugInfo() {
@@ -220,7 +209,6 @@ public class CompilerEnvirons {
 		env.setRecordingComments(true);
 		env.setStrictMode(true);
 		env.setWarnTrailingComma(true);
-		env.setLanguageVersion(Context.VERSION_1_7);
 		env.setReservedKeywordAsIdentifier(true);
 		env.setIdeMode(true);
 		env.setErrorReporter(new ErrorCollector());

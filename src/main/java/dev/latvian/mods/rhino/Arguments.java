@@ -29,15 +29,8 @@ final class Arguments extends IdScriptableObject {
 		args = activation.originalArgs;
 		lengthObj = args.length;
 
-		NativeFunction f = activation.function;
-		calleeObj = f;
-
-		int version = f.getLanguageVersion();
-		if (version <= Context.VERSION_1_3 && version != Context.VERSION_DEFAULT) {
-			callerObj = null;
-		} else {
-			callerObj = NOT_FOUND;
-		}
+		calleeObj = activation.function;
+		callerObj = NOT_FOUND;
 
 		defineProperty(SymbolKey.ITERATOR, iteratorMethod, DONTENUM);
 	}

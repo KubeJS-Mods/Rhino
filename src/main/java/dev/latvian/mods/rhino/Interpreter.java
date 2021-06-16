@@ -979,21 +979,10 @@ public final class Interpreter extends Icode implements Evaluator {
 		return interpretLoop(cx, frame, null);
 	}
 
-	static class GeneratorState {
-		GeneratorState(int operation, Object value) {
-			this.operation = operation;
-			this.value = value;
-		}
-
-		int operation;
-		Object value;
-		RuntimeException returnedException;
-	}
-
 	public static Object resumeGenerator(Context cx, Scriptable scope, int operation, Object savedState, Object value) {
 		CallFrame frame = (CallFrame) savedState;
 		GeneratorState generatorState = new GeneratorState(operation, value);
-		if (operation == NativeGenerator.GENERATOR_CLOSE) {
+		if (operation == GeneratorState.GENERATOR_CLOSE) {
 			try {
 				return interpretLoop(cx, frame, generatorState);
 			} catch (RuntimeException e) {
@@ -1142,11 +1131,7 @@ public final class Interpreter extends Icode implements Evaluator {
 									frame.pc--; // we want to come back here when we resume
 									CallFrame generatorFrame = captureFrameForGenerator(frame);
 									generatorFrame.frozen = true;
-									if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-										frame.result = new ES6Generator(frame.scope, generatorFrame.fnOrScript, generatorFrame);
-									} else {
-										frame.result = new NativeGenerator(frame.scope, generatorFrame.fnOrScript, generatorFrame);
-									}
+									frame.result = new ES6Generator(frame.scope, generatorFrame.fnOrScript, generatorFrame);
 									break Loop;
 								}
 								// We are now resuming execution. Fall through to YIELD case.
@@ -2087,7 +2072,7 @@ public final class Interpreter extends Icode implements Evaluator {
 			int exState;
 			ContinuationJump cjump = null;
 
-			if (generatorState != null && generatorState.operation == NativeGenerator.GENERATOR_CLOSE && throwable == generatorState.value) {
+			if (generatorState != null && generatorState.operation == GeneratorState.GENERATOR_CLOSE && throwable == generatorState.value) {
 				exState = EX_FINALLY_STATE;
 			} else if (throwable instanceof JavaScriptException) {
 				exState = EX_CATCH_STATE;
@@ -2676,7 +2661,7 @@ public final class Interpreter extends Icode implements Evaluator {
 	}
 
 	private static Object freezeGenerator(Context cx, CallFrame frame, int stackTop, GeneratorState generatorState, boolean yieldStar) {
-		if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
+		if (generatorState.operation == GeneratorState.GENERATOR_CLOSE) {
 			// Error: no yields when generator is closing
 			throw ScriptRuntime.typeError0("msg.yield.closing");
 		}
@@ -2699,15 +2684,15 @@ public final class Interpreter extends Icode implements Evaluator {
 		frame.frozen = false;
 		int sourceLine = getIndex(frame.idata.itsICode, frame.pc);
 		frame.pc += 2; // skip line number data
-		if (generatorState.operation == NativeGenerator.GENERATOR_THROW) {
+		if (generatorState.operation == GeneratorState.GENERATOR_THROW) {
 			// processing a call to <generator>.throw(exception): must
 			// act as if exception was thrown from resumption point.
 			return new JavaScriptException(generatorState.value, frame.idata.itsSourceFile, sourceLine);
 		}
-		if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
+		if (generatorState.operation == GeneratorState.GENERATOR_CLOSE) {
 			return generatorState.value;
 		}
-		if (generatorState.operation != NativeGenerator.GENERATOR_SEND) {
+		if (generatorState.operation != dev.latvian.mods.rhino.GeneratorState.GENERATOR_SEND) {
 			throw Kit.codeBug();
 		}
 		if ((op == Token.YIELD) || (op == Icode_YIELD_STAR)) {

@@ -75,7 +75,7 @@ class CodeGenerator extends Icode {
 			scriptOrFn = tree;
 		}
 
-		itsData = new InterpreterData(compilerEnv.getLanguageVersion(), scriptOrFn.getSourceName(), encodedSource, scriptOrFn.isInStrictMode());
+		itsData = new InterpreterData(scriptOrFn.getSourceName(), encodedSource, scriptOrFn.isInStrictMode());
 		itsData.topLevel = true;
 
 		if (returnFunction) {
@@ -469,7 +469,7 @@ class CodeGenerator extends Icode {
 			case Token.RETURN:
 				updateLineNumber(node);
 				if (node.getIntProp(Node.GENERATOR_END_PROP, 0) != 0) {
-					if ((child == null) || (compilerEnv.getLanguageVersion() < Context.VERSION_ES6)) {
+					if ((child == null)) {
 						// End generator function with no result, or old language version
 						// in which generators never return a result.
 						addIcode(Icode_GENERATOR_END);

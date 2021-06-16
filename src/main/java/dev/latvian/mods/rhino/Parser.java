@@ -611,14 +611,7 @@ public class Parser {
 	}
 
 	private AstNode parseFunctionBody(int type, FunctionNode fnNode) throws IOException {
-		boolean isExpressionClosure = false;
-		if (!matchToken(Token.LC, true)) {
-			if (compilerEnv.getLanguageVersion() < Context.VERSION_1_8 && type != FunctionNode.ARROW_FUNCTION) {
-				reportError("msg.no.brace.body");
-			} else {
-				isExpressionClosure = true;
-			}
-		}
+		boolean isExpressionClosure = !matchToken(Token.LC, true);
 		boolean isArrow = type == FunctionNode.ARROW_FUNCTION;
 		++nestingOfFunction;
 		int pos = ts.tokenBeg;
@@ -801,7 +794,7 @@ public class Parser {
 			}
 		} else if (matchToken(Token.LP, true)) {
 			// Anonymous function:  leave name as null
-		} else if (matchToken(Token.MUL, true) && (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6)) {
+		} else if (matchToken(Token.MUL, true)) {
 			// ES6 generator function
 			return function(type, true);
 		} else {
@@ -1426,7 +1419,7 @@ public class Parser {
 				isForIn = true;
 				inPos = ts.tokenBeg - forPos;
 				cond = expr();  // object over which we're iterating
-			} else if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6 && matchToken(Token.NAME, true) && "of".equals(ts.getString())) {
+			} else if (matchToken(Token.NAME, true) && "of".equals(ts.getString())) {
 				isForOf = true;
 				inPos = ts.tokenBeg - forPos;
 				cond = expr();  // object over which we're iterating
@@ -1821,7 +1814,7 @@ public class Parser {
 		int lineno = ts.lineno, pos = ts.tokenBeg, end = ts.tokenEnd;
 
 		boolean yieldStar = false;
-		if ((tt == Token.YIELD) && (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) && (peekToken() == Token.MUL)) {
+		if (tt == Token.YIELD && peekToken() == Token.MUL) {
 			yieldStar = true;
 			consumeToken();
 		}
@@ -1838,10 +1831,6 @@ public class Parser {
 			case Token.ERROR:
 				break;
 			case Token.YIELD:
-				if (compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
-					// Take extra care to preserve language compatibility
-					break;
-				}
 				// fallthrough
 			default:
 				e = expr();
@@ -2329,16 +2318,7 @@ public class Parser {
 				case Token.SHEQ:
 				case Token.SHNE:
 					consumeToken();
-					int parseToken = tt;
-					if (compilerEnv.getLanguageVersion() == Context.VERSION_1_2) {
-						// JavaScript 1.2 uses shallow equality for == and != .
-						if (tt == Token.EQ) {
-							parseToken = Token.SHEQ;
-						} else if (tt == Token.NE) {
-							parseToken = Token.SHNE;
-						}
-					}
-					pn = new InfixExpression(parseToken, pn, relExpr(), opPos);
+					pn = new InfixExpression(tt, pn, relExpr(), opPos);
 					continue;
 			}
 			break;
@@ -2678,7 +2658,7 @@ public class Parser {
 		consumeToken();
 
 		int maybeName = nextToken();
-		if (maybeName != Token.NAME && !(compilerEnv.isReservedKeywordAsIdentifier() && TokenStream.isKeyword(ts.getString(), compilerEnv.getLanguageVersion(), inUseStrictDirective))) {
+		if (maybeName != Token.NAME && !(compilerEnv.isReservedKeywordAsIdentifier() && TokenStream.isKeyword(ts.getString(), inUseStrictDirective))) {
 			reportError("msg.no.name.after.dot");
 		}
 
@@ -3251,7 +3231,7 @@ public class Parser {
 				break;
 
 			default:
-				if (compilerEnv.isReservedKeywordAsIdentifier() && TokenStream.isKeyword(ts.getString(), compilerEnv.getLanguageVersion(), inUseStrictDirective)) {
+				if (compilerEnv.isReservedKeywordAsIdentifier() && TokenStream.isKeyword(ts.getString(), inUseStrictDirective)) {
 					// convert keyword to property name, e.g. ({if: 1})
 					pname = createNameNode();
 					break;
@@ -3266,7 +3246,7 @@ public class Parser {
 		// Support, e.g., |var {x, y} = o| as destructuring shorthand
 		// for |var {x: x, y: y} = o|, as implemented in spidermonkey JS 1.8.
 		int tt = peekToken();
-		if ((tt == Token.COMMA || tt == Token.RC) && ptt == Token.NAME && compilerEnv.getLanguageVersion() >= Context.VERSION_1_8) {
+		if ((tt == Token.COMMA || tt == Token.RC) && ptt == Token.NAME) {
 			if (!inDestructuringAssignment) {
 				reportError("msg.bad.object.init");
 			}
@@ -3406,11 +3386,6 @@ public class Parser {
 			activation = true;
 		} else if (compilerEnv.getActivationNames() != null && compilerEnv.getActivationNames().contains(name)) {
 			activation = true;
-		} else if ("length".equals(name)) {
-			if (token == Token.GETPROP && compilerEnv.getLanguageVersion() == Context.VERSION_1_2) {
-				// Use of "length" in 1.2 requires an activation object.
-				activation = true;
-			}
 		}
 		if (activation) {
 			setRequiresActivation();

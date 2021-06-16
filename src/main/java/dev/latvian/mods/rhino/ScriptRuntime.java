@@ -156,7 +156,7 @@ public class ScriptRuntime {
 		new LazilyLoadedCtor(scope, "RegExp", "dev.latvian.mods.rhino.regexp.NativeRegExp", sealed, true);
 		new LazilyLoadedCtor(scope, "Continuation", "dev.latvian.mods.rhino.NativeContinuation", sealed, true);
 
-		if (((cx.getLanguageVersion() >= Context.VERSION_1_8) && cx.hasFeature(Context.FEATURE_V8_EXTENSIONS)) || (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
+		if (cx.hasFeature(Context.FEATURE_V8_EXTENSIONS)) {
 			new LazilyLoadedCtor(scope, "ArrayBuffer", "dev.latvian.mods.rhino.typedarrays.NativeArrayBuffer", sealed, true);
 			new LazilyLoadedCtor(scope, "Int8Array", "dev.latvian.mods.rhino.typedarrays.NativeInt8Array", sealed, true);
 			new LazilyLoadedCtor(scope, "Uint8Array", "dev.latvian.mods.rhino.typedarrays.NativeUint8Array", sealed, true);
@@ -170,15 +170,13 @@ public class ScriptRuntime {
 			new LazilyLoadedCtor(scope, "DataView", "dev.latvian.mods.rhino.typedarrays.NativeDataView", sealed, true);
 		}
 
-		if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-			NativeSymbol.init(cx, scope, sealed);
-			NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed);
-			NativeCollectionIterator.init(scope, NativeMap.ITERATOR_TAG, sealed);
-			NativeMap.init(cx, scope, sealed);
-			NativeSet.init(cx, scope, sealed);
-			NativeWeakMap.init(scope, sealed);
-			NativeWeakSet.init(scope, sealed);
-		}
+		NativeSymbol.init(cx, scope, sealed);
+		NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed);
+		NativeCollectionIterator.init(scope, NativeMap.ITERATOR_TAG, sealed);
+		NativeMap.init(cx, scope, sealed);
+		NativeSet.init(cx, scope, sealed);
+		NativeWeakMap.init(scope, sealed);
+		NativeWeakSet.init(scope, sealed);
 
 		if (scope instanceof TopLevel) {
 			((TopLevel) scope).cacheBuiltins(scope, sealed);
@@ -296,19 +294,7 @@ public class ScriptRuntime {
 				return (!Double.isNaN(d) && d != 0.0);
 			}
 			if (val instanceof Scriptable) {
-				if (val instanceof ScriptableObject && ((ScriptableObject) val).avoidObjectDetection()) {
-					return false;
-				}
-				if (Context.getContext().isVersionECMA1()) {
-					// pure ECMA
-					return true;
-				}
-				// ECMA extension
-				val = ((Scriptable) val).getDefaultValue(BooleanClass);
-				if ((val instanceof Scriptable) && !isSymbol(val)) {
-					throw errorWithClassName("msg.primitive.expected", val);
-				}
-				continue;
+				return !(val instanceof ScriptableObject) || !((ScriptableObject) val).avoidObjectDetection();
 			}
 			warnAboutNonJSObject(val);
 			return true;
@@ -575,7 +561,7 @@ public class ScriptRuntime {
 		//    ToNumber('0b1') => NaN
 		//    ToNumber('0o5') => NaN
 		final Context cx = Context.getCurrentContext();
-		final boolean oldParsingMode = cx == null || cx.getLanguageVersion() < Context.VERSION_ES6;
+		final boolean oldParsingMode = cx == null;
 
 		// Handle non-base10 numbers
 		if (startChar == '0') {
@@ -755,7 +741,7 @@ public class ScriptRuntime {
 				return false;
 			}
 		}
-		return !TokenStream.isKeyword(s, cx.getLanguageVersion(), isStrict);
+		return !TokenStream.isKeyword(s, isStrict);
 	}
 
 	public static CharSequence toCharSequence(Object val) {
@@ -1438,7 +1424,7 @@ public class ScriptRuntime {
 	 * Version of setObjectElem when elem is a valid JS identifier name.
 	 */
 	public static Object setObjectProp(Object obj, String property, Object value, Context cx, Scriptable scope) {
-		if (!(obj instanceof Scriptable) && cx.isStrictMode() && cx.getLanguageVersion() >= Context.VERSION_1_8) {
+		if (!(obj instanceof Scriptable) && cx.isStrictMode()) {
 			throw undefWriteError(obj, property, value);
 		}
 
@@ -2214,15 +2200,9 @@ public class ScriptRuntime {
 		Callable function = getCallable(thisObj);
 
 		Scriptable callThis = null;
+
 		if (L != 0) {
-			if (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
-				callThis = toObjectOrNull(cx, args[0], scope);
-			} else {
-				callThis = args[0] == Undefined.instance ? Undefined.SCRIPTABLE_UNDEFINED : toObjectOrNull(cx, args[0], scope);
-			}
-		}
-		if (callThis == null && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
-			callThis = getTopCallScope(cx); // This covers the case of args[0] == (null|undefined) as well.
+			callThis = args[0] == Undefined.instance ? Undefined.SCRIPTABLE_UNDEFINED : toObjectOrNull(cx, args[0], scope);
 		}
 
 		Object[] callArgs;
@@ -3429,15 +3409,7 @@ public class ScriptRuntime {
 	}
 
 	static void checkDeprecated(Context cx, String name) {
-		int version = cx.getLanguageVersion();
-		if (version >= Context.VERSION_1_4 || version == Context.VERSION_DEFAULT) {
-			String msg = getMessage1("msg.deprec.ctor", name);
-			if (version == Context.VERSION_DEFAULT) {
-				Context.reportWarning(msg);
-			} else {
-				throw Context.reportRuntimeError(msg);
-			}
-		}
+		throw Context.reportRuntimeError(getMessage1("msg.deprec.ctor", name));
 	}
 
 	public static String getMessage0(String messageId) {

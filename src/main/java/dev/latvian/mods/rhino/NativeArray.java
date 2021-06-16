@@ -634,17 +634,6 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		return indices;
 	}
 
-	@Override
-	public Object getDefaultValue(Class<?> hint) {
-		if (hint == ScriptRuntime.NumberClass) {
-			Context cx = Context.getContext();
-			if (cx.getLanguageVersion() == Context.VERSION_1_2) {
-				return length;
-			}
-		}
-		return super.getDefaultValue(hint);
-	}
-
 	private ScriptableObject defaultIndexPropertyDescriptor(Object value) {
 		Scriptable scope = getParentScope();
 		if (scope == null) {
@@ -706,12 +695,6 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			return new NativeArray(0);
 		}
 
-		// Only use 1 arg as first element for version 1.2; for
-		// any other version (including 1.3) follow ECMA and use it as
-		// a length.
-		if (cx.getLanguageVersion() == Context.VERSION_1_2) {
-			return new NativeArray(args);
-		}
 		Object arg0 = args[0];
 		if (args.length > 1 || !(arg0 instanceof Number)) {
 			return new NativeArray(args);
@@ -1234,19 +1217,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		}
 
 		length += args.length;
-		Object lengthObj = setLengthProperty(cx, o, length);
 
-		/*
-		 * If JS1.2, follow Perl4 by returning the last thing pushed.
-		 * Otherwise, return the new array length.
-		 */
-		if (cx.getLanguageVersion() == Context.VERSION_1_2)
-		// if JS1.2 && no arguments, return undefined.
-		{
-			return args.length == 0 ? Undefined.instance : args[args.length - 1];
-		}
-
-		return lengthObj;
+		return setLengthProperty(cx, o, length);
 	}
 
 	private static Object js_pop(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
@@ -1403,45 +1375,25 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		/* If there are elements to remove, put them into the return value. */
 		Object result;
 		if (count != 0) {
-			if (count == 1 && (cx.getLanguageVersion() == Context.VERSION_1_2)) {
-				/*
-				 * JS lacks "list context", whereby in Perl one turns the
-				 * single scalar that's spliced out into an array just by
-				 * assigning it to @single instead of $single, or by using it
-				 * as Perl push's first argument, for instance.
-				 *
-				 * JS1.2 emulated Perl too closely and returned a non-Array for
-				 * the single-splice-out case, requiring callers to test and
-				 * wrap in [] if necessary.  So JS1.3, default, and other
-				 * versions all return an array of length 1 for uniformity.
-				 */
-				result = getElem(cx, o, begin);
+			if (denseMode) {
+				int intLen = (int) (end - begin);
+				Object[] copy = new Object[intLen];
+				System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
+				result = cx.newArray(scope, copy);
 			} else {
-				if (denseMode) {
-					int intLen = (int) (end - begin);
-					Object[] copy = new Object[intLen];
-					System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
-					result = cx.newArray(scope, copy);
-				} else {
-					Scriptable resultArray = cx.newArray(scope, 0);
-					for (long last = begin; last != end; last++) {
-						Object temp = getRawElem(o, last);
-						if (temp != NOT_FOUND) {
-							setElem(cx, resultArray, last - begin, temp);
-						}
+				Scriptable resultArray = cx.newArray(scope, 0);
+				for (long last = begin; last != end; last++) {
+					Object temp = getRawElem(o, last);
+					if (temp != NOT_FOUND) {
+						setElem(cx, resultArray, last - begin, temp);
 					}
-					// Need to set length for sparse result array
-					setLengthProperty(cx, resultArray, end - begin);
-					result = resultArray;
 				}
+				// Need to set length for sparse result array
+				setLengthProperty(cx, resultArray, end - begin);
+				result = resultArray;
 			}
-		} else { // (count == 0)
-			if (cx.getLanguageVersion() == Context.VERSION_1_2) {
-				/* Emulate C JS1.2; if no elements are removed, return undefined. */
-				result = Undefined.instance;
-			} else {
-				result = cx.newArray(scope, 0);
-			}
+		} else {
+			result = cx.newArray(scope, 0);
 		}
 
 		/* Find the direction (up or down) to copy and make way for argv. */
@@ -1499,16 +1451,6 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			}
 		}
 
-		if (cx.getLanguageVersion() < Context.VERSION_ES6) {
-			// Otherwise, for older Rhino versions, fall back to the old algorithm, which treats things with
-			// the Array constructor as arrays. However, this is contrary to ES6!
-			final Function ctor = ScriptRuntime.getExistingCtor(cx, scope, "Array");
-			if (ScriptRuntime.instanceOf(val, ctor, cx)) {
-				return true;
-			}
-		}
-
-		// Otherwise, it's only spreadable if it's a native array
 		return js_isArray(val);
 	}
 
@@ -1914,7 +1856,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		if (callbackArg == null || !(callbackArg instanceof Function)) {
 			throw ScriptRuntime.notFunctionError(callbackArg);
 		}
-		if (cx.getLanguageVersion() >= Context.VERSION_ES6 && (callbackArg instanceof NativeRegExp)) {
+		if (callbackArg instanceof NativeRegExp) {
 			// Previously, it was allowed to pass RegExp instance as a callback (it implements Function)
 			// But according to ES2015 21.2.6 Properties of RegExp Instances:
 			// > RegExp instances are ordinary objects that inherit properties from the RegExp prototype object.

@@ -73,14 +73,11 @@ class TokenStream {
 		return "";
 	}
 
-	static boolean isKeyword(String s, int version, boolean isStrict) {
-		return Token.EOF != stringToKeyword(s, version, isStrict);
+	static boolean isKeyword(String s, boolean isStrict) {
+		return Token.EOF != stringToKeyword(s, isStrict);
 	}
 
-	private static int stringToKeyword(String name, int version, boolean isStrict) {
-		if (version < Context.VERSION_ES6) {
-			return stringToKeywordForJS(name);
-		}
+	private static int stringToKeyword(String name, boolean isStrict) {
 		return stringToKeywordForES(name, isStrict);
 	}
 
@@ -919,25 +916,14 @@ class TokenStream {
 					// check if it's a keyword.
 
 					// Return the corresponding token if it's a keyword
-					int result = stringToKeyword(str, parser.compilerEnv.getLanguageVersion(), parser.inUseStrictDirective());
+					int result = stringToKeyword(str, parser.inUseStrictDirective());
 					if (result != Token.EOF) {
-						if ((result == Token.LET || result == Token.YIELD) && parser.compilerEnv.getLanguageVersion() < Context.VERSION_1_7) {
-							// LET and YIELD are tokens only in 1.7 and later
-							string = result == Token.LET ? "let" : "yield";
-							result = Token.NAME;
-						}
 						// Save the string in case we need to use in
 						// object literal definitions.
 						this.string = (String) allStrings.intern(str);
-						if (result != Token.RESERVED) {
-							return result;
-						} else if (parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
-							return result;
-						} else if (!parser.compilerEnv.isReservedKeywordAsIdentifier()) {
-							return result;
-						}
+						return result;
 					}
-				} else if (isKeyword(str, parser.compilerEnv.getLanguageVersion(), parser.inUseStrictDirective())) {
+				} else if (isKeyword(str, parser.inUseStrictDirective())) {
 					// If a string contains unicodes, and converted to a keyword,
 					// we convert the last character back to unicode
 					str = convertLastCharToHex(str);
@@ -951,7 +937,6 @@ class TokenStream {
 				stringBufferTop = 0;
 				int base = 10;
 				isHex = isOldOctal = isOctal = isBinary = false;
-				boolean es6 = parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
 
 				if (c == '0') {
 					c = getChar();
@@ -959,11 +944,11 @@ class TokenStream {
 						base = 16;
 						isHex = true;
 						c = getChar();
-					} else if (es6 && (c == 'o' || c == 'O')) {
+					} else if ((c == 'o' || c == 'O')) {
 						base = 8;
 						isOctal = true;
 						c = getChar();
-					} else if (es6 && (c == 'b' || c == 'B')) {
+					} else if ((c == 'b' || c == 'B')) {
 						base = 2;
 						isBinary = true;
 						c = getChar();

@@ -74,9 +74,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 	@Override
 	protected void fillConstructorProperties(IdFunctionObject ctor) {
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getPrototypeOf, "getPrototypeOf", 1);
-		if (Context.getCurrentContext().version >= Context.VERSION_ES6) {
-			addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_setPrototypeOf, "setPrototypeOf", 2);
-		}
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_setPrototypeOf, "setPrototypeOf", 2);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_keys, "keys", 1);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyNames, "getOwnPropertyNames", 1);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertySymbols, "getOwnPropertySymbols", 1);
@@ -186,13 +184,13 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 
 			case Id_valueOf:
-				if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
+				if (thisObj == null || Undefined.isUndefined(thisObj)) {
 					throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
 				}
 				return thisObj;
 
 			case Id_hasOwnProperty: {
-				if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
+				if (thisObj == null || Undefined.isUndefined(thisObj)) {
 					throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
 				}
 				boolean result;
@@ -211,7 +209,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 
 			case Id_propertyIsEnumerable: {
-				if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
+				if (thisObj == null || Undefined.isUndefined(thisObj)) {
 					throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
 				}
 
@@ -257,7 +255,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 
 			case Id_isPrototypeOf: {
-				if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
+				if (thisObj == null || Undefined.isUndefined(thisObj)) {
 					throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
 				}
 
@@ -347,9 +345,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				}
 
 				final Object arg0 = args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-					ScriptRuntimeES6.requireObjectCoercible(cx, arg0, f);
-				}
+				ScriptRuntimeES6.requireObjectCoercible(cx, arg0, f);
 				if (!(arg0 instanceof ScriptableObject)) {
 					return arg0;
 				}
@@ -423,7 +419,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 			case ConstructorId_isExtensible: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
+				if (!(arg instanceof ScriptableObject)) {
 					return Boolean.FALSE;
 				}
 
@@ -432,7 +428,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 			case ConstructorId_preventExtensions: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
+				if (!(arg instanceof ScriptableObject)) {
 					return arg;
 				}
 
@@ -465,7 +461,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 			case ConstructorId_isSealed: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
+				if (!(arg instanceof ScriptableObject)) {
 					return Boolean.TRUE;
 				}
 
@@ -486,7 +482,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 			case ConstructorId_isFrozen: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
+				if (!(arg instanceof ScriptableObject)) {
 					return Boolean.TRUE;
 				}
 
@@ -510,7 +506,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 			case ConstructorId_seal: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
+				if (!(arg instanceof ScriptableObject)) {
 					return arg;
 				}
 
@@ -529,7 +525,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 			case ConstructorId_freeze: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
+				if (!(arg instanceof ScriptableObject)) {
 					return arg;
 				}
 
@@ -592,11 +588,8 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 	}
 
 	private static Scriptable getCompatibleObject(Context cx, Scriptable scope, Object arg) {
-		if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-			Scriptable s = ScriptRuntime.toObject(cx, scope, arg);
-			return ensureScriptable(s);
-		}
-		return ensureScriptable(arg);
+		Scriptable s = ScriptRuntime.toObject(cx, scope, arg);
+		return ensureScriptable(s);
 	}
 
 	// methods implementing java.util.Map
