@@ -794,22 +794,6 @@ public class Decompiler {
 					i = printSourceString(source, i + 1, false, result);
 					continue;
 
-				case Token.COLONCOLON:
-					result.append("::");
-					break;
-
-				case Token.DOTDOT:
-					result.append("..");
-					break;
-
-				case Token.DOTQUERY:
-					result.append(".(");
-					break;
-
-				case Token.XMLATTR:
-					result.append('@');
-					break;
-
 				case Token.DEBUGGER:
 					result.append("debugger;\n");
 					break;

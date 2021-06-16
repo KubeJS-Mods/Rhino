@@ -251,10 +251,6 @@ public class ContextFactory {
 			case Context.FEATURE_PARENT_PROTO_PROPERTIES:
 				return true;
 
-			case Context.FEATURE_E4X:
-				version = cx.getLanguageVersion();
-				return (version == Context.VERSION_DEFAULT || version >= Context.VERSION_1_6);
-
 			case Context.FEATURE_DYNAMIC_SCOPE:
 				return false;
 
@@ -293,9 +289,6 @@ public class ContextFactory {
 
 			case Context.FEATURE_LITTLE_ENDIAN:
 				return false;
-
-			case Context.FEATURE_ENABLE_XML_SECURE_PARSING:
-				return true;
 		}
 		// It is a bug to call the method with unknown featureIndex
 		throw new IllegalArgumentException(String.valueOf(featureIndex));

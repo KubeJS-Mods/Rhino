@@ -17,139 +17,201 @@ package dev.latvian.mods.rhino;
  * @see Parser
  */
 
-public class Token {
-	public enum CommentType {
+public interface Token {
+	enum CommentType {
 		LINE, BLOCK_COMMENT, JSDOC, HTML
 	}
 
 	// debug flags
-	public static final boolean printTrees = false;
-	static final boolean printICode = false;
-	static final boolean printNames = printTrees || printICode;
+	boolean printTrees = false;
+	boolean printICode = false;
+	boolean printNames = printTrees || printICode;
 
 	/**
 	 * Token types.  These values correspond to JSTokenType values in
 	 * jsscan.c.
 	 */
 
-	public final static int
-			// start enum
-			ERROR = -1, // well-known as the only code < EOF
-			EOF = 0,  // end of file token - (not EOF_CHAR)
-			EOL = 1,  // end of line
+	// start enum
+	int ERROR = -1; // well-known as the only code < EOF
+	int EOF = 0;  // end of file token - (not EOF_CHAR)
+	int EOL = 1;  // end of line
 
 	// Interpreter reuses the following as bytecodes
-	FIRST_BYTECODE_TOKEN = 2,
+	int FIRST_BYTECODE_TOKEN = 2;
 
-	ENTERWITH = 2, LEAVEWITH = 3, RETURN = 4, GOTO = 5, IFEQ = 6, IFNE = 7, SETNAME = 8, BITOR = 9, BITXOR = 10, BITAND = 11, EQ = 12, NE = 13, LT = 14, LE = 15, GT = 16, GE = 17, LSH = 18, RSH = 19, URSH = 20, ADD = 21, SUB = 22, MUL = 23, DIV = 24, MOD = 25, NOT = 26, BITNOT = 27, POS = 28, NEG = 29, NEW = 30, DELPROP = 31, TYPEOF = 32, GETPROP = 33, GETPROPNOWARN = 34, SETPROP = 35, GETELEM = 36, SETELEM = 37, CALL = 38, NAME = 39, NUMBER = 40, STRING = 41, NULL = 42, THIS = 43, FALSE = 44, TRUE = 45, SHEQ = 46,   // shallow equality (===)
-			SHNE = 47,   // shallow inequality (!==)
-			REGEXP = 48, BINDNAME = 49, THROW = 50, RETHROW = 51, // rethrow caught exception: catch (e if ) use it
-			IN = 52, INSTANCEOF = 53, LOCAL_LOAD = 54, GETVAR = 55, SETVAR = 56, CATCH_SCOPE = 57, ENUM_INIT_KEYS = 58, ENUM_INIT_VALUES = 59, ENUM_INIT_ARRAY = 60, ENUM_INIT_VALUES_IN_ORDER = 61, ENUM_NEXT = 62, ENUM_ID = 63, THISFN = 64, RETURN_RESULT = 65, // to return previously stored return result
-			ARRAYLIT = 66, // array literal
-			OBJECTLIT = 67, // object literal
-			GET_REF = 68, // *reference
-			SET_REF = 69, // *reference    = something
-			DEL_REF = 70, // delete reference
-			REF_CALL = 71, // f(args)    = something or f(args)++
-			REF_SPECIAL = 72, // reference for special properties like __proto
-			YIELD = 73,  // JS 1.7 yield pseudo keyword
-			STRICT_SETNAME = 74,
-
-	// For XML support:
-	DEFAULTNAMESPACE = 75, // default xml namespace =
-			ESCXMLATTR = 76, ESCXMLTEXT = 77, REF_MEMBER = 78, // Reference for x.@y, x..y etc.
-			REF_NS_MEMBER = 79, // Reference for x.ns::y, x..ns::y etc.
-			REF_NAME = 80, // Reference for @y, @[y] etc.
-			REF_NS_NAME = 81; // Reference for ns::y, @ns::y@[y] etc.
+	int ENTERWITH = 2;
+	int LEAVEWITH = 3;
+	int RETURN = 4;
+	int GOTO = 5;
+	int IFEQ = 6;
+	int IFNE = 7;
+	int SETNAME = 8;
+	int BITOR = 9;
+	int BITXOR = 10;
+	int BITAND = 11;
+	int EQ = 12;
+	int NE = 13;
+	int LT = 14;
+	int LE = 15;
+	int GT = 16;
+	int GE = 17;
+	int LSH = 18;
+	int RSH = 19;
+	int URSH = 20;
+	int ADD = 21;
+	int SUB = 22;
+	int MUL = 23;
+	int DIV = 24;
+	int MOD = 25;
+	int NOT = 26;
+	int BITNOT = 27;
+	int POS = 28;
+	int NEG = 29;
+	int NEW = 30;
+	int DELPROP = 31;
+	int TYPEOF = 32;
+	int GETPROP = 33;
+	int GETPROPNOWARN = 34;
+	int SETPROP = 35;
+	int GETELEM = 36;
+	int SETELEM = 37;
+	int CALL = 38;
+	int NAME = 39;
+	int NUMBER = 40;
+	int STRING = 41;
+	int NULL = 42;
+	int THIS = 43;
+	int FALSE = 44;
+	int TRUE = 45;
+	int SHEQ = 46;   // shallow equality (===)
+	int SHNE = 47;   // shallow inequality (!==)
+	int REGEXP = 48;
+	int BINDNAME = 49;
+	int THROW = 50;
+	int RETHROW = 51; // rethrow caught exception: catch (e if ) use it
+	int IN = 52;
+	int INSTANCEOF = 53;
+	int LOCAL_LOAD = 54;
+	int GETVAR = 55;
+	int SETVAR = 56;
+	int CATCH_SCOPE = 57;
+	int ENUM_INIT_KEYS = 58;
+	int ENUM_INIT_VALUES = 59;
+	int ENUM_INIT_ARRAY = 60;
+	int ENUM_INIT_VALUES_IN_ORDER = 61;
+	int ENUM_NEXT = 62;
+	int ENUM_ID = 63;
+	int THISFN = 64;
+	int RETURN_RESULT = 65; // to return previously stored return result
+	int ARRAYLIT = 66; // array literal
+	int OBJECTLIT = 67; // object literal
+	int GET_REF = 68; // *reference
+	int SET_REF = 69; // *reference    = something
+	int DEL_REF = 70; // delete reference
+	int REF_CALL = 71; // f(args)    = something or f(args)++
+	int REF_SPECIAL = 72; // reference for special properties like __proto
+	int YIELD = 73;  // JS 1.7 yield pseudo keyword
+	int STRICT_SETNAME = 74;
 
 	// End of interpreter bytecodes
-	public final static int LAST_BYTECODE_TOKEN = REF_NS_NAME,
+	int LAST_BYTECODE_TOKEN = STRICT_SETNAME;
 
-	TRY = 82, SEMI = 83,  // semicolon
-			LB = 84,  // left and right brackets
-			RB = 85, LC = 86,  // left and right curlies (braces)
-			RC = 87, LP = 88,  // left and right parentheses
-			RP = 89, COMMA = 90,  // comma operator
+	int TRY = 82;
+	int SEMI = 83;  // semicolon
+	int LB = 84;  // left and right brackets
+	int RB = 85;
+	int LC = 86;  // left and right curlies (braces)
+	int RC = 87;
+	int LP = 88;  // left and right parentheses
+	int RP = 89;
+	int COMMA = 90;  // comma operator
 
-	ASSIGN = 91,  // simple assignment  (=)
-			ASSIGN_BITOR = 92,  // |=
-			ASSIGN_BITXOR = 93,  // ^=
-			ASSIGN_BITAND = 94,  // |=
-			ASSIGN_LSH = 95,  // <<=
-			ASSIGN_RSH = 96,  // >>=
-			ASSIGN_URSH = 97,  // >>>=
-			ASSIGN_ADD = 98,  // +=
-			ASSIGN_SUB = 99,  // -=
-			ASSIGN_MUL = 100,  // *=
-			ASSIGN_DIV = 101,  // /=
-			ASSIGN_MOD = 102;  // %=
+	int ASSIGN = 91;  // simple assignment  (=)
+	int ASSIGN_BITOR = 92;  // |=
+	int ASSIGN_BITXOR = 93;  // ^=
+	int ASSIGN_BITAND = 94;  // |=
+	int ASSIGN_LSH = 95;  // <<=
+	int ASSIGN_RSH = 96;  // >>=
+	int ASSIGN_URSH = 97;  // >>>=
+	int ASSIGN_ADD = 98;  // +=
+	int ASSIGN_SUB = 99;  // -=
+	int ASSIGN_MUL = 100;  // *=
+	int ASSIGN_DIV = 101;  // /=
+	int ASSIGN_MOD = 102;  // %=
 
-	public final static int FIRST_ASSIGN = ASSIGN, LAST_ASSIGN = ASSIGN_MOD,
+	int FIRST_ASSIGN = ASSIGN;
+	int LAST_ASSIGN = ASSIGN_MOD;
 
-	HOOK = 103, // conditional (?:)
-			COLON = 104, OR = 105, // logical or (||)
-			AND = 106, // logical and (&&)
-			INC = 107, // increment/decrement (++ --)
-			DEC = 108, DOT = 109, // member operator (.)
-			FUNCTION = 110, // function keyword
-			EXPORT = 111, // export keyword
-			IMPORT = 112, // import keyword
-			IF = 113, // if keyword
-			ELSE = 114, // else keyword
-			SWITCH = 115, // switch keyword
-			CASE = 116, // case keyword
-			DEFAULT = 117, // default keyword
-			WHILE = 118, // while keyword
-			DO = 119, // do keyword
-			FOR = 120, // for keyword
-			BREAK = 121, // break keyword
-			CONTINUE = 122, // continue keyword
-			VAR = 123, // var keyword
-			WITH = 124, // with keyword
-			CATCH = 125, // catch keyword
-			FINALLY = 126, // finally keyword
-			VOID = 127, // void keyword
-			RESERVED = 128, // reserved keywords
+	int HOOK = 103; // conditional (?:)
+	int COLON = 104;
+	int OR = 105; // logical or (||)
+	int AND = 106; // logical and (&&)
+	int INC = 107; // increment/decrement (++ --)
+	int DEC = 108;
+	int DOT = 109; // member operator (.)
+	int FUNCTION = 110; // function keyword
+	int EXPORT = 111; // export keyword
+	int IMPORT = 112; // import keyword
+	int IF = 113; // if keyword
+	int ELSE = 114; // else keyword
+	int SWITCH = 115; // switch keyword
+	int CASE = 116; // case keyword
+	int DEFAULT = 117; // default keyword
+	int WHILE = 118; // while keyword
+	int DO = 119; // do keyword
+	int FOR = 120; // for keyword
+	int BREAK = 121; // break keyword
+	int CONTINUE = 122; // continue keyword
+	int VAR = 123; // var keyword
+	int WITH = 124; // with keyword
+	int CATCH = 125; // catch keyword
+	int FINALLY = 126; // finally keyword
+	int VOID = 127; // void keyword
+	int RESERVED = 128; // reserved keywords
 
-	EMPTY = 129,
+	int EMPTY = 129;
 
-	/* types used for the parse tree - these never get returned
-	 * by the scanner.
-	 */
-
-	BLOCK = 130, // statement block
-			LABEL = 131, // label
-			TARGET = 132, LOOP = 133, EXPR_VOID = 134, // expression statement in functions
-			EXPR_RESULT = 135, // expression statement in scripts
-			JSR = 136, SCRIPT = 137, // top-level node for entire script
-			TYPEOFNAME = 138, // for typeof(simple-name)
-			USE_STACK = 139, SETPROP_OP = 140, // x.y op= something
-			SETELEM_OP = 141, // x[y] op= something
-			LOCAL_BLOCK = 142, SET_REF_OP = 143, // *reference op= something
-
-	// For XML support:
-	DOTDOT = 144,  // member operator (..)
-			COLONCOLON = 145,  // namespace::name
-			XML = 146,  // XML type
-			DOTQUERY = 147,  // .() -- e.g., x.emps.emp.(name == "terry")
-			XMLATTR = 148,  // @
-			XMLEND = 149,
+	// types used for the parse tree - these never get returned  by the scanner.
+	int BLOCK = 130; // statement block
+	int LABEL = 131; // label
+	int TARGET = 132;
+	int LOOP = 133;
+	int EXPR_VOID = 134; // expression statement in functions
+	int EXPR_RESULT = 135; // expression statement in scripts
+	int JSR = 136;
+	int SCRIPT = 137; // top-level node for entire script
+	int TYPEOFNAME = 138; // for typeof(simple-name)
+	int USE_STACK = 139;
+	int SETPROP_OP = 140; // x.y op= something
+	int SETELEM_OP = 141; // x[y] op= something
+	int LOCAL_BLOCK = 142;
+	int SET_REF_OP = 143; // *reference op= something
 
 	// Optimizer-only-tokens
-	TO_OBJECT = 150, TO_DOUBLE = 151,
+	int TO_OBJECT = 150;
+	int TO_DOUBLE = 151;
 
-	GET = 152,  // JS 1.5 get pseudo keyword
-			SET = 153,  // JS 1.5 set pseudo keyword
-			LET = 154,  // JS 1.7 let pseudo keyword
-			CONST = 155, SETCONST = 156, SETCONSTVAR = 157, ARRAYCOMP = 158,  // array comprehension
-			LETEXPR = 159, WITHEXPR = 160, DEBUGGER = 161, COMMENT = 162, GENEXPR = 163, METHOD = 164,  // ES6 MethodDefinition
-			ARROW = 165,  // ES6 ArrowFunction
-			YIELD_STAR = 166,  // ES6 "yield *", a specialization of yield
-			TEMPLATE_LITERAL = 167,  // template literal
-			TEMPLATE_CHARS = 168,  // template literal - literal section
-			TEMPLATE_LITERAL_SUBST = 169,  // template literal - substitution
-			TAGGED_TEMPLATE_LITERAL = 170,  // template literal - tagged/handler
-			LAST_TOKEN = 170;
+	int GET = 152;  // JS 1.5 get pseudo keyword
+	int SET = 153;  // JS 1.5 set pseudo keyword
+	int LET = 154;  // JS 1.7 let pseudo keyword
+	int CONST = 155;
+	int SETCONST = 156;
+	int SETCONSTVAR = 157;
+	int ARRAYCOMP = 158;  // array comprehension
+	int LETEXPR = 159;
+	int WITHEXPR = 160;
+	int DEBUGGER = 161;
+	int COMMENT = 162;
+	int GENEXPR = 163;
+	int METHOD = 164;  // ES6 MethodDefinition
+	int ARROW = 165;  // ES6 ArrowFunction
+	int YIELD_STAR = 166;  // ES6 "yield *", a specialization of yield
+	int TEMPLATE_LITERAL = 167;  // template literal
+	int TEMPLATE_CHARS = 168;  // template literal - literal section
+	int TEMPLATE_LITERAL_SUBST = 169;  // template literal - substitution
+	int TAGGED_TEMPLATE_LITERAL = 170;  // template literal - tagged/handler
+	int LAST_TOKEN = 170;
 
 
 	/**
@@ -157,7 +219,7 @@ public class Token {
 	 * hardcoded debugging flags in this file, it calls {@code #typeToName};
 	 * otherwise it returns a string whose value is the token number.
 	 */
-	public static String name(int token) {
+	static String name(int token) {
 		if (!printNames) {
 			return String.valueOf(token);
 		}
@@ -171,7 +233,7 @@ public class Token {
 	 * @param token the token code
 	 * @return the actual name for the token code
 	 */
-	public static String typeToName(int token) {
+	static String typeToName(int token) {
 		switch (token) {
 			case ERROR:
 				return "ERROR";
@@ -321,20 +383,6 @@ public class Token {
 				return "REF_CALL";
 			case REF_SPECIAL:
 				return "REF_SPECIAL";
-			case DEFAULTNAMESPACE:
-				return "DEFAULTNAMESPACE";
-			case ESCXMLTEXT:
-				return "ESCXMLTEXT";
-			case ESCXMLATTR:
-				return "ESCXMLATTR";
-			case REF_MEMBER:
-				return "REF_MEMBER";
-			case REF_NS_MEMBER:
-				return "REF_NS_MEMBER";
-			case REF_NAME:
-				return "REF_NAME";
-			case REF_NS_NAME:
-				return "REF_NS_NAME";
 			case TRY:
 				return "TRY";
 			case SEMI:
@@ -459,18 +507,6 @@ public class Token {
 				return "LOCAL_BLOCK";
 			case SET_REF_OP:
 				return "SET_REF_OP";
-			case DOTDOT:
-				return "DOTDOT";
-			case COLONCOLON:
-				return "COLONCOLON";
-			case XML:
-				return "XML";
-			case DOTQUERY:
-				return "DOTQUERY";
-			case XMLATTR:
-				return "XMLATTR";
-			case XMLEND:
-				return "XMLEND";
 			case TO_OBJECT:
 				return "TO_OBJECT";
 			case TO_DOUBLE:
@@ -520,90 +556,12 @@ public class Token {
 	}
 
 	/**
-	 * Convert a keyword token to a name string for use with the
-	 * {@link Context#FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER} feature.
-	 *
-	 * @param token A token
-	 * @return the corresponding name string
-	 */
-	public static String keywordToName(int token) {
-		switch (token) {
-			case Token.BREAK:
-				return "break";
-			case Token.CASE:
-				return "case";
-			case Token.CONTINUE:
-				return "continue";
-			case Token.DEFAULT:
-				return "default";
-			case Token.DELPROP:
-				return "delete";
-			case Token.DO:
-				return "do";
-			case Token.ELSE:
-				return "else";
-			case Token.FALSE:
-				return "false";
-			case Token.FOR:
-				return "for";
-			case Token.FUNCTION:
-				return "function";
-			case Token.IF:
-				return "if";
-			case Token.IN:
-				return "in";
-			case Token.LET:
-				return "let";
-			case Token.NEW:
-				return "new";
-			case Token.NULL:
-				return "null";
-			case Token.RETURN:
-				return "return";
-			case Token.SWITCH:
-				return "switch";
-			case Token.THIS:
-				return "this";
-			case Token.TRUE:
-				return "true";
-			case Token.TYPEOF:
-				return "typeof";
-			case Token.VAR:
-				return "var";
-			case Token.VOID:
-				return "void";
-			case Token.WHILE:
-				return "while";
-			case Token.WITH:
-				return "with";
-			case Token.YIELD:
-				return "yield";
-			case Token.CATCH:
-				return "catch";
-			case Token.CONST:
-				return "const";
-			case Token.DEBUGGER:
-				return "debugger";
-			case Token.FINALLY:
-				return "finally";
-			case Token.INSTANCEOF:
-				return "instanceof";
-			case Token.THROW:
-				return "throw";
-			case Token.TRY:
-				return "try";
-			default:
-				return null;
-		}
-	}
-
-	/**
 	 * Return true if the passed code is a valid Token constant.
 	 *
 	 * @param code a potential token code
 	 * @return true if it's a known token
 	 */
-	public static boolean isValidToken(int code) {
+	static boolean isValidToken(int code) {
 		return code >= ERROR && code <= LAST_TOKEN;
 	}
 }

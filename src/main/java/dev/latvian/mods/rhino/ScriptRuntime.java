@@ -7,7 +7,6 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.ast.FunctionNode;
-import dev.latvian.mods.rhino.util.EmptyRef;
 import dev.latvian.mods.rhino.util.SpecialEquality;
 import dev.latvian.mods.rhino.v8dtoa.DoubleConversion;
 import dev.latvian.mods.rhino.v8dtoa.FastDtoa;
@@ -3758,42 +3757,6 @@ public class ScriptRuntime {
 		/* step 12 */
 		strings[index] = siteObj;
 		return siteObj;
-	}
-
-	/**
-	 * Escapes the reserved characters in a value of an attribute
-	 *
-	 * @param value Unescaped text
-	 * @return The escaped text
-	 */
-	public static String escapeAttributeValue(Object value, Context cx) {
-		return String.valueOf(value); // XML Removed
-	}
-
-	/**
-	 * Escapes the reserved characters in a value of a text node
-	 *
-	 * @param value Unescaped text
-	 * @return The escaped text
-	 */
-	public static String escapeTextValue(Object value, Context cx) {
-		return String.valueOf(value); // XML Removed
-	}
-
-	public static Ref memberRef(Object obj, Object elem, Context cx, int memberTypeFlags) {
-		return EmptyRef.INSTANCE; // XML Removed
-	}
-
-	public static Ref memberRef(Object obj, Object namespace, Object elem, Context cx, int memberTypeFlags) {
-		return EmptyRef.INSTANCE; // XML Removed
-	}
-
-	public static Ref nameRef(Object name, Context cx, Scriptable scope, int memberTypeFlags) {
-		return EmptyRef.INSTANCE; // XML Removed
-	}
-
-	public static Ref nameRef(Object namespace, Object name, Context cx, Scriptable scope, int memberTypeFlags) {
-		return EmptyRef.INSTANCE; // XML Removed
 	}
 
 	public static void storeUint32Result(Context cx, long value) {

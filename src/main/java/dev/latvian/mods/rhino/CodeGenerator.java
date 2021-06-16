@@ -915,42 +915,6 @@ class CodeGenerator extends Icode {
 				addStringOp(type, (String) node.getProp(Node.NAME_PROP));
 				break;
 
-			case Token.REF_MEMBER:
-			case Token.REF_NS_MEMBER:
-			case Token.REF_NAME:
-			case Token.REF_NS_NAME: {
-				int memberTypeFlags = node.getIntProp(Node.MEMBER_TYPE_PROP, 0);
-				// generate possible target, possible namespace and member
-				int childCount = 0;
-				do {
-					visitExpression(child, 0);
-					++childCount;
-					child = child.getNext();
-				} while (child != null);
-				addIndexOp(type, memberTypeFlags);
-				stackChange(1 - childCount);
-			}
-			break;
-
-			case Token.DOTQUERY: {
-				int queryPC;
-				updateLineNumber(node);
-				visitExpression(child, 0);
-				addIcode(Icode_ENTERDQ);
-				stackChange(-1);
-				queryPC = iCodeTop;
-				visitExpression(child.getNext(), 0);
-				addBackwardGoto(Icode_LEAVEDQ, queryPC);
-			}
-			break;
-
-			case Token.DEFAULTNAMESPACE:
-			case Token.ESCXMLATTR:
-			case Token.ESCXMLTEXT:
-				visitExpression(child, 0);
-				addToken(type);
-				break;
-
 			case Token.YIELD:
 			case Token.YIELD_STAR:
 				if (child != null) {

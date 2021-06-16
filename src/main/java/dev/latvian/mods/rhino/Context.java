@@ -187,18 +187,6 @@ public class Context {
 	public static final int FEATURE_PARENT_PROTO_PROPERTIES = 5;
 
 	/**
-	 * Control if support for E4X(ECMAScript for XML) extension is available.
-	 * If hasFeature(FEATURE_E4X) returns true, the XML syntax is available.
-	 * <p>
-	 * By default {@link #hasFeature(int)} returns true if
-	 * the current JS version is set to {@link #VERSION_DEFAULT}
-	 * or is at least {@link #VERSION_1_6}.
-	 *
-	 * @since 1.6 Release 1
-	 */
-	public static final int FEATURE_E4X = 6;
-
-	/**
 	 * Control if dynamic scope should be used for name access.
 	 * If hasFeature(FEATURE_DYNAMIC_SCOPE) returns true, then the name lookup
 	 * during name resolution will use the top scope of the script or function
@@ -345,14 +333,6 @@ public class Context {
 	 * @since 1.7 Release 11
 	 */
 	public static final int FEATURE_LITTLE_ENDIAN = 19;
-
-	/**
-	 * Configure the XMLProcessor to parse XML with security features or not.
-	 * Security features include not fetching remote entity references and disabling XIncludes
-	 *
-	 * @since 1.7 Release 12
-	 */
-	public static final int FEATURE_ENABLE_XML_SECURE_PARSING = 20;
 
 	public static final String languageVersionProperty = "language version";
 	public static final String errorReporterProperty = "error reporter";
@@ -1985,7 +1965,6 @@ public class Context {
 	 * @see #FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER
 	 * @see #FEATURE_TO_STRING_AS_SOURCE
 	 * @see #FEATURE_PARENT_PROTO_PROPERTIES
-	 * @see #FEATURE_E4X
 	 * @see #FEATURE_DYNAMIC_SCOPE
 	 * @see #FEATURE_STRICT_VARS
 	 * @see #FEATURE_STRICT_EVAL

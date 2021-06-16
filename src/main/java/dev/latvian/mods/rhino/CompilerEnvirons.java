@@ -17,7 +17,6 @@ public class CompilerEnvirons {
 		generateDebugInfo = true;
 		reservedKeywordAsIdentifier = true;
 		allowMemberExprAsFunctionName = false;
-		xmlAvailable = true;
 		generatingSource = true;
 		strictMode = false;
 		warningAsError = false;
@@ -33,7 +32,6 @@ public class CompilerEnvirons {
 		allowMemberExprAsFunctionName = cx.hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME);
 		strictMode = cx.hasFeature(Context.FEATURE_STRICT_MODE);
 		warningAsError = cx.hasFeature(Context.FEATURE_WARNING_AS_ERROR);
-		xmlAvailable = cx.hasFeature(Context.FEATURE_E4X);
 
 		generatingSource = cx.isGeneratingSource();
 		activationNames = cx.activationNames;
@@ -88,14 +86,6 @@ public class CompilerEnvirons {
 
 	public void setAllowMemberExprAsFunctionName(boolean flag) {
 		allowMemberExprAsFunctionName = flag;
-	}
-
-	public final boolean isXmlAvailable() {
-		return xmlAvailable;
-	}
-
-	public void setXmlAvailable(boolean flag) {
-		xmlAvailable = flag;
 	}
 
 	public final boolean isGeneratingSource() {
@@ -243,7 +233,6 @@ public class CompilerEnvirons {
 	private boolean generateDebugInfo;
 	private boolean reservedKeywordAsIdentifier;
 	private boolean allowMemberExprAsFunctionName;
-	private boolean xmlAvailable;
 	private boolean generatingSource;
 	private boolean strictMode;
 	private boolean warningAsError;
