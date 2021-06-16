@@ -10,6 +10,7 @@ import dev.latvian.mods.rhino.util.DynamicFunction;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
@@ -20,7 +21,7 @@ public class ScriptTest {
 	public static void main(String[] args) {
 		EventsJS eventsJS = new EventsJS();
 
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(ScriptTest.class.getResourceAsStream("/rhino_test_script.js"), StandardCharsets.UTF_8))) {
+		try {
 			Context cx = Context.enter();
 			cx.setLanguageVersion(Context.VERSION_ES6);
 
@@ -42,7 +43,7 @@ public class ScriptTest {
 			ScriptableObject.putProperty(scope, "events", Context.javaToJS(eventsJS, scope));
 			ScriptableObject.putProperty(scope, "sqTest", Context.javaToJS(new DynamicFunction(o -> ((Number) o[0]).doubleValue() * ((Number) o[0]).doubleValue()), scope));
 
-			cx.evaluateReader(scope, reader, "rhino_test_script.js", 1, null);
+			loadTest(cx, scope, "rhino_test_script.js");
 		} catch (RhinoException ex) {
 			StringBuilder sb = new StringBuilder("Script error in ");
 			sb.append(ex.sourceName());
@@ -67,6 +68,12 @@ public class ScriptTest {
 
 		for (Consumer<Object> consumer : eventsJS.lastCallback) {
 			consumer.accept(48);
+		}
+	}
+
+	private static void loadTest(Context cx, Scriptable scope, String name) throws Exception {
+		try (Reader reader = new BufferedReader(new InputStreamReader(ScriptTest.class.getResourceAsStream("/tests/" + name), StandardCharsets.UTF_8))) {
+			cx.evaluateReader(scope, reader, name, 1, null);
 		}
 	}
 }

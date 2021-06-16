@@ -2688,28 +2688,6 @@ public class Parser {
 		return pg;
 	}
 
-	/**
-	 * Check if :: follows name in which case it becomes a qualified name.
-	 *
-	 * @param atPos           a natural number if we just read an '@' token, else -1
-	 * @param memberTypeFlags flags tracking whether we're a '.' or '..' child
-	 * @return an XmlRef node if it's an attribute access, a child of a
-	 * '..' operator, or the name is followed by ::.  For a plain name,
-	 * returns a Name node.  Returns an ErrorNode for malformed XML
-	 * expressions.  (For now - might change to return a partial XmlRef.)
-	 */
-	private AstNode propertyName(int atPos, int memberTypeFlags) {
-		int pos = atPos != -1 ? atPos : ts.tokenBeg, lineno = ts.lineno;
-		int colonPos = -1;
-		Name name = createNameNode(true, currentToken);
-
-		if (memberTypeFlags == 0 && atPos == -1) {
-			return name;
-		}
-
-		return makeErrorNode();
-	}
-
 	private AstNode destructuringPrimaryExpr() throws IOException, ParserException {
 		try {
 			inDestructuringAssignment = true;

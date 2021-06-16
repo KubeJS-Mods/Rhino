@@ -5,11 +5,13 @@ events.listen('abc', event => {
 	console.info(sqTest(8))
 
 	if (true) {
-		console.infoClass(this)
+		let x = 10
+		console.infoClass(x)
 	}
 
 	if (true) {
-		console.infoClass(this)
+		let x = 20
+		console.infoClass(x)
 	}
 
 	let someArray = [
