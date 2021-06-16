@@ -43,7 +43,7 @@ public class ArrowFunction extends BaseFunction {
 
 	@Override
 	public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-		throw ScriptRuntime.typeError1("msg.not.ctor", decompile(0, 0));
+		throw ScriptRuntime.typeError1("msg.not.ctor", toString());
 	}
 
 	@Override
@@ -65,14 +65,6 @@ public class ArrowFunction extends BaseFunction {
 	@Override
 	public int getArity() {
 		return getLength();
-	}
-
-	@Override
-	String decompile(int indent, int flags) {
-		if (targetFunction instanceof BaseFunction) {
-			return ((BaseFunction) targetFunction).decompile(indent, flags);
-		}
-		return super.decompile(indent, flags);
 	}
 
 	static boolean equalObjectGraphs(ArrowFunction f1, ArrowFunction f2, EqualObjectGraphs eq) {

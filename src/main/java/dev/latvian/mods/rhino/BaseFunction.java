@@ -316,15 +316,9 @@ public class BaseFunction extends IdScriptableObject implements Function {
 			case Id_constructor:
 				return jsConstructor(cx, scope, args);
 
-			case Id_toString: {
-				BaseFunction realf = realFunction(thisObj, f);
-				int indent = ScriptRuntime.toInt32(args, 0);
-				return realf.decompile(indent, 0);
-			}
-
-			case Id_toSource: {
+			case Id_toString:
+			case Id_toSource:
 				return "not_supported";
-			}
 
 			case Id_apply:
 			case Id_call:
@@ -437,30 +431,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		newInstance.setPrototype(getClassPrototype());
 		newInstance.setParentScope(getParentScope());
 		return newInstance;
-	}
-
-	/**
-	 * Decompile the source information associated with this js
-	 * function/script back into a string.
-	 *
-	 * @param indent How much to indent the decompiled result.
-	 * @param flags  Flags specifying format of decompilation output.
-	 */
-	String decompile(int indent, int flags) {
-		StringBuilder sb = new StringBuilder();
-		boolean justbody = (0 != (flags & Decompiler.ONLY_BODY_FLAG));
-		if (!justbody) {
-			sb.append("function ");
-			sb.append(getFunctionName());
-			sb.append("() {\n\t");
-		}
-		sb.append("[native code, arity=");
-		sb.append(getArity());
-		sb.append("]\n");
-		if (!justbody) {
-			sb.append("}\n");
-		}
-		return sb.toString();
 	}
 
 	public int getArity() {

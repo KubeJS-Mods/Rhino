@@ -26,21 +26,6 @@ public abstract class NativeFunction extends BaseFunction {
 		ScriptRuntime.setFunctionProtoAndParent(this, scope, es6GeneratorFunction);
 	}
 
-	/**
-	 * @param indent How much to indent the decompiled result
-	 * @param flags  Flags specifying format of decompilation output
-	 */
-	@Override
-	final String decompile(int indent, int flags) {
-		String encodedSource = getEncodedSource();
-		if (encodedSource == null) {
-			return super.decompile(indent, flags);
-		}
-		UintMap properties = new UintMap(1);
-		properties.put(Decompiler.INITIAL_INDENT_PROP, indent);
-		return Decompiler.decompile(encodedSource, flags, properties);
-	}
-
 	@Override
 	public int getLength() {
 		return getParamCount();

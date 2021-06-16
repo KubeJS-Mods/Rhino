@@ -86,21 +86,6 @@ public class NativeJavaMethod extends BaseFunction {
 	}
 
 	@Override
-	String decompile(int indent, int flags) {
-		StringBuilder sb = new StringBuilder();
-		boolean justbody = (0 != (flags & Decompiler.ONLY_BODY_FLAG));
-		if (!justbody) {
-			sb.append("function ");
-			sb.append(getFunctionName());
-			sb.append("() {");
-		}
-		sb.append("/*\n");
-		sb.append(this);
-		sb.append(justbody ? "*/\n" : "*/}\n");
-		return sb.toString();
-	}
-
-	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0, N = methods.length; i != N; ++i) {

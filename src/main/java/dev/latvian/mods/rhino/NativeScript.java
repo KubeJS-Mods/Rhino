@@ -66,14 +66,6 @@ class NativeScript extends BaseFunction {
 	}
 
 	@Override
-	String decompile(int indent, int flags) {
-		if (script instanceof NativeFunction) {
-			return ((NativeFunction) script).decompile(indent, flags);
-		}
-		return super.decompile(indent, flags);
-	}
-
-	@Override
 	protected void initPrototypeId(int id) {
 		String s;
 		int arity;
@@ -116,12 +108,7 @@ class NativeScript extends BaseFunction {
 			}
 
 			case Id_toString: {
-				NativeScript real = realThis(thisObj, f);
-				Script realScript = real.script;
-				if (realScript == null) {
-					return "";
-				}
-				return cx.decompileScript(realScript, 0);
+				return "not_supported";
 			}
 
 			case Id_exec: {

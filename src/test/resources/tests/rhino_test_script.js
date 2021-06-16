@@ -24,6 +24,8 @@ events.listen('abc', event => {
 		console.infoClass(i)
 	})
 
+	console.infoClass([3, 4, 2, 1239].sort().toString())
+
 	const numbers = [49, 1, 48, 521]
 	numbers.sort()
 

@@ -1159,63 +1159,6 @@ public class Context {
 	}
 
 	/**
-	 * Decompile the script.
-	 * <p>
-	 * The canonical source of the script is returned.
-	 *
-	 * @param script the script to decompile
-	 * @param indent the number of spaces to indent the result
-	 * @return a string representing the script source
-	 */
-	public final String decompileScript(Script script, int indent) {
-		NativeFunction scriptImpl = (NativeFunction) script;
-		return scriptImpl.decompile(indent, 0);
-	}
-
-	/**
-	 * Decompile a JavaScript Function.
-	 * <p>
-	 * Decompiles a previously compiled JavaScript function object to
-	 * canonical source.
-	 * <p>
-	 * Returns function body of '[native code]' if no decompilation
-	 * information is available.
-	 *
-	 * @param fun    the JavaScript function to decompile
-	 * @param indent the number of spaces to indent the result
-	 * @return a string representing the function source
-	 */
-	public final String decompileFunction(Function fun, int indent) {
-		if (fun instanceof BaseFunction) {
-			return ((BaseFunction) fun).decompile(indent, 0);
-		}
-
-		return "function " + fun.getClassName() + "() {\n\t[native code]\n}\n";
-	}
-
-	/**
-	 * Decompile the body of a JavaScript Function.
-	 * <p>
-	 * Decompiles the body a previously compiled JavaScript Function
-	 * object to canonical source, omitting the function header and
-	 * trailing brace.
-	 * <p>
-	 * Returns '[native code]' if no decompilation information is available.
-	 *
-	 * @param fun    the JavaScript function to decompile
-	 * @param indent the number of spaces to indent the result
-	 * @return a string representing the function body source.
-	 */
-	public final String decompileFunctionBody(Function fun, int indent) {
-		if (fun instanceof BaseFunction) {
-			BaseFunction bf = (BaseFunction) fun;
-			return bf.decompile(indent, Decompiler.ONLY_BODY_FLAG);
-		}
-		// ALERT: not sure what the right response here is.
-		return "[native code]\n";
-	}
-
-	/**
 	 * Create a new JavaScript object.
 	 * <p>
 	 * Equivalent to evaluating "new Object()".
@@ -1800,7 +1743,6 @@ public class Context {
 	 *
 	 * @param featureIndex feature index to check
 	 * @return true if the <code>featureIndex</code> feature is turned on
-	 * @see #FEATURE_NON_ECMA_GET_YEAR
 	 * @see #FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME
 	 * @see #FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER
 	 * @see #FEATURE_PARENT_PROTO_PROPERTIES
