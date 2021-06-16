@@ -17,8 +17,7 @@ package dev.latvian.mods.rhino;
  * resulted in substantial performance regressions so we are doing the best that we can.
  */
 
-public interface SlotMap
-		extends Iterable<ScriptableObject.Slot> {
+public interface SlotMap extends Iterable<ScriptableObject.Slot> {
 
 	/**
 	 * Return the size of the map.

@@ -9,8 +9,7 @@ package dev.latvian.mods.rhino.typedarrays;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-public class NativeTypedArrayIterator<T>
-		implements ListIterator<T> {
+public class NativeTypedArrayIterator<T> implements ListIterator<T> {
 	private final NativeTypedArrayView<T> view;
 
 	/**

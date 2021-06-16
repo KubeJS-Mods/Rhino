@@ -23,8 +23,7 @@ package dev.latvian.mods.rhino;
  * @see Scriptable
  */
 
-public class Delegator
-		implements Function, SymbolScriptable {
+public class Delegator implements Function, SymbolScriptable {
 
 	protected Scriptable obj = null;
 
@@ -245,10 +244,7 @@ public class Delegator
 	 */
 	@Override
 	public Object getDefaultValue(Class<?> hint) {
-		return (hint == null ||
-				hint == ScriptRuntime.ScriptableClass ||
-				hint == ScriptRuntime.FunctionClass) ?
-				this : getDelegee().getDefaultValue(hint);
+		return (hint == null || hint == ScriptRuntime.ScriptableClass || hint == ScriptRuntime.FunctionClass) ? this : getDelegee().getDefaultValue(hint);
 	}
 
 	/**
@@ -263,8 +259,7 @@ public class Delegator
 	 * @see Function#call
 	 */
 	@Override
-	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args) {
+	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		return ((Function) getDelegee()).call(cx, scope, thisObj, args);
 	}
 

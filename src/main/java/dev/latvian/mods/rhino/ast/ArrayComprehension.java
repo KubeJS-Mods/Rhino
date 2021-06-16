@@ -18,8 +18,7 @@ import java.util.List;
 public class ArrayComprehension extends Scope {
 
 	private AstNode result;
-	private final List<ArrayComprehensionLoop> loops =
-			new ArrayList<>();
+	private final List<ArrayComprehensionLoop> loops = new ArrayList<>();
 	private AstNode filter;
 	private int ifPosition = -1;
 	private int lp = -1;

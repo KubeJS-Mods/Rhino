@@ -257,9 +257,7 @@ public class ObjArray implements Serializable {
 			default:
 				ensureCapacity(N + 1);
 				if (index != N) {
-					System.arraycopy(data, index - FIELDS_STORE_SIZE,
-							data, index - FIELDS_STORE_SIZE + 1,
-							N - index);
+					System.arraycopy(data, index - FIELDS_STORE_SIZE, data, index - FIELDS_STORE_SIZE + 1, N - index);
 				}
 				data[index - FIELDS_STORE_SIZE] = value;
 		}
@@ -315,9 +313,7 @@ public class ObjArray implements Serializable {
 				/* fall through */
 			default:
 				if (index != N) {
-					System.arraycopy(data, index - FIELDS_STORE_SIZE + 1,
-							data, index - FIELDS_STORE_SIZE,
-							N - index);
+					System.arraycopy(data, index - FIELDS_STORE_SIZE + 1, data, index - FIELDS_STORE_SIZE, N - index);
 				}
 				data[N - FIELDS_STORE_SIZE] = null;
 		}
@@ -349,8 +345,7 @@ public class ObjArray implements Serializable {
 		int N = size;
 		switch (N) {
 			default:
-				System.arraycopy(data, 0, array, offset + FIELDS_STORE_SIZE,
-						N - FIELDS_STORE_SIZE);
+				System.arraycopy(data, 0, array, offset + FIELDS_STORE_SIZE, N - FIELDS_STORE_SIZE);
 				/* fall through */
 			case 5:
 				array[offset + 4] = f4;
@@ -396,8 +391,7 @@ public class ObjArray implements Serializable {
 				}
 				Object[] tmp = new Object[alloc];
 				if (size > FIELDS_STORE_SIZE) {
-					System.arraycopy(data, 0, tmp, 0,
-							size - FIELDS_STORE_SIZE);
+					System.arraycopy(data, 0, tmp, 0, size - FIELDS_STORE_SIZE);
 				}
 				data = tmp;
 			}
@@ -427,8 +421,7 @@ public class ObjArray implements Serializable {
 		}
 	}
 
-	private void readObject(ObjectInputStream is)
-			throws IOException, ClassNotFoundException {
+	private void readObject(ObjectInputStream is) throws IOException, ClassNotFoundException {
 		is.defaultReadObject(); // It reads size
 		int N = size;
 		if (N > FIELDS_STORE_SIZE) {

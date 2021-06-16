@@ -28,17 +28,12 @@ public class CompilerEnvirons {
 	public void initFromContext(Context cx) {
 		setErrorReporter(cx.getErrorReporter());
 		languageVersion = cx.getLanguageVersion();
-		generateDebugInfo = (!cx.isGeneratingDebugChanged()
-				|| cx.isGeneratingDebug());
-		reservedKeywordAsIdentifier
-				= cx.hasFeature(Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER);
-		allowMemberExprAsFunctionName
-				= cx.hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME);
-		strictMode
-				= cx.hasFeature(Context.FEATURE_STRICT_MODE);
+		generateDebugInfo = (!cx.isGeneratingDebugChanged() || cx.isGeneratingDebug());
+		reservedKeywordAsIdentifier = cx.hasFeature(Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER);
+		allowMemberExprAsFunctionName = cx.hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME);
+		strictMode = cx.hasFeature(Context.FEATURE_STRICT_MODE);
 		warningAsError = cx.hasFeature(Context.FEATURE_WARNING_AS_ERROR);
-		xmlAvailable
-				= cx.hasFeature(Context.FEATURE_E4X);
+		xmlAvailable = cx.hasFeature(Context.FEATURE_E4X);
 
 		generatingSource = cx.isGeneratingSource();
 		activationNames = cx.activationNames;

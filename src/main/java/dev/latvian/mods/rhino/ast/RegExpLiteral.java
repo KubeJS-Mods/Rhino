@@ -65,8 +65,7 @@ public class RegExpLiteral extends AstNode {
 
 	@Override
 	public String toSource(int depth) {
-		return makeIndent(depth) + "/" + value + "/"
-				+ (flags == null ? "" : flags);
+		return makeIndent(depth) + "/" + value + "/" + (flags == null ? "" : flags);
 	}
 
 	/**

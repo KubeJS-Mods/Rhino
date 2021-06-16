@@ -50,14 +50,7 @@ public class ArrayComprehensionLoop extends ForInLoop {
 
 	@Override
 	public String toSource(int depth) {
-		return makeIndent(depth)
-				+ " for "
-				+ (isForEach() ? "each " : "")
-				+ "("
-				+ iterator.toSource(0)
-				+ (isForOf() ? " of " : " in ")
-				+ iteratedObject.toSource(0)
-				+ ")";
+		return makeIndent(depth) + " for " + (isForEach() ? "each " : "") + "(" + iterator.toSource(0) + (isForOf() ? " of " : " in ") + iteratedObject.toSource(0) + ")";
 	}
 
 	/**

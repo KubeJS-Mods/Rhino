@@ -255,8 +255,7 @@ public class ObjToIntMap implements Serializable {
 			Object test = keys[index];
 			if (test != null) {
 				int N = 1 << power;
-				if (test == key
-						|| (values[N + index] == hash && test.equals(key))) {
+				if (test == key || (values[N + index] == hash && test.equals(key))) {
 					return index;
 				}
 				// Search in table after first failed attempt
@@ -275,8 +274,7 @@ public class ObjToIntMap implements Serializable {
 					if (test == null) {
 						break;
 					}
-					if (test == key
-							|| (values[N + index] == hash && test.equals(key))) {
+					if (test == key || (values[N + index] == hash && test.equals(key))) {
 						return index;
 					}
 				}
@@ -309,8 +307,7 @@ public class ObjToIntMap implements Serializable {
 				if (check && firstIndex == index) {
 					Kit.codeBug();
 				}
-			}
-			while (keys[index] != null);
+			} while (keys[index] != null);
 		}
 		keys[index] = key;
 		values[N + index] = hash;
@@ -369,8 +366,7 @@ public class ObjToIntMap implements Serializable {
 			Object test = keys[index];
 			if (test != null) {
 				int N = 1 << power;
-				if (test == key
-						|| (values[N + index] == hash && test.equals(key))) {
+				if (test == key || (values[N + index] == hash && test.equals(key))) {
 					return index;
 				}
 				if (test == DELETED) {
@@ -393,8 +389,7 @@ public class ObjToIntMap implements Serializable {
 					if (test == null) {
 						break;
 					}
-					if (test == key
-							|| (values[N + index] == hash && test.equals(key))) {
+					if (test == key || (values[N + index] == hash && test.equals(key))) {
 						return index;
 					}
 					if (test == DELETED && firstDeleted < 0) {
@@ -424,8 +419,7 @@ public class ObjToIntMap implements Serializable {
 		return index;
 	}
 
-	private void writeObject(ObjectOutputStream out)
-			throws IOException {
+	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.defaultWriteObject();
 
 		int count = keyCount;
@@ -439,8 +433,7 @@ public class ObjToIntMap implements Serializable {
 		}
 	}
 
-	private void readObject(ObjectInputStream in)
-			throws IOException, ClassNotFoundException {
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 
 		int writtenKeyCount = keyCount;

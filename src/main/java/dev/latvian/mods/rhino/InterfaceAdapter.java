@@ -43,8 +43,7 @@ public class InterfaceAdapter {
 				// the same function to be invoked anyway).
 				int length = methods.length;
 				if (length == 0) {
-					throw Context.reportRuntimeError1(
-							"msg.no.empty.interface.conversion", cl.getName());
+					throw Context.reportRuntimeError1("msg.no.empty.interface.conversion", cl.getName());
 				}
 				if (length > 1) {
 					String methodName = null;
@@ -55,9 +54,7 @@ public class InterfaceAdapter {
 							if (methodName == null) {
 								methodName = method.getName();
 							} else if (!methodName.equals(method.getName())) {
-								throw Context.reportRuntimeError1(
-										"msg.no.function.interface.conversion",
-										cl.getName());
+								throw Context.reportRuntimeError1("msg.no.function.interface.conversion", cl.getName());
 							}
 						}
 					}
@@ -66,8 +63,7 @@ public class InterfaceAdapter {
 			adapter = new InterfaceAdapter(cf, cl);
 			cache.cacheInterfaceAdapter(cl, adapter);
 		}
-		return VMBridge.instance.newInterfaceProxy(
-				adapter.proxyHelper, cf, adapter, object, topScope);
+		return VMBridge.instance.newInterfaceProxy(adapter.proxyHelper, cf, adapter, object, topScope);
 	}
 
 	/**
@@ -77,9 +73,7 @@ public class InterfaceAdapter {
 	 * @return true, if the function
 	 */
 	private static boolean isFunctionalMethodCandidate(Method method) {
-		if (method.getName().equals("equals")
-				|| method.getName().equals("hashCode")
-				|| method.getName().equals("toString")) {
+		if (method.getName().equals("equals") || method.getName().equals("hashCode") || method.getName().equals("toString")) {
 			// it should be safe to ignore them as there is also a special
 			// case for these methods in VMBridge_jdk18.newInterfaceProxy
 			return false;
@@ -89,26 +83,14 @@ public class InterfaceAdapter {
 	}
 
 	private InterfaceAdapter(ContextFactory cf, Class<?> cl) {
-		this.proxyHelper
-				= VMBridge.instance.getInterfaceProxyHelper(
-				cf, new Class[]{cl});
+		this.proxyHelper = VMBridge.instance.getInterfaceProxyHelper(cf, new Class[]{cl});
 	}
 
-	public Object invoke(ContextFactory cf,
-						 final Object target,
-						 final Scriptable topScope,
-						 final Object thisObject,
-						 final Method method,
-						 final Object[] args) {
+	public Object invoke(ContextFactory cf, final Object target, final Scriptable topScope, final Object thisObject, final Method method, final Object[] args) {
 		return cf.call(cx -> invokeImpl(cx, target, topScope, thisObject, method, args));
 	}
 
-	Object invokeImpl(Context cx,
-					  Object target,
-					  Scriptable topScope,
-					  Object thisObject,
-					  Method method,
-					  Object[] args) {
+	Object invokeImpl(Context cx, Object target, Scriptable topScope, Object thisObject, Method method, Object[] args) {
 		Callable function;
 		if (target instanceof Callable) {
 			function = (Callable) target;
@@ -120,8 +102,7 @@ public class InterfaceAdapter {
 				// We really should throw an error here, but for the sake of
 				// compatibility with JavaAdapter we silently ignore undefined
 				// methods.
-				Context.reportWarning(ScriptRuntime.getMessage1(
-						"msg.undefined.function.interface", methodName));
+				Context.reportWarning(ScriptRuntime.getMessage1("msg.undefined.function.interface", methodName));
 				Class<?> resultType = method.getReturnType();
 				if (resultType == Void.TYPE) {
 					return null;
@@ -129,8 +110,7 @@ public class InterfaceAdapter {
 				return Context.jsToJava(null, resultType);
 			}
 			if (!(value instanceof Callable)) {
-				throw Context.reportRuntimeError1(
-						"msg.not.function.interface", methodName);
+				throw Context.reportRuntimeError1("msg.not.function.interface", methodName);
 			}
 			function = (Callable) value;
 		}
@@ -141,8 +121,7 @@ public class InterfaceAdapter {
 			for (int i = 0, N = args.length; i != N; ++i) {
 				Object arg = args[i];
 				// neutralize wrap factory java primitive wrap feature
-				if (!(arg instanceof String || arg instanceof Number
-						|| arg instanceof Boolean)) {
+				if (!(arg instanceof String || arg instanceof Number || arg instanceof Boolean)) {
 					args[i] = wf.wrap(cx, topScope, arg, null);
 				}
 			}

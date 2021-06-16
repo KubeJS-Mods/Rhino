@@ -472,8 +472,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 	 * @param items a list to print
 	 * @param sb    a {@link StringBuilder} into which to print
 	 */
-	protected <T extends AstNode> void printList(List<T> items,
-												 StringBuilder sb) {
+	protected <T extends AstNode> void printList(List<T> items, StringBuilder sb) {
 		int max = items.size();
 		int count = 0;
 		for (AstNode item : items) {
@@ -489,8 +488,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 	/**
 	 * @see Kit#codeBug
 	 */
-	public static RuntimeException codeBug()
-			throws RuntimeException {
+	public static RuntimeException codeBug() throws RuntimeException {
 		throw Kit.codeBug();
 	}
 

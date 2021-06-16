@@ -15,8 +15,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	SecurityController securityController;
 	Object securityDomain;
 
-	private InterpretedFunction(InterpreterData idata,
-								Object staticSecurityDomain) {
+	private InterpretedFunction(InterpreterData idata, Object staticSecurityDomain) {
 		this.idata = idata;
 
 		// Always get Context from the current thread to
@@ -47,8 +46,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	/**
 	 * Create script from compiled bytecode.
 	 */
-	static InterpretedFunction createScript(InterpreterData idata,
-											Object staticSecurityDomain) {
+	static InterpretedFunction createScript(InterpreterData idata, Object staticSecurityDomain) {
 		InterpretedFunction f;
 		f = new InterpretedFunction(idata, staticSecurityDomain);
 		return f;
@@ -57,9 +55,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	/**
 	 * Create function compiled from Function(...) constructor.
 	 */
-	static InterpretedFunction createFunction(Context cx, Scriptable scope,
-											  InterpreterData idata,
-											  Object staticSecurityDomain) {
+	static InterpretedFunction createFunction(Context cx, Scriptable scope, InterpreterData idata, Object staticSecurityDomain) {
 		InterpretedFunction f;
 		f = new InterpretedFunction(idata, staticSecurityDomain);
 		f.initScriptFunction(cx, scope, f.idata.isES6Generator);
@@ -69,9 +65,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	/**
 	 * Create function embedded in script or another function.
 	 */
-	static InterpretedFunction createFunction(Context cx, Scriptable scope,
-											  InterpretedFunction parent,
-											  int index) {
+	static InterpretedFunction createFunction(Context cx, Scriptable scope, InterpretedFunction parent, int index) {
 		InterpretedFunction f = new InterpretedFunction(parent, index);
 		f.initScriptFunction(cx, scope, f.idata.isES6Generator);
 		return f;
@@ -94,8 +88,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	 * @return the result of the function call.
 	 */
 	@Override
-	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args) {
+	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!ScriptRuntime.hasTopCall(cx)) {
 			return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args, idata.isStrict);
 		}
@@ -110,11 +103,9 @@ final class InterpretedFunction extends NativeFunction implements Script {
 		}
 		if (!ScriptRuntime.hasTopCall(cx)) {
 			// It will go through "call" path. but they are equivalent
-			return ScriptRuntime.doTopCall(
-					this, cx, scope, scope, ScriptRuntime.emptyArgs, idata.isStrict);
+			return ScriptRuntime.doTopCall(this, cx, scope, scope, ScriptRuntime.emptyArgs, idata.isStrict);
 		}
-		return Interpreter.interpret(
-				this, cx, scope, scope, ScriptRuntime.emptyArgs);
+		return Interpreter.interpret(this, cx, scope, scope, ScriptRuntime.emptyArgs);
 	}
 
 	public boolean isScript() {
@@ -132,8 +123,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	}
 
 	@Override
-	public Object resumeGenerator(Context cx, Scriptable scope, int operation,
-								  Object state, Object value) {
+	public Object resumeGenerator(Context cx, Scriptable scope, int operation, Object state, Object value) {
 		return Interpreter.resumeGenerator(cx, scope, operation, state, value);
 	}
 
@@ -165,8 +155,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	boolean hasFunctionNamed(String name) {
 		for (int f = 0; f < idata.getFunctionCount(); f++) {
 			InterpreterData functionData = (InterpreterData) idata.getFunction(f);
-			if (!functionData.declaredAsFunctionExpression
-					&& name.equals(functionData.getFunctionName())) {
+			if (!functionData.declaredAsFunctionExpression && name.equals(functionData.getFunctionName())) {
 				return false;
 			}
 		}

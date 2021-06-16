@@ -243,8 +243,7 @@ public class UintMap implements Serializable {
 					if (entry == key) {
 						return index;
 					}
-				}
-				while (entry != EMPTY);
+				} while (entry != EMPTY);
 			}
 		}
 		return -1;
@@ -274,8 +273,7 @@ public class UintMap implements Serializable {
 				if (check && firstIndex == index) {
 					Kit.codeBug();
 				}
-			}
-			while (keys[index] != EMPTY);
+			} while (keys[index] != EMPTY);
 		}
 		keys[index] = key;
 		++occupiedCount;
@@ -364,8 +362,7 @@ public class UintMap implements Serializable {
 					if (entry == DELETED && firstDeleted < 0) {
 						firstDeleted = index;
 					}
-				}
-				while (entry != EMPTY);
+				} while (entry != EMPTY);
 			}
 		}
 		// Inserting of new key
@@ -388,8 +385,7 @@ public class UintMap implements Serializable {
 		return index;
 	}
 
-	private void writeObject(ObjectOutputStream out)
-			throws IOException {
+	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.defaultWriteObject();
 
 		int count = keyCount;
@@ -415,8 +411,7 @@ public class UintMap implements Serializable {
 		}
 	}
 
-	private void readObject(ObjectInputStream in)
-			throws IOException, ClassNotFoundException {
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 
 		int writtenKeyCount = keyCount;

@@ -232,10 +232,7 @@ public class JsonParser {
 					if (length - pos < 5) {
 						throw new ParseException("Invalid character code: \\u" + src.substring(pos));
 					}
-					int code = fromHex(src.charAt(pos + 0)) << 12
-							| fromHex(src.charAt(pos + 1)) << 8
-							| fromHex(src.charAt(pos + 2)) << 4
-							| fromHex(src.charAt(pos + 3));
+					int code = fromHex(src.charAt(pos + 0)) << 12 | fromHex(src.charAt(pos + 1)) << 8 | fromHex(src.charAt(pos + 2)) << 4 | fromHex(src.charAt(pos + 3));
 					if (code < 0) {
 						throw new ParseException("Invalid character code: " + src.substring(pos, pos + 4));
 					}
@@ -262,10 +259,7 @@ public class JsonParser {
 	}
 
 	private static int fromHex(char c) {
-		return c >= '0' && c <= '9' ? c - '0'
-				: c >= 'A' && c <= 'F' ? c - 'A' + 10
-				: c >= 'a' && c <= 'f' ? c - 'a' + 10
-				: -1;
+		return c >= '0' && c <= '9' ? c - '0' : c >= 'A' && c <= 'F' ? c - 'A' + 10 : c >= 'a' && c <= 'f' ? c - 'a' + 10 : -1;
 	}
 
 	private Number readNumber(char c) throws ParseException {
@@ -334,10 +328,7 @@ public class JsonParser {
 	}
 
 	private Boolean readTrue() throws ParseException {
-		if (length - pos < 3
-				|| src.charAt(pos) != 'r'
-				|| src.charAt(pos + 1) != 'u'
-				|| src.charAt(pos + 2) != 'e') {
+		if (length - pos < 3 || src.charAt(pos) != 'r' || src.charAt(pos + 1) != 'u' || src.charAt(pos + 2) != 'e') {
 			throw new ParseException("Unexpected token: t");
 		}
 		pos += 3;
@@ -345,11 +336,7 @@ public class JsonParser {
 	}
 
 	private Boolean readFalse() throws ParseException {
-		if (length - pos < 4
-				|| src.charAt(pos) != 'a'
-				|| src.charAt(pos + 1) != 'l'
-				|| src.charAt(pos + 2) != 's'
-				|| src.charAt(pos + 3) != 'e') {
+		if (length - pos < 4 || src.charAt(pos) != 'a' || src.charAt(pos + 1) != 'l' || src.charAt(pos + 2) != 's' || src.charAt(pos + 3) != 'e') {
 			throw new ParseException("Unexpected token: f");
 		}
 		pos += 4;
@@ -357,10 +344,7 @@ public class JsonParser {
 	}
 
 	private Object readNull() throws ParseException {
-		if (length - pos < 3
-				|| src.charAt(pos) != 'u'
-				|| src.charAt(pos + 1) != 'l'
-				|| src.charAt(pos + 2) != 'l') {
+		if (length - pos < 3 || src.charAt(pos) != 'u' || src.charAt(pos + 1) != 'l' || src.charAt(pos + 2) != 'l') {
 			throw new ParseException("Unexpected token: n");
 		}
 		pos += 3;

@@ -31,9 +31,7 @@ final class FieldOrMethodRef {
 			return false;
 		}
 		FieldOrMethodRef x = (FieldOrMethodRef) obj;
-		return className.equals(x.className)
-				&& name.equals(x.name)
-				&& type.equals(x.type);
+		return className.equals(x.className) && name.equals(x.name) && type.equals(x.type);
 	}
 
 	@Override

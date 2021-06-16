@@ -56,12 +56,9 @@ final class NativeDate extends IdScriptableObject {
 
 	@Override
 	protected void fillConstructorProperties(IdFunctionObject ctor) {
-		addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_now,
-				"now", 0);
-		addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_parse,
-				"parse", 1);
-		addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_UTC,
-				"UTC", 7);
+		addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_now, "now", 0);
+		addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_parse, "parse", 1);
+		addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_UTC, "UTC", 7);
 		super.fillConstructorProperties(ctor);
 	}
 
@@ -265,8 +262,7 @@ final class NativeDate extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(DATE_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -305,21 +301,14 @@ final class NativeDate extends IdScriptableObject {
 				}
 				Object toISO = getProperty(o, toISOString);
 				if (toISO == NOT_FOUND) {
-					throw ScriptRuntime.typeError2("msg.function.not.found.in",
-							toISOString,
-							ScriptRuntime.toString(o));
+					throw ScriptRuntime.typeError2("msg.function.not.found.in", toISOString, ScriptRuntime.toString(o));
 				}
 				if (!(toISO instanceof Callable)) {
-					throw ScriptRuntime.typeError3("msg.isnt.function.in",
-							toISOString,
-							ScriptRuntime.toString(o),
-							ScriptRuntime.toString(toISO));
+					throw ScriptRuntime.typeError3("msg.isnt.function.in", toISOString, ScriptRuntime.toString(o), ScriptRuntime.toString(toISO));
 				}
-				Object result = ((Callable) toISO).call(cx, scope, o,
-						ScriptRuntime.emptyArgs);
+				Object result = ((Callable) toISO).call(cx, scope, o, ScriptRuntime.emptyArgs);
 				if (!ScriptRuntime.isPrimitive(result)) {
-					throw ScriptRuntime.typeError1("msg.toisostring.must.return.primitive",
-							ScriptRuntime.toString(result));
+					throw ScriptRuntime.typeError1("msg.toisostring.must.return.primitive", ScriptRuntime.toString(result));
 				}
 				return result;
 			}
@@ -504,8 +493,7 @@ final class NativeDate extends IdScriptableObject {
 						year += 1900;
 					}
 
-					double day = MakeDay(year, MonthFromTime(t),
-							DateFromTime(t));
+					double day = MakeDay(year, MonthFromTime(t), DateFromTime(t));
 					t = MakeDate(day, TimeWithinDay(t));
 					t = internalUTC(t);
 					t = TimeClip(t);
@@ -562,8 +550,7 @@ final class NativeDate extends IdScriptableObject {
 	 *  floor((1968 - 1969) / 4) == -1
 	 */
 	private static double DayFromYear(double y) {
-		return ((365 * ((y) - 1970) + Math.floor(((y) - 1969) / 4.0)
-				- Math.floor(((y) - 1901) / 100.0) + Math.floor(((y) - 1601) / 400.0)));
+		return ((365 * ((y) - 1970) + Math.floor(((y) - 1969) / 4.0) - Math.floor(((y) - 1901) / 100.0) + Math.floor(((y) - 1601) / 400.0)));
 	}
 
 	private static double TimeFromYear(double y) {
@@ -623,9 +610,7 @@ final class NativeDate extends IdScriptableObject {
 		if (month == 2) {
 			return IsLeapYear(year) ? 29 : 28;
 		}
-		return month >= 8
-				? 31 - (month & 1)
-				: 30 + (month & 1);
+		return month >= 8 ? 31 - (month & 1) : 30 + (month & 1);
 	}
 
 	private static int MonthFromTime(double t) {
@@ -884,10 +869,8 @@ final class NativeDate extends IdScriptableObject {
 		return (int) result;
 	}
 
-	private static double MakeTime(double hour, double min,
-								   double sec, double ms) {
-		return ((hour * MinutesPerHour + min) * SecondsPerMinute + sec)
-				* msPerSecond + ms;
+	private static double MakeTime(double hour, double min, double sec, double ms) {
+		return ((hour * MinutesPerHour + min) * SecondsPerMinute + sec) * msPerSecond + ms;
 	}
 
 	private static double MakeDay(double year, double month, double date) {
@@ -909,10 +892,7 @@ final class NativeDate extends IdScriptableObject {
 	}
 
 	private static double TimeClip(double d) {
-		if (Double.isNaN(d) ||
-				d == Double.POSITIVE_INFINITY ||
-				d == Double.NEGATIVE_INFINITY ||
-				Math.abs(d) > HalfTimeDomain) {
+		if (Double.isNaN(d) || d == Double.POSITIVE_INFINITY || d == Double.NEGATIVE_INFINITY || Math.abs(d) > HalfTimeDomain) {
 			return ScriptRuntime.NaN;
 		}
 		if (d > 0.0) {
@@ -924,10 +904,7 @@ final class NativeDate extends IdScriptableObject {
 	/* end of ECMA helper functions */
 
 	/* find UTC time from given date... no 1900 correction! */
-	private static double date_msecFromDate(double year, double mon,
-											double mday, double hour,
-											double min, double sec,
-											double msec) {
+	private static double date_msecFromDate(double year, double mon, double mday, double hour, double min, double sec, double msec) {
 		double day;
 		double time;
 		double result;
@@ -967,8 +944,7 @@ final class NativeDate extends IdScriptableObject {
 			array[0] += 1900;
 		}
 
-		return date_msecFromDate(array[0], array[1], array[2],
-				array[3], array[4], array[5], array[6]);
+		return date_msecFromDate(array[0], array[1], array[2], array[3], array[4], array[5], array[6]);
 	}
 
 	private static double jsStaticFunction_UTC(Object[] args) {
@@ -1107,20 +1083,11 @@ final class NativeDate extends IdScriptableObject {
 			int hour = values[HOUR], min = values[MIN], sec = values[SEC], msec = values[MSEC];
 			int tzhour = values[TZHOUR], tzmin = values[TZMIN];
 			if (year > 275943 // ceil(1e8/365) + 1970 = 275943
-					|| (month < 1 || month > 12)
-					|| (day < 1 || day > DaysInMonth(year, month))
-					|| hour > 24
-					|| (hour == 24 && (min > 0 || sec > 0 || msec > 0))
-					|| min > 59
-					|| sec > 59
-					|| tzhour > 23
-					|| tzmin > 59
-			) {
+					|| (month < 1 || month > 12) || (day < 1 || day > DaysInMonth(year, month)) || hour > 24 || (hour == 24 && (min > 0 || sec > 0 || msec > 0)) || min > 59 || sec > 59 || tzhour > 23 || tzmin > 59) {
 				break syntax;
 			}
 			// valid ISO-8601 format, compute date in milliseconds
-			double date = date_msecFromDate(year * yearmod, month - 1, day,
-					hour, min, sec, msec);
+			double date = date_msecFromDate(year * yearmod, month - 1, day, hour, min, sec, msec);
 			if (tzhour == -1) {
 				// Spec says to use UTC timezone, the following bug report says
 				// that local timezone was meant to be used. Stick with spec for now.
@@ -1220,9 +1187,7 @@ final class NativeDate extends IdScriptableObject {
 						return ScriptRuntime.NaN;
 					}
 					tzoffset = n;
-				} else if (n >= 70 ||
-						(prevc == '/' && mon >= 0 && mday >= 0
-								&& year < 0)) {
+				} else if (n >= 70 || (prevc == '/' && mon >= 0 && mday >= 0 && year < 0)) {
 					if (year >= 0) {
 						return ScriptRuntime.NaN;
 					} else if (c <= ' ' || c == ',' || c == '/' || i >= limit) {
@@ -1284,12 +1249,7 @@ final class NativeDate extends IdScriptableObject {
 				 * date-parsing code from Java, to keep js and rhino consistent.
 				 * Is this the right strategy?
 				 */
-				String wtb = "am;pm;"
-						+ "monday;tuesday;wednesday;thursday;friday;"
-						+ "saturday;sunday;"
-						+ "january;february;march;april;may;june;"
-						+ "july;august;september;october;november;december;"
-						+ "gmt;ut;utc;est;edt;cst;cdt;mst;mdt;pst;pdt;";
+				String wtb = "am;pm;" + "monday;tuesday;wednesday;thursday;friday;" + "saturday;sunday;" + "january;february;march;april;may;june;" + "july;august;september;october;november;december;" + "gmt;ut;utc;est;edt;cst;cdt;mst;mdt;pst;pdt;";
 				int index = 0;
 				for (int wtbOffset = 0; ; ) {
 					int wtbNext = wtb.indexOf(';', wtbOffset);
@@ -1427,8 +1387,7 @@ final class NativeDate extends IdScriptableObject {
 
 			// offset from GMT in minutes.  The offset includes daylight
 			// savings, if it applies.
-			int minutes = (int) Math.floor((LocalTZA + DaylightSavingTA(t))
-					/ msPerMinute);
+			int minutes = (int) Math.floor((LocalTZA + DaylightSavingTA(t)) / msPerMinute);
 			// map 510 minutes to 0830 hours
 			int offset = (minutes / 60) * 100 + minutes % 60;
 			if (offset > 0) {
@@ -1612,8 +1571,7 @@ final class NativeDate extends IdScriptableObject {
 		// Take advantage of the fact that all month abbreviations
 		// have the same length to minimize amount of strings runtime has
 		// to keep in memory
-		String months = "Jan" + "Feb" + "Mar" + "Apr" + "May" + "Jun"
-				+ "Jul" + "Aug" + "Sep" + "Oct" + "Nov" + "Dec";
+		String months = "Jan" + "Feb" + "Mar" + "Apr" + "May" + "Jun" + "Jul" + "Aug" + "Sep" + "Oct" + "Nov" + "Dec";
 		index *= 3;
 		for (int i = 0; i != 3; ++i) {
 			sb.append(months.charAt(index + i));
@@ -2107,63 +2065,13 @@ final class NativeDate extends IdScriptableObject {
 		return id;
 	}
 
-	private static final int
-			ConstructorId_now = -3,
-			ConstructorId_parse = -2,
-			ConstructorId_UTC = -1,
+	private static final int ConstructorId_now = -3, ConstructorId_parse = -2, ConstructorId_UTC = -1,
 
-	Id_constructor = 1,
-			Id_toString = 2,
-			Id_toTimeString = 3,
-			Id_toDateString = 4,
-			Id_toLocaleString = 5,
-			Id_toLocaleTimeString = 6,
-			Id_toLocaleDateString = 7,
-			Id_toUTCString = 8,
-			Id_toSource = 9,
-			Id_valueOf = 10,
-			Id_getTime = 11,
-			Id_getYear = 12,
-			Id_getFullYear = 13,
-			Id_getUTCFullYear = 14,
-			Id_getMonth = 15,
-			Id_getUTCMonth = 16,
-			Id_getDate = 17,
-			Id_getUTCDate = 18,
-			Id_getDay = 19,
-			Id_getUTCDay = 20,
-			Id_getHours = 21,
-			Id_getUTCHours = 22,
-			Id_getMinutes = 23,
-			Id_getUTCMinutes = 24,
-			Id_getSeconds = 25,
-			Id_getUTCSeconds = 26,
-			Id_getMilliseconds = 27,
-			Id_getUTCMilliseconds = 28,
-			Id_getTimezoneOffset = 29,
-			Id_setTime = 30,
-			Id_setMilliseconds = 31,
-			Id_setUTCMilliseconds = 32,
-			Id_setSeconds = 33,
-			Id_setUTCSeconds = 34,
-			Id_setMinutes = 35,
-			Id_setUTCMinutes = 36,
-			Id_setHours = 37,
-			Id_setUTCHours = 38,
-			Id_setDate = 39,
-			Id_setUTCDate = 40,
-			Id_setMonth = 41,
-			Id_setUTCMonth = 42,
-			Id_setFullYear = 43,
-			Id_setUTCFullYear = 44,
-			Id_setYear = 45,
-			Id_toISOString = 46,
-			Id_toJSON = 47,
+	Id_constructor = 1, Id_toString = 2, Id_toTimeString = 3, Id_toDateString = 4, Id_toLocaleString = 5, Id_toLocaleTimeString = 6, Id_toLocaleDateString = 7, Id_toUTCString = 8, Id_toSource = 9, Id_valueOf = 10, Id_getTime = 11, Id_getYear = 12, Id_getFullYear = 13, Id_getUTCFullYear = 14, Id_getMonth = 15, Id_getUTCMonth = 16, Id_getDate = 17, Id_getUTCDate = 18, Id_getDay = 19, Id_getUTCDay = 20, Id_getHours = 21, Id_getUTCHours = 22, Id_getMinutes = 23, Id_getUTCMinutes = 24, Id_getSeconds = 25, Id_getUTCSeconds = 26, Id_getMilliseconds = 27, Id_getUTCMilliseconds = 28, Id_getTimezoneOffset = 29, Id_setTime = 30, Id_setMilliseconds = 31, Id_setUTCMilliseconds = 32, Id_setSeconds = 33, Id_setUTCSeconds = 34, Id_setMinutes = 35, Id_setUTCMinutes = 36, Id_setHours = 37, Id_setUTCHours = 38, Id_setDate = 39, Id_setUTCDate = 40, Id_setMonth = 41, Id_setUTCMonth = 42, Id_setFullYear = 43, Id_setUTCFullYear = 44, Id_setYear = 45, Id_toISOString = 46, Id_toJSON = 47,
 
 	MAX_PROTOTYPE_ID = Id_toJSON;
 
-	private static final int
-			Id_toGMTString = Id_toUTCString; // Alias, see Ecma B.2.6
+	private static final int Id_toGMTString = Id_toUTCString; // Alias, see Ecma B.2.6
 	// #/string_id_map#
 
 	/* cached values */

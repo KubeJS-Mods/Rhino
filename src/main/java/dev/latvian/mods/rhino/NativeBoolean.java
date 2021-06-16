@@ -69,8 +69,7 @@ final class NativeBoolean extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(BOOLEAN_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -85,8 +84,7 @@ final class NativeBoolean extends IdScriptableObject {
 				// avoidObjectDetection() is used to implement document.all
 				// see Note on page
 				//   https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean
-				b = (!(args[0] instanceof ScriptableObject) ||
-						!((ScriptableObject) args[0]).avoidObjectDetection()) && ScriptRuntime.toBoolean(args[0]);
+				b = (!(args[0] instanceof ScriptableObject) || !((ScriptableObject) args[0]).avoidObjectDetection()) && ScriptRuntime.toBoolean(args[0]);
 			}
 			if (thisObj == null) {
 				// new Boolean(val) creates a new boolean object.
@@ -154,12 +152,7 @@ final class NativeBoolean extends IdScriptableObject {
 		return id;
 	}
 
-	private static final int
-			Id_constructor = 1,
-			Id_toString = 2,
-			Id_toSource = 3,
-			Id_valueOf = 4,
-			MAX_PROTOTYPE_ID = 4;
+	private static final int Id_constructor = 1, Id_toString = 2, Id_toSource = 3, Id_valueOf = 4, MAX_PROTOTYPE_ID = 4;
 
 	// #/string_id_map#
 

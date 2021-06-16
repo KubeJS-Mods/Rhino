@@ -67,14 +67,10 @@ public class FunctionNode extends ScriptNode {
 	public static final int ARROW_FUNCTION = 4;
 
 	public enum Form {
-		FUNCTION,
-		GETTER,
-		SETTER,
-		METHOD
+		FUNCTION, GETTER, SETTER, METHOD
 	}
 
-	private static final List<AstNode> NO_PARAMS =
-			Collections.unmodifiableList(new ArrayList<>());
+	private static final List<AstNode> NO_PARAMS = Collections.unmodifiableList(new ArrayList<>());
 
 	private Name functionName;
 	private List<AstNode> params;

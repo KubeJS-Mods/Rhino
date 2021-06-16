@@ -16,8 +16,7 @@ import dev.latvian.mods.rhino.Undefined;
  * It also implements List&lt;Integer&gt; for direct manipulation in Java.
  */
 
-public class NativeUint8Array
-		extends NativeTypedArrayView<Integer> {
+public class NativeUint8Array extends NativeTypedArrayView<Integer> {
 	private static final long serialVersionUID = -3349419704390398895L;
 
 	private static final String CLASS_NAME = "Uint8Array";

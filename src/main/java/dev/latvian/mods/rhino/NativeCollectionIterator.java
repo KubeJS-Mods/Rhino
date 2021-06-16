@@ -13,9 +13,7 @@ public class NativeCollectionIterator extends ES6Iterator {
 	private transient Iterator<Hashtable.Entry> iterator = Collections.emptyIterator();
 
 	enum Type {
-		KEYS,
-		VALUES,
-		BOTH
+		KEYS, VALUES, BOTH
 	}
 
 	static void init(ScriptableObject scope, String tag, boolean sealed) {
@@ -28,9 +26,7 @@ public class NativeCollectionIterator extends ES6Iterator {
 		this.type = Type.BOTH;
 	}
 
-	public NativeCollectionIterator(
-			Scriptable scope, String className,
-			Type type, Iterator<Hashtable.Entry> iterator) {
+	public NativeCollectionIterator(Scriptable scope, String className, Type type, Iterator<Hashtable.Entry> iterator) {
 		super(scope, className);
 		this.className = className;
 		this.iterator = iterator;
@@ -62,16 +58,14 @@ public class NativeCollectionIterator extends ES6Iterator {
 		}
 	}
 
-	private void readObject(ObjectInputStream stream)
-			throws IOException, ClassNotFoundException {
+	private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
 		stream.defaultReadObject();
 		className = (String) stream.readObject();
 		type = (Type) stream.readObject();
 		iterator = Collections.emptyIterator();
 	}
 
-	private void writeObject(ObjectOutputStream stream)
-			throws IOException {
+	private void writeObject(ObjectOutputStream stream) throws IOException {
 		stream.defaultWriteObject();
 		stream.writeObject(className);
 		stream.writeObject(type);

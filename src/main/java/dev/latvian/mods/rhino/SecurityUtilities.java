@@ -22,13 +22,11 @@ public class SecurityUtilities {
 	 * @return the value of the system property
 	 */
 	public static String getSystemProperty(final String name) {
-		return AccessController.doPrivileged(
-				(PrivilegedAction<String>) () -> System.getProperty(name));
+		return AccessController.doPrivileged((PrivilegedAction<String>) () -> System.getProperty(name));
 	}
 
 	public static ProtectionDomain getProtectionDomain(final Class<?> clazz) {
-		return AccessController.doPrivileged(
-				(PrivilegedAction<ProtectionDomain>) () -> clazz.getProtectionDomain());
+		return AccessController.doPrivileged((PrivilegedAction<ProtectionDomain>) () -> clazz.getProtectionDomain());
 	}
 
 	/**
@@ -42,13 +40,10 @@ public class SecurityUtilities {
 	public static ProtectionDomain getScriptProtectionDomain() {
 		final SecurityManager securityManager = System.getSecurityManager();
 		if (securityManager instanceof RhinoSecurityManager) {
-			return AccessController.doPrivileged(
-					(PrivilegedAction<ProtectionDomain>) () -> {
-						Class<?> c = ((RhinoSecurityManager) securityManager)
-								.getCurrentScriptClass();
-						return c == null ? null : c.getProtectionDomain();
-					}
-			);
+			return AccessController.doPrivileged((PrivilegedAction<ProtectionDomain>) () -> {
+				Class<?> c = ((RhinoSecurityManager) securityManager).getCurrentScriptClass();
+				return c == null ? null : c.getProtectionDomain();
+			});
 		}
 		return null;
 	}

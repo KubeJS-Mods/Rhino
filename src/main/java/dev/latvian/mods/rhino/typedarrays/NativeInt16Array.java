@@ -16,8 +16,7 @@ import dev.latvian.mods.rhino.Undefined;
  * It also implements List&lt;Short&gt; for direct manipulation in Java.
  */
 
-public class NativeInt16Array
-		extends NativeTypedArrayView<Short> {
+public class NativeInt16Array extends NativeTypedArrayView<Short> {
 	private static final long serialVersionUID = -8592870435287581398L;
 
 	private static final String CLASS_NAME = "Int16Array";

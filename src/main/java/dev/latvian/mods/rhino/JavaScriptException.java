@@ -27,8 +27,7 @@ public class JavaScriptException extends RhinoException {
 		this.value = value;
 		// Fill in fileName and lineNumber automatically when not specified
 		// explicitly, see Bugzilla issue #342807
-		if (value instanceof NativeError && Context.getContext()
-				.hasFeature(Context.FEATURE_LOCATION_INFORMATION_IN_ERROR)) {
+		if (value instanceof NativeError && Context.getContext().hasFeature(Context.FEATURE_LOCATION_INFORMATION_IN_ERROR)) {
 			NativeError error = (NativeError) value;
 			if (!error.has("fileName", error)) {
 				error.put("fileName", error, sourceName);

@@ -44,11 +44,7 @@ final class NativeString extends IdScriptableObject {
 		return "String";
 	}
 
-	private static final int
-			Id_length = 1,
-			Id_namespace = 2,
-			Id_path = 3,
-			MAX_INSTANCE_ID = Id_path;
+	private static final int Id_length = 1, Id_namespace = 2, Id_path = 3, MAX_INSTANCE_ID = Id_path;
 
 	@Override
 	protected int getMaxInstanceId() {
@@ -104,46 +100,26 @@ final class NativeString extends IdScriptableObject {
 
 	@Override
 	protected void fillConstructorProperties(IdFunctionObject ctor) {
-		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCharCode,
-				"fromCharCode", 1);
-		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCodePoint,
-				"fromCodePoint", 1);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_raw, "raw", 1);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_charAt, "charAt", 2);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_charCodeAt, "charCodeAt", 2);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_indexOf, "indexOf", 2);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_lastIndexOf, "lastIndexOf", 2);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_split, "split", 3);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_substring, "substring", 3);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_toLowerCase, "toLowerCase", 1);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_toUpperCase, "toUpperCase", 1);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_substr, "substr", 3);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_concat, "concat", 2);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_slice, "slice", 3);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_equalsIgnoreCase, "equalsIgnoreCase", 2);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_match, "match", 2);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_search, "search", 2);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_replace, "replace", 2);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_localeCompare, "localeCompare", 2);
-		addIdFunctionProperty(ctor, STRING_TAG,
-				ConstructorId_toLocaleLowerCase, "toLocaleLowerCase", 1);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCharCode, "fromCharCode", 1);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCodePoint, "fromCodePoint", 1);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_raw, "raw", 1);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_charAt, "charAt", 2);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_charCodeAt, "charCodeAt", 2);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_indexOf, "indexOf", 2);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_lastIndexOf, "lastIndexOf", 2);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_split, "split", 3);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_substring, "substring", 3);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_toLowerCase, "toLowerCase", 1);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_toUpperCase, "toUpperCase", 1);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_substr, "substr", 3);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_concat, "concat", 2);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_slice, "slice", 3);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_equalsIgnoreCase, "equalsIgnoreCase", 2);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_match, "match", 2);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_search, "search", 2);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_replace, "replace", 2);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_localeCompare, "localeCompare", 2);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_toLocaleLowerCase, "toLocaleLowerCase", 1);
 		super.fillConstructorProperties(ctor);
 	}
 
@@ -360,8 +336,7 @@ final class NativeString extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(STRING_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -435,9 +410,7 @@ final class NativeString extends IdScriptableObject {
 					CharSequence s;
 					if (args.length == 0) {
 						s = "";
-					} else if
-					(ScriptRuntime.isSymbol(args[0]) &&
-									(thisObj != null)) {
+					} else if (ScriptRuntime.isSymbol(args[0]) && (thisObj != null)) {
 						// 19.4.3.2 et.al. Convert a symbol to a string with String() but not new String()
 						s = args[0].toString();
 					} else {
@@ -595,9 +568,7 @@ final class NativeString extends IdScriptableObject {
 				case Id_equalsIgnoreCase: {
 					String s1 = ScriptRuntime.toString(thisObj);
 					String s2 = ScriptRuntime.toString(args, 0);
-					return ScriptRuntime.wrapBoolean(
-							(id == Id_equals) ? s1.equals(s2)
-									: s1.equalsIgnoreCase(s2));
+					return ScriptRuntime.wrapBoolean((id == Id_equals) ? s1.equals(s2) : s1.equalsIgnoreCase(s2));
 				}
 
 				case Id_match:
@@ -613,8 +584,7 @@ final class NativeString extends IdScriptableObject {
 					}
 
 					ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f);
-					return ScriptRuntime.checkRegExpProxy(cx).
-							action(cx, scope, thisObj, args, actionType);
+					return ScriptRuntime.checkRegExpProxy(cx).action(cx, scope, thisObj, args, actionType);
 				}
 				// ECMA-262 1 5.5.4.9
 				case Id_localeCompare: {
@@ -626,9 +596,7 @@ final class NativeString extends IdScriptableObject {
 					Collator collator = Collator.getInstance(cx.getLocale());
 					collator.setStrength(Collator.IDENTICAL);
 					collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
-					return ScriptRuntime.wrapNumber(collator.compare(
-							thisStr,
-							ScriptRuntime.toString(args, 0)));
+					return ScriptRuntime.wrapNumber(collator.compare(thisStr, ScriptRuntime.toString(args, 0)));
 				}
 				case Id_toLocaleLowerCase: {
 					String thisStr = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
@@ -710,9 +678,7 @@ final class NativeString extends IdScriptableObject {
 					String str = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
 					double cnt = ScriptRuntime.toInteger(args, 0);
 
-					return (cnt < 0 || cnt >= str.length())
-							? Undefined.instance
-							: Integer.valueOf(str.codePointAt((int) cnt));
+					return (cnt < 0 || cnt >= str.length()) ? Undefined.instance : Integer.valueOf(str.codePointAt((int) cnt));
 				}
 
 				case SymbolId_iterator:
@@ -733,24 +699,14 @@ final class NativeString extends IdScriptableObject {
 	/*
 	 * HTML composition aids.
 	 */
-	private static String tagify(Scriptable thisObj, String tag,
-								 String attribute, Object[] args) {
+	private static String tagify(Scriptable thisObj, String tag, String attribute, Object[] args) {
 		String str = ScriptRuntime.toString(thisObj);
 		StringBuilder result = new StringBuilder();
-		result.append('<')
-				.append(tag);
+		result.append('<').append(tag);
 		if (attribute != null) {
-			result.append(' ')
-					.append(attribute)
-					.append("=\"")
-					.append(ScriptRuntime.toString(args, 0))
-					.append('"');
+			result.append(' ').append(attribute).append("=\"").append(ScriptRuntime.toString(args, 0)).append('"');
 		}
-		result.append('>')
-				.append(str)
-				.append("</")
-				.append(tag)
-				.append('>');
+		result.append('>').append(str).append("</").append(tag).append('>');
 		return result.toString();
 	}
 
@@ -821,11 +777,9 @@ final class NativeString extends IdScriptableObject {
 
 	@Override
 	protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
-		if (!(id instanceof Symbol)
-				&& (cx != null) && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
+		if (!(id instanceof Symbol) && (cx != null) && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
 			ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, id);
-			if (s.stringId == null
-					&& 0 <= s.index && s.index < string.length()) {
+			if (s.stringId == null && 0 <= s.index && s.index < string.length()) {
 				String value = String.valueOf(string.charAt(s.index));
 				return defaultIndexPropertyDescriptor(value);
 			}
@@ -856,13 +810,11 @@ final class NativeString extends IdScriptableObject {
 		String searchStr = ScriptRuntime.toString(args, 0);
 		double position = ScriptRuntime.toInteger(args, 1);
 
-		if (methodId != Id_startsWith && methodId != Id_endsWith
-				&& searchStr.length() == 0) {
+		if (methodId != Id_startsWith && methodId != Id_endsWith && searchStr.length() == 0) {
 			return position > target.length() ? target.length() : (int) position;
 		}
 
-		if (methodId != Id_startsWith && methodId != Id_endsWith
-				&& position > target.length()) {
+		if (methodId != Id_startsWith && methodId != Id_endsWith && position > target.length()) {
 			return -1;
 		}
 
@@ -880,9 +832,7 @@ final class NativeString extends IdScriptableObject {
 			}
 			return target.substring(0, (int) position).endsWith(searchStr) ? 0 : -1;
 		}
-		return methodId == Id_startsWith
-				? target.startsWith(searchStr, (int) position) ? 0 : -1
-				: target.indexOf(searchStr, (int) position);
+		return methodId == Id_startsWith ? target.startsWith(searchStr, (int) position) ? 0 : -1 : target.indexOf(searchStr, (int) position);
 	}
 
 	/*
@@ -907,8 +857,7 @@ final class NativeString extends IdScriptableObject {
 	/*
 	 * See ECMA 15.5.4.15
 	 */
-	private static CharSequence js_substring(Context cx, CharSequence target,
-											 Object[] args) {
+	private static CharSequence js_substring(Context cx, CharSequence target, Object[] args) {
 		int length = target.length();
 		double start = ScriptRuntime.toInteger(args, 0);
 		double end;
@@ -1108,8 +1057,7 @@ final class NativeString extends IdScriptableObject {
 		StringBuilder concat = new StringBuilder();
 		do {
 			concat.append(filler);
-		}
-		while (concat.length() < fillLen);
+		} while (concat.length() < fillLen);
 		concat.setLength(fillLen);
 
 		if (atStart) {
@@ -1440,83 +1388,13 @@ final class NativeString extends IdScriptableObject {
 		return id;
 	}
 
-	private static final int
-			ConstructorId_fromCharCode = -1,
-			ConstructorId_fromCodePoint = -2,
-			ConstructorId_raw = -3,
+	private static final int ConstructorId_fromCharCode = -1, ConstructorId_fromCodePoint = -2, ConstructorId_raw = -3,
 
-	Id_constructor = 1,
-			Id_toString = 2,
-			Id_toSource = 3,
-			Id_valueOf = 4,
-			Id_charAt = 5,
-			Id_charCodeAt = 6,
-			Id_indexOf = 7,
-			Id_lastIndexOf = 8,
-			Id_split = 9,
-			Id_substring = 10,
-			Id_toLowerCase = 11,
-			Id_toUpperCase = 12,
-			Id_substr = 13,
-			Id_concat = 14,
-			Id_slice = 15,
-			Id_bold = 16,
-			Id_italics = 17,
-			Id_fixed = 18,
-			Id_strike = 19,
-			Id_small = 20,
-			Id_big = 21,
-			Id_blink = 22,
-			Id_sup = 23,
-			Id_sub = 24,
-			Id_fontsize = 25,
-			Id_fontcolor = 26,
-			Id_link = 27,
-			Id_anchor = 28,
-			Id_equals = 29,
-			Id_equalsIgnoreCase = 30,
-			Id_match = 31,
-			Id_search = 32,
-			Id_replace = 33,
-			Id_localeCompare = 34,
-			Id_toLocaleLowerCase = 35,
-			Id_toLocaleUpperCase = 36,
-			Id_trim = 37,
-			Id_trimLeft = 38,
-			Id_trimRight = 39,
-			Id_includes = 40,
-			Id_startsWith = 41,
-			Id_endsWith = 42,
-			Id_normalize = 43,
-			Id_repeat = 44,
-			Id_codePointAt = 45,
-			Id_padStart = 46,
-			Id_padEnd = 47,
-			SymbolId_iterator = 48,
-			Id_trimStart = 49,
-			Id_trimEnd = 50,
-			MAX_PROTOTYPE_ID = Id_trimEnd;
+	Id_constructor = 1, Id_toString = 2, Id_toSource = 3, Id_valueOf = 4, Id_charAt = 5, Id_charCodeAt = 6, Id_indexOf = 7, Id_lastIndexOf = 8, Id_split = 9, Id_substring = 10, Id_toLowerCase = 11, Id_toUpperCase = 12, Id_substr = 13, Id_concat = 14, Id_slice = 15, Id_bold = 16, Id_italics = 17, Id_fixed = 18, Id_strike = 19, Id_small = 20, Id_big = 21, Id_blink = 22, Id_sup = 23, Id_sub = 24, Id_fontsize = 25, Id_fontcolor = 26, Id_link = 27, Id_anchor = 28, Id_equals = 29, Id_equalsIgnoreCase = 30, Id_match = 31, Id_search = 32, Id_replace = 33, Id_localeCompare = 34, Id_toLocaleLowerCase = 35, Id_toLocaleUpperCase = 36, Id_trim = 37, Id_trimLeft = 38, Id_trimRight = 39, Id_includes = 40, Id_startsWith = 41, Id_endsWith = 42, Id_normalize = 43, Id_repeat = 44, Id_codePointAt = 45, Id_padStart = 46, Id_padEnd = 47, SymbolId_iterator = 48, Id_trimStart = 49, Id_trimEnd = 50, MAX_PROTOTYPE_ID = Id_trimEnd;
 
 	// #/string_id_map#
 
-	private static final int
-			ConstructorId_charAt = -Id_charAt,
-			ConstructorId_charCodeAt = -Id_charCodeAt,
-			ConstructorId_indexOf = -Id_indexOf,
-			ConstructorId_lastIndexOf = -Id_lastIndexOf,
-			ConstructorId_split = -Id_split,
-			ConstructorId_substring = -Id_substring,
-			ConstructorId_toLowerCase = -Id_toLowerCase,
-			ConstructorId_toUpperCase = -Id_toUpperCase,
-			ConstructorId_substr = -Id_substr,
-			ConstructorId_concat = -Id_concat,
-			ConstructorId_slice = -Id_slice,
-			ConstructorId_equalsIgnoreCase = -Id_equalsIgnoreCase,
-			ConstructorId_match = -Id_match,
-			ConstructorId_search = -Id_search,
-			ConstructorId_replace = -Id_replace,
-			ConstructorId_localeCompare = -Id_localeCompare,
-			ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
+	private static final int ConstructorId_charAt = -Id_charAt, ConstructorId_charCodeAt = -Id_charCodeAt, ConstructorId_indexOf = -Id_indexOf, ConstructorId_lastIndexOf = -Id_lastIndexOf, ConstructorId_split = -Id_split, ConstructorId_substring = -Id_substring, ConstructorId_toLowerCase = -Id_toLowerCase, ConstructorId_toUpperCase = -Id_toUpperCase, ConstructorId_substr = -Id_substr, ConstructorId_concat = -Id_concat, ConstructorId_slice = -Id_slice, ConstructorId_equalsIgnoreCase = -Id_equalsIgnoreCase, ConstructorId_match = -Id_match, ConstructorId_search = -Id_search, ConstructorId_replace = -Id_replace, ConstructorId_localeCompare = -Id_localeCompare, ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
 
 	private final CharSequence string;
 }

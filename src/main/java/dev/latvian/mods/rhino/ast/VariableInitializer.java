@@ -32,9 +32,7 @@ public class VariableInitializer extends AstNode {
 	 *                                  {@link Token#VAR}, {@link Token#CONST}, or {@link Token#LET}
 	 */
 	public void setNodeType(int nodeType) {
-		if (nodeType != Token.VAR
-				&& nodeType != Token.CONST
-				&& nodeType != Token.LET) {
+		if (nodeType != Token.VAR && nodeType != Token.CONST && nodeType != Token.LET) {
 			throw new IllegalArgumentException("invalid node type");
 		}
 		setType(nodeType);

@@ -74,17 +74,14 @@ public class NativeJavaPackage extends ScriptableObject {
 		if (cached != null && cached instanceof NativeJavaPackage) {
 			return (NativeJavaPackage) cached;
 		}
-		String newPackage = packageName.length() == 0
-				? name
-				: packageName + "." + name;
+		String newPackage = packageName.length() == 0 ? name : packageName + "." + name;
 		NativeJavaPackage pkg = new NativeJavaPackage(true, newPackage, classLoader);
 		ScriptRuntime.setObjectProtoAndParent(pkg, scope);
 		super.put(name, this, pkg);
 		return pkg;
 	}
 
-	synchronized Object getPkgProperty(String name, Scriptable start,
-									   boolean createPkg) {
+	synchronized Object getPkgProperty(String name, Scriptable start, boolean createPkg) {
 		Object cached = super.get(name, start);
 		if (cached != NOT_FOUND) {
 			return cached;
@@ -94,8 +91,7 @@ public class NativeJavaPackage extends ScriptableObject {
 			return null;
 		}
 
-		String className = (packageName.length() == 0)
-				? name : packageName + '.' + name;
+		String className = (packageName.length() == 0) ? name : packageName + '.' + name;
 		Context cx = Context.getContext();
 		ClassShutter shutter = cx.getClassShutter();
 		Scriptable newValue = null;
@@ -153,16 +149,14 @@ public class NativeJavaPackage extends ScriptableObject {
 	public boolean equals(Object obj) {
 		if (obj instanceof NativeJavaPackage) {
 			NativeJavaPackage njp = (NativeJavaPackage) obj;
-			return packageName.equals(njp.packageName) &&
-					classLoader == njp.classLoader;
+			return packageName.equals(njp.packageName) && classLoader == njp.classLoader;
 		}
 		return false;
 	}
 
 	@Override
 	public int hashCode() {
-		return packageName.hashCode() ^
-				(classLoader == null ? 0 : classLoader.hashCode());
+		return packageName.hashCode() ^ (classLoader == null ? 0 : classLoader.hashCode());
 	}
 
 	private final String packageName;

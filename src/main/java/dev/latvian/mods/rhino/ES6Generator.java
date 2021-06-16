@@ -40,8 +40,7 @@ public final class ES6Generator extends IdScriptableObject {
 	private ES6Generator() {
 	}
 
-	public ES6Generator(Scriptable scope, NativeFunction function,
-						Object savedState) {
+	public ES6Generator(Scriptable scope, NativeFunction function, Object savedState) {
 		this.function = function;
 		this.savedState = savedState;
 		// Set parent and prototype properties. Since we don't have a
@@ -49,8 +48,7 @@ public final class ES6Generator extends IdScriptableObject {
 		// prototype in the top scope's associated value.
 		Scriptable top = ScriptableObject.getTopLevelScope(scope);
 		this.setParentScope(top);
-		ES6Generator prototype =
-				(ES6Generator) ScriptableObject.getTopScopeValue(top, GENERATOR_TAG);
+		ES6Generator prototype = (ES6Generator) ScriptableObject.getTopScopeValue(top, GENERATOR_TAG);
 		this.setPrototype(prototype);
 	}
 
@@ -88,8 +86,7 @@ public final class ES6Generator extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(GENERATOR_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -169,8 +166,7 @@ public final class ES6Generator extends IdScriptableObject {
 				} finally {
 					delegee = null;
 				}
-				return resumeLocal(cx, scope,
-						ScriptRuntime.getObjectProp(throwResult, ES6Iterator.VALUE_PROPERTY, cx, scope));
+				return resumeLocal(cx, scope, ScriptRuntime.getObjectProp(throwResult, ES6Iterator.VALUE_PROPERTY, cx, scope));
 			}
 			// Otherwise, we have a normal result and should continue
 			return ensureScriptable(throwResult);
@@ -201,8 +197,7 @@ public final class ES6Generator extends IdScriptableObject {
 					// Iterator is "done".
 					delegee = null;
 					// Return a result to the original generator
-					return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_CLOSE,
-							ScriptRuntime.getObjectPropNoWarn(retResult, ES6Iterator.VALUE_PROPERTY, cx, scope));
+					return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_CLOSE, ScriptRuntime.getObjectPropNoWarn(retResult, ES6Iterator.VALUE_PROPERTY, cx, scope));
 				} else {
 					// Not actually done yet!
 					return ensureScriptable(retResult);
@@ -233,8 +228,7 @@ public final class ES6Generator extends IdScriptableObject {
 		state = State.EXECUTING;
 
 		try {
-			Object r = function.resumeGenerator(cx, scope,
-					NativeGenerator.GENERATOR_SEND, savedState, value);
+			Object r = function.resumeGenerator(cx, scope, NativeGenerator.GENERATOR_SEND, savedState, value);
 
 			if (r instanceof YieldStarResult) {
 				// This special result tells us that we are executing a "yield *"
@@ -244,8 +238,7 @@ public final class ES6Generator extends IdScriptableObject {
 					delegee = ScriptRuntime.callIterator(ysResult.getResult(), cx, scope);
 				} catch (RhinoException re) {
 					// Need to handle exceptions if the iterator cannot be called.
-					return resumeAbruptLocal(cx, scope,
-							NativeGenerator.GENERATOR_THROW, re);
+					return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, re);
 				}
 
 				Scriptable delResult;
@@ -269,8 +262,7 @@ public final class ES6Generator extends IdScriptableObject {
 		} catch (JavaScriptException jse) {
 			state = State.COMPLETED;
 			if (jse.getValue() instanceof NativeIterator.StopIteration) {
-				ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY,
-						((NativeIterator.StopIteration) jse.getValue()).getValue());
+				ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY, ((NativeIterator.StopIteration) jse.getValue()).getValue());
 			} else {
 				lineNumber = jse.lineNumber();
 				lineSource = jse.lineSource();
@@ -337,8 +329,7 @@ public final class ES6Generator extends IdScriptableObject {
 		} catch (JavaScriptException jse) {
 			state = State.COMPLETED;
 			if (jse.getValue() instanceof NativeIterator.StopIteration) {
-				ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY,
-						((NativeIterator.StopIteration) jse.getValue()).getValue());
+				ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY, ((NativeIterator.StopIteration) jse.getValue()).getValue());
 			} else {
 				lineNumber = jse.lineNumber();
 				lineSource = jse.lineSource();
@@ -364,15 +355,12 @@ public final class ES6Generator extends IdScriptableObject {
 	}
 
 	private Object callReturnOptionally(Context cx, Scriptable scope, Object value) {
-		Object[] retArgs = Undefined.instance.equals(value) ? ScriptRuntime.emptyArgs
-				: new Object[]{value};
+		Object[] retArgs = Undefined.instance.equals(value) ? ScriptRuntime.emptyArgs : new Object[]{value};
 		// Delegate to "return" method. If it's not defined we ignore it
-		Object retFnObj = ScriptRuntime.getObjectPropNoWarn(
-				delegee, ES6Iterator.RETURN_METHOD, cx, scope);
+		Object retFnObj = ScriptRuntime.getObjectPropNoWarn(delegee, ES6Iterator.RETURN_METHOD, cx, scope);
 		if (!Undefined.instance.equals(retFnObj)) {
 			if (!(retFnObj instanceof Callable)) {
-				throw ScriptRuntime.typeError2("msg.isnt.function", ES6Iterator.RETURN_METHOD,
-						ScriptRuntime.typeof(retFnObj));
+				throw ScriptRuntime.typeError2("msg.isnt.function", ES6Iterator.RETURN_METHOD, ScriptRuntime.typeof(retFnObj));
 			}
 			return ((Callable) retFnObj).call(cx, scope, ensureScriptable(delegee), retArgs);
 		}
@@ -417,12 +405,7 @@ public final class ES6Generator extends IdScriptableObject {
 		return id;
 	}
 
-	private static final int
-			Id_next = 1,
-			Id_return = 2,
-			Id_throw = 3,
-			SymbolId_iterator = 4,
-			MAX_PROTOTYPE_ID = SymbolId_iterator;
+	private static final int Id_next = 1, Id_return = 2, Id_throw = 3, SymbolId_iterator = 4, MAX_PROTOTYPE_ID = SymbolId_iterator;
 
 	// #/string_id_map#
 
@@ -434,10 +417,7 @@ public final class ES6Generator extends IdScriptableObject {
 	private Object delegee;
 
 	enum State {
-		SUSPENDED_START,
-		SUSPENDED_YIELD,
-		EXECUTING,
-		COMPLETED
+		SUSPENDED_START, SUSPENDED_YIELD, EXECUTING, COMPLETED
 	}
 
 	public static final class YieldStarResult {

@@ -73,42 +73,25 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 
 	@Override
 	protected void fillConstructorProperties(IdFunctionObject ctor) {
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getPrototypeOf,
-				"getPrototypeOf", 1);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getPrototypeOf, "getPrototypeOf", 1);
 		if (Context.getCurrentContext().version >= Context.VERSION_ES6) {
-			addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_setPrototypeOf,
-					"setPrototypeOf", 2);
+			addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_setPrototypeOf, "setPrototypeOf", 2);
 		}
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_keys,
-				"keys", 1);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyNames,
-				"getOwnPropertyNames", 1);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertySymbols,
-				"getOwnPropertySymbols", 1);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyDescriptor,
-				"getOwnPropertyDescriptor", 2);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_defineProperty,
-				"defineProperty", 3);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isExtensible,
-				"isExtensible", 1);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_preventExtensions,
-				"preventExtensions", 1);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_defineProperties,
-				"defineProperties", 2);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_create,
-				"create", 2);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isSealed,
-				"isSealed", 1);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isFrozen,
-				"isFrozen", 1);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_seal,
-				"seal", 1);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_freeze,
-				"freeze", 1);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_assign,
-				"assign", 2);
-		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_is,
-				"is", 2);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_keys, "keys", 1);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyNames, "getOwnPropertyNames", 1);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertySymbols, "getOwnPropertySymbols", 1);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyDescriptor, "getOwnPropertyDescriptor", 2);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_defineProperty, "defineProperty", 3);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isExtensible, "isExtensible", 1);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_preventExtensions, "preventExtensions", 1);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_defineProperties, "defineProperties", 2);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_create, "create", 2);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isSealed, "isSealed", 1);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isFrozen, "isFrozen", 1);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_seal, "seal", 1);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_freeze, "freeze", 1);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_assign, "assign", 2);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_is, "is", 2);
 		super.fillConstructorProperties(ctor);
 	}
 
@@ -172,8 +155,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(OBJECT_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -184,9 +166,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					// BaseFunction.construct will set up parent, proto
 					return f.construct(cx, scope, args);
 				}
-				if (args.length == 0
-						|| args[0] == null
-						|| Undefined.isUndefined(args[0])) {
+				if (args.length == 0 || args[0] == null || Undefined.isUndefined(args[0])) {
 					return new NativeObject();
 				}
 				return ScriptRuntime.toObject(cx, scope, args[0]);
@@ -203,8 +183,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 
 			case Id_toString: {
 				if (cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE)) {
-					String s = ScriptRuntime.defaultObjectToSource(cx, scope,
-							thisObj, args);
+					String s = ScriptRuntime.defaultObjectToSource(cx, scope, thisObj, args);
 					int L = s.length();
 					if (L != 0 && s.charAt(0) == '(' && s.charAt(L - 1) == ')') {
 						// Strip () that surrounds toSource
@@ -276,8 +255,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 							}
 						}
 					} catch (EvaluatorException ee) {
-						if (ee.getMessage().startsWith(ScriptRuntime.getMessage1("msg.prop.not.found",
-								s.stringId == null ? Integer.toString(s.index) : s.stringId))) {
+						if (ee.getMessage().startsWith(ScriptRuntime.getMessage1("msg.prop.not.found", s.stringId == null ? Integer.toString(s.index) : s.stringId))) {
 							result = false;
 						} else {
 							throw ee;
@@ -301,15 +279,13 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 							result = true;
 							break;
 						}
-					}
-					while (v != null);
+					} while (v != null);
 				}
 				return ScriptRuntime.wrapBoolean(result);
 			}
 
 			case Id_toSource:
-				return ScriptRuntime.defaultObjectToSource(cx, scope, thisObj,
-						args);
+				return ScriptRuntime.defaultObjectToSource(cx, scope, thisObj, args);
 			case Id___defineGetter__:
 			case Id___defineSetter__: {
 				if (args.length < 2 || !(args[1] instanceof Callable)) {
@@ -317,10 +293,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					throw ScriptRuntime.notFunctionError(badArg);
 				}
 				if (!(thisObj instanceof ScriptableObject)) {
-					throw Context.reportRuntimeError2(
-							"msg.extend.scriptable",
-							thisObj == null ? "null" : thisObj.getClass().getName(),
-							String.valueOf(args[0]));
+					throw Context.reportRuntimeError2("msg.extend.scriptable", thisObj == null ? "null" : thisObj.getClass().getName(), String.valueOf(args[0]));
 				}
 				ScriptableObject so = (ScriptableObject) thisObj;
 				ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
@@ -336,8 +309,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 
 			case Id___lookupGetter__:
 			case Id___lookupSetter__: {
-				if (args.length < 1 ||
-						!(thisObj instanceof ScriptableObject)) {
+				if (args.length < 1 || !(thisObj instanceof ScriptableObject)) {
 					return Undefined.instance;
 				}
 
@@ -460,8 +432,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 			case ConstructorId_isExtensible: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6
-						&& !(arg instanceof ScriptableObject)) {
+				if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
 					return Boolean.FALSE;
 				}
 
@@ -470,8 +441,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 			case ConstructorId_preventExtensions: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6
-						&& !(arg instanceof ScriptableObject)) {
+				if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
 					return arg;
 				}
 
@@ -504,8 +474,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 			case ConstructorId_isSealed: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6
-						&& !(arg instanceof ScriptableObject)) {
+				if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
 					return Boolean.TRUE;
 				}
 
@@ -526,8 +495,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 			case ConstructorId_isFrozen: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6
-						&& !(arg instanceof ScriptableObject)) {
+				if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
 					return Boolean.TRUE;
 				}
 
@@ -551,8 +519,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 			case ConstructorId_seal: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6
-						&& !(arg instanceof ScriptableObject)) {
+				if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
 					return arg;
 				}
 
@@ -571,8 +538,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 			case ConstructorId_freeze: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
-				if (cx.getLanguageVersion() >= Context.VERSION_ES6
-						&& !(arg instanceof ScriptableObject)) {
+				if (cx.getLanguageVersion() >= Context.VERSION_ES6 && !(arg instanceof ScriptableObject)) {
 					return arg;
 				}
 
@@ -657,8 +623,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 	@Override
 	public boolean containsValue(Object value) {
 		for (Object obj : values()) {
-			if (value == obj ||
-					value != null && value.equals(obj)) {
+			if (value == obj || value != null && value.equals(obj)) {
 				return true;
 			}
 		}
@@ -746,14 +711,12 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 								return false;
 							}
 							Map.Entry<?, ?> e = (Map.Entry<?, ?>) other;
-							return (ekey == null ? e.getKey() == null : ekey.equals(e.getKey()))
-									&& (value == null ? e.getValue() == null : value.equals(e.getValue()));
+							return (ekey == null ? e.getKey() == null : ekey.equals(e.getKey())) && (value == null ? e.getValue() == null : value.equals(e.getValue()));
 						}
 
 						@Override
 						public int hashCode() {
-							return (ekey == null ? 0 : ekey.hashCode()) ^
-									(value == null ? 0 : value.hashCode());
+							return (ekey == null ? 0 : ekey.hashCode()) ^ (value == null ? 0 : value.hashCode());
 						}
 
 						@Override
@@ -944,38 +907,9 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		return id;
 	}
 
-	private static final int
-			ConstructorId_getPrototypeOf = -1,
-			ConstructorId_keys = -2,
-			ConstructorId_getOwnPropertyNames = -3,
-			ConstructorId_getOwnPropertyDescriptor = -4,
-			ConstructorId_defineProperty = -5,
-			ConstructorId_isExtensible = -6,
-			ConstructorId_preventExtensions = -7,
-			ConstructorId_defineProperties = -8,
-			ConstructorId_create = -9,
-			ConstructorId_isSealed = -10,
-			ConstructorId_isFrozen = -11,
-			ConstructorId_seal = -12,
-			ConstructorId_freeze = -13,
-			ConstructorId_getOwnPropertySymbols = -14,
-			ConstructorId_assign = -15,
-			ConstructorId_is = -16,
-			ConstructorId_setPrototypeOf = -17,
+	private static final int ConstructorId_getPrototypeOf = -1, ConstructorId_keys = -2, ConstructorId_getOwnPropertyNames = -3, ConstructorId_getOwnPropertyDescriptor = -4, ConstructorId_defineProperty = -5, ConstructorId_isExtensible = -6, ConstructorId_preventExtensions = -7, ConstructorId_defineProperties = -8, ConstructorId_create = -9, ConstructorId_isSealed = -10, ConstructorId_isFrozen = -11, ConstructorId_seal = -12, ConstructorId_freeze = -13, ConstructorId_getOwnPropertySymbols = -14, ConstructorId_assign = -15, ConstructorId_is = -16, ConstructorId_setPrototypeOf = -17,
 
-	Id_constructor = 1,
-			Id_toString = 2,
-			Id_toLocaleString = 3,
-			Id_valueOf = 4,
-			Id_hasOwnProperty = 5,
-			Id_propertyIsEnumerable = 6,
-			Id_isPrototypeOf = 7,
-			Id_toSource = 8,
-			Id___defineGetter__ = 9,
-			Id___defineSetter__ = 10,
-			Id___lookupGetter__ = 11,
-			Id___lookupSetter__ = 12,
-			MAX_PROTOTYPE_ID = 12;
+	Id_constructor = 1, Id_toString = 2, Id_toLocaleString = 3, Id_valueOf = 4, Id_hasOwnProperty = 5, Id_propertyIsEnumerable = 6, Id_isPrototypeOf = 7, Id_toSource = 8, Id___defineGetter__ = 9, Id___defineSetter__ = 10, Id___lookupGetter__ = 11, Id___lookupSetter__ = 12, MAX_PROTOTYPE_ID = 12;
 
 	@Override
 	public <T> T createDataObject(Supplier<T> instanceFactory) {

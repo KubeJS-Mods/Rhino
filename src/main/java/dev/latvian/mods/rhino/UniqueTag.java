@@ -27,21 +27,18 @@ public final class UniqueTag implements Serializable {
 	/**
 	 * Tag to mark non-existing values.
 	 */
-	public static final UniqueTag
-			NOT_FOUND = new UniqueTag(ID_NOT_FOUND);
+	public static final UniqueTag NOT_FOUND = new UniqueTag(ID_NOT_FOUND);
 
 	/**
 	 * Tag to distinguish between uninitialized and null values.
 	 */
-	public static final UniqueTag
-			NULL_VALUE = new UniqueTag(ID_NULL_VALUE);
+	public static final UniqueTag NULL_VALUE = new UniqueTag(ID_NULL_VALUE);
 
 	/**
 	 * Tag to indicate that a object represents "double" with the real value
 	 * stored somewhere else.
 	 */
-	public static final UniqueTag
-			DOUBLE_MARK = new UniqueTag(ID_DOUBLE_MARK);
+	public static final UniqueTag DOUBLE_MARK = new UniqueTag(ID_DOUBLE_MARK);
 
 	private final int tagId;
 

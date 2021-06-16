@@ -21,8 +21,7 @@ public class BoundFunction extends BaseFunction {
 	private final Object[] boundArgs;
 	private final int length;
 
-	public BoundFunction(Context cx, Scriptable scope, Callable targetFunction, Scriptable boundThis,
-						 Object[] boundArgs) {
+	public BoundFunction(Context cx, Scriptable scope, Callable targetFunction, Scriptable boundThis, Object[] boundArgs) {
 		this.targetFunction = targetFunction;
 		this.boundThis = boundThis;
 		this.boundArgs = boundArgs;

@@ -32,8 +32,7 @@ import java.util.List;
  */
 public class ArrayLiteral extends AstNode implements DestructuringForm {
 
-	private static final List<AstNode> NO_ELEMS =
-			Collections.unmodifiableList(new ArrayList<>());
+	private static final List<AstNode> NO_ELEMS = Collections.unmodifiableList(new ArrayList<>());
 
 	private List<AstNode> elements;
 	private int destructuringLength;

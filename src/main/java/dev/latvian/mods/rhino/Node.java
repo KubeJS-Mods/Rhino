@@ -24,12 +24,7 @@ import java.util.NoSuchElementException;
  * @author Mike McCabe
  */
 public class Node implements Iterable<Node> {
-	public static final int
-			FUNCTION_PROP = 1,
-			LOCAL_PROP = 2,
-			LOCAL_BLOCK_PROP = 3,
-			REGEXP_PROP = 4,
-			CASEARRAY_PROP = 5,
+	public static final int FUNCTION_PROP = 1, LOCAL_PROP = 2, LOCAL_BLOCK_PROP = 3, REGEXP_PROP = 4, CASEARRAY_PROP = 5,
 
 	//  the following properties are defined and manipulated by the
 	//  optimizer -
@@ -41,12 +36,7 @@ public class Node implements Iterable<Node> {
 	//                    object against the known class and call direct if it
 	//                    matches.
 
-	TARGETBLOCK_PROP = 6,
-			VARIABLE_PROP = 7,
-			ISNUMBER_PROP = 8,
-			DIRECTCALL_PROP = 9,
-			SPECIALCALL_PROP = 10,
-			SKIP_INDEXES_PROP = 11, // array of skipped indexes of array literal
+	TARGETBLOCK_PROP = 6, VARIABLE_PROP = 7, ISNUMBER_PROP = 8, DIRECTCALL_PROP = 9, SPECIALCALL_PROP = 10, SKIP_INDEXES_PROP = 11, // array of skipped indexes of array literal
 			OBJECT_IDS_PROP = 12, // array of properties for object literal
 			INCRDECR_PROP = 13, // pre or post type of increment/decrement
 			CATCH_SCOPE_PROP = 14, // index of catch scope block in catch
@@ -55,32 +45,19 @@ public class Node implements Iterable<Node> {
 			NAME_PROP = 17, // property name
 			CONTROL_BLOCK_PROP = 18, // flags a control block that can drop off
 			PARENTHESIZED_PROP = 19, // expression is parenthesized
-			GENERATOR_END_PROP = 20,
-			DESTRUCTURING_ARRAY_LENGTH = 21,
-			DESTRUCTURING_NAMES = 22,
-			DESTRUCTURING_PARAMS = 23,
-			JSDOC_PROP = 24,
-			EXPRESSION_CLOSURE_PROP = 25, // JS 1.8 expression closure pseudo-return
+			GENERATOR_END_PROP = 20, DESTRUCTURING_ARRAY_LENGTH = 21, DESTRUCTURING_NAMES = 22, DESTRUCTURING_PARAMS = 23, JSDOC_PROP = 24, EXPRESSION_CLOSURE_PROP = 25, // JS 1.8 expression closure pseudo-return
 			DESTRUCTURING_SHORTHAND = 26, // JS 1.8 destructuring shorthand
-			ARROW_FUNCTION_PROP = 27,
-			TEMPLATE_LITERAL_PROP = 28,
-			LAST_PROP = 28;
+			ARROW_FUNCTION_PROP = 27, TEMPLATE_LITERAL_PROP = 28, LAST_PROP = 28;
 
 	// values of ISNUMBER_PROP to specify
 	// which of the children are Number types
-	public static final int
-			BOTH = 0,
-			LEFT = 1,
-			RIGHT = 2;
+	public static final int BOTH = 0, LEFT = 1, RIGHT = 2;
 
 	public static final int    // values for SPECIALCALL_PROP
-			NON_SPECIALCALL = 0,
-			SPECIALCALL_EVAL = 1,
-			SPECIALCALL_WITH = 2;
+			NON_SPECIALCALL = 0, SPECIALCALL_EVAL = 1, SPECIALCALL_WITH = 2;
 
 	public static final int   // flags for INCRDECR_PROP
-			DECR_FLAG = 0x1,
-			POST_FLAG = 0x2;
+			DECR_FLAG = 0x1, POST_FLAG = 0x2;
 
 	public static final int   // flags for MEMBER_TYPE_PROP
 			PROPERTY_FLAG = 0x1, // property access: element is valid name
@@ -281,8 +258,7 @@ public class Node implements Iterable<Node> {
 	 */
 	public void addChildBefore(Node newChild, Node node) {
 		if (newChild.next != null) {
-			throw new RuntimeException(
-					"newChild had siblings in addChildBefore");
+			throw new RuntimeException("newChild had siblings in addChildBefore");
 		}
 		if (first == node) {
 			newChild.next = first;
@@ -298,8 +274,7 @@ public class Node implements Iterable<Node> {
 	 */
 	public void addChildAfter(Node newChild, Node node) {
 		if (newChild.next != null) {
-			throw new RuntimeException(
-					"newChild had siblings in addChildAfter");
+			throw new RuntimeException("newChild had siblings in addChildAfter");
 		}
 		newChild.next = node.next;
 		node.next = newChild;
@@ -389,8 +364,7 @@ public class Node implements Iterable<Node> {
 				throw new IllegalStateException("next() has not been called");
 			}
 			if (removed) {
-				throw new IllegalStateException(
-						"remove() already called for current element");
+				throw new IllegalStateException("remove() already called for current element");
 			}
 			if (prev == first) {
 				first = prev.next;
@@ -695,8 +669,7 @@ public class Node implements Iterable<Node> {
 	 */
 	public boolean hasConsistentReturnUsage() {
 		int n = endCheck();
-		return (n & END_RETURNS_VALUE) == 0 ||
-				(n & (END_DROPS_OFF | END_RETURNS | END_YIELDS)) == 0;
+		return (n & END_RETURNS_VALUE) == 0 || (n & (END_DROPS_OFF | END_RETURNS | END_YIELDS)) == 0;
 	}
 
 	/**
@@ -982,13 +955,10 @@ public class Node implements Iterable<Node> {
 				return true;
 
 			case Token.HOOK:
-				if (first == null ||
-						first.next == null ||
-						first.next.next == null) {
+				if (first == null || first.next == null || first.next.next == null) {
 					Kit.codeBug();
 				}
-				return first.next.hasSideEffects() &&
-						first.next.next.hasSideEffects();
+				return first.next.hasSideEffects() && first.next.next.hasSideEffects();
 
 			case Token.AND:
 			case Token.OR:
@@ -1132,8 +1102,7 @@ public class Node implements Iterable<Node> {
 					sb.append(" [source name: ");
 					sb.append(sof.getSourceName());
 					sb.append("] [encoded source length: ");
-					sb.append(sof.getEncodedSourceEnd()
-							- sof.getEncodedSourceStart());
+					sb.append(sof.getEncodedSourceEnd() - sof.getEncodedSourceStart());
 					sb.append("] [base line: ");
 					sb.append(sof.getBaseLineno());
 					sb.append("] [end line: ");
@@ -1144,8 +1113,7 @@ public class Node implements Iterable<Node> {
 					sb.append(" [scope ");
 					appendPrintId(this, printIds, sb);
 					sb.append(": ");
-					Iterator<String> iter =
-							((Scope) this).getSymbolTable().keySet().iterator();
+					Iterator<String> iter = ((Scope) this).getSymbolTable().keySet().iterator();
 					while (iter.hasNext()) {
 						sb.append(iter.next());
 						sb.append(" ");
@@ -1171,8 +1139,7 @@ public class Node implements Iterable<Node> {
 						appendPrintId(finallyTarget, printIds, sb);
 						sb.append(']');
 					}
-				} else if (type == Token.LABEL || type == Token.LOOP
-						|| type == Token.SWITCH) {
+				} else if (type == Token.LABEL || type == Token.LOOP || type == Token.SWITCH) {
 					sb.append(" [break: ");
 					appendPrintId(jump.target, printIds, sb);
 					sb.append(']');
@@ -1275,9 +1242,7 @@ public class Node implements Iterable<Node> {
 		return null;
 	}
 
-	private static void toStringTreeHelper(ScriptNode treeTop, Node n,
-										   ObjToIntMap printIds,
-										   int level, StringBuilder sb) {
+	private static void toStringTreeHelper(ScriptNode treeTop, Node n, ObjToIntMap printIds, int level, StringBuilder sb) {
 		if (Token.printTrees) {
 			if (printIds == null) {
 				printIds = new ObjToIntMap();
@@ -1288,8 +1253,7 @@ public class Node implements Iterable<Node> {
 			}
 			n.toString(printIds, sb);
 			sb.append('\n');
-			for (Node cursor = n.getFirstChild(); cursor != null;
-				 cursor = cursor.getNext()) {
+			for (Node cursor = n.getFirstChild(); cursor != null; cursor = cursor.getNext()) {
 				if (cursor.getType() == Token.FUNCTION) {
 					int fnIndex = cursor.getExistingIntProp(Node.FUNCTION_PROP);
 					FunctionNode fn = treeTop.getFunctionNode(fnIndex);
@@ -1304,15 +1268,13 @@ public class Node implements Iterable<Node> {
 	private static void generatePrintIds(Node n, ObjToIntMap map) {
 		if (Token.printTrees) {
 			map.put(n, map.size());
-			for (Node cursor = n.getFirstChild(); cursor != null;
-				 cursor = cursor.getNext()) {
+			for (Node cursor = n.getFirstChild(); cursor != null; cursor = cursor.getNext()) {
 				generatePrintIds(cursor, map);
 			}
 		}
 	}
 
-	private static void appendPrintId(Node n, ObjToIntMap printIds,
-									  StringBuilder sb) {
+	private static void appendPrintId(Node n, ObjToIntMap printIds, StringBuilder sb) {
 		if (Token.printTrees) {
 			if (n != null) {
 				int id = printIds.get(n, -1);

@@ -31,8 +31,7 @@ import java.util.List;
  */
 public class SwitchStatement extends Jump {
 
-	private static final List<SwitchCase> NO_CASES =
-			Collections.unmodifiableList(new ArrayList<>());
+	private static final List<SwitchCase> NO_CASES = Collections.unmodifiableList(new ArrayList<>());
 
 	private AstNode expression;
 	private List<SwitchCase> cases;

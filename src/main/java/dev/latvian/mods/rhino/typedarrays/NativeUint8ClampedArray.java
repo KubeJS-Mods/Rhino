@@ -17,8 +17,7 @@ import dev.latvian.mods.rhino.Undefined;
  * (0 &lt;= X &lt; 256) will be adjusted so that they match before insertion.
  */
 
-public class NativeUint8ClampedArray
-		extends NativeTypedArrayView<Integer> {
+public class NativeUint8ClampedArray extends NativeTypedArrayView<Integer> {
 	private static final long serialVersionUID = -3349419704390398895L;
 
 	private static final String CLASS_NAME = "Uint8ClampedArray";

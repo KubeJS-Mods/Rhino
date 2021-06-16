@@ -54,10 +54,7 @@ class CodeGenerator extends Icode {
 	// ECF_ or Expression Context Flags constants: for now only TAIL
 	private static final int ECF_TAIL = 1 << 0;
 
-	public InterpreterData compile(CompilerEnvirons compilerEnv,
-								   ScriptNode tree,
-								   String encodedSource,
-								   boolean returnFunction) {
+	public InterpreterData compile(CompilerEnvirons compilerEnv, ScriptNode tree, String encodedSource, boolean returnFunction) {
 		this.compilerEnv = compilerEnv;
 
 		if (Token.printTrees) {
@@ -78,10 +75,7 @@ class CodeGenerator extends Icode {
 			scriptOrFn = tree;
 		}
 
-		itsData = new InterpreterData(compilerEnv.getLanguageVersion(),
-				scriptOrFn.getSourceName(),
-				encodedSource,
-				scriptOrFn.isInStrictMode());
+		itsData = new InterpreterData(compilerEnv.getLanguageVersion(), scriptOrFn.getSourceName(), encodedSource, scriptOrFn.isInStrictMode());
 		itsData.topLevel = true;
 
 		if (returnFunction) {
@@ -157,24 +151,19 @@ class CodeGenerator extends Icode {
 			itsData.itsDoubleTable = null;
 		} else if (itsData.itsDoubleTable.length != doubleTableTop) {
 			double[] tmp = new double[doubleTableTop];
-			System.arraycopy(itsData.itsDoubleTable, 0, tmp, 0,
-					doubleTableTop);
+			System.arraycopy(itsData.itsDoubleTable, 0, tmp, 0, doubleTableTop);
 			itsData.itsDoubleTable = tmp;
 		}
-		if (exceptionTableTop != 0
-				&& itsData.itsExceptionTable.length != exceptionTableTop) {
+		if (exceptionTableTop != 0 && itsData.itsExceptionTable.length != exceptionTableTop) {
 			int[] tmp = new int[exceptionTableTop];
-			System.arraycopy(itsData.itsExceptionTable, 0, tmp, 0,
-					exceptionTableTop);
+			System.arraycopy(itsData.itsExceptionTable, 0, tmp, 0, exceptionTableTop);
 			itsData.itsExceptionTable = tmp;
 		}
 
 		itsData.itsMaxVars = scriptOrFn.getParamAndVarCount();
 		// itsMaxFrameArray: interpret method needs this amount for its
 		// stack and sDbl arrays
-		itsData.itsMaxFrameArray = itsData.itsMaxVars
-				+ itsData.itsMaxLocals
-				+ itsData.itsMaxStack;
+		itsData.itsMaxFrameArray = itsData.itsMaxVars + itsData.itsMaxLocals + itsData.itsMaxStack;
 
 		itsData.argNames = scriptOrFn.getParamAndVarNames();
 		itsData.argIsConst = scriptOrFn.getParamAndVarConst();
@@ -209,9 +198,7 @@ class CodeGenerator extends Icode {
 			array[i] = gen.itsData;
 
 			final AstNode fnParent = fn.getParent();
-			if (!(fnParent instanceof AstRoot
-					|| fnParent instanceof Scope
-					|| fnParent instanceof Block)) {
+			if (!(fnParent instanceof AstRoot || fnParent instanceof Scope || fnParent instanceof Block)) {
 				gen.itsData.declaredAsFunctionExpression = true;
 			}
 		}
@@ -278,8 +265,7 @@ class CodeGenerator extends Icode {
 
 			case Token.FUNCTION: {
 				int fnIndex = node.getExistingIntProp(Node.FUNCTION_PROP);
-				int fnType = scriptOrFn.getFunctionNode(fnIndex).
-						getFunctionType();
+				int fnType = scriptOrFn.getFunctionNode(fnIndex).getFunctionType();
 				// Only function expressions or function expression
 				// statements need closure code creating new function
 				// object on stack as function statements are initialized
@@ -354,9 +340,7 @@ class CodeGenerator extends Icode {
 				// of SWITCH node
 			{
 				visitExpression(child, 0);
-				for (Jump caseNode = (Jump) child.getNext();
-					 caseNode != null;
-					 caseNode = (Jump) caseNode.getNext()) {
+				for (Jump caseNode = (Jump) child.getNext(); caseNode != null; caseNode = (Jump) caseNode.getNext()) {
 					if (caseNode.getType() != Token.CASE) {
 						throw badTree(caseNode);
 					}
@@ -441,19 +425,13 @@ class CodeGenerator extends Icode {
 
 				Node catchTarget = tryNode.target;
 				if (catchTarget != null) {
-					int catchStartPC
-							= labelTable[getTargetLabel(catchTarget)];
-					addExceptionHandler(
-							tryStart, catchStartPC, catchStartPC,
-							false, exceptionObjectLocal, scopeLocal);
+					int catchStartPC = labelTable[getTargetLabel(catchTarget)];
+					addExceptionHandler(tryStart, catchStartPC, catchStartPC, false, exceptionObjectLocal, scopeLocal);
 				}
 				Node finallyTarget = tryNode.getFinally();
 				if (finallyTarget != null) {
-					int finallyStartPC
-							= labelTable[getTargetLabel(finallyTarget)];
-					addExceptionHandler(
-							tryStart, finallyStartPC, finallyStartPC,
-							true, exceptionObjectLocal, scopeLocal);
+					int finallyStartPC = labelTable[getTargetLabel(finallyTarget)];
+					addExceptionHandler(tryStart, finallyStartPC, finallyStartPC, true, exceptionObjectLocal, scopeLocal);
 				}
 
 				addIndexOp(Icode_LOCAL_CLEAR, scopeLocal);
@@ -491,8 +469,7 @@ class CodeGenerator extends Icode {
 			case Token.RETURN:
 				updateLineNumber(node);
 				if (node.getIntProp(Node.GENERATOR_END_PROP, 0) != 0) {
-					if ((child == null) ||
-							(compilerEnv.getLanguageVersion() < Context.VERSION_ES6)) {
+					if ((child == null) || (compilerEnv.getLanguageVersion() < Context.VERSION_ES6)) {
 						// End generator function with no result, or old language version
 						// in which generators never return a result.
 						addIcode(Icode_GENERATOR_END);
@@ -551,8 +528,7 @@ class CodeGenerator extends Icode {
 				int fnIndex = node.getExistingIntProp(Node.FUNCTION_PROP);
 				FunctionNode fn = scriptOrFn.getFunctionNode(fnIndex);
 				// See comments in visitStatement for Token.FUNCTION case
-				if (fn.getFunctionType() != FunctionNode.FUNCTION_EXPRESSION &&
-						fn.getFunctionType() != FunctionNode.ARROW_FUNCTION) {
+				if (fn.getFunctionType() != FunctionNode.FUNCTION_EXPRESSION && fn.getFunctionType() != FunctionNode.ARROW_FUNCTION) {
 					throw Kit.codeBug();
 				}
 				addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
@@ -599,8 +575,7 @@ class CodeGenerator extends Icode {
 					visitExpression(child, 0);
 					++argCount;
 				}
-				int callType = node.getIntProp(Node.SPECIALCALL_PROP,
-						Node.NON_SPECIALCALL);
+				int callType = node.getIntProp(Node.SPECIALCALL_PROP, Node.NON_SPECIALCALL);
 				if (type != Token.REF_CALL && callType != Node.NON_SPECIALCALL) {
 					// embed line number and source filename
 					addIndexOp(Icode_CALLSPECIAL, argCount);
@@ -611,8 +586,7 @@ class CodeGenerator extends Icode {
 					// Only use the tail call optimization if we're not in a try
 					// or we're not generating debug info (since the
 					// optimization will confuse the debugger)
-					if (type == Token.CALL && (contextFlags & ECF_TAIL) != 0 &&
-							!compilerEnv.isGenerateDebugInfo() && !itsInTryFlag) {
+					if (type == Token.CALL && (contextFlags & ECF_TAIL) != 0 && !compilerEnv.isGenerateDebugInfo() && !itsInTryFlag) {
 						type = Icode_TAIL_CALL;
 					}
 					addIndexOp(type, argCount);
@@ -952,8 +926,7 @@ class CodeGenerator extends Icode {
 					visitExpression(child, 0);
 					++childCount;
 					child = child.getNext();
-				}
-				while (child != null);
+				} while (child != null);
 				addIndexOp(type, memberTypeFlags);
 				stackChange(1 - childCount);
 			}
@@ -1452,9 +1425,7 @@ class CodeGenerator extends Icode {
 		}
 	}
 
-	private void addExceptionHandler(int icodeStart, int icodeEnd,
-									 int handlerStart, boolean isFinally,
-									 int exceptionObjectLocal, int scopeLocal) {
+	private void addExceptionHandler(int icodeStart, int icodeEnd, int handlerStart, boolean isFinally, int exceptionObjectLocal, int scopeLocal) {
 		int top = exceptionTableTop;
 		int[] table = itsData.itsExceptionTable;
 		if (table == null) {

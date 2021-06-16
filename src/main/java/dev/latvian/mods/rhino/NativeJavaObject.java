@@ -37,13 +37,11 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	public NativeJavaObject() {
 	}
 
-	public NativeJavaObject(Scriptable scope, Object javaObject,
-							Class<?> staticType) {
+	public NativeJavaObject(Scriptable scope, Object javaObject, Class<?> staticType) {
 		this(scope, javaObject, staticType, false);
 	}
 
-	public NativeJavaObject(Scriptable scope, Object javaObject,
-							Class<?> staticType, boolean isAdapter) {
+	public NativeJavaObject(Scriptable scope, Object javaObject, Class<?> staticType, boolean isAdapter) {
 		this.parent = scope;
 		this.javaObject = javaObject;
 		this.staticType = staticType;
@@ -58,10 +56,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 		} else {
 			dynamicType = staticType;
 		}
-		members = JavaMembers.lookupClass(parent, dynamicType, staticType,
-				isAdapter);
-		fieldAndMethods
-				= members.getFieldAndMethodsObjects(this, javaObject, false);
+		members = JavaMembers.lookupClass(parent, dynamicType, staticType, isAdapter);
+		fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false);
 	}
 
 	@Override
@@ -154,9 +150,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	@Override
 	public Scriptable getPrototype() {
 		if (prototype == null && javaObject instanceof String) {
-			return TopLevel.getBuiltinPrototype(
-					ScriptableObject.getTopLevelScope(parent),
-					TopLevel.Builtins.String);
+			return TopLevel.getBuiltinPrototype(ScriptableObject.getTopLevelScope(parent), TopLevel.Builtins.String);
 		}
 		return prototype;
 	}
@@ -225,11 +219,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 			Object converterObject = get(converterName, this);
 			if (converterObject instanceof Function) {
 				Function f = (Function) converterObject;
-				value = f.call(Context.getContext(), f.getParentScope(),
-						this, ScriptRuntime.emptyArgs);
+				value = f.call(Context.getContext(), f.getParentScope(), this, ScriptRuntime.emptyArgs);
 			} else {
-				if (hint == ScriptRuntime.NumberClass
-						&& javaObject instanceof Boolean) {
+				if (hint == ScriptRuntime.NumberClass && javaObject instanceof Boolean) {
 					boolean b = (Boolean) javaObject;
 					value = b ? ScriptRuntime.wrapNumber(1.0) : ScriptRuntime.zeroObj;
 				} else {
@@ -282,8 +274,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 		switch (fromCode) {
 
 			case JSTYPE_UNDEFINED:
-				if (to == ScriptRuntime.StringClass ||
-						to == ScriptRuntime.ObjectClass) {
+				if (to == ScriptRuntime.StringClass || to == ScriptRuntime.ObjectClass) {
 					return 1;
 				}
 				break;
@@ -363,8 +354,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 				if (to == ScriptRuntime.StringClass) {
 					return 2;
 				} else if (to.isPrimitive() && to != Boolean.TYPE) {
-					return (fromCode == JSTYPE_JAVA_ARRAY)
-							? CONVERSION_NONE : 2 + getSizeRank(to);
+					return (fromCode == JSTYPE_JAVA_ARRAY) ? CONVERSION_NONE : 2 + getSizeRank(to);
 				}
 				break;
 
@@ -489,17 +479,14 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 				return null;
 
 			case JSTYPE_UNDEFINED:
-				if (type == ScriptRuntime.StringClass ||
-						type == ScriptRuntime.ObjectClass) {
+				if (type == ScriptRuntime.StringClass || type == ScriptRuntime.ObjectClass) {
 					return "undefined";
 				}
 				return reportConversionError("undefined", type, value);
 
 			case JSTYPE_BOOLEAN:
 				// Under LC3, only JS Booleans can be coerced into a Boolean value
-				if (type == Boolean.TYPE ||
-						type == ScriptRuntime.BooleanClass ||
-						type == ScriptRuntime.ObjectClass) {
+				if (type == Boolean.TYPE || type == ScriptRuntime.BooleanClass || type == ScriptRuntime.ObjectClass) {
 					return value;
 				} else if (type == ScriptRuntime.StringClass) {
 					return value.toString();
@@ -511,8 +498,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 					return ScriptRuntime.toString(value);
 				} else if (type == ScriptRuntime.ObjectClass) {
 					Context context = Context.getCurrentContext();
-					if ((context != null) &&
-							context.hasFeature(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE)) {
+					if ((context != null) && context.hasFeature(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE)) {
 						//to process numbers like 2.0 as 2 without decimal place
 						long roundedValue = Math.round(toDouble(value));
 						if (roundedValue == toDouble(value)) {
@@ -520,8 +506,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 						}
 					}
 					return coerceToNumber(Double.TYPE, value);
-				} else if ((type.isPrimitive() && type != Boolean.TYPE) ||
-						ScriptRuntime.NumberClass.isAssignableFrom(type)) {
+				} else if ((type.isPrimitive() && type != Boolean.TYPE) || ScriptRuntime.NumberClass.isAssignableFrom(type)) {
 					return coerceToNumber(type, value);
 				} else {
 					return reportConversionError(value, type);
@@ -530,8 +515,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 			case JSTYPE_STRING:
 				if (type == ScriptRuntime.StringClass || type.isInstance(value)) {
 					return value.toString();
-				} else if (type == Character.TYPE
-						|| type == ScriptRuntime.CharacterClass) {
+				} else if (type == Character.TYPE || type == ScriptRuntime.CharacterClass) {
 					// Special case for converting a single char string to a
 					// character
 					// Placed here because it applies *only* to JS strings,
@@ -540,16 +524,14 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 						return ((CharSequence) value).charAt(0);
 					}
 					return coerceToNumber(type, value);
-				} else if ((type.isPrimitive() && type != Boolean.TYPE)
-						|| ScriptRuntime.NumberClass.isAssignableFrom(type)) {
+				} else if ((type.isPrimitive() && type != Boolean.TYPE) || ScriptRuntime.NumberClass.isAssignableFrom(type)) {
 					return coerceToNumber(type, value);
 				} else {
 					return reportConversionError(value, type);
 				}
 
 			case JSTYPE_JAVA_CLASS:
-				if (type == ScriptRuntime.ClassClass ||
-						type == ScriptRuntime.ObjectClass) {
+				if (type == ScriptRuntime.ClassClass || type == ScriptRuntime.ObjectClass) {
 					return unwrappedValue;
 				} else if (type == ScriptRuntime.StringClass) {
 					return unwrappedValue.toString();
@@ -582,8 +564,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 					return coerceToNumber(type, value);
 				} else if (type.isInstance(value)) {
 					return value;
-				} else if (type == ScriptRuntime.DateClass
-						&& value instanceof NativeDate) {
+				} else if (type == ScriptRuntime.DateClass && value instanceof NativeDate) {
 					double time = ((NativeDate) value).getJSTimeValue();
 					// XXX: This will replace NaN by 0
 					return new Date((long) time);
@@ -608,9 +589,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 						return unwrappedValue;
 					}
 					return reportConversionError(unwrappedValue, type);
-				} else if (type.isInterface() && (value instanceof NativeObject
-						|| value instanceof NativeFunction
-						|| value instanceof ArrowFunction)) {
+				} else if (type.isInterface() && (value instanceof NativeObject || value instanceof NativeFunction || value instanceof ArrowFunction)) {
 					// Try to use function/object as implementation of Java interface.
 					return createInterfaceAdapter(type, (ScriptableObject) value);
 				} else {
@@ -649,18 +628,12 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 			if (valueClass == ScriptRuntime.CharacterClass) {
 				return value;
 			}
-			return (char) toInteger(value,
-					ScriptRuntime.CharacterClass,
-					Character.MIN_VALUE,
-					Character.MAX_VALUE);
+			return (char) toInteger(value, ScriptRuntime.CharacterClass, Character.MIN_VALUE, Character.MAX_VALUE);
 		}
 
 		// Double, Float
-		if (type == ScriptRuntime.ObjectClass ||
-				type == ScriptRuntime.DoubleClass || type == Double.TYPE) {
-			return valueClass == ScriptRuntime.DoubleClass
-					? value
-					: Double.valueOf(toDouble(value));
+		if (type == ScriptRuntime.ObjectClass || type == ScriptRuntime.DoubleClass || type == Double.TYPE) {
+			return valueClass == ScriptRuntime.DoubleClass ? value : Double.valueOf(toDouble(value));
 		}
 
 		if (type == ScriptRuntime.FloatClass || type == Float.TYPE) {
@@ -668,8 +641,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 				return value;
 			}
 			double number = toDouble(value);
-			if (Double.isInfinite(number) || Double.isNaN(number)
-					|| number == 0.0) {
+			if (Double.isInfinite(number) || Double.isNaN(number) || number == 0.0) {
 				return (float) number;
 			}
 
@@ -677,9 +649,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 			if (absNumber < Float.MIN_VALUE) {
 				return (number > 0.0) ? +0.0f : -0.0f;
 			} else if (absNumber > Float.MAX_VALUE) {
-				return (number > 0.0) ?
-						Float.POSITIVE_INFINITY :
-						Float.NEGATIVE_INFINITY;
+				return (number > 0.0) ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY;
 			} else {
 				return (float) number;
 			}
@@ -690,10 +660,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 			if (valueClass == ScriptRuntime.IntegerClass) {
 				return value;
 			}
-			return (int) toInteger(value,
-					ScriptRuntime.IntegerClass,
-					Integer.MIN_VALUE,
-					Integer.MAX_VALUE);
+			return (int) toInteger(value, ScriptRuntime.IntegerClass, Integer.MIN_VALUE, Integer.MAX_VALUE);
 		}
 
 		if (type == ScriptRuntime.LongClass || type == Long.TYPE) {
@@ -709,30 +676,21 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 			 */
 			final double max = Double.longBitsToDouble(0x43dfffffffffffffL);
 			final double min = Double.longBitsToDouble(0xc3e0000000000000L);
-			return toInteger(value,
-					ScriptRuntime.LongClass,
-					min,
-					max);
+			return toInteger(value, ScriptRuntime.LongClass, min, max);
 		}
 
 		if (type == ScriptRuntime.ShortClass || type == Short.TYPE) {
 			if (valueClass == ScriptRuntime.ShortClass) {
 				return value;
 			}
-			return (short) toInteger(value,
-					ScriptRuntime.ShortClass,
-					Short.MIN_VALUE,
-					Short.MAX_VALUE);
+			return (short) toInteger(value, ScriptRuntime.ShortClass, Short.MIN_VALUE, Short.MAX_VALUE);
 		}
 
 		if (type == ScriptRuntime.ByteClass || type == Byte.TYPE) {
 			if (valueClass == ScriptRuntime.ByteClass) {
 				return value;
 			}
-			return (byte) toInteger(value,
-					ScriptRuntime.ByteClass,
-					Byte.MIN_VALUE,
-					Byte.MAX_VALUE);
+			return (byte) toInteger(value, ScriptRuntime.ByteClass, Byte.MIN_VALUE, Byte.MAX_VALUE);
 		}
 
 		return toDouble(value);
@@ -774,8 +732,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 		}
 	}
 
-	private static long toInteger(Object value, Class<?> type,
-								  double min, double max) {
+	private static long toInteger(Object value, Class<?> type, double min, double max) {
 		double d = toDouble(value);
 
 		if (Double.isInfinite(d) || Double.isNaN(d)) {
@@ -803,14 +760,10 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	static Object reportConversionError(Object value, Class<?> type, Object stringValue) {
 		// It uses String.valueOf(value), not value.toString() since
 		// value can be null, bug 282447.
-		throw Context.reportRuntimeError2(
-				"msg.conversion.not.allowed",
-				String.valueOf(stringValue),
-				JavaMembers.javaSignature(type));
+		throw Context.reportRuntimeError2("msg.conversion.not.allowed", String.valueOf(stringValue), JavaMembers.javaSignature(type));
 	}
 
-	private void writeObject(ObjectOutputStream out)
-			throws IOException {
+	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.defaultWriteObject();
 
 		out.writeBoolean(isAdapter);
@@ -835,8 +788,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 		}
 	}
 
-	private void readObject(ObjectInputStream in)
-			throws IOException, ClassNotFoundException {
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 
 		isAdapter = in.readBoolean();
@@ -893,13 +845,11 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 			try {
 				sig2[0] = ScriptRuntime.ObjectClass;
 				sig2[1] = Kit.classOrNull("java.io.ObjectOutputStream");
-				adapter_writeAdapterObject = cl.getMethod("writeAdapterObject",
-						sig2);
+				adapter_writeAdapterObject = cl.getMethod("writeAdapterObject", sig2);
 
 				sig2[0] = ScriptRuntime.ScriptableClass;
 				sig2[1] = Kit.classOrNull("java.io.ObjectInputStream");
-				adapter_readAdapterObject = cl.getMethod("readAdapterObject",
-						sig2);
+				adapter_readAdapterObject = cl.getMethod("readAdapterObject", sig2);
 
 			} catch (NoSuchMethodException e) {
 				adapter_writeAdapterObject = null;

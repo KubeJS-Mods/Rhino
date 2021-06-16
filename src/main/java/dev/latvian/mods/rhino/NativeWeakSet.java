@@ -37,8 +37,7 @@ public class NativeWeakSet extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 
 		if (!f.hasTag(MAP_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
@@ -112,8 +111,7 @@ public class NativeWeakSet extends IdScriptableObject {
 	@Override
 	protected void initPrototypeId(int id) {
 		if (id == SymbolId_toStringTag) {
-			initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG,
-					getClassName(), DONTENUM | READONLY);
+			initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG, getClassName(), DONTENUM | READONLY);
 			return;
 		}
 
@@ -191,18 +189,11 @@ public class NativeWeakSet extends IdScriptableObject {
 		return id;
 	}
 
-	private static final int
-			Id_constructor = 1,
-			Id_add = 2,
-			Id_delete = 3,
-			Id_has = 4,
-			SymbolId_toStringTag = 5,
-			MAX_PROTOTYPE_ID = SymbolId_toStringTag;
+	private static final int Id_constructor = 1, Id_add = 2, Id_delete = 3, Id_has = 4, SymbolId_toStringTag = 5, MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	// #/string_id_map#
 
-	private void readObject(ObjectInputStream stream)
-			throws IOException, ClassNotFoundException {
+	private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
 		stream.defaultReadObject();
 		map = new WeakHashMap<>();
 	}

@@ -18,8 +18,7 @@ import dev.latvian.mods.rhino.Undefined;
  * from the NativeArrayBuffer and manipulating it directly, perhaps using the "ByteIo" class as a helper.
  */
 
-public class NativeDataView
-		extends NativeArrayBufferView {
+public class NativeDataView extends NativeArrayBufferView {
 	private static final long serialVersionUID = 1427967607557438968L;
 
 	public static final String CLASS_NAME = "DataView";
@@ -124,8 +123,7 @@ public class NativeDataView
 					return ByteIo.readUint16(arrayBuffer.buffer, offset + pos, littleEndian);
 				}
 			case 4:
-				return signed ? ByteIo.readInt32(arrayBuffer.buffer, offset + pos, littleEndian) :
-						ByteIo.readUint32(arrayBuffer.buffer, offset + pos, littleEndian);
+				return signed ? ByteIo.readInt32(arrayBuffer.buffer, offset + pos, littleEndian) : ByteIo.readUint32(arrayBuffer.buffer, offset + pos, littleEndian);
 			default:
 				throw new AssertionError();
 		}
@@ -243,8 +241,7 @@ public class NativeDataView
 	// Function dispatcher
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(getClassName())) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -487,25 +484,7 @@ public class NativeDataView
 		return id;
 	}
 
-	private static final int
-			Id_constructor = 1,
-			Id_getInt8 = 2,
-			Id_getUint8 = 3,
-			Id_getInt16 = 4,
-			Id_getUint16 = 5,
-			Id_getInt32 = 6,
-			Id_getUint32 = 7,
-			Id_getFloat32 = 8,
-			Id_getFloat64 = 9,
-			Id_setInt8 = 10,
-			Id_setUint8 = 11,
-			Id_setInt16 = 12,
-			Id_setUint16 = 13,
-			Id_setInt32 = 14,
-			Id_setUint32 = 15,
-			Id_setFloat32 = 16,
-			Id_setFloat64 = 17,
-			MAX_PROTOTYPE_ID = Id_setFloat64;
+	private static final int Id_constructor = 1, Id_getInt8 = 2, Id_getUint8 = 3, Id_getInt16 = 4, Id_getUint16 = 5, Id_getInt32 = 6, Id_getUint32 = 7, Id_getFloat32 = 8, Id_getFloat64 = 9, Id_setInt8 = 10, Id_setUint8 = 11, Id_setInt16 = 12, Id_setUint16 = 13, Id_setInt32 = 14, Id_setUint32 = 15, Id_setFloat32 = 16, Id_setFloat64 = 17, MAX_PROTOTYPE_ID = Id_setFloat64;
 
 	// #/string_id_map#
 }

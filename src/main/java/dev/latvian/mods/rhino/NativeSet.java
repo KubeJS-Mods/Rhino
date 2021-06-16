@@ -40,8 +40,7 @@ public class NativeSet extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(SET_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -71,9 +70,7 @@ public class NativeSet extends IdScriptableObject {
 			case Id_entries:
 				return realThis(thisObj, f).js_iterator(scope, NativeCollectionIterator.Type.BOTH);
 			case Id_forEach:
-				return realThis(thisObj, f).js_forEach(cx, scope,
-						args.length > 0 ? args[0] : Undefined.instance,
-						args.length > 1 ? args[1] : Undefined.instance);
+				return realThis(thisObj, f).js_forEach(cx, scope, args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
 			case SymbolId_getSize:
 				return realThis(thisObj, f).js_getSize();
 		}
@@ -83,8 +80,7 @@ public class NativeSet extends IdScriptableObject {
 	private Object js_add(Object k) {
 		// Special handling of "negative zero" from the spec.
 		Object key = k;
-		if ((key instanceof Number) &&
-				((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
+		if ((key instanceof Number) && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
 			key = ScriptRuntime.zeroObj;
 		}
 		entries.put(key, key);
@@ -158,8 +154,7 @@ public class NativeSet extends IdScriptableObject {
 		// been replaced. Since we're not fully constructed yet, create a dummy instance
 		// so that we can get our own prototype.
 		ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, set.getClassName()));
-		final Callable add =
-				ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "add", cx, scope);
+		final Callable add = ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "add", cx, scope);
 		// Clean up the value left around by the previous function
 		ScriptRuntime.lastStoredScriptable(cx);
 
@@ -195,8 +190,7 @@ public class NativeSet extends IdScriptableObject {
 				initPrototypeMethod(SET_TAG, id, GETSIZE, "get size", 0);
 				return;
 			case SymbolId_toStringTag:
-				initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG,
-						getClassName(), DONTENUM | READONLY);
+				initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG, getClassName(), DONTENUM | READONLY);
 				return;
 			// fallthrough
 		}
@@ -329,19 +323,8 @@ public class NativeSet extends IdScriptableObject {
 	// same value as the "values" entry.
 	// Similarly, "keys" is supposed to have the same value as "values," which is why
 	// both have the same ID.
-	private static final int
-			Id_constructor = 1,
-			Id_add = 2,
-			Id_delete = 3,
-			Id_has = 4,
-			Id_clear = 5,
-			Id_keys = 6,
-			Id_values = 6,  // These are deliberately the same to match the spec
-			Id_entries = 7,
-			Id_forEach = 8,
-			SymbolId_getSize = 9,
-			SymbolId_toStringTag = 10,
-			MAX_PROTOTYPE_ID = SymbolId_toStringTag;
+	private static final int Id_constructor = 1, Id_add = 2, Id_delete = 3, Id_has = 4, Id_clear = 5, Id_keys = 6, Id_values = 6,  // These are deliberately the same to match the spec
+			Id_entries = 7, Id_forEach = 8, SymbolId_getSize = 9, SymbolId_toStringTag = 10, MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	// #/string_id_map#
 }

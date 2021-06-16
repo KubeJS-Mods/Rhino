@@ -29,9 +29,7 @@ public class InfixExpression extends AstNode {
 		super(pos, len);
 	}
 
-	public InfixExpression(int pos, int len,
-						   AstNode left,
-						   AstNode right) {
+	public InfixExpression(int pos, int len, AstNode left, AstNode right) {
 		super(pos, len);
 		setLeft(left);
 		setRight(right);
@@ -50,8 +48,7 @@ public class InfixExpression extends AstNode {
 	 *
 	 * @param operatorPos the <em>absolute</em> position of the operator
 	 */
-	public InfixExpression(int operator, AstNode left,
-						   AstNode right, int operatorPos) {
+	public InfixExpression(int operator, AstNode left, AstNode right, int operatorPos) {
 		setType(operator);
 		setOperatorPosition(operatorPos - left.getPosition());
 		setLeftAndRight(left, right);
@@ -160,8 +157,7 @@ public class InfixExpression extends AstNode {
 				return right != null && right.hasSideEffects();
 			case Token.AND:
 			case Token.OR:
-				return left != null && left.hasSideEffects()
-						|| (right != null && right.hasSideEffects());
+				return left != null && left.hasSideEffects() || (right != null && right.hasSideEffects());
 			default:
 				return super.hasSideEffects();
 		}

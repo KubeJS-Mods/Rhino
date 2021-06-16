@@ -31,8 +31,7 @@ public class Assignment extends InfixExpression {
 		super(left, right);
 	}
 
-	public Assignment(int operator, AstNode left,
-					  AstNode right, int operatorPos) {
+	public Assignment(int operator, AstNode left, AstNode right, int operatorPos) {
 		super(operator, left, right, operatorPos);
 	}
 }

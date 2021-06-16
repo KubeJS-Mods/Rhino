@@ -23,8 +23,7 @@ class SpecialRef extends Ref {
 		this.name = name;
 	}
 
-	static Ref createSpecial(Context cx, Scriptable scope, Object object,
-							 String name) {
+	static Ref createSpecial(Context cx, Scriptable scope, Object object, String name) {
 		Scriptable target = ScriptRuntime.toObjectOrNull(cx, object, scope);
 		if (target == null) {
 			throw ScriptRuntime.undefReadError(object, name);
@@ -81,27 +80,22 @@ class SpecialRef extends Ref {
 					Scriptable search = obj;
 					do {
 						if (search == target) {
-							throw Context.reportRuntimeError1(
-									"msg.cyclic.value", name);
+							throw Context.reportRuntimeError1("msg.cyclic.value", name);
 						}
 						if (type == SPECIAL_PROTO) {
 							search = search.getPrototype();
 						} else {
 							search = search.getParentScope();
 						}
-					}
-					while (search != null);
+					} while (search != null);
 				}
 				if (type == SPECIAL_PROTO) {
-					if (target instanceof ScriptableObject
-							&& !((ScriptableObject) target).isExtensible()
-							&& cx.getLanguageVersion() >= Context.VERSION_1_8) {
+					if (target instanceof ScriptableObject && !((ScriptableObject) target).isExtensible() && cx.getLanguageVersion() >= Context.VERSION_1_8) {
 						throw ScriptRuntime.typeError0("msg.not.extensible");
 					}
 
 					if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-						if ((value != null && !"object".equals(ScriptRuntime.typeof(value))) ||
-								!"object".equals(ScriptRuntime.typeof(target))) {
+						if ((value != null && !"object".equals(ScriptRuntime.typeof(value))) || !"object".equals(ScriptRuntime.typeof(target))) {
 							return Undefined.instance;
 						}
 						target.setPrototype(obj);

@@ -31,15 +31,12 @@ public class RegExpImpl implements RegExpProxy {
 	}
 
 	@Override
-	public Scriptable wrapRegExp(Context cx, Scriptable scope,
-								 Object compiled) {
+	public Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled) {
 		return new NativeRegExp(scope, (RECompiled) compiled);
 	}
 
 	@Override
-	public Object action(Context cx, Scriptable scope,
-						 Scriptable thisObj, Object[] args,
-						 int actionType) {
+	public Object action(Context cx, Scriptable scope, Scriptable thisObj, Object[] args, int actionType) {
 		GlobData data = new GlobData();
 		data.mode = actionType;
 		data.str = ScriptRuntime.toString(thisObj);
@@ -86,9 +83,7 @@ public class RegExpImpl implements RegExpProxy {
 				Object arg1 = args.length < 2 ? Undefined.instance : args[1];
 				String repstr = null;
 				Function lambda = null;
-				if (arg1 instanceof Function
-						&& (cx.getLanguageVersion() < Context.VERSION_ES6
-						|| !(arg1 instanceof NativeRegExp))) {
+				if (arg1 instanceof Function && (cx.getLanguageVersion() < Context.VERSION_ES6 || !(arg1 instanceof NativeRegExp))) {
 					lambda = (Function) arg1;
 				} else {
 					repstr = ScriptRuntime.toString(arg1);
@@ -102,8 +97,7 @@ public class RegExpImpl implements RegExpProxy {
 
 				Object val;
 				if (useRE) {
-					val = matchOrReplace(cx, scope, thisObj, args,
-							this, data, re);
+					val = matchOrReplace(cx, scope, thisObj, args, this, data, re);
 				} else {
 					String str = data.str;
 					int index = str.indexOf(search);
@@ -121,8 +115,7 @@ public class RegExpImpl implements RegExpProxy {
 				}
 
 				if (data.charBuf == null) {
-					if (data.global || val == null
-							|| !val.equals(Boolean.TRUE)) {
+					if (data.global || val == null || !val.equals(Boolean.TRUE)) {
 						/* Didn't match even once. */
 						return data.str;
 					}
@@ -139,9 +132,7 @@ public class RegExpImpl implements RegExpProxy {
 		}
 	}
 
-	private static NativeRegExp createRegExp(Context cx, Scriptable scope,
-											 Object[] args, int optarg,
-											 boolean forceFlat) {
+	private static NativeRegExp createRegExp(Context cx, Scriptable scope, Object[] args, int optarg, boolean forceFlat) {
 		NativeRegExp re;
 		Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
 		if (args.length == 0 || args[0] == Undefined.instance) {
@@ -167,17 +158,13 @@ public class RegExpImpl implements RegExpProxy {
 	/**
 	 * Analog of C match_or_replace.
 	 */
-	private static Object matchOrReplace(Context cx, Scriptable scope,
-										 Scriptable thisObj, Object[] args,
-										 RegExpImpl reImpl,
-										 GlobData data, NativeRegExp re) {
+	private static Object matchOrReplace(Context cx, Scriptable scope, Scriptable thisObj, Object[] args, RegExpImpl reImpl, GlobData data, NativeRegExp re) {
 		String str = data.str;
 		data.global = (re.getFlags() & NativeRegExp.JSREG_GLOB) != 0;
 		int[] indexp = {0};
 		Object result = null;
 		if (data.mode == RA_SEARCH) {
-			result = re.executeRegExp(cx, scope, reImpl,
-					str, indexp, NativeRegExp.TEST);
+			result = re.executeRegExp(cx, scope, reImpl, str, indexp, NativeRegExp.TEST);
 			if (result != null && result.equals(Boolean.TRUE)) {
 				result = reImpl.leftContext.length;
 			} else {
@@ -186,8 +173,7 @@ public class RegExpImpl implements RegExpProxy {
 		} else if (data.global) {
 			re.lastIndex = ScriptRuntime.zeroObj;
 			for (int count = 0; indexp[0] <= str.length(); count++) {
-				result = re.executeRegExp(cx, scope, reImpl,
-						str, indexp, NativeRegExp.TEST);
+				result = re.executeRegExp(cx, scope, reImpl, str, indexp, NativeRegExp.TEST);
 				if (result == null || !result.equals(Boolean.TRUE)) {
 					break;
 				}
@@ -211,10 +197,7 @@ public class RegExpImpl implements RegExpProxy {
 				}
 			}
 		} else {
-			result = re.executeRegExp(cx, scope, reImpl, str, indexp,
-					((data.mode == RA_REPLACE)
-							? NativeRegExp.TEST
-							: NativeRegExp.MATCH));
+			result = re.executeRegExp(cx, scope, reImpl, str, indexp, ((data.mode == RA_REPLACE) ? NativeRegExp.TEST : NativeRegExp.MATCH));
 		}
 
 		return result;
@@ -222,10 +205,7 @@ public class RegExpImpl implements RegExpProxy {
 
 
 	@Override
-	public int find_split(Context cx, Scriptable scope, String target,
-						  String separator, Scriptable reObj,
-						  int[] ip, int[] matchlen,
-						  boolean[] matched, String[][] parensp) {
+	public int find_split(Context cx, Scriptable scope, String target, String separator, Scriptable reObj, int[] ip, int[] matchlen, boolean[] matched, String[][] parensp) {
 		int i = ip[0];
 		int length = target.length();
 		int result;
@@ -237,8 +217,7 @@ public class RegExpImpl implements RegExpProxy {
 			/* JS1.2 deviated from Perl by never matching at end of string. */
 			int ipsave = ip[0]; // reuse ip to save object creation
 			ip[0] = i;
-			Object ret = re.executeRegExp(cx, scope, this, target, ip,
-					NativeRegExp.TEST);
+			Object ret = re.executeRegExp(cx, scope, this, target, ip, NativeRegExp.TEST);
 			if (!Boolean.TRUE.equals(ret)) {
 				// Mismatch: ensure our caller advances i past end of string.
 				ip[0] = ipsave;
@@ -309,9 +288,7 @@ public class RegExpImpl implements RegExpProxy {
 	/*
 	 * Analog of match_glob() in jsstr.c
 	 */
-	private static void match_glob(GlobData mdata, Context cx,
-								   Scriptable scope, int count,
-								   RegExpImpl reImpl) {
+	private static void match_glob(GlobData mdata, Context cx, Scriptable scope, int count, RegExpImpl reImpl) {
 		if (mdata.arrayobj == null) {
 			mdata.arrayobj = cx.newArray(scope, 0);
 		}
@@ -323,9 +300,7 @@ public class RegExpImpl implements RegExpProxy {
 	/*
 	 * Analog of replace_glob() in jsstr.c
 	 */
-	private static void replace_glob(GlobData rdata, Context cx,
-									 Scriptable scope, RegExpImpl reImpl,
-									 int leftIndex, int leftlen) {
+	private static void replace_glob(GlobData rdata, Context cx, Scriptable scope, RegExpImpl reImpl, int leftIndex, int leftlen) {
 		int replen;
 		String lambdaStr;
 		if (rdata.lambda != null) {
@@ -371,8 +346,7 @@ public class RegExpImpl implements RegExpProxy {
 				int[] skip = new int[1];
 				int dp = rdata.dollar;
 				do {
-					SubString sub = interpretDollar(cx, reImpl, rdata.repstr,
-							dp, skip);
+					SubString sub = interpretDollar(cx, reImpl, rdata.repstr, dp, skip);
 					if (sub != null) {
 						replen += sub.length - skip[0];
 						dp += skip[0];
@@ -380,8 +354,7 @@ public class RegExpImpl implements RegExpProxy {
 						++dp;
 					}
 					dp = rdata.repstr.indexOf('$', dp);
-				}
-				while (dp >= 0);
+				} while (dp >= 0);
 			}
 		}
 
@@ -402,8 +375,7 @@ public class RegExpImpl implements RegExpProxy {
 		}
 	}
 
-	private static SubString interpretDollar(Context cx, RegExpImpl res,
-											 String da, int dp, int[] skip) {
+	private static SubString interpretDollar(Context cx, RegExpImpl res, String da, int dp, int[] skip) {
 		char dc;
 		int num, tmp;
 
@@ -413,8 +385,7 @@ public class RegExpImpl implements RegExpProxy {
 
 		/* Allow a real backslash (literal "\\") to escape "$1" etc. */
 		int version = cx.getLanguageVersion();
-		if (version != Context.VERSION_DEFAULT
-				&& version <= Context.VERSION_1_4) {
+		if (version != Context.VERSION_DEFAULT && version <= Context.VERSION_1_4) {
 			if (dp > 0 && da.charAt(dp - 1) == '\\') {
 				return null;
 			}
@@ -427,8 +398,7 @@ public class RegExpImpl implements RegExpProxy {
 		dc = da.charAt(dp + 1);
 		if (NativeRegExp.isDigit(dc)) {
 			int cp;
-			if (version != Context.VERSION_DEFAULT
-					&& version <= Context.VERSION_1_4) {
+			if (version != Context.VERSION_DEFAULT && version <= Context.VERSION_1_4) {
 				if (dc == '0') {
 					return null;
 				}
@@ -499,8 +469,7 @@ public class RegExpImpl implements RegExpProxy {
 	/**
 	 * Analog of do_replace in jsstr.c
 	 */
-	private static void do_replace(GlobData rdata, Context cx,
-								   RegExpImpl regExpImpl) {
+	private static void do_replace(GlobData rdata, Context cx, RegExpImpl regExpImpl) {
 		StringBuilder charBuf = rdata.charBuf;
 		int cp = 0;
 		String da = rdata.repstr;
@@ -511,8 +480,7 @@ public class RegExpImpl implements RegExpProxy {
 				int len = dp - cp;
 				charBuf.append(da, cp, dp);
 				cp = dp;
-				SubString sub = interpretDollar(cx, regExpImpl, da,
-						dp, skip);
+				SubString sub = interpretDollar(cx, regExpImpl, da, dp, skip);
 				if (sub != null) {
 					len = sub.length;
 					if (len > 0) {
@@ -524,8 +492,7 @@ public class RegExpImpl implements RegExpProxy {
 					++dp;
 				}
 				dp = da.indexOf('$', dp);
-			}
-			while (dp >= 0);
+			} while (dp >= 0);
 		}
 		int daL = da.length();
 		if (daL > cp) {
@@ -539,8 +506,7 @@ public class RegExpImpl implements RegExpProxy {
 	 * argument.
 	 */
 	@Override
-	public Object js_split(Context cx, Scriptable scope,
-						   String target, Object[] args) {
+	public Object js_split(Context cx, Scriptable scope, String target, Object[] args) {
 		// create an empty Array to return;
 		Scriptable result = cx.newArray(scope, 0);
 
@@ -589,9 +555,7 @@ public class RegExpImpl implements RegExpProxy {
 		boolean[] matched = {false};
 		String[][] parens = {null};
 		int version = cx.getLanguageVersion();
-		while ((match = find_split(cx, scope, target, separator, version,
-				reProxy, re, ip, matchlen, matched, parens))
-				>= 0) {
+		while ((match = find_split(cx, scope, target, separator, version, reProxy, re, ip, matchlen, matched, parens)) >= 0) {
 			if ((limited && len >= limit) || (match > target.length())) {
 				break;
 			}
@@ -623,8 +587,7 @@ public class RegExpImpl implements RegExpProxy {
 			}
 			ip[0] = match + matchlen[0];
 
-			if (version < Context.VERSION_1_3
-					&& version != Context.VERSION_DEFAULT) {
+			if (version < Context.VERSION_1_3 && version != Context.VERSION_DEFAULT) {
 				/*
 				 * Deviate from ECMA to imitate Perl, which omits a final
 				 * split unless a limit argument is given and big enough.
@@ -649,11 +612,7 @@ public class RegExpImpl implements RegExpProxy {
 	 * separator occurrence if found, or the string length if no
 	 * separator is found.
 	 */
-	private static int find_split(Context cx, Scriptable scope, String target,
-								  String separator, int version,
-								  RegExpProxy reProxy, Scriptable re,
-								  int[] ip, int[] matchlen, boolean[] matched,
-								  String[][] parensp) {
+	private static int find_split(Context cx, Scriptable scope, String target, String separator, int version, RegExpProxy reProxy, Scriptable re, int[] ip, int[] matchlen, boolean[] matched, String[][] parensp) {
 		int i = ip[0];
 		int length = target.length();
 
@@ -662,8 +621,7 @@ public class RegExpImpl implements RegExpProxy {
 		 * JavaScript1.2 explicitly.  Split on whitespace, and skip leading w/s.
 		 * Strange but true, apparently modeled after awk.
 		 */
-		if (version == Context.VERSION_1_2 &&
-				re == null && separator.length() == 1 && separator.charAt(0) == ' ') {
+		if (version == Context.VERSION_1_2 && re == null && separator.length() == 1 && separator.charAt(0) == ' ') {
 			/* Skip leading whitespace if at front of str. */
 			if (i == 0) {
 				while (i < length && Character.isWhitespace(target.charAt(i))) {
@@ -678,8 +636,7 @@ public class RegExpImpl implements RegExpProxy {
 			}
 
 			/* Skip over the non-whitespace chars. */
-			while (i < length
-					&& !Character.isWhitespace(target.charAt(i))) {
+			while (i < length && !Character.isWhitespace(target.charAt(i))) {
 				i++;
 			}
 
@@ -714,8 +671,7 @@ public class RegExpImpl implements RegExpProxy {
 		 * trying for a match, so we don't get stuck in a loop.
 		 */
 		if (re != null) {
-			return reProxy.find_split(cx, scope, target, separator, re,
-					ip, matchlen, matched, parensp);
+			return reProxy.find_split(cx, scope, target, separator, re, ip, matchlen, matched, parensp);
 		}
 
 		/*
@@ -723,8 +679,7 @@ public class RegExpImpl implements RegExpProxy {
 		 * string into a non-empty array (an array of length 1 that contains the
 		 * empty string).
 		 */
-		if (version != Context.VERSION_DEFAULT && version < Context.VERSION_1_3
-				&& length == 0) {
+		if (version != Context.VERSION_DEFAULT && version < Context.VERSION_1_3 && length == 0) {
 			return -1;
 		}
 

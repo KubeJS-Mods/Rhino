@@ -28,8 +28,7 @@ final class NativeMath extends IdScriptableObject {
 		if (sealed) {
 			obj.sealObject();
 		}
-		defineProperty(scope, "Math", obj,
-				DONTENUM);
+		defineProperty(scope, "Math", obj, DONTENUM);
 	}
 
 	private NativeMath() {
@@ -233,14 +232,12 @@ final class NativeMath extends IdScriptableObject {
 				default:
 					throw new IllegalStateException(String.valueOf(id));
 			}
-			initPrototypeValue(id, name, ScriptRuntime.wrapNumber(x),
-					DONTENUM | READONLY | PERMANENT);
+			initPrototypeValue(id, name, ScriptRuntime.wrapNumber(x), DONTENUM | READONLY | PERMANENT);
 		}
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(MATH_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -324,9 +321,7 @@ final class NativeMath extends IdScriptableObject {
 
 			case Id_clz32:
 				x = ScriptRuntime.toNumber(args, 0);
-				if (x == 0
-						|| Double.isNaN(x)
-						|| Double.isInfinite(x)) {
+				if (x == 0 || Double.isNaN(x) || Double.isInfinite(x)) {
 					return Double32;
 				}
 				long n = ScriptRuntime.toUint32(x);
@@ -351,9 +346,7 @@ final class NativeMath extends IdScriptableObject {
 
 			case Id_exp:
 				x = ScriptRuntime.toNumber(args, 0);
-				x = (x == Double.POSITIVE_INFINITY) ? x
-						: (x == Double.NEGATIVE_INFINITY) ? 0.0
-						: Math.exp(x);
+				x = (x == Double.POSITIVE_INFINITY) ? x : (x == Double.NEGATIVE_INFINITY) ? 0.0 : Math.exp(x);
 				break;
 
 			case Id_expm1:
@@ -400,8 +393,7 @@ final class NativeMath extends IdScriptableObject {
 
 			case Id_max:
 			case Id_min:
-				x = (methodId == Id_max)
-						? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
+				x = (methodId == Id_max) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
 				for (int i = 0; i != args.length; ++i) {
 					double d = ScriptRuntime.toNumber(args[i]);
 					if (Double.isNaN(d)) {
@@ -853,43 +845,7 @@ final class NativeMath extends IdScriptableObject {
 		return id;
 	}
 
-	private static final int
-			Id_toSource = 1,
-			Id_abs = 2,
-			Id_acos = 3,
-			Id_asin = 4,
-			Id_atan = 5,
-			Id_atan2 = 6,
-			Id_ceil = 7,
-			Id_cos = 8,
-			Id_exp = 9,
-			Id_floor = 10,
-			Id_log = 11,
-			Id_max = 12,
-			Id_min = 13,
-			Id_pow = 14,
-			Id_random = 15,
-			Id_round = 16,
-			Id_sin = 17,
-			Id_sqrt = 18,
-			Id_tan = 19,
-			Id_cbrt = 20,
-			Id_cosh = 21,
-			Id_expm1 = 22,
-			Id_hypot = 23,
-			Id_log1p = 24,
-			Id_log10 = 25,
-			Id_sinh = 26,
-			Id_tanh = 27,
-			Id_imul = 28,
-			Id_trunc = 29,
-			Id_acosh = 30,
-			Id_asinh = 31,
-			Id_atanh = 32,
-			Id_sign = 33,
-			Id_log2 = 34,
-			Id_fround = 35,
-			Id_clz32 = 36,
+	private static final int Id_toSource = 1, Id_abs = 2, Id_acos = 3, Id_asin = 4, Id_atan = 5, Id_atan2 = 6, Id_ceil = 7, Id_cos = 8, Id_exp = 9, Id_floor = 10, Id_log = 11, Id_max = 12, Id_min = 13, Id_pow = 14, Id_random = 15, Id_round = 16, Id_sin = 17, Id_sqrt = 18, Id_tan = 19, Id_cbrt = 20, Id_cosh = 21, Id_expm1 = 22, Id_hypot = 23, Id_log1p = 24, Id_log10 = 25, Id_sinh = 26, Id_tanh = 27, Id_imul = 28, Id_trunc = 29, Id_acosh = 30, Id_asinh = 31, Id_atanh = 32, Id_sign = 33, Id_log2 = 34, Id_fround = 35, Id_clz32 = 36,
 
 	LAST_METHOD_ID = Id_clz32;
 
@@ -899,15 +855,7 @@ final class NativeMath extends IdScriptableObject {
     log2
  */
 
-	private static final int
-			Id_E = LAST_METHOD_ID + 1,
-			Id_PI = LAST_METHOD_ID + 2,
-			Id_LN10 = LAST_METHOD_ID + 3,
-			Id_LN2 = LAST_METHOD_ID + 4,
-			Id_LOG2E = LAST_METHOD_ID + 5,
-			Id_LOG10E = LAST_METHOD_ID + 6,
-			Id_SQRT1_2 = LAST_METHOD_ID + 7,
-			Id_SQRT2 = LAST_METHOD_ID + 8,
+	private static final int Id_E = LAST_METHOD_ID + 1, Id_PI = LAST_METHOD_ID + 2, Id_LN10 = LAST_METHOD_ID + 3, Id_LN2 = LAST_METHOD_ID + 4, Id_LOG2E = LAST_METHOD_ID + 5, Id_LOG10E = LAST_METHOD_ID + 6, Id_SQRT1_2 = LAST_METHOD_ID + 7, Id_SQRT2 = LAST_METHOD_ID + 8,
 
 	MAX_ID = LAST_METHOD_ID + 8;
 

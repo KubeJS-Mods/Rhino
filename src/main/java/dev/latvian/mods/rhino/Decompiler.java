@@ -248,8 +248,7 @@ public class Decompiler {
 	 * @param flags      flags to select output format
 	 * @param properties indentation properties
 	 */
-	public static String decompile(String source, int flags,
-								   UintMap properties) {
+	public static String decompile(String source, int flags, UintMap properties) {
 		int length = source.length();
 		if (length == 0) {
 			return "";
@@ -286,15 +285,8 @@ public class Decompiler {
 				if (tokenname == null) {
 					tokenname = "---";
 				}
-				String pad = tokenname.length() > 7
-						? "\t"
-						: "\t\t";
-				System.err.println
-						(tokenname
-								+ pad + (int) source.charAt(i)
-								+ "\t'" + ScriptRuntime.escapeString
-								(source.substring(i, i + 1))
-								+ "'");
+				String pad = tokenname.length() > 7 ? "\t" : "\t\t";
+				System.err.println(tokenname + pad + (int) source.charAt(i) + "\t'" + ScriptRuntime.escapeString(source.substring(i, i + 1)) + "'");
 			}
 			System.err.println();
 		}
@@ -458,8 +450,7 @@ public class Decompiler {
 					if (i + 1 < length) {
 						int less = 0;
 						int nextToken = source.charAt(i + 1);
-						if (nextToken == Token.CASE
-								|| nextToken == Token.DEFAULT) {
+						if (nextToken == Token.CASE || nextToken == Token.DEFAULT) {
 							less = indentGap - caseGap;
 						} else if (nextToken == Token.RC) {
 							less = indentGap;
@@ -829,8 +820,7 @@ public class Decompiler {
 
 				default:
 					// If we don't know how to decompile it, raise an exception.
-					throw new RuntimeException("Token: " +
-							Token.name(source.charAt(i)));
+					throw new RuntimeException("Token: " + Token.name(source.charAt(i)));
 			}
 			++i;
 		}
@@ -857,9 +847,7 @@ public class Decompiler {
 		return printSourceString(source, offset, false, null);
 	}
 
-	private static int printSourceString(String source, int offset,
-										 boolean asQuotedString,
-										 StringBuilder sb) {
+	private static int printSourceString(String source, int offset, boolean asQuotedString, StringBuilder sb) {
 		int length = source.charAt(offset);
 		++offset;
 		if ((0x8000 & length) != 0) {
@@ -879,8 +867,7 @@ public class Decompiler {
 		return offset + length;
 	}
 
-	private static int printSourceNumber(String source, int offset,
-										 StringBuilder sb) {
+	private static int printSourceNumber(String source, int offset, StringBuilder sb) {
 		double number = 0.0;
 		char type = source.charAt(offset);
 		++offset;

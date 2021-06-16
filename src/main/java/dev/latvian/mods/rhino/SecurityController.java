@@ -80,8 +80,7 @@ public abstract class SecurityController {
 	 * @param securityDomain some object specifying the security
 	 *                       context of the code that is defined by the returned class loader.
 	 */
-	public abstract GeneratedClassLoader createClassLoader(
-			ClassLoader parentLoader, Object securityDomain);
+	public abstract GeneratedClassLoader createClassLoader(ClassLoader parentLoader, Object securityDomain);
 
 	/**
 	 * Create {@link GeneratedClassLoader} with restrictions imposed by
@@ -98,8 +97,7 @@ public abstract class SecurityController {
 	 *                     {@link Context#getApplicationClassLoader()} will be used.
 	 * @param staticDomain static security domain.
 	 */
-	public static GeneratedClassLoader createLoader(
-			ClassLoader parent, Object staticDomain) {
+	public static GeneratedClassLoader createLoader(ClassLoader parent, Object staticDomain) {
 		Context cx = Context.getContext();
 		if (parent == null) {
 			parent = cx.getApplicationClassLoader();
@@ -148,9 +146,7 @@ public abstract class SecurityController {
 	 * The method should always be overridden, it is not declared abstract
 	 * for compatibility reasons.
 	 */
-	public Object callWithDomain(Object securityDomain, Context cx,
-								 final Callable callable, Scriptable scope,
-								 final Scriptable thisObj, final Object[] args) {
+	public Object callWithDomain(Object securityDomain, Context cx, final Callable callable, Scriptable scope, final Scriptable thisObj, final Object[] args) {
 		return execWithDomain(cx, scope, (cx1, scope1) -> callable.call(cx1, scope1, thisObj, args), securityDomain);
 	}
 
@@ -160,8 +156,7 @@ public abstract class SecurityController {
 	 * {@link #callWithDomain(Object securityDomain, Context cx, Callable callable, Scriptable scope, Scriptable thisObj, Object[] args)}.
 	 */
 	@Deprecated
-	public Object execWithDomain(Context cx, Scriptable scope,
-								 Script script, Object securityDomain) {
+	public Object execWithDomain(Context cx, Scriptable scope, Script script, Object securityDomain) {
 		throw new IllegalStateException("callWithDomain should be overridden");
 	}
 

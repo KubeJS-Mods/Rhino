@@ -17,9 +17,7 @@ import java.lang.reflect.Array;
  * @see NativeJavaPackage
  */
 
-public class NativeJavaArray
-		extends NativeJavaObject
-		implements SymbolScriptable {
+public class NativeJavaArray extends NativeJavaObject implements SymbolScriptable {
 	private static final long serialVersionUID = -924022554283675333L;
 
 	@Override
@@ -68,10 +66,8 @@ public class NativeJavaArray
 			return length;
 		}
 		Object result = super.get(id, start);
-		if (result == NOT_FOUND &&
-				!ScriptableObject.hasProperty(getPrototype(), id)) {
-			throw Context.reportRuntimeError2(
-					"msg.java.member.not.found", array.getClass().getName(), id);
+		if (result == NOT_FOUND && !ScriptableObject.hasProperty(getPrototype(), id)) {
+			throw Context.reportRuntimeError2("msg.java.member.not.found", array.getClass().getName(), id);
 		}
 		return result;
 	}
@@ -98,8 +94,7 @@ public class NativeJavaArray
 	public void put(String id, Scriptable start, Object value) {
 		// Ignore assignments to "length"--it's readonly.
 		if (!id.equals("length")) {
-			throw Context.reportRuntimeError1(
-					"msg.java.array.member.not.found", id);
+			throw Context.reportRuntimeError1("msg.java.array.member.not.found", id);
 		}
 	}
 
@@ -108,9 +103,7 @@ public class NativeJavaArray
 		if (0 <= index && index < length) {
 			Array.set(array, index, Context.jsToJava(value, cls));
 		} else {
-			throw Context.reportRuntimeError2(
-					"msg.java.array.index.out.of.bounds", String.valueOf(index),
-					String.valueOf(length - 1));
+			throw Context.reportRuntimeError2("msg.java.array.index.out.of.bounds", String.valueOf(index), String.valueOf(length - 1));
 		}
 	}
 
@@ -155,8 +148,7 @@ public class NativeJavaArray
 	@Override
 	public Scriptable getPrototype() {
 		if (prototype == null) {
-			prototype =
-					ScriptableObject.getArrayPrototype(this.getParentScope());
+			prototype = ScriptableObject.getArrayPrototype(this.getParentScope());
 		}
 		return prototype;
 	}

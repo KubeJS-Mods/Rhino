@@ -147,9 +147,7 @@ public class AstRoot extends ScriptNode {
 				return true;
 			}
 			if (node.getParent() == null) {
-				throw new IllegalStateException
-						("No parent for node: " + node
-								+ "\n" + node.toSource(0));
+				throw new IllegalStateException("No parent for node: " + node + "\n" + node.toSource(0));
 			}
 			return true;
 		});

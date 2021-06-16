@@ -28,10 +28,7 @@ public interface Evaluator {
 	 * createFunctionObject or createScriptObject, depending on the
 	 * value of returnFunction
 	 */
-	Object compile(CompilerEnvirons compilerEnv,
-				   ScriptNode tree,
-				   String encodedSource,
-				   boolean returnFunction);
+	Object compile(CompilerEnvirons compilerEnv, ScriptNode tree, String encodedSource, boolean returnFunction);
 
 	/**
 	 * Create a function object.
@@ -42,8 +39,7 @@ public interface Evaluator {
 	 * @param staticSecurityDomain security domain
 	 * @return Function object that can be called
 	 */
-	Function createFunctionObject(Context cx, Scriptable scope,
-								  Object bytecode, Object staticSecurityDomain);
+	Function createFunctionObject(Context cx, Scriptable scope, Object bytecode, Object staticSecurityDomain);
 
 	/**
 	 * Create a script object.
@@ -52,8 +48,7 @@ public interface Evaluator {
 	 * @param staticSecurityDomain security domain
 	 * @return Script object that can be evaluated
 	 */
-	Script createScriptObject(Object bytecode,
-							  Object staticSecurityDomain);
+	Script createScriptObject(Object bytecode, Object staticSecurityDomain);
 
 	/**
 	 * Capture stack information from the given exception.
@@ -80,8 +75,7 @@ public interface Evaluator {
 	 * @param nativeStackTrace the native stack trace
 	 * @return patched stack trace
 	 */
-	String getPatchedStack(RhinoException ex,
-						   String nativeStackTrace);
+	String getPatchedStack(RhinoException ex, String nativeStackTrace);
 
 	/**
 	 * Get the script stack for the given exception

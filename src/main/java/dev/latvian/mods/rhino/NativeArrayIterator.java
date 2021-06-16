@@ -8,9 +8,7 @@ package dev.latvian.mods.rhino;
 
 public final class NativeArrayIterator extends ES6Iterator {
 	public enum ARRAY_ITERATOR_TYPE {
-		ENTRIES,
-		KEYS,
-		VALUES
+		ENTRIES, KEYS, VALUES
 	}
 
 	private static final long serialVersionUID = 1L;

@@ -40,11 +40,9 @@ public class ClassCache implements Serializable {
 	 * @see #associate(ScriptableObject topScope)
 	 */
 	public static ClassCache get(Scriptable scope) {
-		ClassCache cache = (ClassCache)
-				ScriptableObject.getTopScopeValue(scope, AKEY);
+		ClassCache cache = (ClassCache) ScriptableObject.getTopScopeValue(scope, AKEY);
 		if (cache == null) {
-			throw new RuntimeException("Can't find top level scope for " +
-					"ClassCache.get");
+			throw new RuntimeException("Can't find top level scope for " + "ClassCache.get");
 		}
 		return cache;
 	}
@@ -143,9 +141,7 @@ public class ClassCache implements Serializable {
 	}
 
 	Object getInterfaceAdapter(Class<?> cl) {
-		return interfaceAdapterCache == null
-				? null
-				: interfaceAdapterCache.get(cl);
+		return interfaceAdapterCache == null ? null : interfaceAdapterCache.get(cl);
 	}
 
 	synchronized void cacheInterfaceAdapter(Class<?> cl, Object iadapter) {

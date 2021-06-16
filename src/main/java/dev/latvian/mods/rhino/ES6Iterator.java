@@ -42,8 +42,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
 		this.tag = tag;
 		Scriptable top = ScriptableObject.getTopLevelScope(scope);
 		this.setParentScope(top);
-		IdScriptableObject prototype = (IdScriptableObject)
-				ScriptableObject.getTopScopeValue(top, tag);
+		IdScriptableObject prototype = (IdScriptableObject) ScriptableObject.getTopScopeValue(top, tag);
 		setPrototype(prototype);
 	}
 
@@ -65,8 +64,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(getTag())) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -137,11 +135,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
 		return iteratorResult;
 	}
 
-	private static final int
-			Id_next = 1,
-			SymbolId_iterator = 2,
-			SymbolId_toStringTag = 3,
-			MAX_PROTOTYPE_ID = SymbolId_toStringTag;
+	private static final int Id_next = 1, SymbolId_iterator = 2, SymbolId_toStringTag = 3, MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	public static final String NEXT_METHOD = "next";
 	public static final String DONE_PROPERTY = "done";

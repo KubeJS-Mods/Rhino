@@ -47,11 +47,7 @@ public class Symbol {
 	 * Sets symbol declaration type
 	 */
 	public void setDeclType(int declType) {
-		if (!(declType == Token.FUNCTION
-				|| declType == Token.LP
-				|| declType == Token.VAR
-				|| declType == Token.LET
-				|| declType == Token.CONST)) {
+		if (!(declType == Token.FUNCTION || declType == Token.LP || declType == Token.VAR || declType == Token.LET || declType == Token.CONST)) {
 			throw new IllegalArgumentException("Invalid declType: " + declType);
 		}
 		this.declType = declType;

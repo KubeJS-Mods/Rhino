@@ -21,8 +21,7 @@ import java.util.NoSuchElementException;
  * * If it has a function property called "return" then it will be called
  * when the caller is done iterating.
  */
-public class IteratorLikeIterable
-		implements Iterable<Object>, Closeable {
+public class IteratorLikeIterable implements Iterable<Object>, Closeable {
 	private final Context cx;
 	private final Scriptable scope;
 	private final Callable next;
@@ -63,8 +62,7 @@ public class IteratorLikeIterable
 		return new Itr();
 	}
 
-	public final class Itr
-			implements Iterator<Object> {
+	public final class Itr implements Iterator<Object> {
 		private Object nextVal;
 		private boolean isDone;
 
@@ -73,8 +71,7 @@ public class IteratorLikeIterable
 			Object val = next.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
 			// This will throw if "val" is not an object. 
 			// "getObjectPropNoWarn" won't, so do this as follows.
-			Object doneval = ScriptableObject.getProperty(
-					ScriptableObject.ensureScriptable(val), ES6Iterator.DONE_PROPERTY);
+			Object doneval = ScriptableObject.getProperty(ScriptableObject.ensureScriptable(val), ES6Iterator.DONE_PROPERTY);
 			if (doneval == Scriptable.NOT_FOUND) {
 				doneval = Undefined.instance;
 			}

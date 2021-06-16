@@ -9,8 +9,7 @@ import java.io.Serializable;
  * with the same key are equal.
  */
 
-public class SymbolKey
-		implements Symbol, Serializable {
+public class SymbolKey implements Symbol, Serializable {
 	private static final long serialVersionUID = -6019782713330994754L;
 
 	// These are common SymbolKeys that are equivalent to well-known symbols

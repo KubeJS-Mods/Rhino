@@ -16,8 +16,7 @@ import dev.latvian.mods.rhino.Undefined;
  * NativeArrayBuffer. Many views may simultaneously share the same buffer, and changes to one will affect all.
  */
 
-public abstract class NativeArrayBufferView
-		extends IdScriptableObject {
+public abstract class NativeArrayBufferView extends IdScriptableObject {
 	private static final long serialVersionUID = 6884475582973958419L;
 
 	private static Boolean useLittleEndian = null;
@@ -156,14 +155,10 @@ public abstract class NativeArrayBufferView
 		return instanceIdInfo(READONLY | PERMANENT, id);
 	}
 
-	private static final int
-			Id_buffer = 1,
-			Id_byteOffset = 2,
-			Id_byteLength = 3;
+	private static final int Id_buffer = 1, Id_byteOffset = 2, Id_byteLength = 3;
 
 	// to be visible by subclasses
-	protected static final int
-			MAX_INSTANCE_ID = Id_byteLength;
+	protected static final int MAX_INSTANCE_ID = Id_byteLength;
 
 	// #/string_id_map#
 }

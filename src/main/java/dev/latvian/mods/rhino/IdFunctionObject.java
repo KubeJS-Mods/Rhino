@@ -23,8 +23,7 @@ public class IdFunctionObject extends BaseFunction {
 		this.arity = arity;
 	}
 
-	public IdFunctionObject(IdFunctionCall idcall, Object tag, int id,
-							String name, int arity, Scriptable scope) {
+	public IdFunctionObject(IdFunctionCall idcall, Object tag, int id, String name, int arity, Scriptable scope) {
 		super(scope, null);
 
 		if (arity < 0) {
@@ -70,8 +69,7 @@ public class IdFunctionObject extends BaseFunction {
 	}
 
 	public final void addAsProperty(Scriptable target) {
-		defineProperty(target, functionName, this,
-				DONTENUM);
+		defineProperty(target, functionName, this, DONTENUM);
 	}
 
 	public void exportAsScopeProperty() {
@@ -91,8 +89,7 @@ public class IdFunctionObject extends BaseFunction {
 	}
 
 	@Override
-	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args) {
+	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		return idcall.execIdCall(this, cx, scope, thisObj, args);
 	}
 
@@ -147,8 +144,7 @@ public class IdFunctionObject extends BaseFunction {
 
 	public final RuntimeException unknown() {
 		// It is program error to call id-like methods for unknown function
-		return new IllegalArgumentException(
-				"BAD FUNCTION ID=" + methodId + " MASTER=" + idcall);
+		return new IllegalArgumentException("BAD FUNCTION ID=" + methodId + " MASTER=" + idcall);
 	}
 
 	static boolean equalObjectGraphs(IdFunctionObject f1, IdFunctionObject f2, EqualObjectGraphs eq) {

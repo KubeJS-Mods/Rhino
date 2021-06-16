@@ -90,14 +90,12 @@ public class DoubleHelper {
 	}
 
 	static boolean isNan(long d64) {
-		return ((d64 & kExponentMask) == kExponentMask) &&
-				((d64 & kSignificandMask) != 0L);
+		return ((d64 & kExponentMask) == kExponentMask) && ((d64 & kSignificandMask) != 0L);
 	}
 
 
 	static boolean isInfinite(long d64) {
-		return ((d64 & kExponentMask) == kExponentMask) &&
-				((d64 & kSignificandMask) == 0L);
+		return ((d64 & kExponentMask) == kExponentMask) && ((d64 & kSignificandMask) == 0L);
 	}
 
 

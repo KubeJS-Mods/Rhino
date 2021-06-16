@@ -17,8 +17,7 @@ import java.util.List;
  */
 public class FunctionCall extends AstNode {
 
-	protected static final List<AstNode> NO_ARGS =
-			Collections.unmodifiableList(new ArrayList<>());
+	protected static final List<AstNode> NO_ARGS = Collections.unmodifiableList(new ArrayList<>());
 
 	protected AstNode target;
 	protected List<AstNode> arguments;

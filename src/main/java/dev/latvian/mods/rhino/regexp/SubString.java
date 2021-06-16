@@ -28,9 +28,7 @@ public class SubString {
 
 	@Override
 	public String toString() {
-		return str == null
-				? ""
-				: str.substring(index, index + length);
+		return str == null ? "" : str.substring(index, index + length);
 	}
 
 	String str;

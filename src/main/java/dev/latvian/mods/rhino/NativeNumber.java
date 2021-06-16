@@ -42,29 +42,15 @@ final class NativeNumber extends IdScriptableObject {
 
 	@Override
 	protected void fillConstructorProperties(IdFunctionObject ctor) {
-		final int attr = DONTENUM |
-				PERMANENT |
-				READONLY;
+		final int attr = DONTENUM | PERMANENT | READONLY;
 
 		ctor.defineProperty("NaN", ScriptRuntime.NaNobj, attr);
-		ctor.defineProperty("POSITIVE_INFINITY",
-				ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY),
-				attr);
-		ctor.defineProperty("NEGATIVE_INFINITY",
-				ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY),
-				attr);
-		ctor.defineProperty("MAX_VALUE",
-				ScriptRuntime.wrapNumber(Double.MAX_VALUE),
-				attr);
-		ctor.defineProperty("MIN_VALUE",
-				ScriptRuntime.wrapNumber(Double.MIN_VALUE),
-				attr);
-		ctor.defineProperty("MAX_SAFE_INTEGER",
-				ScriptRuntime.wrapNumber(MAX_SAFE_INTEGER),
-				attr);
-		ctor.defineProperty("MIN_SAFE_INTEGER",
-				ScriptRuntime.wrapNumber(MIN_SAFE_INTEGER),
-				attr);
+		ctor.defineProperty("POSITIVE_INFINITY", ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY), attr);
+		ctor.defineProperty("NEGATIVE_INFINITY", ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY), attr);
+		ctor.defineProperty("MAX_VALUE", ScriptRuntime.wrapNumber(Double.MAX_VALUE), attr);
+		ctor.defineProperty("MIN_VALUE", ScriptRuntime.wrapNumber(Double.MIN_VALUE), attr);
+		ctor.defineProperty("MAX_SAFE_INTEGER", ScriptRuntime.wrapNumber(MAX_SAFE_INTEGER), attr);
+		ctor.defineProperty("MIN_SAFE_INTEGER", ScriptRuntime.wrapNumber(MIN_SAFE_INTEGER), attr);
 
 		addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isFinite, "isFinite", 1);
 		addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isNaN, "isNaN", 1);
@@ -120,15 +106,13 @@ final class NativeNumber extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(NUMBER_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
 		if (id == Id_constructor) {
-			double val = (args.length >= 1)
-					? ScriptRuntime.toNumber(args[0]) : 0.0;
+			double val = (args.length >= 1) ? ScriptRuntime.toNumber(args[0]) : 0.0;
 			if (thisObj == null) {
 				// new Number(val) creates a new Number object.
 				return new NativeNumber(val);
@@ -152,8 +136,7 @@ final class NativeNumber extends IdScriptableObject {
 			case Id_toString:
 			case Id_toLocaleString: {
 				// toLocaleString is just an alias for toString for now
-				int base = (args.length == 0 || args[0] == Undefined.instance)
-						? 10 : ScriptRuntime.toInt32(args[0]);
+				int base = (args.length == 0 || args[0] == Undefined.instance) ? 10 : ScriptRuntime.toInt32(args[0]);
 				return ScriptRuntime.numberToString(value, base);
 			}
 
@@ -179,8 +162,7 @@ final class NativeNumber extends IdScriptableObject {
 					return "-Infinity";
 				}
 				// General case
-				return num_to(value, args, DToA.DTOSTR_STANDARD_EXPONENTIAL,
-						DToA.DTOSTR_EXPONENTIAL, 0, 1);
+				return num_to(value, args, DToA.DTOSTR_STANDARD_EXPONENTIAL, DToA.DTOSTR_EXPONENTIAL, 0, 1);
 			}
 
 			case Id_toPrecision: {
@@ -198,8 +180,7 @@ final class NativeNumber extends IdScriptableObject {
 					}
 					return "-Infinity";
 				}
-				return num_to(value, args, DToA.DTOSTR_STANDARD,
-						DToA.DTOSTR_PRECISION, 1, 0);
+				return num_to(value, args, DToA.DTOSTR_STANDARD, DToA.DTOSTR_PRECISION, 1, 0);
 			}
 
 			default:
@@ -262,10 +243,7 @@ final class NativeNumber extends IdScriptableObject {
 		return ScriptRuntime.numberToString(doubleValue, 10);
 	}
 
-	private static String num_to(double val,
-								 Object[] args,
-								 int zeroArgMode, int oneArgMode,
-								 int precisionMin, int precisionOffset) {
+	private static String num_to(double val, Object[] args, int zeroArgMode, int oneArgMode, int precisionMin, int precisionOffset) {
 		int precision;
 		if (args.length == 0) {
 			precision = 0;
@@ -275,8 +253,7 @@ final class NativeNumber extends IdScriptableObject {
                ECMA requires; this is permitted by ECMA. */
 			double p = ScriptRuntime.toInteger(args[0]);
 			if (p < precisionMin || p > MAX_PRECISION) {
-				String msg = ScriptRuntime.getMessage1(
-						"msg.bad.precision", ScriptRuntime.toString(args[0]));
+				String msg = ScriptRuntime.getMessage1("msg.bad.precision", ScriptRuntime.toString(args[0]));
 				throw ScriptRuntime.rangeError(msg);
 			}
 			precision = ScriptRuntime.toInt32(p);
@@ -309,15 +286,11 @@ final class NativeNumber extends IdScriptableObject {
 	}
 
 	private static boolean isDoubleInteger(Double d) {
-		return !d.isInfinite() &&
-				!d.isNaN() &&
-				(Math.floor(d) == d);
+		return !d.isInfinite() && !d.isNaN() && (Math.floor(d) == d);
 	}
 
 	private static boolean isDoubleInteger(double d) {
-		return !Double.isInfinite(d) &&
-				!Double.isNaN(d) &&
-				(Math.floor(d) == d);
+		return !Double.isInfinite(d) && !Double.isNaN(d) && (Math.floor(d) == d);
 	}
 
 	private static boolean isSafeInteger(Number val) {
@@ -328,15 +301,11 @@ final class NativeNumber extends IdScriptableObject {
 	}
 
 	private static boolean isDoubleSafeInteger(Double d) {
-		return isDoubleInteger(d) &&
-				(d <= MAX_SAFE_INTEGER) &&
-				(d >= MIN_SAFE_INTEGER);
+		return isDoubleInteger(d) && (d <= MAX_SAFE_INTEGER) && (d >= MIN_SAFE_INTEGER);
 	}
 
 	private static boolean isDoubleSafeInteger(double d) {
-		return isDoubleInteger(d) &&
-				(d <= MAX_SAFE_INTEGER) &&
-				(d >= MIN_SAFE_INTEGER);
+		return isDoubleInteger(d) && (d <= MAX_SAFE_INTEGER) && (d >= MIN_SAFE_INTEGER);
 	}
 	// #string_id_map#
 
@@ -399,23 +368,9 @@ final class NativeNumber extends IdScriptableObject {
 		return id;
 	}
 
-	private static final int
-			ConstructorId_isFinite = -1,
-			ConstructorId_isNaN = -2,
-			ConstructorId_isInteger = -3,
-			ConstructorId_isSafeInteger = -4,
-			ConstructorId_parseFloat = -5,
-			ConstructorId_parseInt = -6,
+	private static final int ConstructorId_isFinite = -1, ConstructorId_isNaN = -2, ConstructorId_isInteger = -3, ConstructorId_isSafeInteger = -4, ConstructorId_parseFloat = -5, ConstructorId_parseInt = -6,
 
-	Id_constructor = 1,
-			Id_toString = 2,
-			Id_toLocaleString = 3,
-			Id_toSource = 4,
-			Id_valueOf = 5,
-			Id_toFixed = 6,
-			Id_toExponential = 7,
-			Id_toPrecision = 8,
-			MAX_PROTOTYPE_ID = 8;
+	Id_constructor = 1, Id_toString = 2, Id_toLocaleString = 3, Id_toSource = 4, Id_valueOf = 5, Id_toFixed = 6, Id_toExponential = 7, Id_toPrecision = 8, MAX_PROTOTYPE_ID = 8;
 
 	// #/string_id_map#
 

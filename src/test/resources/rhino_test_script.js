@@ -4,6 +4,14 @@ events.listen('abc', event => {
 	console.info(y(5))
 	console.info(sqTest(8))
 
+	if (true) {
+		console.infoClass(this)
+	}
+
+	if (true) {
+		console.infoClass(this)
+	}
+
 	let someArray = [
 		'packagedexcrafting:ender_crafter',
 		'prefab:block_compressed_stone',
@@ -12,15 +20,15 @@ events.listen('abc', event => {
 		'prefab:block_compressed_dirt',
 		'prefab:block_double_compressed_dirt',
 		'prefab:block_compressed_obsidian',
-		'prefab:block_double_compressed_obsidian',
+		/prefab:.*_obsidian/,
 		'prefab:glass_slab',
 		'prefab:glass_stairs',
-		'thermal:redprint',
+		{id: 'thermal:redprint'},
 		'thermal:lock',
 	]
 
 	someArray.forEach(i => {
-		console.infoClass({output: i})
+		console.infoClass(i)
 	})
 
 	const numbers = [49, 1, 48, 521]

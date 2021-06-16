@@ -173,8 +173,7 @@ public class IfStatement extends AstNode {
 			if (this.getElseKeyWordInlineComment() != null) {
 				sb.append("    ").append(this.getElseKeyWordInlineComment().toSource()).append("\n");
 			}
-			if (elsePart.getType() != Token.BLOCK
-					&& elsePart.getType() != Token.IF) {
+			if (elsePart.getType() != Token.BLOCK && elsePart.getType() != Token.IF) {
 				if (this.getElseKeyWordInlineComment() == null) {
 					sb.append("\n");
 				}

@@ -19,10 +19,7 @@ package dev.latvian.mods.rhino;
 
 public class Token {
 	public enum CommentType {
-		LINE,
-		BLOCK_COMMENT,
-		JSDOC,
-		HTML
+		LINE, BLOCK_COMMENT, JSDOC, HTML
 	}
 
 	// debug flags
@@ -44,70 +41,10 @@ public class Token {
 	// Interpreter reuses the following as bytecodes
 	FIRST_BYTECODE_TOKEN = 2,
 
-	ENTERWITH = 2,
-			LEAVEWITH = 3,
-			RETURN = 4,
-			GOTO = 5,
-			IFEQ = 6,
-			IFNE = 7,
-			SETNAME = 8,
-			BITOR = 9,
-			BITXOR = 10,
-			BITAND = 11,
-			EQ = 12,
-			NE = 13,
-			LT = 14,
-			LE = 15,
-			GT = 16,
-			GE = 17,
-			LSH = 18,
-			RSH = 19,
-			URSH = 20,
-			ADD = 21,
-			SUB = 22,
-			MUL = 23,
-			DIV = 24,
-			MOD = 25,
-			NOT = 26,
-			BITNOT = 27,
-			POS = 28,
-			NEG = 29,
-			NEW = 30,
-			DELPROP = 31,
-			TYPEOF = 32,
-			GETPROP = 33,
-			GETPROPNOWARN = 34,
-			SETPROP = 35,
-			GETELEM = 36,
-			SETELEM = 37,
-			CALL = 38,
-			NAME = 39,
-			NUMBER = 40,
-			STRING = 41,
-			NULL = 42,
-			THIS = 43,
-			FALSE = 44,
-			TRUE = 45,
-			SHEQ = 46,   // shallow equality (===)
+	ENTERWITH = 2, LEAVEWITH = 3, RETURN = 4, GOTO = 5, IFEQ = 6, IFNE = 7, SETNAME = 8, BITOR = 9, BITXOR = 10, BITAND = 11, EQ = 12, NE = 13, LT = 14, LE = 15, GT = 16, GE = 17, LSH = 18, RSH = 19, URSH = 20, ADD = 21, SUB = 22, MUL = 23, DIV = 24, MOD = 25, NOT = 26, BITNOT = 27, POS = 28, NEG = 29, NEW = 30, DELPROP = 31, TYPEOF = 32, GETPROP = 33, GETPROPNOWARN = 34, SETPROP = 35, GETELEM = 36, SETELEM = 37, CALL = 38, NAME = 39, NUMBER = 40, STRING = 41, NULL = 42, THIS = 43, FALSE = 44, TRUE = 45, SHEQ = 46,   // shallow equality (===)
 			SHNE = 47,   // shallow inequality (!==)
-			REGEXP = 48,
-			BINDNAME = 49,
-			THROW = 50,
-			RETHROW = 51, // rethrow caught exception: catch (e if ) use it
-			IN = 52,
-			INSTANCEOF = 53,
-			LOCAL_LOAD = 54,
-			GETVAR = 55,
-			SETVAR = 56,
-			CATCH_SCOPE = 57,
-			ENUM_INIT_KEYS = 58,
-			ENUM_INIT_VALUES = 59,
-			ENUM_INIT_ARRAY = 60,
-			ENUM_INIT_VALUES_IN_ORDER = 61,
-			ENUM_NEXT = 62,
-			ENUM_ID = 63,
-			THISFN = 64,
-			RETURN_RESULT = 65, // to return previously stored return result
+			REGEXP = 48, BINDNAME = 49, THROW = 50, RETHROW = 51, // rethrow caught exception: catch (e if ) use it
+			IN = 52, INSTANCEOF = 53, LOCAL_LOAD = 54, GETVAR = 55, SETVAR = 56, CATCH_SCOPE = 57, ENUM_INIT_KEYS = 58, ENUM_INIT_VALUES = 59, ENUM_INIT_ARRAY = 60, ENUM_INIT_VALUES_IN_ORDER = 61, ENUM_NEXT = 62, ENUM_ID = 63, THISFN = 64, RETURN_RESULT = 65, // to return previously stored return result
 			ARRAYLIT = 66, // array literal
 			OBJECTLIT = 67, // object literal
 			GET_REF = 68, // *reference
@@ -120,26 +57,19 @@ public class Token {
 
 	// For XML support:
 	DEFAULTNAMESPACE = 75, // default xml namespace =
-			ESCXMLATTR = 76,
-			ESCXMLTEXT = 77,
-			REF_MEMBER = 78, // Reference for x.@y, x..y etc.
+			ESCXMLATTR = 76, ESCXMLTEXT = 77, REF_MEMBER = 78, // Reference for x.@y, x..y etc.
 			REF_NS_MEMBER = 79, // Reference for x.ns::y, x..ns::y etc.
 			REF_NAME = 80, // Reference for @y, @[y] etc.
 			REF_NS_NAME = 81; // Reference for ns::y, @ns::y@[y] etc.
 
 	// End of interpreter bytecodes
-	public final static int
-			LAST_BYTECODE_TOKEN = REF_NS_NAME,
+	public final static int LAST_BYTECODE_TOKEN = REF_NS_NAME,
 
-	TRY = 82,
-			SEMI = 83,  // semicolon
+	TRY = 82, SEMI = 83,  // semicolon
 			LB = 84,  // left and right brackets
-			RB = 85,
-			LC = 86,  // left and right curlies (braces)
-			RC = 87,
-			LP = 88,  // left and right parentheses
-			RP = 89,
-			COMMA = 90,  // comma operator
+			RB = 85, LC = 86,  // left and right curlies (braces)
+			RC = 87, LP = 88,  // left and right parentheses
+			RP = 89, COMMA = 90,  // comma operator
 
 	ASSIGN = 91,  // simple assignment  (=)
 			ASSIGN_BITOR = 92,  // |=
@@ -154,17 +84,13 @@ public class Token {
 			ASSIGN_DIV = 101,  // /=
 			ASSIGN_MOD = 102;  // %=
 
-	public final static int
-			FIRST_ASSIGN = ASSIGN,
-			LAST_ASSIGN = ASSIGN_MOD,
+	public final static int FIRST_ASSIGN = ASSIGN, LAST_ASSIGN = ASSIGN_MOD,
 
 	HOOK = 103, // conditional (?:)
-			COLON = 104,
-			OR = 105, // logical or (||)
+			COLON = 104, OR = 105, // logical or (||)
 			AND = 106, // logical and (&&)
 			INC = 107, // increment/decrement (++ --)
-			DEC = 108,
-			DOT = 109, // member operator (.)
+			DEC = 108, DOT = 109, // member operator (.)
 			FUNCTION = 110, // function keyword
 			EXPORT = 111, // export keyword
 			IMPORT = 112, // import keyword
@@ -193,18 +119,13 @@ public class Token {
 
 	BLOCK = 130, // statement block
 			LABEL = 131, // label
-			TARGET = 132,
-			LOOP = 133,
-			EXPR_VOID = 134, // expression statement in functions
+			TARGET = 132, LOOP = 133, EXPR_VOID = 134, // expression statement in functions
 			EXPR_RESULT = 135, // expression statement in scripts
-			JSR = 136,
-			SCRIPT = 137, // top-level node for entire script
+			JSR = 136, SCRIPT = 137, // top-level node for entire script
 			TYPEOFNAME = 138, // for typeof(simple-name)
-			USE_STACK = 139,
-			SETPROP_OP = 140, // x.y op= something
+			USE_STACK = 139, SETPROP_OP = 140, // x.y op= something
 			SETELEM_OP = 141, // x[y] op= something
-			LOCAL_BLOCK = 142,
-			SET_REF_OP = 143, // *reference op= something
+			LOCAL_BLOCK = 142, SET_REF_OP = 143, // *reference op= something
 
 	// For XML support:
 	DOTDOT = 144,  // member operator (..)
@@ -215,22 +136,13 @@ public class Token {
 			XMLEND = 149,
 
 	// Optimizer-only-tokens
-	TO_OBJECT = 150,
-			TO_DOUBLE = 151,
+	TO_OBJECT = 150, TO_DOUBLE = 151,
 
 	GET = 152,  // JS 1.5 get pseudo keyword
 			SET = 153,  // JS 1.5 set pseudo keyword
 			LET = 154,  // JS 1.7 let pseudo keyword
-			CONST = 155,
-			SETCONST = 156,
-			SETCONSTVAR = 157,
-			ARRAYCOMP = 158,  // array comprehension
-			LETEXPR = 159,
-			WITHEXPR = 160,
-			DEBUGGER = 161,
-			COMMENT = 162,
-			GENEXPR = 163,
-			METHOD = 164,  // ES6 MethodDefinition
+			CONST = 155, SETCONST = 156, SETCONSTVAR = 157, ARRAYCOMP = 158,  // array comprehension
+			LETEXPR = 159, WITHEXPR = 160, DEBUGGER = 161, COMMENT = 162, GENEXPR = 163, METHOD = 164,  // ES6 MethodDefinition
 			ARROW = 165,  // ES6 ArrowFunction
 			YIELD_STAR = 166,  // ES6 "yield *", a specialization of yield
 			TEMPLATE_LITERAL = 167,  // template literal
@@ -692,7 +604,6 @@ public class Token {
 	 * @return true if it's a known token
 	 */
 	public static boolean isValidToken(int code) {
-		return code >= ERROR
-				&& code <= LAST_TOKEN;
+		return code >= ERROR && code <= LAST_TOKEN;
 	}
 }

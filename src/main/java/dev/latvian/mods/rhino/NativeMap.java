@@ -40,8 +40,7 @@ public class NativeMap extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(MAP_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -58,9 +57,7 @@ public class NativeMap extends IdScriptableObject {
 				}
 				throw ScriptRuntime.typeError1("msg.no.new", "Map");
 			case Id_set:
-				return realThis(thisObj, f).js_set(
-						args.length > 0 ? args[0] : Undefined.instance,
-						args.length > 1 ? args[1] : Undefined.instance);
+				return realThis(thisObj, f).js_set(args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
 			case Id_delete:
 				return realThis(thisObj, f).js_delete(args.length > 0 ? args[0] : Undefined.instance);
 			case Id_get:
@@ -76,9 +73,7 @@ public class NativeMap extends IdScriptableObject {
 			case Id_entries:
 				return realThis(thisObj, f).js_iterator(scope, NativeCollectionIterator.Type.BOTH);
 			case Id_forEach:
-				return realThis(thisObj, f).js_forEach(cx, scope,
-						args.length > 0 ? args[0] : Undefined.instance,
-						args.length > 1 ? args[1] : Undefined.instance);
+				return realThis(thisObj, f).js_forEach(cx, scope, args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
 			case SymbolId_getSize:
 				return realThis(thisObj, f).js_getSize();
 		}
@@ -91,8 +86,7 @@ public class NativeMap extends IdScriptableObject {
 		final Object value = (v == null ? NULL_VALUE : v);
 		// Special handling of "negative zero" from the spec.
 		Object key = k;
-		if ((key instanceof Number) &&
-				((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
+		if ((key instanceof Number) && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
 			key = ScriptRuntime.zeroObj;
 		}
 		entries.put(key, value);
@@ -182,8 +176,7 @@ public class NativeMap extends IdScriptableObject {
 		// been replaced. Since we're not fully constructed yet, create a dummy instance
 		// so that we can get our own prototype.
 		ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, map.getClassName()));
-		final Callable set =
-				ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "set", cx, scope);
+		final Callable set = ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "set", cx, scope);
 		ScriptRuntime.lastStoredScriptable(cx);
 
 		// Finally, run through all the iterated values and add them!
@@ -229,8 +222,7 @@ public class NativeMap extends IdScriptableObject {
 				initPrototypeMethod(MAP_TAG, id, NativeSet.GETSIZE, "get size", 0);
 				return;
 			case SymbolId_toStringTag:
-				initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG,
-						getClassName(), DONTENUM | READONLY);
+				initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG, getClassName(), DONTENUM | READONLY);
 				return;
 			// fallthrough
 		}
@@ -377,20 +369,7 @@ public class NativeMap extends IdScriptableObject {
 
 	// Note that "SymbolId_iterator" is not present here. That's because the spec
 	// requires that it be the same value as the "entries" prototype property.
-	private static final int
-			Id_constructor = 1,
-			Id_set = 2,
-			Id_get = 3,
-			Id_delete = 4,
-			Id_has = 5,
-			Id_clear = 6,
-			Id_keys = 7,
-			Id_values = 8,
-			Id_entries = 9,
-			Id_forEach = 10,
-			SymbolId_getSize = 11,
-			SymbolId_toStringTag = 12,
-			MAX_PROTOTYPE_ID = SymbolId_toStringTag;
+	private static final int Id_constructor = 1, Id_set = 2, Id_get = 3, Id_delete = 4, Id_has = 5, Id_clear = 6, Id_keys = 7, Id_values = 8, Id_entries = 9, Id_forEach = 10, SymbolId_getSize = 11, SymbolId_toStringTag = 12, MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	// #/string_id_map#
 }

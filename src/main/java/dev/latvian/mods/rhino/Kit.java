@@ -227,8 +227,7 @@ public class Kit {
 						bag = tmp;
 						break;
 					}
-				}
-				while (i != 0);
+				} while (i != 0);
 			}
 		}
 
@@ -347,11 +346,9 @@ public class Kit {
 		}
 	}
 
-	public static byte[] readStream(InputStream is, int initialBufferCapacity)
-			throws IOException {
+	public static byte[] readStream(InputStream is, int initialBufferCapacity) throws IOException {
 		if (initialBufferCapacity <= 0) {
-			throw new IllegalArgumentException(
-					"Bad initialBufferCapacity: " + initialBufferCapacity);
+			throw new IllegalArgumentException("Bad initialBufferCapacity: " + initialBufferCapacity);
 		}
 		byte[] buffer = new byte[initialBufferCapacity];
 		int cursor = 0;
@@ -381,8 +378,7 @@ public class Kit {
 	 * only to be able to write <code>throw Kit.codeBug()</code> if plain
 	 * <code>Kit.codeBug()</code> triggers unreachable code error.
 	 */
-	public static RuntimeException codeBug()
-			throws RuntimeException {
+	public static RuntimeException codeBug() throws RuntimeException {
 		RuntimeException ex = new IllegalStateException("FAILED ASSERTION");
 		// Print stack trace ASAP
 		ex.printStackTrace(System.err);
@@ -395,8 +391,7 @@ public class Kit {
 	 * only to be able to write <code>throw Kit.codeBug()</code> if plain
 	 * <code>Kit.codeBug()</code> triggers unreachable code error.
 	 */
-	public static RuntimeException codeBug(String msg)
-			throws RuntimeException {
+	public static RuntimeException codeBug(String msg) throws RuntimeException {
 		msg = "FAILED ASSERTION: " + msg;
 		RuntimeException ex = new IllegalStateException(msg);
 		// Print stack trace ASAP

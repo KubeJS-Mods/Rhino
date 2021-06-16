@@ -42,8 +42,7 @@ public final class NativeCall extends IdScriptableObject {
 		if (paramAndVarCount != 0) {
 			for (int i = 0; i < paramCount; ++i) {
 				String name = function.getParamOrVarName(i);
-				Object val = i < args.length ? args[i]
-						: Undefined.instance;
+				Object val = i < args.length ? args[i] : Undefined.instance;
 				defineProperty(name, val, PERMANENT);
 			}
 		}
@@ -61,8 +60,7 @@ public final class NativeCall extends IdScriptableObject {
 				if (!super.has(name, this)) {
 					if (function.getParamOrVarConst(i)) {
 						defineProperty(name, Undefined.instance, CONST);
-					} else if (!(function instanceof InterpretedFunction)
-							|| ((InterpretedFunction) function).hasFunctionNamed(name)) {
+					} else if (!(function instanceof InterpretedFunction) || ((InterpretedFunction) function).hasFunctionNamed(name)) {
 						defineProperty(name, Undefined.instance, PERMANENT);
 					}
 				}
@@ -94,8 +92,7 @@ public final class NativeCall extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(CALL_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -118,9 +115,7 @@ public final class NativeCall extends IdScriptableObject {
 		}
 	}
 
-	private static final int
-			Id_constructor = 1,
-			MAX_PROTOTYPE_ID = 1;
+	private static final int Id_constructor = 1, MAX_PROTOTYPE_ID = 1;
 
 	NativeFunction function;
 	Object[] originalArgs;

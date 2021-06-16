@@ -16,8 +16,7 @@ package dev.latvian.mods.rhino;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class EmbeddedSlotMap
-		implements SlotMap {
+public class EmbeddedSlotMap implements SlotMap {
 
 	private ScriptableObject.Slot[] slots;
 
@@ -30,8 +29,7 @@ public class EmbeddedSlotMap
 	// initial slot array size, must be a power of 2
 	private static final int INITIAL_SLOT_SIZE = 4;
 
-	private static final class Iter
-			implements Iterator<ScriptableObject.Slot> {
+	private static final class Iter implements Iterator<ScriptableObject.Slot> {
 		private ScriptableObject.Slot next;
 
 		Iter(ScriptableObject.Slot slot) {
@@ -83,13 +81,9 @@ public class EmbeddedSlotMap
 
 		final int indexOrHash = (key != null ? key.hashCode() : index);
 		final int slotIndex = getSlotIndex(slots.length, indexOrHash);
-		for (ScriptableObject.Slot slot = slots[slotIndex];
-			 slot != null;
-			 slot = slot.next) {
+		for (ScriptableObject.Slot slot = slots[slotIndex]; slot != null; slot = slot.next) {
 			Object skey = slot.name;
-			if (indexOrHash == slot.indexOrHash &&
-					(skey == key ||
-							(key != null && key.equals(skey)))) {
+			if (indexOrHash == slot.indexOrHash && (skey == key || (key != null && key.equals(skey)))) {
 				return slot;
 			}
 		}
@@ -114,13 +108,9 @@ public class EmbeddedSlotMap
 
 		if (slots != null) {
 			final int slotIndex = getSlotIndex(slots.length, indexOrHash);
-			for (slot = slots[slotIndex];
-				 slot != null;
-				 slot = slot.next) {
+			for (slot = slots[slotIndex]; slot != null; slot = slot.next) {
 				Object skey = slot.name;
-				if (indexOrHash == slot.indexOrHash &&
-						(skey == key ||
-								(key != null && key.equals(skey)))) {
+				if (indexOrHash == slot.indexOrHash && (skey == key || (key != null && key.equals(skey)))) {
 					break;
 				}
 			}
@@ -151,8 +141,7 @@ public class EmbeddedSlotMap
 		return createSlot(key, indexOrHash, accessType, slot);
 	}
 
-	private ScriptableObject.Slot createSlot(Object key, int indexOrHash,
-											 ScriptableObject.SlotAccess accessType, ScriptableObject.Slot existingSlot) {
+	private ScriptableObject.Slot createSlot(Object key, int indexOrHash, ScriptableObject.SlotAccess accessType, ScriptableObject.Slot existingSlot) {
 		if (count == 0) {
 			// Always throw away old slots if any on empty insert.
 			slots = new ScriptableObject.Slot[INITIAL_SLOT_SIZE];
@@ -163,9 +152,7 @@ public class EmbeddedSlotMap
 			ScriptableObject.Slot prev = slots[insertPos];
 			ScriptableObject.Slot slot = prev;
 			while (slot != null) {
-				if (slot.indexOrHash == indexOrHash &&
-						(slot.name == key ||
-								(key != null && key.equals(slot.name)))) {
+				if (slot.indexOrHash == indexOrHash && (slot.name == key || (key != null && key.equals(slot.name)))) {
 					break;
 				}
 				prev = slot;
@@ -180,12 +167,9 @@ public class EmbeddedSlotMap
 				// accessType flag and return the appropriate slot instance.
 				ScriptableObject.Slot newSlot;
 
-				if (accessType == ScriptableObject.SlotAccess.MODIFY_GETTER_SETTER
-						&& !(slot instanceof ScriptableObject.GetterSlot)) {
-					newSlot = new ScriptableObject.GetterSlot(key, indexOrHash,
-							slot.getAttributes());
-				} else if (accessType == ScriptableObject.SlotAccess.CONVERT_ACCESSOR_TO_DATA
-						&& (slot instanceof ScriptableObject.GetterSlot)) {
+				if (accessType == ScriptableObject.SlotAccess.MODIFY_GETTER_SETTER && !(slot instanceof ScriptableObject.GetterSlot)) {
+					newSlot = new ScriptableObject.GetterSlot(key, indexOrHash, slot.getAttributes());
+				} else if (accessType == ScriptableObject.SlotAccess.CONVERT_ACCESSOR_TO_DATA && (slot instanceof ScriptableObject.GetterSlot)) {
 					newSlot = new ScriptableObject.Slot(key, indexOrHash, slot.getAttributes());
 				} else if (accessType == ScriptableObject.SlotAccess.MODIFY_CONST) {
 					return null;
@@ -232,9 +216,7 @@ public class EmbeddedSlotMap
 			slots = newSlots;
 		}
 
-		ScriptableObject.Slot newSlot = (accessType == ScriptableObject.SlotAccess.MODIFY_GETTER_SETTER
-				? new ScriptableObject.GetterSlot(key, indexOrHash, 0)
-				: new ScriptableObject.Slot(key, indexOrHash, 0));
+		ScriptableObject.Slot newSlot = (accessType == ScriptableObject.SlotAccess.MODIFY_GETTER_SETTER ? new ScriptableObject.GetterSlot(key, indexOrHash, 0) : new ScriptableObject.Slot(key, indexOrHash, 0));
 		if (accessType == ScriptableObject.SlotAccess.MODIFY_CONST) {
 			newSlot.setAttributes(ScriptableObject.CONST);
 		}
@@ -273,9 +255,7 @@ public class EmbeddedSlotMap
 			ScriptableObject.Slot prev = slots[slotIndex];
 			ScriptableObject.Slot slot = prev;
 			while (slot != null) {
-				if (slot.indexOrHash == indexOrHash &&
-						(slot.name == key ||
-								(key != null && key.equals(slot.name)))) {
+				if (slot.indexOrHash == indexOrHash && (slot.name == key || (key != null && key.equals(slot.name)))) {
 					break;
 				}
 				prev = slot;

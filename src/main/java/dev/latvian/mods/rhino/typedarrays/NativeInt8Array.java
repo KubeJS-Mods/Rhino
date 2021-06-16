@@ -16,8 +16,7 @@ import dev.latvian.mods.rhino.Undefined;
  * It also implements List&lt;Byte&gt; for direct manipulation in Java.
  */
 
-public class NativeInt8Array
-		extends NativeTypedArrayView<Byte> {
+public class NativeInt8Array extends NativeTypedArrayView<Byte> {
 	private static final long serialVersionUID = -3349419704390398895L;
 
 	private static final String CLASS_NAME = "Int8Array";

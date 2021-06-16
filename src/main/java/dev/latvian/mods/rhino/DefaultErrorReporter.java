@@ -28,19 +28,16 @@ class DefaultErrorReporter implements ErrorReporter {
 	}
 
 	@Override
-	public void warning(String message, String sourceURI, int line,
-						String lineText, int lineOffset) {
+	public void warning(String message, String sourceURI, int line, String lineText, int lineOffset) {
 		if (chainedReporter != null) {
-			chainedReporter.warning(
-					message, sourceURI, line, lineText, lineOffset);
+			chainedReporter.warning(message, sourceURI, line, lineText, lineOffset);
 		} else {
 			// Do nothing
 		}
 	}
 
 	@Override
-	public void error(String message, String sourceURI, int line,
-					  String lineText, int lineOffset) {
+	public void error(String message, String sourceURI, int line, String lineText, int lineOffset) {
 		if (forEval) {
 			// Assume error message strings that start with "TypeError: "
 			// should become TypeError exceptions. A bit of a hack, but we
@@ -53,22 +50,17 @@ class DefaultErrorReporter implements ErrorReporter {
 				error = TYPE_ERROR_NAME;
 				message = message.substring(prefix.length());
 			}
-			throw ScriptRuntime.constructError(error, message, sourceURI,
-					line, lineText, lineOffset);
+			throw ScriptRuntime.constructError(error, message, sourceURI, line, lineText, lineOffset);
 		}
 		if (chainedReporter != null) {
-			chainedReporter.error(
-					message, sourceURI, line, lineText, lineOffset);
+			chainedReporter.error(message, sourceURI, line, lineText, lineOffset);
 		} else {
-			throw runtimeError(
-					message, sourceURI, line, lineText, lineOffset);
+			throw runtimeError(message, sourceURI, line, lineText, lineOffset);
 		}
 	}
 
 	@Override
-	public EvaluatorException runtimeError(String message, String sourceURI,
-										   int line, String lineText,
-										   int lineOffset) {
+	public EvaluatorException runtimeError(String message, String sourceURI, int line, String lineText, int lineOffset) {
 		if (chainedReporter != null) {
 			return chainedReporter.runtimeError(message, sourceURI, line, lineText, lineOffset);
 		}

@@ -90,18 +90,12 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		if (protoProp instanceof Scriptable) {
 			return ScriptRuntime.jsDelegatesTo(instance, (Scriptable) protoProp);
 		}
-		throw ScriptRuntime.typeError1("msg.instanceof.bad.prototype",
-				getFunctionName());
+		throw ScriptRuntime.typeError1("msg.instanceof.bad.prototype", getFunctionName());
 	}
 
 	// #string_id_map#
 
-	private static final int
-			Id_length = 1,
-			Id_arity = 2,
-			Id_name = 3,
-			Id_prototype = 4,
-			Id_arguments = 5,
+	private static final int Id_length = 1, Id_arity = 2, Id_name = 3, Id_prototype = 4, Id_arguments = 5,
 
 	MAX_INSTANCE_ID = 5;
 
@@ -218,8 +212,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		switch (id) {
 			case Id_prototype:
 				if ((prototypePropertyAttributes & READONLY) == 0) {
-					prototypeProperty = (value != null)
-							? value : UniqueTag.NULL_VALUE;
+					prototypeProperty = (value != null) ? value : UniqueTag.NULL_VALUE;
 				}
 				return;
 			case Id_arguments:
@@ -314,8 +307,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(FUNCTION_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -347,8 +339,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
 			case Id_apply:
 			case Id_call:
-				return ScriptRuntime.applyOrCall(id == Id_apply,
-						cx, scope, thisObj, args);
+				return ScriptRuntime.applyOrCall(id == Id_apply, cx, scope, thisObj, args);
 
 			case Id_bind:
 				if (!(thisObj instanceof Callable)) {
@@ -379,8 +370,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		if (x instanceof BaseFunction) {
 			return (BaseFunction) x;
 		}
-		throw ScriptRuntime.typeError1("msg.incompat.call",
-				f.getFunctionName());
+		throw ScriptRuntime.typeError1("msg.incompat.call", f.getFunctionName());
 	}
 
 	/**
@@ -407,8 +397,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 	 * Should be overridden.
 	 */
 	@Override
-	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args) {
+	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		return Undefined.instance;
 	}
 
@@ -425,9 +414,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 			if (!(val instanceof Scriptable)) {
 				// It is program error not to return Scriptable from
 				// the call method if createObject returns null.
-				throw new IllegalStateException(
-						"Bad implementaion of call as constructor, name="
-								+ getFunctionName() + " in " + getClass().getName());
+				throw new IllegalStateException("Bad implementaion of call as constructor, name=" + getFunctionName() + " in " + getClass().getName());
 			}
 			result = (Scriptable) val;
 			if (result.getPrototype() == null) {
@@ -553,9 +540,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		}
 		Context cx = Context.getContext();
 		NativeCall activation = ScriptRuntime.findFunctionActivation(cx, this);
-		return (activation == null)
-				? null
-				: activation.get("arguments", activation);
+		return (activation == null) ? null : activation.get("arguments", activation);
 	}
 
 	private Object jsConstructor(Context cx, Scriptable scope, Object[] args) {
@@ -600,8 +585,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 			linep[0] = 1;
 		}
 
-		String sourceURI = ScriptRuntime.
-				makeUrlForGeneratedScript(false, filename, linep[0]);
+		String sourceURI = ScriptRuntime.makeUrlForGeneratedScript(false, filename, linep[0]);
 
 		Scriptable global = getTopLevelScope(scope);
 
@@ -610,14 +594,12 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
 		Evaluator evaluator = Context.createInterpreter();
 		if (evaluator == null) {
-			throw new JavaScriptException("Interpreter not present",
-					filename, linep[0]);
+			throw new JavaScriptException("Interpreter not present", filename, linep[0]);
 		}
 
 		// Compile with explicit interpreter instance to force interpreter
 		// mode.
-		return cx.compileFunction(global, source, evaluator, reporter,
-				sourceURI, 1, null);
+		return cx.compileFunction(global, source, evaluator, reporter, sourceURI, 1, null);
 	}
 
 	@Override
@@ -670,13 +652,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		return id;
 	}
 
-	private static final int
-			Id_constructor = 1,
-			Id_toString = 2,
-			Id_toSource = 3,
-			Id_apply = 4,
-			Id_call = 5,
-			Id_bind = 6,
+	private static final int Id_constructor = 1, Id_toString = 2, Id_toSource = 3, Id_apply = 4, Id_call = 5, Id_bind = 6,
 
 	MAX_PROTOTYPE_ID = Id_bind;
 

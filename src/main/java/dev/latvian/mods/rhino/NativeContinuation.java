@@ -8,8 +8,7 @@ package dev.latvian.mods.rhino;
 
 import java.util.Objects;
 
-public final class NativeContinuation extends IdScriptableObject
-		implements Function {
+public final class NativeContinuation extends IdScriptableObject implements Function {
 	private static final long serialVersionUID = 1794167133757605367L;
 
 	private static final Object FTAG = "Continuation";
@@ -40,8 +39,7 @@ public final class NativeContinuation extends IdScriptableObject
 	}
 
 	@Override
-	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args) {
+	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		return Interpreter.restartContinuation(this, cx, scope, args);
 	}
 
@@ -77,8 +75,7 @@ public final class NativeContinuation extends IdScriptableObject
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(FTAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -113,9 +110,7 @@ public final class NativeContinuation extends IdScriptableObject
 		return id;
 	}
 
-	private static final int
-			Id_constructor = 1,
-			MAX_PROTOTYPE_ID = 1;
+	private static final int Id_constructor = 1, MAX_PROTOTYPE_ID = 1;
 
 	// #/string_id_map#
 }

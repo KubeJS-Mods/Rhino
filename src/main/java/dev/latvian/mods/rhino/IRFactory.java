@@ -119,8 +119,7 @@ public final class IRFactory extends Parser {
 		ScriptNode script = (ScriptNode) transform(root);
 
 		int sourceEndOffset = decompiler.getCurrentOffset();
-		script.setEncodedSourceBounds(sourceStartOffset,
-				sourceEndOffset);
+		script.setEncodedSourceBounds(sourceStartOffset, sourceEndOffset);
 
 		if (compilerEnv.isGeneratingSource()) {
 			script.setEncodedSource(decompiler.getEncodedSource());
@@ -278,11 +277,7 @@ public final class IRFactory extends Parser {
 			defineSymbol(Token.LET, arrayName, false);
 			Node block = new Node(Token.BLOCK, lineno);
 			Node newArray = createCallOrNew(Token.NEW, createName("Array"));
-			Node init = new Node(Token.EXPR_VOID,
-					createAssignment(Token.ASSIGN,
-							createName(arrayName),
-							newArray),
-					lineno);
+			Node init = new Node(Token.EXPR_VOID, createAssignment(Token.ASSIGN, createName(arrayName), newArray), lineno);
 			block.addChildToBack(init);
 			block.addChildToBack(arrayCompTransformHelper(node, arrayName));
 			scopeNode.addChildToBack(block);
@@ -293,8 +288,7 @@ public final class IRFactory extends Parser {
 		}
 	}
 
-	private Node arrayCompTransformHelper(ArrayComprehension node,
-										  String arrayName) {
+	private Node arrayCompTransformHelper(ArrayComprehension node, String arrayName) {
 		decompiler.addToken(Token.LB);
 		int lineno = node.getLineno();
 		Node expr = transform(node.getResult());
@@ -325,11 +319,7 @@ public final class IRFactory extends Parser {
 				decompile(iter);
 				name = currentScriptOrFn.getNextTempName();
 				defineSymbol(Token.LP, name, false);
-				expr = createBinary(Token.COMMA,
-						createAssignment(Token.ASSIGN,
-								iter,
-								createName(name)),
-						expr);
+				expr = createBinary(Token.COMMA, createAssignment(Token.ASSIGN, iter, createName(name)), expr);
 			}
 			Node init = createName(name);
 			// Define as a let since we want the scope of the variable to
@@ -347,10 +337,7 @@ public final class IRFactory extends Parser {
 		}
 
 		// generate code for tmpArray.push(body)
-		Node call = createCallOrNew(Token.CALL,
-				createPropertyGet(createName(arrayName),
-						null,
-						"push", 0));
+		Node call = createCallOrNew(Token.CALL, createPropertyGet(createName(arrayName), null, "push", 0));
 
 		Node body = new Node(Token.EXPR_VOID, call, lineno);
 
@@ -371,13 +358,7 @@ public final class IRFactory extends Parser {
 						acl.getLineno());
 				pushScope(loop);
 				pushed++;
-				body = createForIn(Token.LET,
-						loop,
-						iterators[i],
-						iteratedObjs[i],
-						body,
-						acl.isForEach(),
-						acl.isForOf());
+				body = createForIn(Token.LET, loop, iterators[i], iteratedObjs[i], body, acl.isForEach(), acl.isForOf());
 			}
 		} finally {
 			for (int i = 0; i < pushed; i++) {
@@ -416,8 +397,7 @@ public final class IRFactory extends Parser {
 			}
 		}
 		decompiler.addToken(Token.RB);
-		array.putIntProp(Node.DESTRUCTURING_ARRAY_LENGTH,
-				node.getDestructuringLength());
+		array.putIntProp(Node.DESTRUCTURING_ARRAY_LENGTH, node.getDestructuringLength());
 		if (skipIndexes != null) {
 			int[] skips = new int[skipIndexes.size()];
 			for (int i = 0; i < skipIndexes.size(); i++) {
@@ -438,9 +418,7 @@ public final class IRFactory extends Parser {
 			target = transform(left);
 		}
 		decompiler.addToken(node.getType());
-		return createAssignment(node.getType(),
-				target,
-				transform(node.getRight()));
+		return createAssignment(node.getType(), target, transform(node.getRight()));
 	}
 
 	private Node transformBlock(AstNode node) {
@@ -504,8 +482,7 @@ public final class IRFactory extends Parser {
 			Node cond = transform(loop.getCondition());
 			decompiler.addToken(Token.RP);
 			decompiler.addEOL(Token.SEMI);
-			return createLoop(loop, LOOP_DO_WHILE,
-					body, cond, null, null);
+			return createLoop(loop, LOOP_DO_WHILE, body, cond, null, null);
 		} finally {
 			popScope();
 		}
@@ -553,8 +530,7 @@ public final class IRFactory extends Parser {
 			decompiler.addEOL(Token.LC);
 			Node body = transform(loop.getBody());
 			decompiler.addEOL(Token.RC);
-			return createForIn(declType, loop, lhs, obj, body,
-					loop.isForEach(), loop.isForOf());
+			return createForIn(declType, loop, lhs, obj, body, loop.isForEach(), loop.isForOf());
 		} finally {
 			popScope();
 		}
@@ -613,8 +589,7 @@ public final class IRFactory extends Parser {
 			}
 
 			if (destructuring != null) {
-				body.addChildToFront(new Node(Token.EXPR_VOID,
-						destructuring, lineno));
+				body.addChildToFront(new Node(Token.EXPR_VOID, destructuring, lineno));
 			}
 
 			int syntheticType = fn.getFunctionType();
@@ -686,8 +661,7 @@ public final class IRFactory extends Parser {
 			}
 
 			if (destructuring != null) {
-				body.addChildToFront(new Node(Token.EXPR_VOID,
-						destructuring, lineno));
+				body.addChildToFront(new Node(Token.EXPR_VOID, destructuring, lineno));
 			}
 
 			int syntheticType = fn.getFunctionType();
@@ -738,11 +712,7 @@ public final class IRFactory extends Parser {
 				decompile(iter);
 				name = currentScriptOrFn.getNextTempName();
 				defineSymbol(Token.LP, name, false);
-				expr = createBinary(Token.COMMA,
-						createAssignment(Token.ASSIGN,
-								iter,
-								createName(name)),
-						expr);
+				expr = createBinary(Token.COMMA, createAssignment(Token.ASSIGN, iter, createName(name)), expr);
 			}
 			Node init = createName(name);
 			// Define as a let since we want the scope of the variable to
@@ -781,13 +751,7 @@ public final class IRFactory extends Parser {
 						acl.getLineno());
 				pushScope(loop);
 				pushed++;
-				body = createForIn(Token.LET,
-						loop,
-						iterators[i],
-						iteratedObjs[i],
-						body,
-						acl.isForEach(),
-						acl.isForOf());
+				body = createForIn(Token.LET, loop, iterators[i], iteratedObjs[i], body, acl.isForEach(), acl.isForOf());
 			}
 		} finally {
 			for (int i = 0; i < pushed; i++) {
@@ -1091,9 +1055,7 @@ public final class IRFactory extends Parser {
 		if (!expClosure) {
 			decompiler.addEOL(Token.SEMI);
 		}
-		return rv == null
-				? new Node(Token.RETURN, node.getLineno())
-				: new Node(Token.RETURN, value, node.getLineno());
+		return rv == null ? new Node(Token.RETURN, node.getLineno()) : new Node(Token.RETURN, value, node.getLineno());
 	}
 
 	private Node transformScript(ScriptNode node) {
@@ -1230,8 +1192,7 @@ public final class IRFactory extends Parser {
 			Node body = transform(cc.getBody());
 			decompiler.addEOL(Token.RC);
 
-			catchBlocks.addChildToBack(createCatch(varName, catchCond,
-					body, cc.getLineno()));
+			catchBlocks.addChildToBack(createCatch(varName, catchCond, body, cc.getLineno()));
 		}
 		Node finallyBlock = null;
 		if (node.getFinallyBlock() != null) {
@@ -1240,8 +1201,7 @@ public final class IRFactory extends Parser {
 			finallyBlock = transform(node.getFinallyBlock());
 			decompiler.addEOL(Token.RC);
 		}
-		return createTryCatchFinally(tryBlock, catchBlocks,
-				finallyBlock, node.getLineno());
+		return createTryCatchFinally(tryBlock, catchBlocks, finallyBlock, node.getLineno());
 	}
 
 	private Node transformUnary(UnaryExpression node) {
@@ -1269,8 +1229,7 @@ public final class IRFactory extends Parser {
 		// Might be most robust to have parser record whether it was
 		// a variable declaration statement, possibly as a node property.
 		AstNode parent = node.getParent();
-		if (!(parent instanceof Loop)
-				&& !(parent instanceof LetNode)) {
+		if (!(parent instanceof Loop) && !(parent instanceof LetNode)) {
 			decompiler.addEOL(Token.SEMI);
 		}
 		return node;
@@ -1301,8 +1260,7 @@ public final class IRFactory extends Parser {
 				if (right == null) {  // TODO:  should this ever happen?
 					node.addChildToBack(left);
 				} else {
-					Node d = createDestructuringAssignment(node.getType(),
-							left, right);
+					Node d = createDestructuringAssignment(node.getType(), left, right);
 					node.addChildToBack(d);
 				}
 			} else {
@@ -1390,12 +1348,8 @@ public final class IRFactory extends Parser {
 				if (isXmlAttr) {
 					// Need to put the result in double quotes
 					expr = createUnary(Token.ESCXMLATTR, expr);
-					Node prepend = createBinary(Token.ADD,
-							createString("\""),
-							expr);
-					expr = createBinary(Token.ADD,
-							prepend,
-							createString("\""));
+					Node prepend = createBinary(Token.ADD, createString("\""), expr);
+					expr = createBinary(Token.ADD, prepend, createString("\""));
 				} else {
 					expr = createUnary(Token.ESCXMLTEXT, expr);
 				}
@@ -1422,8 +1376,7 @@ public final class IRFactory extends Parser {
 
 	// We get here if we weren't a child of a . or .. infix node
 	private Node transformXmlRef(XmlRef node) {
-		int memberTypeFlags = node.isAttributeAccess()
-				? Node.ATTRIBUTE_FLAG : 0;
+		int memberTypeFlags = node.isAttributeAccess() ? Node.ATTRIBUTE_FLAG : 0;
 		return transformXmlRef(null, node, memberTypeFlags);
 	}
 
@@ -1460,8 +1413,7 @@ public final class IRFactory extends Parser {
 	/**
 	 * If caseExpression argument is null it indicates a default label.
 	 */
-	private static void addSwitchCase(Node switchBlock, Node caseExpression,
-									  Node statements) {
+	private static void addSwitchCase(Node switchBlock, Node caseExpression, Node statements) {
 		if (switchBlock.getType() != Token.BLOCK) {
 			throw Kit.codeBug();
 		}
@@ -1501,8 +1453,7 @@ public final class IRFactory extends Parser {
 			defaultTarget = switchBreakTarget;
 		}
 
-		switchBlock.addChildAfter(makeJump(Token.GOTO, defaultTarget),
-				switchNode);
+		switchBlock.addChildAfter(makeJump(Token.GOTO, defaultTarget), switchNode);
 		switchBlock.addChildToBack(switchBreakTarget);
 	}
 
@@ -1523,17 +1474,14 @@ public final class IRFactory extends Parser {
 	 * @param stmts     the statements in the catch clause
 	 * @param lineno    the starting line number of the catch clause
 	 */
-	private Node createCatch(String varName, Node catchCond, Node stmts,
-							 int lineno) {
+	private Node createCatch(String varName, Node catchCond, Node stmts, int lineno) {
 		if (catchCond == null) {
 			catchCond = new Node(Token.EMPTY);
 		}
-		return new Node(Token.CATCH, createName(varName),
-				catchCond, stmts, lineno);
+		return new Node(Token.CATCH, createName(varName), catchCond, stmts, lineno);
 	}
 
-	private static Node initFunction(FunctionNode fnNode, int functionIndex,
-									 Node statements, int functionType) {
+	private static Node initFunction(FunctionNode fnNode, int functionIndex, Node statements, int functionType) {
 		fnNode.setFunctionType(functionType);
 		fnNode.addChildToBack(statements);
 
@@ -1545,8 +1493,7 @@ public final class IRFactory extends Parser {
 
 		if (functionType == FunctionNode.FUNCTION_EXPRESSION) {
 			Name name = fnNode.getFunctionName();
-			if (name != null && name.length() != 0
-					&& fnNode.getSymbol(name.getIdentifier()) == null) {
+			if (name != null && name.length() != 0 && fnNode.getSymbol(name.getIdentifier()) == null) {
 				// A function expression needs to have its name as a
 				// variable (if it isn't already allocated as a variable).
 				// See ECMA Ch. 13.  We add code to the beginning of the
@@ -1555,11 +1502,7 @@ public final class IRFactory extends Parser {
 				// function doesn't already define a formal parameter, var,
 				// or nested function with the same name.
 				fnNode.putSymbol(new Symbol(Token.FUNCTION, name.getIdentifier()));
-				Node setFn = new Node(Token.EXPR_VOID,
-						new Node(Token.SETNAME,
-								Node.newString(Token.BINDNAME,
-										name.getIdentifier()),
-								new Node(Token.THISFN)));
+				Node setFn = new Node(Token.EXPR_VOID, new Node(Token.SETNAME, Node.newString(Token.BINDNAME, name.getIdentifier()), new Node(Token.THISFN)));
 				statements.addChildrenToFront(setFn);
 			}
 		}
@@ -1588,8 +1531,7 @@ public final class IRFactory extends Parser {
 		return result;
 	}
 
-	private static Node createFor(Scope loop, Node init,
-								  Node test, Node incr, Node body) {
+	private static Node createFor(Scope loop, Node init, Node test, Node incr, Node body) {
 		if (init.getType() == Token.LET) {
 			// rewrite "for (let i=s; i < N; i++)..." as
 			// "let (i=s) { for (; i < N; i++)..." so that "s" is evaluated
@@ -1597,15 +1539,13 @@ public final class IRFactory extends Parser {
 			Scope let = Scope.splitScope(loop);
 			let.setType(Token.LET);
 			let.addChildrenToBack(init);
-			let.addChildToBack(createLoop(loop, LOOP_FOR, body, test,
-					new Node(Token.EMPTY), incr));
+			let.addChildToBack(createLoop(loop, LOOP_FOR, body, test, new Node(Token.EMPTY), incr));
 			return let;
 		}
 		return createLoop(loop, LOOP_FOR, body, test, init, incr);
 	}
 
-	private static Node createLoop(Jump loop, int loopType, Node body,
-								   Node cond, Node init, Node incr) {
+	private static Node createLoop(Jump loop, int loopType, Node body, Node cond, Node init, Node incr) {
 		Node bodyTarget = Node.newTarget();
 		Node condTarget = Node.newTarget();
 		if (loopType == LOOP_FOR && cond.getType() == Token.EMPTY) {
@@ -1657,8 +1597,7 @@ public final class IRFactory extends Parser {
 	/**
 	 * Generate IR for a for..in loop.
 	 */
-	private Node createForIn(int declType, Node loop, Node lhs,
-							 Node obj, Node body, boolean isForEach, boolean isForOf) {
+	private Node createForIn(int declType, Node loop, Node lhs, Node obj, Node body, boolean isForEach, boolean isForOf) {
 		int destructuring = -1;
 		int destructuringLen = 0;
 		Node lvalue;
@@ -1695,11 +1634,7 @@ public final class IRFactory extends Parser {
 		}
 
 		Node localBlock = new Node(Token.LOCAL_BLOCK);
-		int initType = isForEach ? Token.ENUM_INIT_VALUES
-				: isForOf ? Token.ENUM_INIT_VALUES_IN_ORDER
-				: (destructuring != -1
-				? Token.ENUM_INIT_ARRAY
-				: Token.ENUM_INIT_KEYS);
+		int initType = isForEach ? Token.ENUM_INIT_VALUES : isForOf ? Token.ENUM_INIT_VALUES_IN_ORDER : (destructuring != -1 ? Token.ENUM_INIT_ARRAY : Token.ENUM_INIT_KEYS);
 		Node init = new Node(initType, obj);
 		init.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
 		Node cond = new Node(Token.ENUM_NEXT);
@@ -1711,9 +1646,7 @@ public final class IRFactory extends Parser {
 		Node assign;
 		if (destructuring != -1) {
 			assign = createDestructuringAssignment(declType, lvalue, id);
-			if (!isForEach && !isForOf &&
-					(destructuring == Token.OBJECTLIT ||
-							destructuringLen != 2)) {
+			if (!isForEach && !isForOf && (destructuring == Token.OBJECTLIT || destructuringLen != 2)) {
 				// destructuring assignment is only allowed in for..each or
 				// with an array type of length 2 (to hold key and value)
 				reportError("msg.bad.for.in.destruct");
@@ -1749,15 +1682,11 @@ public final class IRFactory extends Parser {
 	 * <p>
 	 * ... and a goto to GOTO around these handlers.
 	 */
-	private Node createTryCatchFinally(Node tryBlock, Node catchBlocks,
-									   Node finallyBlock, int lineno) {
-		boolean hasFinally = (finallyBlock != null)
-				&& (finallyBlock.getType() != Token.BLOCK
-				|| finallyBlock.hasChildren());
+	private Node createTryCatchFinally(Node tryBlock, Node catchBlocks, Node finallyBlock, int lineno) {
+		boolean hasFinally = (finallyBlock != null) && (finallyBlock.getType() != Token.BLOCK || finallyBlock.hasChildren());
 
 		// short circuit
-		if (tryBlock.getType() == Token.BLOCK && !tryBlock.hasChildren()
-				&& !hasFinally) {
+		if (tryBlock.getType() == Token.BLOCK && !tryBlock.hasChildren() && !hasFinally) {
 			return tryBlock;
 		}
 
@@ -1861,22 +1790,18 @@ public final class IRFactory extends Parser {
 					condStmt = catchStatement;
 					hasDefault = true;
 				} else {
-					condStmt = createIf(cond, catchStatement, null,
-							catchLineNo);
+					condStmt = createIf(cond, catchStatement, null, catchLineNo);
 				}
 
 				// Generate code to create the scope object and store
 				// it in catchScopeBlock register
-				Node catchScope = new Node(Token.CATCH_SCOPE, name,
-						createUseLocal(handlerBlock));
+				Node catchScope = new Node(Token.CATCH_SCOPE, name, createUseLocal(handlerBlock));
 				catchScope.putProp(Node.LOCAL_BLOCK_PROP, catchScopeBlock);
 				catchScope.putIntProp(Node.CATCH_SCOPE_PROP, scopeIndex);
 				catchScopeBlock.addChildToBack(catchScope);
 
 				// Add with statement based on catch scope object
-				catchScopeBlock.addChildToBack(
-						createWith(createUseLocal(catchScopeBlock), condStmt,
-								catchLineNo));
+				catchScopeBlock.addChildToBack(createWith(createUseLocal(catchScopeBlock), condStmt, catchLineNo));
 
 				// move to next cb
 				cb = cb.getNext();
@@ -1980,8 +1905,7 @@ public final class IRFactory extends Parser {
 					Node left = child;
 					Node right = Node.newString(child.getString());
 					n = new Node(nodeType, left, right);
-				} else if (childType == Token.GETPROP ||
-						childType == Token.GETELEM) {
+				} else if (childType == Token.GETPROP || childType == Token.GETELEM) {
 					Node left = child.getFirstChild();
 					Node right = child.getLastChild();
 					child.removeChild(left);
@@ -2085,8 +2009,7 @@ public final class IRFactory extends Parser {
 		throw Kit.codeBug();
 	}
 
-	private Node createPropertyGet(Node target, String namespace, String name,
-								   int memberTypeFlags) {
+	private Node createPropertyGet(Node target, String namespace, String name, int memberTypeFlags) {
 		if (namespace == null && memberTypeFlags == 0) {
 			if (target == null) {
 				return createName(name);
@@ -2110,8 +2033,7 @@ public final class IRFactory extends Parser {
 	 * @param elem            the node in the brackets
 	 * @param memberTypeFlags E4X flags
 	 */
-	private Node createElementGet(Node target, String namespace, Node elem,
-								  int memberTypeFlags) {
+	private Node createElementGet(Node target, String namespace, Node elem, int memberTypeFlags) {
 		// OPT: could optimize to createPropertyGet
 		// iff elem is string that can not be number
 		if (namespace == null && memberTypeFlags == 0) {
@@ -2125,8 +2047,7 @@ public final class IRFactory extends Parser {
 		return createMemberRefGet(target, namespace, elem, memberTypeFlags);
 	}
 
-	private Node createMemberRefGet(Node target, String namespace, Node elem,
-									int memberTypeFlags) {
+	private Node createMemberRefGet(Node target, String namespace, Node elem, int memberTypeFlags) {
 		Node nsNode = null;
 		if (namespace != null) {
 			// See 11.1.2 in ECMA 357
@@ -2288,8 +2209,7 @@ public final class IRFactory extends Parser {
 	private Node createAssignment(int assignType, Node left, Node right) {
 		Node ref = makeReference(left);
 		if (ref == null) {
-			if (left.getType() == Token.ARRAYLIT ||
-					left.getType() == Token.OBJECTLIT) {
+			if (left.getType() == Token.ARRAYLIT || left.getType() == Token.OBJECTLIT) {
 				if (assignType != Token.ASSIGN) {
 					reportError("msg.bad.destruct.op");
 					return right;
@@ -2354,9 +2274,7 @@ public final class IRFactory extends Parser {
 				Node obj = left.getFirstChild();
 				Node id = left.getLastChild();
 
-				int type = nodeType == Token.GETPROP
-						? Token.SETPROP_OP
-						: Token.SETELEM_OP;
+				int type = nodeType == Token.GETPROP ? Token.SETPROP_OP : Token.SETELEM_OP;
 
 				Node opLeft = new Node(Token.USE_STACK);
 				Node op = new Node(assignOp, opLeft, right);
@@ -2426,8 +2344,7 @@ public final class IRFactory extends Parser {
 
 	// Check if node is the target of a destructuring bind.
 	boolean isDestructuring(Node n) {
-		return n instanceof DestructuringForm
-				&& ((DestructuringForm) n).isDestructuring();
+		return n instanceof DestructuringForm && ((DestructuringForm) n).isDestructuring();
 	}
 
 	Node decompileFunctionHeader(FunctionNode fn) {
@@ -2490,8 +2407,7 @@ public final class IRFactory extends Parser {
 				decompiler.addToken(node.getType());
 				break;
 			default:
-				Kit.codeBug("unexpected token: "
-						+ Token.typeToName(node.getType()));
+				Kit.codeBug("unexpected token: " + Token.typeToName(node.getType()));
 		}
 	}
 
@@ -2517,8 +2433,7 @@ public final class IRFactory extends Parser {
 		int size = props.size();
 		for (int i = 0; i < size; i++) {
 			ObjectProperty prop = props.get(i);
-			boolean destructuringShorthand =
-					Boolean.TRUE.equals(prop.getProp(Node.DESTRUCTURING_SHORTHAND));
+			boolean destructuringShorthand = Boolean.TRUE.equals(prop.getProp(Node.DESTRUCTURING_SHORTHAND));
 			decompile(prop.getLeft());
 			if (!destructuringShorthand) {
 				decompiler.addToken(Token.COLON);

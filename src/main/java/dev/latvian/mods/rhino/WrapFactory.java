@@ -44,10 +44,8 @@ public class WrapFactory {
 	 *                   object based on its class, staticType will be used instead.
 	 * @return the wrapped value.
 	 */
-	public Object wrap(Context cx, Scriptable scope,
-					   Object obj, Class<?> staticType) {
-		if (obj == null || obj == Undefined.instance
-				|| obj instanceof Scriptable) {
+	public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
+		if (obj == null || obj == Undefined.instance || obj instanceof Scriptable) {
 			return obj;
 		}
 		if (staticType != null && staticType.isPrimitive()) {
@@ -60,13 +58,7 @@ public class WrapFactory {
 			return obj;
 		}
 		if (!isJavaPrimitiveWrap()) {
-			if (obj instanceof String ||
-					obj instanceof Boolean ||
-					obj instanceof Integer ||
-					obj instanceof Short ||
-					obj instanceof Long ||
-					obj instanceof Float ||
-					obj instanceof Double) {
+			if (obj instanceof String || obj instanceof Boolean || obj instanceof Integer || obj instanceof Short || obj instanceof Long || obj instanceof Float || obj instanceof Double) {
 				return obj;
 			} else if (obj instanceof Character) {
 				return String.valueOf(((Character) obj).charValue());
@@ -117,8 +109,7 @@ public class WrapFactory {
 	 *                   object based on its class, staticType will be used instead.
 	 * @return the wrapped value which shall not be null
 	 */
-	public Scriptable wrapAsJavaObject(Context cx, Scriptable scope,
-									   Object javaObject, Class<?> staticType) {
+	public Scriptable wrapAsJavaObject(Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
 		if (List.class.isAssignableFrom(javaObject.getClass())) {
 			return new NativeJavaList(scope, javaObject);
 		} else if (Map.class.isAssignableFrom(javaObject.getClass())) {
@@ -140,8 +131,7 @@ public class WrapFactory {
 	 * @return the wrapped value which shall not be null
 	 * @since 1.7R3
 	 */
-	public Scriptable wrapJavaClass(Context cx, Scriptable scope,
-									Class<?> javaClass) {
+	public Scriptable wrapJavaClass(Context cx, Scriptable scope, Class<?> javaClass) {
 		return new NativeJavaClass(scope, javaClass);
 	}
 

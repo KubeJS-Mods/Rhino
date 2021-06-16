@@ -26,8 +26,7 @@ import java.util.List;
  */
 public class TryStatement extends AstNode {
 
-	private static final List<CatchClause> NO_CATCHES =
-			Collections.unmodifiableList(new ArrayList<>());
+	private static final List<CatchClause> NO_CATCHES = Collections.unmodifiableList(new ArrayList<>());
 
 	private AstNode tryBlock;
 	private List<CatchClause> catchClauses;

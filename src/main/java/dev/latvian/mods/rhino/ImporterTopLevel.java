@@ -85,8 +85,7 @@ public class ImporterTopLevel extends TopLevel {
 
 	@Override
 	public boolean has(String name, Scriptable start) {
-		return super.has(name, start)
-				|| getPackageProperty(name, start) != NOT_FOUND;
+		return super.has(name, start) || getPackageProperty(name, start) != NOT_FOUND;
 	}
 
 	@Override
@@ -112,8 +111,7 @@ public class ImporterTopLevel extends TopLevel {
 				if (result == NOT_FOUND) {
 					result = v;
 				} else {
-					throw Context.reportRuntimeError2(
-							"msg.ambig.import", result.toString(), v.toString());
+					throw Context.reportRuntimeError2("msg.ambig.import", result.toString(), v.toString());
 				}
 			}
 		}
@@ -129,8 +127,7 @@ public class ImporterTopLevel extends TopLevel {
 			} else if (arg instanceof NativeJavaPackage) {
 				result.importPackage((NativeJavaPackage) arg);
 			} else {
-				throw Context.reportRuntimeError1(
-						"msg.not.class.not.pkg", Context.toString(arg));
+				throw Context.reportRuntimeError1("msg.not.class.not.pkg", Context.toString(arg));
 			}
 		}
 		// set explicitly prototype and scope
@@ -147,8 +144,7 @@ public class ImporterTopLevel extends TopLevel {
 		for (int i = 0; i != args.length; i++) {
 			Object arg = args[i];
 			if (!(arg instanceof NativeJavaClass)) {
-				throw Context.reportRuntimeError1(
-						"msg.not.class", Context.toString(arg));
+				throw Context.reportRuntimeError1("msg.not.class", Context.toString(arg));
 			}
 			importClass((NativeJavaClass) arg);
 		}
@@ -159,8 +155,7 @@ public class ImporterTopLevel extends TopLevel {
 		for (int i = 0; i != args.length; i++) {
 			Object arg = args[i];
 			if (!(arg instanceof NativeJavaPackage)) {
-				throw Context.reportRuntimeError1(
-						"msg.not.pkg", Context.toString(arg));
+				throw Context.reportRuntimeError1("msg.not.pkg", Context.toString(arg));
 			}
 			importPackage((NativeJavaPackage) arg);
 		}
@@ -216,8 +211,7 @@ public class ImporterTopLevel extends TopLevel {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(IMPORTER_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -281,11 +275,7 @@ public class ImporterTopLevel extends TopLevel {
 		return id;
 	}
 
-	private static final int
-			Id_constructor = 1,
-			Id_importClass = 2,
-			Id_importPackage = 3,
-			MAX_PROTOTYPE_ID = 3;
+	private static final int Id_constructor = 1, Id_importClass = 2, Id_importPackage = 3, MAX_PROTOTYPE_ID = 3;
 
 	// #/string_id_map#
 

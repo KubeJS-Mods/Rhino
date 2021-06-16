@@ -15,9 +15,7 @@ import java.util.Map;
  * an "internal data slot" that makes them a Symbol and others cannot.
  */
 
-public class NativeSymbol
-		extends IdScriptableObject
-		implements Symbol {
+public class NativeSymbol extends IdScriptableObject implements Symbol {
 	private static final long serialVersionUID = -589539749749830003L;
 
 	public static final String CLASS_NAME = "Symbol";
@@ -104,9 +102,7 @@ public class NativeSymbol
 		addIdFunctionProperty(ctor, CLASS_NAME, ConstructorId_keyFor, "keyFor", 1);
 	}
 
-	private static void createStandardSymbol(Context cx, Scriptable scope,
-											 ScriptableObject ctor,
-											 String name, SymbolKey key) {
+	private static void createStandardSymbol(Context cx, Scriptable scope, ScriptableObject ctor, String name, SymbolKey key) {
 		Scriptable sym = cx.newObject(scope, CLASS_NAME, new Object[]{name, key});
 		ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT);
 	}
@@ -151,15 +147,7 @@ public class NativeSymbol
 		return 0;
 	}
 
-	private static final int
-			ConstructorId_keyFor = -2,
-			ConstructorId_for = -1,
-			Id_constructor = 1,
-			Id_toString = 2,
-			Id_valueOf = 4,
-			SymbolId_toStringTag = 3,
-			SymbolId_toPrimitive = 5,
-			MAX_PROTOTYPE_ID = SymbolId_toPrimitive;
+	private static final int ConstructorId_keyFor = -2, ConstructorId_for = -1, Id_constructor = 1, Id_toString = 2, Id_valueOf = 4, SymbolId_toStringTag = 3, SymbolId_toPrimitive = 5, MAX_PROTOTYPE_ID = SymbolId_toPrimitive;
 
 	// #/string_id_map#
 

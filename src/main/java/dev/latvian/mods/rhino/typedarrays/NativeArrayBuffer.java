@@ -18,8 +18,7 @@ import dev.latvian.mods.rhino.Undefined;
  * it implements the ArrayBuffer interface. Used directly from Java, it simply holds a byte array.
  */
 
-public class NativeArrayBuffer
-		extends IdScriptableObject {
+public class NativeArrayBuffer extends IdScriptableObject {
 	private static final long serialVersionUID = 3110411773054879549L;
 
 	public static final String CLASS_NAME = "ArrayBuffer";
@@ -114,8 +113,7 @@ public class NativeArrayBuffer
 	// Function-calling dispatcher
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(CLASS_NAME)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -195,10 +193,7 @@ public class NativeArrayBuffer
 	}
 
 	// Table of all functions
-	private static final int
-			Id_constructor = 1,
-			Id_slice = 2,
-			MAX_PROTOTYPE_ID = Id_slice;
+	private static final int Id_constructor = 1, Id_slice = 2, MAX_PROTOTYPE_ID = Id_slice;
 
 	// #/string_id_map#
 
@@ -243,7 +238,5 @@ public class NativeArrayBuffer
 	}
 
 	// Table of all properties
-	private static final int
-			Id_byteLength = 1,
-			MAX_INSTANCE_ID = Id_byteLength;
+	private static final int Id_byteLength = 1, MAX_INSTANCE_ID = Id_byteLength;
 }

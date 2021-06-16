@@ -82,8 +82,7 @@ public class FunctionObject extends BaseFunction {
 	 * @param scope               enclosing scope of function
 	 * @see Scriptable
 	 */
-	public FunctionObject(String name, Member methodOrConstructor,
-						  Scriptable scope) {
+	public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
 		if (methodOrConstructor instanceof Constructor) {
 			member = new MemberBox((Constructor<?>) methodOrConstructor);
 			isStatic = true; // well, doesn't take a 'this'
@@ -98,23 +97,13 @@ public class FunctionObject extends BaseFunction {
 		if (arity == 4 && (types[1].isArray() || types[2].isArray())) {
 			// Either variable args or an error.
 			if (types[1].isArray()) {
-				if (!isStatic ||
-						types[0] != ScriptRuntime.ContextClass ||
-						types[1].getComponentType() != ScriptRuntime.ObjectClass ||
-						types[2] != ScriptRuntime.FunctionClass ||
-						types[3] != Boolean.TYPE) {
-					throw Context.reportRuntimeError1(
-							"msg.varargs.ctor", methodName);
+				if (!isStatic || types[0] != ScriptRuntime.ContextClass || types[1].getComponentType() != ScriptRuntime.ObjectClass || types[2] != ScriptRuntime.FunctionClass || types[3] != Boolean.TYPE) {
+					throw Context.reportRuntimeError1("msg.varargs.ctor", methodName);
 				}
 				parmsLength = VARARGS_CTOR;
 			} else {
-				if (!isStatic ||
-						types[0] != ScriptRuntime.ContextClass ||
-						types[1] != ScriptRuntime.ScriptableClass ||
-						types[2].getComponentType() != ScriptRuntime.ObjectClass ||
-						types[3] != ScriptRuntime.FunctionClass) {
-					throw Context.reportRuntimeError1(
-							"msg.varargs.fun", methodName);
+				if (!isStatic || types[0] != ScriptRuntime.ContextClass || types[1] != ScriptRuntime.ScriptableClass || types[2].getComponentType() != ScriptRuntime.ObjectClass || types[3] != ScriptRuntime.FunctionClass) {
+					throw Context.reportRuntimeError1("msg.varargs.fun", methodName);
 				}
 				parmsLength = VARARGS_METHOD;
 			}
@@ -125,8 +114,7 @@ public class FunctionObject extends BaseFunction {
 				for (int i = 0; i != arity; ++i) {
 					int tag = getTypeTag(types[i]);
 					if (tag == JAVA_UNSUPPORTED_TYPE) {
-						throw Context.reportRuntimeError2(
-								"msg.bad.parms", types[i].getName(), methodName);
+						throw Context.reportRuntimeError2("msg.bad.parms", types[i].getName(), methodName);
 					}
 					typeTags[i] = (byte) tag;
 				}
@@ -144,8 +132,7 @@ public class FunctionObject extends BaseFunction {
 		} else {
 			Class<?> ctorType = member.getDeclaringClass();
 			if (!ScriptRuntime.ScriptableClass.isAssignableFrom(ctorType)) {
-				throw Context.reportRuntimeError1(
-						"msg.bad.ctor.return", ctorType.getName());
+				throw Context.reportRuntimeError1("msg.bad.ctor.return", ctorType.getName());
 			}
 		}
 
@@ -183,8 +170,7 @@ public class FunctionObject extends BaseFunction {
 		return JAVA_UNSUPPORTED_TYPE;
 	}
 
-	public static Object convertArg(Context cx, Scriptable scope,
-									Object arg, int typeTag) {
+	public static Object convertArg(Context cx, Scriptable scope, Object arg, int typeTag) {
 		switch (typeTag) {
 			case JAVA_STRING_TYPE:
 				if (arg instanceof String) {
@@ -200,8 +186,7 @@ public class FunctionObject extends BaseFunction {
 				if (arg instanceof Boolean) {
 					return arg;
 				}
-				return ScriptRuntime.toBoolean(arg) ? Boolean.TRUE
-						: Boolean.FALSE;
+				return ScriptRuntime.toBoolean(arg) ? Boolean.TRUE : Boolean.FALSE;
 			case JAVA_DOUBLE_TYPE:
 				if (arg instanceof Double) {
 					return arg;
@@ -256,9 +241,7 @@ public class FunctionObject extends BaseFunction {
 			Method method = methods[i];
 			if (method != null && name.equals(method.getName())) {
 				if (found != null) {
-					throw Context.reportRuntimeError2(
-							"msg.no.overload", name,
-							method.getDeclaringClass().getName());
+					throw Context.reportRuntimeError2("msg.no.overload", name, method.getDeclaringClass().getName());
 				}
 				found = method;
 			}
@@ -291,9 +274,7 @@ public class FunctionObject extends BaseFunction {
 		}
 		int count = 0;
 		for (int i = 0; i < methods.length; i++) {
-			if (sawSecurityException
-					? methods[i].getDeclaringClass() != clazz
-					: !Modifier.isPublic(methods[i].getModifiers())) {
+			if (sawSecurityException ? methods[i].getDeclaringClass() != clazz : !Modifier.isPublic(methods[i].getModifiers())) {
 				methods[i] = null;
 			} else {
 				count++;
@@ -327,8 +308,7 @@ public class FunctionObject extends BaseFunction {
 	 */
 	public void addAsConstructor(Scriptable scope, Scriptable prototype) {
 		initAsConstructor(scope, prototype);
-		defineProperty(scope, prototype.getClassName(),
-				this, DONTENUM);
+		defineProperty(scope, prototype.getClassName(), this, DONTENUM);
 	}
 
 	void initAsConstructor(Scriptable scope, Scriptable prototype) {
@@ -337,10 +317,7 @@ public class FunctionObject extends BaseFunction {
 
 		prototype.setParentScope(this);
 
-		defineProperty(prototype, "constructor", this,
-				DONTENUM |
-						PERMANENT |
-						READONLY);
+		defineProperty(prototype, "constructor", this, DONTENUM | PERMANENT | READONLY);
 		setParentScope(scope);
 	}
 
@@ -354,8 +331,7 @@ public class FunctionObject extends BaseFunction {
 	 *Context, Scriptable, Scriptable, Object[])
 	 */
 	@Override
-	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args) {
+	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		Object result;
 		boolean checkMethodResult = false;
 		int argsLength = args.length;
@@ -376,9 +352,7 @@ public class FunctionObject extends BaseFunction {
 				boolean inNewExpr = (thisObj == null);
 				Boolean b = inNewExpr ? Boolean.TRUE : Boolean.FALSE;
 				Object[] invokeArgs = {cx, args, this, b};
-				result = (member.isCtor())
-						? member.newInstance(invokeArgs)
-						: member.invoke(null, invokeArgs);
+				result = (member.isCtor()) ? member.newInstance(invokeArgs) : member.invoke(null, invokeArgs);
 			}
 
 		} else {
@@ -399,8 +373,7 @@ public class FunctionObject extends BaseFunction {
 					}
 					if (!compatible) {
 						// Couldn't find an object to call this on.
-						throw ScriptRuntime.typeError1("msg.incompat.call",
-								functionName);
+						throw ScriptRuntime.typeError1("msg.incompat.call", functionName);
 					}
 				}
 			}
@@ -425,9 +398,7 @@ public class FunctionObject extends BaseFunction {
 			} else {
 				invokeArgs = new Object[parmsLength];
 				for (int i = 0; i != parmsLength; ++i) {
-					Object arg = (i < argsLength)
-							? args[i]
-							: Undefined.instance;
+					Object arg = (i < argsLength) ? args[i] : Undefined.instance;
 					invokeArgs[i] = convertArg(cx, scope, arg, typeTags[i]);
 				}
 			}
@@ -487,8 +458,7 @@ public class FunctionObject extends BaseFunction {
 		return parmsLength == VARARGS_CTOR;
 	}
 
-	private void readObject(ObjectInputStream in)
-			throws IOException, ClassNotFoundException {
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 		if (parmsLength > 0) {
 			Class<?>[] types = member.argTypes;

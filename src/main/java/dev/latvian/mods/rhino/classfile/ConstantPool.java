@@ -18,21 +18,7 @@ final class ConstantPool {
 	}
 
 	private static final int ConstantPoolSize = 256;
-	static final byte
-			CONSTANT_Class = 7,
-			CONSTANT_Fieldref = 9,
-			CONSTANT_Methodref = 10,
-			CONSTANT_InterfaceMethodref = 11,
-			CONSTANT_String = 8,
-			CONSTANT_Integer = 3,
-			CONSTANT_Float = 4,
-			CONSTANT_Long = 5,
-			CONSTANT_Double = 6,
-			CONSTANT_NameAndType = 12,
-			CONSTANT_Utf8 = 1,
-			CONSTANT_MethodType = 16,
-			CONSTANT_MethodHandle = 15,
-			CONSTANT_InvokeDynamic = 18;
+	static final byte CONSTANT_Class = 7, CONSTANT_Fieldref = 9, CONSTANT_Methodref = 10, CONSTANT_InterfaceMethodref = 11, CONSTANT_String = 8, CONSTANT_Integer = 3, CONSTANT_Float = 4, CONSTANT_Long = 5, CONSTANT_Double = 6, CONSTANT_NameAndType = 12, CONSTANT_Utf8 = 1, CONSTANT_MethodType = 16, CONSTANT_MethodHandle = 15, CONSTANT_InvokeDynamic = 18;
 
 	int write(byte[] data, int offset) {
 		offset = ClassFileWriter.putInt16((short) itsTopIndex, data, offset);
@@ -98,8 +84,7 @@ final class ConstantPool {
 	}
 
 	int addConstant(Object value) {
-		if (value instanceof Integer || value instanceof Byte
-				|| value instanceof Short) {
+		if (value instanceof Integer || value instanceof Byte || value instanceof Short) {
 			return addConstant(((Number) value).intValue());
 		} else if (value instanceof Character) {
 			return addConstant(((Character) value).charValue());
@@ -254,8 +239,7 @@ final class ConstantPool {
 	}
 
 	short addFieldRef(String className, String fieldName, String fieldType) {
-		FieldOrMethodRef ref = new FieldOrMethodRef(className, fieldName,
-				fieldType);
+		FieldOrMethodRef ref = new FieldOrMethodRef(className, fieldName, fieldType);
 
 		int theIndex = itsFieldRefHash.get(ref, -1);
 		if (theIndex == -1) {
@@ -273,10 +257,8 @@ final class ConstantPool {
 		return (short) theIndex;
 	}
 
-	short addMethodRef(String className, String methodName,
-					   String methodType) {
-		FieldOrMethodRef ref = new FieldOrMethodRef(className, methodName,
-				methodType);
+	short addMethodRef(String className, String methodName, String methodType) {
+		FieldOrMethodRef ref = new FieldOrMethodRef(className, methodName, methodType);
 
 		int theIndex = itsMethodRefHash.get(ref, -1);
 		if (theIndex == -1) {
@@ -294,24 +276,21 @@ final class ConstantPool {
 		return (short) theIndex;
 	}
 
-	short addInterfaceMethodRef(String className,
-								String methodName, String methodType) {
+	short addInterfaceMethodRef(String className, String methodName, String methodType) {
 		short ntIndex = addNameAndType(methodName, methodType);
 		short classIndex = addClass(className);
 		ensure(5);
 		itsPool[itsTop++] = CONSTANT_InterfaceMethodref;
 		itsTop = ClassFileWriter.putInt16(classIndex, itsPool, itsTop);
 		itsTop = ClassFileWriter.putInt16(ntIndex, itsPool, itsTop);
-		FieldOrMethodRef r = new FieldOrMethodRef(className, methodName,
-				methodType);
+		FieldOrMethodRef r = new FieldOrMethodRef(className, methodName, methodType);
 		setConstantData(itsTopIndex, r);
 		itsPoolTypes.put(itsTopIndex, CONSTANT_InterfaceMethodref);
 		return (short) (itsTopIndex++);
 	}
 
 	short addInvokeDynamic(String methodName, String methodType, int bootstrapIndex) {
-		ConstantEntry entry = new ConstantEntry(CONSTANT_InvokeDynamic,
-				bootstrapIndex, methodName, methodType);
+		ConstantEntry entry = new ConstantEntry(CONSTANT_InvokeDynamic, bootstrapIndex, methodName, methodType);
 		int theIndex = itsConstantHash.get(entry, -1);
 
 		if (theIndex == -1) {

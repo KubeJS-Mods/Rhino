@@ -17,11 +17,9 @@ import java.util.LinkedHashMap;
  * number of properties.
  */
 
-public class HashSlotMap
-		implements SlotMap {
+public class HashSlotMap implements SlotMap {
 
-	private final LinkedHashMap<Object, ScriptableObject.Slot> map =
-			new LinkedHashMap<>();
+	private final LinkedHashMap<Object, ScriptableObject.Slot> map = new LinkedHashMap<>();
 
 	@Override
 	public int size() {
@@ -67,17 +65,14 @@ public class HashSlotMap
 		return createSlot(key, index, name, accessType);
 	}
 
-	private ScriptableObject.Slot createSlot(Object key, int index,
-											 Object name, ScriptableObject.SlotAccess accessType) {
+	private ScriptableObject.Slot createSlot(Object key, int index, Object name, ScriptableObject.SlotAccess accessType) {
 		ScriptableObject.Slot slot = map.get(name);
 		if (slot != null) {
 			ScriptableObject.Slot newSlot;
 
-			if (accessType == ScriptableObject.SlotAccess.MODIFY_GETTER_SETTER
-					&& !(slot instanceof ScriptableObject.GetterSlot)) {
+			if (accessType == ScriptableObject.SlotAccess.MODIFY_GETTER_SETTER && !(slot instanceof ScriptableObject.GetterSlot)) {
 				newSlot = new ScriptableObject.GetterSlot(name, slot.indexOrHash, slot.getAttributes());
-			} else if (accessType == ScriptableObject.SlotAccess.CONVERT_ACCESSOR_TO_DATA
-					&& (slot instanceof ScriptableObject.GetterSlot)) {
+			} else if (accessType == ScriptableObject.SlotAccess.CONVERT_ACCESSOR_TO_DATA && (slot instanceof ScriptableObject.GetterSlot)) {
 				newSlot = new ScriptableObject.Slot(name, slot.indexOrHash, slot.getAttributes());
 			} else if (accessType == ScriptableObject.SlotAccess.MODIFY_CONST) {
 				return null;
@@ -89,9 +84,7 @@ public class HashSlotMap
 			return newSlot;
 		}
 
-		ScriptableObject.Slot newSlot = (accessType == ScriptableObject.SlotAccess.MODIFY_GETTER_SETTER
-				? new ScriptableObject.GetterSlot(key, index, 0)
-				: new ScriptableObject.Slot(key, index, 0));
+		ScriptableObject.Slot newSlot = (accessType == ScriptableObject.SlotAccess.MODIFY_GETTER_SETTER ? new ScriptableObject.GetterSlot(key, index, 0) : new ScriptableObject.Slot(key, index, 0));
 		if (accessType == ScriptableObject.SlotAccess.MODIFY_CONST) {
 			newSlot.setAttributes(ScriptableObject.CONST);
 		}

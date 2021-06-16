@@ -32,8 +32,7 @@ public class ErrorCollector implements IdeErrorReporter {
 	 * @throws UnsupportedOperationException
 	 */
 	@Override
-	public void warning(String message, String sourceName, int line,
-						String lineSource, int lineOffset) {
+	public void warning(String message, String sourceName, int line, String lineSource, int lineOffset) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -42,9 +41,7 @@ public class ErrorCollector implements IdeErrorReporter {
 	 */
 	@Override
 	public void warning(String message, String sourceName, int offset, int length) {
-		errors.add(new ParseProblem(ParseProblem.Type.Warning,
-				message, sourceName,
-				offset, length));
+		errors.add(new ParseProblem(ParseProblem.Type.Warning, message, sourceName, offset, length));
 	}
 
 	/**
@@ -54,8 +51,7 @@ public class ErrorCollector implements IdeErrorReporter {
 	 * @throws UnsupportedOperationException
 	 */
 	@Override
-	public void error(String message, String sourceName, int line,
-					  String lineSource, int lineOffset) {
+	public void error(String message, String sourceName, int line, String lineSource, int lineOffset) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -63,20 +59,15 @@ public class ErrorCollector implements IdeErrorReporter {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void error(String message, String sourceName,
-					  int fileOffset, int length) {
-		errors.add(new ParseProblem(ParseProblem.Type.Error,
-				message, sourceName,
-				fileOffset, length));
+	public void error(String message, String sourceName, int fileOffset, int length) {
+		errors.add(new ParseProblem(ParseProblem.Type.Error, message, sourceName, fileOffset, length));
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public EvaluatorException runtimeError(String message, String sourceName,
-										   int line, String lineSource,
-										   int lineOffset) {
+	public EvaluatorException runtimeError(String message, String sourceName, int line, String lineSource, int lineOffset) {
 		throw new UnsupportedOperationException();
 	}
 

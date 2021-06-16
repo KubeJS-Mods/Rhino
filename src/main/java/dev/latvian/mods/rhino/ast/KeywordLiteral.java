@@ -48,13 +48,8 @@ public class KeywordLiteral extends AstNode {
 	 */
 	@Override
 	public KeywordLiteral setType(int nodeType) {
-		if (!(nodeType == Token.THIS
-				|| nodeType == Token.NULL
-				|| nodeType == Token.TRUE
-				|| nodeType == Token.FALSE
-				|| nodeType == Token.DEBUGGER)) {
-			throw new IllegalArgumentException("Invalid node type: "
-					+ nodeType);
+		if (!(nodeType == Token.THIS || nodeType == Token.NULL || nodeType == Token.TRUE || nodeType == Token.FALSE || nodeType == Token.DEBUGGER)) {
+			throw new IllegalArgumentException("Invalid node type: " + nodeType);
 		}
 		type = nodeType;
 		return this;
@@ -89,8 +84,7 @@ public class KeywordLiteral extends AstNode {
 				sb.append("debugger;\n");
 				break;
 			default:
-				throw new IllegalStateException("Invalid keyword literal type: "
-						+ getType());
+				throw new IllegalStateException("Invalid keyword literal type: " + getType());
 		}
 		return sb.toString();
 	}

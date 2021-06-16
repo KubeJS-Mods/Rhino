@@ -30,13 +30,11 @@ public final class LazilyLoadedCtor implements Serializable {
 	private Object initializedValue;
 	private int state;
 
-	public LazilyLoadedCtor(ScriptableObject scope, String propertyName,
-							String className, boolean sealed) {
+	public LazilyLoadedCtor(ScriptableObject scope, String propertyName, String className, boolean sealed) {
 		this(scope, propertyName, className, sealed, false);
 	}
 
-	LazilyLoadedCtor(ScriptableObject scope, String propertyName,
-					 String className, boolean sealed, boolean privileged) {
+	LazilyLoadedCtor(ScriptableObject scope, String propertyName, String className, boolean sealed, boolean privileged) {
 
 		this.scope = scope;
 		this.propertyName = propertyName;
@@ -45,15 +43,13 @@ public final class LazilyLoadedCtor implements Serializable {
 		this.privileged = privileged;
 		this.state = STATE_BEFORE_INIT;
 
-		scope.addLazilyInitializedValue(propertyName, 0, this,
-				ScriptableObject.DONTENUM);
+		scope.addLazilyInitializedValue(propertyName, 0, this, ScriptableObject.DONTENUM);
 	}
 
 	void init() {
 		synchronized (this) {
 			if (state == STATE_INITIALIZING) {
-				throw new IllegalStateException(
-						"Recursive initialization for " + propertyName);
+				throw new IllegalStateException("Recursive initialization for " + propertyName);
 			}
 			if (state == STATE_BEFORE_INIT) {
 				state = STATE_INITIALIZING;
@@ -88,8 +84,7 @@ public final class LazilyLoadedCtor implements Serializable {
 		Class<? extends Scriptable> cl = cast(Kit.classOrNull(className));
 		if (cl != null) {
 			try {
-				Object value = ScriptableObject.buildClassCtor(scope, cl,
-						sealed, false);
+				Object value = ScriptableObject.buildClassCtor(scope, cl, sealed, false);
 				if (value != null) {
 					return value;
 				}

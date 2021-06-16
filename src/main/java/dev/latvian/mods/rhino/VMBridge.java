@@ -16,10 +16,7 @@ public abstract class VMBridge {
 	static final VMBridge instance = makeInstance();
 
 	private static VMBridge makeInstance() {
-		String[] classNames = {
-				"dev.latvian.mods.rhino.VMBridge_custom",
-				"dev.latvian.mods.rhino.jdk18.VMBridge_jdk18",
-		};
+		String[] classNames = {"dev.latvian.mods.rhino.VMBridge_custom", "dev.latvian.mods.rhino.jdk18.VMBridge_jdk18",};
 		for (int i = 0; i != classNames.length; ++i) {
 			String className = classNames[i];
 			Class<?> cl = Kit.classOrNull(className);
@@ -86,8 +83,7 @@ public abstract class VMBridge {
 	 *
 	 * @param interfaces Array with one or more interface class objects.
 	 */
-	protected abstract Object getInterfaceProxyHelper(ContextFactory cf,
-													  Class<?>[] interfaces);
+	protected abstract Object getInterfaceProxyHelper(ContextFactory cf, Class<?>[] interfaces);
 
 	/**
 	 * Create proxy object for {@link InterfaceAdapter}. The proxy should call
@@ -99,9 +95,5 @@ public abstract class VMBridge {
 	 * @param proxyHelper The result of the previous call to
 	 *                    {@link #getInterfaceProxyHelper(ContextFactory, Class[])}.
 	 */
-	protected abstract Object newInterfaceProxy(Object proxyHelper,
-												ContextFactory cf,
-												InterfaceAdapter adapter,
-												Object target,
-												Scriptable topScope);
+	protected abstract Object newInterfaceProxy(Object proxyHelper, ContextFactory cf, InterfaceAdapter adapter, Object target, Scriptable topScope);
 }

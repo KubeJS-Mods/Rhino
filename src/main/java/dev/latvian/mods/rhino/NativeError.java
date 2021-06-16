@@ -54,8 +54,7 @@ final class NativeError extends IdScriptableObject {
 		NativeCallSite.init(obj, sealed);
 	}
 
-	static NativeError make(Context cx, Scriptable scope,
-							IdFunctionObject ctorObj, Object[] args) {
+	static NativeError make(Context cx, Scriptable scope, IdFunctionObject ctorObj, Object[] args) {
 		Scriptable proto = (Scriptable) (ctorObj.get("prototype", ctorObj));
 
 		NativeError obj = new NativeError();
@@ -65,15 +64,13 @@ final class NativeError extends IdScriptableObject {
 		int arglen = args.length;
 		if (arglen >= 1) {
 			if (args[0] != Undefined.instance) {
-				putProperty(obj, "message",
-						ScriptRuntime.toString(args[0]));
+				putProperty(obj, "message", ScriptRuntime.toString(args[0]));
 			}
 			if (arglen >= 2) {
 				putProperty(obj, "fileName", args[1]);
 				if (arglen >= 3) {
 					int line = ScriptRuntime.toInt32(args[2]);
-					putProperty(obj, "lineNumber",
-							line);
+					putProperty(obj, "lineNumber", line);
 				}
 			}
 		}
@@ -82,8 +79,7 @@ final class NativeError extends IdScriptableObject {
 
 	@Override
 	protected void fillConstructorProperties(IdFunctionObject ctor) {
-		addIdFunctionProperty(ctor, ERROR_TAG, ConstructorId_captureStackTrace,
-				"captureStackTrace", 2);
+		addIdFunctionProperty(ctor, ERROR_TAG, ConstructorId_captureStackTrace, "captureStackTrace", 2);
 
 		// This is running on the global "Error" object. Associate an object there that can store
 		// default stack trace, etc.
@@ -92,10 +88,8 @@ final class NativeError extends IdScriptableObject {
 		associateValue(ProtoProps.KEY, protoProps);
 
 		// Define constructor properties that delegate to the ProtoProps object.
-		ctor.defineProperty("stackTraceLimit", protoProps,
-				ProtoProps.GET_STACK_LIMIT, ProtoProps.SET_STACK_LIMIT, 0);
-		ctor.defineProperty("prepareStackTrace", protoProps,
-				ProtoProps.GET_PREPARE_STACK, ProtoProps.SET_PREPARE_STACK, 0);
+		ctor.defineProperty("stackTraceLimit", protoProps, ProtoProps.GET_STACK_LIMIT, ProtoProps.SET_STACK_LIMIT, 0);
+		ctor.defineProperty("prepareStackTrace", protoProps, ProtoProps.GET_PREPARE_STACK, ProtoProps.SET_PREPARE_STACK, 0);
 
 		super.fillConstructorProperties(ctor);
 	}
@@ -136,8 +130,7 @@ final class NativeError extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(ERROR_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -166,9 +159,7 @@ final class NativeError extends IdScriptableObject {
 		// the getter and setter below.
 		if (stackProvider == null) {
 			stackProvider = re;
-			defineProperty("stack", this,
-					ERROR_DELEGATE_GET_STACK, ERROR_DELEGATE_SET_STACK,
-					DONTENUM);
+			defineProperty("stack", this, ERROR_DELEGATE_GET_STACK, ERROR_DELEGATE_SET_STACK, DONTENUM);
 		}
 	}
 
@@ -249,8 +240,7 @@ final class NativeError extends IdScriptableObject {
 		}
 	}
 
-	private static String js_toSource(Context cx, Scriptable scope,
-									  Scriptable thisObj) {
+	private static String js_toSource(Context cx, Scriptable scope, Scriptable thisObj) {
 		// Emulation of SpiderMonkey behavior
 		Object name = getProperty(thisObj, "name");
 		Object message = getProperty(thisObj, "message");
@@ -264,9 +254,7 @@ final class NativeError extends IdScriptableObject {
 		}
 		sb.append(ScriptRuntime.toString(name));
 		sb.append("(");
-		if (message != NOT_FOUND
-				|| fileName != NOT_FOUND
-				|| lineNumber != NOT_FOUND) {
+		if (message != NOT_FOUND || fileName != NOT_FOUND || lineNumber != NOT_FOUND) {
 			if (message == NOT_FOUND) {
 				message = "";
 			}
@@ -313,8 +301,7 @@ final class NativeError extends IdScriptableObject {
 		// Define a property on the specified object to get that stack
 		// that delegates to our new error. Build the stack trace lazily
 		// using the "getStack" code from NativeError.
-		obj.defineProperty("stack", err,
-				ERROR_DELEGATE_GET_STACK, ERROR_DELEGATE_SET_STACK, 0);
+		obj.defineProperty("stack", err, ERROR_DELEGATE_GET_STACK, ERROR_DELEGATE_SET_STACK, 0);
 	}
 
 	@Override
@@ -350,11 +337,7 @@ final class NativeError extends IdScriptableObject {
 		return id;
 	}
 
-	private static final int
-			Id_constructor = 1,
-			Id_toString = 2,
-			Id_toSource = 3,
-			ConstructorId_captureStackTrace = -1,
+	private static final int Id_constructor = 1, Id_toString = 2, Id_toSource = 3, ConstructorId_captureStackTrace = -1,
 
 	MAX_PROTOTYPE_ID = 3;
 
@@ -364,8 +347,7 @@ final class NativeError extends IdScriptableObject {
 	 * We will attch this object to the constructor and use it solely to store the constructor properties
 	 * that are "global." We can't make them static because there can be many contexts in the same JVM.
 	 */
-	private static final class ProtoProps
-			implements Serializable {
+	private static final class ProtoProps implements Serializable {
 		static final String KEY = "_ErrorPrototypeProps";
 
 		static final Method GET_STACK_LIMIT;

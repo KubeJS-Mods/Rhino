@@ -155,8 +155,7 @@ public abstract class RhinoException extends RuntimeException {
 		this.lineSource = lineSource;
 	}
 
-	final void recordErrorOrigin(String sourceName, int lineNumber,
-								 String lineSource, int columnNumber) {
+	final void recordErrorOrigin(String sourceName, int lineNumber, String lineSource, int columnNumber) {
 		// XXX: for compatibility allow for now -1 to mean 0
 		if (lineNumber == -1) {
 			lineNumber = 0;
@@ -293,16 +292,12 @@ public abstract class RhinoException extends RuntimeException {
 		// kudos to Marc Guillemot for coming up with this
 		for (StackTraceElement e : stack) {
 			String fileName = e.getFileName();
-			if (e.getMethodName().startsWith("_c_")
-					&& e.getLineNumber() > -1
-					&& fileName != null
-					&& !fileName.endsWith(".java")) {
+			if (e.getMethodName().startsWith("_c_") && e.getLineNumber() > -1 && fileName != null && !fileName.endsWith(".java")) {
 				String methodName = e.getMethodName();
 				Matcher match = JAVA_STACK_PATTERN.matcher(methodName);
 				// the method representing the main script is always "_c_script_0" -
 				// at least we hope so
-				methodName = !"_c_script_0".equals(methodName) && match.find() ?
-						match.group(1) : null;
+				methodName = !"_c_script_0".equals(methodName) && match.find() ? match.group(1) : null;
 
 				if (!printStarted && hideFunction.equals(methodName)) {
 					printStarted = true;
@@ -311,10 +306,7 @@ public abstract class RhinoException extends RuntimeException {
 					count++;
 				}
 
-			} else if ("dev.latvian.mods.rhino.Interpreter".equals(e.getClassName())
-					&& "interpretLoop".equals(e.getMethodName())
-					&& interpreterStack != null
-					&& interpreterStack.length > interpreterStackIndex) {
+			} else if ("dev.latvian.mods.rhino.Interpreter".equals(e.getClassName()) && "interpretLoop".equals(e.getMethodName()) && interpreterStack != null && interpreterStack.length > interpreterStackIndex) {
 
 				for (ScriptStackElement elem : interpreterStack[interpreterStackIndex++]) {
 					if (!printStarted && hideFunction.equals(elem.functionName)) {

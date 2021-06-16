@@ -15,8 +15,7 @@ import java.util.Iterator;
  * This class holds the various SlotMaps of various types, and knows how to atomically
  * switch between them when we need to so that we use the right data structure at the right time.
  */
-class SlotMapContainer
-		implements SlotMap {
+class SlotMapContainer implements SlotMap {
 
 	/**
 	 * Once the object has this many properties in it, we will replace the EmbeddedSlotMap

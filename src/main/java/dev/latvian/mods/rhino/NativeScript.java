@@ -43,8 +43,7 @@ class NativeScript extends BaseFunction {
 	}
 
 	@Override
-	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args) {
+	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (script != null) {
 			return script.exec(cx, scope);
 		}
@@ -102,17 +101,14 @@ class NativeScript extends BaseFunction {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(SCRIPT_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
 		switch (id) {
 			case Id_constructor: {
-				String source = (args.length == 0)
-						? ""
-						: ScriptRuntime.toString(args[0]);
+				String source = (args.length == 0) ? "" : ScriptRuntime.toString(args[0]);
 				Script script = compile(cx, source);
 				NativeScript nscript = new NativeScript(script);
 				ScriptRuntime.setObjectProtoAndParent(nscript, scope);
@@ -129,8 +125,7 @@ class NativeScript extends BaseFunction {
 			}
 
 			case Id_exec: {
-				throw Context.reportRuntimeError1(
-						"msg.cant.call.indirect", "exec");
+				throw Context.reportRuntimeError1("msg.cant.call.indirect", "exec");
 			}
 
 			case Id_compile: {
@@ -159,8 +154,7 @@ class NativeScript extends BaseFunction {
 		}
 		ErrorReporter reporter;
 		reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
-		return cx.compileString(source, null, reporter, filename,
-				linep[0], null);
+		return cx.compileString(source, null, reporter, filename, linep[0], null);
 	}
 
 	// #string_id_map#
@@ -201,12 +195,7 @@ class NativeScript extends BaseFunction {
 		return id;
 	}
 
-	private static final int
-			Id_constructor = 1,
-			Id_toString = 2,
-			Id_compile = 3,
-			Id_exec = 4,
-			MAX_PROTOTYPE_ID = 4;
+	private static final int Id_constructor = 1, Id_toString = 2, Id_compile = 3, Id_exec = 4, MAX_PROTOTYPE_ID = 4;
 
 	// #/string_id_map#
 

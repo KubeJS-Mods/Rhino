@@ -4,6 +4,7 @@
 
 package dev.latvian.mods.rhino.annotations;
 
+import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.ScriptableObject;
 
 import java.lang.annotation.Documented;
@@ -14,8 +15,8 @@ import java.lang.annotation.Target;
 
 /**
  * An annotation that marks a Java method as JavaScript static function. This can
- * be used as an alternative to the <code>jsStaticFunction_</code> prefix desribed in
- * {@link ScriptableObject#defineClass(org.mozilla.javascript.Scriptable, java.lang.Class)}.
+ * be used as an alternative to the <code>jsStaticFunction_</code> prefix described in
+ * {@link ScriptableObject#defineClass(Scriptable, Class)}.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

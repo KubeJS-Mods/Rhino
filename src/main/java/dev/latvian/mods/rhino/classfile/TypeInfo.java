@@ -115,8 +115,7 @@ final class TypeInfo {
 
 		if (current == incoming || (currentIsObject && incoming == NULL)) {
 			return current;
-		} else if (currentTag == TypeInfo.TOP ||
-				incomingTag == TypeInfo.TOP) {
+		} else if (currentTag == TypeInfo.TOP || incomingTag == TypeInfo.TOP) {
 			return TypeInfo.TOP;
 		} else if (current == NULL && incomingIsObject) {
 			return incoming;
@@ -127,8 +126,7 @@ final class TypeInfo {
 			// spot. The constant order is: class_data, class_name, super_data,
 			// super_name.
 			String currentlyGeneratedName = (String) pool.getConstantData(2);
-			String currentlyGeneratedSuperName =
-					(String) pool.getConstantData(4);
+			String currentlyGeneratedSuperName = (String) pool.getConstantData(4);
 
 			// If any of the merged types are the class that's currently being
 			// generated, automatically start at the super class instead. At
@@ -148,8 +146,7 @@ final class TypeInfo {
 				return current;
 			} else if (incomingClass.isAssignableFrom(currentClass)) {
 				return incoming;
-			} else if (incomingClass.isInterface() ||
-					currentClass.isInterface()) {
+			} else if (incomingClass.isInterface() || currentClass.isInterface()) {
 				// For verification purposes, Sun specifies that interfaces are
 				// subtypes of Object. Therefore, we know that the merge result
 				// involving interfaces where one is not assignable to the
@@ -167,9 +164,7 @@ final class TypeInfo {
 				}
 			}
 		}
-		throw new IllegalArgumentException("bad merge attempt between " +
-				toString(current, pool) + " and " +
-				toString(incoming, pool));
+		throw new IllegalArgumentException("bad merge attempt between " + toString(current, pool) + " and " + toString(incoming, pool));
 	}
 
 	static String toString(int type, ConstantPool pool) {
@@ -232,8 +227,7 @@ final class TypeInfo {
 		print(locals, locals.length, stack, stack.length, pool);
 	}
 
-	static void print(int[] locals, int localsTop, int[] stack, int stackTop,
-					  ConstantPool pool) {
+	static void print(int[] locals, int localsTop, int[] stack, int stackTop, ConstantPool pool) {
 		System.out.print("locals: ");
 		System.out.println(toString(locals, localsTop, pool));
 		System.out.print("stack: ");

@@ -12,8 +12,7 @@ package dev.latvian.mods.rhino.ast;
 public class ParseProblem {
 
 	public enum Type {
-		Error,
-		Warning
+		Error, Warning
 	}
 
 	private Type type;
@@ -25,8 +24,7 @@ public class ParseProblem {
 	/**
 	 * Constructs a new ParseProblem.
 	 */
-	public ParseProblem(ParseProblem.Type type, String message,
-						String sourceName, int offset, int length) {
+	public ParseProblem(ParseProblem.Type type, String message, String sourceName, int offset, int length) {
 		setType(type);
 		setMessage(message);
 		setSourceName(sourceName);

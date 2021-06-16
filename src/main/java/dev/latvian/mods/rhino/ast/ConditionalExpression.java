@@ -139,13 +139,10 @@ public class ConditionalExpression extends AstNode {
 
 	@Override
 	public boolean hasSideEffects() {
-		if (testExpression == null
-				|| trueExpression == null
-				|| falseExpression == null) {
+		if (testExpression == null || trueExpression == null || falseExpression == null) {
 			codeBug();
 		}
-		return trueExpression.hasSideEffects()
-				&& falseExpression.hasSideEffects();
+		return trueExpression.hasSideEffects() && falseExpression.hasSideEffects();
 	}
 
 	@Override

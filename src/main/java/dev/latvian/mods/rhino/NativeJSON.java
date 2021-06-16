@@ -36,8 +36,7 @@ public final class NativeJSON extends IdScriptableObject {
 		if (sealed) {
 			obj.sealObject();
 		}
-		defineProperty(scope, "JSON", obj,
-				DONTENUM);
+		defineProperty(scope, "JSON", obj, DONTENUM);
 	}
 
 	private NativeJSON() {
@@ -76,8 +75,7 @@ public final class NativeJSON extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(JSON_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -130,16 +128,14 @@ public final class NativeJSON extends IdScriptableObject {
 		}
 	}
 
-	public static Object parse(Context cx, Scriptable scope, String jtext,
-							   Callable reviver) {
+	public static Object parse(Context cx, Scriptable scope, String jtext, Callable reviver) {
 		Object unfiltered = parse(cx, scope, jtext);
 		Scriptable root = cx.newObject(scope);
 		root.put("", root, unfiltered);
 		return walk(cx, scope, reviver, root, "");
 	}
 
-	private static Object walk(Context cx, Scriptable scope, Callable reviver,
-							   Scriptable holder, Object name) {
+	private static Object walk(Context cx, Scriptable scope, Callable reviver, Scriptable holder, Object name) {
 		final Object property;
 		if (name instanceof Number) {
 			property = holder.get(((Number) name).intValue(), holder);
@@ -202,8 +198,7 @@ public final class NativeJSON extends IdScriptableObject {
 	}
 
 	private static class StringifyState {
-		StringifyState(Context cx, Scriptable scope, String indent, String gap,
-					   Callable replacer, List<Object> propertyList) {
+		StringifyState(Context cx, Scriptable scope, String indent, String gap, Callable replacer, List<Object> propertyList) {
 			this.cx = cx;
 			this.scope = scope;
 
@@ -223,8 +218,7 @@ public final class NativeJSON extends IdScriptableObject {
 		Scriptable scope;
 	}
 
-	public static Object stringify(Context cx, Scriptable scope, Object value,
-								   Object replacer, Object space) {
+	public static Object stringify(Context cx, Scriptable scope, Object value, Object replacer, Object space) {
 		String indent = "";
 		String gap = "";
 
@@ -265,11 +259,7 @@ public final class NativeJSON extends IdScriptableObject {
 			}
 		}
 
-		StringifyState state = new StringifyState(cx, scope,
-				indent,
-				gap,
-				replacerFunction,
-				propertyList);
+		StringifyState state = new StringifyState(cx, scope, indent, gap, replacerFunction, propertyList);
 
 		ScriptableObject wrapper = new NativeObject();
 		wrapper.setParentScope(scope);
@@ -278,8 +268,7 @@ public final class NativeJSON extends IdScriptableObject {
 		return str("", wrapper, state);
 	}
 
-	private static Object str(Object key, Scriptable holder,
-							  StringifyState state) {
+	private static Object str(Object key, Scriptable holder, StringifyState state) {
 		Object value = null;
 		if (key instanceof String) {
 			value = getProperty(holder, (String) key);
@@ -290,14 +279,12 @@ public final class NativeJSON extends IdScriptableObject {
 		if (value instanceof Scriptable && hasProperty((Scriptable) value, "toJSON")) {
 			Object toJSON = getProperty((Scriptable) value, "toJSON");
 			if (toJSON instanceof Callable) {
-				value = callMethod(state.cx, (Scriptable) value, "toJSON",
-						new Object[]{key});
+				value = callMethod(state.cx, (Scriptable) value, "toJSON", new Object[]{key});
 			}
 		}
 
 		if (state.replacer != null) {
-			value = state.replacer.call(state.cx, state.scope, holder,
-					new Object[]{key, value});
+			value = state.replacer.call(state.cx, state.scope, holder, new Object[]{key, value});
 		}
 
 
@@ -325,8 +312,7 @@ public final class NativeJSON extends IdScriptableObject {
 
 		if (value instanceof Number) {
 			double d = ((Number) value).doubleValue();
-			if (!Double.isNaN(d) && d != Double.POSITIVE_INFINITY &&
-					d != Double.NEGATIVE_INFINITY) {
+			if (!Double.isNaN(d) && d != Double.POSITIVE_INFINITY && d != Double.NEGATIVE_INFINITY) {
 				return ScriptRuntime.toString(value);
 			}
 			return "null";
@@ -396,8 +382,7 @@ public final class NativeJSON extends IdScriptableObject {
 			} else {
 				String separator = ",\n" + state.indent;
 				String properties = join(partial, separator);
-				finalValue = "{\n" + state.indent + properties + '\n' +
-						stepback + '}';
+				finalValue = "{\n" + state.indent + properties + '\n' + stepback + '}';
 			}
 		}
 
@@ -525,12 +510,7 @@ public final class NativeJSON extends IdScriptableObject {
 		return id;
 	}
 
-	private static final int
-			Id_toSource = 1,
-			Id_parse = 2,
-			Id_stringify = 3,
-			LAST_METHOD_ID = 3,
-			MAX_ID = 3;
+	private static final int Id_toSource = 1, Id_parse = 2, Id_stringify = 3, LAST_METHOD_ID = 3, MAX_ID = 3;
 
 	// #/string_id_map#
 }

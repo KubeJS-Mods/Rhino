@@ -16,8 +16,7 @@ import dev.latvian.mods.rhino.Undefined;
  * It also implements List&lt;Long&gt; for direct manipulation in Java.
  */
 
-public class NativeUint32Array
-		extends NativeTypedArrayView<Long> {
+public class NativeUint32Array extends NativeTypedArrayView<Long> {
 	private static final long serialVersionUID = -7987831421954144244L;
 
 	private static final String CLASS_NAME = "Uint32Array";

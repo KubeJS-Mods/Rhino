@@ -32,9 +32,7 @@ public class ParenthesizedExpression extends AstNode {
 	}
 
 	public ParenthesizedExpression(AstNode expr) {
-		this(expr != null ? expr.getPosition() : 0,
-				expr != null ? expr.getLength() : 1,
-				expr);
+		this(expr != null ? expr.getPosition() : 0, expr != null ? expr.getLength() : 1, expr);
 	}
 
 	public ParenthesizedExpression(int pos, int len, AstNode expr) {

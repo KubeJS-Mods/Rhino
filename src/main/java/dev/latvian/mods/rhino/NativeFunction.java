@@ -81,8 +81,7 @@ public abstract class NativeFunction extends BaseFunction {
 	 * @param value     The return value of yield (if required).
 	 * @return The next yielded value (if any)
 	 */
-	public Object resumeGenerator(Context cx, Scriptable scope,
-								  int operation, Object state, Object value) {
+	public Object resumeGenerator(Context cx, Scriptable scope, int operation, Object state, Object value) {
 		throw new EvaluatorException("resumeGenerator() not implemented");
 	}
 

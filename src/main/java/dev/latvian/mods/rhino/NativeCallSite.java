@@ -114,8 +114,7 @@ public class NativeCallSite extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(CALLSITE_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -301,22 +300,6 @@ public class NativeCallSite extends IdScriptableObject {
 		return id;
 	}
 
-	private static final int
-			Id_constructor = 1,
-			Id_getThis = 2,
-			Id_getTypeName = 3,
-			Id_getFunction = 4,
-			Id_getFunctionName = 5,
-			Id_getMethodName = 6,
-			Id_getFileName = 7,
-			Id_getLineNumber = 8,
-			Id_getColumnNumber = 9,
-			Id_getEvalOrigin = 10,
-			Id_isToplevel = 11,
-			Id_isEval = 12,
-			Id_isNative = 13,
-			Id_isConstructor = 14,
-			Id_toString = 15,
-			MAX_PROTOTYPE_ID = 15;
+	private static final int Id_constructor = 1, Id_getThis = 2, Id_getTypeName = 3, Id_getFunction = 4, Id_getFunctionName = 5, Id_getMethodName = 6, Id_getFileName = 7, Id_getLineNumber = 8, Id_getColumnNumber = 9, Id_getEvalOrigin = 10, Id_isToplevel = 11, Id_isEval = 12, Id_isNative = 13, Id_isConstructor = 14, Id_toString = 15, MAX_PROTOTYPE_ID = 15;
 	// #/string_id_map#
 }

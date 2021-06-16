@@ -70,24 +70,16 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 				default:
 					throw Kit.codeBug();
 			}
-			IdFunctionObject f = new IdFunctionObject(obj, FTAG, id, name,
-					arity, scope);
+			IdFunctionObject f = new IdFunctionObject(obj, FTAG, id, name, arity, scope);
 			if (sealed) {
 				f.sealObject();
 			}
 			f.exportAsScopeProperty();
 		}
 
-		ScriptableObject.defineProperty(
-				scope, "NaN", ScriptRuntime.NaNobj,
-				ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT);
-		ScriptableObject.defineProperty(
-				scope, "Infinity",
-				ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY),
-				ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT);
-		ScriptableObject.defineProperty(
-				scope, "undefined", Undefined.instance,
-				ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT);
+		ScriptableObject.defineProperty(scope, "NaN", ScriptRuntime.NaNobj, ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT);
+		ScriptableObject.defineProperty(scope, "Infinity", ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY), ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT);
+		ScriptableObject.defineProperty(scope, "undefined", Undefined.instance, ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT);
 
         /*
             Each error constructor gets its own Error object as a prototype,
@@ -99,15 +91,10 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 				continue;
 			}
 			String name = error.name();
-			ScriptableObject errorProto =
-					(ScriptableObject) ScriptRuntime.newBuiltinObject(cx, scope,
-							TopLevel.Builtins.Error,
-							ScriptRuntime.emptyArgs);
+			ScriptableObject errorProto = (ScriptableObject) ScriptRuntime.newBuiltinObject(cx, scope, TopLevel.Builtins.Error, ScriptRuntime.emptyArgs);
 			errorProto.put("name", errorProto, name);
 			errorProto.put("message", errorProto, "");
-			IdFunctionObject ctor = new IdFunctionObject(obj, FTAG,
-					Id_new_CommonError,
-					name, 1, scope);
+			IdFunctionObject ctor = new IdFunctionObject(obj, FTAG, Id_new_CommonError, name, 1, scope);
 			ctor.markAsConstructor(errorProto);
 			errorProto.put("constructor", errorProto, ctor);
 			errorProto.setAttributes("constructor", ScriptableObject.DONTENUM);
@@ -120,8 +107,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (f.hasTag(FTAG)) {
 			int methodId = f.methodId();
 			switch (methodId) {
@@ -184,8 +170,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 					return js_unescape(args);
 
 				case Id_uneval: {
-					Object value = (args.length != 0)
-							? args[0] : Undefined.instance;
+					Object value = (args.length != 0) ? args[0] : Undefined.instance;
 					return ScriptRuntime.uneval(cx, scope, value);
 				}
 
@@ -219,8 +204,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 				break;
 			}
 			start++;
-		}
-		while (start < len);
+		} while (start < len);
 
 		if (c == '+' || (negative = (c == '-'))) {
 			start++;
@@ -383,18 +367,14 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 	 */
 
 	private static Object js_escape(Object[] args) {
-		final int
-				URL_XALPHAS = 1,
-				URL_XPALPHAS = 2,
-				URL_PATH = 4;
+		final int URL_XALPHAS = 1, URL_XPALPHAS = 2, URL_PATH = 4;
 
 		String s = ScriptRuntime.toString(args, 0);
 
 		int mask = URL_XALPHAS | URL_XPALPHAS | URL_PATH;
 		if (args.length > 1) { // the 'mask' argument.  Non-ECMA.
 			double d = ScriptRuntime.toNumber(args[1]);
-			if (Double.isNaN(d) || ((mask = (int) d) != d) ||
-					0 != (mask & ~(URL_XALPHAS | URL_XPALPHAS | URL_PATH))) {
+			if (Double.isNaN(d) || ((mask = (int) d) != d) || 0 != (mask & ~(URL_XALPHAS | URL_XPALPHAS | URL_PATH))) {
 				throw Context.reportRuntimeError0("msg.bad.esc.mask");
 			}
 		}
@@ -402,11 +382,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 		StringBuilder sb = null;
 		for (int k = 0, L = s.length(); k != L; ++k) {
 			int c = s.charAt(k);
-			if (mask != 0
-					&& ((c >= '0' && c <= '9')
-					|| (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
-					|| c == '@' || c == '*' || c == '_' || c == '-' || c == '.'
-					|| (0 != (mask & URL_PATH) && (c == '/' || c == '+')))) {
+			if (mask != 0 && ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '@' || c == '*' || c == '_' || c == '-' || c == '.' || (0 != (mask & URL_PATH) && (c == '/' || c == '+')))) {
 				if (sb != null) {
 					sb.append((char) c);
 				}
@@ -660,8 +636,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 						k += 3;
 					}
 					// Check for overlongs and other should-not-present codes
-					if (ucs4Char < minUcs4Char
-							|| (ucs4Char >= 0xD800 && ucs4Char <= 0xDFFF)) {
+					if (ucs4Char < minUcs4Char || (ucs4Char >= 0xD800 && ucs4Char <= 0xDFFF)) {
 						ucs4Char = INVALID_UTF8;
 					} else if (ucs4Char == 0xFFFE || ucs4Char == 0xFFFF) {
 						ucs4Char = 0xFFFD;
@@ -691,8 +666,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 	}
 
 	private static boolean encodeUnescaped(char c, boolean fullUri) {
-		if (('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z')
-				|| ('0' <= c && c <= '9')) {
+		if (('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z') || ('0' <= c && c <= '9')) {
 			return true;
 		}
 		if ("-_.!~*'()".indexOf(c) >= 0) {
@@ -705,8 +679,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 	}
 
 	private static EcmaError uriError() {
-		return ScriptRuntime.constructError("URIError",
-				ScriptRuntime.getMessage0("msg.bad.uri"));
+		return ScriptRuntime.constructError("URIError", ScriptRuntime.getMessage0("msg.bad.uri"));
 	}
 
 	private static final String URI_DECODE_RESERVED = ";/?:@&=+$,#";
@@ -741,20 +714,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 
 	private static final Object FTAG = "Global";
 
-	private static final int
-			Id_decodeURI = 1,
-			Id_decodeURIComponent = 2,
-			Id_encodeURI = 3,
-			Id_encodeURIComponent = 4,
-			Id_escape = 5,
-			Id_eval = 6,
-			Id_isFinite = 7,
-			Id_isNaN = 8,
-			Id_isXMLName = 9,
-			Id_parseFloat = 10,
-			Id_parseInt = 11,
-			Id_unescape = 12,
-			Id_uneval = 13,
+	private static final int Id_decodeURI = 1, Id_decodeURIComponent = 2, Id_encodeURI = 3, Id_encodeURIComponent = 4, Id_escape = 5, Id_eval = 6, Id_isFinite = 7, Id_isNaN = 8, Id_isXMLName = 9, Id_parseFloat = 10, Id_parseInt = 11, Id_unescape = 12, Id_uneval = 13,
 
 	LAST_SCOPE_FUNCTION_ID = 13,
 

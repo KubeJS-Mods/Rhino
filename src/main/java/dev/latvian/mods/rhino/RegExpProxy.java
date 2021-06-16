@@ -22,18 +22,11 @@ public interface RegExpProxy {
 
 	Object compileRegExp(Context cx, String source, String flags);
 
-	Scriptable wrapRegExp(Context cx, Scriptable scope,
-						  Object compiled);
+	Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled);
 
-	Object action(Context cx, Scriptable scope,
-				  Scriptable thisObj, Object[] args,
-				  int actionType);
+	Object action(Context cx, Scriptable scope, Scriptable thisObj, Object[] args, int actionType);
 
-	int find_split(Context cx, Scriptable scope, String target,
-				   String separator, Scriptable re,
-				   int[] ip, int[] matchlen,
-				   boolean[] matched, String[][] parensp);
+	int find_split(Context cx, Scriptable scope, String target, String separator, Scriptable re, int[] ip, int[] matchlen, boolean[] matched, String[][] parensp);
 
-	Object js_split(Context _cx, Scriptable _scope,
-					String thisString, Object[] _args);
+	Object js_split(Context _cx, Scriptable _scope, String thisString, Object[] _args);
 }

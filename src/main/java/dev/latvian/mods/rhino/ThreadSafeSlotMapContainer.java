@@ -16,8 +16,7 @@ import java.util.concurrent.locks.StampedLock;
  * This class extends the SlotMapContainer so that we have thread-safe access to all
  * the properties of an object.
  */
-class ThreadSafeSlotMapContainer
-		extends SlotMapContainer {
+class ThreadSafeSlotMapContainer extends SlotMapContainer {
 
 	private final StampedLock lock = new StampedLock();
 

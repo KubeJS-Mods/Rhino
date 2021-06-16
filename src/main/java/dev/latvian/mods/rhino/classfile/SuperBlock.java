@@ -47,8 +47,7 @@ final class SuperBlock {
 	int[] getTrimmedLocals() {
 		int last = locals.length - 1;
 		// Exclude all of the trailing TOPs not bound to a DOUBLE/LONG
-		while (last >= 0 && locals[last] == TypeInfo.TOP &&
-				!TypeInfo.isTwoWords(locals[last - 1])) {
+		while (last >= 0 && locals[last] == TypeInfo.TOP && !TypeInfo.isTwoWords(locals[last - 1])) {
 			last--;
 		}
 		last++;
@@ -75,20 +74,16 @@ final class SuperBlock {
 		return copy;
 	}
 
-	boolean merge(int[] locals, int localsTop, int[] stack, int stackTop,
-				  ConstantPool pool) {
+	boolean merge(int[] locals, int localsTop, int[] stack, int stackTop, ConstantPool pool) {
 		if (!isInitialized) {
 			System.arraycopy(locals, 0, this.locals, 0, localsTop);
 			this.stack = new int[stackTop];
 			System.arraycopy(stack, 0, this.stack, 0, stackTop);
 			isInitialized = true;
 			return true;
-		} else if (this.locals.length == localsTop &&
-				this.stack.length == stackTop) {
-			boolean localsChanged = mergeState(this.locals, locals, localsTop,
-					pool);
-			boolean stackChanged = mergeState(this.stack, stack, stackTop,
-					pool);
+		} else if (this.locals.length == localsTop && this.stack.length == stackTop) {
+			boolean localsChanged = mergeState(this.locals, locals, localsTop, pool);
+			boolean stackChanged = mergeState(this.stack, stack, stackTop, pool);
 			return localsChanged || stackChanged;
 		} else {
 			if (ClassFileWriter.StackMapTable.DEBUGSTACKMAP) {
@@ -110,8 +105,7 @@ final class SuperBlock {
 	 * constraint that is imposed on merging operand stacks (the local variable
 	 * array is always the same size).
 	 */
-	private static boolean mergeState(int[] current, int[] incoming, int size,
-									  ConstantPool pool) {
+	private static boolean mergeState(int[] current, int[] incoming, int size, ConstantPool pool) {
 		boolean changed = false;
 		for (int i = 0; i < size; i++) {
 			int currentType = current[i];

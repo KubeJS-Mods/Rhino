@@ -136,8 +136,6 @@ final class EqualObjectGraphs {
 			return o2 instanceof NativeGlobal; // stateless objects
 		} else if (o1 instanceof JavaAdapter) {
 			return o2 instanceof JavaAdapter; // stateless objects
-		} else if (o1 instanceof NativeJavaTopPackage) {
-			return o2 instanceof NativeJavaTopPackage; // stateless objects
 		}
 
 		// Fallback case for everything else.

@@ -33,8 +33,7 @@ final class Arguments extends IdScriptableObject {
 		calleeObj = f;
 
 		int version = f.getLanguageVersion();
-		if (version <= Context.VERSION_1_3
-				&& version != Context.VERSION_DEFAULT) {
+		if (version <= Context.VERSION_1_3 && version != Context.VERSION_DEFAULT) {
 			callerObj = null;
 		} else {
 			callerObj = NOT_FOUND;
@@ -159,10 +158,7 @@ final class Arguments extends IdScriptableObject {
 
 	// #string_id_map#
 
-	private static final int
-			Id_callee = 1,
-			Id_length = 2,
-			Id_caller = 3,
+	private static final int Id_callee = 1, Id_length = 2, Id_caller = 3,
 
 	MAX_INSTANCE_ID = Id_caller;
 
@@ -206,7 +202,6 @@ final class Arguments extends IdScriptableObject {
 				return super.findInstanceIdInfo(s);
 			}
 		}
-
 
 		if (id == 0) {
 			return super.findInstanceIdInfo(s);
@@ -375,9 +370,7 @@ final class Arguments extends IdScriptableObject {
 	}
 
 	@Override
-	protected void defineOwnProperty(Context cx, Object id,
-									 ScriptableObject desc,
-									 boolean checkValid) {
+	protected void defineOwnProperty(Context cx, Object id, ScriptableObject desc, boolean checkValid) {
 		super.defineOwnProperty(cx, id, desc, checkValid);
 		if (ScriptRuntime.isSymbol(id)) {
 			return;
@@ -436,8 +429,7 @@ final class Arguments extends IdScriptableObject {
 		private static final long serialVersionUID = 4239122318596177391L;
 
 		@Override
-		public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-						   Object[] args) {
+		public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 			// TODO : call %ArrayProto_values%
 			// 9.4.4.6 CreateUnmappedArgumentsObject(argumentsList)
 			//  1. Perform DefinePropertyOrThrow(obj, @@iterator, PropertyDescriptor {[[Value]]:%ArrayProto_values%,

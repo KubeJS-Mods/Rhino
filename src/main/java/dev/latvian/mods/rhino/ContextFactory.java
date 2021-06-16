@@ -236,9 +236,7 @@ public class ContextFactory {
 				 * version...
 				 */
 				version = cx.getLanguageVersion();
-				return (version == Context.VERSION_1_0
-						|| version == Context.VERSION_1_1
-						|| version == Context.VERSION_1_2);
+				return (version == Context.VERSION_1_0 || version == Context.VERSION_1_1 || version == Context.VERSION_1_2);
 
 			case Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME:
 				return false;
@@ -255,8 +253,7 @@ public class ContextFactory {
 
 			case Context.FEATURE_E4X:
 				version = cx.getLanguageVersion();
-				return (version == Context.VERSION_DEFAULT
-						|| version >= Context.VERSION_1_6);
+				return (version == Context.VERSION_DEFAULT || version >= Context.VERSION_1_6);
 
 			case Context.FEATURE_DYNAMIC_SCOPE:
 				return false;
@@ -351,13 +348,11 @@ public class ContextFactory {
 			throw new IllegalArgumentException("loader is null");
 		}
 		if (!Kit.testIfCanLoadRhinoClasses(loader)) {
-			throw new IllegalArgumentException(
-					"Loader can not resolve Rhino classes");
+			throw new IllegalArgumentException("Loader can not resolve Rhino classes");
 		}
 
 		if (this.applicationClassLoader != null) {
-			throw new IllegalStateException(
-					"applicationClassLoader can only be set once");
+			throw new IllegalStateException("applicationClassLoader can only be set once");
 		}
 		checkNotSealed();
 
@@ -371,9 +366,7 @@ public class ContextFactory {
 	 * to perform the real call. In this way execution of any script
 	 * happens inside this function.
 	 */
-	protected Object doTopCall(Callable callable,
-							   Context cx, Scriptable scope,
-							   Scriptable thisObj, Object[] args) {
+	protected Object doTopCall(Callable callable, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		Object result = callable.call(cx, scope, thisObj, args);
 		return result instanceof ConsString ? result.toString() : result;
 	}

@@ -25,8 +25,7 @@ public interface DebugFrame {
 	 * @param thisObj    value of the JavaScript <code>this</code> object
 	 * @param args       the array of arguments
 	 */
-	void onEnter(Context cx, Scriptable activation,
-				 Scriptable thisObj, Object[] args);
+	void onEnter(Context cx, Scriptable activation, Scriptable thisObj, Object[] args);
 
 	/**
 	 * Called when executed code reaches new line in the source.

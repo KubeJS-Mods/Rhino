@@ -456,8 +456,7 @@ public class Context {
 		Object helper = VMBridge.instance.getThreadContextHelper();
 		Context cx = VMBridge.instance.getContext(helper);
 		if (cx == null) {
-			throw new IllegalStateException(
-					"Calling Context.exit without previous Context.enter");
+			throw new IllegalStateException("Calling Context.exit without previous Context.enter");
 		}
 		if (cx.enterCount < 1) {
 			Kit.codeBug();
@@ -484,9 +483,7 @@ public class Context {
 	 *
 	 * @see ContextFactory#call(ContextAction)
 	 */
-	public static Object call(ContextFactory factory, final Callable callable,
-							  final Scriptable scope, final Scriptable thisObj,
-							  final Object[] args) {
+	public static Object call(ContextFactory factory, final Callable callable, final Scriptable scope, final Scriptable thisObj, final Object[] args) {
 		if (factory == null) {
 			factory = ContextFactory.getGlobal();
 		}
@@ -599,9 +596,7 @@ public class Context {
 		checkLanguageVersion(version);
 		Object listeners = propertyListeners;
 		if (listeners != null && version != this.version) {
-			firePropertyChangeImpl(listeners, languageVersionProperty,
-					this.version,
-					version);
+			firePropertyChangeImpl(listeners, languageVersionProperty, this.version, version);
 		}
 		this.version = version;
 	}
@@ -682,8 +677,7 @@ public class Context {
 		}
 		Object listeners = propertyListeners;
 		if (listeners != null) {
-			firePropertyChangeImpl(listeners, errorReporterProperty,
-					old, reporter);
+			firePropertyChangeImpl(listeners, errorReporterProperty, old, reporter);
 		}
 		this.errorReporter = reporter;
 		return old;
@@ -758,16 +752,14 @@ public class Context {
 	 * @see java.beans.PropertyChangeListener
 	 * @see java.beans.PropertyChangeEvent
 	 */
-	final void firePropertyChange(String property, Object oldValue,
-								  Object newValue) {
+	final void firePropertyChange(String property, Object oldValue, Object newValue) {
 		Object listeners = propertyListeners;
 		if (listeners != null) {
 			firePropertyChangeImpl(listeners, property, oldValue, newValue);
 		}
 	}
 
-	private void firePropertyChangeImpl(Object listeners, String property,
-										Object oldValue, Object newValue) {
+	private void firePropertyChangeImpl(Object listeners, String property, Object oldValue, Object newValue) {
 		for (int i = 0; ; ++i) {
 			Object l = Kit.getListener(listeners, i);
 			if (l == null) {
@@ -775,8 +767,7 @@ public class Context {
 			}
 			if (l instanceof PropertyChangeListener) {
 				PropertyChangeListener pcl = (PropertyChangeListener) l;
-				pcl.propertyChange(new PropertyChangeEvent(
-						this, property, oldValue, newValue));
+				pcl.propertyChange(new PropertyChangeEvent(this, property, oldValue, newValue));
 			}
 		}
 	}
@@ -791,15 +782,12 @@ public class Context {
 	 * @param lineOffset the offset into lineSource where problem was detected
 	 * @see ErrorReporter
 	 */
-	public static void reportWarning(String message, String sourceName,
-									 int lineno, String lineSource,
-									 int lineOffset) {
+	public static void reportWarning(String message, String sourceName, int lineno, String lineSource, int lineOffset) {
 		Context cx = Context.getContext();
 		if (cx.hasFeature(FEATURE_WARNING_AS_ERROR)) {
 			reportError(message, sourceName, lineno, lineSource, lineOffset);
 		} else {
-			cx.getErrorReporter().warning(message, sourceName, lineno,
-					lineSource, lineOffset);
+			cx.getErrorReporter().warning(message, sourceName, lineno, lineSource, lineOffset);
 		}
 	}
 
@@ -836,16 +824,12 @@ public class Context {
 	 * @param lineOffset the offset into lineSource where problem was detected
 	 * @see ErrorReporter
 	 */
-	public static void reportError(String message, String sourceName,
-								   int lineno, String lineSource,
-								   int lineOffset) {
+	public static void reportError(String message, String sourceName, int lineno, String lineSource, int lineOffset) {
 		Context cx = getCurrentContext();
 		if (cx != null) {
-			cx.getErrorReporter().error(message, sourceName, lineno,
-					lineSource, lineOffset);
+			cx.getErrorReporter().error(message, sourceName, lineno, lineSource, lineOffset);
 		} else {
-			throw new EvaluatorException(message, sourceName, lineno,
-					lineSource, lineOffset);
+			throw new EvaluatorException(message, sourceName, lineno, lineSource, lineOffset);
 		}
 	}
 
@@ -873,16 +857,10 @@ public class Context {
 	 * execution of the script
 	 * @see ErrorReporter
 	 */
-	public static EvaluatorException reportRuntimeError(String message,
-														String sourceName,
-														int lineno,
-														String lineSource,
-														int lineOffset) {
+	public static EvaluatorException reportRuntimeError(String message, String sourceName, int lineno, String lineSource, int lineOffset) {
 		Context cx = getCurrentContext();
 		if (cx != null) {
-			return cx.getErrorReporter().
-					runtimeError(message, sourceName, lineno,
-							lineSource, lineOffset);
+			return cx.getErrorReporter().runtimeError(message, sourceName, lineno, lineSource, lineOffset);
 		}
 		throw new EvaluatorException(message, sourceName, lineno, lineSource, lineOffset);
 	}
@@ -892,30 +870,23 @@ public class Context {
 		return reportRuntimeError(msg);
 	}
 
-	public static EvaluatorException reportRuntimeError1(String messageId,
-														 Object arg1) {
+	public static EvaluatorException reportRuntimeError1(String messageId, Object arg1) {
 		String msg = ScriptRuntime.getMessage1(messageId, arg1);
 		return reportRuntimeError(msg);
 	}
 
-	public static EvaluatorException reportRuntimeError2(String messageId,
-														 Object arg1, Object arg2) {
+	public static EvaluatorException reportRuntimeError2(String messageId, Object arg1, Object arg2) {
 		String msg = ScriptRuntime.getMessage2(messageId, arg1, arg2);
 		return reportRuntimeError(msg);
 	}
 
-	public static EvaluatorException reportRuntimeError3(String messageId,
-														 Object arg1, Object arg2,
-														 Object arg3) {
+	public static EvaluatorException reportRuntimeError3(String messageId, Object arg1, Object arg2, Object arg3) {
 		String msg = ScriptRuntime.getMessage3(messageId, arg1, arg2, arg3);
 		return reportRuntimeError(msg);
 	}
 
-	public static EvaluatorException reportRuntimeError4(String messageId,
-														 Object arg1, Object arg2,
-														 Object arg3, Object arg4) {
-		String msg
-				= ScriptRuntime.getMessage4(messageId, arg1, arg2, arg3, arg4);
+	public static EvaluatorException reportRuntimeError4(String messageId, Object arg1, Object arg2, Object arg3, Object arg4) {
+		String msg = ScriptRuntime.getMessage4(messageId, arg1, arg2, arg3, arg4);
 		return reportRuntimeError(msg);
 	}
 
@@ -1054,8 +1025,7 @@ public class Context {
 	 * argument if it is not null or newly allocated scope object.
 	 * @since 1.4R3
 	 */
-	public ScriptableObject initStandardObjects(ScriptableObject scope,
-												boolean sealed) {
+	public ScriptableObject initStandardObjects(ScriptableObject scope, boolean sealed) {
 		return ScriptRuntime.initStandardObjects(this, scope, sealed);
 	}
 
@@ -1094,8 +1064,7 @@ public class Context {
 	 * argument if it is not null or newly allocated scope object.
 	 * @since 1.7.6
 	 */
-	public ScriptableObject initSafeStandardObjects(ScriptableObject scope,
-													boolean sealed) {
+	public ScriptableObject initSafeStandardObjects(ScriptableObject scope, boolean sealed) {
 		return ScriptRuntime.initSafeStandardObjects(this, scope, sealed);
 	}
 
@@ -1123,11 +1092,8 @@ public class Context {
 	 * @return the result of evaluating the string
 	 * @see SecurityController
 	 */
-	public final Object evaluateString(Scriptable scope, String source,
-									   String sourceName, int lineno,
-									   Object securityDomain) {
-		Script script = compileString(source, sourceName, lineno,
-				securityDomain);
+	public final Object evaluateString(Scriptable scope, String source, String sourceName, int lineno, Object securityDomain) {
+		Script script = compileString(source, sourceName, lineno, securityDomain);
 		if (script != null) {
 			return script.exec(this, scope);
 		}
@@ -1150,12 +1116,8 @@ public class Context {
 	 * @return the result of evaluating the source
 	 * @throws IOException if an IOException was generated by the Reader
 	 */
-	public final Object evaluateReader(Scriptable scope, Reader in,
-									   String sourceName, int lineno,
-									   Object securityDomain)
-			throws IOException {
-		Script script = compileReader(in, sourceName, lineno,
-				securityDomain);
+	public final Object evaluateReader(Scriptable scope, Reader in, String sourceName, int lineno, Object securityDomain) throws IOException {
+		Script script = compileReader(in, sourceName, lineno, securityDomain);
 		if (script != null) {
 			return script.exec(this, scope);
 		}
@@ -1175,17 +1137,12 @@ public class Context {
 	 *                             in a call to {@link #captureContinuation()}
 	 * @since 1.7 Release 2
 	 */
-	public Object executeScriptWithContinuations(Script script,
-												 Scriptable scope)
-			throws ContinuationPending {
-		if (!(script instanceof InterpretedFunction) ||
-				!((InterpretedFunction) script).isScript()) {
+	public Object executeScriptWithContinuations(Script script, Scriptable scope) throws ContinuationPending {
+		if (!(script instanceof InterpretedFunction) || !((InterpretedFunction) script).isScript()) {
 			// Can only be applied to scripts
-			throw new IllegalArgumentException("Script argument was not" +
-					" a script or was not created by interpreted mode ");
+			throw new IllegalArgumentException("Script argument was not" + " a script or was not created by interpreted mode ");
 		}
-		return callFunctionWithContinuations((InterpretedFunction) script,
-				scope, ScriptRuntime.emptyArgs);
+		return callFunctionWithContinuations((InterpretedFunction) script, scope, ScriptRuntime.emptyArgs);
 	}
 
 	/**
@@ -1202,17 +1159,13 @@ public class Context {
 	 *                             in a call to {@link #captureContinuation()}
 	 * @since 1.7 Release 2
 	 */
-	public Object callFunctionWithContinuations(Callable function,
-												Scriptable scope, Object[] args)
-			throws ContinuationPending {
+	public Object callFunctionWithContinuations(Callable function, Scriptable scope, Object[] args) throws ContinuationPending {
 		if (!(function instanceof InterpretedFunction)) {
 			// Can only be applied to scripts
-			throw new IllegalArgumentException("Function argument was not" +
-					" created by interpreted mode ");
+			throw new IllegalArgumentException("Function argument was not" + " created by interpreted mode ");
 		}
 		if (ScriptRuntime.hasTopCall(this)) {
-			throw new IllegalStateException("Cannot have any pending top " +
-					"calls when executing a script with continuations");
+			throw new IllegalStateException("Cannot have any pending top " + "calls when executing a script with continuations");
 		}
 		// Annotate so we can check later to ensure no java code in
 		// intervening frames
@@ -1235,8 +1188,7 @@ public class Context {
 	 * @since 1.7 Release 2
 	 */
 	public ContinuationPending captureContinuation() {
-		return new ContinuationPending(
-				Interpreter.captureContinuation(this));
+		return new ContinuationPending(Interpreter.captureContinuation(this));
 	}
 
 	/**
@@ -1256,13 +1208,9 @@ public class Context {
 	 *                             the code terminates
 	 * @since 1.7 Release 2
 	 */
-	public Object resumeContinuation(Object continuation,
-									 Scriptable scope, Object functionResult)
-			throws ContinuationPending {
+	public Object resumeContinuation(Object continuation, Scriptable scope, Object functionResult) throws ContinuationPending {
 		Object[] args = {functionResult};
-		return Interpreter.restartContinuation(
-				(NativeContinuation) continuation,
-				this, scope, args);
+		return Interpreter.restartContinuation((NativeContinuation) continuation, this, scope, args);
 	}
 
 	/**
@@ -1317,16 +1265,13 @@ public class Context {
 	 * @throws IOException if an IOException was generated by the Reader
 	 * @see Script
 	 */
-	public final Script compileReader(Reader in, String sourceName,
-									  int lineno, Object securityDomain)
-			throws IOException {
+	public final Script compileReader(Reader in, String sourceName, int lineno, Object securityDomain) throws IOException {
 		if (lineno < 0) {
 			// For compatibility IllegalArgumentException can not be thrown here
 			lineno = 0;
 		}
 
-		return (Script) compileImpl(null, Kit.readReader(in), sourceName, lineno,
-				securityDomain, false, null, null);
+		return (Script) compileImpl(null, Kit.readReader(in), sourceName, lineno, securityDomain, false, null, null);
 	}
 
 	/**
@@ -1345,26 +1290,17 @@ public class Context {
 	 * @return a script that may later be executed
 	 * @see Script
 	 */
-	public final Script compileString(String source,
-									  String sourceName, int lineno,
-									  Object securityDomain) {
+	public final Script compileString(String source, String sourceName, int lineno, Object securityDomain) {
 		if (lineno < 0) {
 			// For compatibility IllegalArgumentException can not be thrown here
 			lineno = 0;
 		}
-		return compileString(source, null, null, sourceName, lineno,
-				securityDomain);
+		return compileString(source, null, null, sourceName, lineno, securityDomain);
 	}
 
-	final Script compileString(String source,
-							   Evaluator compiler,
-							   ErrorReporter compilationErrorReporter,
-							   String sourceName, int lineno,
-							   Object securityDomain) {
+	final Script compileString(String source, Evaluator compiler, ErrorReporter compilationErrorReporter, String sourceName, int lineno, Object securityDomain) {
 		try {
-			return (Script) compileImpl(null, source, sourceName, lineno,
-					securityDomain, false,
-					compiler, compilationErrorReporter);
+			return (Script) compileImpl(null, source, sourceName, lineno, securityDomain, false, compiler, compilationErrorReporter);
 		} catch (IOException ioe) {
 			// Should not happen when dealing with source as string
 			throw new RuntimeException(ioe);
@@ -1388,22 +1324,13 @@ public class Context {
 	 * @return a Function that may later be called
 	 * @see Function
 	 */
-	public final Function compileFunction(Scriptable scope, String source,
-										  String sourceName, int lineno,
-										  Object securityDomain) {
-		return compileFunction(scope, source, null, null, sourceName, lineno,
-				securityDomain);
+	public final Function compileFunction(Scriptable scope, String source, String sourceName, int lineno, Object securityDomain) {
+		return compileFunction(scope, source, null, null, sourceName, lineno, securityDomain);
 	}
 
-	final Function compileFunction(Scriptable scope, String source,
-								   Evaluator compiler,
-								   ErrorReporter compilationErrorReporter,
-								   String sourceName, int lineno,
-								   Object securityDomain) {
+	final Function compileFunction(Scriptable scope, String source, Evaluator compiler, ErrorReporter compilationErrorReporter, String sourceName, int lineno, Object securityDomain) {
 		try {
-			return (Function) compileImpl(scope, source, sourceName,
-					lineno, securityDomain, true,
-					compiler, compilationErrorReporter);
+			return (Function) compileImpl(scope, source, sourceName, lineno, securityDomain, true, compiler, compilationErrorReporter);
 		} catch (IOException ioe) {
 			// Should never happen because we just made the reader
 			// from a String
@@ -1479,8 +1406,7 @@ public class Context {
 	 */
 	public Scriptable newObject(Scriptable scope) {
 		NativeObject result = new NativeObject();
-		ScriptRuntime.setBuiltinProtoAndParent(result, scope,
-				TopLevel.Builtins.Object);
+		ScriptRuntime.setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Object);
 		return result;
 	}
 
@@ -1517,8 +1443,7 @@ public class Context {
 	 * @param args            the array of arguments for the constructor
 	 * @return the new object
 	 */
-	public Scriptable newObject(Scriptable scope, String constructorName,
-								Object[] args) {
+	public Scriptable newObject(Scriptable scope, String constructorName, Object[] args) {
 		return ScriptRuntime.newObject(this, scope, constructorName, args);
 	}
 
@@ -1533,8 +1458,7 @@ public class Context {
 	 */
 	public Scriptable newArray(Scriptable scope, int length) {
 		NativeArray result = new NativeArray(length);
-		ScriptRuntime.setBuiltinProtoAndParent(result, scope,
-				TopLevel.Builtins.Array);
+		ScriptRuntime.setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Array);
 		return result;
 	}
 
@@ -1553,8 +1477,7 @@ public class Context {
 			throw new IllegalArgumentException();
 		}
 		NativeArray result = new NativeArray(elements);
-		ScriptRuntime.setBuiltinProtoAndParent(result, scope,
-				TopLevel.Builtins.Array);
+		ScriptRuntime.setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Array);
 		return result;
 	}
 
@@ -1694,8 +1617,7 @@ public class Context {
 	 * @return the converted value
 	 * @throws EvaluatorException if the conversion cannot be performed
 	 */
-	public static Object jsToJava(Object value, Class<?> desiredType)
-			throws EvaluatorException {
+	public static Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
 		Context cx = getCurrentContext();
 		return NativeJavaObject.coerceTypeImpl(cx.hasTypeWrappers() ? cx.getTypeWrappers() : null, desiredType, value);
 	}
@@ -1725,8 +1647,7 @@ public class Context {
 		// special handling of Error so scripts would not catch them
 		if (e instanceof Error) {
 			Context cx = getContext();
-			if (cx == null ||
-					!cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
+			if (cx == null || !cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
 				throw (Error) e;
 			}
 		}
@@ -1878,8 +1799,7 @@ public class Context {
 			throw new IllegalArgumentException();
 		}
 		if (hasClassShutter) {
-			throw new SecurityException("Cannot overwrite existing " +
-					"ClassShutter object");
+			throw new SecurityException("Cannot overwrite existing " + "ClassShutter object");
 		}
 		classShutter = shutter;
 		hasClassShutter = true;
@@ -2172,10 +2092,8 @@ public class Context {
 			ContextFactory f = getFactory();
 			ClassLoader loader = f.getApplicationClassLoader();
 			if (loader == null) {
-				ClassLoader threadLoader
-						= Thread.currentThread().getContextClassLoader();
-				if (threadLoader != null
-						&& Kit.testIfCanLoadRhinoClasses(threadLoader)) {
+				ClassLoader threadLoader = Thread.currentThread().getContextClassLoader();
+				if (threadLoader != null && Kit.testIfCanLoadRhinoClasses(threadLoader)) {
 					// Thread.getContextClassLoader is not cached since
 					// its caching prevents it from GC which may lead to
 					// a memory leak and hides updates to
@@ -2207,8 +2125,7 @@ public class Context {
 			return;
 		}
 		if (!Kit.testIfCanLoadRhinoClasses(loader)) {
-			throw new IllegalArgumentException(
-					"Loader can not resolve Rhino classes");
+			throw new IllegalArgumentException("Loader can not resolve Rhino classes");
 		}
 		applicationClassLoader = loader;
 	}
@@ -2222,24 +2139,17 @@ public class Context {
 	static Context getContext() {
 		Context cx = getCurrentContext();
 		if (cx == null) {
-			throw new RuntimeException(
-					"No Context associated with current Thread");
+			throw new RuntimeException("No Context associated with current Thread");
 		}
 		return cx;
 	}
 
-	private Object compileImpl(Scriptable scope,
-							   String sourceString, String sourceName, int lineno,
-							   Object securityDomain, boolean returnFunction,
-							   Evaluator compiler,
-							   ErrorReporter compilationErrorReporter)
-			throws IOException {
+	private Object compileImpl(Scriptable scope, String sourceString, String sourceName, int lineno, Object securityDomain, boolean returnFunction, Evaluator compiler, ErrorReporter compilationErrorReporter) throws IOException {
 		if (sourceName == null) {
 			sourceName = "unnamed script";
 		}
 		if (securityDomain != null && getSecurityController() == null) {
-			throw new IllegalArgumentException(
-					"securityDomain should be null if setSecurityController() was never called");
+			throw new IllegalArgumentException("securityDomain should be null if setSecurityController() was never called");
 		}
 
 		// scope should be given if and only if compiling function
@@ -2253,8 +2163,7 @@ public class Context {
 			compilationErrorReporter = compilerEnv.getErrorReporter();
 		}
 
-		ScriptNode tree = parse(sourceString, sourceName, lineno,
-				compilerEnv, compilationErrorReporter, returnFunction);
+		ScriptNode tree = parse(sourceString, sourceName, lineno, compilerEnv, compilationErrorReporter, returnFunction);
 
 		Object bytecode;
 		try {
@@ -2295,9 +2204,7 @@ public class Context {
 		return result;
 	}
 
-	private ScriptNode parse(String sourceString, String sourceName, int lineno,
-							 CompilerEnvirons compilerEnv, ErrorReporter compilationErrorReporter,
-							 boolean returnFunction) throws IOException {
+	private ScriptNode parse(String sourceString, String sourceName, int lineno, CompilerEnvirons compilerEnv, ErrorReporter compilationErrorReporter, boolean returnFunction) throws IOException {
 		Parser p = new Parser(compilerEnv, compilationErrorReporter);
 		if (returnFunction) {
 			p.calledByCompileFunction = true;
@@ -2309,13 +2216,11 @@ public class Context {
 		AstRoot ast = p.parse(sourceString, sourceName, lineno);
 		if (returnFunction) {
 			// parser no longer adds function to script node
-			if (!(ast.getFirstChild() != null
-					&& ast.getFirstChild().getType() == Token.FUNCTION)) {
+			if (!(ast.getFirstChild() != null && ast.getFirstChild().getType() == Token.FUNCTION)) {
 				// XXX: the check just looks for the first child
 				// and allows for more nodes after it for compatibility
 				// with sources like function() {};;;
-				throw new IllegalArgumentException(
-						"compileFunction only accepts source with single JS function: " + sourceString);
+				throw new IllegalArgumentException("compileFunction only accepts source with single JS function: " + sourceString);
 			}
 		}
 
@@ -2324,8 +2229,7 @@ public class Context {
 		return tree;
 	}
 
-	private static void notifyDebugger_r(Context cx, DebuggableScript dscript,
-										 String debugSource) {
+	private static void notifyDebugger_r(Context cx, DebuggableScript dscript, String debugSource) {
 		cx.debugger.handleCompilationDone(cx, dscript, debugSource);
 		for (int i = 0; i != dscript.getFunctionCount(); ++i) {
 			notifyDebugger_r(cx, dscript.getFunction(i), debugSource);
@@ -2372,8 +2276,7 @@ public class Context {
 
 	RegExpProxy getRegExpProxy() {
 		if (regExpProxy == null) {
-			Class<?> cl = Kit.classOrNull(
-					"dev.latvian.mods.rhino.regexp.RegExpImpl");
+			Class<?> cl = Kit.classOrNull("dev.latvian.mods.rhino.regexp.RegExpImpl");
 			if (cl != null) {
 				regExpProxy = (RegExpProxy) Kit.newInstanceOrNull(cl);
 			}

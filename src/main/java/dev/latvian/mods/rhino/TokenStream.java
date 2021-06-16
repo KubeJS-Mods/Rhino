@@ -26,13 +26,11 @@ class TokenStream {
 	 * to check.  (And checking EOF by exception is annoying.)
 	 * Note distinction from EOF token type!
 	 */
-	private final static int
-			EOF_CHAR = -1;
+	private final static int EOF_CHAR = -1;
 
 	private final static char BYTE_ORDER_MARK = '\uFEFF';
 
-	TokenStream(Parser parser, Reader sourceReader, String sourceString,
-				int lineno) {
+	TokenStream(Parser parser, Reader sourceReader, String sourceString, int lineno) {
 		this.parser = parser;
 		this.lineno = lineno;
 		if (sourceReader != null) {
@@ -92,54 +90,21 @@ class TokenStream {
 	private static int stringToKeywordForJS(String name) {
 		// #string_id_map#
 		// The following assumes that Token.EOF == 0
-		final int
-				Id_break = Token.BREAK,
-				Id_case = Token.CASE,
-				Id_continue = Token.CONTINUE,
-				Id_default = Token.DEFAULT,
-				Id_delete = Token.DELPROP,
-				Id_do = Token.DO,
-				Id_else = Token.ELSE,
-				Id_export = Token.RESERVED,
-				Id_false = Token.FALSE,
-				Id_for = Token.FOR,
-				Id_function = Token.FUNCTION,
-				Id_if = Token.IF,
-				Id_in = Token.IN,
-				Id_let = Token.LET,  // reserved ES5 strict
-				Id_new = Token.NEW,
-				Id_null = Token.NULL,
-				Id_return = Token.RETURN,
-				Id_switch = Token.SWITCH,
-				Id_this = Token.THIS,
-				Id_true = Token.TRUE,
-				Id_typeof = Token.TYPEOF,
-				Id_var = Token.VAR,
-				Id_void = Token.VOID,
-				Id_while = Token.WHILE,
-				Id_with = Token.WITH,
-				Id_yield = Token.YIELD,  // reserved ES5 strict
+		final int Id_break = Token.BREAK, Id_case = Token.CASE, Id_continue = Token.CONTINUE, Id_default = Token.DEFAULT, Id_delete = Token.DELPROP, Id_do = Token.DO, Id_else = Token.ELSE, Id_export = Token.RESERVED, Id_false = Token.FALSE, Id_for = Token.FOR, Id_function = Token.FUNCTION, Id_if = Token.IF, Id_in = Token.IN, Id_let = Token.LET,  // reserved ES5 strict
+				Id_new = Token.NEW, Id_null = Token.NULL, Id_return = Token.RETURN, Id_switch = Token.SWITCH, Id_this = Token.THIS, Id_true = Token.TRUE, Id_typeof = Token.TYPEOF, Id_var = Token.VAR, Id_void = Token.VOID, Id_while = Token.WHILE, Id_with = Token.WITH, Id_yield = Token.YIELD,  // reserved ES5 strict
 
 				// the following are #ifdef RESERVE_JAVA_KEYWORDS in jsscan.c
 				Id_abstract = Token.RESERVED,  // ES3 only
 				Id_boolean = Token.RESERVED,  // ES3 only
 				Id_byte = Token.RESERVED,  // ES3 only
-				Id_catch = Token.CATCH,
-				Id_char = Token.RESERVED,  // ES3 only
-				Id_class = Token.RESERVED,
-				Id_const = Token.CONST,     // reserved
-				Id_debugger = Token.DEBUGGER,
-				Id_double = Token.RESERVED,  // ES3 only
-				Id_enum = Token.RESERVED,
-				Id_extends = Token.RESERVED,
-				Id_final = Token.RESERVED,  // ES3 only
-				Id_finally = Token.FINALLY,
-				Id_float = Token.RESERVED,  // ES3 only
+				Id_catch = Token.CATCH, Id_char = Token.RESERVED,  // ES3 only
+				Id_class = Token.RESERVED, Id_const = Token.CONST,     // reserved
+				Id_debugger = Token.DEBUGGER, Id_double = Token.RESERVED,  // ES3 only
+				Id_enum = Token.RESERVED, Id_extends = Token.RESERVED, Id_final = Token.RESERVED,  // ES3 only
+				Id_finally = Token.FINALLY, Id_float = Token.RESERVED,  // ES3 only
 				Id_goto = Token.RESERVED,  // ES3 only
 				Id_implements = Token.RESERVED,  // ES3, ES5 strict
-				Id_import = Token.RESERVED,
-				Id_instanceof = Token.INSTANCEOF,
-				Id_int = Token.RESERVED,  // ES3
+				Id_import = Token.RESERVED, Id_instanceof = Token.INSTANCEOF, Id_int = Token.RESERVED,  // ES3
 				Id_interface = Token.RESERVED,  // ES3, ES5 strict
 				Id_long = Token.RESERVED,  // ES3 only
 				Id_native = Token.RESERVED,  // ES3 only
@@ -149,13 +114,10 @@ class TokenStream {
 				Id_public = Token.RESERVED,  // ES3, ES5 strict
 				Id_short = Token.RESERVED,  // ES3 only
 				Id_static = Token.RESERVED,  // ES3, ES5 strict
-				Id_super = Token.RESERVED,
-				Id_synchronized = Token.RESERVED,  // ES3 only
-				Id_throw = Token.THROW,
-				Id_throws = Token.RESERVED,  // ES3 only
+				Id_super = Token.RESERVED, Id_synchronized = Token.RESERVED,  // ES3 only
+				Id_throw = Token.THROW, Id_throws = Token.RESERVED,  // ES3 only
 				Id_transient = Token.RESERVED,  // ES3 only
-				Id_try = Token.TRY,
-				Id_volatile = Token.RESERVED;  // ES3 only
+				Id_try = Token.TRY, Id_volatile = Token.RESERVED;  // ES3 only
 
 		int id;
 		String s = name;
@@ -504,56 +466,16 @@ class TokenStream {
 		// The following assumes that Token.EOF == 0
 		final int
 				// 11.6.2.1 Keywords (ECMAScript2015)
-				Id_break = Token.BREAK,
-				Id_case = Token.CASE,
-				Id_catch = Token.CATCH,
-				Id_class = Token.RESERVED,
-				Id_const = Token.CONST,
-				Id_continue = Token.CONTINUE,
-				Id_debugger = Token.DEBUGGER,
-				Id_default = Token.DEFAULT,
-				Id_delete = Token.DELPROP,
-				Id_do = Token.DO,
-				Id_else = Token.ELSE,
-				Id_export = Token.RESERVED,
-				Id_extends = Token.RESERVED,
-				Id_finally = Token.FINALLY,
-				Id_for = Token.FOR,
-				Id_function = Token.FUNCTION,
-				Id_if = Token.IF,
-				Id_import = Token.RESERVED,
-				Id_in = Token.IN,
-				Id_instanceof = Token.INSTANCEOF,
-				Id_new = Token.NEW,
-				Id_return = Token.RETURN,
-				Id_super = Token.RESERVED,
-				Id_switch = Token.SWITCH,
-				Id_this = Token.THIS,
-				Id_throw = Token.THROW,
-				Id_try = Token.TRY,
-				Id_typeof = Token.TYPEOF,
-				Id_var = Token.VAR,
-				Id_void = Token.VOID,
-				Id_while = Token.WHILE,
-				Id_with = Token.WITH,
-				Id_yield = Token.YIELD,
+				Id_break = Token.BREAK, Id_case = Token.CASE, Id_catch = Token.CATCH, Id_class = Token.RESERVED, Id_const = Token.CONST, Id_continue = Token.CONTINUE, Id_debugger = Token.DEBUGGER, Id_default = Token.DEFAULT, Id_delete = Token.DELPROP, Id_do = Token.DO, Id_else = Token.ELSE, Id_export = Token.RESERVED, Id_extends = Token.RESERVED, Id_finally = Token.FINALLY, Id_for = Token.FOR, Id_function = Token.FUNCTION, Id_if = Token.IF, Id_import = Token.RESERVED, Id_in = Token.IN, Id_instanceof = Token.INSTANCEOF, Id_new = Token.NEW, Id_return = Token.RETURN, Id_super = Token.RESERVED, Id_switch = Token.SWITCH, Id_this = Token.THIS, Id_throw = Token.THROW, Id_try = Token.TRY, Id_typeof = Token.TYPEOF, Id_var = Token.VAR, Id_void = Token.VOID, Id_while = Token.WHILE, Id_with = Token.WITH, Id_yield = Token.YIELD,
 
 				// 11.6.2.2 Future Reserved Words
-				Id_await = Token.RESERVED,
-				Id_enum = Token.RESERVED,
+				Id_await = Token.RESERVED, Id_enum = Token.RESERVED,
 
 				// 11.6.2.2 NOTE Strict Future Reserved Words
-				Id_implements = Token.RESERVED,
-				Id_interface = Token.RESERVED,
-				Id_package = Token.RESERVED,
-				Id_private = Token.RESERVED,
-				Id_protected = Token.RESERVED,
-				Id_public = Token.RESERVED,
+				Id_implements = Token.RESERVED, Id_interface = Token.RESERVED, Id_package = Token.RESERVED, Id_private = Token.RESERVED, Id_protected = Token.RESERVED, Id_public = Token.RESERVED,
 
 				// 11.8 Literals
-				Id_false = Token.FALSE,
-				Id_null = Token.NULL,
-				Id_true = Token.TRUE,
+				Id_false = Token.FALSE, Id_null = Token.NULL, Id_true = Token.TRUE,
 
 				// Non ReservedWord, but Non IdentifierName in strict mode code.
 				// 12.1.1 Static Semantics: Early Errors
@@ -980,8 +902,7 @@ class TokenStream {
 								return Token.ERROR;
 							}
 						} else {
-							if (c == EOF_CHAR || c == BYTE_ORDER_MARK
-									|| !Character.isJavaIdentifierPart((char) c)) {
+							if (c == EOF_CHAR || c == BYTE_ORDER_MARK || !Character.isJavaIdentifierPart((char) c)) {
 								break;
 							}
 							addToString(c);
@@ -998,9 +919,7 @@ class TokenStream {
 					// Return the corresponding token if it's a keyword
 					int result = stringToKeyword(str, parser.compilerEnv.getLanguageVersion(), parser.inUseStrictDirective());
 					if (result != Token.EOF) {
-						if ((result == Token.LET || result == Token.YIELD) &&
-								parser.compilerEnv.getLanguageVersion()
-										< Context.VERSION_1_7) {
+						if ((result == Token.LET || result == Token.YIELD) && parser.compilerEnv.getLanguageVersion() < Context.VERSION_1_7) {
 							// LET and YIELD are tokens only in 1.7 and later
 							string = result == Token.LET ? "let" : "yield";
 							result = Token.NAME;
@@ -1071,8 +990,7 @@ class TokenStream {
 								 * numeric grammar.  We might not always be so
 								 * permissive, so we warn about it.
 								 */
-								parser.addWarning("msg.bad.octal.literal",
-										c == '8' ? "8" : "9");
+								parser.addWarning("msg.bad.octal.literal", c == '8' ? "8" : "9");
 								base = 10;
 							} else {
 								parser.addError("msg.caught.nfe");
@@ -1100,8 +1018,7 @@ class TokenStream {
 						do {
 							addToString(c);
 							c = getChar();
-						}
-						while (isDigit(c));
+						} while (isDigit(c));
 					}
 					if (c == 'e' || c == 'E') {
 						addToString(c);
@@ -1117,8 +1034,7 @@ class TokenStream {
 						do {
 							addToString(c);
 							c = getChar();
-						}
-						while (isDigit(c));
+						} while (isDigit(c));
 					}
 				}
 				ungetChar(c);
@@ -1504,8 +1420,7 @@ class TokenStream {
 		if (c <= 127) {
 			return c == 0x20 || c == 0x9 || c == 0xC || c == 0xB;
 		}
-		return c == 0xA0 || c == BYTE_ORDER_MARK
-				|| Character.getType((char) c) == Character.SPACE_SEPARATOR;
+		return c == 0xA0 || c == BYTE_ORDER_MARK || Character.getType((char) c) == Character.SPACE_SEPARATOR;
 	}
 
 	private static boolean isJSFormatChar(int c) {
@@ -1515,8 +1430,7 @@ class TokenStream {
 	/**
 	 * Parser calls the method when it gets / or /= in literal context.
 	 */
-	void readRegExp(int startToken)
-			throws IOException {
+	void readRegExp(int startToken) throws IOException {
 		int start = tokenBeg;
 		stringBufferTop = 0;
 		if (startToken == Token.ASSIGN_DIV) {
@@ -1584,8 +1498,7 @@ class TokenStream {
 		}
 
 		this.string = new String(stringBuffer, 0, reEnd);
-		this.regExpFlags = new String(stringBuffer, reEnd,
-				stringBufferTop - reEnd);
+		this.regExpFlags = new String(stringBuffer, reEnd, stringBufferTop - reEnd);
 	}
 
 	String readAndClearRegExpFlags() {
@@ -1744,8 +1657,7 @@ class TokenStream {
 										parser.reportError("msg.syntax");
 										return Token.ERROR;
 									}
-								}
-								while ((c = getTemplateLiteralChar()) != '}');
+								} while ((c = getTemplateLiteralChar()) != '}');
 								if (escapeVal > 0xFFFF) {
 									addToString(Character.highSurrogate(escapeVal));
 									addToString(Character.lowSurrogate(escapeVal));
@@ -1896,12 +1808,7 @@ class TokenStream {
 									case '[':
 										c = getChar(); // Skip [
 										addToString(c);
-										if (getChar() == 'C' &&
-												getChar() == 'D' &&
-												getChar() == 'A' &&
-												getChar() == 'T' &&
-												getChar() == 'A' &&
-												getChar() == '[') {
+										if (getChar() == 'C' && getChar() == 'D' && getChar() == 'A' && getChar() == 'T' && getChar() == 'A' && getChar() == '[') {
 											addToString('C');
 											addToString('D');
 											addToString('A');
@@ -2371,8 +2278,7 @@ class TokenStream {
 		}
 		if (sourceEnd == sourceBuffer.length) {
 			if (lineStart != 0 && !isMarkingComment()) {
-				System.arraycopy(sourceBuffer, lineStart, sourceBuffer, 0,
-						sourceEnd - lineStart);
+				System.arraycopy(sourceBuffer, lineStart, sourceBuffer, 0, sourceEnd - lineStart);
 				sourceEnd -= lineStart;
 				sourceCursor -= lineStart;
 				lineStart = 0;
@@ -2382,8 +2288,7 @@ class TokenStream {
 				sourceBuffer = tmp;
 			}
 		}
-		int n = sourceReader.read(sourceBuffer, sourceEnd,
-				sourceBuffer.length - sourceEnd);
+		int n = sourceReader.read(sourceBuffer, sourceEnd, sourceBuffer.length - sourceEnd);
 		if (n < 0) {
 			return false;
 		}
@@ -2454,16 +2359,14 @@ class TokenStream {
 			Kit.codeBug();
 		}
 		StringBuilder comment = new StringBuilder(commentPrefix);
-		comment.append(sourceBuffer, commentCursor,
-				getTokenLength() - commentPrefix.length());
+		comment.append(sourceBuffer, commentCursor, getTokenLength() - commentPrefix.length());
 		commentCursor = -1;
 		return comment.toString();
 	}
 
 	private static String convertLastCharToHex(String str) {
 		int lastIndex = str.length() - 1;
-		StringBuilder buf = new StringBuilder(
-				str.substring(0, lastIndex));
+		StringBuilder buf = new StringBuilder(str.substring(0, lastIndex));
 		buf.append("\\u");
 		String hexCode = Integer.toHexString(str.charAt(lastIndex));
 		for (int i = 0; i < 4 - hexCode.length(); ++i) {

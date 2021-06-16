@@ -43,12 +43,8 @@ public class ObjectProperty extends InfixExpression {
 	 * @throws IllegalArgumentException if {@code nodeType} is invalid
 	 */
 	public void setNodeType(int nodeType) {
-		if (nodeType != Token.COLON
-				&& nodeType != Token.GET
-				&& nodeType != Token.SET
-				&& nodeType != Token.METHOD) {
-			throw new IllegalArgumentException("invalid node type: "
-					+ nodeType);
+		if (nodeType != Token.COLON && nodeType != Token.GET && nodeType != Token.SET && nodeType != Token.METHOD) {
+			throw new IllegalArgumentException("invalid node type: " + nodeType);
 		}
 		setType(nodeType);
 	}

@@ -84,9 +84,7 @@ public class VariableDeclaration extends AstNode {
 	 */
 	@Override
 	public Node setType(int type) {
-		if (type != Token.VAR
-				&& type != Token.CONST
-				&& type != Token.LET) {
+		if (type != Token.VAR && type != Token.CONST && type != Token.LET) {
 			throw new IllegalArgumentException("invalid decl type: " + type);
 		}
 		return super.setType(type);

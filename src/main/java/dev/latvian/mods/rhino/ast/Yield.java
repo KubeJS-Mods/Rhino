@@ -60,9 +60,7 @@ public class Yield extends AstNode {
 
 	@Override
 	public String toSource(int depth) {
-		return value == null
-				? "yield"
-				: "yield " + value.toSource(0);
+		return value == null ? "yield" : "yield " + value.toSource(0);
 	}
 
 	/**

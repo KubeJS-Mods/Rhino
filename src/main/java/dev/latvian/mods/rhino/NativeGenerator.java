@@ -49,8 +49,7 @@ public final class NativeGenerator extends IdScriptableObject {
 	private NativeGenerator() {
 	}
 
-	public NativeGenerator(Scriptable scope, NativeFunction function,
-						   Object savedState) {
+	public NativeGenerator(Scriptable scope, NativeFunction function, Object savedState) {
 		this.function = function;
 		this.savedState = savedState;
 		// Set parent and prototype properties. Since we don't have a
@@ -58,14 +57,11 @@ public final class NativeGenerator extends IdScriptableObject {
 		// prototype in the top scope's associated value.
 		Scriptable top = getTopLevelScope(scope);
 		this.setParentScope(top);
-		NativeGenerator prototype = (NativeGenerator)
-				getTopScopeValue(top, GENERATOR_TAG);
+		NativeGenerator prototype = (NativeGenerator) getTopScopeValue(top, GENERATOR_TAG);
 		this.setPrototype(prototype);
 	}
 
-	public static final int GENERATOR_SEND = 0,
-			GENERATOR_THROW = 1,
-			GENERATOR_CLOSE = 2;
+	public static final int GENERATOR_SEND = 0, GENERATOR_THROW = 1, GENERATOR_CLOSE = 2;
 
 	@Override
 	public String getClassName() {
@@ -104,8 +100,7 @@ public final class NativeGenerator extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(GENERATOR_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -121,14 +116,12 @@ public final class NativeGenerator extends IdScriptableObject {
 
 			case Id_close:
 				// need to run any pending finally clauses
-				return generator.resume(cx, scope, GENERATOR_CLOSE,
-						new GeneratorClosedException());
+				return generator.resume(cx, scope, GENERATOR_CLOSE, new GeneratorClosedException());
 
 			case Id_next:
 				// arguments to next() are ignored
 				generator.firstTime = false;
-				return generator.resume(cx, scope, GENERATOR_SEND,
-						Undefined.instance);
+				return generator.resume(cx, scope, GENERATOR_SEND, Undefined.instance);
 
 			case Id_send: {
 				Object arg = args.length > 0 ? args[0] : Undefined.instance;
@@ -139,8 +132,7 @@ public final class NativeGenerator extends IdScriptableObject {
 			}
 
 			case Id_throw:
-				return generator.resume(cx, scope, GENERATOR_THROW,
-						args.length > 0 ? args[0] : Undefined.instance);
+				return generator.resume(cx, scope, GENERATOR_THROW, args.length > 0 ? args[0] : Undefined.instance);
 
 			case Id___iterator__:
 				return thisObj;
@@ -150,8 +142,7 @@ public final class NativeGenerator extends IdScriptableObject {
 		}
 	}
 
-	private Object resume(Context cx, Scriptable scope, int operation,
-						  Object value) {
+	private Object resume(Context cx, Scriptable scope, int operation, Object value) {
 		if (savedState == null) {
 			if (operation == GENERATOR_CLOSE) {
 				return Undefined.instance;
@@ -174,8 +165,7 @@ public final class NativeGenerator extends IdScriptableObject {
 				}
 				locked = true;
 			}
-			return function.resumeGenerator(cx, scope, operation, savedState,
-					value);
+			return function.resumeGenerator(cx, scope, operation, savedState, value);
 		} catch (GeneratorClosedException e) {
 			// On closing a generator in the compile path, the generator
 			// throws a special exception. This ensures execution of all pending
@@ -239,13 +229,7 @@ public final class NativeGenerator extends IdScriptableObject {
 		return id;
 	}
 
-	private static final int
-			Id_close = 1,
-			Id_next = 2,
-			Id_send = 3,
-			Id_throw = 4,
-			Id___iterator__ = 5,
-			MAX_PROTOTYPE_ID = 5;
+	private static final int Id_close = 1, Id_next = 2, Id_send = 3, Id_throw = 4, Id___iterator__ = 5, MAX_PROTOTYPE_ID = 5;
 
 	// #/string_id_map#
 	private NativeFunction function;

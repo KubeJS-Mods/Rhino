@@ -100,8 +100,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 	protected abstract NativeTypedArrayView<T> realThis(Scriptable thisObj, IdFunctionObject f);
 
 	private NativeArrayBuffer makeArrayBuffer(Context cx, Scriptable scope, int length) {
-		return (NativeArrayBuffer) cx.newObject(scope, NativeArrayBuffer.CLASS_NAME,
-				new Object[]{(double) length * getBytesPerElement()});
+		return (NativeArrayBuffer) cx.newObject(scope, NativeArrayBuffer.CLASS_NAME, new Object[]{(double) length * getBytesPerElement()});
 	}
 
 	private NativeTypedArrayView<T> js_constructor(Context cx, Scriptable scope, Object[] args) {
@@ -123,8 +122,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 
 		if (arg0 instanceof NativeTypedArrayView) {
 			// Copy elements from the old array and convert them into our own
-			@SuppressWarnings("unchecked")
-			NativeTypedArrayView<T> src = (NativeTypedArrayView<T>) arg0;
+			@SuppressWarnings("unchecked") NativeTypedArrayView<T> src = (NativeTypedArrayView<T>) arg0;
 			NativeArrayBuffer na = makeArrayBuffer(cx, scope, src.length);
 			NativeTypedArrayView<T> v = construct(na, 0, src.length);
 
@@ -247,16 +245,13 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 		int len = Math.max(0, (end - start));
 		int byteOff = Math.min(start * getBytesPerElement(), arrayBuffer.getLength());
 
-		return
-				cx.newObject(scope, getClassName(),
-						new Object[]{arrayBuffer, byteOff, len});
+		return cx.newObject(scope, getClassName(), new Object[]{arrayBuffer, byteOff, len});
 	}
 
 	// Dispatcher
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-							 Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(getClassName())) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
@@ -292,8 +287,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 					NativeTypedArrayView<T> self = realThis(thisObj, f);
 					if (args[0] instanceof NativeTypedArrayView) {
 						int offset = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
-						@SuppressWarnings("unchecked")
-						NativeTypedArrayView<T> nativeView = (NativeTypedArrayView<T>) args[0];
+						@SuppressWarnings("unchecked") NativeTypedArrayView<T> nativeView = (NativeTypedArrayView<T>) args[0];
 						self.setRange(nativeView, offset);
 						return Undefined.instance;
 					}
@@ -421,16 +415,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 	}
 
 	// Table of all functions
-	private static final int
-			Id_constructor = 1,
-			Id_toString = 2,
-			Id_get = 3,
-			Id_set = 4,
-			Id_subarray = 5,
-			SymbolId_iterator = 6;
+	private static final int Id_constructor = 1, Id_toString = 2, Id_get = 3, Id_set = 4, Id_subarray = 5, SymbolId_iterator = 6;
 
-	protected static final int
-			MAX_PROTOTYPE_ID = SymbolId_iterator;
+	protected static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
 
 	// #/string_id_map#
 
@@ -438,8 +425,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 
 	@Override
 	protected void fillConstructorProperties(IdFunctionObject ctor) {
-		ctor.defineProperty("BYTES_PER_ELEMENT", ScriptRuntime.wrapInt(getBytesPerElement()),
-				DONTENUM | PERMANENT | READONLY);
+		ctor.defineProperty("BYTES_PER_ELEMENT", ScriptRuntime.wrapInt(getBytesPerElement()), DONTENUM | PERMANENT | READONLY);
 
 		super.fillConstructorProperties(ctor);
 	}
@@ -511,10 +497,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 	/*
 	 * These must not conflict with ids in the parent since we delegate there for property dispatching.
 	 */
-	private static final int
-			Id_length = NativeArrayBufferView.MAX_INSTANCE_ID + 1,
-			Id_BYTES_PER_ELEMENT = Id_length + 1,
-			MAX_INSTANCE_ID = Id_BYTES_PER_ELEMENT;
+	private static final int Id_length = NativeArrayBufferView.MAX_INSTANCE_ID + 1, Id_BYTES_PER_ELEMENT = Id_length + 1, MAX_INSTANCE_ID = Id_BYTES_PER_ELEMENT;
 
 	// #/string_id_map#
 

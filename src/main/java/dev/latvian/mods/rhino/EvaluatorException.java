@@ -27,8 +27,7 @@ public class EvaluatorException extends RhinoException {
 	 * @param sourceName the name of the source reponsible for the error
 	 * @param lineNumber the line number of the source
 	 */
-	public EvaluatorException(String detail, String sourceName,
-							  int lineNumber) {
+	public EvaluatorException(String detail, String sourceName, int lineNumber) {
 		this(detail, sourceName, lineNumber, null, 0);
 	}
 
@@ -46,8 +45,7 @@ public class EvaluatorException extends RhinoException {
 	 * @param lineSource   the source of the line containing the error (may be
 	 *                     null if unknown)
 	 */
-	public EvaluatorException(String detail, String sourceName, int lineNumber,
-							  String lineSource, int columnNumber) {
+	public EvaluatorException(String detail, String sourceName, int lineNumber, String lineSource, int columnNumber) {
 		super(detail);
 		recordErrorOrigin(sourceName, lineNumber, lineSource, columnNumber);
 	}

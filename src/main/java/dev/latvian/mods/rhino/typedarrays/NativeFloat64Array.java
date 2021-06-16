@@ -17,8 +17,7 @@ import dev.latvian.mods.rhino.Undefined;
  * It also implements List&lt;Double&gt; for direct manipulation in Java.
  */
 
-public class NativeFloat64Array
-		extends NativeTypedArrayView<Double> {
+public class NativeFloat64Array extends NativeTypedArrayView<Double> {
 	private static final long serialVersionUID = -1255405650050639335L;
 
 	private static final String CLASS_NAME = "Float64Array";

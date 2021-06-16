@@ -34,8 +34,7 @@ class DToA {
 		return (char) ((digit >= 10) ? 'a' - 10 + digit : '0' + digit);
 	}
 
-	static final int
-			DTOSTR_STANDARD = 0,              /* Either fixed or exponential format; round-trip */
+	static final int DTOSTR_STANDARD = 0,              /* Either fixed or exponential format; round-trip */
 			DTOSTR_STANDARD_EXPONENTIAL = 1,  /* Always exponential format; round-trip */
 			DTOSTR_FIXED = 2,                 /* Round to <precision> digits after the decimal point; exponential if number is large */
 			DTOSTR_EXPONENTIAL = 3,           /* Always exponential format; <precision> significant digits */
@@ -69,11 +68,7 @@ class DToA {
 	private static final int n_bigtens = 5;
 
 
-	private static final double[] tens = {
-			1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9,
-			1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19,
-			1e20, 1e21, 1e22
-	};
+	private static final double[] tens = {1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22};
 
 	private static final double[] bigtens = {1e16, 1e32, 1e64, 1e128, 1e256};
 
@@ -290,8 +285,7 @@ class DToA {
 		//            JS_ASSERT(-s2 < e);
 		BigInteger mlo = BigInteger.valueOf(1);
 		BigInteger mhi = mlo;
-		if ((word1 == 0) && ((word0 & Bndry_mask) == 0)
-				&& ((word0 & (Exp_mask & Exp_mask << 1)) != 0)) {
+		if ((word1 == 0) && ((word0 & Bndry_mask) == 0) && ((word0 & (Exp_mask & Exp_mask << 1)) != 0)) {
             /* The special case.  Here we want to be within a quarter of the last input
                significant digit instead of one half of it when the output string's value is less than d.  */
 			s2 += Log2P;
@@ -350,8 +344,7 @@ class DToA {
 			}
 			//                JS_ASSERT(digit < (uint32)base);
 			buffer.append(BASEDIGIT(digit));
-		}
-		while (!done);
+		} while (!done);
 
 		return buffer.toString();
 	}
@@ -434,9 +427,7 @@ class DToA {
 	 * 2.49 will still round to 2, and 2.51 will still round to 3. */
 	/* bufsize should be at least 20 for modes 0 and 1.  For the other modes,
 	 * bufsize should be two greater than the maximum number of output characters expected. */
-	static int
-	JS_dtoa(double d, int mode, boolean biasUp, int ndigits,
-			boolean[] sign, StringBuilder buf) {
+	static int JS_dtoa(double d, int mode, boolean biasUp, int ndigits, boolean[] sign, StringBuilder buf) {
         /*  Arguments ndigits, decpt, sign are similar to those
             of ecvt and fcvt; trailing zeros are suppressed from
             the returned string.  If not null, *rve is set to point
@@ -471,8 +462,7 @@ class DToA {
             to hold the suppressed trailing zeros.
         */
 
-		int b2, b5, i, ieps, ilim, ilim0, ilim1,
-				j, j1, k, k0, m2, m5, s2, s5;
+		int b2, b5, i, ieps, ilim, ilim0, ilim1, j, j1, k, k0, m2, m5, s2, s5;
 		char dig;
 		long L;
 		long x;
@@ -532,9 +522,7 @@ class DToA {
 		} else {
 			/* d is denormalized */
 			i = bbits[0] + be[0] + (Bias + (P - 1) - 1);
-			x = (i > 32)
-					? ((long) word0(d)) << (64 - i) | word1(d) >>> (i - 32)
-					: ((long) word1(d)) << (32 - i);
+			x = (i > 32) ? ((long) word0(d)) << (64 - i) | word1(d) >>> (i - 32) : ((long) word1(d)) << (32 - i);
 			//            d2 = x;
 			//            word0(d2) -= 31*Exp_msk1; /* adjust exponent */
 			d2 = setWord0(x, word0(x) - 31 * Exp_msk1);
@@ -888,9 +876,7 @@ class DToA {
 		/* Check for special case that d is a normalized power of 2. */
 		spec_case = false;
 		if (mode < 2) {
-			if ((word1(d) == 0) && ((word0(d) & Bndry_mask) == 0)
-					&& ((word0(d) & (Exp_mask & Exp_mask << 1)) != 0)
-			) {
+			if ((word1(d) == 0) && ((word0(d) & Bndry_mask) == 0) && ((word0(d) & (Exp_mask & Exp_mask << 1)) != 0)) {
                 /* The special case.  Here we want to be within a quarter of the last input
                    significant digit instead of one half of it when the decimal output string's value is less than d.  */
 				b2 += Log2P;
@@ -953,9 +939,7 @@ class DToA {
 		if (ilim <= 0 && mode > 2) {
             /* We're doing fixed-mode output and d is less than the minimum nonzero output in this mode.
                Output either zero or the minimum nonzero output depending on which is closer to d. */
-			if ((ilim < 0)
-					|| ((i = b.compareTo(S = S.multiply(BigInteger.valueOf(5)))) < 0)
-					|| ((i == 0 && !biasUp))) {
+			if ((ilim < 0) || ((i = b.compareTo(S = S.multiply(BigInteger.valueOf(5)))) < 0) || ((i == 0 && !biasUp))) {
             /* Always emit at least one digit.  If the number appears to be zero
                using the current mode, then emit one '0' digit and set decpt to 1. */
             /*no_digits:
@@ -1016,18 +1000,13 @@ class DToA {
 					buf.append(dig);
 					return k + 1;
 				}
-				if ((j < 0)
-						|| ((j == 0)
-						&& (mode == 0)
-						&& ((word1(d) & 1) == 0)
-				)) {
+				if ((j < 0) || ((j == 0) && (mode == 0) && ((word1(d) & 1) == 0))) {
 					if (j1 > 0) {
                         /* Either dig or dig+1 would work here as the least significant decimal digit.
                            Use whichever would produce a decimal value closer to d. */
 						b = b.shiftLeft(1);
 						j1 = b.compareTo(S);
-						if (((j1 > 0) || (j1 == 0 && (((dig & 1) == 1) || biasUp)))
-								&& (dig++ == '9')) {
+						if (((j1 > 0) || (j1 == 0 && (((dig & 1) == 1) || biasUp))) && (dig++ == '9')) {
 							buf.append('9');
 							if (roundOff(buf)) {
 								k++;
@@ -1117,8 +1096,7 @@ class DToA {
 		return k + 1;
 	}
 
-	private static void
-	stripTrailingZeroes(StringBuilder buf) {
+	private static void stripTrailingZeroes(StringBuilder buf) {
 		//      while(*--s == '0') ;
 		//      s++;
 		int bl = buf.length();
@@ -1129,15 +1107,13 @@ class DToA {
 	}
 
 	/* Mapping of JSDToStrMode -> JS_dtoa mode */
-	private static final int[] dtoaModes = {
-			0,   /* DTOSTR_STANDARD */
+	private static final int[] dtoaModes = {0,   /* DTOSTR_STANDARD */
 			0,   /* DTOSTR_STANDARD_EXPONENTIAL, */
 			3,   /* DTOSTR_FIXED, */
 			2,   /* DTOSTR_EXPONENTIAL, */
 			2};  /* DTOSTR_PRECISION */
 
-	static void
-	JS_dtostr(StringBuilder buffer, int mode, int precision, double d) {
+	static void JS_dtostr(StringBuilder buffer, int mode, int precision, double d) {
 		int decPt;                                    /* Position of decimal point relative to first digit returned by JS_dtoa */
 		boolean[] sign = new boolean[1];            /* true if the sign bit was set in d */
 		int nDigits;                                /* Number of significand digits returned by JS_dtoa */
@@ -1198,8 +1174,7 @@ class DToA {
 				nDigits = minNDigits;
 				do {
 					buffer.append('0');
-				}
-				while (buffer.length() != p);
+				} while (buffer.length() != p);
 			}
 
 			if (exponentialNotation) {
@@ -1230,10 +1205,7 @@ class DToA {
 		}
 
 		/* If negative and neither -0.0 nor NaN, output a leading '-'. */
-		if (sign[0] &&
-				!(word0(d) == Sign_bit && word1(d) == 0) &&
-				!((word0(d) & Exp_mask) == Exp_mask &&
-						((word1(d) != 0) || ((word0(d) & Frac_mask) != 0)))) {
+		if (sign[0] && !(word0(d) == Sign_bit && word1(d) == 0) && !((word0(d) & Exp_mask) == Exp_mask && ((word1(d) != 0) || ((word0(d) & Frac_mask) != 0)))) {
 			buffer.insert(0, '-');
 		}
 	}

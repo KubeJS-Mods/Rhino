@@ -48,10 +48,8 @@ class NativeRegExpCtor extends BaseFunction {
 	}
 
 	@Override
-	public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-					   Object[] args) {
-		if (args.length > 0 && args[0] instanceof NativeRegExp &&
-				(args.length == 1 || args[1] == Undefined.instance)) {
+	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		if (args.length > 0 && args[0] instanceof NativeRegExp && (args.length == 1 || args[1] == Undefined.instance)) {
 			return args[0];
 		}
 		return construct(cx, scope, args);
@@ -72,29 +70,21 @@ class NativeRegExpCtor extends BaseFunction {
 
 	// #string_id_map#
 
-	private static final int
-			Id_multiline = 1,
-			Id_STAR = 2,  // #string=$*#
+	private static final int Id_multiline = 1, Id_STAR = 2,  // #string=$*#
 
-	Id_input = 3,
-			Id_UNDERSCORE = 4,  // #string=$_#
+	Id_input = 3, Id_UNDERSCORE = 4,  // #string=$_#
 
-	Id_lastMatch = 5,
-			Id_AMPERSAND = 6,  // #string=$&#
+	Id_lastMatch = 5, Id_AMPERSAND = 6,  // #string=$&#
 
-	Id_lastParen = 7,
-			Id_PLUS = 8,  // #string=$+#
+	Id_lastParen = 7, Id_PLUS = 8,  // #string=$+#
 
-	Id_leftContext = 9,
-			Id_BACK_QUOTE = 10, // #string=$`#
+	Id_leftContext = 9, Id_BACK_QUOTE = 10, // #string=$`#
 
-	Id_rightContext = 11,
-			Id_QUOTE = 12, // #string=$'#
+	Id_rightContext = 11, Id_QUOTE = 12, // #string=$'#
 
 	DOLLAR_ID_BASE = 12;
 
-	private static final int
-			Id_DOLLAR_1 = DOLLAR_ID_BASE + 1, // #string=$1#
+	private static final int Id_DOLLAR_1 = DOLLAR_ID_BASE + 1, // #string=$1#
 			Id_DOLLAR_2 = DOLLAR_ID_BASE + 2, // #string=$2#
 			Id_DOLLAR_3 = DOLLAR_ID_BASE + 3, // #string=$3#
 			Id_DOLLAR_4 = DOLLAR_ID_BASE + 4, // #string=$4#

@@ -42,8 +42,7 @@ public class UnaryExpression extends AstNode {
 	/**
 	 * Constructs a new prefix UnaryExpression.
 	 */
-	public UnaryExpression(int operator, int operatorPosition,
-						   AstNode operand) {
+	public UnaryExpression(int operator, int operatorPosition, AstNode operand) {
 		this(operator, operatorPosition, operand, false);
 	}
 
@@ -58,14 +57,11 @@ public class UnaryExpression extends AstNode {
 	 * @param postFix          true if the operator follows the operand.  Int
 	 * @throws IllegalArgumentException} if {@code operand} is {@code null}
 	 */
-	public UnaryExpression(int operator, int operatorPosition,
-						   AstNode operand, boolean postFix) {
+	public UnaryExpression(int operator, int operatorPosition, AstNode operand, boolean postFix) {
 		assertNotNull(operand);
 		int beg = postFix ? operand.getPosition() : operatorPosition;
 		// JavaScript only has ++ and -- postfix operators, so length is 2
-		int end = postFix
-				? operatorPosition + 2
-				: operand.getPosition() + operand.getLength();
+		int end = postFix ? operatorPosition + 2 : operand.getPosition() + operand.getLength();
 		setBounds(beg, end);
 		setOperator(operator);
 		setOperand(operand);

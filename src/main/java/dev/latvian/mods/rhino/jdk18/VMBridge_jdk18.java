@@ -66,8 +66,7 @@ public class VMBridge_jdk18 extends VMBridge {
 	}
 
 	@Override
-	protected Object getInterfaceProxyHelper(ContextFactory cf,
-											 Class<?>[] interfaces) {
+	protected Object getInterfaceProxyHelper(ContextFactory cf, Class<?>[] interfaces) {
 		// XXX: How to handle interfaces array withclasses from different
 		// class loaders? Using cf.getApplicationClassLoader() ?
 		ClassLoader loader = interfaces[0].getClassLoader();
@@ -83,11 +82,7 @@ public class VMBridge_jdk18 extends VMBridge {
 	}
 
 	@Override
-	protected Object newInterfaceProxy(Object proxyHelper,
-									   final ContextFactory cf,
-									   final InterfaceAdapter adapter,
-									   final Object target,
-									   final Scriptable topScope) {
+	protected Object newInterfaceProxy(Object proxyHelper, final ContextFactory cf, final InterfaceAdapter adapter, final Object target, final Scriptable topScope) {
 		Constructor<?> c = (Constructor<?>) proxyHelper;
 
 		InvocationHandler handler = (proxy, method, args) -> {

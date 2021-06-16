@@ -75,8 +75,7 @@ public class ConsString implements CharSequence, Serializable {
 				charPos -= str.length();
 				str.getChars(0, str.length(), chars, charPos);
 				next = stack.isEmpty() ? null : stack.removeFirst();
-			}
-			while (next != null);
+			} while (next != null);
 
 			left = new String(chars);
 			right = "";
