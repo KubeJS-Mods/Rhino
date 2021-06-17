@@ -92,6 +92,7 @@ ${a + "z"} ${b.toLowerCase()}`
 
 	events.testWrapper('rhino:test', 5, 409, 4)
 	events.testWrapper2(['rhino:array_test_1', 'rhino:array_test_2'])
+	events.testWrapper2('rhino:array_test_3')
 	events.testWrapper3([[['a', 'b', 'c']], [['d', 'e', 'f']]])
 
 	events.testWrapper('rhino:test', 5, 409, 4)

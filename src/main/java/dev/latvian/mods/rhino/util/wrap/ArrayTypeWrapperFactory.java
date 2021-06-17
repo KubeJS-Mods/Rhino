@@ -2,7 +2,7 @@ package dev.latvian.mods.rhino.util.wrap;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author LatvianModder
@@ -24,17 +24,23 @@ public class ArrayTypeWrapperFactory<T> implements TypeWrapperFactory<T[]> {
 	@Override
 	@SuppressWarnings("all")
 	public T[] wrap(Object o) {
-		if (o instanceof Iterable) {
+		if (o == null) {
+			return emptyArray;
+		} else if (o instanceof Iterable) {
 			int size;
 
-			if (o instanceof List) {
-				size = ((List) o).size();
+			if (o instanceof Collection) {
+				size = ((Collection) o).size();
 			} else {
 				size = 0;
 
 				for (Object o1 : (Iterable<Object>) o) {
 					size++;
 				}
+			}
+
+			if (size == 0) {
+				return emptyArray;
 			}
 
 			T[] array = (T[]) Array.newInstance(target, size);
@@ -48,6 +54,30 @@ public class ArrayTypeWrapperFactory<T> implements TypeWrapperFactory<T[]> {
 			}
 
 			return index == 0 ? emptyArray : index == array.length ? array : Arrays.copyOf(array, index, arrayTarget);
+		} else if (o.getClass().isArray()) {
+			int size = Array.getLength(o);
+
+			if (size == 0) {
+				return emptyArray;
+			}
+
+			T[] array = (T[]) Array.newInstance(target, size);
+			int index = 0;
+
+			for (int i = 0; i < array.length; i++) {
+				Object o1 = Array.get(o, i);
+
+				if (typeWrapper.validator.test(o1)) {
+					array[index] = typeWrapper.factory.wrap(o1);
+					index++;
+				}
+			}
+
+			return index == 0 ? emptyArray : index == array.length ? array : Arrays.copyOf(array, index, arrayTarget);
+		} else if (typeWrapper.validator.test(o)) {
+			T[] array = (T[]) Array.newInstance(target, 1);
+			array[0] = typeWrapper.factory.wrap(o);
+			return array;
 		}
 
 		return emptyArray;
