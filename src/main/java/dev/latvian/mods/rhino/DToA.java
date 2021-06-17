@@ -1107,11 +1107,13 @@ class DToA {
 	}
 
 	/* Mapping of JSDToStrMode -> JS_dtoa mode */
-	private static final int[] dtoaModes = {0,   /* DTOSTR_STANDARD */
+	private static final int[] dtoaModes = {
+			0,   /* DTOSTR_STANDARD */
 			0,   /* DTOSTR_STANDARD_EXPONENTIAL, */
 			3,   /* DTOSTR_FIXED, */
 			2,   /* DTOSTR_EXPONENTIAL, */
-			2};  /* DTOSTR_PRECISION */
+			2
+	};  /* DTOSTR_PRECISION */
 
 	static void JS_dtostr(StringBuilder buffer, int mode, int precision, double d) {
 		int decPt;                                    /* Position of decimal point relative to first digit returned by JS_dtoa */
