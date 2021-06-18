@@ -89,6 +89,10 @@ public class NativeJavaMethod extends BaseFunction {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0, N = methods.length; i != N; ++i) {
+			if (i > 0) {
+				sb.append('\n');
+			}
+
 			// Check member type, we also use this for overloaded constructors
 			if (methods[i].isMethod()) {
 				Method method = methods[i].method();
@@ -99,7 +103,6 @@ public class NativeJavaMethod extends BaseFunction {
 				sb.append(methods[i].getName());
 			}
 			sb.append(JavaMembers.liveConnectSignature(methods[i].argTypes));
-			sb.append('\n');
 		}
 		return sb.toString();
 	}

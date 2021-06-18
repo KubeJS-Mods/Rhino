@@ -6,13 +6,26 @@
 
 package dev.latvian.mods.rhino;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.internal.Streams;
+import com.google.gson.stream.JsonWriter;
 import dev.latvian.mods.rhino.json.JsonParser;
+import dev.latvian.mods.rhino.util.HideFromJS;
+import dev.latvian.mods.rhino.util.RemapForJS;
 
+import java.io.StringWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 /**
@@ -27,6 +40,20 @@ public final class NativeJSON extends IdScriptableObject {
 	private static final Object JSON_TAG = "JSON";
 
 	private static final int MAX_STRINGIFY_GAP_LENGTH = 10;
+
+	private static final HashSet<String> IGNORED_METHODS = new HashSet<>();
+
+	static {
+		IGNORED_METHODS.add("void wait()");
+		IGNORED_METHODS.add("void wait(long, int)");
+		IGNORED_METHODS.add("native void wait(long)");
+		IGNORED_METHODS.add("boolean equals(Object)");
+		IGNORED_METHODS.add("String toString()");
+		IGNORED_METHODS.add("native int hashCode()");
+		IGNORED_METHODS.add("native Class getClass()");
+		IGNORED_METHODS.add("native void notify()");
+		IGNORED_METHODS.add("native void notifyAll()");
+	}
 
 	static void init(Scriptable scope, boolean sealed) {
 		NativeJSON obj = new NativeJSON();
@@ -218,29 +245,13 @@ public final class NativeJSON extends IdScriptableObject {
 		Scriptable scope;
 	}
 
-	public static Object stringify(Context cx, Scriptable scope, Object value, Object replacer, Object space) {
-		String indent = "";
-		String gap = "";
+	public static String stringify(Context cx, Scriptable scope, Object value, Object replacer, Object space) {
+		JsonElement e = stringify0(scope, value);
 
-		List<Object> propertyList = null;
-		Callable replacerFunction = null;
+		StringWriter stringWriter = new StringWriter();
+		JsonWriter writer = new JsonWriter(stringWriter);
 
-		if (replacer instanceof Callable) {
-			replacerFunction = (Callable) replacer;
-		} else if (replacer instanceof NativeArray) {
-			propertyList = new LinkedList<>();
-			NativeArray replacerArray = (NativeArray) replacer;
-			for (int i : replacerArray.getIndexIds()) {
-				Object v = replacerArray.get(i, replacerArray);
-				if (v instanceof String || v instanceof Number) {
-					propertyList.add(v);
-				} else if (v instanceof NativeString) {
-					propertyList.add(ScriptRuntime.toString(v));
-				} else if (v instanceof NativeNumber) {
-					propertyList.add(ScriptRuntime.toNumber(v));
-				}
-			}
-		}
+		String indent = null;
 
 		if (space instanceof NativeNumber) {
 			space = ScriptRuntime.toNumber(space);
@@ -251,231 +262,196 @@ public final class NativeJSON extends IdScriptableObject {
 		if (space instanceof Number) {
 			int gapLength = (int) ScriptRuntime.toInteger(space);
 			gapLength = Math.min(MAX_STRINGIFY_GAP_LENGTH, gapLength);
-			gap = (gapLength > 0) ? repeat(' ', gapLength) : "";
+			indent = (gapLength > 0) ? repeat(' ', gapLength) : "";
 		} else if (space instanceof String) {
-			gap = (String) space;
-			if (gap.length() > MAX_STRINGIFY_GAP_LENGTH) {
-				gap = gap.substring(0, MAX_STRINGIFY_GAP_LENGTH);
+			indent = (String) space;
+			if (indent.length() > MAX_STRINGIFY_GAP_LENGTH) {
+				indent = indent.substring(0, MAX_STRINGIFY_GAP_LENGTH);
 			}
 		}
 
-		StringifyState state = new StringifyState(cx, scope, indent, gap, replacerFunction, propertyList);
+		if (indent != null) {
+			writer.setIndent(indent);
+		}
 
-		ScriptableObject wrapper = new NativeObject();
-		wrapper.setParentScope(scope);
-		wrapper.setPrototype(getObjectPrototype(scope));
-		wrapper.defineProperty("", value, 0);
-		return str("", wrapper, state);
+		writer.setSerializeNulls(true);
+		writer.setHtmlSafe(false);
+		writer.setLenient(true);
+
+		try {
+			Streams.write(e, writer);
+			return stringWriter.toString();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return "error";
+		}
 	}
 
-	private static Object str(Object key, Scriptable holder, StringifyState state) {
-		Object value = null;
-		if (key instanceof String) {
-			value = getProperty(holder, (String) key);
+	private static void type(StringBuilder builder, Class<?> type) {
+		String s = type.getName();
+
+		if (s.startsWith("java.lang.") || s.startsWith("java.util.")) {
+			builder.append(s.substring(10));
 		} else {
-			value = getProperty(holder, ((Number) key).intValue());
+			builder.append(s);
 		}
-
-		if (value instanceof Scriptable && hasProperty((Scriptable) value, "toJSON")) {
-			Object toJSON = getProperty((Scriptable) value, "toJSON");
-			if (toJSON instanceof Callable) {
-				value = callMethod(state.cx, (Scriptable) value, "toJSON", new Object[]{key});
-			}
-		}
-
-		if (state.replacer != null) {
-			value = state.replacer.call(state.cx, state.scope, holder, new Object[]{key, value});
-		}
-
-
-		if (value instanceof NativeNumber) {
-			value = ScriptRuntime.toNumber(value);
-		} else if (value instanceof NativeString) {
-			value = ScriptRuntime.toString(value);
-		} else if (value instanceof NativeBoolean) {
-			value = ((NativeBoolean) value).getDefaultValue(ScriptRuntime.BooleanClass);
-		}
-
-		if (value == null) {
-			return "null";
-		}
-		if (value.equals(Boolean.TRUE)) {
-			return "true";
-		}
-		if (value.equals(Boolean.FALSE)) {
-			return "false";
-		}
-
-		if (value instanceof CharSequence) {
-			return quote(value.toString());
-		}
-
-		if (value instanceof Number) {
-			double d = ((Number) value).doubleValue();
-			if (!Double.isNaN(d) && d != Double.POSITIVE_INFINITY && d != Double.NEGATIVE_INFINITY) {
-				return ScriptRuntime.toString(value);
-			}
-			return "null";
-		}
-
-		if (value instanceof Scriptable && !(value instanceof Callable)) {
-			if (value instanceof NativeArray) {
-				return ja((NativeArray) value, state);
-			}
-			return jo((Scriptable) value, state);
-		}
-
-		return Undefined.instance;
 	}
 
-	private static String join(Collection<Object> objs, String delimiter) {
-		if (objs == null || objs.isEmpty()) {
-			return "";
+	private static void params(StringBuilder builder, Class<?>[] params) {
+		builder.append('(');
+
+		for (int i = 0; i < params.length; i++) {
+			if (i > 0) {
+				builder.append(", ");
+			}
+
+			type(builder, params[i]);
 		}
-		Iterator<Object> iter = objs.iterator();
-		if (!iter.hasNext()) {
-			return "";
-		}
-		StringBuilder builder = new StringBuilder(iter.next().toString());
-		while (iter.hasNext()) {
-			builder.append(delimiter).append(iter.next());
-		}
-		return builder.toString();
+
+		builder.append(')');
 	}
 
-	private static String jo(Scriptable value, StringifyState state) {
-		if (state.stack.search(value) != -1) {
-			throw ScriptRuntime.typeError0("msg.cyclic.value");
-		}
-		state.stack.push(value);
+	private static JsonElement stringify0(Scriptable scope, Object v) {
+		if (v == null) {
+			return JsonNull.INSTANCE;
+		} else if (v instanceof Boolean) {
+			return new JsonPrimitive((Boolean) v);
+		} else if (v instanceof CharSequence) {
+			return new JsonPrimitive(v.toString());
+		} else if (v instanceof Number) {
+			return new JsonPrimitive((Number) v);
+		} else if (v instanceof NativeString) {
+			return new JsonPrimitive(ScriptRuntime.toString(v));
+		} else if (v instanceof NativeNumber) {
+			return new JsonPrimitive(ScriptRuntime.toNumber(v));
+		} else if (v instanceof Map) {
+			JsonObject json = new JsonObject();
 
-		String stepback = state.indent;
-		state.indent = state.indent + state.gap;
-		Object[] k = null;
-		if (state.propertyList != null) {
-			k = state.propertyList.toArray();
+			for (Map.Entry<?, ?> entry : ((Map<?, ?>) v).entrySet()) {
+				json.add(entry.getKey().toString(), stringify0(scope, entry.getValue()));
+			}
+
+			return json;
+		} else if (v instanceof Iterable) {
+			JsonArray json = new JsonArray();
+
+			for (Object o : (Iterable<?>) v) {
+				json.add(stringify0(scope, o));
+
+				return json;
+			}
+		}
+
+		if (v instanceof Wrapper) {
+			v = ((Wrapper) v).unwrap();
+		}
+
+		Class<?> cl = v.getClass();
+		StringBuilder clName = new StringBuilder(cl.getName());
+
+		while (cl.isArray()) {
+			cl = cl.getComponentType();
+			clName.append("[]");
+		}
+
+		JsonArray list = new JsonArray();
+
+		if (cl.isInterface()) {
+			clName.insert(0, "interface ");
+		} else if (cl.isAnnotation()) {
+			clName.insert(0, "annotation ");
+		} else if (cl.isEnum()) {
+			clName.insert(0, "enum ");
 		} else {
-			k = value.getIds();
+			clName.insert(0, "class ");
 		}
 
-		List<Object> partial = new LinkedList<>();
+		list.add(clName.toString());
 
-		for (Object p : k) {
-			Object strP = str(p, value, state);
-			if (strP != Undefined.instance) {
-				String member = quote(p.toString()) + ":";
-				if (state.gap.length() > 0) {
-					member = member + " ";
-				}
-				member = member + strP;
-				partial.add(member);
+		for (Constructor<?> constructor : cl.getConstructors()) {
+			if (constructor.isAnnotationPresent(HideFromJS.class)) {
+				continue;
 			}
+
+			StringBuilder builder = new StringBuilder("new ");
+			builder.append(cl.getSimpleName());
+			params(builder, constructor.getParameterTypes());
+			list.add(builder.toString());
 		}
 
-		final String finalValue;
+		for (Field field : cl.getFields()) {
+			int mod = field.getModifiers();
 
-		if (partial.isEmpty()) {
-			finalValue = "{}";
-		} else {
-			if (state.gap.length() == 0) {
-				finalValue = '{' + join(partial, ",") + '}';
+			if (Modifier.isTransient(mod) || field.isAnnotationPresent(HideFromJS.class)) {
+				continue;
+			}
+
+			StringBuilder builder = new StringBuilder();
+
+			if (Modifier.isStatic(mod)) {
+				builder.append("static ");
+			}
+
+			if (Modifier.isFinal(mod)) {
+				builder.append("final ");
+			}
+
+			if (Modifier.isNative(mod)) {
+				builder.append("native ");
+			}
+
+			type(builder, field.getType());
+			builder.append(' ');
+
+			RemapForJS remap = field.getAnnotation(RemapForJS.class);
+
+			if (remap != null) {
+				builder.append(remap.value());
 			} else {
-				String separator = ",\n" + state.indent;
-				String properties = join(partial, separator);
-				finalValue = "{\n" + state.indent + properties + '\n' + stepback + '}';
+				builder.append(field.getName());
 			}
+
+			list.add(builder.toString());
 		}
 
-		state.stack.pop();
-		state.indent = stepback;
-		return finalValue;
-	}
+		for (Method method : cl.getMethods()) {
+			if (method.isAnnotationPresent(HideFromJS.class)) {
+				continue;
+			}
 
-	private static String ja(NativeArray value, StringifyState state) {
-		if (state.stack.search(value) != -1) {
-			throw ScriptRuntime.typeError0("msg.cyclic.value");
-		}
-		state.stack.push(value);
+			int mod = method.getModifiers();
 
-		String stepback = state.indent;
-		state.indent = state.indent + state.gap;
-		List<Object> partial = new LinkedList<>();
+			StringBuilder builder = new StringBuilder();
 
-		long len = value.getLength();
-		for (long index = 0; index < len; index++) {
-			Object strP;
-			if (index > Integer.MAX_VALUE) {
-				strP = str(Long.toString(index), value, state);
+			if (Modifier.isStatic(mod)) {
+				builder.append("static ");
+			}
+
+			if (Modifier.isNative(mod)) {
+				builder.append("native ");
+			}
+
+			type(builder, method.getReturnType());
+			builder.append(' ');
+
+			RemapForJS remap = method.getAnnotation(RemapForJS.class);
+
+			if (remap != null) {
+				builder.append(remap.value());
 			} else {
-				strP = str((int) index, value, state);
+				builder.append(method.getName());
 			}
-			if (strP == Undefined.instance) {
-				partial.add("null");
-			} else {
-				partial.add(strP);
-			}
-		}
 
-		final String finalValue;
+			params(builder, method.getParameterTypes());
 
-		if (partial.isEmpty()) {
-			finalValue = "[]";
-		} else {
-			if (state.gap.length() == 0) {
-				finalValue = '[' + join(partial, ",") + ']';
-			} else {
-				String separator = ",\n" + state.indent;
-				String properties = join(partial, separator);
-				finalValue = "[\n" + state.indent + properties + '\n' + stepback + ']';
+			String s = builder.toString();
+
+			if (!IGNORED_METHODS.contains(s)) {
+				list.add(s);
 			}
 		}
 
-		state.stack.pop();
-		state.indent = stepback;
-		return finalValue;
-	}
-
-	private static String quote(String string) {
-		StringBuilder product = new StringBuilder(string.length() + 2); // two extra chars for " on either side
-		product.append('"');
-		int length = string.length();
-		for (int i = 0; i < length; i++) {
-			char c = string.charAt(i);
-			switch (c) {
-				case '"':
-					product.append("\\\"");
-					break;
-				case '\\':
-					product.append("\\\\");
-					break;
-				case '\b':
-					product.append("\\b");
-					break;
-				case '\f':
-					product.append("\\f");
-					break;
-				case '\n':
-					product.append("\\n");
-					break;
-				case '\r':
-					product.append("\\r");
-					break;
-				case '\t':
-					product.append("\\t");
-					break;
-				default:
-					if (c < ' ') {
-						product.append("\\u");
-						String hex = String.format("%04x", (int) c);
-						product.append(hex);
-					} else {
-						product.append(c);
-					}
-					break;
-			}
-		}
-		product.append('"');
-		return product.toString();
+		return list;
 	}
 
 	// #string_id_map#

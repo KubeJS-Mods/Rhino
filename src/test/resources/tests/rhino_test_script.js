@@ -125,4 +125,6 @@ ${a + "z"} ${b.toLowerCase()}`
 	var JMath = java.lang.Math
 	console.info(JMath.PI)
 	*/
+
+	console.info(`JSON Test:\n${JSON.stringify({a: 1302, b: 'awdwad', c: false, d: rect, e: rect2}, null, '  ')}`)
 })
