@@ -89,4 +89,8 @@ public class EventsJS {
 	public void setSomeId(ResourceLocation id) {
 		System.out.println("Some ID set to: " + id);
 	}
+
+	public void testRLArray(String id, ResourceLocation[] ids) {
+		System.out.println(id + ": " + Arrays.toString(ids));
+	}
 }
