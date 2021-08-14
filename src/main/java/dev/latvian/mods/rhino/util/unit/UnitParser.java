@@ -209,6 +209,8 @@ class UnitParser {
 							throw new UnitParserException(string, startPos, "Unexpected character " + c + ", expected ) or ,!");
 					}
 				}
+			} else {
+				readClose(startPos);
 			}
 
 			switch (func) {

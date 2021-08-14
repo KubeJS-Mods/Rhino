@@ -22,8 +22,10 @@ public class UnitTest {
 		printUnit("PI", variables);
 
 		printUnit("time()", variables);
-		Thread.sleep(1000L);
+		Thread.sleep(350L);
 		printUnit("time()", variables);
+
+		printUnit("(abs((time() * 0.01)) % 300)", variables);
 	}
 
 	private static void printUnit(String string, UnitVariables variables) {
