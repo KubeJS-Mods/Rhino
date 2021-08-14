@@ -11,6 +11,11 @@ public class MinUnit extends Func2Unit {
 	}
 
 	@Override
+	public int getAsInt() {
+		return Math.min(unit.getAsInt(), with.getAsInt());
+	}
+
+	@Override
 	public String toString() {
 		return fString("min", unit, with);
 	}

@@ -12,6 +12,12 @@ public class NegUnit extends Func1Unit {
 	}
 
 	@Override
+	public int getAsInt() {
+		int i = unit.getAsInt();
+		return i == 0 ? i : -i;
+	}
+
+	@Override
 	public String toString() {
 		return "-" + unit;
 	}

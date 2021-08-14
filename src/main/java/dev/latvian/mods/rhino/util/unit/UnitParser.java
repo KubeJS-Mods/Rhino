@@ -95,7 +95,7 @@ class UnitParser {
 	}
 
 	private boolean isSym(char c) {
-		return c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '>' || c == '<';
+		return c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '>' || c == '<' || c == '!' || c == '=' || c == '~' || c == '^';
 	}
 
 	private String readSym() {
@@ -147,6 +147,9 @@ class UnitParser {
 		} else if (start == '-') {
 			move();
 			return readUnit().neg();
+		} else if (start == '~' || start == '!') {
+			move();
+			return readUnit().not();
 		} else if (start >= '0' && start <= '9') {
 			return Unit.fixed(Float.parseFloat(readN()));
 		} else if (start == '(') {
@@ -174,6 +177,27 @@ class UnitParser {
 					return unit.shiftLeft(with);
 				case ">>":
 					return unit.shiftRight(with);
+				case "&":
+				case "&&":
+					return unit.and(with);
+				case "|":
+				case "||":
+					return unit.or(with);
+				case "^":
+					return unit.xor(with);
+				case "==":
+					return unit.eq(with);
+				case "!=":
+				case "~=":
+					return unit.neq(with);
+				case ">":
+					return unit.gt(with);
+				case "<":
+					return unit.lt(with);
+				case ">=":
+					return unit.gte(with);
+				case "<=":
+					return unit.lte(with);
 				default:
 					throw new UnitParserException(string, startPos, "Unknown operation " + c);
 			}
@@ -185,10 +209,14 @@ class UnitParser {
 					return Unit.PI;
 				case "E":
 					return Unit.E;
+				case "true":
+					return Unit.ONE;
+				case "false":
+					return Unit.ZERO;
 			}
 
 			readOpen(startPos);
-			List<Unit> args = new ArrayList<>(1);
+			List<Unit> args = new ArrayList<>(2);
 
 			skipS();
 			if (peek() != ')') {
@@ -254,6 +282,8 @@ class UnitParser {
 					return args.get(0).floor();
 				case "ceil":
 					return args.get(0).ceil();
+				case "if":
+					return new IfUnit(args.get(0), args.get(1), args.get(2));
 				default:
 					throw new UnitParserException(string, startPos, "Unknown function " + func);
 			}

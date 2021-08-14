@@ -12,6 +12,11 @@ public class TimeUnit implements Unit {
 	}
 
 	@Override
+	public int getAsInt() {
+		return (int) (System.nanoTime() / 1000000000L);
+	}
+
+	@Override
 	public String toString() {
 		return "time()";
 	}

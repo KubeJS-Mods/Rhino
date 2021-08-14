@@ -7,7 +7,12 @@ public class ShiftRightUnit extends Func2Unit {
 
 	@Override
 	public float get() {
-		return (int) unit.get() >> (int) with.get();
+		return unit.getAsInt() >> with.getAsInt();
+	}
+
+	@Override
+	public int getAsInt() {
+		return unit.getAsInt() >> with.getAsInt();
 	}
 
 	@Override

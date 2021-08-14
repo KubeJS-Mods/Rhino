@@ -26,6 +26,7 @@ public class UnitTest {
 		printUnit("time()", variables);
 
 		printUnit("(abs((time() * 0.01)) % 300)", variables);
+		printUnit("if((random() > 0.5), 10, 100)", variables);
 	}
 
 	private static void printUnit(String string, UnitVariables variables) {

@@ -11,6 +11,11 @@ public class MulUnit extends Func2Unit {
 	}
 
 	@Override
+	public int getAsInt() {
+		return unit.getAsInt() * with.getAsInt();
+	}
+
+	@Override
 	public String toString() {
 		return aString(unit, " * ", with);
 	}

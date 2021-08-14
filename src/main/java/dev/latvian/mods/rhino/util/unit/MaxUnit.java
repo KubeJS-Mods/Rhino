@@ -11,6 +11,11 @@ public class MaxUnit extends Func2Unit {
 	}
 
 	@Override
+	public int getAsInt() {
+		return Math.max(unit.getAsInt(), with.getAsInt());
+	}
+
+	@Override
 	public String toString() {
 		return fString("max", unit, with);
 	}

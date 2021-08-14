@@ -6,9 +6,28 @@ public interface Unit {
 	Unit ONE = new FixedUnit(1F);
 	Unit PI = new FixedUnit(3.141592653589793F);
 	Unit E = new FixedUnit(2.718281828459045F);
+	Unit NAN = new FixedUnit(Float.NaN);
+	Unit POS_INFINITY = new FixedUnit(Float.POSITIVE_INFINITY);
+	Unit NEG_INFINITY = new FixedUnit(Float.NEGATIVE_INFINITY);
 
 	static Unit fixed(float value) {
-		return value == 0F ? ZERO : value == 1F ? ONE : new FixedUnit(value);
+		if (Float.isNaN(value)) {
+			return NAN;
+		} else if (value == 0F) {
+			return ZERO;
+		} else if (value == 1F) {
+			return ONE;
+		} else if (value == 3.141592653589793F) {
+			return PI;
+		} else if (value == 2.718281828459045F) {
+			return E;
+		} else if (value == Float.POSITIVE_INFINITY) {
+			return POS_INFINITY;
+		} else if (value == Float.NEGATIVE_INFINITY) {
+			return NEG_INFINITY;
+		}
+
+		return new FixedUnit(value);
 	}
 
 	static Unit parse(String string, UnitVariables variables) {
@@ -17,12 +36,20 @@ public interface Unit {
 
 	float get();
 
+	default int getAsInt() {
+		return (int) get();
+	}
+
+	default boolean getAsBoolean() {
+		return get() != 0F;
+	}
+
 	default Unit neg() {
 		return new NegUnit(this);
 	}
 
 	default Unit add(Unit with) {
-		return new SumUnit(this, with);
+		return new AddUnit(this, with);
 	}
 
 	default Unit sub(Unit with) {
@@ -119,5 +146,45 @@ public interface Unit {
 
 	default Unit ceil() {
 		return new CeilUnit(this);
+	}
+
+	default Unit not() {
+		return new NotUnit(this);
+	}
+
+	default Unit and(Unit with) {
+		return new AndUnit(this, with);
+	}
+
+	default Unit or(Unit with) {
+		return new OrUnit(this, with);
+	}
+
+	default Unit xor(Unit with) {
+		return new XorUnit(this, with);
+	}
+
+	default Unit eq(Unit with) {
+		return new EqUnit(this, with);
+	}
+
+	default Unit neq(Unit with) {
+		return new NeqUnit(this, with);
+	}
+
+	default Unit gt(Unit with) {
+		return new GtUnit(this, with);
+	}
+
+	default Unit lt(Unit with) {
+		return new LtUnit(this, with);
+	}
+
+	default Unit gte(Unit with) {
+		return new GteUnit(this, with);
+	}
+
+	default Unit lte(Unit with) {
+		return new LteUnit(this, with);
 	}
 }
