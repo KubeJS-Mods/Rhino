@@ -22,14 +22,14 @@ public class ScriptTest {
 		EventsJS eventsJS = new EventsJS();
 
 		try {
-			Context cx = Context.enter();
+			Context cx = Context.enterWithNewFactory();
 
 			cx.setClassShutter((fullClassName, type) -> {
 				System.out.println("-- Checking class permissions " + fullClassName + " / " + type);
 				return type != ClassShutter.TYPE_CLASS_IN_PACKAGE || !fullClassName.startsWith("java.net");
 			});
 
-			cx.getTypeWrappers().register(ResourceLocation.class, o -> !"rhino:array_test_1" .equals(o), ResourceLocation::new);
+			cx.getTypeWrappers().register(ResourceLocation.class, o -> !"rhino:array_test_1".equals(o), ResourceLocation::new);
 
 			Scriptable scope = cx.initStandardObjects();
 
@@ -42,7 +42,7 @@ public class ScriptTest {
 			ScriptableObject.putProperty(scope, "events", Context.javaToJS(eventsJS, scope));
 			ScriptableObject.putProperty(scope, "sqTest", Context.javaToJS(new DynamicFunction(o -> ((Number) o[0]).doubleValue() * ((Number) o[0]).doubleValue()), scope));
 
-			// loadTest(cx, scope, "rhino_test_script.js");
+			loadTest(cx, scope, "rhino_test_script.js");
 			loadTest(cx, scope, "array_type_wrapper_test.js");
 		} catch (RhinoException ex) {
 			StringBuilder sb = new StringBuilder("Script error in ");
@@ -68,6 +68,15 @@ public class ScriptTest {
 
 		for (Consumer<Object> consumer : eventsJS.lastCallback) {
 			consumer.accept(48);
+		}
+
+		try {
+			Context cx1 = Context.enterWithNewFactory();
+			cx1.getTypeWrappers().register(ResourceLocation.class, o -> !"rhino:array_test_1".equals(o), ResourceLocation::new);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		} finally {
+			Context.exit();
 		}
 	}
 
