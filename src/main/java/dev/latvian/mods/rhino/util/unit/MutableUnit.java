@@ -1,9 +1,9 @@
 package dev.latvian.mods.rhino.util.unit;
 
-public class MutablePixelUnit implements Unit {
+public class MutableUnit implements Unit {
 	private float value;
 
-	public MutablePixelUnit(float v) {
+	public MutableUnit(float v) {
 		value = v;
 	}
 
