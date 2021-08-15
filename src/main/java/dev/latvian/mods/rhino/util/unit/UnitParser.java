@@ -120,14 +120,7 @@ class UnitParser {
 
 		if (start == '$') {
 			move();
-			String key = readW();
-			Unit unit = storage.getVariable(key);
-
-			if (unit == null) {
-				throw new UnitParserException(string, startPos, "Variable $" + key + " not set!");
-			}
-
-			return new VariableUnit(storage, key);
+			return new VariableUnit(storage, readW());
 		} else if (start == '-') {
 			move();
 			return readUnit().neg();
