@@ -11,12 +11,12 @@ public class FloorUnit extends Func1Unit {
 	}
 
 	@Override
-	public float get() {
-		return floor(unit.get());
+	public String getFuncName() {
+		return "floor";
 	}
 
 	@Override
-	public String toString() {
-		return fString("floor", unit);
+	public float get() {
+		return floor(unit.get());
 	}
 }

@@ -6,12 +6,12 @@ public class Log1pUnit extends Func1Unit {
 	}
 
 	@Override
-	public float get() {
-		return (float) Math.log1p(unit.get());
+	public String getFuncName() {
+		return "log1p";
 	}
 
 	@Override
-	public String toString() {
-		return fString("log1p", unit);
+	public float get() {
+		return (float) Math.log1p(unit.get());
 	}
 }

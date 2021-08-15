@@ -1,8 +1,13 @@
 package dev.latvian.mods.rhino.util.unit;
 
-public class GtUnit extends Func2Unit {
+public class GtUnit extends OpUnit {
 	public GtUnit(Unit u, Unit w) {
 		super(u, w);
+	}
+
+	@Override
+	public String getSymbols() {
+		return ">";
 	}
 
 	@Override
@@ -18,10 +23,5 @@ public class GtUnit extends Func2Unit {
 	@Override
 	public boolean getAsBoolean() {
 		return unit.get() > with.get();
-	}
-
-	@Override
-	public String toString() {
-		return aString(unit, " > ", with);
 	}
 }

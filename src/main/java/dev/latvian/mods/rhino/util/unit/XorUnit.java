@@ -1,8 +1,13 @@
 package dev.latvian.mods.rhino.util.unit;
 
-public class XorUnit extends Func2Unit {
+public class XorUnit extends OpUnit {
 	public XorUnit(Unit u, Unit w) {
 		super(u, w);
+	}
+
+	@Override
+	public String getSymbols() {
+		return "^";
 	}
 
 	@Override
@@ -18,10 +23,5 @@ public class XorUnit extends Func2Unit {
 	@Override
 	public boolean getAsBoolean() {
 		return unit.getAsBoolean() != with.getAsBoolean();
-	}
-
-	@Override
-	public String toString() {
-		return aString(unit, " ^ ", with);
 	}
 }

@@ -6,12 +6,12 @@ public class TanUnit extends Func1Unit {
 	}
 
 	@Override
-	public float get() {
-		return (float) Math.tan(unit.get());
+	public String getFuncName() {
+		return "tan";
 	}
 
 	@Override
-	public String toString() {
-		return fString("tan", unit);
+	public float get() {
+		return (float) Math.tan(unit.get());
 	}
 }

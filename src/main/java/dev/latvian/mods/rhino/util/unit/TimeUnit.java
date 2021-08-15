@@ -1,10 +1,12 @@
 package dev.latvian.mods.rhino.util.unit;
 
-import java.util.Random;
-
-public class TimeUnit implements Unit {
+public class TimeUnit extends Func0Unit {
 	public static final TimeUnit INSTANCE = new TimeUnit();
-	public static final Random RANDOM = new Random();
+
+	@Override
+	public String getFuncName() {
+		return "time";
+	}
 
 	@Override
 	public float get() {
@@ -14,10 +16,5 @@ public class TimeUnit implements Unit {
 	@Override
 	public int getAsInt() {
 		return (int) (System.nanoTime() / 1000000000L);
-	}
-
-	@Override
-	public String toString() {
-		return "time()";
 	}
 }

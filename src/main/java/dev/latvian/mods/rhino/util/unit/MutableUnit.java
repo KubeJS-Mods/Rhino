@@ -1,6 +1,6 @@
 package dev.latvian.mods.rhino.util.unit;
 
-public class MutableUnit implements Unit {
+public class MutableUnit extends Unit {
 	private float value;
 
 	public MutableUnit(float v) {
@@ -17,7 +17,7 @@ public class MutableUnit implements Unit {
 	}
 
 	@Override
-	public String toString() {
-		return String.valueOf(value);
+	public void append(StringBuilder sb) {
+		sb.append(value);
 	}
 }

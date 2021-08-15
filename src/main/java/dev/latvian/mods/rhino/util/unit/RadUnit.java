@@ -6,12 +6,12 @@ public class RadUnit extends Func1Unit {
 	}
 
 	@Override
-	public float get() {
-		return (float) Math.toRadians(unit.get());
+	public String getFuncName() {
+		return "rad";
 	}
 
 	@Override
-	public String toString() {
-		return fString("rad", unit);
+	public float get() {
+		return (float) Math.toRadians(unit.get());
 	}
 }

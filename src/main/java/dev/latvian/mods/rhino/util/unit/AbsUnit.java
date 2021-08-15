@@ -6,6 +6,11 @@ public class AbsUnit extends Func1Unit {
 	}
 
 	@Override
+	public String getFuncName() {
+		return "abs";
+	}
+
+	@Override
 	public float get() {
 		return Math.abs(unit.get());
 	}
@@ -13,10 +18,5 @@ public class AbsUnit extends Func1Unit {
 	@Override
 	public int getAsInt() {
 		return Math.abs(unit.getAsInt());
-	}
-
-	@Override
-	public String toString() {
-		return fString("abs", unit);
 	}
 }

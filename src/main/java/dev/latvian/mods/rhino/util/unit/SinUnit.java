@@ -6,12 +6,12 @@ public class SinUnit extends Func1Unit {
 	}
 
 	@Override
-	public float get() {
-		return (float) Math.sin(unit.get());
+	public String getFuncName() {
+		return "sin";
 	}
 
 	@Override
-	public String toString() {
-		return fString("sin", unit);
+	public float get() {
+		return (float) Math.sin(unit.get());
 	}
 }

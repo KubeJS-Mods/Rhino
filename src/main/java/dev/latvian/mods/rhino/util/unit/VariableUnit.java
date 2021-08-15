@@ -1,8 +1,8 @@
 package dev.latvian.mods.rhino.util.unit;
 
-public class VariableUnit implements Unit {
-	private final Unit unit;
-	private final String key;
+public class VariableUnit extends Unit {
+	public final Unit unit;
+	public final String key;
 
 	public VariableUnit(Unit u, String k) {
 		unit = u;
@@ -15,7 +15,8 @@ public class VariableUnit implements Unit {
 	}
 
 	@Override
-	public String toString() {
-		return "$" + key;
+	public void append(StringBuilder sb) {
+		sb.append('$');
+		sb.append(key);
 	}
 }

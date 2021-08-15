@@ -6,12 +6,12 @@ public class SqrtUnit extends Func1Unit {
 	}
 
 	@Override
-	public float get() {
-		return (float) Math.sqrt(unit.get());
+	public String getFuncName() {
+		return "sqrt";
 	}
 
 	@Override
-	public String toString() {
-		return fString("sqrt", unit);
+	public float get() {
+		return (float) Math.sqrt(unit.get());
 	}
 }

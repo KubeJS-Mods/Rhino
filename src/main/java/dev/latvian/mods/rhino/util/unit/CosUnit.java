@@ -6,12 +6,12 @@ public class CosUnit extends Func1Unit {
 	}
 
 	@Override
-	public float get() {
-		return (float) Math.cos(unit.get());
+	public String getFuncName() {
+		return "cos";
 	}
 
 	@Override
-	public String toString() {
-		return fString("cos", unit);
+	public float get() {
+		return (float) Math.cos(unit.get());
 	}
 }

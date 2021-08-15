@@ -6,6 +6,11 @@ public class BoolUnit extends Func1Unit {
 	}
 
 	@Override
+	public String getFuncName() {
+		return "bool";
+	}
+
+	@Override
 	public float get() {
 		return unit.getAsBoolean() ? 1F : 0F;
 	}
@@ -21,7 +26,7 @@ public class BoolUnit extends Func1Unit {
 	}
 
 	@Override
-	public String toString() {
-		return fString("bool", unit);
+	public Unit toBool() {
+		return this;
 	}
 }

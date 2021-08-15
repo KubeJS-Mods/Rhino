@@ -6,12 +6,12 @@ public class Atan2Unit extends Func2Unit {
 	}
 
 	@Override
-	public float get() {
-		return (float) Math.atan2(unit.get(), with.get());
+	public String getFuncName() {
+		return "atan2";
 	}
 
 	@Override
-	public String toString() {
-		return fString("atan2", unit, with);
+	public float get() {
+		return (float) Math.atan2(unit.get(), with.get());
 	}
 }

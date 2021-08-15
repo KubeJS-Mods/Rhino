@@ -6,6 +6,11 @@ public class SqUnit extends Func1Unit {
 	}
 
 	@Override
+	public String getFuncName() {
+		return "sq";
+	}
+
+	@Override
 	public float get() {
 		return unit.get() * unit.get();
 	}
@@ -13,10 +18,5 @@ public class SqUnit extends Func1Unit {
 	@Override
 	public int getAsInt() {
 		return unit.getAsInt() * unit.getAsInt();
-	}
-
-	@Override
-	public String toString() {
-		return fString("sq", unit);
 	}
 }

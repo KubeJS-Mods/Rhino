@@ -11,12 +11,12 @@ public class CeilUnit extends Func1Unit {
 	}
 
 	@Override
-	public float get() {
-		return ceil(unit.get());
+	public String getFuncName() {
+		return "ceil";
 	}
 
 	@Override
-	public String toString() {
-		return fString("ceil", unit);
+	public float get() {
+		return ceil(unit.get());
 	}
 }

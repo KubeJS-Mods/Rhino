@@ -7,13 +7,13 @@ class UnitParser {
 	private final String string;
 	private final char[] chars;
 	private int pos;
-	private final UnitVariables variables;
+	private final UnitStorage storage;
 
-	public UnitParser(String s, UnitVariables v) {
+	public UnitParser(String s, UnitStorage st) {
 		string = s;
 		chars = string.trim().toCharArray();
 		pos = 0;
-		variables = v;
+		storage = st;
 	}
 
 	private boolean isEOL() {
@@ -40,22 +40,6 @@ class UnitParser {
 		char c = peek();
 		move();
 		return c;
-	}
-
-	private void readOpen(int startPos) {
-		skipS();
-
-		if (read() != '(') {
-			throw new UnitParserException(string, startPos, "Expected ( at " + pos);
-		}
-	}
-
-	private void readComma(int startPos) {
-		skipS();
-
-		if (read() != ',') {
-			throw new UnitParserException(string, startPos, "Expected , at " + pos);
-		}
 	}
 
 	private void readClose(int startPos) {
@@ -129,7 +113,7 @@ class UnitParser {
 		}
 	}
 
-	private Unit readUnit() {
+	public Unit readUnit() {
 		skipS();
 		int startPos = pos;
 		char start = peek();
@@ -137,7 +121,7 @@ class UnitParser {
 		if (start == '$') {
 			move();
 			String key = readW();
-			Unit unit = variables.get(key);
+			Unit unit = storage.getVariable(key);
 
 			if (unit == null) {
 				throw new UnitParserException(string, startPos, "Variable $" + key + " not set!");
@@ -150,8 +134,17 @@ class UnitParser {
 		} else if (start == '~' || start == '!') {
 			move();
 			return readUnit().not();
+		} else if (start == '#') {
+			move();
+			String hex = readW();
+			int i = Long.decode("#" + hex).intValue();
+			int r = (i >> 16) & 0xFF;
+			int g = (i >> 8) & 0xFF;
+			int b = i & 0xFF;
+			int a = (i >> 24) & 0xFF;
+			return new ColorUnit(FixedUnit.of(r), FixedUnit.of(g), FixedUnit.of(b), hex.length() == 6 ? null : FixedUnit.of(a));
 		} else if (start >= '0' && start <= '9') {
-			return Unit.fixed(Float.parseFloat(readN()));
+			return FixedUnit.of(Float.parseFloat(readN()));
 		} else if (start == '(') {
 			move();
 			Unit unit = readUnit();
@@ -160,62 +153,28 @@ class UnitParser {
 			Unit with = readUnit();
 			readClose(startPos);
 
-			switch (c) {
-				case "+":
-					return unit.add(with);
-				case "-":
-					return unit.sub(with);
-				case "*":
-					return unit.mul(with);
-				case "/":
-					return unit.div(with);
-				case "%":
-					return unit.mod(with);
-				case "**":
-					return unit.pow(with);
-				case "<<":
-					return unit.shiftLeft(with);
-				case ">>":
-					return unit.shiftRight(with);
-				case "&":
-				case "&&":
-					return unit.and(with);
-				case "|":
-				case "||":
-					return unit.or(with);
-				case "^":
-					return unit.xor(with);
-				case "==":
-					return unit.eq(with);
-				case "!=":
-				case "~=":
-					return unit.neq(with);
-				case ">":
-					return unit.gt(with);
-				case "<":
-					return unit.lt(with);
-				case ">=":
-					return unit.gte(with);
-				case "<=":
-					return unit.lte(with);
-				default:
-					throw new UnitParserException(string, startPos, "Unknown operation " + c);
+			Unit u = storage.createOp(c, unit, with);
+
+			if (u == null) {
+				throw new UnitParserException(string, startPos, "Unknown operation " + c);
 			}
+
+			return u;
 		} else if (isW(start)) {
 			String func = readW();
 
-			switch (func) {
-				case "PI":
-					return Unit.PI;
-				case "E":
-					return Unit.E;
-				case "true":
-					return Unit.ONE;
-				case "false":
-					return Unit.ZERO;
+			ConstantUnit constant = storage.getConstant(func);
+
+			if (constant != null) {
+				return constant;
 			}
 
-			readOpen(startPos);
+			skipS();
+
+			if (read() != '(') {
+				throw new UnitParserException(string, startPos, "Unknown constant '" + func + "' at " + pos);
+			}
+
 			List<Unit> args = new ArrayList<>(2);
 
 			skipS();
@@ -241,52 +200,13 @@ class UnitParser {
 				readClose(startPos);
 			}
 
-			switch (func) {
-				case "random":
-					return RandomUnit.INSTANCE;
-				case "time":
-					return TimeUnit.INSTANCE;
-				case "min":
-					return args.get(0).min(args.get(1));
-				case "max":
-					return args.get(0).max(args.get(1));
-				case "pow":
-					return args.get(0).pow(args.get(1));
-				case "atan2":
-					return args.get(0).atan2(args.get(1));
-				case "abs":
-					return args.get(0).abs();
-				case "sin":
-					return args.get(0).sin();
-				case "cos":
-					return args.get(0).cos();
-				case "tan":
-					return args.get(0).tan();
-				case "deg":
-					return args.get(0).deg();
-				case "rad":
-					return args.get(0).rad();
-				case "atan":
-					return args.get(0).atan();
-				case "log":
-					return args.get(0).log();
-				case "log10":
-					return args.get(0).log10();
-				case "log1p":
-					return args.get(0).log1p();
-				case "sqrt":
-					return args.get(0).sqrt();
-				case "sq":
-					return args.get(0).sq();
-				case "floor":
-					return args.get(0).floor();
-				case "ceil":
-					return args.get(0).ceil();
-				case "if":
-					return new IfUnit(args.get(0), args.get(1), args.get(2));
-				default:
-					throw new UnitParserException(string, startPos, "Unknown function " + func);
+			Unit function = storage.createFunc(func, args);
+
+			if (function != null) {
+				return function;
 			}
+
+			throw new UnitParserException(string, startPos, "Unknown function " + func);
 		}
 
 		throw new UnitParserException(string, startPos, "Unknown syntax");

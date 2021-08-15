@@ -6,12 +6,12 @@ public class DegUnit extends Func1Unit {
 	}
 
 	@Override
-	public float get() {
-		return (float) Math.toDegrees(unit.get());
+	public String getFuncName() {
+		return "deg";
 	}
 
 	@Override
-	public String toString() {
-		return fString("deg", unit);
+	public float get() {
+		return (float) Math.toDegrees(unit.get());
 	}
 }

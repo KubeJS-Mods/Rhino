@@ -2,17 +2,17 @@ package dev.latvian.mods.rhino.util.unit;
 
 import java.util.Random;
 
-public class RandomUnit implements Unit {
+public class RandomUnit extends Func0Unit {
 	public static final RandomUnit INSTANCE = new RandomUnit();
 	public static final Random RANDOM = new Random();
 
 	@Override
-	public float get() {
-		return RANDOM.nextFloat();
+	public String getFuncName() {
+		return "random";
 	}
 
 	@Override
-	public String toString() {
-		return "random()";
+	public float get() {
+		return RANDOM.nextFloat();
 	}
 }

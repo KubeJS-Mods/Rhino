@@ -1,21 +1,21 @@
 package dev.latvian.mods.rhino.util.unit;
 
-public abstract class Func2Unit extends FuncUnit {
+public abstract class OpUnit extends Unit {
 	public final Unit unit;
 	public final Unit with;
 
-	public Func2Unit(Unit u, Unit w) {
+	public OpUnit(Unit u, Unit w) {
 		unit = u;
 		with = w;
 	}
 
+	public abstract String getSymbols();
+
 	@Override
 	public void append(StringBuilder sb) {
-		sb.append(getFuncName());
 		sb.append('(');
 		unit.append(sb);
-		sb.append(',');
-		sb.append(' ');
+		sb.append(getSymbols());
 		with.append(sb);
 		sb.append(')');
 	}

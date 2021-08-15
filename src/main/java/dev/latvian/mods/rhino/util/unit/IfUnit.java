@@ -1,6 +1,6 @@
 package dev.latvian.mods.rhino.util.unit;
 
-public class IfUnit implements Unit {
+public class IfUnit extends Unit {
 	private final Unit statement;
 	private final Unit trueUnit;
 	private final Unit falseUnit;
@@ -27,7 +27,15 @@ public class IfUnit implements Unit {
 	}
 
 	@Override
-	public String toString() {
-		return "if(" + statement + ", " + trueUnit + ", " + falseUnit + ")";
+	public void append(StringBuilder sb) {
+		sb.append("if(");
+		statement.append(sb);
+		sb.append(',');
+		sb.append(' ');
+		trueUnit.append(sb);
+		sb.append(',');
+		sb.append(' ');
+		falseUnit.append(sb);
+		sb.append(')');
 	}
 }
