@@ -11,6 +11,7 @@ public class UnitStorage {
 	private final Map<String, ConstantUnit> constants;
 	private final Map<String, OpSupplier> operations;
 	private final Map<String, FuncSupplier> functions;
+	private long variableVersion = 0L;
 
 	public UnitStorage() {
 		variables = new HashMap<>();
@@ -75,11 +76,16 @@ public class UnitStorage {
 
 	public void setVariable(String key, Unit unit) {
 		variables.put(key, unit);
+		variableVersion++;
 	}
 
 	@Nullable
 	public Unit getVariable(String key) {
 		return variables.get(key);
+	}
+
+	public long getVariableVersion() {
+		return variableVersion;
 	}
 
 	public void addConstant(String name, float val) {

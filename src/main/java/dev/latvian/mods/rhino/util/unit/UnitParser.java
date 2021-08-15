@@ -127,7 +127,7 @@ class UnitParser {
 				throw new UnitParserException(string, startPos, "Variable $" + key + " not set!");
 			}
 
-			return new VariableUnit(unit, key);
+			return new VariableUnit(storage, key);
 		} else if (start == '-') {
 			move();
 			return readUnit().neg();
