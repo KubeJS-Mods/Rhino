@@ -93,4 +93,8 @@ public class EventsJS {
 	public void testRLArray(String id, ResourceLocation[] ids) {
 		System.out.println(id + ": " + Arrays.toString(ids));
 	}
+
+	public TestMapLike getMapLike() {
+		return new TestMapLike();
+	}
 }

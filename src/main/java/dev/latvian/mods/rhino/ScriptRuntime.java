@@ -279,26 +279,24 @@ public class ScriptRuntime {
 	 * See ECMA 9.2.
 	 */
 	public static boolean toBoolean(Object val) {
-		for (; ; ) {
-			if (val instanceof Boolean) {
-				return (Boolean) val;
-			}
-			if (val == null || val == Undefined.instance) {
-				return false;
-			}
-			if (val instanceof CharSequence) {
-				return ((CharSequence) val).length() != 0;
-			}
-			if (val instanceof Number) {
-				double d = ((Number) val).doubleValue();
-				return (!Double.isNaN(d) && d != 0.0);
-			}
-			if (val instanceof Scriptable) {
-				return !(val instanceof ScriptableObject) || !((ScriptableObject) val).avoidObjectDetection();
-			}
-			warnAboutNonJSObject(val);
-			return true;
+		if (val instanceof Boolean) {
+			return (Boolean) val;
 		}
+		if (val == null || val == Undefined.instance) {
+			return false;
+		}
+		if (val instanceof CharSequence) {
+			return ((CharSequence) val).length() != 0;
+		}
+		if (val instanceof Number) {
+			double d = ((Number) val).doubleValue();
+			return (!Double.isNaN(d) && d != 0.0);
+		}
+		if (val instanceof Scriptable) {
+			return !(val instanceof ScriptableObject) || !((ScriptableObject) val).avoidObjectDetection();
+		}
+		warnAboutNonJSObject(val);
+		return true;
 	}
 
 	/**
@@ -307,38 +305,36 @@ public class ScriptRuntime {
 	 * See ECMA 9.3.
 	 */
 	public static double toNumber(Object val) {
-		for (; ; ) {
-			if (val instanceof Number) {
-				return ((Number) val).doubleValue();
-			}
-			if (val == null) {
-				return +0.0;
-			}
-			if (val == Undefined.instance) {
-				return NaN;
-			}
-			if (val instanceof String) {
-				return toNumber((String) val);
-			}
-			if (val instanceof CharSequence) {
-				return toNumber(val.toString());
-			}
-			if (val instanceof Boolean) {
-				return (Boolean) val ? 1 : +0.0;
-			}
-			if (val instanceof Symbol) {
-				throw typeError0("msg.not.a.number");
-			}
-			if (val instanceof Scriptable) {
-				val = ((Scriptable) val).getDefaultValue(NumberClass);
-				if ((val instanceof Scriptable) && !isSymbol(val)) {
-					throw errorWithClassName("msg.primitive.expected", val);
-				}
-				continue;
-			}
-			warnAboutNonJSObject(val);
+		if (val instanceof Number) {
+			return ((Number) val).doubleValue();
+		}
+		if (val == null) {
+			return +0.0;
+		}
+		if (val == Undefined.instance) {
 			return NaN;
 		}
+		if (val instanceof String) {
+			return toNumber((String) val);
+		}
+		if (val instanceof CharSequence) {
+			return toNumber(val.toString());
+		}
+		if (val instanceof Boolean) {
+			return (Boolean) val ? 1 : +0.0;
+		}
+		if (val instanceof Symbol) {
+			throw typeError0("msg.not.a.number");
+		}
+		if (val instanceof Scriptable) {
+			val = ((Scriptable) val).getDefaultValue(NumberClass);
+			if ((val instanceof Scriptable) && !isSymbol(val)) {
+				throw errorWithClassName("msg.primitive.expected", val);
+			}
+			return toNumber(val);
+		}
+		warnAboutNonJSObject(val);
+		return NaN;
 	}
 
 	public static double toNumber(Object[] args, int index) {
@@ -757,36 +753,34 @@ public class ScriptRuntime {
 	 * See ECMA 9.8.
 	 */
 	public static String toString(Object val) {
-		for (; ; ) {
-			if (val == null) {
-				return "null";
-			}
-			if (val == Undefined.instance || val == Undefined.SCRIPTABLE_UNDEFINED) {
-				return "undefined";
-			}
-			if (val instanceof String) {
-				return (String) val;
-			}
-			if (val instanceof CharSequence) {
-				return val.toString();
-			}
-			if (val instanceof Number) {
-				// XXX should we just teach NativeNumber.stringValue()
-				// about Numbers?
-				return numberToString(((Number) val).doubleValue(), 10);
-			}
-			if (val instanceof Symbol) {
-				throw typeError0("msg.not.a.string");
-			}
-			if (val instanceof Scriptable) {
-				val = ((Scriptable) val).getDefaultValue(StringClass);
-				if ((val instanceof Scriptable) && !isSymbol(val)) {
-					throw errorWithClassName("msg.primitive.expected", val);
-				}
-				continue;
-			}
+		if (val == null) {
+			return "null";
+		}
+		if (val == Undefined.instance || val == Undefined.SCRIPTABLE_UNDEFINED) {
+			return "undefined";
+		}
+		if (val instanceof String) {
+			return (String) val;
+		}
+		if (val instanceof CharSequence) {
 			return val.toString();
 		}
+		if (val instanceof Number) {
+			// XXX should we just teach NativeNumber.stringValue()
+			// about Numbers?
+			return numberToString(((Number) val).doubleValue(), 10);
+		}
+		if (val instanceof Symbol) {
+			throw typeError0("msg.not.a.string");
+		}
+		if (val instanceof Scriptable) {
+			val = ((Scriptable) val).getDefaultValue(StringClass);
+			if ((val instanceof Scriptable) && !isSymbol(val)) {
+				throw errorWithClassName("msg.primitive.expected", val);
+			}
+			return toString(val);
+		}
+		return val.toString();
 	}
 
 	static String defaultObjectToString(Scriptable obj) {
@@ -1072,53 +1066,6 @@ public class ScriptRuntime {
 	public static char toUint16(Object val) {
 		double d = toNumber(val);
 		return (char) DoubleConversion.doubleToInt32(d);
-	}
-
-	// XXX: this is until setDefaultNamespace will learn how to store NS
-	// properly and separates namespace form Scriptable.get etc.
-	private static final String DEFAULT_NS_TAG = "__default_namespace__";
-
-	public static Object setDefaultNamespace(Object namespace, Context cx) {
-		Scriptable scope = cx.currentActivationCall;
-		if (scope == null) {
-			scope = getTopCallScope(cx);
-		}
-
-		Object ns = namespace; // XML Removed
-
-		// XXX : this should be in separated namesapce from Scriptable.get/put
-		if (!scope.has(DEFAULT_NS_TAG, scope)) {
-			// XXX: this is racy of cause
-			ScriptableObject.defineProperty(scope, DEFAULT_NS_TAG, ns, ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
-		} else {
-			scope.put(DEFAULT_NS_TAG, scope, ns);
-		}
-
-		return Undefined.instance;
-	}
-
-	public static Object searchDefaultNamespace(Context cx) {
-		Scriptable scope = cx.currentActivationCall;
-		if (scope == null) {
-			scope = getTopCallScope(cx);
-		}
-		Object nsObject;
-		for (; ; ) {
-			Scriptable parent = scope.getParentScope();
-			if (parent == null) {
-				nsObject = ScriptableObject.getProperty(scope, DEFAULT_NS_TAG);
-				if (nsObject == Scriptable.NOT_FOUND) {
-					return null;
-				}
-				break;
-			}
-			nsObject = scope.get(DEFAULT_NS_TAG, scope);
-			if (nsObject != Scriptable.NOT_FOUND) {
-				break;
-			}
-			scope = parent;
-		}
-		return nsObject;
 	}
 
 	public static Object getTopLevelProp(Scriptable scope, String id) {
@@ -2682,59 +2629,54 @@ public class ScriptRuntime {
 	}
 
 	static boolean eqNumber(double x, Object y) {
-		for (; ; ) {
-			if (y == null || y == Undefined.instance) {
-				return false;
-			} else if (y instanceof Number) {
-				return x == ((Number) y).doubleValue();
-			} else if (y instanceof CharSequence) {
-				return x == toNumber(y);
-			} else if (y instanceof Boolean) {
-				return x == ((Boolean) y ? 1.0 : +0.0);
-			} else if (isSymbol(y)) {
-				return false;
-			} else if (y instanceof Scriptable) {
-				if (y instanceof ScriptableObject) {
-					Object xval = wrapNumber(x);
-					Object test = ((ScriptableObject) y).equivalentValues(xval);
-					if (test != Scriptable.NOT_FOUND) {
-						return (Boolean) test;
-					}
+		if (y == null || y == Undefined.instance) {
+			return false;
+		} else if (y instanceof Number) {
+			return x == ((Number) y).doubleValue();
+		} else if (y instanceof CharSequence) {
+			return x == toNumber(y);
+		} else if (y instanceof Boolean) {
+			return x == ((Boolean) y ? 1.0 : +0.0);
+		} else if (isSymbol(y)) {
+			return false;
+		} else if (y instanceof Scriptable) {
+			if (y instanceof ScriptableObject) {
+				Object xval = wrapNumber(x);
+				Object test = ((ScriptableObject) y).equivalentValues(xval);
+				if (test != Scriptable.NOT_FOUND) {
+					return (Boolean) test;
 				}
-				y = toPrimitive(y);
-			} else {
-				warnAboutNonJSObject(y);
-				return false;
 			}
+			return eqNumber(x, toPrimitive(y));
+		} else {
+			warnAboutNonJSObject(y);
+			return false;
 		}
 	}
 
 	private static boolean eqString(CharSequence x, Object y) {
-		for (; ; ) {
-			if (y == null || y == Undefined.instance) {
-				return false;
-			} else if (y instanceof CharSequence) {
-				CharSequence c = (CharSequence) y;
-				return x.length() == c.length() && x.toString().equals(c.toString());
-			} else if (y instanceof Number) {
-				return toNumber(x.toString()) == ((Number) y).doubleValue();
-			} else if (y instanceof Boolean) {
-				return toNumber(x.toString()) == ((Boolean) y ? 1.0 : 0.0);
-			} else if (isSymbol(y)) {
-				return false;
-			} else if (y instanceof Scriptable) {
-				if (y instanceof ScriptableObject) {
-					Object test = ((ScriptableObject) y).equivalentValues(x.toString());
-					if (test != Scriptable.NOT_FOUND) {
-						return (Boolean) test;
-					}
+		if (y == null || y == Undefined.instance) {
+			return false;
+		} else if (y instanceof CharSequence) {
+			CharSequence c = (CharSequence) y;
+			return x.length() == c.length() && x.toString().equals(c.toString());
+		} else if (y instanceof Number) {
+			return toNumber(x.toString()) == ((Number) y).doubleValue();
+		} else if (y instanceof Boolean) {
+			return toNumber(x.toString()) == ((Boolean) y ? 1.0 : 0.0);
+		} else if (isSymbol(y)) {
+			return false;
+		} else if (y instanceof Scriptable) {
+			if (y instanceof ScriptableObject) {
+				Object test = ((ScriptableObject) y).equivalentValues(x.toString());
+				if (test != Scriptable.NOT_FOUND) {
+					return (Boolean) test;
 				}
-				y = toPrimitive(y);
-				continue;
-			} else {
-				warnAboutNonJSObject(y);
-				return false;
 			}
+			return eqString(x, toPrimitive(y));
+		} else {
+			warnAboutNonJSObject(y);
+			return false;
 		}
 	}
 

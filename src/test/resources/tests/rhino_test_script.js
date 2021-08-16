@@ -127,4 +127,6 @@ ${a + "z"} ${b.toLowerCase()}`
 	*/
 
 	console.info(`JSON Test:\n${JSON.stringify({a: 1302, b: 'awdwad', c: false, d: rect, e: rect2}, null, '  ')}`)
+
+	console.info('Test MapLike: ' + events.mapLike.a)
 })
