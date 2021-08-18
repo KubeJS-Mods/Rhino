@@ -28,4 +28,8 @@ public interface MapLike<K, T> extends CustomJavaObjectWrapper {
 	default Collection<K> keysML() {
 		return Collections.emptySet();
 	}
+
+	default void removeML(K key) {
+		throw new UnsupportedOperationException("Can't delete values from this map!");
+	}
 }

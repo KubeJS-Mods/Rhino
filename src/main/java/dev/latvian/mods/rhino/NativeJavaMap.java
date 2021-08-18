@@ -84,4 +84,14 @@ public class NativeJavaMap extends NativeJavaObject {
 		}
 		return ids.toArray();
 	}
+
+	@Override
+	public void delete(String name) {
+		map.remove(name);
+	}
+
+	@Override
+	public void delete(int index) {
+		map.remove(index);
+	}
 }

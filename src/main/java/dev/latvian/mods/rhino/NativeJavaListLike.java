@@ -97,4 +97,11 @@ public class NativeJavaListLike extends NativeJavaObject {
 	private boolean isWithValidIndex(int index) {
 		return index >= 0 && index < list.sizeLL();
 	}
+
+	@Override
+	public void delete(int index) {
+		if (isWithValidIndex(index)) {
+			list.removeLL(index);
+		}
+	}
 }

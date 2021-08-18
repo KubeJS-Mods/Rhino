@@ -80,4 +80,14 @@ public class NativeJavaMapLike extends NativeJavaObject {
 
 		return k;
 	}
+
+	@Override
+	public void delete(String name) {
+		map.removeML(name);
+	}
+
+	@Override
+	public void delete(int index) {
+		map.removeML(index);
+	}
 }

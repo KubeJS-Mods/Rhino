@@ -15,8 +15,12 @@ public interface ListLike<T> extends CustomJavaObjectWrapper {
 	T getLL(int index);
 
 	default void setLL(int index, T value) {
-		throw new UnsupportedOperationException("Can't insert values in this map!");
+		throw new UnsupportedOperationException("Can't insert values in this list!");
 	}
 
 	int sizeLL();
+
+	default void removeLL(T index) {
+		throw new UnsupportedOperationException("Can't delete values from this list!");
+	}
 }
