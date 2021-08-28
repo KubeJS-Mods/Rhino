@@ -7,7 +7,7 @@
 package dev.latvian.mods.rhino;
 
 /**
- * A Symbol is a JavaScript objecy that obeys the special properties of the
+ * A Symbol is a JavaScript object that obeys the special properties of the
  * Symbol prototype. This interface lets us possibly support multiple
  * implementations of Symbol.
  *

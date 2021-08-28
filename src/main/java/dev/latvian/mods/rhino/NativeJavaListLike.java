@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.Deletable;
 import dev.latvian.mods.rhino.util.ListLike;
 
 import java.util.List;
@@ -101,7 +102,9 @@ public class NativeJavaListLike extends NativeJavaObject {
 	@Override
 	public void delete(int index) {
 		if (isWithValidIndex(index)) {
+			Object obj = list.getLL(index);
 			list.removeLL(index);
+			Deletable.deleteObject(obj);
 		}
 	}
 }

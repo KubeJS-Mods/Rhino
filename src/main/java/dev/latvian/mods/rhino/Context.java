@@ -53,9 +53,6 @@ import java.util.Set;
 
 @SuppressWarnings("ThrowableNotThrown")
 public class Context {
-
-	public static final int VERSION_ES6 = 200;
-
 	/**
 	 * Control if member expression as function name extension is available.
 	 * If <code>hasFeature(FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME)</code> returns
@@ -264,8 +261,8 @@ public class Context {
 	 * @see ContextFactory#call(ContextAction)
 	 */
 	public static Context getCurrentContext() {
-		Object helper = VMBridge.instance.getThreadContextHelper();
-		return VMBridge.instance.getContext(helper);
+		Object helper = VMBridge.vm.getThreadContextHelper();
+		return VMBridge.vm.getContext(helper);
 	}
 
 	/**
@@ -285,8 +282,8 @@ public class Context {
 	}
 
 	static Context enter(Context cx, ContextFactory factory) {
-		Object helper = VMBridge.instance.getThreadContextHelper();
-		Context old = VMBridge.instance.getContext(helper);
+		Object helper = VMBridge.vm.getThreadContextHelper();
+		Context old = VMBridge.vm.getContext(helper);
 		if (old != null) {
 			cx = old;
 		} else {
@@ -304,7 +301,7 @@ public class Context {
 					throw new IllegalStateException("can not use Context instance already associated with some thread");
 				}
 			}
-			VMBridge.instance.setContext(helper, cx);
+			VMBridge.vm.setContext(helper, cx);
 		}
 		++cx.enterCount;
 		return cx;
@@ -323,8 +320,8 @@ public class Context {
 	 * @see ContextFactory#enterContext()
 	 */
 	public static void exit() {
-		Object helper = VMBridge.instance.getThreadContextHelper();
-		Context cx = VMBridge.instance.getContext(helper);
+		Object helper = VMBridge.vm.getThreadContextHelper();
+		Context cx = VMBridge.vm.getContext(helper);
 		if (cx == null) {
 			throw new IllegalStateException("Calling Context.exit without previous Context.enter");
 		}
@@ -332,7 +329,7 @@ public class Context {
 			Kit.codeBug();
 		}
 		if (--cx.enterCount == 0) {
-			VMBridge.instance.setContext(helper, null);
+			VMBridge.vm.setContext(helper, null);
 			cx.factory.onContextReleased(cx);
 		}
 	}

@@ -1,11 +1,12 @@
 package dev.latvian.mods.rhino.test;
 
+import dev.latvian.mods.rhino.util.Deletable;
 import dev.latvian.mods.rhino.util.SpecialEquality;
 
 /**
  * @author LatvianModder
  */
-public class ResourceLocation implements SpecialEquality {
+public class ResourceLocation implements SpecialEquality, Deletable {
 	public final String namespace;
 	public final String path;
 
@@ -39,5 +40,10 @@ public class ResourceLocation implements SpecialEquality {
 	public boolean specialEquals(Object o, boolean shallow) {
 		ResourceLocation r = o instanceof ResourceLocation ? (ResourceLocation) o : new ResourceLocation(String.valueOf(o));
 		return r == this || namespace.equals(r.namespace) && path.equals(r.path);
+	}
+
+	@Override
+	public void onDeletedByJS() {
+		System.out.println("RL " + this + " was deleted!");
 	}
 }

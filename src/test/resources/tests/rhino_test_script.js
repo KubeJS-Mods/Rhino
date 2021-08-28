@@ -129,4 +129,9 @@ ${a + "z"} ${b.toLowerCase()}`
 	console.info(`JSON Test:\n${JSON.stringify({a: 1302, b: 'awdwad', c: false, d: rect, e: rect2}, null, '  ')}`)
 
 	console.info('Test MapLike: ' + events.mapLike.a)
+
+	let map = {test: new ResourceLocation('test_delete')}
+	console.info(map)
+	delete map.test
+	console.info(map)
 })

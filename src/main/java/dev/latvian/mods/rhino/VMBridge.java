@@ -8,14 +8,17 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.jdk18.VMBridge_jdk18;
+
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 
 public abstract class VMBridge {
 
-	static final VMBridge instance = makeInstance();
+	static final VMBridge vm = makeVMInstance();
 
-	private static VMBridge makeInstance() {
+	private static VMBridge makeVMInstance() {
+		/*
 		String[] classNames = {"dev.latvian.mods.rhino.VMBridge_custom", "dev.latvian.mods.rhino.jdk18.VMBridge_jdk18",};
 		for (int i = 0; i != classNames.length; ++i) {
 			String className = classNames[i];
@@ -28,6 +31,9 @@ public abstract class VMBridge {
 			}
 		}
 		throw new IllegalStateException("Failed to create VMBridge instance");
+		 */
+
+		return new VMBridge_jdk18();
 	}
 
 	/**

@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.Deletable;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 import org.jetbrains.annotations.Nullable;
@@ -137,6 +138,15 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
 	@Override
 	public void delete(String name) {
+		if (fieldAndMethods != null) {
+			Object result = fieldAndMethods.get(name);
+			if (result != null) {
+				Deletable.deleteObject(result);
+				return;
+			}
+		}
+
+		Deletable.deleteObject(members.get(this, name, javaObject, false));
 	}
 
 	@Override

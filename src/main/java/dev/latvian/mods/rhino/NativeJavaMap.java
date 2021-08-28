@@ -5,6 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.Deletable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -87,11 +89,11 @@ public class NativeJavaMap extends NativeJavaObject {
 
 	@Override
 	public void delete(String name) {
-		map.remove(name);
+		Deletable.deleteObject(map.remove(name));
 	}
 
 	@Override
 	public void delete(int index) {
-		map.remove(index);
+		Deletable.deleteObject(map.remove(index));
 	}
 }

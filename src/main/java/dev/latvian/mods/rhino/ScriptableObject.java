@@ -14,6 +14,7 @@ import dev.latvian.mods.rhino.annotations.JSGetter;
 import dev.latvian.mods.rhino.annotations.JSSetter;
 import dev.latvian.mods.rhino.annotations.JSStaticFunction;
 import dev.latvian.mods.rhino.debug.DebuggableObject;
+import dev.latvian.mods.rhino.util.Deletable;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -554,7 +555,9 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	@Override
 	public void delete(String name) {
 		checkNotSealed(name, 0);
+		Slot s = slotMap.query(name, 0);
 		slotMap.remove(name, 0);
+		Deletable.deleteObject(s == null ? null : s.value);
 	}
 
 	/**
@@ -568,7 +571,9 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	@Override
 	public void delete(int index) {
 		checkNotSealed(null, index);
+		Slot s = slotMap.query(null, index);
 		slotMap.remove(null, index);
+		Deletable.deleteObject(s == null ? null : s.value);
 	}
 
 	/**
