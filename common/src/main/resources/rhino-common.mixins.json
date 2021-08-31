@@ -3,6 +3,14 @@
 	"package": "dev.latvian.mods.rhino.mod.core.mixin.common",
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
+		"ChatFormattingMixin",
+		"DirectionMixin",
+		"DyeColorMixin",
+		"ResourceKeyMixin",
+		"ResourceLocationMixin",
+		"TextColorMixin",
+		"Vec3iMixin",
+		"Vec3Mixin"
 	],
 	"client": [
 	],
