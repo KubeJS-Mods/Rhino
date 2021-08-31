@@ -1,153 +1,87 @@
 plugins {
-    id "dev.architectury.loom" version "0.7.2-SNAPSHOT"
-    id "com.matthewprenger.cursegradle" version "1.4.0"
-    id 'maven-publish'
+	id "architectury-plugin" version "3.1-SNAPSHOT"
+	id "dev.architectury.loom" version "0.7.3-SNAPSHOT" apply false
+	id "io.github.juuxel.loom-quiltflower" version "1.1.1" apply false
 }
 
-apply from: 'https://files.latmod.com/public/markdown-git-changelog.gradle'
-
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
-
-def ENV = System.getenv()
-version = "${mod_version}-build.${ENV.GITHUB_RUN_NUMBER ?: 9999}"
-archivesBaseName = project.archives_base_name
-group = project.maven_group
-
-loom {
-    silentMojangMappingsLicense()
-
-    mixinConfigs = []
-
-    useFabricMixin = true
-
-    dataGen {
-        mod project.mod_id
-    }
-
-    launches {
-        data {
-            arg "--existing", file("src/main/resources").absolutePath
-        }
-    }
+architectury {
+	minecraft = rootProject.minecraft_version
 }
 
-repositories {
-    // maven { url "https://www.cursemaven.com" }
-    // maven { url "https://maven.shedaniel.me/" }
-    maven {
-        url "https://maven.saps.dev/minecraft"
-        content {
-            includeGroup "dev.ftb.mods"
-            includeGroup "dev.latvian.mods"
-        }
-    }
+subprojects {
+	apply plugin: "dev.architectury.loom"
+	apply plugin: "io.github.juuxel.loom-quiltflower"
+
+	loom {
+		silentMojangMappingsLicense()
+		useFabricMixin = true
+	}
+
+	dependencies {
+		minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+		mappings loom.officialMojangMappings()
+	}
 }
 
-dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings minecraft.officialMojangMappings()
-    forge "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
+allprojects {
+	apply plugin: "java"
+	apply plugin: "architectury-plugin"
+	apply plugin: "maven-publish"
+	apply from: "https://files.latmod.com/public/markdown-git-changelog.gradle"
+
+	def ENV = System.getenv()
+	version = "${mod_version}-build.${ENV.GITHUB_RUN_NUMBER ?: 9999}"
+	group = project.mod_package
+	archivesBaseName = project.mod_name
+
+	sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+
+	configurations {
+		modOptional
+		modCompileOnly.extendsFrom(modOptional)
+		modRuntime.extendsFrom(modOptional)
+
+		optional
+		compileOnly.extendsFrom(optional)
+		runtime.extendsFrom(optional)
+	}
+
+	tasks.withType(JavaCompile) {
+		options.encoding = "UTF-8"
+
+		// The Minecraft launcher currently installs Java 8 for users, so your mod probably wants to target Java 8 too
+		// JDK 9 introduced a new way of specifying this that will make sure no newer classes or methods are used.
+		// We'll use that if it's available, but otherwise we'll use the older option.
+		def targetVersion = 8
+		if (JavaVersion.current().isJava9Compatible()) {
+			options.release = targetVersion
+		}
+	}
+
+	java {
+		withSourcesJar()
+	}
+
+	repositories {
+		maven {
+			url "https://maven.architectury.dev/"
+		}
+
+		maven {
+			url "https://www.cursemaven.com"
+			content {
+				includeGroup "curse.maven"
+			}
+		}
+
+		maven {
+			url "https://maven.saps.dev/minecraft"
+			content {
+				includeGroup "dev.latvian.mods"
+				includeGroup "dev.ftb.mods"
+			}
+		}
+	}
 }
 
-processResources {
-    inputs.property "version", project.version
-
-    filesMatching("META-INF/mods.toml") {
-        expand "version": project.version
-    }
-    
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
-    }
-}
-
-tasks.withType(JavaCompile).configureEach {
-    it.options.encoding = "UTF-8"
-    def targetVersion = 8
-    if (JavaVersion.current().isJava9Compatible()) {
-        it.options.release = targetVersion
-    }
-}
-
-java {
-    withSourcesJar()
-}
-
-jar {
-    from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}" }
-    }
-
-    manifest {
-        attributes([
-                "Specification-Title"     : project.mod_id,
-                "Specification-Vendor"    : project.mod_author,
-                "Specification-Version"   : "1",
-                "Implementation-Title"    : project.name,
-                "Implementation-Version"  : version,
-                "Implementation-Vendor"   : project.mod_author,
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        ])
-    }
-
-    classifier null
-}
-
-publishing {
-    publications {
-        mavenRhino(MavenPublication) {
-            artifactId = rootProject.archivesBaseName
-            artifact(remapJar) {
-                classifier null
-            }
-            artifact(sourcesJar) {
-                builtBy remapSourcesJar
-            }
-        }
-    }
-    repositories {
-        if (ENV.FTB_MAVEN_TOKEN) {
-            maven {
-                url "https://maven.ftb.dev/release"
-                credentials {
-                    username = "latvian"
-                    password = "${ENV.FTB_MAVEN_TOKEN}"
-                }
-            }
-        }
-
-        if (ENV.SAPS_TOKEN) {
-            maven {
-                url "https://maven.saps.dev/minecraft"
-                credentials {
-                    username = "latvian"
-                    password = "${ENV.SAPS_TOKEN}"
-                }
-            }
-        }
-    }
-}
-
-if (ENV.CURSEFORGE_KEY) {
-    curseforge {
-        apiKey = ENV.CURSEFORGE_KEY
-        project {
-            id = rootProject.curseforge_id
-            releaseType = rootProject.curseforge_type
-            addGameVersion "Forge"
-            addGameVersion "Fabric"
-            addGameVersion "1.14.4"
-            addGameVersion "1.15.2"
-            addGameVersion "1.16.1"
-            addGameVersion "1.16.2"
-            addGameVersion "1.16.3"
-            addGameVersion "1.16.4"
-            addGameVersion "1.16.5"
-            addGameVersion "1.17"
-            mainArtifact(remapJar.archivePath)
-            changelog = getGitChangelog
-            changelogType = 'markdown'
-        }
-    }
-}
+task curseforgePublish

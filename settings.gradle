@@ -1,9 +1,12 @@
 pluginManagement {
-    repositories {
-        maven { url "https://maven.creeperhost.net/" }
-        maven { url "https://maven.shedaniel.me/" }
-        gradlePluginPortal()
-    }
+	repositories {
+		maven { url "https://maven.creeperhost.net/" }
+		maven { url "https://maven.architectury.dev/" }
+		maven { url "https://server.bbkr.space/artifactory/libs-release/" }
+		gradlePluginPortal()
+	}
 }
+
+include "common", "fabric", "forge"
 
 rootProject.name = 'Rhino'

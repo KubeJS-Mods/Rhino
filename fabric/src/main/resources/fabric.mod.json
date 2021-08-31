@@ -1,0 +1,34 @@
+{
+	"schemaVersion": 1,
+	"id": "rhino",
+	"version": "${version}",
+	"name": "Rhino",
+	"description": "A fork of Mozilla's Rhino library, modified for use in mods",
+	"authors": [
+		"LatvianModder",
+		"Mozilla"
+	],
+	"contact": {
+		"sources": "https://github.com/KubeJS-Mods/Rhino",
+		"issues": "https://github.com/KubeJS-Mods/Rhino/issues"
+	},
+	"license": "MPL-2.0",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"dev.latvian.mods.rhino.mod.fabric.RhinoModFabric"
+		]
+	},
+	"mixins": [
+		"rhino-common.mixins.json",
+		"rhino.mixins.json"
+	],
+	"depends": {
+		"fabric": "*",
+		"minecraft": "~1.16.4",
+		"architectury": ">=1.20.28"
+	},
+	"custom": {
+		"modmenu:api": true
+	}
+}

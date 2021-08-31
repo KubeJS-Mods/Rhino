@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"package": "dev.latvian.mods.rhino.mod.core.mixin.forge",
+	"compatibilityLevel": "JAVA_8",
+	"mixins": [
+	],
+	"client": [
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"minVersion": "0.8"
+}

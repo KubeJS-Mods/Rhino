@@ -1,0 +1,34 @@
+modLoader = "javafml"
+loaderVersion = "[32,)"
+issueTrackerURL = "https://github.com/KubeJS-Mods/Rhino/issues"
+license = "MPL-2.0"
+
+[[mods]]
+modId = "rhino"
+version = "${version}"
+displayName = "Rhino"
+authors = "LatvianModder, Mozilla"
+description = '''
+A fork of Mozilla's Rhino library, modified for use in mods
+'''
+
+[[dependencies.rhino]]
+modId = "forge"
+mandatory = true
+versionRange = "[32.0.75,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.rhino]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.16.4,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.rhino]]
+modId = "architectury"
+mandatory = true
+versionRange = "[1.20.28,)"
+ordering = "AFTER"
+side = "BOTH"
