@@ -2911,7 +2911,8 @@ public final class Interpreter extends Icode implements Evaluator {
 	}
 
 	private static boolean stack_boolean(CallFrame frame, int i) {
-		Object x = frame.stack[i];
+		Object x = Wrapper.unwrapped(frame.stack[i]);
+
 		if (Boolean.TRUE.equals(x)) {
 			return true;
 		} else if (Boolean.FALSE.equals(x)) {
