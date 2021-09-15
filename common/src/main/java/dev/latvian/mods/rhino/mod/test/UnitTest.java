@@ -1,4 +1,4 @@
-package dev.latvian.mods.rhino.test;
+package dev.latvian.mods.rhino.mod.test;
 
 import dev.latvian.mods.rhino.util.unit.FixedUnit;
 import dev.latvian.mods.rhino.util.unit.Unit;

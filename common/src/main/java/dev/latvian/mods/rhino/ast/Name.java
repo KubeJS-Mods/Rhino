@@ -147,4 +147,9 @@ public class Name extends AstNode {
 	public void visit(NodeVisitor v) {
 		v.visit(this);
 	}
+
+	@Override
+	public String toString() {
+		return identifier;
+	}
 }

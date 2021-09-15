@@ -67,4 +67,9 @@ public class Label extends Jump {
 	public void visit(NodeVisitor v) {
 		v.visit(this);
 	}
+
+	@Override
+	public String toString() {
+		return name;
+	}
 }

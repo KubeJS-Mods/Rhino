@@ -1,8 +1,9 @@
-package dev.latvian.mods.rhino.test;
+package dev.latvian.mods.rhino.mod.test;
 
 import dev.latvian.mods.rhino.util.DataObject;
 import dev.latvian.mods.rhino.util.DynamicMap;
 import dev.latvian.mods.rhino.util.RemapForJS;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class EventsJS {
+public class RhinoTest {
 	public List<Consumer<Object>> lastCallback = new ArrayList<>();
 	private final DynamicMap<DynamicMap<Integer>> dynamicMap0 = new DynamicMap<>(s1 -> new DynamicMap<>(s2 -> s1.hashCode() + s2.hashCode()));
 	public ResourceLocation someIdField = null;

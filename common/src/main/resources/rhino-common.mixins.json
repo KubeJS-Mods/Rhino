@@ -4,6 +4,8 @@
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
 		"ChatFormattingMixin",
+		"CollectionTagMixin",
+		"CompoundTagMixin",
 		"DirectionMixin",
 		"DyeColorMixin",
 		"ResourceKeyMixin",
