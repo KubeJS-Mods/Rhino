@@ -23,7 +23,6 @@ dependencies {
 	forge("net.minecraftforge:forge:${rootProject.architectury.minecraft}-${rootProject.forge_version}")
 
 	modApi("me.shedaniel:architectury-forge:${rootProject.architectury_version}")
-	modImplementation("dev.latvian.mods:kubejs-forge:${rootProject.kubejs_version}") { transitive = false }
 
 	implementation(project(path: ":common")) {
 		transitive = false

@@ -1,11 +1,7 @@
 package dev.latvian.mods.rhino.mod.test;
 
-import dev.latvian.kubejs.KubeJSPlugin;
-import dev.latvian.kubejs.script.BindingsEvent;
-import dev.latvian.mods.rhino.mod.util.NBTWrapper;
-import me.shedaniel.architectury.platform.Platform;
-
-public class RhinoTestPlugin extends KubeJSPlugin {
+public class RhinoTestPlugin {
+	/*
 	@Override
 	public void addBindings(BindingsEvent event) {
 		if (Platform.isDevelopmentEnvironment()) {
@@ -18,4 +14,5 @@ public class RhinoTestPlugin extends KubeJSPlugin {
 			event.add("NBTTest", NBTWrapper.class);
 		}
 	}
+	 */
 }

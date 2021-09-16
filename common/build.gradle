@@ -2,7 +2,6 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
 	modApi "me.shedaniel:architectury:${rootProject.architectury_version}"
-	modImplementation("dev.latvian.mods:kubejs-fabric:${rootProject.kubejs_version}") { transitive = false }
 }
 
 def ENV = System.getenv()

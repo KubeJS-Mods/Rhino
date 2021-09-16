@@ -19,7 +19,6 @@ dependencies {
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}")
 
 	modApi("me.shedaniel:architectury-fabric:${rootProject.architectury_version}")
-	modImplementation("dev.latvian.mods:kubejs-fabric:${rootProject.kubejs_version}") { transitive = false }
 
 	implementation(project(path: ":common")) {
 		transitive = false
