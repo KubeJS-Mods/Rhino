@@ -25,10 +25,3 @@ mandatory = true
 versionRange = "[1.16.4,)"
 ordering = "NONE"
 side = "BOTH"
-
-[[dependencies.rhino]]
-modId = "architectury"
-mandatory = true
-versionRange = "[1.20.28,)"
-ordering = "AFTER"
-side = "BOTH"
