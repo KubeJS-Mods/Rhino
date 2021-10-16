@@ -2,7 +2,6 @@ package dev.latvian.mods.rhino.mod.util;
 
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.EncoderException;
-import me.shedaniel.architectury.utils.NbtType;
 import net.minecraft.nbt.ByteArrayTag;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CollectionTag;

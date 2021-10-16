@@ -1,38 +1,39 @@
 plugins {
-	id "com.github.johnrengelman.shadow" version "5.0.0"
+	id "com.github.johnrengelman.shadow" version "7.0.0"
 	id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
 def ENV = System.getenv()
-
-configurations {
-	shadowCommon
-}
 
 architectury {
 	platformSetupLoomIde()
 	forge()
 }
 
+configurations {
+	common
+	shadowCommon // Don't use shadow from the shadow plugin because we don't want IDEA to index this.
+	compileClasspath.extendsFrom common
+	runtimeClasspath.extendsFrom common
+	developmentForge.extendsFrom common
+	dev
+}
+
+artifacts {
+	dev(jar)
+}
+
 loom {
-	mixinConfigs = ["rhino.mixins.json", "rhino-common.mixins.json"]
-	useFabricMixin = true
+	forge {
+		mixinConfigs = ["rhino.mixins.json", "rhino-common.mixins.json"]
+	}
 }
 
 dependencies {
 	forge("net.minecraftforge:forge:${rootProject.architectury.minecraft}-${rootProject.forge_version}")
 
-	modApi("me.shedaniel:architectury-forge:${rootProject.architectury_version}")
-
-	implementation(project(path: ":common")) {
-		transitive = false
-	}
-	developmentForge(project(path: ":common")) {
-		transitive = false
-	}
-	shadowCommon(project(path: ":common", configuration: "transformProductionForge")) {
-		transitive = false
-	}
+	common(project(path: ":common", configuration: "dev")) { transitive false }
+	shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive false }
 }
 
 processResources {
@@ -73,6 +74,12 @@ jar {
 	classifier "dev"
 }
 
+components.java {
+	withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+		skip()
+	}
+}
+
 if (ENV.CURSEFORGE_KEY) {
 	curseforge {
 		apiKey = ENV.CURSEFORGE_KEY
@@ -87,12 +94,9 @@ if (ENV.CURSEFORGE_KEY) {
 			addGameVersion "1.16.3"
 			addGameVersion "1.16.4"
 			addGameVersion "1.16.5"
-			addGameVersion "1.17"
-			addGameVersion "1.17.1"
+			//addGameVersion "1.17"
+			//addGameVersion "1.17.1"
 			mainArtifact(remapJar.archivePath)
-			relations {
-				requiredDependency 'architectury-forge'
-			}
 			changelog = getGitChangelog
 			changelogType = 'markdown'
 		}
@@ -103,10 +107,7 @@ publishing {
 	publications {
 		mavenForge(MavenPublication) {
 			artifactId = "${rootProject.mod_name}-${project.name}"
-			artifact(remapJar)
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-			}
+			from components.java
 		}
 	}
 
