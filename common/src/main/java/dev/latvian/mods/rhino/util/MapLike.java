@@ -32,4 +32,8 @@ public interface MapLike<K, T> extends CustomJavaObjectWrapper {
 	default void removeML(K key) {
 		throw new UnsupportedOperationException("Can't delete values from this map!");
 	}
+
+	default void clearML() {
+		throw new UnsupportedOperationException("Can't clear this map!");
+	}
 }

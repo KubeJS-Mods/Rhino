@@ -23,4 +23,8 @@ public interface ListLike<T> extends CustomJavaObjectWrapper {
 	default void removeLL(int index) {
 		throw new UnsupportedOperationException("Can't delete values from this list!");
 	}
+
+	default void clearLL() {
+		throw new UnsupportedOperationException("Can't clear this list!");
+	}
 }

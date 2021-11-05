@@ -29,4 +29,9 @@ public abstract class CollectionTagMixin implements ListLike<Object> {
 	public void removeLL(int index) {
 		((CollectionTag) (Object) this).remove(index);
 	}
+
+	@Override
+	public void clearLL() {
+		((CollectionTag) (Object) this).clear();
+	}
 }

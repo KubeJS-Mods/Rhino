@@ -2,6 +2,7 @@ package dev.latvian.mods.rhino.mod.core.mixin.common;
 
 import dev.latvian.mods.rhino.mod.util.NBTWrapper;
 import dev.latvian.mods.rhino.util.MapLike;
+import dev.latvian.mods.rhino.util.RemapForJS;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import org.spongepowered.asm.mixin.Final;
@@ -47,4 +48,13 @@ public abstract class CompoundTagMixin implements MapLike<String, Object> {
 	public void removeML(String key) {
 		tags.remove(key);
 	}
+
+	@Override
+	public void clearML() {
+		tags.clear();
+	}
+
+	@Shadow
+	@RemapForJS("merge")
+	public abstract CompoundTag merge(CompoundTag tag);
 }
