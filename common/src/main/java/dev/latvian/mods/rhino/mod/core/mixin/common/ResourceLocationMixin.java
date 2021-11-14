@@ -6,7 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(ResourceLocation.class)
+@Mixin(value = ResourceLocation.class, priority = 1001)
 public abstract class ResourceLocationMixin implements SpecialEquality {
 	@Shadow
 	@RemapForJS("getNamespace")

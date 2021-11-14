@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Shadow;
 /**
  * @author LatvianModder
  */
-@Mixin(Vec3.class)
+@Mixin(value = Vec3.class, priority = 1001)
 public abstract class Vec3Mixin {
 	@Shadow
 	@Final

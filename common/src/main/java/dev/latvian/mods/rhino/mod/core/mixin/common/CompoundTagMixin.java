@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import java.util.Collection;
 import java.util.Map;
 
-@Mixin(CompoundTag.class)
+@Mixin(value = CompoundTag.class, priority = 1001)
 public abstract class CompoundTagMixin implements MapLike<String, Object> {
 	@Shadow
 	@Final

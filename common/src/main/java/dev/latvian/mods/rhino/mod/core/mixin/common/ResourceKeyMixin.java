@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Shadow;
 /**
  * @author LatvianModder
  */
-@Mixin(ResourceKey.class)
+@Mixin(value = ResourceKey.class, priority = 1001)
 public abstract class ResourceKeyMixin implements SpecialEquality {
 	@Shadow
 	@Final
