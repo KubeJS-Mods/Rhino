@@ -2,6 +2,7 @@ package dev.latvian.mods.rhino.mod.wrapper;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * @author LatvianModder
@@ -23,7 +24,11 @@ public interface AABBWrapper {
 	}
 
 	static AABB ofSize(double x, double y, double z) {
-		return AABB.ofSize(x, y, z);
+		return ofSize(Vec3.ZERO, x, y, z);
+	}
+
+	static AABB ofSize(Vec3 vec3, double x, double y, double z) {
+		return AABB.ofSize(vec3, x, y, z);
 	}
 
 	static AABB wrap(Object o) {
