@@ -25,7 +25,7 @@
 	],
 	"depends": {
 		"fabric": "*",
-		"minecraft": ">=1.14.4"
+		"minecraft": ">=1.18-pre1"
 	},
 	"custom": {
 		"modmenu:api": true
