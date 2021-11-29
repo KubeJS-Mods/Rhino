@@ -2,24 +2,7 @@ package dev.latvian.mods.rhino.mod.util;
 
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.EncoderException;
-import net.minecraft.nbt.ByteArrayTag;
-import net.minecraft.nbt.ByteTag;
-import net.minecraft.nbt.CollectionTag;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.DoubleTag;
-import net.minecraft.nbt.FloatTag;
-import net.minecraft.nbt.IntArrayTag;
-import net.minecraft.nbt.IntTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.LongArrayTag;
-import net.minecraft.nbt.LongTag;
-import net.minecraft.nbt.NbtAccounter;
-import net.minecraft.nbt.NumericTag;
-import net.minecraft.nbt.ShortTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.nbt.TagType;
-import net.minecraft.nbt.TagTypes;
+import net.minecraft.nbt.*;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.Nullable;
 
@@ -177,7 +160,7 @@ public class NBTUtils {
 		return tagType == CompoundTag.TYPE ? COMPOUND_TYPE : tagType == ListTag.TYPE ? LIST_TYPE : tagType;
 	}
 
-	private static final TagType<OrderedCompoundTag> COMPOUND_TYPE = new TagType<OrderedCompoundTag>() {
+	private static final TagType<OrderedCompoundTag> COMPOUND_TYPE = new TagType.VariableSize<OrderedCompoundTag>() {
 		@Override
 		public OrderedCompoundTag load(DataInput dataInput, int i, NbtAccounter nbtAccounter) throws IOException {
 			nbtAccounter.accountBits(384L);
@@ -186,19 +169,79 @@ public class NBTUtils {
 			} else {
 				Map<String, Tag> map = new LinkedHashMap<>();
 
-				byte b;
-				while ((b = dataInput.readByte()) != 0) {
-					String string = dataInput.readUTF();
-					nbtAccounter.accountBits(224L + 16L * string.length());
-					TagType<?> tagType = convertType(TagTypes.getType(b));
-					Tag tag = tagType.load(dataInput, i + 1, nbtAccounter);
+				byte typeId;
+				while ((typeId = dataInput.readByte()) != 0) {
+					String key = dataInput.readUTF();
+					nbtAccounter.accountBits(224L + 16L * key.length());
+					TagType<?> valueType = convertType(TagTypes.getType(typeId));
+					Tag value = valueType.load(dataInput, i + 1, nbtAccounter);
 
-					if (map.put(string, tag) != null) {
+					if (map.put(key, value) != null) {
 						nbtAccounter.accountBits(288L);
 					}
 				}
 
 				return new OrderedCompoundTag(map);
+			}
+		}
+
+		@Override
+		public StreamTagVisitor.ValueResult parse(DataInput dataInput, StreamTagVisitor visitor) throws IOException {
+			while (true) {
+				byte typeId;
+				if ((typeId = dataInput.readByte()) != 0) {
+					TagType<?> valueType = convertType(TagTypes.getType(typeId));
+					switch (visitor.visitEntry(valueType)) {
+						case HALT:
+							return StreamTagVisitor.ValueResult.HALT;
+						case BREAK:
+							StringTag.skipString(dataInput);
+							valueType.skip(dataInput);
+							break;
+						case SKIP:
+							StringTag.skipString(dataInput);
+							valueType.skip(dataInput);
+							continue;
+						default:
+							String key = dataInput.readUTF();
+							switch (visitor.visitEntry(valueType, key)) {
+								case HALT:
+									return StreamTagVisitor.ValueResult.HALT;
+								case BREAK:
+									valueType.skip(dataInput);
+									break;
+								case SKIP:
+									valueType.skip(dataInput);
+									continue;
+								default:
+									switch (valueType.parse(dataInput, visitor)) {
+										case HALT:
+											return StreamTagVisitor.ValueResult.HALT;
+										case BREAK:
+										default:
+											continue;
+									}
+							}
+					}
+				}
+
+				if (typeId != 0) {
+					while ((typeId = dataInput.readByte()) != 0) {
+						StringTag.skipString(dataInput);
+						convertType(TagTypes.getType(typeId)).skip(dataInput);
+					}
+				}
+
+				return visitor.visitContainerEnd();
+			}
+		}
+
+		@Override
+		public void skip(DataInput dataInput) throws IOException {
+			byte typeId;
+			while ((typeId = dataInput.readByte()) != 0) {
+				StringTag.skipString(dataInput);
+				convertType(TagTypes.getType(typeId)).skip(dataInput);
 			}
 		}
 
@@ -213,29 +256,79 @@ public class NBTUtils {
 		}
 	};
 
-	private static final TagType<ListTag> LIST_TYPE = new TagType<ListTag>() {
+	private static final TagType<ListTag> LIST_TYPE = new TagType.VariableSize<ListTag>() {
 		@Override
 		public ListTag load(DataInput dataInput, int i, NbtAccounter nbtAccounter) throws IOException {
 			nbtAccounter.accountBits(296L);
 			if (i > 512) {
 				throw new RuntimeException("Tried to read NBT tag with too high complexity, depth > 512");
 			} else {
-				byte b = dataInput.readByte();
-				int j = dataInput.readInt();
-				if (b == 0 && j > 0) {
+				byte typeId = dataInput.readByte();
+				int size = dataInput.readInt();
+				if (typeId == 0 && size > 0) {
 					throw new RuntimeException("Missing type on ListTag");
 				} else {
-					nbtAccounter.accountBits(32L * (long) j);
-					TagType<?> tagType = convertType(TagTypes.getType(b));
+					nbtAccounter.accountBits(32L * (long) size);
+					TagType<?> valueType = convertType(TagTypes.getType(typeId));
 					ListTag list = new ListTag();
 
-					for (int k = 0; k < j; ++k) {
-						list.add(tagType.load(dataInput, i + 1, nbtAccounter));
+					for (int k = 0; k < size; ++k) {
+						list.add(valueType.load(dataInput, i + 1, nbtAccounter));
 					}
 
 					return list;
 				}
 			}
+		}
+
+		@Override
+		public StreamTagVisitor.ValueResult parse(DataInput dataInput, StreamTagVisitor visitor) throws IOException {
+			TagType<?> tagType = convertType(TagTypes.getType(dataInput.readByte()));
+			int size = dataInput.readInt();
+			switch (visitor.visitList(tagType, size)) {
+				case HALT:
+					return StreamTagVisitor.ValueResult.HALT;
+				case BREAK:
+					tagType.skip(dataInput, size);
+					return visitor.visitContainerEnd();
+				default:
+					int i = 0;
+
+					out:
+					for (; i < size; ++i) {
+						switch (visitor.visitElement(tagType, i)) {
+							case HALT:
+								return StreamTagVisitor.ValueResult.HALT;
+							case BREAK:
+								tagType.skip(dataInput);
+								break out;
+							case SKIP:
+								tagType.skip(dataInput);
+								break;
+							default:
+								switch (tagType.parse(dataInput, visitor)) {
+									case HALT:
+										return StreamTagVisitor.ValueResult.HALT;
+									case BREAK:
+										break out;
+								}
+						}
+					}
+
+					int toSkip = size - 1 - i;
+					if (toSkip > 0) {
+						tagType.skip(dataInput, toSkip);
+					}
+
+					return visitor.visitContainerEnd();
+			}
+		}
+
+		@Override
+		public void skip(DataInput visitor) throws IOException {
+			TagType<?> tagType = convertType(TagTypes.getType(visitor.readByte()));
+			int size = visitor.readInt();
+			tagType.skip(visitor, size);
 		}
 
 		@Override
