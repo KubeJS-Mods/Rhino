@@ -387,7 +387,7 @@ class JavaMembers {
 	}
 
 	private void reflect(Context cx, Scriptable scope, boolean includeProtected, boolean includePrivate) {
-		if (cl.isAnnotationPresent(HideFromJS.class) || (cl.getPackage() != null && cl.getPackage().isAnnotationPresent(HideFromJS.class))) {
+		if (cl.isAnnotationPresent(HideFromJS.class)) {
 			ctors = new NativeJavaMethod(new MemberBox[0], cl.getSimpleName());
 			return;
 		}
