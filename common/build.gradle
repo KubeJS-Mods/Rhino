@@ -5,7 +5,7 @@ dependencies {
 def ENV = System.getenv()
 
 architectury {
-	common(false)
+	common()
 }
 
 configurations {
