@@ -87,7 +87,7 @@ if (ENV.CURSEFORGE_KEY) {
 			id = project.curseforge_id_forge
 			releaseType = project.curseforge_type
 			addGameVersion "Forge"
-			addGameVersion "1.18"
+			addGameVersion "${rootProject.minecraft_version}"
 			mainArtifact(remapJar.archivePath)
 			changelog = getGitChangelog
 			changelogType = 'markdown'
