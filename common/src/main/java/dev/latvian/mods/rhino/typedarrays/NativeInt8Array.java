@@ -11,12 +11,15 @@ import dev.latvian.mods.rhino.IdFunctionObject;
 import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.Undefined;
 
+import java.io.Serial;
+
 /**
  * An array view that stores 8-bit quantities and implements the JavaScript "Int8Array" interface.
  * It also implements List&lt;Byte&gt; for direct manipulation in Java.
  */
 
 public class NativeInt8Array extends NativeTypedArrayView<Byte> {
+	@Serial
 	private static final long serialVersionUID = -3349419704390398895L;
 
 	private static final String CLASS_NAME = "Int8Array";

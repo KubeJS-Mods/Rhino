@@ -9,6 +9,7 @@ package dev.latvian.mods.rhino;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -16,6 +17,7 @@ import java.io.Serializable;
  */
 
 public class ObjArray implements Serializable {
+	@Serial
 	private static final long serialVersionUID = 4174889037736658296L;
 
 	public ObjArray() {
@@ -75,40 +77,24 @@ public class ObjArray implements Serializable {
 	}
 
 	private Object getImpl(int index) {
-		switch (index) {
-			case 0:
-				return f0;
-			case 1:
-				return f1;
-			case 2:
-				return f2;
-			case 3:
-				return f3;
-			case 4:
-				return f4;
-		}
-		return data[index - FIELDS_STORE_SIZE];
+		return switch (index) {
+			case 0 -> f0;
+			case 1 -> f1;
+			case 2 -> f2;
+			case 3 -> f3;
+			case 4 -> f4;
+			default -> data[index - FIELDS_STORE_SIZE];
+		};
 	}
 
 	private void setImpl(int index, Object value) {
 		switch (index) {
-			case 0:
-				f0 = value;
-				break;
-			case 1:
-				f1 = value;
-				break;
-			case 2:
-				f2 = value;
-				break;
-			case 3:
-				f3 = value;
-				break;
-			case 4:
-				f4 = value;
-				break;
-			default:
-				data[index - FIELDS_STORE_SIZE] = value;
+			case 0 -> f0 = value;
+			case 1 -> f1 = value;
+			case 2 -> f2 = value;
+			case 3 -> f3 = value;
+			case 4 -> f4 = value;
+			default -> data[index - FIELDS_STORE_SIZE] = value;
 		}
 
 	}
@@ -151,31 +137,31 @@ public class ObjArray implements Serializable {
 		--N;
 		Object top;
 		switch (N) {
-			case -1:
-				throw onEmptyStackTopRead();
-			case 0:
+			case -1 -> throw onEmptyStackTopRead();
+			case 0 -> {
 				top = f0;
 				f0 = null;
-				break;
-			case 1:
+			}
+			case 1 -> {
 				top = f1;
 				f1 = null;
-				break;
-			case 2:
+			}
+			case 2 -> {
 				top = f2;
 				f2 = null;
-				break;
-			case 3:
+			}
+			case 3 -> {
 				top = f3;
 				f3 = null;
-				break;
-			case 4:
+			}
+			case 4 -> {
 				top = f4;
 				f4 = null;
-				break;
-			default:
+			}
+			default -> {
 				top = data[N - FIELDS_STORE_SIZE];
 				data[N - FIELDS_STORE_SIZE] = null;
+			}
 		}
 		size = N;
 		return top;
@@ -412,6 +398,7 @@ public class ObjArray implements Serializable {
 		throw new IllegalStateException("Attempt to modify sealed array");
 	}
 
+	@Serial
 	private void writeObject(ObjectOutputStream os) throws IOException {
 		os.defaultWriteObject();
 		int N = size;
@@ -421,6 +408,7 @@ public class ObjArray implements Serializable {
 		}
 	}
 
+	@Serial
 	private void readObject(ObjectInputStream is) throws IOException, ClassNotFoundException {
 		is.defaultReadObject(); // It reads size
 		int N = size;

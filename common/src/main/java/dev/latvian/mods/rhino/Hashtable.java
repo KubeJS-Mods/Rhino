@@ -1,5 +1,6 @@
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,6 +23,7 @@ import java.util.NoSuchElementException;
  */
 public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
 
+	@Serial
 	private static final long serialVersionUID = -7151554912419543747L;
 	private final HashMap<Object, Entry> map = new HashMap<>();
 	private Entry first = null;
@@ -34,6 +36,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
 	 */
 
 	public static final class Entry implements Serializable {
+		@Serial
 		private static final long serialVersionUID = 4086572107122965503L;
 		protected Object key;
 		protected Object value;

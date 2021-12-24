@@ -6,7 +6,10 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 public final class NativeStringIterator extends ES6Iterator {
+	@Serial
 	private static final long serialVersionUID = 1L;
 	private static final String ITERATOR_TAG = "StringIterator";
 

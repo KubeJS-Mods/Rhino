@@ -9,6 +9,7 @@ package dev.latvian.mods.rhino;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -27,10 +28,12 @@ import java.io.Serializable;
  * may override scopeInit or fillConstructorProperties methods.
  */
 public abstract class IdScriptableObject extends ScriptableObject implements IdFunctionCall {
+	@Serial
 	private static final long serialVersionUID = -3744239272168621609L;
 	private transient PrototypeValues prototypeValues;
 
 	private static final class PrototypeValues implements Serializable {
+		@Serial
 		private static final long serialVersionUID = 3038645279153854371L;
 
 		private static final int NAME_SLOT = 1;
@@ -866,8 +869,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 
 	@Override
 	public void defineOwnProperty(Context cx, Object key, ScriptableObject desc) {
-		if (key instanceof String) {
-			String name = (String) key;
+		if (key instanceof String name) {
 			int info = findInstanceIdInfo(name);
 			if (info != 0) {
 				int id = (info & 0xFFFF);
@@ -983,6 +985,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 		return null;
 	}
 
+	@Serial
 	private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
 		stream.defaultReadObject();
 		int maxPrototypeId = stream.readInt();
@@ -991,6 +994,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 		}
 	}
 
+	@Serial
 	private void writeObject(ObjectOutputStream stream) throws IOException {
 		stream.defaultWriteObject();
 		int maxPrototypeId = 0;

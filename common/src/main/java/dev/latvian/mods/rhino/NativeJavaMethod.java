@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -22,6 +23,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 
 public class NativeJavaMethod extends BaseFunction {
+	@Serial
 	private static final long serialVersionUID = -3440381785576412928L;
 
 	NativeJavaMethod(MemberBox[] methods) {
@@ -555,10 +557,9 @@ class ResolvedOverload {
 
 	@Override
 	public boolean equals(Object other) {
-		if (!(other instanceof ResolvedOverload)) {
+		if (!(other instanceof ResolvedOverload ovl)) {
 			return false;
 		}
-		ResolvedOverload ovl = (ResolvedOverload) other;
 		return Arrays.equals(types, ovl.types) && index == ovl.index;
 	}
 

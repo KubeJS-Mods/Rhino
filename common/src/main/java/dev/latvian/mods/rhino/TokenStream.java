@@ -58,17 +58,12 @@ class TokenStream {
 		if (Token.printTrees) {
 			String name = Token.name(token);
 
-			switch (token) {
-				case Token.STRING:
-				case Token.REGEXP:
-				case Token.NAME:
-					return name + " `" + this.string + "'";
+			return switch (token) {
+				case Token.STRING, Token.REGEXP, Token.NAME -> name + " `" + this.string + "'";
+				case Token.NUMBER -> "NUMBER " + this.number;
+				default -> name;
+			};
 
-				case Token.NUMBER:
-					return "NUMBER " + this.number;
-			}
-
-			return name;
 		}
 		return "";
 	}

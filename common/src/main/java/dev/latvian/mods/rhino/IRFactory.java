@@ -1869,10 +1869,7 @@ public final class IRFactory extends Parser {
 		int childType = child.getType();
 
 		switch (childType) {
-			case Token.NAME:
-			case Token.GETPROP:
-			case Token.GETELEM:
-			case Token.GET_REF: {
+			case Token.NAME, Token.GETPROP, Token.GETELEM, Token.GET_REF -> {
 				Node n = new Node(nodeType, child);
 				int incrDecrMask = 0;
 				if (nodeType == Token.DEC) {
@@ -2126,13 +2123,12 @@ public final class IRFactory extends Parser {
 
 		int nodeType = left.getType();
 		switch (nodeType) {
-			case Token.NAME: {
+			case Token.NAME -> {
 				Node op = new Node(assignOp, left, right);
 				Node lvalueLeft = Node.newString(Token.BINDNAME, left.getString());
 				return new Node(Token.SETNAME, lvalueLeft, op);
 			}
-			case Token.GETPROP:
-			case Token.GETELEM: {
+			case Token.GETPROP, Token.GETELEM -> {
 				Node obj = left.getFirstChild();
 				Node id = left.getLastChild();
 
@@ -2142,7 +2138,7 @@ public final class IRFactory extends Parser {
 				Node op = new Node(assignOp, opLeft, right);
 				return new Node(type, obj, id, op);
 			}
-			case Token.GET_REF: {
+			case Token.GET_REF -> {
 				ref = left.getFirstChild();
 				checkMutableReference(ref);
 				Node opLeft = new Node(Token.USE_STACK);

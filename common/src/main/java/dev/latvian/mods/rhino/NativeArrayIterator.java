@@ -6,11 +6,14 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 public final class NativeArrayIterator extends ES6Iterator {
 	public enum ARRAY_ITERATOR_TYPE {
 		ENTRIES, KEYS, VALUES
 	}
 
+	@Serial
 	private static final long serialVersionUID = 1L;
 	private static final String ITERATOR_TAG = "ArrayIterator";
 

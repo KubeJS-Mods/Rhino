@@ -6,12 +6,15 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 /**
  * The class for  Arrow Function Definitions
  * EcmaScript 6 Rev 14, March 8, 2013 Draft spec , 13.2
  */
 public class ArrowFunction extends BaseFunction {
 
+	@Serial
 	private static final long serialVersionUID = -7377989503697220633L;
 
 	private final Callable targetFunction;

@@ -19,6 +19,7 @@ import dev.latvian.mods.rhino.SymbolKey;
 import dev.latvian.mods.rhino.Undefined;
 import dev.latvian.mods.rhino.Wrapper;
 
+import java.io.Serial;
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Iterator;
@@ -32,6 +33,7 @@ import java.util.RandomAccess;
  */
 
 public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView implements List<T>, RandomAccess, ExternalArrayData {
+	@Serial
 	private static final long serialVersionUID = -4963053773152251274L;
 
 	/**
@@ -132,9 +134,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 			return v;
 		}
 
-		if (arg0 instanceof NativeArrayBuffer) {
+		if (arg0 instanceof NativeArrayBuffer na) {
 			// Make a slice of an existing buffer, with shared storage
-			NativeArrayBuffer na = (NativeArrayBuffer) arg0;
 			int byteOff = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
 
 			int byteLen;
@@ -160,9 +161,8 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 			return construct(na, byteOff, byteLen / getBytesPerElement());
 		}
 
-		if (arg0 instanceof NativeArray) {
+		if (arg0 instanceof NativeArray array) {
 			// Copy elements of the array and convert them to the correct type
-			NativeArray array = (NativeArray) arg0;
 
 			NativeArrayBuffer na = makeArrayBuffer(cx, scope, array.size());
 			NativeTypedArrayView<T> v = construct(na, 0, array.size());
@@ -328,28 +328,27 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 		String s, fnName = null;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 3;
 				s = "constructor";
-				break;
-			case Id_toString:
+			}
+			case Id_toString -> {
 				arity = 0;
 				s = "toString";
-				break;
-			case Id_get:
+			}
+			case Id_get -> {
 				arity = 1;
 				s = "get";
-				break;
-			case Id_set:
+			}
+			case Id_set -> {
 				arity = 2;
 				s = "set";
-				break;
-			case Id_subarray:
+			}
+			case Id_subarray -> {
 				arity = 2;
 				s = "subarray";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(getClassName(), id, s, fnName, arity);
 	}
@@ -434,26 +433,20 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 
 	@Override
 	protected String getInstanceIdName(int id) {
-		switch (id) {
-			case Id_length:
-				return "length";
-			case Id_BYTES_PER_ELEMENT:
-				return "BYTES_PER_ELEMENT";
-			default:
-				return super.getInstanceIdName(id);
-		}
+		return switch (id) {
+			case Id_length -> "length";
+			case Id_BYTES_PER_ELEMENT -> "BYTES_PER_ELEMENT";
+			default -> super.getInstanceIdName(id);
+		};
 	}
 
 	@Override
 	protected Object getInstanceIdValue(int id) {
-		switch (id) {
-			case Id_length:
-				return ScriptRuntime.wrapInt(length);
-			case Id_BYTES_PER_ELEMENT:
-				return ScriptRuntime.wrapInt(getBytesPerElement());
-			default:
-				return super.getInstanceIdValue(id);
-		}
+		return switch (id) {
+			case Id_length -> ScriptRuntime.wrapInt(length);
+			case Id_BYTES_PER_ELEMENT -> ScriptRuntime.wrapInt(getBytesPerElement());
+			default -> super.getInstanceIdValue(id);
+		};
 	}
 
 	// #string_id_map#

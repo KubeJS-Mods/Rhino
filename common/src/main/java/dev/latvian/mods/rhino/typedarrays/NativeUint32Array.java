@@ -11,12 +11,15 @@ import dev.latvian.mods.rhino.IdFunctionObject;
 import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.Undefined;
 
+import java.io.Serial;
+
 /**
  * An array view that stores 32-bit quantities and implements the JavaScript "Uint32Array" interface.
  * It also implements List&lt;Long&gt; for direct manipulation in Java.
  */
 
 public class NativeUint32Array extends NativeTypedArrayView<Long> {
+	@Serial
 	private static final long serialVersionUID = -7987831421954144244L;
 
 	private static final String CLASS_NAME = "Uint32Array";

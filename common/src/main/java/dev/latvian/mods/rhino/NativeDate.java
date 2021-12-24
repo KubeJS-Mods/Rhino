@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -21,6 +22,7 @@ import java.util.TimeZone;
  * https://dxr.mozilla.dev/latvian/repackaged/org/mozilla-central/source/js/src/jsdate.cpp
  */
 final class NativeDate extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = -8307438915861678966L;
 
 	private static final Object DATE_TAG = "Date";
@@ -67,196 +69,195 @@ final class NativeDate extends IdScriptableObject {
 		String s;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 7;
 				s = "constructor";
-				break;
-			case Id_toString:
+			}
+			case Id_toString -> {
 				arity = 0;
 				s = "toString";
-				break;
-			case Id_toTimeString:
+			}
+			case Id_toTimeString -> {
 				arity = 0;
 				s = "toTimeString";
-				break;
-			case Id_toDateString:
+			}
+			case Id_toDateString -> {
 				arity = 0;
 				s = "toDateString";
-				break;
-			case Id_toLocaleString:
+			}
+			case Id_toLocaleString -> {
 				arity = 0;
 				s = "toLocaleString";
-				break;
-			case Id_toLocaleTimeString:
+			}
+			case Id_toLocaleTimeString -> {
 				arity = 0;
 				s = "toLocaleTimeString";
-				break;
-			case Id_toLocaleDateString:
+			}
+			case Id_toLocaleDateString -> {
 				arity = 0;
 				s = "toLocaleDateString";
-				break;
-			case Id_toUTCString:
+			}
+			case Id_toUTCString -> {
 				arity = 0;
 				s = "toUTCString";
-				break;
-			case Id_toSource:
+			}
+			case Id_toSource -> {
 				arity = 0;
 				s = "toSource";
-				break;
-			case Id_valueOf:
+			}
+			case Id_valueOf -> {
 				arity = 0;
 				s = "valueOf";
-				break;
-			case Id_getTime:
+			}
+			case Id_getTime -> {
 				arity = 0;
 				s = "getTime";
-				break;
-			case Id_getYear:
+			}
+			case Id_getYear -> {
 				arity = 0;
 				s = "getYear";
-				break;
-			case Id_getFullYear:
+			}
+			case Id_getFullYear -> {
 				arity = 0;
 				s = "getFullYear";
-				break;
-			case Id_getUTCFullYear:
+			}
+			case Id_getUTCFullYear -> {
 				arity = 0;
 				s = "getUTCFullYear";
-				break;
-			case Id_getMonth:
+			}
+			case Id_getMonth -> {
 				arity = 0;
 				s = "getMonth";
-				break;
-			case Id_getUTCMonth:
+			}
+			case Id_getUTCMonth -> {
 				arity = 0;
 				s = "getUTCMonth";
-				break;
-			case Id_getDate:
+			}
+			case Id_getDate -> {
 				arity = 0;
 				s = "getDate";
-				break;
-			case Id_getUTCDate:
+			}
+			case Id_getUTCDate -> {
 				arity = 0;
 				s = "getUTCDate";
-				break;
-			case Id_getDay:
+			}
+			case Id_getDay -> {
 				arity = 0;
 				s = "getDay";
-				break;
-			case Id_getUTCDay:
+			}
+			case Id_getUTCDay -> {
 				arity = 0;
 				s = "getUTCDay";
-				break;
-			case Id_getHours:
+			}
+			case Id_getHours -> {
 				arity = 0;
 				s = "getHours";
-				break;
-			case Id_getUTCHours:
+			}
+			case Id_getUTCHours -> {
 				arity = 0;
 				s = "getUTCHours";
-				break;
-			case Id_getMinutes:
+			}
+			case Id_getMinutes -> {
 				arity = 0;
 				s = "getMinutes";
-				break;
-			case Id_getUTCMinutes:
+			}
+			case Id_getUTCMinutes -> {
 				arity = 0;
 				s = "getUTCMinutes";
-				break;
-			case Id_getSeconds:
+			}
+			case Id_getSeconds -> {
 				arity = 0;
 				s = "getSeconds";
-				break;
-			case Id_getUTCSeconds:
+			}
+			case Id_getUTCSeconds -> {
 				arity = 0;
 				s = "getUTCSeconds";
-				break;
-			case Id_getMilliseconds:
+			}
+			case Id_getMilliseconds -> {
 				arity = 0;
 				s = "getMilliseconds";
-				break;
-			case Id_getUTCMilliseconds:
+			}
+			case Id_getUTCMilliseconds -> {
 				arity = 0;
 				s = "getUTCMilliseconds";
-				break;
-			case Id_getTimezoneOffset:
+			}
+			case Id_getTimezoneOffset -> {
 				arity = 0;
 				s = "getTimezoneOffset";
-				break;
-			case Id_setTime:
+			}
+			case Id_setTime -> {
 				arity = 1;
 				s = "setTime";
-				break;
-			case Id_setMilliseconds:
+			}
+			case Id_setMilliseconds -> {
 				arity = 1;
 				s = "setMilliseconds";
-				break;
-			case Id_setUTCMilliseconds:
+			}
+			case Id_setUTCMilliseconds -> {
 				arity = 1;
 				s = "setUTCMilliseconds";
-				break;
-			case Id_setSeconds:
+			}
+			case Id_setSeconds -> {
 				arity = 2;
 				s = "setSeconds";
-				break;
-			case Id_setUTCSeconds:
+			}
+			case Id_setUTCSeconds -> {
 				arity = 2;
 				s = "setUTCSeconds";
-				break;
-			case Id_setMinutes:
+			}
+			case Id_setMinutes -> {
 				arity = 3;
 				s = "setMinutes";
-				break;
-			case Id_setUTCMinutes:
+			}
+			case Id_setUTCMinutes -> {
 				arity = 3;
 				s = "setUTCMinutes";
-				break;
-			case Id_setHours:
+			}
+			case Id_setHours -> {
 				arity = 4;
 				s = "setHours";
-				break;
-			case Id_setUTCHours:
+			}
+			case Id_setUTCHours -> {
 				arity = 4;
 				s = "setUTCHours";
-				break;
-			case Id_setDate:
+			}
+			case Id_setDate -> {
 				arity = 1;
 				s = "setDate";
-				break;
-			case Id_setUTCDate:
+			}
+			case Id_setUTCDate -> {
 				arity = 1;
 				s = "setUTCDate";
-				break;
-			case Id_setMonth:
+			}
+			case Id_setMonth -> {
 				arity = 2;
 				s = "setMonth";
-				break;
-			case Id_setUTCMonth:
+			}
+			case Id_setUTCMonth -> {
 				arity = 2;
 				s = "setUTCMonth";
-				break;
-			case Id_setFullYear:
+			}
+			case Id_setFullYear -> {
 				arity = 3;
 				s = "setFullYear";
-				break;
-			case Id_setUTCFullYear:
+			}
+			case Id_setUTCFullYear -> {
 				arity = 3;
 				s = "setUTCFullYear";
-				break;
-			case Id_setYear:
+			}
+			case Id_setYear -> {
 				arity = 1;
 				s = "setYear";
-				break;
-			case Id_toISOString:
+			}
+			case Id_toISOString -> {
 				arity = 0;
 				s = "toISOString";
-				break;
-			case Id_toJSON:
+			}
+			case Id_toJSON -> {
 				arity = 1;
 				s = "toJSON";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(DATE_TAG, id, s, arity);
 	}
@@ -317,10 +318,9 @@ final class NativeDate extends IdScriptableObject {
 
 		// The rest of Date.prototype methods require thisObj to be Date
 
-		if (!(thisObj instanceof NativeDate)) {
+		if (!(thisObj instanceof NativeDate realThis)) {
 			throw incompatibleCallError(f);
 		}
-		NativeDate realThis = (NativeDate) thisObj;
 		double t = realThis.date;
 
 		switch (id) {
@@ -1001,11 +1001,10 @@ final class NativeDate extends IdScriptableObject {
 
 			if (i == len) {
 				// reached EOF, check for end state
-				switch (state) {
-					case HOUR:
-					case TZHOUR:
-						state = ERROR;
-				}
+				state = switch (state) {
+					case HOUR, TZHOUR -> ERROR;
+					default -> state;
+				};
 				break;
 			}
 
@@ -1027,17 +1026,10 @@ final class NativeDate extends IdScriptableObject {
 
 			// state transition
 			switch (state) {
-				case YEAR:
-				case MONTH:
-					state = (c == '-' ? state + 1 : c == 'T' ? HOUR : ERROR);
-					break;
-				case DAY:
-					state = (c == 'T' ? HOUR : ERROR);
-					break;
-				case HOUR:
-					state = (c == ':' ? MIN : ERROR);
-					break;
-				case TZHOUR:
+				case YEAR, MONTH -> state = (c == '-' ? state + 1 : c == 'T' ? HOUR : ERROR);
+				case DAY -> state = (c == 'T' ? HOUR : ERROR);
+				case HOUR -> state = (c == ':' ? MIN : ERROR);
+				case TZHOUR -> {
 					// state = (c == ':' ? state + 1 : ERROR);
 					// Non-standard extension, https://bugzilla.mozilla.org/show_bug.cgi?id=682754
 					if (c != ':') {
@@ -1045,19 +1037,11 @@ final class NativeDate extends IdScriptableObject {
 						i -= 1;
 					}
 					state = TZMIN;
-					break;
-				case MIN:
-					state = (c == ':' ? SEC : c == '+' || c == '-' ? TZHOUR : ERROR);
-					break;
-				case SEC:
-					state = (c == '.' ? MSEC : c == '+' || c == '-' ? TZHOUR : ERROR);
-					break;
-				case MSEC:
-					state = (c == '+' || c == '-' ? TZHOUR : ERROR);
-					break;
-				case TZMIN:
-					state = ERROR;
-					break;
+				}
+				case MIN -> state = (c == ':' ? SEC : c == '+' || c == '-' ? TZHOUR : ERROR);
+				case SEC -> state = (c == '.' ? MSEC : c == '+' || c == '-' ? TZHOUR : ERROR);
+				case MSEC -> state = (c == '+' || c == '-' ? TZHOUR : ERROR);
+				case TZMIN -> state = ERROR;
 			}
 			if (state == TZHOUR) {
 				// save timezone modificator
@@ -1287,41 +1271,18 @@ final class NativeDate extends IdScriptableObject {
 					index -= 12;
 					// timezones
 					switch (index) {
-						case 0 /* gmt */:
-							tzoffset = 0;
-							break;
-						case 1 /* ut */:
-							tzoffset = 0;
-							break;
-						case 2 /* utc */:
-							tzoffset = 0;
-							break;
-						case 3 /* est */:
-							tzoffset = 5 * 60;
-							break;
-						case 4 /* edt */:
-							tzoffset = 4 * 60;
-							break;
-						case 5 /* cst */:
-							tzoffset = 6 * 60;
-							break;
-						case 6 /* cdt */:
-							tzoffset = 5 * 60;
-							break;
-						case 7 /* mst */:
-							tzoffset = 7 * 60;
-							break;
-						case 8 /* mdt */:
-							tzoffset = 6 * 60;
-							break;
-						case 9 /* pst */:
-							tzoffset = 8 * 60;
-							break;
-						case 10 /* pdt */:
-							tzoffset = 7 * 60;
-							break;
-						default:
-							Kit.codeBug();
+						case 0 /* gmt */ -> tzoffset = 0;
+						case 1 /* ut */ -> tzoffset = 0;
+						case 2 /* utc */ -> tzoffset = 0;
+						case 3 /* est */ -> tzoffset = 5 * 60;
+						case 4 /* edt */ -> tzoffset = 4 * 60;
+						case 5 /* cst */ -> tzoffset = 6 * 60;
+						case 6 /* cdt */ -> tzoffset = 5 * 60;
+						case 7 /* mst */ -> tzoffset = 7 * 60;
+						case 8 /* mdt */ -> tzoffset = 6 * 60;
+						case 9 /* pst */ -> tzoffset = 8 * 60;
+						case 10 /* pdt */ -> tzoffset = 7 * 60;
+						default -> Kit.codeBug();
 					}
 				}
 			}
@@ -1454,20 +1415,12 @@ final class NativeDate extends IdScriptableObject {
 	}
 
 	private static String toLocale_helper(double t, int methodId) {
-		DateFormat formatter;
-		switch (methodId) {
-			case Id_toLocaleString:
-				formatter = localeDateTimeFormatter;
-				break;
-			case Id_toLocaleTimeString:
-				formatter = localeTimeFormatter;
-				break;
-			case Id_toLocaleDateString:
-				formatter = localeDateFormatter;
-				break;
-			default:
-				throw new AssertionError(); // unreachable
-		}
+		DateFormat formatter = switch (methodId) {
+			case Id_toLocaleString -> localeDateTimeFormatter;
+			case Id_toLocaleTimeString -> localeTimeFormatter;
+			case Id_toLocaleDateString -> localeDateFormatter;
+			default -> throw new AssertionError(); // unreachable
+		};
 
 		synchronized (formatter) {
 			return formatter.format(new Date((long) t));

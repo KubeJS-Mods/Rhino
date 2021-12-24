@@ -68,6 +68,7 @@ import dev.latvian.mods.rhino.ast.WithStatement;
 import dev.latvian.mods.rhino.ast.Yield;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -150,6 +151,7 @@ public class Parser {
 
 	// Exception to unwind
 	private static class ParserException extends RuntimeException {
+		@Serial
 		private static final long serialVersionUID = 5882582646773765630L;
 	}
 
@@ -2130,17 +2132,15 @@ public class Parser {
 			return;
 		}
 		switch (declType) {
-			case Token.LET:
+			case Token.LET -> {
 				if (!ignoreNotInBlock && ((currentScope.getType() == Token.IF) || currentScope instanceof Loop)) {
 					addError("msg.let.decl.not.in.block");
 					return;
 				}
-				currentScope.putSymbol(new dev.latvian.mods.rhino.ast.Symbol(declType, name));
+				currentScope.putSymbol(new Symbol(declType, name));
 				return;
-
-			case Token.VAR:
-			case Token.CONST:
-			case Token.FUNCTION:
+			}
+			case Token.VAR, Token.CONST, Token.FUNCTION -> {
 				if (symbol != null) {
 					if (symDeclType == Token.VAR) {
 						addStrictWarning("msg.var.redecl", name);
@@ -2148,11 +2148,11 @@ public class Parser {
 						addStrictWarning("msg.var.hides.arg", name);
 					}
 				} else {
-					currentScriptOrFn.putSymbol(new dev.latvian.mods.rhino.ast.Symbol(declType, name));
+					currentScriptOrFn.putSymbol(new Symbol(declType, name));
 				}
 				return;
-
-			case Token.LP:
+			}
+			case Token.LP -> {
 				if (symbol != null) {
 					// must be duplicate parameter. Second parameter hides the
 					// first, so go ahead and add the second parameter
@@ -2160,9 +2160,8 @@ public class Parser {
 				}
 				currentScriptOrFn.putSymbol(new Symbol(declType, name));
 				return;
-
-			default:
-				throw codeBug();
+			}
+			default -> throw codeBug();
 		}
 	}
 
@@ -2313,13 +2312,11 @@ public class Parser {
 		for (; ; ) {
 			int tt = peekToken(), opPos = ts.tokenBeg;
 			switch (tt) {
-				case Token.EQ:
-				case Token.NE:
-				case Token.SHEQ:
-				case Token.SHNE:
+				case Token.EQ, Token.NE, Token.SHEQ, Token.SHNE -> {
 					consumeToken();
 					pn = new InfixExpression(tt, pn, relExpr(), opPos);
 					continue;
+				}
 			}
 			break;
 		}
@@ -2355,12 +2352,11 @@ public class Parser {
 		for (; ; ) {
 			int tt = peekToken(), opPos = ts.tokenBeg;
 			switch (tt) {
-				case Token.LSH:
-				case Token.URSH:
-				case Token.RSH:
+				case Token.LSH, Token.URSH, Token.RSH -> {
 					consumeToken();
 					pn = new InfixExpression(tt, pn, addExpr(), opPos);
 					continue;
+				}
 			}
 			break;
 		}
@@ -2386,12 +2382,11 @@ public class Parser {
 		for (; ; ) {
 			int tt = peekToken(), opPos = ts.tokenBeg;
 			switch (tt) {
-				case Token.MUL:
-				case Token.DIV:
-				case Token.MOD:
+				case Token.MUL, Token.DIV, Token.MOD -> {
 					consumeToken();
 					pn = new InfixExpression(tt, pn, unaryExpr(), opPos);
 					continue;
+				}
 			}
 			break;
 		}
@@ -2408,48 +2403,44 @@ public class Parser {
 		int line = ts.lineno;
 
 		switch (tt) {
-			case Token.VOID:
-			case Token.NOT:
-			case Token.BITNOT:
-			case Token.TYPEOF:
+			case Token.VOID, Token.NOT, Token.BITNOT, Token.TYPEOF -> {
 				consumeToken();
 				node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
 				node.setLineno(line);
 				return node;
-
-			case Token.ADD:
+			}
+			case Token.ADD -> {
 				consumeToken();
 				// Convert to special POS token in parse tree
 				node = new UnaryExpression(Token.POS, ts.tokenBeg, unaryExpr());
 				node.setLineno(line);
 				return node;
-
-			case Token.SUB:
+			}
+			case Token.SUB -> {
 				consumeToken();
 				// Convert to special NEG token in parse tree
 				node = new UnaryExpression(Token.NEG, ts.tokenBeg, unaryExpr());
 				node.setLineno(line);
 				return node;
-
-			case Token.INC:
-			case Token.DEC:
+			}
+			case Token.INC, Token.DEC -> {
 				consumeToken();
 				UnaryExpression expr = new UnaryExpression(tt, ts.tokenBeg, memberExpr(true));
 				expr.setLineno(line);
 				checkBadIncDec(expr);
 				return expr;
-
-			case Token.DELPROP:
+			}
+			case Token.DELPROP -> {
 				consumeToken();
 				node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
 				node.setLineno(line);
 				return node;
-
-			case Token.ERROR:
+			}
+			case Token.ERROR -> {
 				consumeToken();
 				return makeErrorNode();
-
-			default:
+			}
+			default -> {
 				AstNode pn = memberExpr(true);
 				// Don't look across a newline boundary for a postfix incop.
 				tt = peekTokenOrEOL();
@@ -2461,6 +2452,7 @@ public class Parser {
 				uexpr.setLineno(line);
 				checkBadIncDec(uexpr);
 				return uexpr;
+			}
 		}
 	}
 
@@ -2946,18 +2938,16 @@ public class Parser {
 
 			AstNode iter = null;
 			switch (peekToken()) {
-				case Token.LB:
-				case Token.LC:
+				case Token.LB, Token.LC -> {
 					// handle destructuring assignment
 					iter = destructuringPrimaryExpr();
 					markDestructuring(iter);
-					break;
-				case Token.NAME:
+				}
+				case Token.NAME -> {
 					consumeToken();
 					iter = createNameNode();
-					break;
-				default:
-					reportError("msg.bad.var");
+				}
+				default -> reportError("msg.bad.var");
 			}
 
 			// Define as a let since we want the scope of the variable to
@@ -3050,18 +3040,16 @@ public class Parser {
 
 			AstNode iter = null;
 			switch (peekToken()) {
-				case Token.LB:
-				case Token.LC:
+				case Token.LB, Token.LC -> {
 					// handle destructuring assignment
 					iter = destructuringPrimaryExpr();
 					markDestructuring(iter);
-					break;
-				case Token.NAME:
+				}
+				case Token.NAME -> {
 					consumeToken();
 					iter = createNameNode();
-					break;
-				default:
-					reportError("msg.bad.var");
+				}
+				default -> reportError("msg.bad.var");
 			}
 
 			// Define as a let since we want the scope of the variable to
@@ -3171,26 +3159,25 @@ public class Parser {
 
 			if (this.inUseStrictDirective && propertyName != null) {
 				switch (entryKind) {
-					case PROP_ENTRY:
-					case METHOD_ENTRY:
+					case PROP_ENTRY, METHOD_ENTRY -> {
 						if (getterNames.contains(propertyName) || setterNames.contains(propertyName)) {
 							addError("msg.dup.obj.lit.prop.strict", propertyName);
 						}
 						getterNames.add(propertyName);
 						setterNames.add(propertyName);
-						break;
-					case GET_ENTRY:
+					}
+					case GET_ENTRY -> {
 						if (getterNames.contains(propertyName)) {
 							addError("msg.dup.obj.lit.prop.strict", propertyName);
 						}
 						getterNames.add(propertyName);
-						break;
-					case SET_ENTRY:
+					}
+					case SET_ENTRY -> {
 						if (setterNames.contains(propertyName)) {
 							addError("msg.dup.obj.lit.prop.strict", propertyName);
 						}
 						setterNames.add(propertyName);
-						break;
+					}
 				}
 			}
 
@@ -3218,25 +3205,17 @@ public class Parser {
 		AstNode pname;
 		int tt = peekToken();
 		switch (tt) {
-			case Token.NAME:
-				pname = createNameNode();
-				break;
-
-			case Token.STRING:
-				pname = createStringLiteral();
-				break;
-
-			case Token.NUMBER:
-				pname = new NumberLiteral(ts.tokenBeg, ts.getString(), ts.getNumber());
-				break;
-
-			default:
+			case Token.NAME -> pname = createNameNode();
+			case Token.STRING -> pname = createStringLiteral();
+			case Token.NUMBER -> pname = new NumberLiteral(ts.tokenBeg, ts.getString(), ts.getNumber());
+			default -> {
 				if (compilerEnv.isReservedKeywordAsIdentifier() && TokenStream.isKeyword(ts.getString(), inUseStrictDirective)) {
 					// convert keyword to property name, e.g. ({if: 1})
 					pname = createNameNode();
 					break;
 				}
 				return null;
+			}
 		}
 
 		return pname;
@@ -3272,18 +3251,18 @@ public class Parser {
 		}
 		ObjectProperty pn = new ObjectProperty(pos);
 		switch (entryKind) {
-			case GET_ENTRY:
+			case GET_ENTRY -> {
 				pn.setIsGetterMethod();
 				fn.setFunctionIsGetterMethod();
-				break;
-			case SET_ENTRY:
+			}
+			case SET_ENTRY -> {
 				pn.setIsSetterMethod();
 				fn.setFunctionIsSetterMethod();
-				break;
-			case METHOD_ENTRY:
+			}
+			case METHOD_ENTRY -> {
 				pn.setIsNormalMethod();
 				fn.setFunctionIsNormalMethod();
-				break;
+			}
 		}
 		int end = getNodeEnd(fn);
 		pn.setLeft(propName);
@@ -3577,24 +3556,15 @@ public class Parser {
 		List<String> destructuringNames = new ArrayList<>();
 		boolean empty = true;
 		switch (left.getType()) {
-			case Token.ARRAYLIT:
-				empty = destructuringArray((ArrayLiteral) left, variableType, tempName, comma, destructuringNames);
-				break;
-			case Token.OBJECTLIT:
-				empty = destructuringObject((ObjectLiteral) left, variableType, tempName, comma, destructuringNames);
-				break;
-			case Token.GETPROP:
-			case Token.GETELEM:
+			case Token.ARRAYLIT -> empty = destructuringArray((ArrayLiteral) left, variableType, tempName, comma, destructuringNames);
+			case Token.OBJECTLIT -> empty = destructuringObject((ObjectLiteral) left, variableType, tempName, comma, destructuringNames);
+			case Token.GETPROP, Token.GETELEM -> {
 				switch (variableType) {
-					case Token.CONST:
-					case Token.LET:
-					case Token.VAR:
-						reportError("msg.bad.assign.left");
+					case Token.CONST, Token.LET, Token.VAR -> reportError("msg.bad.assign.left");
 				}
 				comma.addChildToBack(simpleAssignment(left, createName(tempName)));
-				break;
-			default:
-				reportError("msg.bad.assign.left");
+			}
+			default -> reportError("msg.bad.assign.left");
 		}
 		if (empty) {
 			// Don't want a COMMA node with no children. Just add a zero.
@@ -3731,16 +3701,15 @@ public class Parser {
 	protected Node simpleAssignment(Node left, Node right) {
 		int nodeType = left.getType();
 		switch (nodeType) {
-			case Token.NAME:
+			case Token.NAME -> {
 				String name = ((Name) left).getIdentifier();
 				if (inUseStrictDirective && ("eval".equals(name) || "arguments".equals(name))) {
 					reportError("msg.bad.id.strict", name);
 				}
 				left.setType(Token.BINDNAME);
 				return new Node(Token.SETNAME, left, right);
-
-			case Token.GETPROP:
-			case Token.GETELEM: {
+			}
+			case Token.GETPROP, Token.GETELEM -> {
 				Node obj, id;
 				// If it's a PropertyGet or ElementGet, we're in the parse pass.
 				// We could alternately have PropertyGet and ElementGet
@@ -3771,7 +3740,7 @@ public class Parser {
 				}
 				return new Node(type, obj, id, right);
 			}
-			case Token.GET_REF: {
+			case Token.GET_REF -> {
 				Node ref = left.getFirstChild();
 				checkMutableReference(ref);
 				return new Node(Token.SET_REF, ref, right);

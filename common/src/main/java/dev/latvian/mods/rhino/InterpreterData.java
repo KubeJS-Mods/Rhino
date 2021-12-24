@@ -8,10 +8,12 @@ package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.debug.DebuggableScript;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 
 final class InterpreterData implements Serializable, DebuggableScript {
+	@Serial
 	private static final long serialVersionUID = 5067677351589230234L;
 
 	static final int INITIAL_MAX_ICODE_LENGTH = 1024;

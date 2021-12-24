@@ -9,6 +9,7 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.regexp.NativeRegExp;
 import dev.latvian.mods.rhino.util.DataObject;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +28,7 @@ import java.util.function.Supplier;
  * @author Mike McCabe
  */
 public class NativeArray extends IdScriptableObject implements List, DataObject {
+	@Serial
 	private static final long serialVersionUID = 7331366857676127338L;
 
 	/*
@@ -182,132 +184,131 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		String s, fnName = null;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 1;
 				s = "constructor";
-				break;
-			case Id_toString:
+			}
+			case Id_toString -> {
 				arity = 0;
 				s = "toString";
-				break;
-			case Id_toLocaleString:
+			}
+			case Id_toLocaleString -> {
 				arity = 0;
 				s = "toLocaleString";
-				break;
-			case Id_toSource:
+			}
+			case Id_toSource -> {
 				arity = 0;
 				s = "toSource";
-				break;
-			case Id_join:
+			}
+			case Id_join -> {
 				arity = 1;
 				s = "join";
-				break;
-			case Id_reverse:
+			}
+			case Id_reverse -> {
 				arity = 0;
 				s = "reverse";
-				break;
-			case Id_sort:
+			}
+			case Id_sort -> {
 				arity = 1;
 				s = "sort";
-				break;
-			case Id_push:
+			}
+			case Id_push -> {
 				arity = 1;
 				s = "push";
-				break;
-			case Id_pop:
+			}
+			case Id_pop -> {
 				arity = 0;
 				s = "pop";
-				break;
-			case Id_shift:
+			}
+			case Id_shift -> {
 				arity = 0;
 				s = "shift";
-				break;
-			case Id_unshift:
+			}
+			case Id_unshift -> {
 				arity = 1;
 				s = "unshift";
-				break;
-			case Id_splice:
+			}
+			case Id_splice -> {
 				arity = 2;
 				s = "splice";
-				break;
-			case Id_concat:
+			}
+			case Id_concat -> {
 				arity = 1;
 				s = "concat";
-				break;
-			case Id_slice:
+			}
+			case Id_slice -> {
 				arity = 2;
 				s = "slice";
-				break;
-			case Id_indexOf:
+			}
+			case Id_indexOf -> {
 				arity = 1;
 				s = "indexOf";
-				break;
-			case Id_lastIndexOf:
+			}
+			case Id_lastIndexOf -> {
 				arity = 1;
 				s = "lastIndexOf";
-				break;
-			case Id_every:
+			}
+			case Id_every -> {
 				arity = 1;
 				s = "every";
-				break;
-			case Id_filter:
+			}
+			case Id_filter -> {
 				arity = 1;
 				s = "filter";
-				break;
-			case Id_forEach:
+			}
+			case Id_forEach -> {
 				arity = 1;
 				s = "forEach";
-				break;
-			case Id_map:
+			}
+			case Id_map -> {
 				arity = 1;
 				s = "map";
-				break;
-			case Id_some:
+			}
+			case Id_some -> {
 				arity = 1;
 				s = "some";
-				break;
-			case Id_find:
+			}
+			case Id_find -> {
 				arity = 1;
 				s = "find";
-				break;
-			case Id_findIndex:
+			}
+			case Id_findIndex -> {
 				arity = 1;
 				s = "findIndex";
-				break;
-			case Id_reduce:
+			}
+			case Id_reduce -> {
 				arity = 1;
 				s = "reduce";
-				break;
-			case Id_reduceRight:
+			}
+			case Id_reduceRight -> {
 				arity = 1;
 				s = "reduceRight";
-				break;
-			case Id_fill:
+			}
+			case Id_fill -> {
 				arity = 1;
 				s = "fill";
-				break;
-			case Id_keys:
+			}
+			case Id_keys -> {
 				arity = 0;
 				s = "keys";
-				break;
-			case Id_values:
+			}
+			case Id_values -> {
 				arity = 0;
 				s = "values";
-				break;
-			case Id_entries:
+			}
+			case Id_entries -> {
 				arity = 0;
 				s = "entries";
-				break;
-			case Id_includes:
+			}
+			case Id_includes -> {
 				arity = 1;
 				s = "includes";
-				break;
-			case Id_copyWithin:
+			}
+			case Id_copyWithin -> {
 				arity = 2;
 				s = "copyWithin";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 
 		initPrototypeMethod(ARRAY_TAG, id, s, fnName, arity);
@@ -854,9 +855,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				Object[] e = getIds(); // will only find in object itself
 				for (int i = 0; i < e.length; i++) {
 					Object id = e[i];
-					if (id instanceof String) {
+					if (id instanceof String strId) {
 						// > MAXINT will appear as string
-						String strId = (String) id;
 						long index = toArrayIndex(strId);
 						if (index >= longVal) {
 							delete(strId);
@@ -1072,8 +1072,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		}
 		// if no args, use "," as separator
 		String separator = (args.length < 1 || args[0] == Undefined.instance) ? "," : ScriptRuntime.toString(args[0]);
-		if (o instanceof NativeArray) {
-			NativeArray na = (NativeArray) o;
+		if (o instanceof NativeArray na) {
 			if (na.denseOnly) {
 				StringBuilder sb = new StringBuilder();
 				for (int i = 0; i < length; i++) {
@@ -1124,8 +1123,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static Scriptable js_reverse(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-		if (o instanceof NativeArray) {
-			NativeArray na = (NativeArray) o;
+		if (o instanceof NativeArray na) {
 			if (na.denseOnly) {
 				for (int i = 0, j = ((int) na.length) - 1; i < j; i++, j--) {
 					Object temp = na.dense[i];
@@ -1202,8 +1200,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static Object js_push(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-		if (o instanceof NativeArray) {
-			NativeArray na = (NativeArray) o;
+		if (o instanceof NativeArray na) {
 			if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
 				for (int i = 0; i < args.length; i++) {
 					na.dense[(int) na.length++] = args[i];
@@ -1225,8 +1222,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
 		Object result;
-		if (o instanceof NativeArray) {
-			NativeArray na = (NativeArray) o;
+		if (o instanceof NativeArray na) {
 			if (na.denseOnly && na.length > 0) {
 				na.length--;
 				result = na.dense[(int) na.length];
@@ -1257,8 +1253,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static Object js_shift(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-		if (o instanceof NativeArray) {
-			NativeArray na = (NativeArray) o;
+		if (o instanceof NativeArray na) {
 			if (na.denseOnly && na.length > 0) {
 				na.length--;
 				Object result = na.dense[0];
@@ -1299,8 +1294,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static Object js_unshift(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-		if (o instanceof NativeArray) {
-			NativeArray na = (NativeArray) o;
+		if (o instanceof NativeArray na) {
 			if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
 				System.arraycopy(na.dense, 0, na.dense, args.length, (int) na.length);
 				for (int i = 0; i < args.length; i++) {
@@ -1461,10 +1455,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		long newlen = srclen + offset;
 
 		// First, optimize for a pair of native, dense arrays
-		if ((newlen <= Integer.MAX_VALUE) && (result instanceof NativeArray)) {
-			final NativeArray denseResult = (NativeArray) result;
-			if (denseResult.denseOnly && (arg instanceof NativeArray)) {
-				final NativeArray denseArg = (NativeArray) arg;
+		if ((newlen <= Integer.MAX_VALUE) && (result instanceof final NativeArray denseResult)) {
+			if (denseResult.denseOnly && (arg instanceof final NativeArray denseArg)) {
 				if (denseArg.denseOnly) {
 					// Now we can optimize
 					denseResult.ensureCapacity((int) newlen);
@@ -1592,8 +1584,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				return NEGATIVE_ONE;
 			}
 		}
-		if (o instanceof NativeArray) {
-			NativeArray na = (NativeArray) o;
+		if (o instanceof NativeArray na) {
 			if (na.denseOnly) {
 				Scriptable proto = na.getPrototype();
 				for (int i = (int) start; i < length; i++) {
@@ -1648,8 +1639,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				return NEGATIVE_ONE;
 			}
 		}
-		if (o instanceof NativeArray) {
-			NativeArray na = (NativeArray) o;
+		if (o instanceof NativeArray na) {
 			if (na.denseOnly) {
 				Scriptable proto = na.getPrototype();
 				for (int i = (int) start; i >= 0; i--) {
@@ -1700,8 +1690,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				return Boolean.FALSE;
 			}
 		}
-		if (o instanceof NativeArray) {
-			NativeArray na = (NativeArray) o;
+		if (o instanceof NativeArray na) {
 			if (na.denseOnly) {
 				Scriptable proto = na.getPrototype();
 				for (int i = (int) k; i < len; i++) {
@@ -1808,8 +1797,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 		// Optimize for a native array. If properties were overridden with setters
 		// and other non-default options then we won't get here.
-		if ((o instanceof NativeArray) && (count <= Integer.MAX_VALUE)) {
-			NativeArray na = (NativeArray) o;
+		if ((o instanceof NativeArray na) && (count <= Integer.MAX_VALUE)) {
 			if (na.denseOnly) {
 				for (; count > 0; count--) {
 					na.dense[(int) to] = na.dense[(int) from];
@@ -1853,7 +1841,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 		long length = getLengthProperty(cx, o, id == Id_map);
 		Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
-		if (callbackArg == null || !(callbackArg instanceof Function)) {
+		if (callbackArg == null || !(callbackArg instanceof Function f)) {
 			throw ScriptRuntime.notFunctionError(callbackArg);
 		}
 		if (callbackArg instanceof NativeRegExp) {
@@ -1865,7 +1853,6 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			throw ScriptRuntime.notFunctionError(callbackArg);
 		}
 
-		Function f = (Function) callbackArg;
 		Scriptable parent = getTopLevelScope(f);
 		Scriptable thisArg;
 		if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
@@ -1927,20 +1914,13 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 					break;
 			}
 		}
-		switch (id) {
-			case Id_every:
-				return Boolean.TRUE;
-			case Id_filter:
-			case Id_map:
-				return array;
-			case Id_some:
-				return Boolean.FALSE;
-			case Id_findIndex:
-				return ScriptRuntime.wrapNumber(-1);
-			case Id_forEach:
-			default:
-				return Undefined.instance;
-		}
+		return switch (id) {
+			case Id_every -> Boolean.TRUE;
+			case Id_filter, Id_map -> array;
+			case Id_some -> Boolean.FALSE;
+			case Id_findIndex -> ScriptRuntime.wrapNumber(-1);
+			default -> Undefined.instance;
+		};
 	}
 
 	/**
@@ -1951,10 +1931,9 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 		long length = getLengthProperty(cx, o, false);
 		Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
-		if (callbackArg == null || !(callbackArg instanceof Function)) {
+		if (callbackArg == null || !(callbackArg instanceof Function f)) {
 			throw ScriptRuntime.notFunctionError(callbackArg);
 		}
-		Function f = (Function) callbackArg;
 		Scriptable parent = getTopLevelScope(f);
 		// hack to serve both reduce and reduceRight with the same loop
 		boolean movingLeft = id == Id_reduce;
@@ -2251,6 +2230,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 	public static final class StringLikeComparator implements Comparator<Object>, Serializable {
 
+		@Serial
 		private static final long serialVersionUID = 5299017659728190979L;
 
 		@Override
@@ -2263,6 +2243,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 	public static final class ElementComparator implements Comparator<Object>, Serializable {
 
+		@Serial
 		private static final long serialVersionUID = -1189948017688708858L;
 
 		private final Comparator<Object> child;

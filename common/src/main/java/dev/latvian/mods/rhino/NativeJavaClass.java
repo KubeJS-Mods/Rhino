@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.Map;
@@ -27,6 +28,7 @@ import java.util.Map;
  */
 
 public class NativeJavaClass extends NativeJavaObject implements Function {
+	@Serial
 	private static final long serialVersionUID = -6460763940409461664L;
 
 	// Special property for getting the underlying Java class object.
@@ -134,9 +136,8 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 		// If it looks like a "cast" of an object to this class type,
 		// walk the prototype chain to see if there's a wrapper of a
 		// object that's an instanceof this class.
-		if (args.length == 1 && args[0] instanceof Scriptable) {
+		if (args.length == 1 && args[0] instanceof Scriptable p) {
 			Class<?> c = getClassObject();
-			Scriptable p = (Scriptable) args[0];
 			do {
 				if (p instanceof Wrapper) {
 					Object o = ((Wrapper) p).unwrap();

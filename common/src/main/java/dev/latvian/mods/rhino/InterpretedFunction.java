@@ -8,7 +8,10 @@ package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.debug.DebuggableScript;
 
+import java.io.Serial;
+
 final class InterpretedFunction extends NativeFunction implements Script {
+	@Serial
 	private static final long serialVersionUID = 541475680333911468L;
 
 	InterpreterData idata;

@@ -8,6 +8,7 @@ package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.DataObject;
 
+import java.io.Serial;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.AbstractCollection;
@@ -29,6 +30,7 @@ import java.util.function.Supplier;
  * @author Norris Boyd
  */
 public class NativeObject extends IdScriptableObject implements Map, DataObject {
+	@Serial
 	private static final long serialVersionUID = -6345305608474346996L;
 
 	private static final Object OBJECT_TAG = "Object";
@@ -98,56 +100,55 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		String s;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 1;
 				s = "constructor";
-				break;
-			case Id_toString:
+			}
+			case Id_toString -> {
 				arity = 0;
 				s = "toString";
-				break;
-			case Id_toLocaleString:
+			}
+			case Id_toLocaleString -> {
 				arity = 0;
 				s = "toLocaleString";
-				break;
-			case Id_valueOf:
+			}
+			case Id_valueOf -> {
 				arity = 0;
 				s = "valueOf";
-				break;
-			case Id_hasOwnProperty:
+			}
+			case Id_hasOwnProperty -> {
 				arity = 1;
 				s = "hasOwnProperty";
-				break;
-			case Id_propertyIsEnumerable:
+			}
+			case Id_propertyIsEnumerable -> {
 				arity = 1;
 				s = "propertyIsEnumerable";
-				break;
-			case Id_isPrototypeOf:
+			}
+			case Id_isPrototypeOf -> {
 				arity = 1;
 				s = "isPrototypeOf";
-				break;
-			case Id_toSource:
+			}
+			case Id_toSource -> {
 				arity = 0;
 				s = "toSource";
-				break;
-			case Id___defineGetter__:
+			}
+			case Id___defineGetter__ -> {
 				arity = 2;
 				s = "__defineGetter__";
-				break;
-			case Id___defineSetter__:
+			}
+			case Id___defineSetter__ -> {
 				arity = 2;
 				s = "__defineSetter__";
-				break;
-			case Id___lookupGetter__:
+			}
+			case Id___lookupGetter__ -> {
 				arity = 1;
 				s = "__lookupGetter__";
-				break;
-			case Id___lookupSetter__:
+			}
+			case Id___lookupSetter__ -> {
 				arity = 1;
 				s = "__lookupSetter__";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(OBJECT_TAG, id, s, arity);
 	}
@@ -172,10 +173,9 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 
 			case Id_toLocaleString: {
 				Object toString = getProperty(thisObj, "toString");
-				if (!(toString instanceof Callable)) {
+				if (!(toString instanceof Callable fun)) {
 					throw ScriptRuntime.notFunctionError(toString);
 				}
-				Callable fun = (Callable) toString;
 				return fun.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
 			}
 
@@ -218,8 +218,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 
 				if (arg instanceof Symbol) {
 					result = ((SymbolScriptable) thisObj).has((Symbol) arg, thisObj);
-					if (result && thisObj instanceof ScriptableObject) {
-						ScriptableObject so = (ScriptableObject) thisObj;
+					if (result && thisObj instanceof ScriptableObject so) {
 						int attrs = so.getAttributes((Symbol) arg);
 						result = ((attrs & DONTENUM) == 0);
 					}
@@ -230,15 +229,13 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					try {
 						if (s.stringId == null) {
 							result = thisObj.has(s.index, thisObj);
-							if (result && thisObj instanceof ScriptableObject) {
-								ScriptableObject so = (ScriptableObject) thisObj;
+							if (result && thisObj instanceof ScriptableObject so) {
 								int attrs = so.getAttributes(s.index);
 								result = ((attrs & DONTENUM) == 0);
 							}
 						} else {
 							result = thisObj.has(s.stringId, thisObj);
-							if (result && thisObj instanceof ScriptableObject) {
-								ScriptableObject so = (ScriptableObject) thisObj;
+							if (result && thisObj instanceof ScriptableObject so) {
 								int attrs = so.getAttributes(s.stringId);
 								result = ((attrs & DONTENUM) == 0);
 							}
@@ -260,8 +257,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				}
 
 				boolean result = false;
-				if (args.length != 0 && args[0] instanceof Scriptable) {
-					Scriptable v = (Scriptable) args[0];
+				if (args.length != 0 && args[0] instanceof Scriptable v) {
 					do {
 						v = v.getPrototype();
 						if (v == thisObj) {
@@ -277,17 +273,15 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return ScriptRuntime.defaultObjectToSource(cx, scope, thisObj, args);
 			case Id___defineGetter__:
 			case Id___defineSetter__: {
-				if (args.length < 2 || !(args[1] instanceof Callable)) {
+				if (args.length < 2 || !(args[1] instanceof Callable getterOrSetter)) {
 					Object badArg = (args.length >= 2 ? args[1] : Undefined.instance);
 					throw ScriptRuntime.notFunctionError(badArg);
 				}
-				if (!(thisObj instanceof ScriptableObject)) {
+				if (!(thisObj instanceof ScriptableObject so)) {
 					throw Context.reportRuntimeError2("msg.extend.scriptable", thisObj == null ? "null" : thisObj.getClass().getName(), String.valueOf(args[0]));
 				}
-				ScriptableObject so = (ScriptableObject) thisObj;
 				ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
 				int index = s.stringId != null ? 0 : s.index;
-				Callable getterOrSetter = (Callable) args[1];
 				boolean isSetter = (id == Id___defineSetter__);
 				so.setGetterOrSetter(s.stringId, index, getterOrSetter, isSetter);
 				if (so instanceof NativeArray) {
@@ -298,11 +292,10 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 
 			case Id___lookupGetter__:
 			case Id___lookupSetter__: {
-				if (args.length < 1 || !(thisObj instanceof ScriptableObject)) {
+				if (args.length < 1 || !(thisObj instanceof ScriptableObject so)) {
 					return Undefined.instance;
 				}
 
-				ScriptableObject so = (ScriptableObject) thisObj;
 				ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
 				int index = s.stringId != null ? 0 : s.index;
 				boolean isSetter = (id == Id___lookupSetter__);
@@ -346,10 +339,9 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 
 				final Object arg0 = args[0];
 				ScriptRuntimeES6.requireObjectCoercible(cx, arg0, f);
-				if (!(arg0 instanceof ScriptableObject)) {
+				if (!(arg0 instanceof ScriptableObject obj)) {
 					return arg0;
 				}
-				ScriptableObject obj = (ScriptableObject) arg0;
 				if (!obj.isExtensible()) {
 					throw ScriptRuntime.typeError0("msg.not.extensible");
 				}
@@ -691,10 +683,9 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 
 						@Override
 						public boolean equals(Object other) {
-							if (!(other instanceof Map.Entry)) {
+							if (!(other instanceof Entry<?, ?> e)) {
 								return false;
 							}
-							Map.Entry<?, ?> e = (Map.Entry<?, ?>) other;
 							return (ekey == null ? e.getKey() == null : ekey.equals(e.getKey())) && (value == null ? e.getValue() == null : value.equals(e.getValue()));
 						}
 
@@ -823,11 +814,11 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			int c;
 			L:
 			switch (s.length()) {
-				case 7:
+				case 7 -> {
 					X = "valueOf";
 					id = Id_valueOf;
-					break L;
-				case 8:
+				}
+				case 8 -> {
 					c = s.charAt(3);
 					if (c == 'o') {
 						X = "toSource";
@@ -836,16 +827,16 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 						X = "toString";
 						id = Id_toString;
 					}
-					break L;
-				case 11:
+				}
+				case 11 -> {
 					X = "constructor";
 					id = Id_constructor;
-					break L;
-				case 13:
+				}
+				case 13 -> {
 					X = "isPrototypeOf";
 					id = Id_isPrototypeOf;
-					break L;
-				case 14:
+				}
+				case 14 -> {
 					c = s.charAt(0);
 					if (c == 'h') {
 						X = "hasOwnProperty";
@@ -854,8 +845,8 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 						X = "toLocaleString";
 						id = Id_toLocaleString;
 					}
-					break L;
-				case 16:
+				}
+				case 16 -> {
 					c = s.charAt(2);
 					if (c == 'd') {
 						c = s.charAt(8);
@@ -876,11 +867,11 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 							id = Id___lookupSetter__;
 						}
 					}
-					break L;
-				case 20:
+				}
+				case 20 -> {
 					X = "propertyIsEnumerable";
 					id = Id_propertyIsEnumerable;
-					break L;
+				}
 			}
 			if (X != null && X != s && !X.equals(s)) {
 				id = 0;

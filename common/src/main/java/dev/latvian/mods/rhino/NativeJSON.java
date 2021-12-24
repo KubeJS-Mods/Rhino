@@ -17,6 +17,7 @@ import dev.latvian.mods.rhino.json.JsonParser;
 import dev.latvian.mods.rhino.util.HideFromJS;
 import dev.latvian.mods.rhino.util.RemapForJS;
 
+import java.io.Serial;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -35,6 +36,7 @@ import java.util.Stack;
  * @author Matthew Crumley, Raphael Speyer
  */
 public final class NativeJSON extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = -4567599697595654984L;
 
 	private static final Object JSON_TAG = "JSON";
@@ -80,20 +82,19 @@ public final class NativeJSON extends IdScriptableObject {
 			String name;
 			int arity;
 			switch (id) {
-				case Id_toSource:
+				case Id_toSource -> {
 					arity = 0;
 					name = "toSource";
-					break;
-				case Id_parse:
+				}
+				case Id_parse -> {
 					arity = 2;
 					name = "parse";
-					break;
-				case Id_stringify:
+				}
+				case Id_stringify -> {
 					arity = 3;
 					name = "stringify";
-					break;
-				default:
-					throw new IllegalStateException(String.valueOf(id));
+				}
+				default -> throw new IllegalStateException(String.valueOf(id));
 			}
 			initPrototypeMethod(JSON_TAG, id, name, arity);
 		} else {
@@ -170,8 +171,7 @@ public final class NativeJSON extends IdScriptableObject {
 			property = holder.get(((String) name), holder);
 		}
 
-		if (property instanceof Scriptable) {
-			Scriptable val = ((Scriptable) property);
+		if (property instanceof Scriptable val) {
 			if (val instanceof NativeArray) {
 				long len = ((NativeArray) val).getLength();
 				for (long i = 0; i < len; i++) {
@@ -465,18 +465,18 @@ public final class NativeJSON extends IdScriptableObject {
 			String X = null;
 			L:
 			switch (s.length()) {
-				case 5:
+				case 5 -> {
 					X = "parse";
 					id = Id_parse;
-					break L;
-				case 8:
+				}
+				case 8 -> {
 					X = "toSource";
 					id = Id_toSource;
-					break L;
-				case 9:
+				}
+				case 9 -> {
 					X = "stringify";
 					id = Id_stringify;
-					break L;
+				}
 			}
 			if (X != null && X != s && !X.equals(s)) {
 				id = 0;

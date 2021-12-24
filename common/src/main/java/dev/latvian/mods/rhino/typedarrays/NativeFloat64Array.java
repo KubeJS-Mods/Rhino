@@ -12,12 +12,15 @@ import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.Undefined;
 
+import java.io.Serial;
+
 /**
  * An array view that stores 64-bit quantities and implements the JavaScript "Float64Array" interface.
  * It also implements List&lt;Double&gt; for direct manipulation in Java.
  */
 
 public class NativeFloat64Array extends NativeTypedArrayView<Double> {
+	@Serial
 	private static final long serialVersionUID = -1255405650050639335L;
 
 	private static final String CLASS_NAME = "Float64Array";

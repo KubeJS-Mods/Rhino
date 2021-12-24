@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since Rhino 1.5 Release 5
  */
 public class ClassCache implements Serializable {
+	@Serial
 	private static final long serialVersionUID = -8866246036237312215L;
 	private static final Object AKEY = "ClassCache";
 	private volatile boolean cachingIsEnabled = true;

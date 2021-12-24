@@ -8,6 +8,7 @@ package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.regexp.NativeRegExp;
 
+import java.io.Serial;
 import java.text.Collator;
 import java.text.Normalizer;
 import java.util.Locale;
@@ -26,6 +27,7 @@ import java.util.Locale;
  * @author Ronald Brill
  */
 final class NativeString extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = 920268368584188687L;
 
 	private static final Object STRING_TAG = "String";
@@ -53,29 +55,22 @@ final class NativeString extends IdScriptableObject {
 
 	@Override
 	protected int findInstanceIdInfo(String s) {
-		switch (s) {
-			case "length":
-				return instanceIdInfo(DONTENUM | READONLY | PERMANENT, Id_length);
-			case "namespace":
-				return instanceIdInfo(DONTENUM | READONLY | PERMANENT, Id_namespace);
-			case "path":
-				return instanceIdInfo(DONTENUM | READONLY | PERMANENT, Id_path);
-		}
-		return super.findInstanceIdInfo(s);
+		return switch (s) {
+			case "length" -> instanceIdInfo(DONTENUM | READONLY | PERMANENT, Id_length);
+			case "namespace" -> instanceIdInfo(DONTENUM | READONLY | PERMANENT, Id_namespace);
+			case "path" -> instanceIdInfo(DONTENUM | READONLY | PERMANENT, Id_path);
+			default -> super.findInstanceIdInfo(s);
+		};
 	}
 
 	@Override
 	protected String getInstanceIdName(int id) {
-		switch (id) {
-			case Id_length:
-				return "length";
-			case Id_namespace:
-				return "namespace";
-			case Id_path:
-				return "path";
-			default:
-				return super.getInstanceIdName(id);
-		}
+		return switch (id) {
+			case Id_length -> "length";
+			case Id_namespace -> "namespace";
+			case Id_path -> "path";
+			default -> super.getInstanceIdName(id);
+		};
 	}
 
 	@Override
@@ -133,204 +128,203 @@ final class NativeString extends IdScriptableObject {
 		String s, fnName = null;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 1;
 				s = "constructor";
-				break;
-			case Id_toString:
+			}
+			case Id_toString -> {
 				arity = 0;
 				s = "toString";
-				break;
-			case Id_toSource:
+			}
+			case Id_toSource -> {
 				arity = 0;
 				s = "toSource";
-				break;
-			case Id_valueOf:
+			}
+			case Id_valueOf -> {
 				arity = 0;
 				s = "valueOf";
-				break;
-			case Id_charAt:
+			}
+			case Id_charAt -> {
 				arity = 1;
 				s = "charAt";
-				break;
-			case Id_charCodeAt:
+			}
+			case Id_charCodeAt -> {
 				arity = 1;
 				s = "charCodeAt";
-				break;
-			case Id_indexOf:
+			}
+			case Id_indexOf -> {
 				arity = 1;
 				s = "indexOf";
-				break;
-			case Id_lastIndexOf:
+			}
+			case Id_lastIndexOf -> {
 				arity = 1;
 				s = "lastIndexOf";
-				break;
-			case Id_split:
+			}
+			case Id_split -> {
 				arity = 2;
 				s = "split";
-				break;
-			case Id_substring:
+			}
+			case Id_substring -> {
 				arity = 2;
 				s = "substring";
-				break;
-			case Id_toLowerCase:
+			}
+			case Id_toLowerCase -> {
 				arity = 0;
 				s = "toLowerCase";
-				break;
-			case Id_toUpperCase:
+			}
+			case Id_toUpperCase -> {
 				arity = 0;
 				s = "toUpperCase";
-				break;
-			case Id_substr:
+			}
+			case Id_substr -> {
 				arity = 2;
 				s = "substr";
-				break;
-			case Id_concat:
+			}
+			case Id_concat -> {
 				arity = 1;
 				s = "concat";
-				break;
-			case Id_slice:
+			}
+			case Id_slice -> {
 				arity = 2;
 				s = "slice";
-				break;
-			case Id_bold:
+			}
+			case Id_bold -> {
 				arity = 0;
 				s = "bold";
-				break;
-			case Id_italics:
+			}
+			case Id_italics -> {
 				arity = 0;
 				s = "italics";
-				break;
-			case Id_fixed:
+			}
+			case Id_fixed -> {
 				arity = 0;
 				s = "fixed";
-				break;
-			case Id_strike:
+			}
+			case Id_strike -> {
 				arity = 0;
 				s = "strike";
-				break;
-			case Id_small:
+			}
+			case Id_small -> {
 				arity = 0;
 				s = "small";
-				break;
-			case Id_big:
+			}
+			case Id_big -> {
 				arity = 0;
 				s = "big";
-				break;
-			case Id_blink:
+			}
+			case Id_blink -> {
 				arity = 0;
 				s = "blink";
-				break;
-			case Id_sup:
+			}
+			case Id_sup -> {
 				arity = 0;
 				s = "sup";
-				break;
-			case Id_sub:
+			}
+			case Id_sub -> {
 				arity = 0;
 				s = "sub";
-				break;
-			case Id_fontsize:
+			}
+			case Id_fontsize -> {
 				arity = 0;
 				s = "fontsize";
-				break;
-			case Id_fontcolor:
+			}
+			case Id_fontcolor -> {
 				arity = 0;
 				s = "fontcolor";
-				break;
-			case Id_link:
+			}
+			case Id_link -> {
 				arity = 0;
 				s = "link";
-				break;
-			case Id_anchor:
+			}
+			case Id_anchor -> {
 				arity = 0;
 				s = "anchor";
-				break;
-			case Id_equals:
+			}
+			case Id_equals -> {
 				arity = 1;
 				s = "equals";
-				break;
-			case Id_equalsIgnoreCase:
+			}
+			case Id_equalsIgnoreCase -> {
 				arity = 1;
 				s = "equalsIgnoreCase";
-				break;
-			case Id_match:
+			}
+			case Id_match -> {
 				arity = 1;
 				s = "match";
-				break;
-			case Id_search:
+			}
+			case Id_search -> {
 				arity = 1;
 				s = "search";
-				break;
-			case Id_replace:
+			}
+			case Id_replace -> {
 				arity = 2;
 				s = "replace";
-				break;
-			case Id_localeCompare:
+			}
+			case Id_localeCompare -> {
 				arity = 1;
 				s = "localeCompare";
-				break;
-			case Id_toLocaleLowerCase:
+			}
+			case Id_toLocaleLowerCase -> {
 				arity = 0;
 				s = "toLocaleLowerCase";
-				break;
-			case Id_toLocaleUpperCase:
+			}
+			case Id_toLocaleUpperCase -> {
 				arity = 0;
 				s = "toLocaleUpperCase";
-				break;
-			case Id_trim:
+			}
+			case Id_trim -> {
 				arity = 0;
 				s = "trim";
-				break;
-			case Id_trimLeft:
+			}
+			case Id_trimLeft -> {
 				arity = 0;
 				s = "trimLeft";
-				break;
-			case Id_trimRight:
+			}
+			case Id_trimRight -> {
 				arity = 0;
 				s = "trimRight";
-				break;
-			case Id_includes:
+			}
+			case Id_includes -> {
 				arity = 1;
 				s = "includes";
-				break;
-			case Id_startsWith:
+			}
+			case Id_startsWith -> {
 				arity = 1;
 				s = "startsWith";
-				break;
-			case Id_endsWith:
+			}
+			case Id_endsWith -> {
 				arity = 1;
 				s = "endsWith";
-				break;
-			case Id_normalize:
+			}
+			case Id_normalize -> {
 				arity = 0;
 				s = "normalize";
-				break;
-			case Id_repeat:
+			}
+			case Id_repeat -> {
 				arity = 1;
 				s = "repeat";
-				break;
-			case Id_codePointAt:
+			}
+			case Id_codePointAt -> {
 				arity = 1;
 				s = "codePointAt";
-				break;
-			case Id_padStart:
+			}
+			case Id_padStart -> {
 				arity = 1;
 				s = "padStart";
-				break;
-			case Id_padEnd:
+			}
+			case Id_padEnd -> {
 				arity = 1;
 				s = "padEnd";
-				break;
-			case Id_trimStart:
+			}
+			case Id_trimStart -> {
 				arity = 0;
 				s = "trimStart";
-				break;
-			case Id_trimEnd:
+			}
+			case Id_trimEnd -> {
 				arity = 0;
 				s = "trimEnd";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(STRING_TAG, id, s, fnName, arity);
 	}

@@ -42,10 +42,9 @@ public final class JavaAdapter implements IdFunctionCall {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (!(obj instanceof JavaAdapterSignature)) {
+			if (!(obj instanceof JavaAdapterSignature sig)) {
 				return false;
 			}
-			JavaAdapterSignature sig = (JavaAdapterSignature) obj;
 			if (superClass != sig.superClass) {
 				return false;
 			}
@@ -280,13 +279,11 @@ public final class JavaAdapter implements IdFunctionCall {
 		Object[] ids = ScriptableObject.getPropertyIds(obj);
 		ObjToIntMap map = new ObjToIntMap(ids.length);
 		for (int i = 0; i != ids.length; ++i) {
-			if (!(ids[i] instanceof String)) {
+			if (!(ids[i] instanceof String id)) {
 				continue;
 			}
-			String id = (String) ids[i];
 			Object value = ScriptableObject.getProperty(obj, id);
-			if (value instanceof Function) {
-				Function f = (Function) value;
+			if (value instanceof Function f) {
 				int length = ScriptRuntime.toInt32(ScriptableObject.getProperty(f, "length"));
 				if (length < 0) {
 					length = 0;
@@ -711,28 +708,26 @@ public final class JavaAdapter implements IdFunctionCall {
 			cfw.add(ByteCode.DUP);
 			String typeName = argType.getName();
 			switch (typeName.charAt(0)) {
-				case 'b':
-				case 's':
-				case 'i':
+				case 'b', 's', 'i' -> {
 					// load an int value, convert to double.
 					cfw.add(ByteCode.ILOAD, paramOffset);
 					cfw.add(ByteCode.I2D);
-					break;
-				case 'l':
+				}
+				case 'l' -> {
 					// load a long, convert to double.
 					cfw.add(ByteCode.LLOAD, paramOffset);
 					cfw.add(ByteCode.L2D);
 					size = 2;
-					break;
-				case 'f':
+				}
+				case 'f' -> {
 					// load a float, convert to double.
 					cfw.add(ByteCode.FLOAD, paramOffset);
 					cfw.add(ByteCode.F2D);
-					break;
-				case 'd':
+				}
+				case 'd' -> {
 					cfw.add(ByteCode.DLOAD, paramOffset);
 					size = 2;
-					break;
+				}
 			}
 			cfw.addInvoke(ByteCode.INVOKESPECIAL, "java/lang/Double", "<init>", "(D)V");
 		}
@@ -768,25 +763,20 @@ public final class JavaAdapter implements IdFunctionCall {
 			cfw.addInvoke(ByteCode.INVOKESTATIC, "dev/latvian/mods/rhino/Context", "toNumber", "(Ljava/lang/Object;)D");
 			String typeName = retType.getName();
 			switch (typeName.charAt(0)) {
-				case 'b':
-				case 's':
-				case 'i':
+				case 'b', 's', 'i' -> {
 					cfw.add(ByteCode.D2I);
 					cfw.add(ByteCode.IRETURN);
-					break;
-				case 'l':
+				}
+				case 'l' -> {
 					cfw.add(ByteCode.D2L);
 					cfw.add(ByteCode.LRETURN);
-					break;
-				case 'f':
+				}
+				case 'f' -> {
 					cfw.add(ByteCode.D2F);
 					cfw.add(ByteCode.FRETURN);
-					break;
-				case 'd':
-					cfw.add(ByteCode.DRETURN);
-					break;
-				default:
-					throw new RuntimeException("Unexpected return type " + retType);
+				}
+				case 'd' -> cfw.add(ByteCode.DRETURN);
+				default -> throw new RuntimeException("Unexpected return type " + retType);
 			}
 
 		} else {
@@ -862,25 +852,25 @@ public final class JavaAdapter implements IdFunctionCall {
 		}
 		String typeName = paramType.getName();
 		switch (typeName.charAt(0)) {
-			case 'z':
-			case 'b':
-			case 'c':
-			case 's':
-			case 'i':
+			case 'z', 'b', 'c', 's', 'i' -> {
 				// load an int value, convert to double.
 				cfw.addILoad(paramOffset);
 				return 1;
-			case 'l':
+			}
+			case 'l' -> {
 				// load a long, convert to double.
 				cfw.addLLoad(paramOffset);
 				return 2;
-			case 'f':
+			}
+			case 'f' -> {
 				// load a float, convert to double.
 				cfw.addFLoad(paramOffset);
 				return 1;
-			case 'd':
+			}
+			case 'd' -> {
 				cfw.addDLoad(paramOffset);
 				return 2;
+			}
 		}
 		throw Kit.codeBug();
 	}
@@ -894,22 +884,10 @@ public final class JavaAdapter implements IdFunctionCall {
 		if (retType.isPrimitive()) {
 			String typeName = retType.getName();
 			switch (typeName.charAt(0)) {
-				case 'b':
-				case 'c':
-				case 's':
-				case 'i':
-				case 'z':
-					cfw.add(ByteCode.IRETURN);
-					break;
-				case 'l':
-					cfw.add(ByteCode.LRETURN);
-					break;
-				case 'f':
-					cfw.add(ByteCode.FRETURN);
-					break;
-				case 'd':
-					cfw.add(ByteCode.DRETURN);
-					break;
+				case 'b', 'c', 's', 'i', 'z' -> cfw.add(ByteCode.IRETURN);
+				case 'l' -> cfw.add(ByteCode.LRETURN);
+				case 'f' -> cfw.add(ByteCode.FRETURN);
+				case 'd' -> cfw.add(ByteCode.DRETURN);
 			}
 		} else {
 			cfw.add(ByteCode.ARETURN);

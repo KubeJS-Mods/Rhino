@@ -11,12 +11,15 @@ import dev.latvian.mods.rhino.IdScriptableObject;
 import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.Undefined;
 
+import java.io.Serial;
+
 /**
  * This class is the abstract parent for all views of the array. It shows a view of the underlying
  * NativeArrayBuffer. Many views may simultaneously share the same buffer, and changes to one will affect all.
  */
 
 public abstract class NativeArrayBufferView extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = 6884475582973958419L;
 
 	private static Boolean useLittleEndian = null;
@@ -92,30 +95,22 @@ public abstract class NativeArrayBufferView extends IdScriptableObject {
 
 	@Override
 	protected String getInstanceIdName(int id) {
-		switch (id) {
-			case Id_buffer:
-				return "buffer";
-			case Id_byteOffset:
-				return "byteOffset";
-			case Id_byteLength:
-				return "byteLength";
-			default:
-				return super.getInstanceIdName(id);
-		}
+		return switch (id) {
+			case Id_buffer -> "buffer";
+			case Id_byteOffset -> "byteOffset";
+			case Id_byteLength -> "byteLength";
+			default -> super.getInstanceIdName(id);
+		};
 	}
 
 	@Override
 	protected Object getInstanceIdValue(int id) {
-		switch (id) {
-			case Id_buffer:
-				return arrayBuffer;
-			case Id_byteOffset:
-				return ScriptRuntime.wrapInt(offset);
-			case Id_byteLength:
-				return ScriptRuntime.wrapInt(byteLength);
-			default:
-				return super.getInstanceIdValue(id);
-		}
+		return switch (id) {
+			case Id_buffer -> arrayBuffer;
+			case Id_byteOffset -> ScriptRuntime.wrapInt(offset);
+			case Id_byteLength -> ScriptRuntime.wrapInt(byteLength);
+			default -> super.getInstanceIdValue(id);
+		};
 	}
 
 	// #string_id_map#

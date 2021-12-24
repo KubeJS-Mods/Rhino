@@ -582,8 +582,7 @@ public class Context {
 			if (l == null) {
 				break;
 			}
-			if (l instanceof PropertyChangeListener) {
-				PropertyChangeListener pcl = (PropertyChangeListener) l;
+			if (l instanceof PropertyChangeListener pcl) {
 				pcl.propertyChange(new PropertyChangeEvent(this, property, oldValue, newValue));
 			}
 		}
@@ -1943,8 +1942,7 @@ public class Context {
 			if (sourceString == null) {
 				Kit.codeBug();
 			}
-			if (bytecode instanceof DebuggableScript) {
-				DebuggableScript dscript = (DebuggableScript) bytecode;
+			if (bytecode instanceof DebuggableScript dscript) {
 				notifyDebugger_r(this, dscript, sourceString);
 			} else {
 				throw new RuntimeException("NOT SUPPORTED");

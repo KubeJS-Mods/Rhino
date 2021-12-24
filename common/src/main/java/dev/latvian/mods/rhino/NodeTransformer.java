@@ -79,8 +79,7 @@ public class NodeTransformer {
 			}
 
 			int type = node.getType();
-			if (createScopeObjects && (type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP) && (node instanceof Scope)) {
-				Scope newScope = (Scope) node;
+			if (createScopeObjects && (type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP) && (node instanceof Scope newScope)) {
 				if (newScope.getSymbolTable() != null) {
 					// transform to let statement so we get a with statement
 					// created to contain scoped let variables

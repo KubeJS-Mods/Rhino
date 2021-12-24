@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 /**
  * This class implements the Number native object.
  * <p>
@@ -14,6 +16,7 @@ package dev.latvian.mods.rhino;
  * @author Norris Boyd
  */
 final class NativeNumber extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = 3504516769741512101L;
 
 	/**
@@ -67,40 +70,39 @@ final class NativeNumber extends IdScriptableObject {
 		String s;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 1;
 				s = "constructor";
-				break;
-			case Id_toString:
+			}
+			case Id_toString -> {
 				arity = 1;
 				s = "toString";
-				break;
-			case Id_toLocaleString:
+			}
+			case Id_toLocaleString -> {
 				arity = 1;
 				s = "toLocaleString";
-				break;
-			case Id_toSource:
+			}
+			case Id_toSource -> {
 				arity = 0;
 				s = "toSource";
-				break;
-			case Id_valueOf:
+			}
+			case Id_valueOf -> {
 				arity = 0;
 				s = "valueOf";
-				break;
-			case Id_toFixed:
+			}
+			case Id_toFixed -> {
 				arity = 1;
 				s = "toFixed";
-				break;
-			case Id_toExponential:
+			}
+			case Id_toExponential -> {
 				arity = 1;
 				s = "toExponential";
-				break;
-			case Id_toPrecision:
+			}
+			case Id_toPrecision -> {
 				arity = 1;
 				s = "toPrecision";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(NUMBER_TAG, id, s, arity);
 	}
@@ -319,7 +321,7 @@ final class NativeNumber extends IdScriptableObject {
 			int c;
 			L:
 			switch (s.length()) {
-				case 7:
+				case 7 -> {
 					c = s.charAt(0);
 					if (c == 't') {
 						X = "toFixed";
@@ -328,8 +330,8 @@ final class NativeNumber extends IdScriptableObject {
 						X = "valueOf";
 						id = Id_valueOf;
 					}
-					break L;
-				case 8:
+				}
+				case 8 -> {
 					c = s.charAt(3);
 					if (c == 'o') {
 						X = "toSource";
@@ -338,8 +340,8 @@ final class NativeNumber extends IdScriptableObject {
 						X = "toString";
 						id = Id_toString;
 					}
-					break L;
-				case 11:
+				}
+				case 11 -> {
 					c = s.charAt(0);
 					if (c == 'c') {
 						X = "constructor";
@@ -348,15 +350,15 @@ final class NativeNumber extends IdScriptableObject {
 						X = "toPrecision";
 						id = Id_toPrecision;
 					}
-					break L;
-				case 13:
+				}
+				case 13 -> {
 					X = "toExponential";
 					id = Id_toExponential;
-					break L;
-				case 14:
+				}
+				case 14 -> {
 					X = "toLocaleString";
 					id = Id_toLocaleString;
-					break L;
+				}
 			}
 			if (X != null && X != s && !X.equals(s)) {
 				id = 0;

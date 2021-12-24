@@ -923,22 +923,13 @@ public class Node implements Iterable<Node> {
 					return END_DROPS_OFF;
 				}
 
-				switch (first.type) {
-					case Token.LABEL:
-						return first.endCheckLabel();
-
-					case Token.IFNE:
-						return first.endCheckIf();
-
-					case Token.SWITCH:
-						return first.endCheckSwitch();
-
-					case Token.TRY:
-						return first.endCheckTry();
-
-					default:
-						return endCheckBlock();
-				}
+				return switch (first.type) {
+					case Token.LABEL -> first.endCheckLabel();
+					case Token.IFNE -> first.endCheckIf();
+					case Token.SWITCH -> first.endCheckSwitch();
+					case Token.TRY -> first.endCheckTry();
+					default -> endCheckBlock();
+				};
 
 			default:
 				return END_DROPS_OFF;
@@ -1092,10 +1083,8 @@ public class Node implements Iterable<Node> {
 					sb.append("]");
 				}
 			} else if (this instanceof Scope) {
-				if (this instanceof ScriptNode) {
-					ScriptNode sof = (ScriptNode) this;
-					if (this instanceof FunctionNode) {
-						FunctionNode fn = (FunctionNode) this;
+				if (this instanceof ScriptNode sof) {
+					if (this instanceof FunctionNode fn) {
 						sb.append(' ');
 						sb.append(fn.getName());
 					}
@@ -1120,8 +1109,7 @@ public class Node implements Iterable<Node> {
 					}
 					sb.append("]");
 				}
-			} else if (this instanceof Jump) {
-				Jump jump = (Jump) this;
+			} else if (this instanceof Jump jump) {
 				if (type == Token.BREAK || type == Token.CONTINUE) {
 					sb.append(" [label: ");
 					appendPrintId(jump.getJumpStatement(), printIds, sb);
@@ -1179,32 +1167,21 @@ public class Node implements Iterable<Node> {
 						value = "last local block";
 						break;
 					case ISNUMBER_PROP:
-						switch (x.intValue) {
-							case BOTH:
-								value = "both";
-								break;
-							case RIGHT:
-								value = "right";
-								break;
-							case LEFT:
-								value = "left";
-								break;
-							default:
-								throw Kit.codeBug();
-						}
+						value = switch (x.intValue) {
+							case BOTH -> "both";
+							case RIGHT -> "right";
+							case LEFT -> "left";
+							default -> throw Kit.codeBug();
+						};
 						break;
 					case SPECIALCALL_PROP:
-						switch (x.intValue) {
-							case SPECIALCALL_EVAL:
-								value = "eval";
-								break;
-							case SPECIALCALL_WITH:
-								value = "with";
-								break;
-							default:
-								// NON_SPECIALCALL should not be stored
-								throw Kit.codeBug();
-						}
+						value = switch (x.intValue) {
+							case SPECIALCALL_EVAL -> "eval";
+							case SPECIALCALL_WITH -> "with";
+							default ->
+									// NON_SPECIALCALL should not be stored
+									throw Kit.codeBug();
+						};
 						break;
 					case OBJECT_IDS_PROP: {
 						Object[] a = (Object[]) x.objectValue;

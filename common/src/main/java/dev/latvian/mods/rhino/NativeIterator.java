@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.util.Iterator;
 
 /**
@@ -15,6 +16,7 @@ import java.util.Iterator;
  * @author Norris Boyd
  */
 public final class NativeIterator extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = -4136968203581667681L;
 	private static final Object ITERATOR_TAG = "Iterator";
 
@@ -68,6 +70,7 @@ public final class NativeIterator extends IdScriptableObject {
 	public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
 
 	public static class StopIteration extends NativeObject {
+		@Serial
 		private static final long serialVersionUID = 2485151085722377663L;
 
 		private Object value = Undefined.instance;
@@ -107,20 +110,19 @@ public final class NativeIterator extends IdScriptableObject {
 		String s;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 2;
 				s = "constructor";
-				break;
-			case Id_next:
+			}
+			case Id_next -> {
 				arity = 0;
 				s = "next";
-				break;
-			case Id___iterator__:
+			}
+			case Id___iterator__ -> {
 				arity = 1;
 				s = ITERATOR_PROPERTY_NAME;
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(ITERATOR_TAG, id, s, arity);
 	}
@@ -136,24 +138,17 @@ public final class NativeIterator extends IdScriptableObject {
 			return jsConstructor(cx, scope, thisObj, args);
 		}
 
-		if (!(thisObj instanceof NativeIterator)) {
+		if (!(thisObj instanceof NativeIterator iterator)) {
 			throw incompatibleCallError(f);
 		}
 
-		NativeIterator iterator = (NativeIterator) thisObj;
-
-		switch (id) {
-
-			case Id_next:
-				return iterator.next(cx, scope);
-
-			case Id___iterator__:
-				/// XXX: what about argument? SpiderMonkey apparently ignores it
-				return thisObj;
-
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
-		}
+		return switch (id) {
+			case Id_next -> iterator.next(cx, scope);
+			case Id___iterator__ ->
+					/// XXX: what about argument? SpiderMonkey apparently ignores it
+					thisObj;
+			default -> throw new IllegalArgumentException(String.valueOf(id));
+		};
 	}
 
 	/* The JavaScript constructor */

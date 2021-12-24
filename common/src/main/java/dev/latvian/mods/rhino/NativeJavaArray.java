@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.lang.reflect.Array;
 
 /**
@@ -18,6 +19,7 @@ import java.lang.reflect.Array;
  */
 
 public class NativeJavaArray extends NativeJavaObject implements SymbolScriptable {
+	@Serial
 	private static final long serialVersionUID = -924022554283675333L;
 
 	@Override

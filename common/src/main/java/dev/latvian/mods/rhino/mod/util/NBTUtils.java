@@ -2,7 +2,25 @@ package dev.latvian.mods.rhino.mod.util;
 
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.EncoderException;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.ByteArrayTag;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.CollectionTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.FloatTag;
+import net.minecraft.nbt.IntArrayTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.LongArrayTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NumericTag;
+import net.minecraft.nbt.ShortTag;
+import net.minecraft.nbt.StreamTagVisitor;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagType;
+import net.minecraft.nbt.TagTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +45,7 @@ public class NBTUtils {
 			return StringTag.valueOf(o.toString());
 		} else if (o instanceof Boolean) {
 			return ByteTag.valueOf((Boolean) o ? (byte) 1 : (byte) 0);
-		} else if (o instanceof Number) {
-			Number number = (Number) o;
+		} else if (o instanceof Number number) {
 
 			if (number instanceof Byte) {
 				return ByteTag.valueOf(number.byteValue());

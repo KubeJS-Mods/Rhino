@@ -27,48 +27,23 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 			String name;
 			int arity = 1;
 			switch (id) {
-				case Id_decodeURI:
-					name = "decodeURI";
-					break;
-				case Id_decodeURIComponent:
-					name = "decodeURIComponent";
-					break;
-				case Id_encodeURI:
-					name = "encodeURI";
-					break;
-				case Id_encodeURIComponent:
-					name = "encodeURIComponent";
-					break;
-				case Id_escape:
-					name = "escape";
-					break;
-				case Id_eval:
-					name = "eval";
-					break;
-				case Id_isFinite:
-					name = "isFinite";
-					break;
-				case Id_isNaN:
-					name = "isNaN";
-					break;
-				case Id_isXMLName:
-					name = "isXMLName";
-					break;
-				case Id_parseFloat:
-					name = "parseFloat";
-					break;
-				case Id_parseInt:
+				case Id_decodeURI -> name = "decodeURI";
+				case Id_decodeURIComponent -> name = "decodeURIComponent";
+				case Id_encodeURI -> name = "encodeURI";
+				case Id_encodeURIComponent -> name = "encodeURIComponent";
+				case Id_escape -> name = "escape";
+				case Id_eval -> name = "eval";
+				case Id_isFinite -> name = "isFinite";
+				case Id_isNaN -> name = "isNaN";
+				case Id_isXMLName -> name = "isXMLName";
+				case Id_parseFloat -> name = "parseFloat";
+				case Id_parseInt -> {
 					name = "parseInt";
 					arity = 2;
-					break;
-				case Id_unescape:
-					name = "unescape";
-					break;
-				case Id_uneval:
-					name = "uneval";
-					break;
-				default:
-					throw Kit.codeBug();
+				}
+				case Id_unescape -> name = "unescape";
+				case Id_uneval -> name = "uneval";
+				default -> throw Kit.codeBug();
 			}
 			IdFunctionObject f = new IdFunctionObject(obj, FTAG, id, name, arity, scope);
 			if (sealed) {
@@ -298,16 +273,15 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 		boolean exponentValid = false;
 		for (; i < len; i++) {
 			switch (s.charAt(i)) {
-				case '.':
+				case '.' -> {
 					if (decimal != -1) // Only allow a single decimal point.
 					{
 						break;
 					}
 					decimal = i;
 					continue;
-
-				case 'e':
-				case 'E':
+				}
+				case 'e', 'E' -> {
 					if (exponent != -1) {
 						break;
 					} else if (i == len - 1) {
@@ -315,9 +289,8 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 					}
 					exponent = i;
 					continue;
-
-				case '+':
-				case '-':
+				}
+				case '+', '-' -> {
 					// Only allow '+' or '-' after 'e' or 'E'
 					if (exponent != i - 1) {
 						break;
@@ -326,24 +299,15 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 						break;
 					}
 					continue;
-
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
+				}
+				case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
 					if (exponent != -1) {
 						exponentValid = true;
 					}
 					continue;
-
-				default:
-					break;
+				}
+				default -> {
+				}
 			}
 			break;
 		}
@@ -472,8 +436,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 	}
 
 	static boolean isEvalFunction(Object functionObj) {
-		if (functionObj instanceof IdFunctionObject) {
-			IdFunctionObject function = (IdFunctionObject) functionObj;
+		if (functionObj instanceof IdFunctionObject function) {
 			return function.hasTag(FTAG) && function.methodId() == Id_eval;
 		}
 		return false;

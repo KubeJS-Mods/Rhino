@@ -6,7 +6,10 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 public final class ES6Generator extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = 1645892441041347273L;
 
 	private static final Object GENERATOR_TAG = "Generator";
@@ -67,20 +70,19 @@ public final class ES6Generator extends IdScriptableObject {
 		String s;
 		int arity;
 		switch (id) {
-			case Id_next:
+			case Id_next -> {
 				arity = 1;
 				s = "next";
-				break;
-			case Id_return:
+			}
+			case Id_return -> {
 				arity = 1;
 				s = "return";
-				break;
-			case Id_throw:
+			}
+			case Id_throw -> {
 				arity = 1;
 				s = "throw";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(GENERATOR_TAG, id, s, arity);
 	}
@@ -92,11 +94,10 @@ public final class ES6Generator extends IdScriptableObject {
 		}
 		int id = f.methodId();
 
-		if (!(thisObj instanceof ES6Generator)) {
+		if (!(thisObj instanceof ES6Generator generator)) {
 			throw incompatibleCallError(f);
 		}
 
-		ES6Generator generator = (ES6Generator) thisObj;
 		Object value = args.length >= 1 ? args[0] : Undefined.instance;
 
 		switch (id) {
@@ -230,10 +231,9 @@ public final class ES6Generator extends IdScriptableObject {
 		try {
 			Object r = function.resumeGenerator(cx, scope, GeneratorState.GENERATOR_SEND, savedState, value);
 
-			if (r instanceof YieldStarResult) {
+			if (r instanceof YieldStarResult ysResult) {
 				// This special result tells us that we are executing a "yield *"
 				state = State.SUSPENDED_YIELD;
-				YieldStarResult ysResult = (YieldStarResult) r;
 				try {
 					delegee = ScriptRuntime.callIterator(ysResult.getResult(), cx, scope);
 				} catch (RhinoException re) {

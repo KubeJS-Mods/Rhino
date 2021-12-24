@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 /**
  * The JavaScript Script object.
  * <p>
@@ -21,6 +23,7 @@ package dev.latvian.mods.rhino;
  */
 
 class NativeScript extends BaseFunction {
+	@Serial
 	private static final long serialVersionUID = -6795101161980121700L;
 
 	private static final Object SCRIPT_TAG = "Script";
@@ -70,24 +73,23 @@ class NativeScript extends BaseFunction {
 		String s;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 1;
 				s = "constructor";
-				break;
-			case Id_toString:
+			}
+			case Id_toString -> {
 				arity = 0;
 				s = "toString";
-				break;
-			case Id_exec:
+			}
+			case Id_exec -> {
 				arity = 0;
 				s = "exec";
-				break;
-			case Id_compile:
+			}
+			case Id_compile -> {
 				arity = 1;
 				s = "compile";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(SCRIPT_TAG, id, s, arity);
 	}
@@ -99,23 +101,20 @@ class NativeScript extends BaseFunction {
 		}
 		int id = f.methodId();
 		switch (id) {
-			case Id_constructor: {
+			case Id_constructor -> {
 				String source = (args.length == 0) ? "" : ScriptRuntime.toString(args[0]);
 				Script script = compile(cx, source);
 				NativeScript nscript = new NativeScript(script);
 				ScriptRuntime.setObjectProtoAndParent(nscript, scope);
 				return nscript;
 			}
-
-			case Id_toString: {
+			case Id_toString -> {
 				return "not_supported";
 			}
-
-			case Id_exec: {
+			case Id_exec -> {
 				throw Context.reportRuntimeError1("msg.cant.call.indirect", "exec");
 			}
-
-			case Id_compile: {
+			case Id_compile -> {
 				NativeScript real = realThis(thisObj, f);
 				String source = ScriptRuntime.toString(args, 0);
 				real.script = compile(cx, source);
@@ -156,22 +155,22 @@ class NativeScript extends BaseFunction {
 			String X = null;
 			L:
 			switch (s.length()) {
-				case 4:
+				case 4 -> {
 					X = "exec";
 					id = Id_exec;
-					break L;
-				case 7:
+				}
+				case 7 -> {
 					X = "compile";
 					id = Id_compile;
-					break L;
-				case 8:
+				}
+				case 8 -> {
 					X = "toString";
 					id = Id_toString;
-					break L;
-				case 11:
+				}
+				case 11 -> {
 					X = "constructor";
 					id = Id_constructor;
-					break L;
+				}
 			}
 			if (X != null && X != s && !X.equals(s)) {
 				id = 0;

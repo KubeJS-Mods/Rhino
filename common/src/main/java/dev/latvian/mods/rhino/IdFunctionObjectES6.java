@@ -1,7 +1,10 @@
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 public class IdFunctionObjectES6 extends IdFunctionObject {
 
+	@Serial
 	private static final long serialVersionUID = -8023088662589035261L;
 
 	public IdFunctionObjectES6(IdFunctionCall idcall, Object tag, int id, String name, int arity, Scriptable scope) {

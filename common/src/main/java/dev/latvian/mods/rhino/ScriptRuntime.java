@@ -11,6 +11,7 @@ import dev.latvian.mods.rhino.util.SpecialEquality;
 import dev.latvian.mods.rhino.v8dtoa.DoubleConversion;
 import dev.latvian.mods.rhino.v8dtoa.FastDtoa;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.Arrays;
@@ -38,6 +39,7 @@ public class ScriptRuntime {
 	public static BaseFunction typeErrorThrower(Context cx) {
 		if (cx.typeErrorThrower == null) {
 			BaseFunction thrower = new BaseFunction() {
+				@Serial
 				private static final long serialVersionUID = -5891740962154902286L;
 
 				@Override
@@ -240,21 +242,19 @@ public class ScriptRuntime {
 	 * <BOM>
 	 */
 	static boolean isStrWhiteSpaceChar(int c) {
-		switch (c) {
-			case ' ': // <SP>
-			case '\n': // <LF>
-			case '\r': // <CR>
-			case '\t': // <TAB>
-			case '\u00A0': // <NBSP>
-			case '\u000C': // <FF>
-			case '\u000B': // <VT>
-			case '\u2028': // <LS>
-			case '\u2029': // <PS>
-			case '\uFEFF': // <BOM>
-				return true;
-			default:
-				return Character.getType(c) == Character.SPACE_SEPARATOR;
-		}
+		return switch (c) { // <SP>
+			// <LF>
+			// <CR>
+			// <TAB>
+			// <NBSP>
+			// <FF>
+			// <VT>
+			// <LS>
+			// <PS>
+			case ' ', '\n', '\r', '\t', '\u00A0', '\u000C', '\u000B', '\u2028', '\u2029', '\uFEFF' -> // <BOM>
+					true;
+			default -> Character.getType(c) == Character.SPACE_SEPARATOR;
+		};
 	}
 
 	public static Boolean wrapBoolean(boolean b) {
@@ -667,33 +667,17 @@ public class ScriptRuntime {
 				sb.setLength(i);
 			}
 
-			int escape = -1;
-			switch (c) {
-				case '\b':
-					escape = 'b';
-					break;
-				case '\f':
-					escape = 'f';
-					break;
-				case '\n':
-					escape = 'n';
-					break;
-				case '\r':
-					escape = 'r';
-					break;
-				case '\t':
-					escape = 't';
-					break;
-				case 0xb:
-					escape = 'v';
-					break; // Java lacks \v.
-				case ' ':
-					escape = ' ';
-					break;
-				case '\\':
-					escape = '\\';
-					break;
-			}
+			int escape = switch (c) {
+				case '\b' -> 'b';
+				case '\f' -> 'f';
+				case '\n' -> 'n';
+				case '\r' -> 'r';
+				case '\t' -> 't';
+				case 0xb -> 'v'; // Java lacks \v.
+				case ' ' -> ' ';
+				case '\\' -> '\\';
+				default -> -1;
+			};
 			if (escape >= 0) {
 				// an \escaped sort of character
 				sb.append('\\');
@@ -856,14 +840,12 @@ public class ScriptRuntime {
 		if (value instanceof Boolean) {
 			return toString(value);
 		}
-		if (value instanceof Scriptable) {
-			Scriptable obj = (Scriptable) value;
+		if (value instanceof Scriptable obj) {
 			// Wrapped Java objects won't have "toSource" and will report
 			// errors for get()s of nonexistent name, so use has() first
 			if (ScriptableObject.hasProperty(obj, "toSource")) {
 				Object v = ScriptableObject.getProperty(obj, "toSource");
-				if (v instanceof Function) {
-					Function f = (Function) v;
+				if (v instanceof Function f) {
 					return toString(f.call(cx, scope, obj, emptyArgs));
 				}
 			}
@@ -1677,6 +1659,7 @@ public class ScriptRuntime {
 	 * to see if a given property has already been enumerated.
 	 */
 	private static class IdEnumeration implements Serializable {
+		@Serial
 		private static final long serialVersionUID = 1L;
 		Scriptable obj;
 		Object[] ids;
@@ -1695,10 +1678,9 @@ public class ScriptRuntime {
 	public static Scriptable toIterator(Context cx, Scriptable scope, Scriptable obj, boolean keyOnly) {
 		if (ScriptableObject.hasProperty(obj, NativeIterator.ITERATOR_PROPERTY_NAME)) {
 			Object v = ScriptableObject.getProperty(obj, NativeIterator.ITERATOR_PROPERTY_NAME);
-			if (!(v instanceof Callable)) {
+			if (!(v instanceof Callable f)) {
 				throw typeError0("msg.invalid.iterator");
 			}
-			Callable f = (Callable) v;
 			Object[] args = new Object[]{keyOnly ? Boolean.TRUE : Boolean.FALSE};
 			v = f.call(cx, scope, obj, args);
 			if (!(v instanceof Scriptable)) {
@@ -1751,10 +1733,9 @@ public class ScriptRuntime {
 		}
 
 		Object iterator = ScriptableObject.getProperty(x.obj, SymbolKey.ITERATOR);
-		if (!(iterator instanceof Callable)) {
+		if (!(iterator instanceof Callable f)) {
 			throw typeError1("msg.not.iterable", toString(x.obj));
 		}
-		Callable f = (Callable) iterator;
 		Scriptable scope = x.obj.getParentScope();
 		Object[] args = new Object[]{};
 		Object v = f.call(cx, scope, x.obj, args);
@@ -1776,10 +1757,9 @@ public class ScriptRuntime {
 				return enumNextInOrder(x);
 			}
 			Object v = ScriptableObject.getProperty(x.iterator, "next");
-			if (!(v instanceof Callable)) {
+			if (!(v instanceof Callable f)) {
 				return Boolean.FALSE;
 			}
-			Callable f = (Callable) v;
 			Context cx = Context.getContext();
 			try {
 				x.currentId = f.call(cx, x.iterator.getParentScope(), x.iterator, emptyArgs);
@@ -1806,8 +1786,7 @@ public class ScriptRuntime {
 			}
 			if (id instanceof Symbol) {
 				continue;
-			} else if (id instanceof String) {
-				String strId = (String) id;
+			} else if (id instanceof String strId) {
 				if (!x.obj.has(strId, x.obj)) {
 					continue;   // must have been deleted
 				}
@@ -1825,10 +1804,9 @@ public class ScriptRuntime {
 
 	private static Boolean enumNextInOrder(IdEnumeration enumObj) {
 		Object v = ScriptableObject.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
-		if (!(v instanceof Callable)) {
+		if (!(v instanceof Callable f)) {
 			throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
 		}
-		Callable f = (Callable) v;
 		Context cx = Context.getContext();
 		Scriptable scope = enumObj.iterator.getParentScope();
 		Object r = f.call(cx, scope, enumObj.iterator, emptyArgs);
@@ -2013,11 +1991,10 @@ public class ScriptRuntime {
 	 * after calling this method.
 	 */
 	public static Callable getValueFunctionAndThis(Object value, Context cx) {
-		if (!(value instanceof Callable)) {
+		if (!(value instanceof Callable f)) {
 			throw notFunctionError(value);
 		}
 
-		Callable f = (Callable) value;
 		Scriptable thisObj = null;
 		if (f instanceof Scriptable) {
 			thisObj = ((Scriptable) f).getParentScope();
@@ -2074,8 +2051,7 @@ public class ScriptRuntime {
 	 * store args.clone(), not args array itself.
 	 */
 	public static Ref callRef(Callable function, Scriptable thisObj, Object[] args, Context cx) {
-		if (function instanceof RefCallable) {
-			RefCallable rfunction = (RefCallable) function;
+		if (function instanceof RefCallable rfunction) {
 			Ref ref = rfunction.refCall(cx, thisObj, args);
 			if (ref == null) {
 				throw new IllegalStateException(rfunction.getClass().getName() + ".refCall() returned null");
@@ -2093,10 +2069,9 @@ public class ScriptRuntime {
 	 * See ECMA 11.2.2
 	 */
 	public static Scriptable newObject(Object fun, Context cx, Scriptable scope, Object[] args) {
-		if (!(fun instanceof Function)) {
+		if (!(fun instanceof Function function)) {
 			throw notFunctionError(fun);
 		}
-		Function function = (Function) fun;
 		return function.construct(cx, scope, args);
 	}
 
@@ -2470,10 +2445,9 @@ public class ScriptRuntime {
 	}
 
 	public static Object toPrimitive(Object val, Class<?> typeHint) {
-		if (!(val instanceof Scriptable)) {
+		if (!(val instanceof Scriptable s)) {
 			return val;
 		}
-		Scriptable s = (Scriptable) val;
 		Object result = s.getDefaultValue(typeHint);
 		if ((result instanceof Scriptable) && !isSymbol(result)) {
 			throw typeError0("msg.bad.default.value");
@@ -2652,8 +2626,7 @@ public class ScriptRuntime {
 	private static boolean eqString(CharSequence x, Object y) {
 		if (y == null || y == Undefined.instance) {
 			return false;
-		} else if (y instanceof CharSequence) {
-			CharSequence c = (CharSequence) y;
+		} else if (y instanceof CharSequence c) {
 			return x.length() == c.length() && x.toString().equals(c.toString());
 		} else if (y instanceof Number) {
 			return toNumber(x.toString()) == ((Number) y).doubleValue();
@@ -3000,20 +2973,17 @@ public class ScriptRuntime {
 			String errorMsg;
 			Throwable javaException = null;
 
-			if (t instanceof EcmaError) {
-				EcmaError ee = (EcmaError) t;
+			if (t instanceof EcmaError ee) {
 				re = ee;
 				type = TopLevel.NativeErrors.valueOf(ee.getName());
 				errorMsg = ee.getErrorMessage();
-			} else if (t instanceof WrappedException) {
-				WrappedException we = (WrappedException) t;
+			} else if (t instanceof WrappedException we) {
 				re = we;
 				javaException = we.getWrappedException();
 				type = TopLevel.NativeErrors.JavaException;
 				errorMsg = javaException.getClass().getName() + ": " + javaException.getMessage();
-			} else if (t instanceof EvaluatorException) {
+			} else if (t instanceof EvaluatorException ee) {
 				// Pure evaluator exception, nor WrappedException instance
-				EvaluatorException ee = (EvaluatorException) t;
 				re = ee;
 				type = TopLevel.NativeErrors.InternalError;
 				errorMsg = ee.getMessage();
@@ -3081,20 +3051,17 @@ public class ScriptRuntime {
 		String errorMsg;
 		Throwable javaException = null;
 
-		if (t instanceof EcmaError) {
-			EcmaError ee = (EcmaError) t;
+		if (t instanceof EcmaError ee) {
 			re = ee;
 			errorName = ee.getName();
 			errorMsg = ee.getErrorMessage();
-		} else if (t instanceof WrappedException) {
-			WrappedException we = (WrappedException) t;
+		} else if (t instanceof WrappedException we) {
 			re = we;
 			javaException = we.getWrappedException();
 			errorName = "JavaException";
 			errorMsg = javaException.getClass().getName() + ": " + javaException.getMessage();
-		} else if (t instanceof EvaluatorException) {
+		} else if (t instanceof EvaluatorException ee) {
 			// Pure evaluator exception, nor WrappedException instance
-			EvaluatorException ee = (EvaluatorException) t;
 			re = ee;
 			errorName = "InternalError";
 			errorMsg = ee.getMessage();

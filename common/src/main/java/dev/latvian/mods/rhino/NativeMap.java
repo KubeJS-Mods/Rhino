@@ -6,9 +6,11 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.util.Iterator;
 
 public class NativeMap extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = 1171922614280016891L;
 	private static final Object MAP_TAG = "Map";
 	static final String ITERATOR_TAG = "Map Iterator";
@@ -127,10 +129,9 @@ public class NativeMap extends IdScriptableObject {
 	}
 
 	private Object js_forEach(Context cx, Scriptable scope, Object arg1, Object arg2) {
-		if (!(arg1 instanceof Callable)) {
+		if (!(arg1 instanceof final Callable f)) {
 			throw ScriptRuntime.typeError2("msg.isnt.function", arg1, ScriptRuntime.typeof(arg1));
 		}
-		final Callable f = (Callable) arg1;
 
 		boolean isStrict = cx.isStrictMode();
 		Iterator<Hashtable.Entry> i = entries.iterator();
@@ -218,60 +219,61 @@ public class NativeMap extends IdScriptableObject {
 	@Override
 	protected void initPrototypeId(int id) {
 		switch (id) {
-			case SymbolId_getSize:
+			case SymbolId_getSize -> {
 				initPrototypeMethod(MAP_TAG, id, NativeSet.GETSIZE, "get size", 0);
 				return;
-			case SymbolId_toStringTag:
+			}
+			case SymbolId_toStringTag -> {
 				initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG, getClassName(), DONTENUM | READONLY);
 				return;
+			}
 			// fallthrough
 		}
 
 		String s, fnName = null;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 0;
 				s = "constructor";
-				break;
-			case Id_set:
+			}
+			case Id_set -> {
 				arity = 2;
 				s = "set";
-				break;
-			case Id_get:
+			}
+			case Id_get -> {
 				arity = 1;
 				s = "get";
-				break;
-			case Id_delete:
+			}
+			case Id_delete -> {
 				arity = 1;
 				s = "delete";
-				break;
-			case Id_has:
+			}
+			case Id_has -> {
 				arity = 1;
 				s = "has";
-				break;
-			case Id_clear:
+			}
+			case Id_clear -> {
 				arity = 0;
 				s = "clear";
-				break;
-			case Id_keys:
+			}
+			case Id_keys -> {
 				arity = 0;
 				s = "keys";
-				break;
-			case Id_values:
+			}
+			case Id_values -> {
 				arity = 0;
 				s = "values";
-				break;
-			case Id_entries:
+			}
+			case Id_entries -> {
 				arity = 0;
 				s = "entries";
-				break;
-			case Id_forEach:
+			}
+			case Id_forEach -> {
 				arity = 1;
 				s = "forEach";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(MAP_TAG, id, s, fnName, arity);
 	}
@@ -306,7 +308,7 @@ public class NativeMap extends IdScriptableObject {
 			int c;
 			L:
 			switch (s.length()) {
-				case 3:
+				case 3 -> {
 					c = s.charAt(0);
 					if (c == 'g') {
 						if (s.charAt(2) == 't' && s.charAt(1) == 'e') {
@@ -324,16 +326,16 @@ public class NativeMap extends IdScriptableObject {
 							break L0;
 						}
 					}
-					break L;
-				case 4:
+				}
+				case 4 -> {
 					X = "keys";
 					id = Id_keys;
-					break L;
-				case 5:
+				}
+				case 5 -> {
 					X = "clear";
 					id = Id_clear;
-					break L;
-				case 6:
+				}
+				case 6 -> {
 					c = s.charAt(0);
 					if (c == 'd') {
 						X = "delete";
@@ -342,8 +344,8 @@ public class NativeMap extends IdScriptableObject {
 						X = "values";
 						id = Id_values;
 					}
-					break L;
-				case 7:
+				}
+				case 7 -> {
 					c = s.charAt(0);
 					if (c == 'e') {
 						X = "entries";
@@ -352,11 +354,11 @@ public class NativeMap extends IdScriptableObject {
 						X = "forEach";
 						id = Id_forEach;
 					}
-					break L;
-				case 11:
+				}
+				case 11 -> {
 					X = "constructor";
 					id = Id_constructor;
-					break L;
+				}
 			}
 			if (X != null && X != s && !X.equals(s)) {
 				id = 0;

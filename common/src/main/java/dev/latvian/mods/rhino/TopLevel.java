@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.util.EnumMap;
 
 /**
@@ -37,6 +38,7 @@ import java.util.EnumMap;
  */
 public class TopLevel extends IdScriptableObject {
 
+	@Serial
 	private static final long serialVersionUID = -4648046356662472260L;
 
 	/**

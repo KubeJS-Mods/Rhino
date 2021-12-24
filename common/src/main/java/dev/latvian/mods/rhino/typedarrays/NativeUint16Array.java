@@ -11,12 +11,15 @@ import dev.latvian.mods.rhino.IdFunctionObject;
 import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.Undefined;
 
+import java.io.Serial;
+
 /**
  * An array view that stores 16-bit quantities and implements the JavaScript "Uint16Array" interface.
  * It also implements List&lt;Integer&gt; for direct manipulation in Java.
  */
 
 public class NativeUint16Array extends NativeTypedArrayView<Integer> {
+	@Serial
 	private static final long serialVersionUID = 7700018949434240321L;
 
 	private static final String CLASS_NAME = "Uint16Array";

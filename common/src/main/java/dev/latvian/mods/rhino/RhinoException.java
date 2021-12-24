@@ -10,6 +10,7 @@ package dev.latvian.mods.rhino;
 import java.io.CharArrayWriter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -324,6 +325,7 @@ public abstract class RhinoException extends RuntimeException {
 		}
 	}
 
+	@Serial
 	private static final long serialVersionUID = 1883500631321581169L;
 
 	private String sourceName;

@@ -6,9 +6,11 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.util.Objects;
 
 public final class NativeContinuation extends IdScriptableObject implements Function {
+	@Serial
 	private static final long serialVersionUID = 1794167133757605367L;
 
 	private static final Object FTAG = "Continuation";
@@ -64,12 +66,11 @@ public final class NativeContinuation extends IdScriptableObject implements Func
 		String s;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 0;
 				s = "constructor";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(FTAG, id, s, arity);
 	}
@@ -81,8 +82,7 @@ public final class NativeContinuation extends IdScriptableObject implements Func
 		}
 		int id = f.methodId();
 		switch (id) {
-			case Id_constructor:
-				throw Context.reportRuntimeError("Direct call is not supported");
+			case Id_constructor -> throw Context.reportRuntimeError("Direct call is not supported");
 		}
 		throw new IllegalArgumentException(String.valueOf(id));
 	}

@@ -11,6 +11,7 @@ import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.debug.DebugFrame;
 
 import java.io.PrintStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +36,7 @@ public final class Interpreter extends Icode implements Evaluator {
 	 * Class to hold data corresponding to one interpreted call stack frame.
 	 */
 	private static class CallFrame implements Cloneable, Serializable {
+		@Serial
 		private static final long serialVersionUID = -2843792508994958978L;
 
 		// fields marked "final" in a comment are effectively final except when they're modified immediately after cloning.
@@ -285,6 +287,7 @@ public final class Interpreter extends Icode implements Evaluator {
 	}
 
 	private static final class ContinuationJump implements Serializable {
+		@Serial
 		private static final long serialVersionUID = 7687739156004308247L;
 
 		CallFrame capturedFrame;
@@ -473,36 +476,25 @@ public final class Interpreter extends Icode implements Evaluator {
 			int old_pc = pc;
 			++pc;
 			switch (token) {
-				default:
+				default -> {
 					if (icodeLength != 1) {
 						Kit.codeBug();
 					}
 					out.println(tname);
-					break;
-
-				case Icode_GOSUB:
-				case Token.GOTO:
-				case Token.IFEQ:
-				case Token.IFNE:
-				case Icode_IFEQ_POP:
-				case Icode_LEAVEDQ: {
+				}
+				case Icode_GOSUB, Token.GOTO, Token.IFEQ, Token.IFNE, Icode_IFEQ_POP, Icode_LEAVEDQ -> {
 					int newPC = pc + getShort(iCode, pc) - 1;
 					out.println(tname + " " + newPC);
 					pc += 2;
 					break;
 				}
-				case Icode_VAR_INC_DEC:
-				case Icode_NAME_INC_DEC:
-				case Icode_PROP_INC_DEC:
-				case Icode_ELEM_INC_DEC:
-				case Icode_REF_INC_DEC: {
+				case Icode_VAR_INC_DEC, Icode_NAME_INC_DEC, Icode_PROP_INC_DEC, Icode_ELEM_INC_DEC, Icode_REF_INC_DEC -> {
 					int incrDecrType = iCode[pc];
 					out.println(tname + " " + incrDecrType);
 					++pc;
 					break;
 				}
-
-				case Icode_CALLSPECIAL: {
+				case Icode_CALLSPECIAL -> {
 					int callType = iCode[pc] & 0xFF;
 					boolean isNew = (iCode[pc + 1] != 0);
 					int line = getIndex(iCode, pc + 2);
@@ -510,131 +502,109 @@ public final class Interpreter extends Icode implements Evaluator {
 					pc += 4;
 					break;
 				}
-
-				case Token.CATCH_SCOPE: {
+				case Token.CATCH_SCOPE -> {
 					boolean afterFisrtFlag = (iCode[pc] != 0);
 					out.println(tname + " " + afterFisrtFlag);
 					++pc;
 				}
-				break;
-				case Token.REGEXP:
-					out.println(tname + " " + idata.itsRegExpLiterals[indexReg]);
-					break;
-				case Token.OBJECTLIT:
-				case Icode_SPARE_ARRAYLIT:
-					out.println(tname + " " + idata.literalIds[indexReg]);
-					break;
-				case Icode_CLOSURE_EXPR:
-				case Icode_CLOSURE_STMT:
-					out.println(tname + " " + idata.itsNestedFunctions[indexReg]);
-					break;
-				case Token.CALL:
-				case Icode_TAIL_CALL:
-				case Token.REF_CALL:
-				case Token.NEW:
-					out.println(tname + ' ' + indexReg);
-					break;
-				case Token.THROW:
-				case Token.YIELD:
-				case Icode_YIELD_STAR:
-				case Icode_GENERATOR:
-				case Icode_GENERATOR_END:
-				case Icode_GENERATOR_RETURN: {
+				case Token.REGEXP -> out.println(tname + " " + idata.itsRegExpLiterals[indexReg]);
+				case Token.OBJECTLIT, Icode_SPARE_ARRAYLIT -> out.println(tname + " " + idata.literalIds[indexReg]);
+				case Icode_CLOSURE_EXPR, Icode_CLOSURE_STMT -> out.println(tname + " " + idata.itsNestedFunctions[indexReg]);
+				case Token.CALL, Icode_TAIL_CALL, Token.REF_CALL, Token.NEW -> out.println(tname + ' ' + indexReg);
+				case Token.THROW, Token.YIELD, Icode_YIELD_STAR, Icode_GENERATOR, Icode_GENERATOR_END, Icode_GENERATOR_RETURN -> {
 					int line = getIndex(iCode, pc);
 					out.println(tname + " : " + line);
 					pc += 2;
 					break;
 				}
-				case Icode_SHORTNUMBER: {
+				case Icode_SHORTNUMBER -> {
 					int value = getShort(iCode, pc);
 					out.println(tname + " " + value);
 					pc += 2;
 					break;
 				}
-				case Icode_INTNUMBER: {
+				case Icode_INTNUMBER -> {
 					int value = getInt(iCode, pc);
 					out.println(tname + " " + value);
 					pc += 4;
 					break;
 				}
-				case Token.NUMBER: {
+				case Token.NUMBER -> {
 					double value = idata.itsDoubleTable[indexReg];
 					out.println(tname + " " + value);
 					break;
 				}
-				case Icode_LINE: {
+				case Icode_LINE -> {
 					int line = getIndex(iCode, pc);
 					out.println(tname + " : " + line);
 					pc += 2;
 					break;
 				}
-				case Icode_REG_STR1: {
+				case Icode_REG_STR1 -> {
 					String str = strings[0xFF & iCode[pc]];
 					out.println(tname + " \"" + str + '"');
 					++pc;
 					break;
 				}
-				case Icode_REG_STR2: {
+				case Icode_REG_STR2 -> {
 					String str = strings[getIndex(iCode, pc)];
 					out.println(tname + " \"" + str + '"');
 					pc += 2;
 					break;
 				}
-				case Icode_REG_STR4: {
+				case Icode_REG_STR4 -> {
 					String str = strings[getInt(iCode, pc)];
 					out.println(tname + " \"" + str + '"');
 					pc += 4;
 					break;
 				}
-				case Icode_REG_IND_C0:
+				case Icode_REG_IND_C0 -> {
 					indexReg = 0;
 					out.println(tname);
-					break;
-				case Icode_REG_IND_C1:
+				}
+				case Icode_REG_IND_C1 -> {
 					indexReg = 1;
 					out.println(tname);
-					break;
-				case Icode_REG_IND_C2:
+				}
+				case Icode_REG_IND_C2 -> {
 					indexReg = 2;
 					out.println(tname);
-					break;
-				case Icode_REG_IND_C3:
+				}
+				case Icode_REG_IND_C3 -> {
 					indexReg = 3;
 					out.println(tname);
-					break;
-				case Icode_REG_IND_C4:
+				}
+				case Icode_REG_IND_C4 -> {
 					indexReg = 4;
 					out.println(tname);
-					break;
-				case Icode_REG_IND_C5:
+				}
+				case Icode_REG_IND_C5 -> {
 					indexReg = 5;
 					out.println(tname);
-					break;
-				case Icode_REG_IND1: {
+				}
+				case Icode_REG_IND1 -> {
 					indexReg = 0xFF & iCode[pc];
 					out.println(tname + " " + indexReg);
 					++pc;
 					break;
 				}
-				case Icode_REG_IND2: {
+				case Icode_REG_IND2 -> {
 					indexReg = getIndex(iCode, pc);
 					out.println(tname + " " + indexReg);
 					pc += 2;
 					break;
 				}
-				case Icode_REG_IND4: {
+				case Icode_REG_IND4 -> {
 					indexReg = getInt(iCode, pc);
 					out.println(tname + " " + indexReg);
 					pc += 4;
 					break;
 				}
-				case Icode_GETVAR1:
-				case Icode_SETVAR1:
-				case Icode_SETCONSTVAR1:
+				case Icode_GETVAR1, Icode_SETVAR1, Icode_SETCONSTVAR1 -> {
 					indexReg = iCode[pc];
 					out.println(tname + " " + indexReg);
 					++pc;
-					break;
+				}
 			}
 			if (old_pc + icodeLength != pc) {
 				Kit.codeBug();
@@ -1545,8 +1515,7 @@ public final class Interpreter extends Icode implements Evaluator {
 								if (frame.useActivation) {
 									calleeScope = ScriptableObject.getTopLevelScope(frame.scope);
 								}
-								if (fun instanceof InterpretedFunction) {
-									InterpretedFunction ifun = (InterpretedFunction) fun;
+								if (fun instanceof InterpretedFunction ifun) {
 									if (frame.fnOrScript.securityDomain == ifun.securityDomain) {
 										CallFrame callParentFrame = frame;
 										if (op == Icode_TAIL_CALL) {
@@ -1599,8 +1568,7 @@ public final class Interpreter extends Icode implements Evaluator {
 									break withoutExceptions;
 								}
 
-								if (fun instanceof IdFunctionObject) {
-									IdFunctionObject ifun = (IdFunctionObject) fun;
+								if (fun instanceof IdFunctionObject ifun) {
 									if (NativeContinuation.isContinuationConstructor(ifun)) {
 										frame.stack[stackTop] = captureContinuation(cx, frame.parentFrame, false);
 										continue Loop;
@@ -1609,8 +1577,7 @@ public final class Interpreter extends Icode implements Evaluator {
 									// Function.call within this interpreter loop invocation
 									if (BaseFunction.isApplyOrCall(ifun)) {
 										Callable applyCallable = ScriptRuntime.getCallable(funThisObj);
-										if (applyCallable instanceof InterpretedFunction) {
-											InterpretedFunction iApplyCallable = (InterpretedFunction) applyCallable;
+										if (applyCallable instanceof InterpretedFunction iApplyCallable) {
 											if (frame.fnOrScript.securityDomain == iApplyCallable.securityDomain) {
 												frame = initFrameForApplyOrCall(cx, frame, indexReg, stack, sDbl, stackTop, op, calleeScope, ifun, iApplyCallable);
 												continue StateLoop;
@@ -1621,13 +1588,11 @@ public final class Interpreter extends Icode implements Evaluator {
 
 								// Bug 447697 -- make best effort to keep __noSuchMethod__ within this
 								// interpreter loop invocation
-								if (fun instanceof ScriptRuntime.NoSuchMethodShim) {
+								if (fun instanceof ScriptRuntime.NoSuchMethodShim noSuchMethodShim) {
 									// get the shim and the actual method
-									ScriptRuntime.NoSuchMethodShim noSuchMethodShim = (ScriptRuntime.NoSuchMethodShim) fun;
 									Callable noSuchMethodMethod = noSuchMethodShim.noSuchMethodMethod;
 									// if the method is in fact an InterpretedFunction
-									if (noSuchMethodMethod instanceof InterpretedFunction) {
-										InterpretedFunction ifun = (InterpretedFunction) noSuchMethodMethod;
+									if (noSuchMethodMethod instanceof InterpretedFunction ifun) {
 										if (frame.fnOrScript.securityDomain == ifun.securityDomain) {
 											frame = initFrameForNoSuchMethod(cx, frame, indexReg, stack, sDbl, stackTop, op, funThisObj, calleeScope, noSuchMethodShim, ifun);
 											continue StateLoop;
@@ -1651,8 +1616,7 @@ public final class Interpreter extends Icode implements Evaluator {
 								stackTop -= indexReg;
 
 								Object lhs = stack[stackTop];
-								if (lhs instanceof InterpretedFunction) {
-									InterpretedFunction f = (InterpretedFunction) lhs;
+								if (lhs instanceof InterpretedFunction f) {
 									if (frame.fnOrScript.securityDomain == f.securityDomain) {
 										Scriptable newInstance = f.createObject(cx, frame.scope);
 										CallFrame calleeFrame = initFrame(cx, frame.scope, newInstance, stack, sDbl, stackTop + 1, indexReg, f, frame);
@@ -1664,16 +1628,14 @@ public final class Interpreter extends Icode implements Evaluator {
 										continue StateLoop;
 									}
 								}
-								if (!(lhs instanceof Function)) {
+								if (!(lhs instanceof Function fun)) {
 									if (lhs == DBL_MRK) {
 										lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 									}
 									throw ScriptRuntime.notFunctionError(lhs);
 								}
-								Function fun = (Function) lhs;
 
-								if (fun instanceof IdFunctionObject) {
-									IdFunctionObject ifun = (IdFunctionObject) fun;
+								if (fun instanceof IdFunctionObject ifun) {
 									if (NativeContinuation.isContinuationConstructor(ifun)) {
 										frame.stack[stackTop] = captureContinuation(cx, frame.parentFrame, false);
 										continue Loop;
@@ -2109,9 +2071,8 @@ public final class Interpreter extends Icode implements Evaluator {
 					exState = EX_NO_JS_STATE;
 				}
 			}
-			if (frame.debuggerFrame != null && throwable instanceof RuntimeException) {
+			if (frame.debuggerFrame != null && throwable instanceof RuntimeException rex) {
 				// Call debugger only for RuntimeException
-				RuntimeException rex = (RuntimeException) throwable;
 				try {
 					frame.debuggerFrame.onExceptionThrown(cx, rex);
 				} catch (Throwable ex) {
@@ -2249,22 +2210,13 @@ public final class Interpreter extends Icode implements Evaluator {
 						throw Kit.codeBug();
 				}
 			}
-			switch (op) {
-				case Token.GE:
-					valBln = ScriptRuntime.cmp_LE(rhs, lhs);
-					break;
-				case Token.LE:
-					valBln = ScriptRuntime.cmp_LE(lhs, rhs);
-					break;
-				case Token.GT:
-					valBln = ScriptRuntime.cmp_LT(rhs, lhs);
-					break;
-				case Token.LT:
-					valBln = ScriptRuntime.cmp_LT(lhs, rhs);
-					break;
-				default:
-					throw Kit.codeBug();
-			}
+			valBln = switch (op) {
+				case Token.GE -> ScriptRuntime.cmp_LE(rhs, lhs);
+				case Token.LE -> ScriptRuntime.cmp_LE(lhs, rhs);
+				case Token.GT -> ScriptRuntime.cmp_LT(rhs, lhs);
+				case Token.LT -> ScriptRuntime.cmp_LT(lhs, rhs);
+				default -> throw Kit.codeBug();
+			};
 		}
 		stack[stackTop] = ScriptRuntime.wrapBoolean(valBln);
 		return stackTop;
@@ -2275,21 +2227,11 @@ public final class Interpreter extends Icode implements Evaluator {
 		int rIntValue = stack_int32(frame, stackTop);
 		stack[--stackTop] = UniqueTag.DOUBLE_MARK;
 		switch (op) {
-			case Token.BITAND:
-				lIntValue &= rIntValue;
-				break;
-			case Token.BITOR:
-				lIntValue |= rIntValue;
-				break;
-			case Token.BITXOR:
-				lIntValue ^= rIntValue;
-				break;
-			case Token.LSH:
-				lIntValue <<= rIntValue;
-				break;
-			case Token.RSH:
-				lIntValue >>= rIntValue;
-				break;
+			case Token.BITAND -> lIntValue &= rIntValue;
+			case Token.BITOR -> lIntValue |= rIntValue;
+			case Token.BITXOR -> lIntValue ^= rIntValue;
+			case Token.LSH -> lIntValue <<= rIntValue;
+			case Token.RSH -> lIntValue >>= rIntValue;
 		}
 		sDbl[stackTop] = lIntValue;
 		return stackTop;
@@ -2411,8 +2353,7 @@ public final class Interpreter extends Icode implements Evaluator {
 				val = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 			}
 			String stringReg = frame.idata.argNames[indexReg];
-			if (frame.scope instanceof ConstProperties) {
-				ConstProperties cp = (ConstProperties) frame.scope;
+			if (frame.scope instanceof ConstProperties cp) {
 				cp.putConst(stringReg, frame.scope, val);
 			} else {
 				throw Kit.codeBug();
@@ -3001,18 +2942,10 @@ public final class Interpreter extends Icode implements Evaluator {
 		double lDbl = stack_double(frame, stackTop);
 		stack[stackTop] = UniqueTag.DOUBLE_MARK;
 		switch (op) {
-			case Token.SUB:
-				lDbl -= rDbl;
-				break;
-			case Token.MUL:
-				lDbl *= rDbl;
-				break;
-			case Token.DIV:
-				lDbl /= rDbl;
-				break;
-			case Token.MOD:
-				lDbl %= rDbl;
-				break;
+			case Token.SUB -> lDbl -= rDbl;
+			case Token.MUL -> lDbl *= rDbl;
+			case Token.DIV -> lDbl /= rDbl;
+			case Token.MOD -> lDbl %= rDbl;
 		}
 		sDbl[stackTop] = lDbl;
 		return stackTop;
