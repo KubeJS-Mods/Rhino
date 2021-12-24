@@ -14,7 +14,7 @@ public class RhinoTest {
 		// context.setClassShutter((fullClassName, type) -> type != ClassShutter.TYPE_CLASS_IN_PACKAGE || isClassAllowed(fullClassName));
 
 		RhinoTest test = new RhinoTest(context);
-		test.add("console", new TestConsole());
+		test.add("console", TestConsole.class);
 
 		test.load("/rhinotest/test.js");
 	}

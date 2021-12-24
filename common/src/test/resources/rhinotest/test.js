@@ -1,1 +1,5 @@
-console.info('Hello')
+let testScript = (text) => {
+	console.info(text)
+}
+
+testScript('Hello')

@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.debug.DebuggableScript;
-
 import java.io.Serial;
 
 /**
@@ -43,10 +41,6 @@ public abstract class NativeFunction extends BaseFunction {
 	 * Get encoded source string.
 	 */
 	public String getEncodedSource() {
-		return null;
-	}
-
-	public DebuggableScript getDebuggableView() {
 		return null;
 	}
 

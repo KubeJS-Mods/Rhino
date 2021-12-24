@@ -13,7 +13,6 @@ import dev.latvian.mods.rhino.annotations.JSFunction;
 import dev.latvian.mods.rhino.annotations.JSGetter;
 import dev.latvian.mods.rhino.annotations.JSSetter;
 import dev.latvian.mods.rhino.annotations.JSStaticFunction;
-import dev.latvian.mods.rhino.debug.DebuggableObject;
 import dev.latvian.mods.rhino.util.Deletable;
 
 import java.io.IOException;
@@ -48,7 +47,7 @@ import java.util.Map;
  * @see Scriptable
  */
 
-public abstract class ScriptableObject implements Scriptable, SymbolScriptable, Serializable, DebuggableObject, ConstProperties {
+public abstract class ScriptableObject implements Scriptable, SymbolScriptable, Serializable, ConstProperties {
 
 	@Serial
 	private static final long serialVersionUID = 2829861078851942586L;

@@ -278,6 +278,10 @@ public interface Scriptable {
 	 */
 	Object[] getIds();
 
+	default Object[] getAllIds() {
+		return getIds();
+	}
+
 	/**
 	 * Get the default value of the object with a given hint.
 	 * The hints are String.class for type String, Number.class for type

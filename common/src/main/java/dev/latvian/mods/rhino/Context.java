@@ -11,8 +11,6 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.ast.AstRoot;
 import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter.ClassFileFormatException;
-import dev.latvian.mods.rhino.debug.DebuggableScript;
-import dev.latvian.mods.rhino.debug.Debugger;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 
 import java.beans.PropertyChangeEvent;
@@ -1682,52 +1680,6 @@ public class Context {
 	}
 
 	/**
-	 * Return the current debugger.
-	 *
-	 * @return the debugger, or null if none is attached.
-	 */
-	public final Debugger getDebugger() {
-		return debugger;
-	}
-
-	/**
-	 * Return the debugger context data associated with current context.
-	 *
-	 * @return the debugger data, or null if debugger is not attached
-	 */
-	public final Object getDebuggerContextData() {
-		return debuggerData;
-	}
-
-	/**
-	 * Set the associated debugger.
-	 *
-	 * @param debugger    the debugger to be used on callbacks from
-	 *                    the engine.
-	 * @param contextData arbitrary object that debugger can use to store
-	 *                    per Context data.
-	 */
-	public final void setDebugger(Debugger debugger, Object contextData) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		this.debugger = debugger;
-		debuggerData = contextData;
-	}
-
-	/**
-	 * Return DebuggableScript instance if any associated with the script.
-	 * If callable supports DebuggableScript implementation, the method
-	 * returns it. Otherwise null is returned.
-	 */
-	public static DebuggableScript getDebuggableView(Script script) {
-		if (script instanceof NativeFunction) {
-			return ((NativeFunction) script).getDebuggableView();
-		}
-		return null;
-	}
-
-	/**
 	 * Controls certain aspects of script semantics.
 	 * Should be overwritten to alter default behavior.
 	 * <p>
@@ -1938,17 +1890,6 @@ public class Context {
 			bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
 		}
 
-		if (debugger != null) {
-			if (sourceString == null) {
-				Kit.codeBug();
-			}
-			if (bytecode instanceof DebuggableScript dscript) {
-				notifyDebugger_r(this, dscript, sourceString);
-			} else {
-				throw new RuntimeException("NOT SUPPORTED");
-			}
-		}
-
 		Object result;
 		if (returnFunction) {
 			result = compiler.createFunctionObject(this, scope, bytecode, securityDomain);
@@ -1982,13 +1923,6 @@ public class Context {
 		IRFactory irf = new IRFactory(compilerEnv, compilationErrorReporter);
 		ScriptNode tree = irf.transformTree(ast);
 		return tree;
-	}
-
-	private static void notifyDebugger_r(Context cx, DebuggableScript dscript, String debugSource) {
-		cx.debugger.handleCompilationDone(cx, dscript, debugSource);
-		for (int i = 0; i != dscript.getFunctionCount(); ++i) {
-			notifyDebugger_r(cx, dscript.getFunction(i), debugSource);
-		}
 	}
 
 	private Evaluator createCompiler() {
@@ -2138,7 +2072,6 @@ public class Context {
 	boolean useDynamicScope;
 	private int maximumInterpreterStackDepth;
 	private WrapFactory wrapFactory;
-	Debugger debugger;
 	private Object debuggerData;
 	private int enterCount;
 	private Object propertyListeners;

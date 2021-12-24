@@ -1122,12 +1122,6 @@ public class Parser {
 				pn = returnOrYield(tt, false);
 				break;
 
-			case Token.DEBUGGER:
-				consumeToken();
-				pn = new KeywordLiteral(ts.tokenBeg, ts.tokenEnd - ts.tokenBeg, tt);
-				pn.setLineno(ts.lineno);
-				break;
-
 			case Token.LC:
 				return block();
 

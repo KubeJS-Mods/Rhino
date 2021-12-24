@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.debug.DebuggableScript;
-
 import java.io.Serial;
 
 final class InterpretedFunction extends NativeFunction implements Script {
@@ -121,11 +119,6 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	}
 
 	@Override
-	public DebuggableScript getDebuggableView() {
-		return idata;
-	}
-
-	@Override
 	public Object resumeGenerator(Context cx, Scriptable scope, int operation, Object state, Object value) {
 		return Interpreter.resumeGenerator(cx, scope, operation, state, value);
 	}
@@ -152,7 +145,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 
 	boolean hasFunctionNamed(String name) {
 		for (int f = 0; f < idata.getFunctionCount(); f++) {
-			InterpreterData functionData = (InterpreterData) idata.getFunction(f);
+			InterpreterData functionData = idata.getFunction(f);
 			if (!functionData.declaredAsFunctionExpression && name.equals(functionData.getFunctionName())) {
 				return false;
 			}

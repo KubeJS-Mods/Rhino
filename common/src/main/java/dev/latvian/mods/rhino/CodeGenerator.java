@@ -330,10 +330,6 @@ class CodeGenerator extends Icode {
 			}
 			break;
 
-			case Token.DEBUGGER:
-				addIcode(Icode_DEBUGGER);
-				break;
-
 			case Token.SWITCH:
 				updateLineNumber(node);
 				// See comments in IRFactory.createSwitch() for description

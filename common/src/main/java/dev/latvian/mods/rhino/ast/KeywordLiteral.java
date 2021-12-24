@@ -15,8 +15,7 @@ import dev.latvian.mods.rhino.Token;
  * {@link Token#THIS},
  * {@link Token#NULL},
  * {@link Token#TRUE},
- * {@link Token#FALSE}, or
- * {@link Token#DEBUGGER}.
+ * {@link Token#FALSE}.
  */
 public class KeywordLiteral extends AstNode {
 
@@ -48,7 +47,7 @@ public class KeywordLiteral extends AstNode {
 	 */
 	@Override
 	public KeywordLiteral setType(int nodeType) {
-		if (!(nodeType == Token.THIS || nodeType == Token.NULL || nodeType == Token.TRUE || nodeType == Token.FALSE || nodeType == Token.DEBUGGER)) {
+		if (!(nodeType == Token.THIS || nodeType == Token.NULL || nodeType == Token.TRUE || nodeType == Token.FALSE)) {
 			throw new IllegalArgumentException("Invalid node type: " + nodeType);
 		}
 		type = nodeType;

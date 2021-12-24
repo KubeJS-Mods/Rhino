@@ -3583,12 +3583,6 @@ public class ScriptRuntime {
 		return masterScriptUrl + '#' + masterScriptLine + "(Function)";
 	}
 
-	static boolean isGeneratedScript(String sourceUrl) {
-		// ALERT: this may clash with a valid URL containing (eval) or
-		// (Function)
-		return sourceUrl.contains("(eval)") || sourceUrl.contains("(Function)");
-	}
-
 	/**
 	 * Not all "NativeSymbol" instances are actually symbols. So account for that here rather than just
 	 * by using an "instanceof" check.
