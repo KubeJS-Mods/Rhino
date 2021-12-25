@@ -17,8 +17,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -470,23 +468,8 @@ public final class JavaAdapter implements IdFunctionCall {
 	}
 
 	static Class<?> loadAdapterClass(String className, byte[] classBytes) {
-		Object staticDomain;
-		Class<?> domainClass = SecurityController.getStaticSecurityDomainClass();
-		if (domainClass == CodeSource.class || domainClass == ProtectionDomain.class) {
-			// use the calling script's security domain if available
-			ProtectionDomain protectionDomain = SecurityUtilities.getScriptProtectionDomain();
-			if (protectionDomain == null) {
-				protectionDomain = JavaAdapter.class.getProtectionDomain();
-			}
-			if (domainClass == CodeSource.class) {
-				staticDomain = protectionDomain == null ? null : protectionDomain.getCodeSource();
-			} else {
-				staticDomain = protectionDomain;
-			}
-		} else {
-			staticDomain = null;
-		}
-		GeneratedClassLoader loader = SecurityController.createLoader(null, staticDomain);
+		Context cx = Context.getContext();
+		GeneratedClassLoader loader = cx.createClassLoader(cx.getApplicationClassLoader());
 		Class<?> result = loader.defineClass(className, classBytes);
 		loader.linkClass(result);
 		return result;

@@ -571,7 +571,7 @@ class CodeGenerator extends Icode {
 					// Only use the tail call optimization if we're not in a try
 					// or we're not generating debug info (since the
 					// optimization will confuse the debugger)
-					if (type == Token.CALL && (contextFlags & ECF_TAIL) != 0 && !compilerEnv.isGenerateDebugInfo() && !itsInTryFlag) {
+					if (type == Token.CALL && (contextFlags & ECF_TAIL) != 0 && !itsInTryFlag) {
 						type = Icode_TAIL_CALL;
 					}
 					addIndexOp(type, argCount);

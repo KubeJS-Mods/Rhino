@@ -76,7 +76,7 @@ public abstract class VMBridge {
 	 * @return true if it was possible to make method accessible
 	 * or false otherwise.
 	 */
-	protected abstract boolean tryToMakeAccessible(AccessibleObject accessible);
+	protected abstract boolean tryToMakeAccessible(Object target, AccessibleObject accessible);
 
 	/**
 	 * Create helper object to create later proxies implementing the specified

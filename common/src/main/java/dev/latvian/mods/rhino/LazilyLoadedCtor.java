@@ -9,8 +9,6 @@ package dev.latvian.mods.rhino;
 import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 /**
  * Avoid loading classes unless they are used.
@@ -76,9 +74,9 @@ public final class LazilyLoadedCtor implements Serializable {
 	}
 
 	private Object buildValue() {
-		if (privileged) {
-			return AccessController.doPrivileged((PrivilegedAction<Object>) () -> buildValue0());
-		}
+		//if (privileged) {
+		//	return AccessController.doPrivileged((PrivilegedAction<Object>) () -> buildValue0());
+		//}
 		return buildValue0();
 	}
 
@@ -101,10 +99,7 @@ public final class LazilyLoadedCtor implements Serializable {
 				if (target instanceof RuntimeException) {
 					throw (RuntimeException) target;
 				}
-			} catch (RhinoException ex) {
-			} catch (InstantiationException ex) {
-			} catch (IllegalAccessException ex) {
-			} catch (SecurityException ex) {
+			} catch (RhinoException | InstantiationException | IllegalAccessException | SecurityException ex) {
 			}
 		}
 		return Scriptable.NOT_FOUND;

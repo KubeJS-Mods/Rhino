@@ -738,7 +738,7 @@ public final class Interpreter extends Icode implements Evaluator {
 	public String getPatchedStack(RhinoException ex, String nativeStackTrace) {
 		String tag = "dev.latvian.mods.rhino.Interpreter.interpretLoop";
 		StringBuilder sb = new StringBuilder(nativeStackTrace.length() + 1000);
-		String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
+		String lineSeparator = System.lineSeparator();
 
 		CallFrame[] array = (CallFrame[]) ex.interpreterStackInfo;
 		int[] linePC = ex.interpreterLineData;
@@ -798,7 +798,7 @@ public final class Interpreter extends Icode implements Evaluator {
 	public List<String> getScriptStack(RhinoException ex) {
 		ScriptStackElement[][] stack = getScriptStackElements(ex);
 		List<String> list = new ArrayList<>(stack.length);
-		String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
+		String lineSeparator = System.lineSeparator();
 		for (ScriptStackElement[] group : stack) {
 			StringBuilder sb = new StringBuilder();
 			for (ScriptStackElement elem : group) {
@@ -865,16 +865,6 @@ public final class Interpreter extends Icode implements Evaluator {
 	static Object interpret(InterpretedFunction ifun, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!ScriptRuntime.hasTopCall(cx)) {
 			Kit.codeBug();
-		}
-
-		if (cx.interpreterSecurityDomain != ifun.securityDomain) {
-			Object savedDomain = cx.interpreterSecurityDomain;
-			cx.interpreterSecurityDomain = ifun.securityDomain;
-			try {
-				return ifun.securityController.callWithDomain(ifun.securityDomain, cx, ifun, scope, thisObj, args);
-			} finally {
-				cx.interpreterSecurityDomain = savedDomain;
-			}
 		}
 
 		CallFrame frame = initFrame(cx, scope, thisObj, args, null, 0, args.length, ifun, null);
@@ -1451,37 +1441,35 @@ public final class Interpreter extends Icode implements Evaluator {
 									calleeScope = ScriptableObject.getTopLevelScope(frame.scope);
 								}
 								if (fun instanceof InterpretedFunction ifun) {
-									if (frame.fnOrScript.securityDomain == ifun.securityDomain) {
-										CallFrame callParentFrame = frame;
-										if (op == Icode_TAIL_CALL) {
-											// In principle tail call can re-use the current
-											// frame and its stack arrays but it is hard to
-											// do properly. Any exceptions that can legally
-											// happen during frame re-initialization including
-											// StackOverflowException during innocent looking
-											// System.arraycopy may leave the current frame
-											// data corrupted leading to undefined behaviour
-											// in the catch code bellow that unwinds JS stack
-											// on exceptions. Then there is issue about frame release
-											// end exceptions there.
-											// To avoid frame allocation a released frame
-											// can be cached for re-use which would also benefit
-											// non-tail calls but it is not clear that this caching
-											// would gain in performance due to potentially
-											// bad interaction with GC.
-											callParentFrame = frame.parentFrame;
-											// Release the current frame. See Bug #344501 to see why
-											// it is being done here.
-											exitFrame(cx, frame, null);
-										}
-										CallFrame calleeFrame = initFrame(cx, calleeScope, funThisObj, stack, sDbl, stackTop + 2, indexReg, ifun, callParentFrame);
-										if (op != Icode_TAIL_CALL) {
-											frame.savedStackTop = stackTop;
-											frame.savedCallOp = op;
-										}
-										frame = calleeFrame;
-										continue StateLoop;
+									CallFrame callParentFrame = frame;
+									if (op == Icode_TAIL_CALL) {
+										// In principle tail call can re-use the current
+										// frame and its stack arrays but it is hard to
+										// do properly. Any exceptions that can legally
+										// happen during frame re-initialization including
+										// StackOverflowException during innocent looking
+										// System.arraycopy may leave the current frame
+										// data corrupted leading to undefined behaviour
+										// in the catch code bellow that unwinds JS stack
+										// on exceptions. Then there is issue about frame release
+										// end exceptions there.
+										// To avoid frame allocation a released frame
+										// can be cached for re-use which would also benefit
+										// non-tail calls but it is not clear that this caching
+										// would gain in performance due to potentially
+										// bad interaction with GC.
+										callParentFrame = frame.parentFrame;
+										// Release the current frame. See Bug #344501 to see why
+										// it is being done here.
+										exitFrame(cx, frame, null);
 									}
+									CallFrame calleeFrame = initFrame(cx, calleeScope, funThisObj, stack, sDbl, stackTop + 2, indexReg, ifun, callParentFrame);
+									if (op != Icode_TAIL_CALL) {
+										frame.savedStackTop = stackTop;
+										frame.savedCallOp = op;
+									}
+									frame = calleeFrame;
+									continue StateLoop;
 								}
 
 								if (fun instanceof NativeContinuation) {
@@ -1513,10 +1501,8 @@ public final class Interpreter extends Icode implements Evaluator {
 									if (BaseFunction.isApplyOrCall(ifun)) {
 										Callable applyCallable = ScriptRuntime.getCallable(funThisObj);
 										if (applyCallable instanceof InterpretedFunction iApplyCallable) {
-											if (frame.fnOrScript.securityDomain == iApplyCallable.securityDomain) {
-												frame = initFrameForApplyOrCall(cx, frame, indexReg, stack, sDbl, stackTop, op, calleeScope, ifun, iApplyCallable);
-												continue StateLoop;
-											}
+											frame = initFrameForApplyOrCall(cx, frame, indexReg, stack, sDbl, stackTop, op, calleeScope, ifun, iApplyCallable);
+											continue StateLoop;
 										}
 									}
 								}
@@ -1528,10 +1514,8 @@ public final class Interpreter extends Icode implements Evaluator {
 									Callable noSuchMethodMethod = noSuchMethodShim.noSuchMethodMethod;
 									// if the method is in fact an InterpretedFunction
 									if (noSuchMethodMethod instanceof InterpretedFunction ifun) {
-										if (frame.fnOrScript.securityDomain == ifun.securityDomain) {
-											frame = initFrameForNoSuchMethod(cx, frame, indexReg, stack, sDbl, stackTop, op, funThisObj, calleeScope, noSuchMethodShim, ifun);
-											continue StateLoop;
-										}
+										frame = initFrameForNoSuchMethod(cx, frame, indexReg, stack, sDbl, stackTop, op, funThisObj, calleeScope, noSuchMethodShim, ifun);
+										continue StateLoop;
 									}
 								}
 
@@ -1552,16 +1536,14 @@ public final class Interpreter extends Icode implements Evaluator {
 
 								Object lhs = stack[stackTop];
 								if (lhs instanceof InterpretedFunction f) {
-									if (frame.fnOrScript.securityDomain == f.securityDomain) {
-										Scriptable newInstance = f.createObject(cx, frame.scope);
-										CallFrame calleeFrame = initFrame(cx, frame.scope, newInstance, stack, sDbl, stackTop + 1, indexReg, f, frame);
+									Scriptable newInstance = f.createObject(cx, frame.scope);
+									CallFrame calleeFrame = initFrame(cx, frame.scope, newInstance, stack, sDbl, stackTop + 1, indexReg, f, frame);
 
-										stack[stackTop] = newInstance;
-										frame.savedStackTop = stackTop;
-										frame.savedCallOp = op;
-										frame = calleeFrame;
-										continue StateLoop;
-									}
+									stack[stackTop] = newInstance;
+									frame.savedStackTop = stackTop;
+									frame.savedCallOp = op;
+									frame = calleeFrame;
+									continue StateLoop;
 								}
 								if (!(lhs instanceof Function fun)) {
 									if (lhs == DBL_MRK) {

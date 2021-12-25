@@ -13,7 +13,6 @@ import java.util.Set;
 public class CompilerEnvirons {
 	public CompilerEnvirons() {
 		errorReporter = DefaultErrorReporter.instance;
-		generateDebugInfo = true;
 		reservedKeywordAsIdentifier = true;
 		allowMemberExprAsFunctionName = false;
 		generatingSource = true;
@@ -25,7 +24,6 @@ public class CompilerEnvirons {
 
 	public void initFromContext(Context cx) {
 		setErrorReporter(cx.getErrorReporter());
-		generateDebugInfo = (!cx.isGeneratingDebugChanged() || cx.isGeneratingDebug());
 		reservedKeywordAsIdentifier = cx.hasFeature(Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER);
 		allowMemberExprAsFunctionName = cx.hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME);
 		strictMode = cx.hasFeature(Context.FEATURE_STRICT_MODE);
@@ -47,14 +45,6 @@ public class CompilerEnvirons {
 			throw new IllegalArgumentException();
 		}
 		this.errorReporter = errorReporter;
-	}
-
-	public final boolean isGenerateDebugInfo() {
-		return generateDebugInfo;
-	}
-
-	public void setGenerateDebugInfo(boolean flag) {
-		this.generateDebugInfo = flag;
 	}
 
 	public final boolean isReservedKeywordAsIdentifier() {
@@ -218,7 +208,6 @@ public class CompilerEnvirons {
 	private ErrorReporter errorReporter;
 
 	private int languageVersion;
-	private boolean generateDebugInfo;
 	private boolean reservedKeywordAsIdentifier;
 	private boolean allowMemberExprAsFunctionName;
 	private boolean generatingSource;

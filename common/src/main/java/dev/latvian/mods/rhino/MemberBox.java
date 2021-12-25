@@ -127,7 +127,7 @@ final class MemberBox implements Serializable {
 					memberObject = accessible;
 					method = accessible;
 				} else {
-					if (!VMBridge.vm.tryToMakeAccessible(method)) {
+					if (!VMBridge.vm.tryToMakeAccessible(target, method)) {
 						throw Context.throwAsScriptRuntimeEx(ex);
 					}
 				}
@@ -155,7 +155,7 @@ final class MemberBox implements Serializable {
 			try {
 				return ctor.newInstance(args);
 			} catch (IllegalAccessException ex) {
-				if (!VMBridge.vm.tryToMakeAccessible(ctor)) {
+				if (!VMBridge.vm.tryToMakeAccessible(null, ctor)) {
 					throw Context.throwAsScriptRuntimeEx(ex);
 				}
 			}

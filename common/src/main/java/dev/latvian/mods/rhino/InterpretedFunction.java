@@ -13,35 +13,17 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	private static final long serialVersionUID = 541475680333911468L;
 
 	InterpreterData idata;
-	SecurityController securityController;
-	Object securityDomain;
 
 	private InterpretedFunction(InterpreterData idata, Object staticSecurityDomain) {
 		this.idata = idata;
 
-		// Always get Context from the current thread to
-		// avoid security breaches via passing mangled Context instances
-		// with bogus SecurityController
-		Context cx = Context.getContext();
-		SecurityController sc = cx.getSecurityController();
-		Object dynamicDomain;
-		if (sc != null) {
-			dynamicDomain = sc.getDynamicSecurityDomain(staticSecurityDomain);
-		} else {
-			if (staticSecurityDomain != null) {
-				throw new IllegalArgumentException();
-			}
-			dynamicDomain = null;
+		if (staticSecurityDomain != null) {
+			throw new IllegalArgumentException();
 		}
-
-		this.securityController = sc;
-		this.securityDomain = dynamicDomain;
 	}
 
 	private InterpretedFunction(InterpretedFunction parent, int index) {
 		this.idata = parent.idata.itsNestedFunctions[index];
-		this.securityController = parent.securityController;
-		this.securityDomain = parent.securityDomain;
 	}
 
 	/**

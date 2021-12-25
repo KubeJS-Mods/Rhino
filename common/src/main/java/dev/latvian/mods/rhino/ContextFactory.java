@@ -10,9 +10,6 @@ package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
 /**
  * Factory class that Rhino runtime uses to create new {@link Context}
  * instances.  A <code>ContextFactory</code> can also notify listeners
@@ -289,7 +286,7 @@ public class ContextFactory {
 	 * Application can override the method to provide custom class loading.
 	 */
 	protected GeneratedClassLoader createClassLoader(final ClassLoader parent) {
-		return AccessController.doPrivileged((PrivilegedAction<DefiningClassLoader>) () -> new DefiningClassLoader(parent));
+		return new DefiningClassLoader(parent);
 	}
 
 	/**

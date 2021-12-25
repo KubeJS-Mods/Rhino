@@ -222,7 +222,7 @@ public abstract class RhinoException extends RuntimeException {
 
 	static String formatStackTrace(ScriptStackElement[] stack, String message) {
 		StringBuilder buffer = new StringBuilder();
-		String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
+		String lineSeparator = System.lineSeparator();
 
 		for (ScriptStackElement elem : stack) {
 			elem.renderJavaStyle(buffer);
