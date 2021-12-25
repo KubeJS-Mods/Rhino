@@ -455,46 +455,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 		return parent == null ? 0 : 1 + parent.depth();
 	}
 
-	protected static class DebugPrintVisitor implements NodeVisitor {
-		private final StringBuilder buffer;
-		private static final int DEBUG_INDENT = 2;
-
-		public DebugPrintVisitor(StringBuilder buf) {
-			buffer = buf;
-		}
-
-		@Override
-		public String toString() {
-			return buffer.toString();
-		}
-
-		private static String makeIndent(int depth) {
-			StringBuilder sb = new StringBuilder(DEBUG_INDENT * depth);
-			for (int i = 0; i < (DEBUG_INDENT * depth); i++) {
-				sb.append(" ");
-			}
-			return sb.toString();
-		}
-
-		@Override
-		public boolean visit(AstNode node) {
-			int tt = node.getType();
-			String name = Token.typeToName(tt);
-			buffer.append(node.getAbsolutePosition()).append("\t");
-			buffer.append(makeIndent(node.depth()));
-			buffer.append(name).append(" ");
-			buffer.append(node.getPosition()).append(" ");
-			buffer.append(node.getLength());
-			if (tt == Token.NAME) {
-				buffer.append(" ").append(((Name) node).getIdentifier());
-			} else if (tt == Token.STRING) {
-				buffer.append(" ").append(((StringLiteral) node).getValue(true));
-			}
-			buffer.append("\n");
-			return true;  // process kids
-		}
-	}
-
 	/**
 	 * Return the line number recorded for this node.
 	 * If no line number was recorded, searches the parent chain.
@@ -510,19 +470,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 			return parent.getLineno();
 		}
 		return -1;
-	}
-
-	/**
-	 * Returns a debugging representation of the parse tree
-	 * starting at this node.
-	 *
-	 * @return a very verbose indented printout of the tree.
-	 * The format of each line is:  abs-pos  name position length [identifier]
-	 */
-	public String debugPrint() {
-		DebugPrintVisitor dpv = new DebugPrintVisitor(new StringBuilder(1000));
-		visit(dpv);
-		return dpv.toString();
 	}
 
 	public AstNode getInlineComment() {

@@ -57,17 +57,7 @@ class CodeGenerator extends Icode {
 	public InterpreterData compile(CompilerEnvirons compilerEnv, ScriptNode tree, String encodedSource, boolean returnFunction) {
 		this.compilerEnv = compilerEnv;
 
-		if (Token.printTrees) {
-			System.out.println("before transform:");
-			System.out.println(tree.toStringTree(tree));
-		}
-
 		new NodeTransformer().transform(tree, compilerEnv);
-
-		if (Token.printTrees) {
-			System.out.println("after transform:");
-			System.out.println(tree.toStringTree(tree));
-		}
 
 		if (returnFunction) {
 			scriptOrFn = tree.getFunctionNode(0);
@@ -174,10 +164,6 @@ class CodeGenerator extends Icode {
 
 		if (literalIds.size() != 0) {
 			itsData.literalIds = literalIds.toArray();
-		}
-
-		if (Token.printICode) {
-			Interpreter.dumpICode(itsData);
 		}
 	}
 

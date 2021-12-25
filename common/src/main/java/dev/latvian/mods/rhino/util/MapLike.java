@@ -5,6 +5,7 @@ import dev.latvian.mods.rhino.NativeJavaMapLike;
 import dev.latvian.mods.rhino.Scriptable;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -34,6 +35,8 @@ public interface MapLike<K, T> extends CustomJavaObjectWrapper {
 	}
 
 	default void clearML() {
-		throw new UnsupportedOperationException("Can't clear this map!");
+		for (K key : new ArrayList<>(keysML())) {
+			removeML(key);
+		}
 	}
 }

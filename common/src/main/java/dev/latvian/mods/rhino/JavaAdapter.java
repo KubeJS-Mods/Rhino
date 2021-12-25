@@ -475,61 +475,6 @@ public final class JavaAdapter implements IdFunctionCall {
 		return result;
 	}
 
-	public static Function getFunction(Scriptable obj, String functionName) {
-		Object x = ScriptableObject.getProperty(obj, functionName);
-		if (x == Scriptable.NOT_FOUND) {
-			// This method used to swallow the exception from calling
-			// an undefined method. People have come to depend on this
-			// somewhat dubious behavior. It allows people to avoid
-			// implementing listener methods that they don't care about,
-			// for instance.
-			return null;
-		}
-		if (!(x instanceof Function)) {
-			throw ScriptRuntime.notFunctionError(x, functionName);
-		}
-
-		return (Function) x;
-	}
-
-	/**
-	 * Utility method which dynamically binds a Context to the current thread,
-	 * if none already exists.
-	 */
-	public static Object callMethod(ContextFactory factory, final Scriptable thisObj, final Function f, final Object[] args, final long argsToWrap) {
-		if (f == null) {
-			// See comments in getFunction
-			return null;
-		}
-		if (factory == null) {
-			factory = ContextFactory.getGlobal();
-		}
-
-		final Scriptable scope = f.getParentScope();
-		if (argsToWrap == 0) {
-			return Context.call(factory, f, scope, thisObj, args);
-		}
-
-		Context cx = Context.getCurrentContext();
-		if (cx != null) {
-			return doCall(cx, scope, thisObj, f, args, argsToWrap);
-		}
-		return factory.call(cx2 -> doCall(cx2, scope, thisObj, f, args, argsToWrap));
-	}
-
-	private static Object doCall(Context cx, Scriptable scope, Scriptable thisObj, Function f, Object[] args, long argsToWrap) {
-		// Wrap the rest of objects
-		for (int i = 0; i != args.length; ++i) {
-			if (0 != (argsToWrap & (1 << i))) {
-				Object arg = args[i];
-				if (!(arg instanceof Scriptable)) {
-					args[i] = cx.getWrapFactory().wrap(cx, scope, arg, null);
-				}
-			}
-		}
-		return f.call(cx, scope, thisObj, args);
-	}
-
 	private static void generateCtor(ClassFileWriter cfw, String adapterName, String superName, Constructor<?> superCtor) {
 		short locals = 3; // this + factory + delegee
 		Class<?>[] parameters = superCtor.getParameterTypes();

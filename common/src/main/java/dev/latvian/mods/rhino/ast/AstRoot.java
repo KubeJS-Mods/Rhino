@@ -110,14 +110,4 @@ public class AstRoot extends ScriptNode {
 		visit(visitor);
 		visitComments(visitor);
 	}
-
-	/**
-	 * A debug-printer that includes comments (at the end).
-	 */
-	@Override
-	public String debugPrint() {
-		DebugPrintVisitor dpv = new DebugPrintVisitor(new StringBuilder(1000));
-		visitAll(dpv);
-		return dpv.toString();
-	}
 }

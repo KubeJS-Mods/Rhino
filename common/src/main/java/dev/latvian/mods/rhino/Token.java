@@ -22,11 +22,6 @@ public interface Token {
 		LINE, BLOCK_COMMENT, JSDOC, HTML
 	}
 
-	// debug flags
-	boolean printTrees = false;
-	boolean printICode = false;
-	boolean printNames = printTrees || printICode;
-
 	/**
 	 * Token types.  These values correspond to JSTokenType values in
 	 * jsscan.c.
@@ -220,10 +215,7 @@ public interface Token {
 	 * otherwise it returns a string whose value is the token number.
 	 */
 	static String name(int token) {
-		if (!printNames) {
-			return String.valueOf(token);
-		}
-		return typeToName(token);
+		return String.valueOf(token);
 	}
 
 	/**

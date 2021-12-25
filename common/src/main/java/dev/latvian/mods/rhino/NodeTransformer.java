@@ -56,10 +56,6 @@ public class NodeTransformer {
 		boolean createScopeObjects = tree.getType() != Token.FUNCTION || ((FunctionNode) tree).requiresActivation();
 		tree.flattenSymbolTable(!createScopeObjects);
 
-		//uncomment to print tree before transformation
-		if (Token.printTrees) {
-			System.out.println(tree.toStringTree(tree));
-		}
 		transformCompilationUnit_r(tree, tree, tree, createScopeObjects, inStrictMode);
 	}
 

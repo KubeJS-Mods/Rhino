@@ -108,99 +108,11 @@ abstract class Icode {
 	// Last icode
 	MIN_ICODE = -67;
 
-	static String bytecodeName(int bytecode) {
-		if (!validBytecode(bytecode)) {
-			throw new IllegalArgumentException(String.valueOf(bytecode));
-		}
-
-		if (!Token.printICode) {
-			return String.valueOf(bytecode);
-		}
-
-		if (validTokenCode(bytecode)) {
-			return Token.name(bytecode);
-		}
-
-		return switch (bytecode) {
-			case Icode_DUP -> "DUP";
-			case Icode_DUP2 -> "DUP2";
-			case Icode_SWAP -> "SWAP";
-			case Icode_POP -> "POP";
-			case Icode_POP_RESULT -> "POP_RESULT";
-			case Icode_IFEQ_POP -> "IFEQ_POP";
-			case Icode_VAR_INC_DEC -> "VAR_INC_DEC";
-			case Icode_NAME_INC_DEC -> "NAME_INC_DEC";
-			case Icode_PROP_INC_DEC -> "PROP_INC_DEC";
-			case Icode_ELEM_INC_DEC -> "ELEM_INC_DEC";
-			case Icode_REF_INC_DEC -> "REF_INC_DEC";
-			case Icode_SCOPE_LOAD -> "SCOPE_LOAD";
-			case Icode_SCOPE_SAVE -> "SCOPE_SAVE";
-			case Icode_TYPEOFNAME -> "TYPEOFNAME";
-			case Icode_NAME_AND_THIS -> "NAME_AND_THIS";
-			case Icode_PROP_AND_THIS -> "PROP_AND_THIS";
-			case Icode_ELEM_AND_THIS -> "ELEM_AND_THIS";
-			case Icode_VALUE_AND_THIS -> "VALUE_AND_THIS";
-			case Icode_CLOSURE_EXPR -> "CLOSURE_EXPR";
-			case Icode_CLOSURE_STMT -> "CLOSURE_STMT";
-			case Icode_CALLSPECIAL -> "CALLSPECIAL";
-			case Icode_RETUNDEF -> "RETUNDEF";
-			case Icode_GOSUB -> "GOSUB";
-			case Icode_STARTSUB -> "STARTSUB";
-			case Icode_RETSUB -> "RETSUB";
-			case Icode_LINE -> "LINE";
-			case Icode_SHORTNUMBER -> "SHORTNUMBER";
-			case Icode_INTNUMBER -> "INTNUMBER";
-			case Icode_LITERAL_NEW -> "LITERAL_NEW";
-			case Icode_LITERAL_SET -> "LITERAL_SET";
-			case Icode_SPARE_ARRAYLIT -> "SPARE_ARRAYLIT";
-			case Icode_REG_IND_C0 -> "REG_IND_C0";
-			case Icode_REG_IND_C1 -> "REG_IND_C1";
-			case Icode_REG_IND_C2 -> "REG_IND_C2";
-			case Icode_REG_IND_C3 -> "REG_IND_C3";
-			case Icode_REG_IND_C4 -> "REG_IND_C4";
-			case Icode_REG_IND_C5 -> "REG_IND_C5";
-			case Icode_REG_IND1 -> "LOAD_IND1";
-			case Icode_REG_IND2 -> "LOAD_IND2";
-			case Icode_REG_IND4 -> "LOAD_IND4";
-			case Icode_REG_STR_C0 -> "REG_STR_C0";
-			case Icode_REG_STR_C1 -> "REG_STR_C1";
-			case Icode_REG_STR_C2 -> "REG_STR_C2";
-			case Icode_REG_STR_C3 -> "REG_STR_C3";
-			case Icode_REG_STR1 -> "LOAD_STR1";
-			case Icode_REG_STR2 -> "LOAD_STR2";
-			case Icode_REG_STR4 -> "LOAD_STR4";
-			case Icode_GETVAR1 -> "GETVAR1";
-			case Icode_SETVAR1 -> "SETVAR1";
-			case Icode_UNDEF -> "UNDEF";
-			case Icode_ZERO -> "ZERO";
-			case Icode_ONE -> "ONE";
-			case Icode_ENTERDQ -> "ENTERDQ";
-			case Icode_LEAVEDQ -> "LEAVEDQ";
-			case Icode_TAIL_CALL -> "TAIL_CALL";
-			case Icode_LOCAL_CLEAR -> "LOCAL_CLEAR";
-			case Icode_LITERAL_GETTER -> "LITERAL_GETTER";
-			case Icode_LITERAL_SETTER -> "LITERAL_SETTER";
-			case Icode_SETCONST -> "SETCONST";
-			case Icode_SETCONSTVAR -> "SETCONSTVAR";
-			case Icode_SETCONSTVAR1 -> "SETCONSTVAR1";
-			case Icode_GENERATOR -> "GENERATOR";
-			case Icode_GENERATOR_END -> "GENERATOR_END";
-			case Icode_GENERATOR_RETURN -> "GENERATOR_RETURN";
-			case Icode_YIELD_STAR -> "YIELD_STAR";
-			case Icode_TEMPLATE_LITERAL_CALLSITE -> "TEMPLATE_LITERAL_CALLSITE";
-			default -> throw new IllegalStateException(String.valueOf(bytecode));
-		};
-	}
-
 	static boolean validIcode(int icode) {
 		return MIN_ICODE <= icode && icode <= 0;
 	}
 
 	static boolean validTokenCode(int token) {
 		return Token.FIRST_BYTECODE_TOKEN <= token && token <= Token.LAST_BYTECODE_TOKEN;
-	}
-
-	static boolean validBytecode(int bytecode) {
-		return validIcode(bytecode) || validTokenCode(bytecode);
 	}
 }
