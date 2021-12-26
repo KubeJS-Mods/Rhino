@@ -31,12 +31,11 @@ public class ScriptNode extends Scope {
 	private List<TemplateLiteral> templateLiterals;
 	private final List<FunctionNode> EMPTY_LIST = Collections.emptyList();
 
-	private List<Symbol> symbols = new ArrayList<>(4);
+	private List<AstSymbol> symbols = new ArrayList<>(4);
 	private int paramCount = 0;
 	private String[] variableNames;
 	private boolean[] isConsts;
 
-	private Object compilerData;
 	private int tempNumber = 0;
 	private boolean inStrictMode;
 
@@ -251,7 +250,7 @@ public class ScriptNode extends Scope {
 			codeBug();
 		}
 		Scope node = nameNode.getScope();
-		Symbol symbol = null;
+		AstSymbol symbol = null;
 		if (node != null && nameNode instanceof Name) {
 			symbol = node.getSymbol(((Name) nameNode).getIdentifier());
 		}
@@ -290,7 +289,7 @@ public class ScriptNode extends Scope {
 		return isConsts;
 	}
 
-	void addSymbol(Symbol symbol) {
+	void addSymbol(AstSymbol symbol) {
 		if (variableNames != null) {
 			codeBug();
 		}
@@ -300,11 +299,11 @@ public class ScriptNode extends Scope {
 		symbols.add(symbol);
 	}
 
-	public List<Symbol> getSymbols() {
+	public List<AstSymbol> getSymbols() {
 		return symbols;
 	}
 
-	public void setSymbols(List<Symbol> symbols) {
+	public void setSymbols(List<AstSymbol> symbols) {
 		this.symbols = symbols;
 	}
 
@@ -318,13 +317,13 @@ public class ScriptNode extends Scope {
 	 */
 	public void flattenSymbolTable(boolean flattenAllTables) {
 		if (!flattenAllTables) {
-			List<Symbol> newSymbols = new ArrayList<>();
+			List<AstSymbol> newSymbols = new ArrayList<>();
 			if (this.symbolTable != null) {
 				// Just replace "symbols" with the symbols in this object's
 				// symbol table. Can't just work from symbolTable map since
 				// we need to retain duplicate parameters.
 				for (int i = 0; i < symbols.size(); i++) {
-					Symbol symbol = symbols.get(i);
+					AstSymbol symbol = symbols.get(i);
 					if (symbol.getContainingTable() == this) {
 						newSymbols.add(symbol);
 					}
@@ -335,24 +334,11 @@ public class ScriptNode extends Scope {
 		variableNames = new String[symbols.size()];
 		isConsts = new boolean[symbols.size()];
 		for (int i = 0; i < symbols.size(); i++) {
-			Symbol symbol = symbols.get(i);
+			AstSymbol symbol = symbols.get(i);
 			variableNames[i] = symbol.getName();
 			isConsts[i] = symbol.getDeclType() == Token.CONST;
 			symbol.setIndex(i);
 		}
-	}
-
-	public Object getCompilerData() {
-		return compilerData;
-	}
-
-	public void setCompilerData(Object data) {
-		assertNotNull(data);
-		// Can only call once
-		if (compilerData != null) {
-			throw new IllegalStateException();
-		}
-		compilerData = data;
 	}
 
 	public String getNextTempName() {

@@ -22,10 +22,8 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This class represents the runtime context of an executing script.
@@ -1866,9 +1864,7 @@ public class Context {
 			}
 		}
 
-		IRFactory irf = new IRFactory(compilerEnv, compilationErrorReporter);
-		ScriptNode tree = irf.transformTree(ast);
-		return tree;
+		return new IRFactory(compilerEnv, compilationErrorReporter).transformTree(ast);
 	}
 
 	private Evaluator createCompiler() {
@@ -1919,48 +1915,6 @@ public class Context {
 		return regExpProxy;
 	}
 
-	/**
-	 * Add a name to the list of names forcing the creation of real
-	 * activation objects for functions.
-	 *
-	 * @param name the name of the object to add to the list
-	 */
-	public void addActivationName(String name) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		if (activationNames == null) {
-			activationNames = new HashSet<>();
-		}
-		activationNames.add(name);
-	}
-
-	/**
-	 * Check whether the name is in the list of names of objects
-	 * forcing the creation of activation objects.
-	 *
-	 * @param name the name of the object to test
-	 * @return true if an function activation object is needed.
-	 */
-	public final boolean isActivationNeeded(String name) {
-		return activationNames != null && activationNames.contains(name);
-	}
-
-	/**
-	 * Remove a name from the list of names forcing the creation of real
-	 * activation objects for functions.
-	 *
-	 * @param name the name of the object to remove from the list
-	 */
-	public void removeActivationName(String name) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		if (activationNames != null) {
-			activationNames.remove(name);
-		}
-	}
-
 	public final boolean isStrictMode() {
 		return isTopLevelStrict || (currentActivationCall != null && currentActivationCall.isStrict);
 	}
@@ -2004,12 +1958,6 @@ public class Context {
 	private Object propertyListeners;
 	private Map<Object, Object> threadLocalMap;
 	private ClassLoader applicationClassLoader;
-
-	/**
-	 * This is the list of names of objects forcing the creation of
-	 * function activation records.
-	 */
-	Set<String> activationNames;
 
 	// For the interpreter to store the last frame for error reports etc.
 	Object lastInterpreterFrame;

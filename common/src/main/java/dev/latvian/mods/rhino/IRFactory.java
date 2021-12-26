@@ -12,6 +12,7 @@ import dev.latvian.mods.rhino.ast.ArrayLiteral;
 import dev.latvian.mods.rhino.ast.Assignment;
 import dev.latvian.mods.rhino.ast.AstNode;
 import dev.latvian.mods.rhino.ast.AstRoot;
+import dev.latvian.mods.rhino.ast.AstSymbol;
 import dev.latvian.mods.rhino.ast.Block;
 import dev.latvian.mods.rhino.ast.BreakStatement;
 import dev.latvian.mods.rhino.ast.CatchClause;
@@ -49,7 +50,6 @@ import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.ast.StringLiteral;
 import dev.latvian.mods.rhino.ast.SwitchCase;
 import dev.latvian.mods.rhino.ast.SwitchStatement;
-import dev.latvian.mods.rhino.ast.Symbol;
 import dev.latvian.mods.rhino.ast.TaggedTemplateLiteral;
 import dev.latvian.mods.rhino.ast.TemplateCharacters;
 import dev.latvian.mods.rhino.ast.TemplateLiteral;
@@ -204,7 +204,7 @@ public final class IRFactory extends Parser {
 		String arrayName = currentScriptOrFn.getNextTempName();
 		pushScope(scopeNode);
 		try {
-			defineSymbol(Token.LET, arrayName, false);
+			defineSymbol(Token.LET, arrayName);
 			Node block = new Node(Token.BLOCK, lineno);
 			Node newArray = createCallOrNew(Token.NEW, createName("Array"));
 			Node init = new Node(Token.EXPR_VOID, createAssignment(Token.ASSIGN, createName(arrayName), newArray), lineno);
@@ -248,13 +248,13 @@ public final class IRFactory extends Parser {
 				// destructuring assignment
 				decompile(iter);
 				name = currentScriptOrFn.getNextTempName();
-				defineSymbol(Token.LP, name, false);
+				defineSymbol(Token.LP, name);
 				expr = createBinary(Token.COMMA, createAssignment(Token.ASSIGN, iter, createName(name)), expr);
 			}
 			Node init = createName(name);
 			// Define as a let since we want the scope of the variable to
 			// be restricted to the array comprehension
-			defineSymbol(Token.LET, name, false);
+			defineSymbol(Token.LET, name);
 			iterators[i] = init;
 
 			if (acl.isForOf()) {
@@ -641,13 +641,13 @@ public final class IRFactory extends Parser {
 				// destructuring assignment
 				decompile(iter);
 				name = currentScriptOrFn.getNextTempName();
-				defineSymbol(Token.LP, name, false);
+				defineSymbol(Token.LP, name);
 				expr = createBinary(Token.COMMA, createAssignment(Token.ASSIGN, iter, createName(name)), expr);
 			}
 			Node init = createName(name);
 			// Define as a let since we want the scope of the variable to
 			// be restricted to the array comprehension
-			defineSymbol(Token.LET, name, false);
+			defineSymbol(Token.LET, name);
 			iterators[i] = init;
 
 			if (acl.isForOf()) {
@@ -1328,7 +1328,7 @@ public final class IRFactory extends Parser {
 				// function's name to the function value, but only if the
 				// function doesn't already define a formal parameter, var,
 				// or nested function with the same name.
-				fnNode.putSymbol(new Symbol(Token.FUNCTION, name.getIdentifier()));
+				fnNode.putSymbol(new AstSymbol(Token.FUNCTION, name.getIdentifier()));
 				Node setFn = new Node(Token.EXPR_VOID, new Node(Token.SETNAME, Node.newString(Token.BINDNAME, name.getIdentifier()), new Node(Token.THISFN)));
 				statements.addChildrenToFront(setFn);
 			}

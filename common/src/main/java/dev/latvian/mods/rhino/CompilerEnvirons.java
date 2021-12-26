@@ -6,20 +6,11 @@
 
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.ast.ErrorCollector;
-
-import java.util.Set;
-
 public class CompilerEnvirons {
 	public CompilerEnvirons() {
 		errorReporter = DefaultErrorReporter.instance;
 		reservedKeywordAsIdentifier = true;
-		allowMemberExprAsFunctionName = false;
 		generatingSource = true;
-		strictMode = false;
-		warningAsError = false;
-		generateObserverCount = false;
-		allowSharpComments = false;
 	}
 
 	public void initFromContext(Context cx) {
@@ -30,10 +21,6 @@ public class CompilerEnvirons {
 		warningAsError = cx.hasFeature(Context.FEATURE_WARNING_AS_ERROR);
 
 		generatingSource = cx.isGeneratingSource();
-		activationNames = cx.activationNames;
-
-		// Observer code generation in compiled code :
-		generateObserverCount = cx.generateObserverCount;
 	}
 
 	public final ErrorReporter getErrorReporter() {
@@ -51,10 +38,6 @@ public class CompilerEnvirons {
 		return reservedKeywordAsIdentifier;
 	}
 
-	public void setReservedKeywordAsIdentifier(boolean flag) {
-		reservedKeywordAsIdentifier = flag;
-	}
-
 	/**
 	 * Extension to ECMA: if 'function &lt;name&gt;' is not followed
 	 * by '(', assume &lt;name&gt; starts a {@code memberExpr}
@@ -63,20 +46,8 @@ public class CompilerEnvirons {
 		return allowMemberExprAsFunctionName;
 	}
 
-	public void setAllowMemberExprAsFunctionName(boolean flag) {
-		allowMemberExprAsFunctionName = flag;
-	}
-
 	public final boolean isGeneratingSource() {
 		return generatingSource;
-	}
-
-	public boolean getWarnTrailingComma() {
-		return warnTrailingComma;
-	}
-
-	public void setWarnTrailingComma(boolean warn) {
-		warnTrailingComma = warn;
 	}
 
 	public final boolean isStrictMode() {
@@ -104,121 +75,11 @@ public class CompilerEnvirons {
 		this.generatingSource = generatingSource;
 	}
 
-	/**
-	 * @return true iff code will be generated with callbacks to enable
-	 * instruction thresholds
-	 */
-	public boolean isGenerateObserverCount() {
-		return generateObserverCount;
-	}
-
-	/**
-	 * Turn on or off generation of code with callbacks to
-	 * track the count of executed instructions.
-	 * Currently only affects JVM byte code generation: this slows down the
-	 * generated code, but code generated without the callbacks will not
-	 * be counted toward instruction thresholds. Rhino's interpretive
-	 * mode does instruction counting without inserting callbacks, so
-	 * there is no requirement to compile code differently.
-	 *
-	 * @param generateObserverCount if true, generated code will contain
-	 *                              calls to accumulate an estimate of the instructions executed.
-	 */
-	public void setGenerateObserverCount(boolean generateObserverCount) {
-		this.generateObserverCount = generateObserverCount;
-	}
-
-	public boolean isRecordingComments() {
-		return recordingComments;
-	}
-
-	public void setRecordingComments(boolean record) {
-		recordingComments = record;
-	}
-
-	public boolean isRecordingLocalJsDocComments() {
-		return recordingLocalJsDocComments;
-	}
-
-	public void setRecordingLocalJsDocComments(boolean record) {
-		recordingLocalJsDocComments = record;
-	}
-
-	/**
-	 * Turn on or off full error recovery.  In this mode, parse errors do not
-	 * throw an exception, and the parser attempts to build a full syntax tree
-	 * from the input.  Useful for IDEs and other frontends.
-	 */
-	public void setRecoverFromErrors(boolean recover) {
-		recoverFromErrors = recover;
-	}
-
-	public boolean recoverFromErrors() {
-		return recoverFromErrors;
-	}
-
-	/**
-	 * Puts the parser in "IDE" mode.  This enables some slightly more expensive
-	 * computations, such as figuring out helpful error bounds.
-	 */
-	public void setIdeMode(boolean ide) {
-		ideMode = ide;
-	}
-
-	public boolean isIdeMode() {
-		return ideMode;
-	}
-
-	public Set<String> getActivationNames() {
-		return activationNames;
-	}
-
-	public void setActivationNames(Set<String> activationNames) {
-		this.activationNames = activationNames;
-	}
-
-	/**
-	 * Mozilla sources use the C preprocessor.
-	 */
-	public void setAllowSharpComments(boolean allow) {
-		allowSharpComments = allow;
-	}
-
-	public boolean getAllowSharpComments() {
-		return allowSharpComments;
-	}
-
-	/**
-	 * Returns a {@code CompilerEnvirons} suitable for using Rhino
-	 * in an IDE environment.  Most features are enabled by default.
-	 * The {@link ErrorReporter} is set to an {@link ErrorCollector}.
-	 */
-	public static CompilerEnvirons ideEnvirons() {
-		CompilerEnvirons env = new CompilerEnvirons();
-		env.setRecoverFromErrors(true);
-		env.setRecordingComments(true);
-		env.setStrictMode(true);
-		env.setWarnTrailingComma(true);
-		env.setReservedKeywordAsIdentifier(true);
-		env.setIdeMode(true);
-		env.setErrorReporter(new ErrorCollector());
-		return env;
-	}
-
 	private ErrorReporter errorReporter;
 
-	private int languageVersion;
 	private boolean reservedKeywordAsIdentifier;
 	private boolean allowMemberExprAsFunctionName;
 	private boolean generatingSource;
 	private boolean strictMode;
 	private boolean warningAsError;
-	private boolean generateObserverCount;
-	private boolean recordingComments;
-	private boolean recordingLocalJsDocComments;
-	private boolean recoverFromErrors;
-	private boolean warnTrailingComma;
-	private boolean ideMode;
-	private boolean allowSharpComments;
-	Set<String> activationNames;
 }

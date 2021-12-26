@@ -1633,30 +1633,10 @@ class TokenStream {
 	}
 
 	private void markCommentStart(String prefix) {
-		if (parser.compilerEnv.isRecordingComments() && sourceReader != null) {
-			commentPrefix = prefix;
-			commentCursor = sourceCursor - 1;
-		}
 	}
 
 	private boolean isMarkingComment() {
 		return commentCursor != -1;
-	}
-
-	final String getAndResetCurrentComment() {
-		if (sourceString != null) {
-			if (isMarkingComment()) {
-				Kit.codeBug();
-			}
-			return sourceString.substring(tokenBeg, tokenEnd);
-		}
-		if (!isMarkingComment()) {
-			Kit.codeBug();
-		}
-		StringBuilder comment = new StringBuilder(commentPrefix);
-		comment.append(sourceBuffer, commentCursor, getTokenLength() - commentPrefix.length());
-		commentCursor = -1;
-		return comment.toString();
 	}
 
 	private static String convertLastCharToHex(String str) {
@@ -1727,6 +1707,6 @@ class TokenStream {
 
 	private final Parser parser;
 
-	private String commentPrefix = "";
-	private int commentCursor = -1;
+	private final String commentPrefix = "";
+	private final int commentCursor = -1;
 }

@@ -12,17 +12,15 @@ import dev.latvian.mods.rhino.Token;
 /**
  * Represents a symbol-table entry.
  */
-public class Symbol {
-
-	// One of Token.FUNCTION, Token.LP (for parameters), Token.VAR,
-	// Token.LET, or Token.CONST
+public class AstSymbol {
+	// One of Token.FUNCTION, Token.LP (for parameters), Token.VAR, Token.LET, or Token.CONST
 	private int declType;
 	private int index = -1;
 	private String name;
 	private Node node;
 	private Scope containingTable;
 
-	public Symbol() {
+	public AstSymbol() {
 	}
 
 	/**
@@ -31,7 +29,7 @@ public class Symbol {
 	 * @param declType {@link Token#FUNCTION}, {@link Token#LP}
 	 *                 (for params), {@link Token#VAR}, {@link Token#LET} or {@link Token#CONST}
 	 */
-	public Symbol(int declType, String name) {
+	public AstSymbol(int declType, String name) {
 		setName(name);
 		setDeclType(declType);
 	}
