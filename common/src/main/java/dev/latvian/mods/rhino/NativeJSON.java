@@ -25,9 +25,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
 /**
  * This class implements the JSON native object.
@@ -222,27 +220,6 @@ public final class NativeJSON extends IdScriptableObject {
 		char[] chars = new char[count];
 		Arrays.fill(chars, c);
 		return new String(chars);
-	}
-
-	private static class StringifyState {
-		StringifyState(Context cx, Scriptable scope, String indent, String gap, Callable replacer, List<Object> propertyList) {
-			this.cx = cx;
-			this.scope = scope;
-
-			this.indent = indent;
-			this.gap = gap;
-			this.replacer = replacer;
-			this.propertyList = propertyList;
-		}
-
-		Stack<Scriptable> stack = new Stack<>();
-		String indent;
-		String gap;
-		Callable replacer;
-		List<Object> propertyList;
-
-		Context cx;
-		Scriptable scope;
 	}
 
 	public static String stringify(Context cx, Scriptable scope, Object value, Object replacer, Object space) {
