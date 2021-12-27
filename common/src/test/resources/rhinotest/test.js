@@ -1,3 +1,4 @@
+/*
 let scopeBar = () => {
 	const bar = 123;
 	{
@@ -49,3 +50,12 @@ let scopes2 = () => {
 }
 
 console.info(scopes2())
+ */
+
+const test = ['abc', 'def', 'ghi']
+
+for (x of test) {
+	console.info(`Test: ${x}`)
+}
+
+console.info(`Var: ${x}`)

@@ -111,7 +111,6 @@ public class Parser {
 	private final ErrorReporter errorReporter;
 	private IdeErrorReporter errorCollector;
 	private String sourceURI;
-	private char[] sourceChars;
 
 	boolean calledByCompileFunction;  // ugly - set directly by Context
 	private boolean parseFinished;  // set when finished to prevent reuse
@@ -996,7 +995,6 @@ public class Parser {
 			if (pn != null) {
 				if (compilerEnv.isStrictMode() && !pn.hasSideEffects()) {
 					int beg = pn.getPosition();
-					beg = Math.max(beg, lineBeginningFor(beg));
 					addStrictWarning(pn instanceof EmptyStatement ? "msg.extra.trailing.semi" : "msg.no.side.effects", "", beg, nodeEnd(pn) - beg);
 				}
 				int ntt = peekToken();
@@ -1471,21 +1469,49 @@ public class Parser {
 	private AstNode forLoopInit(int tt) throws IOException {
 		try {
 			inForInit = true;  // checked by variables() and relExpr()
-			AstNode init = null;
+			AstNode init;
 			if (tt == Token.SEMI) {
 				init = new EmptyExpression(ts.tokenBeg, 1);
 				init.setLineno(ts.lineno);
-			} else if (tt == Token.VAR || tt == Token.LET) {
+			} else if (tt == Token.VAR || tt == Token.LET || tt == Token.CONST) {
 				consumeToken();
-				init = variables(tt, ts.tokenBeg, false);
+				init = variables(Token.LET, ts.tokenBeg, false);
 			} else {
 				init = expr();
+
+				if (init instanceof Name) {
+					return nameToVariableDeclaration((Name) init, ts.tokenBeg, false);
+				}
+
 				markDestructuring(init);
 			}
+
 			return init;
 		} finally {
 			inForInit = false;
 		}
+	}
+
+	private AstNode nameToVariableDeclaration(Name name, int pos, boolean isStatement) throws IOException {
+		/*
+		int end = ts.tokenEnd;
+		VariableDeclaration pn = new VariableDeclaration(pos);
+		pn.setType(Token.LET);
+		pn.setLineno(ts.lineno);
+		int lineno = ts.lineno;
+
+		VariableInitializer vi = new VariableInitializer(pos, end - pos);
+		vi.setTarget(name);
+		vi.setType(Token.LET);
+		vi.setLineno(lineno);
+		pn.addVariable(vi);
+		pn.setLength(end - pos);
+		pn.setIsStatement(isStatement);
+		return pn;
+		 */
+
+		markDestructuring(name);
+		return name;
 	}
 
 	private TryStatement tryStatement() throws IOException {
@@ -3386,38 +3412,6 @@ public class Parser {
 		prevNameTokenStart = pos;
 		prevNameTokenString = name;
 		prevNameTokenLineno = lineno;
-	}
-
-	/**
-	 * Return the file offset of the beginning of the input source line
-	 * containing the passed position.
-	 *
-	 * @param pos an offset into the input source stream.  If the offset
-	 *            is negative, it's converted to 0, and if it's beyond the end of
-	 *            the source buffer, the last source position is used.
-	 * @return the offset of the beginning of the line containing pos
-	 * (i.e. 1+ the offset of the first preceding newline).  Returns -1
-	 * if the {@link CompilerEnvirons} is not set to ide-mode,
-	 * and {@link #parse(String, String, int)} was used.
-	 */
-	private int lineBeginningFor(int pos) {
-		if (sourceChars == null) {
-			return -1;
-		}
-		if (pos <= 0) {
-			return 0;
-		}
-		char[] buf = sourceChars;
-		if (pos >= buf.length) {
-			pos = buf.length - 1;
-		}
-		while (--pos >= 0) {
-			char c = buf[pos];
-			if (ScriptRuntime.isJSLineTerminator(c)) {
-				return pos + 1; // want position after the newline
-			}
-		}
-		return 0;
 	}
 
 	private void warnMissingSemi(int pos, int end) {
