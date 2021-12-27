@@ -2412,7 +2412,7 @@ public class Parser {
 		int line = ts.lineno;
 
 		switch (tt) {
-			case Token.VOID, Token.NOT, Token.BITNOT, Token.TYPEOF -> {
+			case Token.VOID, Token.NOT, Token.BITNOT, Token.TYPEOF, Token.DELPROP -> {
 				consumeToken();
 				node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
 				node.setLineno(line);
@@ -2438,12 +2438,6 @@ public class Parser {
 				expr.setLineno(line);
 				checkBadIncDec(expr);
 				return expr;
-			}
-			case Token.DELPROP -> {
-				consumeToken();
-				node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
-				node.setLineno(line);
-				return node;
 			}
 			case Token.ERROR -> {
 				consumeToken();

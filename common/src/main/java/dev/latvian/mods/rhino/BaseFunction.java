@@ -305,7 +305,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
 			case Id_toString:
 			case Id_toSource:
-				return "not_supported";
+				return toFunctionString(thisObj);
 
 			case Id_apply:
 			case Id_call:
@@ -329,17 +329,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
 				return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
 		}
 		throw new IllegalArgumentException(String.valueOf(id));
-	}
-
-	private static BaseFunction realFunction(Scriptable thisObj, IdFunctionObject f) {
-		Object x = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
-		if (x instanceof Delegator) {
-			x = ((Delegator) x).getDelegee();
-		}
-		if (x instanceof BaseFunction) {
-			return (BaseFunction) x;
-		}
-		throw ScriptRuntime.typeError1("msg.incompat.call", f.getFunctionName());
 	}
 
 	/**
@@ -429,6 +418,22 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
 	public String getFunctionName() {
 		return "";
+	}
+
+	protected String toFunctionString(Scriptable parent) {
+		String s = getFunctionName();
+
+		if (s.isEmpty()) {
+			return parent != null ? parent.getClassName() : "Unknown";
+		}
+
+		return s;
+	}
+
+	@Override
+	public String toString() {
+		String s = getFunctionName();
+		return s.isEmpty() ? "Unknown" : s;
 	}
 
 	protected boolean hasPrototypeProperty() {

@@ -78,6 +78,8 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getPrototypeOf, "getPrototypeOf", 1);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_setPrototypeOf, "setPrototypeOf", 2);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_keys, "keys", 1);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_entries, "entries", 1);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_values, "values", 1);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyNames, "getOwnPropertyNames", 1);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertySymbols, "getOwnPropertySymbols", 1);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyDescriptor, "getOwnPropertyDescriptor", 2);
@@ -365,6 +367,29 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					ids[i] = ScriptRuntime.toString(ids[i]);
 				}
 				return cx.newArray(scope, ids);
+			}
+			case ConstructorId_entries: {
+				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Scriptable obj = getCompatibleObject(cx, scope, arg);
+				Object[] ids = obj.getIds();
+				Object[] entries = new Object[ids.length];
+				for (int i = 0; i < ids.length; i++) {
+					Object[] entry = new Object[2];
+					entry[0] = ScriptRuntime.toString(ids[i]);
+					entry[1] = obj.get(entry[0].toString(), scope);
+					entries[i] = cx.newArray(scope, entry);
+				}
+				return cx.newArray(scope, entries);
+			}
+			case ConstructorId_values: {
+				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Scriptable obj = getCompatibleObject(cx, scope, arg);
+				Object[] ids = obj.getIds();
+				Object[] values = new Object[ids.length];
+				for (int i = 0; i < ids.length; i++) {
+					values[i] = obj.get(ScriptRuntime.toString(ids[i]), scope);
+				}
+				return cx.newArray(scope, values);
 			}
 			case ConstructorId_getOwnPropertyNames: {
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
@@ -882,7 +907,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		return id;
 	}
 
-	private static final int ConstructorId_getPrototypeOf = -1, ConstructorId_keys = -2, ConstructorId_getOwnPropertyNames = -3, ConstructorId_getOwnPropertyDescriptor = -4, ConstructorId_defineProperty = -5, ConstructorId_isExtensible = -6, ConstructorId_preventExtensions = -7, ConstructorId_defineProperties = -8, ConstructorId_create = -9, ConstructorId_isSealed = -10, ConstructorId_isFrozen = -11, ConstructorId_seal = -12, ConstructorId_freeze = -13, ConstructorId_getOwnPropertySymbols = -14, ConstructorId_assign = -15, ConstructorId_is = -16, ConstructorId_setPrototypeOf = -17,
+	private static final int ConstructorId_getPrototypeOf = -1, ConstructorId_keys = -2, ConstructorId_getOwnPropertyNames = -3, ConstructorId_getOwnPropertyDescriptor = -4, ConstructorId_defineProperty = -5, ConstructorId_isExtensible = -6, ConstructorId_preventExtensions = -7, ConstructorId_defineProperties = -8, ConstructorId_create = -9, ConstructorId_isSealed = -10, ConstructorId_isFrozen = -11, ConstructorId_seal = -12, ConstructorId_freeze = -13, ConstructorId_getOwnPropertySymbols = -14, ConstructorId_assign = -15, ConstructorId_is = -16, ConstructorId_setPrototypeOf = -17, ConstructorId_entries = -18, ConstructorId_values = -19,
 
 	Id_constructor = 1, Id_toString = 2, Id_toLocaleString = 3, Id_valueOf = 4, Id_hasOwnProperty = 5, Id_propertyIsEnumerable = 6, Id_isPrototypeOf = 7, Id_toSource = 8, Id___defineGetter__ = 9, Id___defineSetter__ = 10, Id___lookupGetter__ = 11, Id___lookupSetter__ = 12, MAX_PROTOTYPE_ID = 12;
 

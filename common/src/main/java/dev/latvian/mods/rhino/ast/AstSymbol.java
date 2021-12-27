@@ -6,7 +6,6 @@
 
 package dev.latvian.mods.rhino.ast;
 
-import dev.latvian.mods.rhino.Node;
 import dev.latvian.mods.rhino.Token;
 
 /**
@@ -17,11 +16,7 @@ public class AstSymbol {
 	private int declType;
 	private int index = -1;
 	private String name;
-	private Node node;
 	private Scope containingTable;
-
-	public AstSymbol() {
-	}
 
 	/**
 	 * Constructs a new Symbol with a specific name and declaration type
@@ -66,13 +61,6 @@ public class AstSymbol {
 	}
 
 	/**
-	 * Returns the node associated with this identifier
-	 */
-	public Node getNode() {
-		return node;
-	}
-
-	/**
 	 * Returns symbol's index in its scope
 	 */
 	public int getIndex() {
@@ -84,13 +72,6 @@ public class AstSymbol {
 	 */
 	public void setIndex(int index) {
 		this.index = index;
-	}
-
-	/**
-	 * Sets the node associated with this identifier
-	 */
-	public void setNode(Node node) {
-		this.node = node;
 	}
 
 	/**
@@ -118,10 +99,6 @@ public class AstSymbol {
 		result.append(getDeclTypeName());
 		result.append(") name=");
 		result.append(name);
-		if (node != null) {
-			result.append(" line=");
-			result.append(node.getLineno());
-		}
 		return result.toString();
 	}
 }
