@@ -59,7 +59,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 
 	@Override
 	public boolean has(Symbol key, Scriptable start) {
-		return SymbolKey.IS_CONCAT_SPREADABLE.equals(key);
+		return SymbolKey.IS_CONCAT_SPREADABLE.equals(key) || super.has(key, start);
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 		if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key)) {
 			return Boolean.TRUE;
 		}
-		return NOT_FOUND;
+		return super.get(key, start);
 	}
 
 	@Override

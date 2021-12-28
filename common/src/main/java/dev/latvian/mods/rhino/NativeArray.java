@@ -449,16 +449,16 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 				case Id_keys:
 					thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-					return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.KEYS);
+					return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ArrayIteratorType.KEYS);
 
 				case Id_entries:
 					thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-					return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.ENTRIES);
+					return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ArrayIteratorType.ENTRIES);
 
 				case Id_values:
 				case SymbolId_iterator:
 					thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-					return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
+					return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ArrayIteratorType.VALUES);
 			}
 			throw new IllegalArgumentException("Array.prototype has no method: " + f.getFunctionName());
 		}

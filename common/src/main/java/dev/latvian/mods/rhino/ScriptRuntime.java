@@ -12,7 +12,6 @@ import dev.latvian.mods.rhino.v8dtoa.DoubleConversion;
 import dev.latvian.mods.rhino.v8dtoa.FastDtoa;
 
 import java.io.Serial;
-import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Locale;
@@ -1644,37 +1643,6 @@ public class ScriptRuntime {
 		return value;
 	}
 
-	/**
-	 * This is the enumeration needed by the for..in statement.
-	 * <p>
-	 * See ECMA 12.6.3.
-	 * <p>
-	 * IdEnumeration maintains a ObjToIntMap to make sure a given
-	 * id is enumerated only once across multiple objects in a
-	 * prototype chain.
-	 * <p>
-	 * XXX - ECMA delete doesn't hide properties in the prototype,
-	 * but js/ref does. This means that the js/ref for..in can
-	 * avoid maintaining a hash table and instead perform lookups
-	 * to see if a given property has already been enumerated.
-	 */
-	private static class IdEnumeration implements Serializable {
-		@Serial
-		private static final long serialVersionUID = 1L;
-		Scriptable obj;
-		Object[] ids;
-		ObjToIntMap used;
-		Object currentId;
-		int index;
-		int enumType; /* one of ENUM_INIT_KEYS, ENUM_INIT_VALUES,
-                         ENUM_INIT_ARRAY, ENUMERATE_VALUES_IN_ORDER */
-
-		// if true, integer ids will be returned as numbers rather than strings
-		boolean enumNumbers;
-
-		Scriptable iterator;
-	}
-
 	public static Scriptable toIterator(Context cx, Scriptable scope, Scriptable obj, boolean keyOnly) {
 		if (ScriptableObject.hasProperty(obj, NativeIterator.ITERATOR_PROPERTY_NAME)) {
 			Object v = ScriptableObject.getProperty(obj, NativeIterator.ITERATOR_PROPERTY_NAME);
@@ -1699,7 +1667,7 @@ public class ScriptRuntime {
 	public static final int ENUMERATE_ARRAY_NO_ITERATOR = 5;
 	public static final int ENUMERATE_VALUES_IN_ORDER = 6;
 
-	public static Object enumInit(Object value, Context cx, Scriptable scope, int enumType) {
+	public static IdEnumeration enumInit(Object value, Context cx, Scriptable scope, int enumType) {
 		IdEnumeration x = new IdEnumeration();
 		x.obj = toObjectOrNull(cx, value, scope);
 		// "for of" loop
@@ -1721,166 +1689,38 @@ public class ScriptRuntime {
 		if (x.iterator == null) {
 			// enumInit should read all initial ids before returning
 			// or "for (a.i in a)" would wrongly enumerate i in a as well
-			enumChangeObject(x);
+			x.changeObject();
 		}
 
 		return x;
 	}
 
-	private static Object enumInitInOrder(Context cx, IdEnumeration x) {
-		if (!(x.obj instanceof SymbolScriptable) || !ScriptableObject.hasProperty(x.obj, SymbolKey.ITERATOR)) {
+	private static IdEnumeration enumInitInOrder(Context cx, IdEnumeration x) {
+		Object iterator = x.obj instanceof SymbolScriptable ? ScriptableObject.getProperty(x.obj, SymbolKey.ITERATOR) : null;
+
+		if (!(iterator instanceof Callable f)) {
+			if (iterator instanceof IdEnumerationIterator) {
+				x.iterator = (IdEnumerationIterator) iterator;
+				return x;
+			}
+
 			throw typeError1("msg.not.iterable", toString(x.obj));
 		}
 
-		Object iterator = ScriptableObject.getProperty(x.obj, SymbolKey.ITERATOR);
-		if (!(iterator instanceof Callable f)) {
-			throw typeError1("msg.not.iterable", toString(x.obj));
-		}
 		Scriptable scope = x.obj.getParentScope();
-		Object[] args = new Object[]{};
-		Object v = f.call(cx, scope, x.obj, args);
+		Object v = f.call(cx, scope, x.obj, emptyArgs);
+
 		if (!(v instanceof Scriptable)) {
+			if (v instanceof IdEnumerationIterator) {
+				x.iterator = (IdEnumerationIterator) v;
+				return x;
+			}
+
 			throw typeError1("msg.not.iterable", toString(x.obj));
 		}
+
 		x.iterator = (Scriptable) v;
 		return x;
-	}
-
-	public static void setEnumNumbers(Object enumObj, boolean enumNumbers) {
-		((IdEnumeration) enumObj).enumNumbers = enumNumbers;
-	}
-
-	public static Boolean enumNext(Object enumObj) {
-		IdEnumeration x = (IdEnumeration) enumObj;
-		if (x.iterator != null) {
-			if (x.enumType == ENUMERATE_VALUES_IN_ORDER) {
-				return enumNextInOrder(x);
-			}
-			Object v = ScriptableObject.getProperty(x.iterator, "next");
-			if (!(v instanceof Callable f)) {
-				return Boolean.FALSE;
-			}
-			Context cx = Context.getContext();
-			try {
-				x.currentId = f.call(cx, x.iterator.getParentScope(), x.iterator, emptyArgs);
-				return Boolean.TRUE;
-			} catch (JavaScriptException e) {
-				if (e.getValue() instanceof NativeIterator.StopIteration) {
-					return Boolean.FALSE;
-				}
-				throw e;
-			}
-		}
-		for (; ; ) {
-			if (x.obj == null) {
-				return Boolean.FALSE;
-			}
-			if (x.index == x.ids.length) {
-				x.obj = x.obj.getPrototype();
-				enumChangeObject(x);
-				continue;
-			}
-			Object id = x.ids[x.index++];
-			if (x.used != null && x.used.has(id)) {
-				continue;
-			}
-			if (id instanceof Symbol) {
-				continue;
-			} else if (id instanceof String strId) {
-				if (!x.obj.has(strId, x.obj)) {
-					continue;   // must have been deleted
-				}
-				x.currentId = strId;
-			} else {
-				int intId = ((Number) id).intValue();
-				if (!x.obj.has(intId, x.obj)) {
-					continue;   // must have been deleted
-				}
-				x.currentId = x.enumNumbers ? Integer.valueOf(intId) : String.valueOf(intId);
-			}
-			return Boolean.TRUE;
-		}
-	}
-
-	private static Boolean enumNextInOrder(IdEnumeration enumObj) {
-		Object v = ScriptableObject.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
-		if (!(v instanceof Callable f)) {
-			throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
-		}
-		Context cx = Context.getContext();
-		Scriptable scope = enumObj.iterator.getParentScope();
-		Object r = f.call(cx, scope, enumObj.iterator, emptyArgs);
-		Scriptable iteratorResult = toObject(cx, scope, r);
-		Object done = ScriptableObject.getProperty(iteratorResult, ES6Iterator.DONE_PROPERTY);
-		if (done != Scriptable.NOT_FOUND && toBoolean(done)) {
-			return Boolean.FALSE;
-		}
-		enumObj.currentId = ScriptableObject.getProperty(iteratorResult, ES6Iterator.VALUE_PROPERTY);
-		return Boolean.TRUE;
-	}
-
-	public static Object enumId(Object enumObj, Context cx) {
-		IdEnumeration x = (IdEnumeration) enumObj;
-		if (x.iterator != null) {
-			return x.currentId;
-		}
-		switch (x.enumType) {
-			case ENUMERATE_KEYS:
-			case ENUMERATE_KEYS_NO_ITERATOR:
-				return x.currentId;
-			case ENUMERATE_VALUES:
-			case ENUMERATE_VALUES_NO_ITERATOR:
-				return enumValue(enumObj, cx);
-			case ENUMERATE_ARRAY:
-			case ENUMERATE_ARRAY_NO_ITERATOR:
-				Object[] elements = {x.currentId, enumValue(enumObj, cx)};
-				return cx.newArray(ScriptableObject.getTopLevelScope(x.obj), elements);
-			default:
-				throw Kit.codeBug();
-		}
-	}
-
-	public static Object enumValue(Object enumObj, Context cx) {
-		IdEnumeration x = (IdEnumeration) enumObj;
-
-		Object result;
-
-		if (isSymbol(x.currentId)) {
-			SymbolScriptable so = ScriptableObject.ensureSymbolScriptable(x.obj);
-			result = so.get((Symbol) x.currentId, x.obj);
-		} else {
-			StringIdOrIndex s = toStringIdOrIndex(cx, x.currentId);
-			if (s.stringId == null) {
-				result = x.obj.get(s.index, x.obj);
-			} else {
-				result = x.obj.get(s.stringId, x.obj);
-			}
-		}
-
-		return result;
-	}
-
-	private static void enumChangeObject(IdEnumeration x) {
-		Object[] ids = null;
-		while (x.obj != null) {
-			ids = x.obj.getIds();
-			if (ids.length != 0) {
-				break;
-			}
-			x.obj = x.obj.getPrototype();
-		}
-		if (x.obj != null && x.ids != null) {
-			Object[] previous = x.ids;
-			int L = previous.length;
-			if (x.used == null) {
-				x.used = new ObjToIntMap(L);
-			}
-			for (int i = 0; i != L; ++i) {
-				x.used.intern(previous[i]);
-			}
-		}
-		x.ids = ids;
-		x.index = 0;
 	}
 
 	/**

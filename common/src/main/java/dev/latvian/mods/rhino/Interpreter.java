@@ -1480,9 +1480,9 @@ public final class Interpreter extends Icode implements Evaluator {
 							case Token.ENUM_NEXT:
 							case Token.ENUM_ID: {
 								indexReg += frame.localShift;
-								Object val = stack[indexReg];
+								IdEnumeration val = (IdEnumeration) stack[indexReg];
 								++stackTop;
-								stack[stackTop] = (op == Token.ENUM_NEXT) ? ScriptRuntime.enumNext(val) : ScriptRuntime.enumId(val, cx);
+								stack[stackTop] = (op == Token.ENUM_NEXT) ? val.next(cx) : val.getId(cx);
 								continue;
 							}
 							case Token.REF_SPECIAL: {

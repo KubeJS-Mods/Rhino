@@ -75,7 +75,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
 	@Override
 	public boolean has(Symbol key, Scriptable start) {
-		return false;
+		return javaObject instanceof Iterable<?> && SymbolKey.ITERATOR.equals(key);
 	}
 
 	@Override
@@ -93,6 +93,10 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
 	@Override
 	public Object get(Symbol key, Scriptable start) {
+		if (javaObject instanceof Iterable<?> && SymbolKey.ITERATOR.equals(key)) {
+			return new NativeArrayIterator(getParentScope(), start, NativeArrayIterator.ArrayIteratorType.VALUES);
+		}
+
 		// Native Java objects have no Symbol members
 		return Scriptable.NOT_FOUND;
 	}

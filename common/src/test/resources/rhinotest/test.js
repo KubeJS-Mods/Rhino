@@ -4,6 +4,14 @@ const testObject = {
 	a: -39, b: 2, c: 3439438
 }
 
+for (let string of console.testArray) {
+	console.info(string)
+}
+
+for (let string of console.testList) {
+	console.info(string)
+}
+
 console.info(Object.keys(testObject))
 console.info(Object.values(testObject))
 console.info(Object.entries(testObject))

@@ -11,7 +11,7 @@ import dev.latvian.mods.rhino.ExternalArrayData;
 import dev.latvian.mods.rhino.IdFunctionObject;
 import dev.latvian.mods.rhino.NativeArray;
 import dev.latvian.mods.rhino.NativeArrayIterator;
-import dev.latvian.mods.rhino.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
+import dev.latvian.mods.rhino.NativeArrayIterator.ArrayIteratorType;
 import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.Symbol;
@@ -313,7 +313,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 				return self.js_subarray(cx, scope, start, end);
 
 			case SymbolId_iterator:
-				return new NativeArrayIterator(scope, thisObj, ARRAY_ITERATOR_TYPE.VALUES);
+				return new NativeArrayIterator(scope, thisObj, ArrayIteratorType.VALUES);
 		}
 		throw new IllegalArgumentException(String.valueOf(id));
 	}

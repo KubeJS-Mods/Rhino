@@ -48,7 +48,7 @@ public final class NativeIterator extends IdScriptableObject {
 	private NativeIterator() {
 	}
 
-	private NativeIterator(Object objectIterator) {
+	private NativeIterator(IdEnumeration objectIterator) {
 		this.objectIterator = objectIterator;
 	}
 
@@ -143,7 +143,7 @@ public final class NativeIterator extends IdScriptableObject {
 		}
 
 		return switch (id) {
-			case Id_next -> iterator.next(cx, scope);
+			case Id_next -> iterator.objectIterator.nextExec(cx, scope);
 			case Id___iterator__ ->
 					/// XXX: what about argument? SpiderMonkey apparently ignores it
 					thisObj;
@@ -180,21 +180,12 @@ public final class NativeIterator extends IdScriptableObject {
 
 		// Otherwise, just set up to iterate over the properties of the object.
 		// Do not call __iterator__ method.
-		Object objectIterator = ScriptRuntime.enumInit(obj, cx, scope, keyOnly ? ScriptRuntime.ENUMERATE_KEYS_NO_ITERATOR : ScriptRuntime.ENUMERATE_ARRAY_NO_ITERATOR);
-		ScriptRuntime.setEnumNumbers(objectIterator, true);
+		IdEnumeration objectIterator = ScriptRuntime.enumInit(obj, cx, scope, keyOnly ? ScriptRuntime.ENUMERATE_KEYS_NO_ITERATOR : ScriptRuntime.ENUMERATE_ARRAY_NO_ITERATOR);
+		objectIterator.enumNumbers = true;
 		NativeIterator result = new NativeIterator(objectIterator);
 		result.setPrototype(getClassPrototype(scope, result.getClassName()));
 		result.setParentScope(scope);
 		return result;
-	}
-
-	private Object next(Context cx, Scriptable scope) {
-		Boolean b = ScriptRuntime.enumNext(this.objectIterator);
-		if (!b) {
-			// Out of values. Throw StopIteration.
-			throw new JavaScriptException(NativeIterator.getStopIterationObject(scope), null, 0);
-		}
-		return ScriptRuntime.enumId(this.objectIterator, cx);
 	}
 
 	/**
@@ -273,6 +264,6 @@ public final class NativeIterator extends IdScriptableObject {
 
 	// #/string_id_map#
 
-	private Object objectIterator;
+	private IdEnumeration objectIterator;
 }
 
