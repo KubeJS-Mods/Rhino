@@ -7,6 +7,7 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.Deletable;
+import dev.latvian.mods.rhino.util.JavaIteratorWrapper;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +95,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	@Override
 	public Object get(Symbol key, Scriptable start) {
 		if (javaObject instanceof Iterable<?> && SymbolKey.ITERATOR.equals(key)) {
-			return new NativeArrayIterator(getParentScope(), start, NativeArrayIterator.ArrayIteratorType.VALUES);
+			return new JavaIteratorWrapper(((Iterable<?>) javaObject).iterator());
 		}
 
 		// Native Java objects have no Symbol members
