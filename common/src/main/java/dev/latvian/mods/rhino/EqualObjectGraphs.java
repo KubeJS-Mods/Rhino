@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.debug.DebuggableObject;
-
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -298,10 +296,8 @@ final class EqualObjectGraphs {
 		if (s instanceof ScriptableObject) {
 			// Grabs symbols too
 			return ((ScriptableObject) s).getIds(true, true);
-		} else if (s instanceof DebuggableObject) {
-			return ((DebuggableObject) s).getAllIds();
 		} else {
-			return s.getIds();
+			return s.getAllIds();
 		}
 	}
 

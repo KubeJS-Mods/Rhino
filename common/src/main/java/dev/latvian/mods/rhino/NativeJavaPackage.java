@@ -8,6 +8,7 @@ package dev.latvian.mods.rhino;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serial;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -25,6 +26,7 @@ import java.util.Set;
  */
 
 public class NativeJavaPackage extends ScriptableObject {
+	@Serial
 	private static final long serialVersionUID = 7445054382212031523L;
 
 	public NativeJavaPackage(boolean internalUsage, String packageName, ClassLoader classLoader) {
@@ -135,6 +137,7 @@ public class NativeJavaPackage extends ScriptableObject {
 		return toString();
 	}
 
+	@Serial
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 		this.classLoader = Context.getCurrentContext().getApplicationClassLoader();
@@ -147,8 +150,7 @@ public class NativeJavaPackage extends ScriptableObject {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof NativeJavaPackage) {
-			NativeJavaPackage njp = (NativeJavaPackage) obj;
+		if (obj instanceof NativeJavaPackage njp) {
 			return packageName.equals(njp.packageName) && classLoader == njp.classLoader;
 		}
 		return false;

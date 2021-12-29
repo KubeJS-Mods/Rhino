@@ -159,10 +159,9 @@ public class Kit {
 
 		if (bag == null) {
 			bag = listener;
-		} else if (!(bag instanceof Object[])) {
+		} else if (!(bag instanceof Object[] array)) {
 			bag = new Object[]{bag, listener};
 		} else {
-			Object[] array = (Object[]) bag;
 			int L = array.length;
 			// bag has at least 2 elements if it is array
 			if (L < 2) {
@@ -203,8 +202,7 @@ public class Kit {
 
 		if (bag == listener) {
 			bag = null;
-		} else if (bag instanceof Object[]) {
-			Object[] array = (Object[]) bag;
+		} else if (bag instanceof Object[] array) {
 			int L = array.length;
 			// bag has at least 2 elements if it is array
 			if (L < 2) {
@@ -251,23 +249,21 @@ public class Kit {
 			if (bag == null) {
 				return null;
 			}
-			if (!(bag instanceof Object[])) {
+			if (!(bag instanceof Object[] array)) {
 				return bag;
 			}
-			Object[] array = (Object[]) bag;
 			// bag has at least 2 elements if it is array
 			if (array.length < 2) {
 				throw new IllegalArgumentException();
 			}
 			return array[0];
 		} else if (index == 1) {
-			if (!(bag instanceof Object[])) {
+			if (!(bag instanceof Object[] array)) {
 				if (bag == null) {
 					throw new IllegalArgumentException();
 				}
 				return null;
 			}
-			Object[] array = (Object[]) bag;
 			// the array access will check for index on its own
 			return array[1];
 		} else {
@@ -308,10 +304,9 @@ public class Kit {
 
 		@Override
 		public boolean equals(Object anotherObj) {
-			if (!(anotherObj instanceof ComplexKey)) {
+			if (!(anotherObj instanceof ComplexKey another)) {
 				return false;
 			}
-			ComplexKey another = (ComplexKey) anotherObj;
 			return key1.equals(another.key1) && key2.equals(another.key2);
 		}
 

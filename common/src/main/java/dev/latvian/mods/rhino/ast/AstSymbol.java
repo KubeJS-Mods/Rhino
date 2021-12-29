@@ -6,24 +6,17 @@
 
 package dev.latvian.mods.rhino.ast;
 
-import dev.latvian.mods.rhino.Node;
 import dev.latvian.mods.rhino.Token;
 
 /**
  * Represents a symbol-table entry.
  */
-public class Symbol {
-
-	// One of Token.FUNCTION, Token.LP (for parameters), Token.VAR,
-	// Token.LET, or Token.CONST
+public class AstSymbol {
+	// One of Token.FUNCTION, Token.LP (for parameters), Token.VAR, Token.LET, or Token.CONST
 	private int declType;
 	private int index = -1;
 	private String name;
-	private Node node;
 	private Scope containingTable;
-
-	public Symbol() {
-	}
 
 	/**
 	 * Constructs a new Symbol with a specific name and declaration type
@@ -31,7 +24,7 @@ public class Symbol {
 	 * @param declType {@link Token#FUNCTION}, {@link Token#LP}
 	 *                 (for params), {@link Token#VAR}, {@link Token#LET} or {@link Token#CONST}
 	 */
-	public Symbol(int declType, String name) {
+	public AstSymbol(int declType, String name) {
 		setName(name);
 		setDeclType(declType);
 	}
@@ -68,13 +61,6 @@ public class Symbol {
 	}
 
 	/**
-	 * Returns the node associated with this identifier
-	 */
-	public Node getNode() {
-		return node;
-	}
-
-	/**
 	 * Returns symbol's index in its scope
 	 */
 	public int getIndex() {
@@ -86,13 +72,6 @@ public class Symbol {
 	 */
 	public void setIndex(int index) {
 		this.index = index;
-	}
-
-	/**
-	 * Sets the node associated with this identifier
-	 */
-	public void setNode(Node node) {
-		this.node = node;
 	}
 
 	/**
@@ -120,10 +99,6 @@ public class Symbol {
 		result.append(getDeclTypeName());
 		result.append(") name=");
 		result.append(name);
-		if (node != null) {
-			result.append(" line=");
-			result.append(node.getLineno());
-		}
 		return result.toString();
 	}
 }

@@ -56,10 +56,6 @@ public class NodeTransformer {
 		boolean createScopeObjects = tree.getType() != Token.FUNCTION || ((FunctionNode) tree).requiresActivation();
 		tree.flattenSymbolTable(!createScopeObjects);
 
-		//uncomment to print tree before transformation
-		if (Token.printTrees) {
-			System.out.println(tree.toStringTree(tree));
-		}
 		transformCompilationUnit_r(tree, tree, tree, createScopeObjects, inStrictMode);
 	}
 
@@ -79,8 +75,7 @@ public class NodeTransformer {
 			}
 
 			int type = node.getType();
-			if (createScopeObjects && (type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP) && (node instanceof Scope)) {
-				Scope newScope = (Scope) node;
+			if (createScopeObjects && (type == Token.BLOCK || type == Token.LOOP || type == Token.ARRAYCOMP) && (node instanceof Scope newScope)) {
 				if (newScope.getSymbolTable() != null) {
 					// transform to let statement so we get a with statement
 					// created to contain scoped let variables

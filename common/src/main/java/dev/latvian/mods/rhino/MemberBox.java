@@ -9,6 +9,7 @@ package dev.latvian.mods.rhino;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -25,6 +26,7 @@ import java.lang.reflect.Modifier;
  */
 
 final class MemberBox implements Serializable {
+	@Serial
 	private static final long serialVersionUID = 6358550398665688245L;
 
 	private transient Member memberObject;
@@ -125,7 +127,7 @@ final class MemberBox implements Serializable {
 					memberObject = accessible;
 					method = accessible;
 				} else {
-					if (!VMBridge.vm.tryToMakeAccessible(method)) {
+					if (!VMBridge.tryToMakeAccessible(target, method)) {
 						throw Context.throwAsScriptRuntimeEx(ex);
 					}
 				}
@@ -153,7 +155,7 @@ final class MemberBox implements Serializable {
 			try {
 				return ctor.newInstance(args);
 			} catch (IllegalAccessException ex) {
-				if (!VMBridge.vm.tryToMakeAccessible(ctor)) {
+				if (!VMBridge.tryToMakeAccessible(null, ctor)) {
 					throw Context.throwAsScriptRuntimeEx(ex);
 				}
 			}
@@ -202,6 +204,7 @@ final class MemberBox implements Serializable {
 		return null;
 	}
 
+	@Serial
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 		Member member = readMember(in);
@@ -212,6 +215,7 @@ final class MemberBox implements Serializable {
 		}
 	}
 
+	@Serial
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.defaultWriteObject();
 		writeMember(out, memberObject);

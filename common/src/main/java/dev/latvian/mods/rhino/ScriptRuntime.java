@@ -11,7 +11,7 @@ import dev.latvian.mods.rhino.util.SpecialEquality;
 import dev.latvian.mods.rhino.v8dtoa.DoubleConversion;
 import dev.latvian.mods.rhino.v8dtoa.FastDtoa;
 
-import java.io.Serializable;
+import java.io.Serial;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Locale;
@@ -38,6 +38,7 @@ public class ScriptRuntime {
 	public static BaseFunction typeErrorThrower(Context cx) {
 		if (cx.typeErrorThrower == null) {
 			BaseFunction thrower = new BaseFunction() {
+				@Serial
 				private static final long serialVersionUID = -5891740962154902286L;
 
 				@Override
@@ -240,21 +241,19 @@ public class ScriptRuntime {
 	 * <BOM>
 	 */
 	static boolean isStrWhiteSpaceChar(int c) {
-		switch (c) {
-			case ' ': // <SP>
-			case '\n': // <LF>
-			case '\r': // <CR>
-			case '\t': // <TAB>
-			case '\u00A0': // <NBSP>
-			case '\u000C': // <FF>
-			case '\u000B': // <VT>
-			case '\u2028': // <LS>
-			case '\u2029': // <PS>
-			case '\uFEFF': // <BOM>
-				return true;
-			default:
-				return Character.getType(c) == Character.SPACE_SEPARATOR;
-		}
+		return switch (c) { // <SP>
+			// <LF>
+			// <CR>
+			// <TAB>
+			// <NBSP>
+			// <FF>
+			// <VT>
+			// <LS>
+			// <PS>
+			case ' ', '\n', '\r', '\t', '\u00A0', '\u000C', '\u000B', '\u2028', '\u2029', '\uFEFF' -> // <BOM>
+					true;
+			default -> Character.getType(c) == Character.SPACE_SEPARATOR;
+		};
 	}
 
 	public static Boolean wrapBoolean(boolean b) {
@@ -667,33 +666,17 @@ public class ScriptRuntime {
 				sb.setLength(i);
 			}
 
-			int escape = -1;
-			switch (c) {
-				case '\b':
-					escape = 'b';
-					break;
-				case '\f':
-					escape = 'f';
-					break;
-				case '\n':
-					escape = 'n';
-					break;
-				case '\r':
-					escape = 'r';
-					break;
-				case '\t':
-					escape = 't';
-					break;
-				case 0xb:
-					escape = 'v';
-					break; // Java lacks \v.
-				case ' ':
-					escape = ' ';
-					break;
-				case '\\':
-					escape = '\\';
-					break;
-			}
+			int escape = switch (c) {
+				case '\b' -> 'b';
+				case '\f' -> 'f';
+				case '\n' -> 'n';
+				case '\r' -> 'r';
+				case '\t' -> 't';
+				case 0xb -> 'v'; // Java lacks \v.
+				case ' ' -> ' ';
+				case '\\' -> '\\';
+				default -> -1;
+			};
 			if (escape >= 0) {
 				// an \escaped sort of character
 				sb.append('\\');
@@ -856,14 +839,12 @@ public class ScriptRuntime {
 		if (value instanceof Boolean) {
 			return toString(value);
 		}
-		if (value instanceof Scriptable) {
-			Scriptable obj = (Scriptable) value;
+		if (value instanceof Scriptable obj) {
 			// Wrapped Java objects won't have "toSource" and will report
 			// errors for get()s of nonexistent name, so use has() first
 			if (ScriptableObject.hasProperty(obj, "toSource")) {
 				Object v = ScriptableObject.getProperty(obj, "toSource");
-				if (v instanceof Function) {
-					Function f = (Function) v;
+				if (v instanceof Function f) {
 					return toString(f.call(cx, scope, obj, emptyArgs));
 				}
 			}
@@ -1662,43 +1643,12 @@ public class ScriptRuntime {
 		return value;
 	}
 
-	/**
-	 * This is the enumeration needed by the for..in statement.
-	 * <p>
-	 * See ECMA 12.6.3.
-	 * <p>
-	 * IdEnumeration maintains a ObjToIntMap to make sure a given
-	 * id is enumerated only once across multiple objects in a
-	 * prototype chain.
-	 * <p>
-	 * XXX - ECMA delete doesn't hide properties in the prototype,
-	 * but js/ref does. This means that the js/ref for..in can
-	 * avoid maintaining a hash table and instead perform lookups
-	 * to see if a given property has already been enumerated.
-	 */
-	private static class IdEnumeration implements Serializable {
-		private static final long serialVersionUID = 1L;
-		Scriptable obj;
-		Object[] ids;
-		ObjToIntMap used;
-		Object currentId;
-		int index;
-		int enumType; /* one of ENUM_INIT_KEYS, ENUM_INIT_VALUES,
-                         ENUM_INIT_ARRAY, ENUMERATE_VALUES_IN_ORDER */
-
-		// if true, integer ids will be returned as numbers rather than strings
-		boolean enumNumbers;
-
-		Scriptable iterator;
-	}
-
 	public static Scriptable toIterator(Context cx, Scriptable scope, Scriptable obj, boolean keyOnly) {
 		if (ScriptableObject.hasProperty(obj, NativeIterator.ITERATOR_PROPERTY_NAME)) {
 			Object v = ScriptableObject.getProperty(obj, NativeIterator.ITERATOR_PROPERTY_NAME);
-			if (!(v instanceof Callable)) {
+			if (!(v instanceof Callable f)) {
 				throw typeError0("msg.invalid.iterator");
 			}
-			Callable f = (Callable) v;
 			Object[] args = new Object[]{keyOnly ? Boolean.TRUE : Boolean.FALSE};
 			v = f.call(cx, scope, obj, args);
 			if (!(v instanceof Scriptable)) {
@@ -1717,7 +1667,7 @@ public class ScriptRuntime {
 	public static final int ENUMERATE_ARRAY_NO_ITERATOR = 5;
 	public static final int ENUMERATE_VALUES_IN_ORDER = 6;
 
-	public static Object enumInit(Object value, Context cx, Scriptable scope, int enumType) {
+	public static IdEnumeration enumInit(Object value, Context cx, Scriptable scope, int enumType) {
 		IdEnumeration x = new IdEnumeration();
 		x.obj = toObjectOrNull(cx, value, scope);
 		// "for of" loop
@@ -1739,170 +1689,38 @@ public class ScriptRuntime {
 		if (x.iterator == null) {
 			// enumInit should read all initial ids before returning
 			// or "for (a.i in a)" would wrongly enumerate i in a as well
-			enumChangeObject(x);
+			x.changeObject();
 		}
 
 		return x;
 	}
 
-	private static Object enumInitInOrder(Context cx, IdEnumeration x) {
-		if (!(x.obj instanceof SymbolScriptable) || !ScriptableObject.hasProperty(x.obj, SymbolKey.ITERATOR)) {
+	private static IdEnumeration enumInitInOrder(Context cx, IdEnumeration x) {
+		Object iterator = x.obj instanceof SymbolScriptable ? ScriptableObject.getProperty(x.obj, SymbolKey.ITERATOR) : null;
+
+		if (!(iterator instanceof Callable f)) {
+			if (iterator instanceof IdEnumerationIterator) {
+				x.iterator = (IdEnumerationIterator) iterator;
+				return x;
+			}
+
 			throw typeError1("msg.not.iterable", toString(x.obj));
 		}
 
-		Object iterator = ScriptableObject.getProperty(x.obj, SymbolKey.ITERATOR);
-		if (!(iterator instanceof Callable)) {
-			throw typeError1("msg.not.iterable", toString(x.obj));
-		}
-		Callable f = (Callable) iterator;
 		Scriptable scope = x.obj.getParentScope();
-		Object[] args = new Object[]{};
-		Object v = f.call(cx, scope, x.obj, args);
+		Object v = f.call(cx, scope, x.obj, emptyArgs);
+
 		if (!(v instanceof Scriptable)) {
+			if (v instanceof IdEnumerationIterator) {
+				x.iterator = (IdEnumerationIterator) v;
+				return x;
+			}
+
 			throw typeError1("msg.not.iterable", toString(x.obj));
 		}
+
 		x.iterator = (Scriptable) v;
 		return x;
-	}
-
-	public static void setEnumNumbers(Object enumObj, boolean enumNumbers) {
-		((IdEnumeration) enumObj).enumNumbers = enumNumbers;
-	}
-
-	public static Boolean enumNext(Object enumObj) {
-		IdEnumeration x = (IdEnumeration) enumObj;
-		if (x.iterator != null) {
-			if (x.enumType == ENUMERATE_VALUES_IN_ORDER) {
-				return enumNextInOrder(x);
-			}
-			Object v = ScriptableObject.getProperty(x.iterator, "next");
-			if (!(v instanceof Callable)) {
-				return Boolean.FALSE;
-			}
-			Callable f = (Callable) v;
-			Context cx = Context.getContext();
-			try {
-				x.currentId = f.call(cx, x.iterator.getParentScope(), x.iterator, emptyArgs);
-				return Boolean.TRUE;
-			} catch (JavaScriptException e) {
-				if (e.getValue() instanceof NativeIterator.StopIteration) {
-					return Boolean.FALSE;
-				}
-				throw e;
-			}
-		}
-		for (; ; ) {
-			if (x.obj == null) {
-				return Boolean.FALSE;
-			}
-			if (x.index == x.ids.length) {
-				x.obj = x.obj.getPrototype();
-				enumChangeObject(x);
-				continue;
-			}
-			Object id = x.ids[x.index++];
-			if (x.used != null && x.used.has(id)) {
-				continue;
-			}
-			if (id instanceof Symbol) {
-				continue;
-			} else if (id instanceof String) {
-				String strId = (String) id;
-				if (!x.obj.has(strId, x.obj)) {
-					continue;   // must have been deleted
-				}
-				x.currentId = strId;
-			} else {
-				int intId = ((Number) id).intValue();
-				if (!x.obj.has(intId, x.obj)) {
-					continue;   // must have been deleted
-				}
-				x.currentId = x.enumNumbers ? Integer.valueOf(intId) : String.valueOf(intId);
-			}
-			return Boolean.TRUE;
-		}
-	}
-
-	private static Boolean enumNextInOrder(IdEnumeration enumObj) {
-		Object v = ScriptableObject.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
-		if (!(v instanceof Callable)) {
-			throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
-		}
-		Callable f = (Callable) v;
-		Context cx = Context.getContext();
-		Scriptable scope = enumObj.iterator.getParentScope();
-		Object r = f.call(cx, scope, enumObj.iterator, emptyArgs);
-		Scriptable iteratorResult = toObject(cx, scope, r);
-		Object done = ScriptableObject.getProperty(iteratorResult, ES6Iterator.DONE_PROPERTY);
-		if (done != Scriptable.NOT_FOUND && toBoolean(done)) {
-			return Boolean.FALSE;
-		}
-		enumObj.currentId = ScriptableObject.getProperty(iteratorResult, ES6Iterator.VALUE_PROPERTY);
-		return Boolean.TRUE;
-	}
-
-	public static Object enumId(Object enumObj, Context cx) {
-		IdEnumeration x = (IdEnumeration) enumObj;
-		if (x.iterator != null) {
-			return x.currentId;
-		}
-		switch (x.enumType) {
-			case ENUMERATE_KEYS:
-			case ENUMERATE_KEYS_NO_ITERATOR:
-				return x.currentId;
-			case ENUMERATE_VALUES:
-			case ENUMERATE_VALUES_NO_ITERATOR:
-				return enumValue(enumObj, cx);
-			case ENUMERATE_ARRAY:
-			case ENUMERATE_ARRAY_NO_ITERATOR:
-				Object[] elements = {x.currentId, enumValue(enumObj, cx)};
-				return cx.newArray(ScriptableObject.getTopLevelScope(x.obj), elements);
-			default:
-				throw Kit.codeBug();
-		}
-	}
-
-	public static Object enumValue(Object enumObj, Context cx) {
-		IdEnumeration x = (IdEnumeration) enumObj;
-
-		Object result;
-
-		if (isSymbol(x.currentId)) {
-			SymbolScriptable so = ScriptableObject.ensureSymbolScriptable(x.obj);
-			result = so.get((Symbol) x.currentId, x.obj);
-		} else {
-			StringIdOrIndex s = toStringIdOrIndex(cx, x.currentId);
-			if (s.stringId == null) {
-				result = x.obj.get(s.index, x.obj);
-			} else {
-				result = x.obj.get(s.stringId, x.obj);
-			}
-		}
-
-		return result;
-	}
-
-	private static void enumChangeObject(IdEnumeration x) {
-		Object[] ids = null;
-		while (x.obj != null) {
-			ids = x.obj.getIds();
-			if (ids.length != 0) {
-				break;
-			}
-			x.obj = x.obj.getPrototype();
-		}
-		if (x.obj != null && x.ids != null) {
-			Object[] previous = x.ids;
-			int L = previous.length;
-			if (x.used == null) {
-				x.used = new ObjToIntMap(L);
-			}
-			for (int i = 0; i != L; ++i) {
-				x.used.intern(previous[i]);
-			}
-		}
-		x.ids = ids;
-		x.index = 0;
 	}
 
 	/**
@@ -2013,11 +1831,10 @@ public class ScriptRuntime {
 	 * after calling this method.
 	 */
 	public static Callable getValueFunctionAndThis(Object value, Context cx) {
-		if (!(value instanceof Callable)) {
+		if (!(value instanceof Callable f)) {
 			throw notFunctionError(value);
 		}
 
-		Callable f = (Callable) value;
 		Scriptable thisObj = null;
 		if (f instanceof Scriptable) {
 			thisObj = ((Scriptable) f).getParentScope();
@@ -2074,8 +1891,7 @@ public class ScriptRuntime {
 	 * store args.clone(), not args array itself.
 	 */
 	public static Ref callRef(Callable function, Scriptable thisObj, Object[] args, Context cx) {
-		if (function instanceof RefCallable) {
-			RefCallable rfunction = (RefCallable) function;
+		if (function instanceof RefCallable rfunction) {
 			Ref ref = rfunction.refCall(cx, thisObj, args);
 			if (ref == null) {
 				throw new IllegalStateException(rfunction.getClass().getName() + ".refCall() returned null");
@@ -2093,10 +1909,9 @@ public class ScriptRuntime {
 	 * See ECMA 11.2.2
 	 */
 	public static Scriptable newObject(Object fun, Context cx, Scriptable scope, Object[] args) {
-		if (!(fun instanceof Function)) {
+		if (!(fun instanceof Function function)) {
 			throw notFunctionError(fun);
 		}
-		Function function = (Function) fun;
 		return function.construct(cx, scope, args);
 	}
 
@@ -2470,10 +2285,9 @@ public class ScriptRuntime {
 	}
 
 	public static Object toPrimitive(Object val, Class<?> typeHint) {
-		if (!(val instanceof Scriptable)) {
+		if (!(val instanceof Scriptable s)) {
 			return val;
 		}
-		Scriptable s = (Scriptable) val;
 		Object result = s.getDefaultValue(typeHint);
 		if ((result instanceof Scriptable) && !isSymbol(result)) {
 			throw typeError0("msg.bad.default.value");
@@ -2652,8 +2466,7 @@ public class ScriptRuntime {
 	private static boolean eqString(CharSequence x, Object y) {
 		if (y == null || y == Undefined.instance) {
 			return false;
-		} else if (y instanceof CharSequence) {
-			CharSequence c = (CharSequence) y;
+		} else if (y instanceof CharSequence c) {
 			return x.length() == c.length() && x.toString().equals(c.toString());
 		} else if (y instanceof Number) {
 			return toNumber(x.toString()) == ((Number) y).doubleValue();
@@ -3000,20 +2813,17 @@ public class ScriptRuntime {
 			String errorMsg;
 			Throwable javaException = null;
 
-			if (t instanceof EcmaError) {
-				EcmaError ee = (EcmaError) t;
+			if (t instanceof EcmaError ee) {
 				re = ee;
 				type = TopLevel.NativeErrors.valueOf(ee.getName());
 				errorMsg = ee.getErrorMessage();
-			} else if (t instanceof WrappedException) {
-				WrappedException we = (WrappedException) t;
+			} else if (t instanceof WrappedException we) {
 				re = we;
 				javaException = we.getWrappedException();
 				type = TopLevel.NativeErrors.JavaException;
 				errorMsg = javaException.getClass().getName() + ": " + javaException.getMessage();
-			} else if (t instanceof EvaluatorException) {
+			} else if (t instanceof EvaluatorException ee) {
 				// Pure evaluator exception, nor WrappedException instance
-				EvaluatorException ee = (EvaluatorException) t;
 				re = ee;
 				type = TopLevel.NativeErrors.InternalError;
 				errorMsg = ee.getMessage();
@@ -3081,20 +2891,17 @@ public class ScriptRuntime {
 		String errorMsg;
 		Throwable javaException = null;
 
-		if (t instanceof EcmaError) {
-			EcmaError ee = (EcmaError) t;
+		if (t instanceof EcmaError ee) {
 			re = ee;
 			errorName = ee.getName();
 			errorMsg = ee.getErrorMessage();
-		} else if (t instanceof WrappedException) {
-			WrappedException we = (WrappedException) t;
+		} else if (t instanceof WrappedException we) {
 			re = we;
 			javaException = we.getWrappedException();
 			errorName = "JavaException";
 			errorMsg = javaException.getClass().getName() + ": " + javaException.getMessage();
-		} else if (t instanceof EvaluatorException) {
+		} else if (t instanceof EvaluatorException ee) {
 			// Pure evaluator exception, nor WrappedException instance
-			EvaluatorException ee = (EvaluatorException) t;
 			re = ee;
 			errorName = "InternalError";
 			errorMsg = ee.getMessage();
@@ -3614,12 +3421,6 @@ public class ScriptRuntime {
 			return masterScriptUrl + '#' + masterScriptLine + "(eval)";
 		}
 		return masterScriptUrl + '#' + masterScriptLine + "(Function)";
-	}
-
-	static boolean isGeneratedScript(String sourceUrl) {
-		// ALERT: this may clash with a valid URL containing (eval) or
-		// (Function)
-		return sourceUrl.contains("(eval)") || sourceUrl.contains("(Function)");
 	}
 
 	/**

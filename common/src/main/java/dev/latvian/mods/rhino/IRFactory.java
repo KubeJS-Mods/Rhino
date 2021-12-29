@@ -12,6 +12,7 @@ import dev.latvian.mods.rhino.ast.ArrayLiteral;
 import dev.latvian.mods.rhino.ast.Assignment;
 import dev.latvian.mods.rhino.ast.AstNode;
 import dev.latvian.mods.rhino.ast.AstRoot;
+import dev.latvian.mods.rhino.ast.AstSymbol;
 import dev.latvian.mods.rhino.ast.Block;
 import dev.latvian.mods.rhino.ast.BreakStatement;
 import dev.latvian.mods.rhino.ast.CatchClause;
@@ -49,7 +50,6 @@ import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.ast.StringLiteral;
 import dev.latvian.mods.rhino.ast.SwitchCase;
 import dev.latvian.mods.rhino.ast.SwitchStatement;
-import dev.latvian.mods.rhino.ast.Symbol;
 import dev.latvian.mods.rhino.ast.TaggedTemplateLiteral;
 import dev.latvian.mods.rhino.ast.TemplateCharacters;
 import dev.latvian.mods.rhino.ast.TemplateLiteral;
@@ -103,10 +103,6 @@ public final class IRFactory extends Parser {
 		this.inUseStrictDirective = root.isInStrictMode();
 		int sourceStartOffset = decompiler.getCurrentOffset();
 
-		if (Token.printTrees) {
-			System.out.println("IRFactory.transformTree");
-			System.out.println(root.debugPrint());
-		}
 		ScriptNode script = (ScriptNode) transform(root);
 
 		int sourceEndOffset = decompiler.getCurrentOffset();
@@ -125,109 +121,61 @@ public final class IRFactory extends Parser {
 	// IR transformation part of the public AST API - desirable?
 	// Another possibility:  create AstTransformer interface and adapter.
 	public Node transform(AstNode node) {
-		switch (node.getType()) {
-			case Token.ARRAYCOMP:
-				return transformArrayComp((ArrayComprehension) node);
-			case Token.ARRAYLIT:
-				return transformArrayLiteral((ArrayLiteral) node);
-			case Token.BLOCK:
-				return transformBlock(node);
-			case Token.BREAK:
-				return transformBreak((BreakStatement) node);
-			case Token.CALL:
-				return transformFunctionCall((FunctionCall) node);
-			case Token.CONTINUE:
-				return transformContinue((ContinueStatement) node);
-			case Token.DO:
-				return transformDoLoop((DoLoop) node);
-			case Token.EMPTY:
-			case Token.COMMENT:
-				return node;
-			case Token.FOR:
-				if (node instanceof ForInLoop) {
-					return transformForInLoop((ForInLoop) node);
-				}
-				return transformForLoop((ForLoop) node);
-			case Token.FUNCTION:
-				return transformFunction((FunctionNode) node);
-			case Token.GENEXPR:
-				return transformGenExpr((GeneratorExpression) node);
-			case Token.GETELEM:
-				return transformElementGet((ElementGet) node);
-			case Token.GETPROP:
-				return transformPropertyGet((PropertyGet) node);
-			case Token.HOOK:
-				return transformCondExpr((ConditionalExpression) node);
-			case Token.IF:
-				return transformIf((IfStatement) node);
-
-			case Token.TRUE:
-			case Token.FALSE:
-			case Token.THIS:
-			case Token.NULL:
-			case Token.DEBUGGER:
-				return transformLiteral(node);
-
-			case Token.NAME:
-				return transformName((Name) node);
-			case Token.NUMBER:
-				return transformNumber((NumberLiteral) node);
-			case Token.NEW:
-				return transformNewExpr((NewExpression) node);
-			case Token.OBJECTLIT:
-				return transformObjectLiteral((ObjectLiteral) node);
-			case Token.TEMPLATE_LITERAL:
-				return transformTemplateLiteral((TemplateLiteral) node);
-			case Token.TAGGED_TEMPLATE_LITERAL:
-				return transformTemplateLiteralCall((TaggedTemplateLiteral) node);
-			case Token.REGEXP:
-				return transformRegExp((RegExpLiteral) node);
-			case Token.RETURN:
-				return transformReturn((ReturnStatement) node);
-			case Token.SCRIPT:
-				return transformScript((ScriptNode) node);
-			case Token.STRING:
-				return transformString((StringLiteral) node);
-			case Token.SWITCH:
-				return transformSwitch((SwitchStatement) node);
-			case Token.THROW:
-				return transformThrow((ThrowStatement) node);
-			case Token.TRY:
-				return transformTry((TryStatement) node);
-			case Token.WHILE:
-				return transformWhileLoop((WhileLoop) node);
-			case Token.WITH:
-				return transformWith((WithStatement) node);
-			case Token.YIELD:
-			case Token.YIELD_STAR:
-				return transformYield((Yield) node);
-			default:
+		return switch (node.getType()) {
+			case Token.ARRAYCOMP -> transformArrayComp((ArrayComprehension) node);
+			case Token.ARRAYLIT -> transformArrayLiteral((ArrayLiteral) node);
+			case Token.BLOCK -> transformBlock(node);
+			case Token.BREAK -> transformBreak((BreakStatement) node);
+			case Token.CALL -> transformFunctionCall((FunctionCall) node);
+			case Token.CONTINUE -> transformContinue((ContinueStatement) node);
+			case Token.DO -> transformDoLoop((DoLoop) node);
+			case Token.EMPTY, Token.COMMENT -> node;
+			case Token.FOR -> node instanceof ForInLoop ? transformForInLoop((ForInLoop) node) : transformForLoop((ForLoop) node);
+			case Token.FUNCTION -> transformFunction((FunctionNode) node);
+			case Token.GENEXPR -> transformGenExpr((GeneratorExpression) node);
+			case Token.GETELEM -> transformElementGet((ElementGet) node);
+			case Token.GETPROP -> transformPropertyGet((PropertyGet) node);
+			case Token.HOOK -> transformCondExpr((ConditionalExpression) node);
+			case Token.IF -> transformIf((IfStatement) node);
+			case Token.TRUE, Token.FALSE, Token.THIS, Token.NULL -> transformLiteral(node);
+			case Token.NAME -> transformName((Name) node);
+			case Token.NUMBER -> transformNumber((NumberLiteral) node);
+			case Token.NEW -> transformNewExpr((NewExpression) node);
+			case Token.OBJECTLIT -> transformObjectLiteral((ObjectLiteral) node);
+			case Token.TEMPLATE_LITERAL -> transformTemplateLiteral((TemplateLiteral) node);
+			case Token.TAGGED_TEMPLATE_LITERAL -> transformTemplateLiteralCall((TaggedTemplateLiteral) node);
+			case Token.REGEXP -> transformRegExp((RegExpLiteral) node);
+			case Token.RETURN -> transformReturn((ReturnStatement) node);
+			case Token.SCRIPT -> transformScript((ScriptNode) node);
+			case Token.STRING -> transformString((StringLiteral) node);
+			case Token.SWITCH -> transformSwitch((SwitchStatement) node);
+			case Token.THROW -> transformThrow((ThrowStatement) node);
+			case Token.TRY -> transformTry((TryStatement) node);
+			case Token.WHILE -> transformWhileLoop((WhileLoop) node);
+			case Token.WITH -> transformWith((WithStatement) node);
+			case Token.YIELD, Token.YIELD_STAR -> transformYield((Yield) node);
+			default -> {
 				if (node instanceof ExpressionStatement) {
-					return transformExprStmt((ExpressionStatement) node);
+					yield transformExprStmt((ExpressionStatement) node);
+				} else if (node instanceof Assignment) {
+					yield transformAssignment((Assignment) node);
+				} else if (node instanceof UnaryExpression) {
+					yield transformUnary((UnaryExpression) node);
+				} else if (node instanceof InfixExpression) {
+					yield transformInfix((InfixExpression) node);
+				} else if (node instanceof VariableDeclaration) {
+					yield transformVariables((VariableDeclaration) node);
+				} else if (node instanceof ParenthesizedExpression) {
+					yield transformParenExpr((ParenthesizedExpression) node);
+				} else if (node instanceof LabeledStatement) {
+					yield transformLabeledStatement((LabeledStatement) node);
+				} else if (node instanceof LetNode) {
+					yield transformLetNode((LetNode) node);
 				}
-				if (node instanceof Assignment) {
-					return transformAssignment((Assignment) node);
-				}
-				if (node instanceof UnaryExpression) {
-					return transformUnary((UnaryExpression) node);
-				}
-				if (node instanceof InfixExpression) {
-					return transformInfix((InfixExpression) node);
-				}
-				if (node instanceof VariableDeclaration) {
-					return transformVariables((VariableDeclaration) node);
-				}
-				if (node instanceof ParenthesizedExpression) {
-					return transformParenExpr((ParenthesizedExpression) node);
-				}
-				if (node instanceof LabeledStatement) {
-					return transformLabeledStatement((LabeledStatement) node);
-				}
-				if (node instanceof LetNode) {
-					return transformLetNode((LetNode) node);
-				}
+
 				throw new IllegalArgumentException("Can't transform: " + node);
-		}
+			}
+		};
 	}
 
 	private Node transformArrayComp(ArrayComprehension node) {
@@ -256,7 +204,7 @@ public final class IRFactory extends Parser {
 		String arrayName = currentScriptOrFn.getNextTempName();
 		pushScope(scopeNode);
 		try {
-			defineSymbol(Token.LET, arrayName, false);
+			defineSymbol(Token.LET, arrayName);
 			Node block = new Node(Token.BLOCK, lineno);
 			Node newArray = createCallOrNew(Token.NEW, createName("Array"));
 			Node init = new Node(Token.EXPR_VOID, createAssignment(Token.ASSIGN, createName(arrayName), newArray), lineno);
@@ -300,13 +248,13 @@ public final class IRFactory extends Parser {
 				// destructuring assignment
 				decompile(iter);
 				name = currentScriptOrFn.getNextTempName();
-				defineSymbol(Token.LP, name, false);
+				defineSymbol(Token.LP, name);
 				expr = createBinary(Token.COMMA, createAssignment(Token.ASSIGN, iter, createName(name)), expr);
 			}
 			Node init = createName(name);
 			// Define as a let since we want the scope of the variable to
 			// be restricted to the array comprehension
-			defineSymbol(Token.LET, name, false);
+			defineSymbol(Token.LET, name);
 			iterators[i] = init;
 
 			if (acl.isForOf()) {
@@ -693,13 +641,13 @@ public final class IRFactory extends Parser {
 				// destructuring assignment
 				decompile(iter);
 				name = currentScriptOrFn.getNextTempName();
-				defineSymbol(Token.LP, name, false);
+				defineSymbol(Token.LP, name);
 				expr = createBinary(Token.COMMA, createAssignment(Token.ASSIGN, iter, createName(name)), expr);
 			}
 			Node init = createName(name);
 			// Define as a let since we want the scope of the variable to
 			// be restricted to the array comprehension
-			defineSymbol(Token.LET, name, false);
+			defineSymbol(Token.LET, name);
 			iterators[i] = init;
 
 			if (acl.isForOf()) {
@@ -1380,7 +1328,7 @@ public final class IRFactory extends Parser {
 				// function's name to the function value, but only if the
 				// function doesn't already define a formal parameter, var,
 				// or nested function with the same name.
-				fnNode.putSymbol(new Symbol(Token.FUNCTION, name.getIdentifier()));
+				fnNode.putSymbol(new AstSymbol(Token.FUNCTION, name.getIdentifier()));
 				Node setFn = new Node(Token.EXPR_VOID, new Node(Token.SETNAME, Node.newString(Token.BINDNAME, name.getIdentifier()), new Node(Token.THISFN)));
 				statements.addChildrenToFront(setFn);
 			}
@@ -1869,10 +1817,7 @@ public final class IRFactory extends Parser {
 		int childType = child.getType();
 
 		switch (childType) {
-			case Token.NAME:
-			case Token.GETPROP:
-			case Token.GETELEM:
-			case Token.GET_REF: {
+			case Token.NAME, Token.GETPROP, Token.GETELEM, Token.GET_REF -> {
 				Node n = new Node(nodeType, child);
 				int incrDecrMask = 0;
 				if (nodeType == Token.DEC) {
@@ -2126,13 +2071,12 @@ public final class IRFactory extends Parser {
 
 		int nodeType = left.getType();
 		switch (nodeType) {
-			case Token.NAME: {
+			case Token.NAME -> {
 				Node op = new Node(assignOp, left, right);
 				Node lvalueLeft = Node.newString(Token.BINDNAME, left.getString());
 				return new Node(Token.SETNAME, lvalueLeft, op);
 			}
-			case Token.GETPROP:
-			case Token.GETELEM: {
+			case Token.GETPROP, Token.GETELEM -> {
 				Node obj = left.getFirstChild();
 				Node id = left.getLastChild();
 
@@ -2142,7 +2086,7 @@ public final class IRFactory extends Parser {
 				Node op = new Node(assignOp, opLeft, right);
 				return new Node(type, obj, id, op);
 			}
-			case Token.GET_REF: {
+			case Token.GET_REF -> {
 				ref = left.getFirstChild();
 				checkMutableReference(ref);
 				Node opLeft = new Node(Token.USE_STACK);

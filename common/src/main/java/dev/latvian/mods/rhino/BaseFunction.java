@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 /**
  * The base class for Function objects. That is one of two purposes. It is also
  * the prototype for every "function" defined except those that are used
@@ -16,6 +18,7 @@ package dev.latvian.mods.rhino;
  * @author Norris Boyd
  */
 public class BaseFunction extends IdScriptableObject implements Function {
+	@Serial
 	private static final long serialVersionUID = 5311394446546053859L;
 
 	private static final Object FUNCTION_TAG = "Function";
@@ -115,19 +118,19 @@ public class BaseFunction extends IdScriptableObject implements Function {
 			int c;
 			L:
 			switch (s.length()) {
-				case 4:
+				case 4 -> {
 					X = "name";
 					id = Id_name;
-					break L;
-				case 5:
+				}
+				case 5 -> {
 					X = "arity";
 					id = Id_arity;
-					break L;
-				case 6:
+				}
+				case 6 -> {
 					X = "length";
 					id = Id_length;
-					break L;
-				case 9:
+				}
+				case 9 -> {
 					c = s.charAt(0);
 					if (c == 'a') {
 						X = "arguments";
@@ -136,7 +139,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 						X = "prototype";
 						id = Id_prototype;
 					}
-					break L;
+				}
 			}
 			if (X != null && X != s && !X.equals(s)) {
 				id = 0;
@@ -152,59 +155,42 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
 		int attr;
 		switch (id) {
-			case Id_length:
-			case Id_arity:
-			case Id_name:
-				attr = DONTENUM | READONLY | PERMANENT;
-				break;
-			case Id_prototype:
+			case Id_length, Id_arity, Id_name -> attr = DONTENUM | READONLY | PERMANENT;
+			case Id_prototype -> {
 				// some functions such as built-ins don't have a prototype property
 				if (!hasPrototypeProperty()) {
 					return 0;
 				}
 				attr = prototypePropertyAttributes;
-				break;
-			case Id_arguments:
-				attr = argumentsAttributes;
-				break;
-			default:
-				throw new IllegalStateException();
+			}
+			case Id_arguments -> attr = argumentsAttributes;
+			default -> throw new IllegalStateException();
 		}
 		return instanceIdInfo(attr, id);
 	}
 
 	@Override
 	protected String getInstanceIdName(int id) {
-		switch (id) {
-			case Id_length:
-				return "length";
-			case Id_arity:
-				return "arity";
-			case Id_name:
-				return "name";
-			case Id_prototype:
-				return "prototype";
-			case Id_arguments:
-				return "arguments";
-		}
-		return super.getInstanceIdName(id);
+		return switch (id) {
+			case Id_length -> "length";
+			case Id_arity -> "arity";
+			case Id_name -> "name";
+			case Id_prototype -> "prototype";
+			case Id_arguments -> "arguments";
+			default -> super.getInstanceIdName(id);
+		};
 	}
 
 	@Override
 	protected Object getInstanceIdValue(int id) {
-		switch (id) {
-			case Id_length:
-				return ScriptRuntime.wrapInt(getLength());
-			case Id_arity:
-				return ScriptRuntime.wrapInt(getArity());
-			case Id_name:
-				return getFunctionName();
-			case Id_prototype:
-				return getPrototypeProperty();
-			case Id_arguments:
-				return getArguments();
-		}
-		return super.getInstanceIdValue(id);
+		return switch (id) {
+			case Id_length -> ScriptRuntime.wrapInt(getLength());
+			case Id_arity -> ScriptRuntime.wrapInt(getArity());
+			case Id_name -> getFunctionName();
+			case Id_prototype -> getPrototypeProperty();
+			case Id_arguments -> getArguments();
+			default -> super.getInstanceIdValue(id);
+		};
 	}
 
 	@Override
@@ -237,12 +223,14 @@ public class BaseFunction extends IdScriptableObject implements Function {
 	@Override
 	protected void setInstanceIdAttributes(int id, int attr) {
 		switch (id) {
-			case Id_prototype:
+			case Id_prototype -> {
 				prototypePropertyAttributes = attr;
 				return;
-			case Id_arguments:
+			}
+			case Id_arguments -> {
 				argumentsAttributes = attr;
 				return;
+			}
 		}
 		super.setInstanceIdAttributes(id, attr);
 	}
@@ -261,32 +249,31 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		String s;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 1;
 				s = "constructor";
-				break;
-			case Id_toString:
+			}
+			case Id_toString -> {
 				arity = 0;
 				s = "toString";
-				break;
-			case Id_toSource:
+			}
+			case Id_toSource -> {
 				arity = 1;
 				s = "toSource";
-				break;
-			case Id_apply:
+			}
+			case Id_apply -> {
 				arity = 2;
 				s = "apply";
-				break;
-			case Id_call:
+			}
+			case Id_call -> {
 				arity = 1;
 				s = "call";
-				break;
-			case Id_bind:
+			}
+			case Id_bind -> {
 				arity = 1;
 				s = "bind";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(FUNCTION_TAG, id, s, arity);
 	}
@@ -318,17 +305,16 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
 			case Id_toString:
 			case Id_toSource:
-				return "not_supported";
+				return toFunctionString(thisObj);
 
 			case Id_apply:
 			case Id_call:
 				return ScriptRuntime.applyOrCall(id == Id_apply, cx, scope, thisObj, args);
 
 			case Id_bind:
-				if (!(thisObj instanceof Callable)) {
+				if (!(thisObj instanceof Callable targetFunction)) {
 					throw ScriptRuntime.notFunctionError(thisObj);
 				}
-				Callable targetFunction = (Callable) thisObj;
 				int argc = args.length;
 				final Scriptable boundThis;
 				final Object[] boundArgs;
@@ -343,17 +329,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
 				return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
 		}
 		throw new IllegalArgumentException(String.valueOf(id));
-	}
-
-	private static BaseFunction realFunction(Scriptable thisObj, IdFunctionObject f) {
-		Object x = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
-		if (x instanceof Delegator) {
-			x = ((Delegator) x).getDelegee();
-		}
-		if (x instanceof BaseFunction) {
-			return (BaseFunction) x;
-		}
-		throw ScriptRuntime.typeError1("msg.incompat.call", f.getFunctionName());
 	}
 
 	/**
@@ -443,6 +418,22 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
 	public String getFunctionName() {
 		return "";
+	}
+
+	protected String toFunctionString(Scriptable parent) {
+		String s = getFunctionName();
+
+		if (s.isEmpty()) {
+			return parent != null ? parent.getClassName() : "Unknown";
+		}
+
+		return s;
+	}
+
+	@Override
+	public String toString() {
+		String s = getFunctionName();
+		return s.isEmpty() ? "Unknown" : s;
 	}
 
 	protected boolean hasPrototypeProperty() {
@@ -565,7 +556,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 			int c;
 			L:
 			switch (s.length()) {
-				case 4:
+				case 4 -> {
 					c = s.charAt(0);
 					if (c == 'b') {
 						X = "bind";
@@ -574,12 +565,12 @@ public class BaseFunction extends IdScriptableObject implements Function {
 						X = "call";
 						id = Id_call;
 					}
-					break L;
-				case 5:
+				}
+				case 5 -> {
 					X = "apply";
 					id = Id_apply;
-					break L;
-				case 8:
+				}
+				case 8 -> {
 					c = s.charAt(3);
 					if (c == 'o') {
 						X = "toSource";
@@ -588,11 +579,11 @@ public class BaseFunction extends IdScriptableObject implements Function {
 						X = "toString";
 						id = Id_toString;
 					}
-					break L;
-				case 11:
+				}
+				case 11 -> {
 					X = "constructor";
 					id = Id_constructor;
-					break L;
+				}
 			}
 			if (X != null && X != s && !X.equals(s)) {
 				id = 0;

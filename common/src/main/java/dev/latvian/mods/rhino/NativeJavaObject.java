@@ -7,6 +7,7 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.Deletable;
+import dev.latvian.mods.rhino.util.JavaIteratorWrapper;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
@@ -33,6 +35,7 @@ import java.util.Map;
  */
 
 public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, Serializable {
+	@Serial
 	private static final long serialVersionUID = -6948590651130498591L;
 
 	public NativeJavaObject() {
@@ -73,7 +76,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
 	@Override
 	public boolean has(Symbol key, Scriptable start) {
-		return false;
+		return javaObject instanceof Iterable<?> && SymbolKey.ITERATOR.equals(key);
 	}
 
 	@Override
@@ -91,6 +94,10 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
 	@Override
 	public Object get(Symbol key, Scriptable start) {
+		if (javaObject instanceof Iterable<?> && SymbolKey.ITERATOR.equals(key)) {
+			return new JavaIteratorWrapper(((Iterable<?>) javaObject).iterator());
+		}
+
 		// Native Java objects have no Symbol members
 		return Scriptable.NOT_FOUND;
 	}
@@ -227,8 +234,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 				throw Context.reportRuntimeError0("msg.default.value");
 			}
 			Object converterObject = get(converterName, this);
-			if (converterObject instanceof Function) {
-				Function f = (Function) converterObject;
+			if (converterObject instanceof Function f) {
 				value = f.call(Context.getContext(), f.getParentScope(), this, ScriptRuntime.emptyArgs);
 			} else {
 				if (hint == ScriptRuntime.NumberClass && javaObject instanceof Boolean) {
@@ -578,10 +584,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 					double time = ((NativeDate) value).getJSTimeValue();
 					// XXX: This will replace NaN by 0
 					return new Date((long) time);
-				} else if (type.isArray() && value instanceof NativeArray) {
+				} else if (type.isArray() && value instanceof NativeArray array) {
 					// Make a new java array, and coerce the JS array components
 					// to the target (component) type.
-					NativeArray array = (NativeArray) value;
 					long length = array.getLength();
 					Class<?> arrayType = type.getComponentType();
 					Object Result = Array.newInstance(arrayType, (int) length);
@@ -773,6 +778,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 		throw Context.reportRuntimeError2("msg.conversion.not.allowed", String.valueOf(stringValue), JavaMembers.javaSignature(type));
 	}
 
+	@Serial
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.defaultWriteObject();
 
@@ -798,6 +804,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 		}
 	}
 
+	@Serial
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 

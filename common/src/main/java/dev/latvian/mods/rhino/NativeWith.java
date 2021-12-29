@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -15,6 +16,7 @@ import java.io.Serializable;
  * for operations on its parent.
  */
 public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall, Serializable {
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	static void init(Scriptable scope, boolean sealed) {
@@ -187,8 +189,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall,
 	}
 
 	static boolean isWithFunction(Object functionObj) {
-		if (functionObj instanceof IdFunctionObject) {
-			IdFunctionObject f = (IdFunctionObject) functionObj;
+		if (functionObj instanceof IdFunctionObject f) {
 			return f.hasTag(FTAG) && f.methodId() == Id_constructor;
 		}
 		return false;

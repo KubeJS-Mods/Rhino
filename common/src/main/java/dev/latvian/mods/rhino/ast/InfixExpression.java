@@ -152,15 +152,11 @@ public class InfixExpression extends AstNode {
 	@Override
 	public boolean hasSideEffects() {
 		// the null-checks are for malformed expressions in IDE-mode
-		switch (getType()) {
-			case Token.COMMA:
-				return right != null && right.hasSideEffects();
-			case Token.AND:
-			case Token.OR:
-				return left != null && left.hasSideEffects() || (right != null && right.hasSideEffects());
-			default:
-				return super.hasSideEffects();
-		}
+		return switch (getType()) {
+			case Token.COMMA -> right != null && right.hasSideEffects();
+			case Token.AND, Token.OR -> left != null && left.hasSideEffects() || (right != null && right.hasSideEffects());
+			default -> super.hasSideEffects();
+		};
 	}
 
 	/**

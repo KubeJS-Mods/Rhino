@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 
@@ -15,6 +16,7 @@ import java.lang.reflect.Method;
  * ECMA 15.11
  */
 final class NativeError extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = -5338413581437645187L;
 
 	private static final Object ERROR_TAG = "Error";
@@ -111,20 +113,19 @@ final class NativeError extends IdScriptableObject {
 		String s;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 1;
 				s = "constructor";
-				break;
-			case Id_toString:
+			}
+			case Id_toString -> {
 				arity = 0;
 				s = "toString";
-				break;
-			case Id_toSource:
+			}
+			case Id_toSource -> {
 				arity = 0;
 				s = "toSource";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(ERROR_TAG, id, s, arity);
 	}
@@ -328,6 +329,7 @@ final class NativeError extends IdScriptableObject {
 			}
 		}
 
+		@Serial
 		private static final long serialVersionUID = 1907180507775337939L;
 
 		private int stackTraceLimit = DEFAULT_STACK_LIMIT;

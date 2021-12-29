@@ -42,20 +42,18 @@ public class RegExpImpl implements RegExpProxy {
 		data.str = ScriptRuntime.toString(thisObj);
 
 		switch (actionType) {
-			case RA_MATCH: {
+			case RA_MATCH -> {
 				int optarg = Integer.MAX_VALUE;
 				NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
 				Object rval = matchOrReplace(cx, scope, thisObj, args, this, data, re);
 				return data.arrayobj == null ? rval : data.arrayobj;
 			}
-
-			case RA_SEARCH: {
+			case RA_SEARCH -> {
 				int optarg = Integer.MAX_VALUE;
 				NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
 				return matchOrReplace(cx, scope, thisObj, args, this, data, re);
 			}
-
-			case RA_REPLACE: {
+			case RA_REPLACE -> {
 				boolean useRE = args.length > 0 && args[0] instanceof NativeRegExp;
 				NativeRegExp re = null;
 				String search = null;
@@ -112,9 +110,7 @@ public class RegExpImpl implements RegExpProxy {
 				data.charBuf.append(rc.str, rc.index, rc.index + rc.length);
 				return data.charBuf.toString();
 			}
-
-			default:
-				throw Kit.codeBug();
+			default -> throw Kit.codeBug();
 		}
 	}
 
@@ -398,19 +394,14 @@ public class RegExpImpl implements RegExpProxy {
 		}
 
 		skip[0] = 2;
-		switch (dc) {
-			case '$':
-				return new SubString("$");
-			case '&':
-				return res.lastMatch;
-			case '+':
-				return res.lastParen;
-			case '`':
-				return res.leftContext;
-			case '\'':
-				return res.rightContext;
-		}
-		return null;
+		return switch (dc) {
+			case '$' -> new SubString("$");
+			case '&' -> res.lastMatch;
+			case '+' -> res.lastParen;
+			case '`' -> res.leftContext;
+			case '\'' -> res.rightContext;
+			default -> null;
+		};
 	}
 
 	/**

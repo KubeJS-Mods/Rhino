@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.Proxy;
 
@@ -13,6 +14,7 @@ import java.lang.reflect.Proxy;
  * This class implements the Undefined value in JavaScript.
  */
 public class Undefined implements Serializable {
+	@Serial
 	private static final long serialVersionUID = 9195680630202616767L;
 
 	public static final Object instance = new Undefined();
@@ -20,6 +22,7 @@ public class Undefined implements Serializable {
 	private Undefined() {
 	}
 
+	@Serial
 	public Object readResolve() {
 		return instance;
 	}

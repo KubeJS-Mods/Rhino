@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 /**
  * This class implements the "arguments" object.
  * <p>
@@ -15,6 +17,7 @@ package dev.latvian.mods.rhino;
  * @see NativeCall
  */
 final class Arguments extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = 4275508002492040609L;
 
 	private static final String FTAG = "Arguments";
@@ -200,20 +203,12 @@ final class Arguments extends IdScriptableObject {
 			return super.findInstanceIdInfo(s);
 		}
 
-		int attr;
-		switch (id) {
-			case Id_callee:
-				attr = calleeAttr;
-				break;
-			case Id_caller:
-				attr = callerAttr;
-				break;
-			case Id_length:
-				attr = lengthAttr;
-				break;
-			default:
-				throw new IllegalStateException();
-		}
+		int attr = switch (id) {
+			case Id_callee -> calleeAttr;
+			case Id_caller -> callerAttr;
+			case Id_length -> lengthAttr;
+			default -> throw new IllegalStateException();
+		};
 		return instanceIdInfo(attr, id);
 	}
 
@@ -221,15 +216,12 @@ final class Arguments extends IdScriptableObject {
 
 	@Override
 	protected String getInstanceIdName(int id) {
-		switch (id) {
-			case Id_callee:
-				return "callee";
-			case Id_length:
-				return "length";
-			case Id_caller:
-				return "caller";
-		}
-		return null;
+		return switch (id) {
+			case Id_callee -> "callee";
+			case Id_length -> "length";
+			case Id_caller -> "caller";
+			default -> null;
+		};
 	}
 
 	@Override
@@ -258,33 +250,22 @@ final class Arguments extends IdScriptableObject {
 	@Override
 	protected void setInstanceIdValue(int id, Object value) {
 		switch (id) {
-			case Id_callee:
-				calleeObj = value;
-				return;
-			case Id_length:
-				lengthObj = value;
-				return;
-			case Id_caller:
-				callerObj = (value != null) ? value : UniqueTag.NULL_VALUE;
-				return;
+			case Id_callee -> calleeObj = value;
+			case Id_length -> lengthObj = value;
+			case Id_caller -> callerObj = (value != null) ? value : UniqueTag.NULL_VALUE;
+			default -> super.setInstanceIdValue(id, value);
 		}
-		super.setInstanceIdValue(id, value);
+
 	}
 
 	@Override
 	protected void setInstanceIdAttributes(int id, int attr) {
 		switch (id) {
-			case Id_callee:
-				calleeAttr = attr;
-				return;
-			case Id_length:
-				lengthAttr = attr;
-				return;
-			case Id_caller:
-				callerAttr = attr;
-				return;
+			case Id_callee -> calleeAttr = attr;
+			case Id_length -> lengthAttr = attr;
+			case Id_caller -> callerAttr = attr;
+			default -> super.setInstanceIdAttributes(id, attr);
 		}
-		super.setInstanceIdAttributes(id, attr);
 	}
 
 	@Override
@@ -419,6 +400,7 @@ final class Arguments extends IdScriptableObject {
 	}
 
 	private static final BaseFunction iteratorMethod = new BaseFunction() {
+		@Serial
 		private static final long serialVersionUID = 4239122318596177391L;
 
 		@Override
@@ -427,11 +409,12 @@ final class Arguments extends IdScriptableObject {
 			// 9.4.4.6 CreateUnmappedArgumentsObject(argumentsList)
 			//  1. Perform DefinePropertyOrThrow(obj, @@iterator, PropertyDescriptor {[[Value]]:%ArrayProto_values%,
 			//     [[Writable]]: true, [[Enumerable]]: false, [[Configurable]]: true}).
-			return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
+			return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ArrayIteratorType.VALUES);
 		}
 	};
 
 	private static class ThrowTypeError extends BaseFunction {
+		@Serial
 		private static final long serialVersionUID = -744615873947395749L;
 		private final String propertyName;
 

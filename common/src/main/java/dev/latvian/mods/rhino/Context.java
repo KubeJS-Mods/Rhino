@@ -11,8 +11,6 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.ast.AstRoot;
 import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter.ClassFileFormatException;
-import dev.latvian.mods.rhino.debug.DebuggableScript;
-import dev.latvian.mods.rhino.debug.Debugger;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 
 import java.beans.PropertyChangeEvent;
@@ -24,10 +22,8 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This class represents the runtime context of an executing script.
@@ -261,8 +257,8 @@ public class Context {
 	 * @see ContextFactory#call(ContextAction)
 	 */
 	public static Context getCurrentContext() {
-		Object helper = VMBridge.vm.getThreadContextHelper();
-		return VMBridge.vm.getContext(helper);
+		Object helper = VMBridge.getThreadContextHelper();
+		return VMBridge.getContext(helper);
 	}
 
 	/**
@@ -282,8 +278,8 @@ public class Context {
 	}
 
 	static Context enter(Context cx, ContextFactory factory) {
-		Object helper = VMBridge.vm.getThreadContextHelper();
-		Context old = VMBridge.vm.getContext(helper);
+		Object helper = VMBridge.getThreadContextHelper();
+		Context old = VMBridge.getContext(helper);
 		if (old != null) {
 			cx = old;
 		} else {
@@ -301,7 +297,7 @@ public class Context {
 					throw new IllegalStateException("can not use Context instance already associated with some thread");
 				}
 			}
-			VMBridge.vm.setContext(helper, cx);
+			VMBridge.setContext(helper, cx);
 		}
 		++cx.enterCount;
 		return cx;
@@ -320,8 +316,8 @@ public class Context {
 	 * @see ContextFactory#enterContext()
 	 */
 	public static void exit() {
-		Object helper = VMBridge.vm.getThreadContextHelper();
-		Context cx = VMBridge.vm.getContext(helper);
+		Object helper = VMBridge.getThreadContextHelper();
+		Context cx = VMBridge.getContext(helper);
 		if (cx == null) {
 			throw new IllegalStateException("Calling Context.exit without previous Context.enter");
 		}
@@ -329,7 +325,7 @@ public class Context {
 			Kit.codeBug();
 		}
 		if (--cx.enterCount == 0) {
-			VMBridge.vm.setContext(helper, null);
+			VMBridge.setContext(helper, null);
 			cx.factory.onContextReleased(cx);
 		}
 	}
@@ -582,8 +578,7 @@ public class Context {
 			if (l == null) {
 				break;
 			}
-			if (l instanceof PropertyChangeListener) {
-				PropertyChangeListener pcl = (PropertyChangeListener) l;
+			if (l instanceof PropertyChangeListener pcl) {
 				pcl.propertyChange(new PropertyChangeEvent(this, property, oldValue, newValue));
 			}
 		}
@@ -907,7 +902,6 @@ public class Context {
 	 *                       implementations that don't care about security, this value
 	 *                       may be null.
 	 * @return the result of evaluating the string
-	 * @see SecurityController
 	 */
 	public final Object evaluateString(Scriptable scope, String source, String sourceName, int lineno, Object securityDomain) {
 		Script script = compileString(source, sourceName, lineno, securityDomain);
@@ -1418,31 +1412,6 @@ public class Context {
 	}
 
 	/**
-	 * Tell whether debug information is being generated.
-	 *
-	 * @since 1.3
-	 */
-	public final boolean isGeneratingDebug() {
-		return generatingDebug;
-	}
-
-	/**
-	 * Specify whether or not debug information should be generated.
-	 * <p>
-	 * Setting the generation of debug information on will set the
-	 * optimization level to zero.
-	 *
-	 * @since 1.3
-	 */
-	public final void setGeneratingDebug(boolean generatingDebug) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		generatingDebugChanged = true;
-		this.generatingDebug = generatingDebug;
-	}
-
-	/**
 	 * Tell whether source information is being generated.
 	 *
 	 * @since 1.3
@@ -1512,34 +1481,6 @@ public class Context {
 			throw new IllegalArgumentException("Cannot set maximumInterpreterStackDepth to less than 1");
 		}
 		maximumInterpreterStackDepth = max;
-	}
-
-	/**
-	 * Set the security controller for this context.
-	 * <p> SecurityController may only be set if it is currently null
-	 * and {@link SecurityController#hasGlobal()} is <code>false</code>.
-	 * Otherwise a SecurityException is thrown.
-	 *
-	 * @param controller a SecurityController object
-	 * @throws SecurityException if there is already a SecurityController
-	 *                           object for this Context or globally installed.
-	 * @see SecurityController#initGlobal(SecurityController controller)
-	 * @see SecurityController#hasGlobal()
-	 */
-	public final void setSecurityController(SecurityController controller) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		if (controller == null) {
-			throw new IllegalArgumentException();
-		}
-		if (securityController != null) {
-			throw new SecurityException("Can not overwrite existing SecurityController object");
-		}
-		if (SecurityController.hasGlobal()) {
-			throw new SecurityException("Can not overwrite existing global SecurityController object");
-		}
-		securityController = controller;
 	}
 
 	/**
@@ -1680,52 +1621,6 @@ public class Context {
 			wrapFactory = new WrapFactory();
 		}
 		return wrapFactory;
-	}
-
-	/**
-	 * Return the current debugger.
-	 *
-	 * @return the debugger, or null if none is attached.
-	 */
-	public final Debugger getDebugger() {
-		return debugger;
-	}
-
-	/**
-	 * Return the debugger context data associated with current context.
-	 *
-	 * @return the debugger data, or null if debugger is not attached
-	 */
-	public final Object getDebuggerContextData() {
-		return debuggerData;
-	}
-
-	/**
-	 * Set the associated debugger.
-	 *
-	 * @param debugger    the debugger to be used on callbacks from
-	 *                    the engine.
-	 * @param contextData arbitrary object that debugger can use to store
-	 *                    per Context data.
-	 */
-	public final void setDebugger(Debugger debugger, Object contextData) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		this.debugger = debugger;
-		debuggerData = contextData;
-	}
-
-	/**
-	 * Return DebuggableScript instance if any associated with the script.
-	 * If callable supports DebuggableScript implementation, the method
-	 * returns it. Otherwise null is returned.
-	 */
-	public static DebuggableScript getDebuggableView(Script script) {
-		if (script instanceof NativeFunction) {
-			return ((NativeFunction) script).getDebuggableView();
-		}
-		return null;
 	}
 
 	/**
@@ -1905,7 +1800,7 @@ public class Context {
 		if (sourceName == null) {
 			sourceName = "unnamed script";
 		}
-		if (securityDomain != null && getSecurityController() == null) {
+		if (securityDomain != null) {
 			throw new IllegalArgumentException("securityDomain should be null if setSecurityController() was never called");
 		}
 
@@ -1939,18 +1834,6 @@ public class Context {
 			bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
 		}
 
-		if (debugger != null) {
-			if (sourceString == null) {
-				Kit.codeBug();
-			}
-			if (bytecode instanceof DebuggableScript) {
-				DebuggableScript dscript = (DebuggableScript) bytecode;
-				notifyDebugger_r(this, dscript, sourceString);
-			} else {
-				throw new RuntimeException("NOT SUPPORTED");
-			}
-		}
-
 		Object result;
 		if (returnFunction) {
 			result = compiler.createFunctionObject(this, scope, bytecode, securityDomain);
@@ -1981,16 +1864,7 @@ public class Context {
 			}
 		}
 
-		IRFactory irf = new IRFactory(compilerEnv, compilationErrorReporter);
-		ScriptNode tree = irf.transformTree(ast);
-		return tree;
-	}
-
-	private static void notifyDebugger_r(Context cx, DebuggableScript dscript, String debugSource) {
-		cx.debugger.handleCompilationDone(cx, dscript, debugSource);
-		for (int i = 0; i != dscript.getFunctionCount(); ++i) {
-			notifyDebugger_r(cx, dscript.getFunction(i), debugSource);
-		}
+		return new IRFactory(compilerEnv, compilationErrorReporter).transformTree(ast);
 	}
 
 	private Evaluator createCompiler() {
@@ -2041,61 +1915,6 @@ public class Context {
 		return regExpProxy;
 	}
 
-	// The method must NOT be public or protected
-	SecurityController getSecurityController() {
-		SecurityController global = SecurityController.global();
-		if (global != null) {
-			return global;
-		}
-		return securityController;
-	}
-
-	public final boolean isGeneratingDebugChanged() {
-		return generatingDebugChanged;
-	}
-
-	/**
-	 * Add a name to the list of names forcing the creation of real
-	 * activation objects for functions.
-	 *
-	 * @param name the name of the object to add to the list
-	 */
-	public void addActivationName(String name) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		if (activationNames == null) {
-			activationNames = new HashSet<>();
-		}
-		activationNames.add(name);
-	}
-
-	/**
-	 * Check whether the name is in the list of names of objects
-	 * forcing the creation of activation objects.
-	 *
-	 * @param name the name of the object to test
-	 * @return true if an function activation object is needed.
-	 */
-	public final boolean isActivationNeeded(String name) {
-		return activationNames != null && activationNames.contains(name);
-	}
-
-	/**
-	 * Remove a name from the list of names forcing the creation of real
-	 * activation objects for functions.
-	 *
-	 * @param name the name of the object to remove from the list
-	 */
-	public void removeActivationName(String name) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		if (activationNames != null) {
-			activationNames.remove(name);
-		}
-	}
-
 	public final boolean isStrictMode() {
 		return isTopLevelStrict || (currentActivationCall != null && currentActivationCall.isStrict);
 	}
@@ -2126,32 +1945,19 @@ public class Context {
 	// Use ObjToIntMap instead of java.util.HashSet for JDK 1.1 compatibility
 	ObjToIntMap iterating;
 
-	Object interpreterSecurityDomain;
-
-	private SecurityController securityController;
 	private boolean hasClassShutter;
 	private ClassShutter classShutter;
 	private ErrorReporter errorReporter;
 	RegExpProxy regExpProxy;
 	private Locale locale;
-	private boolean generatingDebug;
-	private boolean generatingDebugChanged;
 	private boolean generatingSource = true;
 	boolean useDynamicScope;
 	private int maximumInterpreterStackDepth;
 	private WrapFactory wrapFactory;
-	Debugger debugger;
-	private Object debuggerData;
 	private int enterCount;
 	private Object propertyListeners;
 	private Map<Object, Object> threadLocalMap;
 	private ClassLoader applicationClassLoader;
-
-	/**
-	 * This is the list of names of objects forcing the creation of
-	 * function activation records.
-	 */
-	Set<String> activationNames;
 
 	// For the interpreter to store the last frame for error reports etc.
 	Object lastInterpreterFrame;

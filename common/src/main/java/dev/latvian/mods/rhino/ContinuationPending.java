@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 /**
  * Exception thrown by
  * {@link Context#executeScriptWithContinuations(Script, Scriptable)}
@@ -18,6 +20,7 @@ package dev.latvian.mods.rhino;
  * @author Norris Boyd
  */
 public class ContinuationPending extends RuntimeException {
+	@Serial
 	private static final long serialVersionUID = 4956008116771118856L;
 	private NativeContinuation continuationState;
 	private Object applicationState;

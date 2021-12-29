@@ -27,10 +27,9 @@ final class FieldOrMethodRef {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof FieldOrMethodRef)) {
+		if (!(obj instanceof FieldOrMethodRef x)) {
 			return false;
 		}
-		FieldOrMethodRef x = (FieldOrMethodRef) obj;
 		return className.equals(x.className) && name.equals(x.name) && type.equals(x.type);
 	}
 

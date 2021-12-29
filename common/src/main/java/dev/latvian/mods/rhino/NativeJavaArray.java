@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.lang.reflect.Array;
 
 /**
@@ -18,6 +19,7 @@ import java.lang.reflect.Array;
  */
 
 public class NativeJavaArray extends NativeJavaObject implements SymbolScriptable {
+	@Serial
 	private static final long serialVersionUID = -924022554283675333L;
 
 	@Override
@@ -57,7 +59,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 
 	@Override
 	public boolean has(Symbol key, Scriptable start) {
-		return SymbolKey.IS_CONCAT_SPREADABLE.equals(key);
+		return SymbolKey.IS_CONCAT_SPREADABLE.equals(key) || super.has(key, start);
 	}
 
 	@Override
@@ -87,7 +89,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 		if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key)) {
 			return Boolean.TRUE;
 		}
-		return NOT_FOUND;
+		return super.get(key, start);
 	}
 
 	@Override

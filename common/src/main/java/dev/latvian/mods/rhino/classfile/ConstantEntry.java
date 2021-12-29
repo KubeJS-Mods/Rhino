@@ -29,27 +29,18 @@ final class ConstantEntry {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof ConstantEntry)) {
+		if (!(obj instanceof ConstantEntry entry)) {
 			return false;
 		}
-		ConstantEntry entry = (ConstantEntry) obj;
 		if (type != entry.type) {
 			return false;
 		}
-		switch (type) {
-			case ConstantPool.CONSTANT_Integer:
-			case ConstantPool.CONSTANT_Float:
-				return intval == entry.intval;
-			case ConstantPool.CONSTANT_Long:
-			case ConstantPool.CONSTANT_Double:
-				return longval == entry.longval;
-			case ConstantPool.CONSTANT_NameAndType:
-				return str1.equals(entry.str1) && str2.equals(entry.str2);
-			case ConstantPool.CONSTANT_InvokeDynamic:
-				return intval == entry.intval && str1.equals(entry.str1) && str2.equals(entry.str2);
-			default:
-				throw new RuntimeException("unsupported constant type");
-
-		}
+		return switch (type) {
+			case ConstantPool.CONSTANT_Integer, ConstantPool.CONSTANT_Float -> intval == entry.intval;
+			case ConstantPool.CONSTANT_Long, ConstantPool.CONSTANT_Double -> longval == entry.longval;
+			case ConstantPool.CONSTANT_NameAndType -> str1.equals(entry.str1) && str2.equals(entry.str2);
+			case ConstantPool.CONSTANT_InvokeDynamic -> intval == entry.intval && str1.equals(entry.str1) && str2.equals(entry.str2);
+			default -> throw new RuntimeException("unsupported constant type");
+		};
 	}
 }

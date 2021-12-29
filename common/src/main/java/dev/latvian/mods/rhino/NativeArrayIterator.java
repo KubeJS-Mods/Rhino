@@ -6,15 +6,18 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 public final class NativeArrayIterator extends ES6Iterator {
-	public enum ARRAY_ITERATOR_TYPE {
+	public enum ArrayIteratorType {
 		ENTRIES, KEYS, VALUES
 	}
 
+	@Serial
 	private static final long serialVersionUID = 1L;
 	private static final String ITERATOR_TAG = "ArrayIterator";
 
-	private ARRAY_ITERATOR_TYPE type;
+	private ArrayIteratorType type;
 
 	static void init(ScriptableObject scope, boolean sealed) {
 		init(scope, sealed, new NativeArrayIterator(), ITERATOR_TAG);
@@ -27,7 +30,7 @@ public final class NativeArrayIterator extends ES6Iterator {
 		super();
 	}
 
-	public NativeArrayIterator(Scriptable scope, Scriptable arrayLike, ARRAY_ITERATOR_TYPE type) {
+	public NativeArrayIterator(Scriptable scope, Scriptable arrayLike, ArrayIteratorType type) {
 		super(scope, ITERATOR_TAG);
 		this.index = 0;
 		this.arrayLike = arrayLike;
@@ -46,7 +49,7 @@ public final class NativeArrayIterator extends ES6Iterator {
 
 	@Override
 	protected Object nextValue(Context cx, Scriptable scope) {
-		if (type == ARRAY_ITERATOR_TYPE.KEYS) {
+		if (type == ArrayIteratorType.KEYS) {
 			return index++;
 		}
 
@@ -55,7 +58,7 @@ public final class NativeArrayIterator extends ES6Iterator {
 			value = Undefined.instance;
 		}
 
-		if (type == ARRAY_ITERATOR_TYPE.ENTRIES) {
+		if (type == ArrayIteratorType.ENTRIES) {
 			value = cx.newArray(scope, new Object[]{index, value});
 		}
 

@@ -9,6 +9,7 @@ package dev.latvian.mods.rhino;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -21,6 +22,7 @@ import java.io.Serializable;
  */
 @SuppressWarnings("unused")
 public class ObjToIntMap implements Serializable {
+	@Serial
 	private static final long serialVersionUID = -1542220580748809402L;
 
 	// Map implementation via hashtable,
@@ -419,6 +421,7 @@ public class ObjToIntMap implements Serializable {
 		return index;
 	}
 
+	@Serial
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.defaultWriteObject();
 
@@ -433,6 +436,7 @@ public class ObjToIntMap implements Serializable {
 		}
 	}
 
+	@Serial
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 

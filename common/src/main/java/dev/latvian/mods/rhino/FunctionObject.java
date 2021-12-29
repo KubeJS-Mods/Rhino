@@ -10,12 +10,14 @@ package dev.latvian.mods.rhino;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serial;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public class FunctionObject extends BaseFunction {
+	@Serial
 	private static final long serialVersionUID = -5332312783643935019L;
 
 	/**
@@ -458,6 +460,7 @@ public class FunctionObject extends BaseFunction {
 		return parmsLength == VARARGS_CTOR;
 	}
 
+	@Serial
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 		if (parmsLength > 0) {

@@ -6,7 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.debug.DebuggableScript;
+import java.io.Serial;
 
 /**
  * This class implements the Function native object.
@@ -16,6 +16,7 @@ import dev.latvian.mods.rhino.debug.DebuggableScript;
  */
 public abstract class NativeFunction extends BaseFunction {
 
+	@Serial
 	private static final long serialVersionUID = 8713897114082216401L;
 
 	public final void initScriptFunction(Context cx, Scriptable scope) {
@@ -40,10 +41,6 @@ public abstract class NativeFunction extends BaseFunction {
 	 * Get encoded source string.
 	 */
 	public String getEncodedSource() {
-		return null;
-	}
-
-	public DebuggableScript getDebuggableView() {
 		return null;
 	}
 

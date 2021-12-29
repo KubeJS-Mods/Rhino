@@ -10,6 +10,7 @@ import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.Scriptable;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,34 +55,16 @@ public class JsonParser {
 		consumeWhitespace();
 		while (pos < length) {
 			char c = src.charAt(pos++);
-			switch (c) {
-				case '{':
-					return readObject();
-				case '[':
-					return readArray();
-				case 't':
-					return readTrue();
-				case 'f':
-					return readFalse();
-				case '"':
-					return readString();
-				case 'n':
-					return readNull();
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-				case '0':
-				case '-':
-					return readNumber(c);
-				default:
-					throw new ParseException("Unexpected token: " + c);
-			}
+			return switch (c) {
+				case '{' -> readObject();
+				case '[' -> readArray();
+				case 't' -> readTrue();
+				case 'f' -> readFalse();
+				case '"' -> readString();
+				case 'n' -> readNull();
+				case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-' -> readNumber(c);
+				default -> throw new ParseException("Unexpected token: " + c);
+			};
 		}
 		throw new ParseException("Empty JSON string");
 	}
@@ -100,36 +83,34 @@ public class JsonParser {
 		while (pos < length) {
 			char c = src.charAt(pos++);
 			switch (c) {
-				case '}':
+				case '}' -> {
 					if (!needsComma) {
 						throw new ParseException("Unexpected comma in object literal");
 					}
 					return object;
-				case ',':
+				}
+				case ',' -> {
 					if (!needsComma) {
 						throw new ParseException("Unexpected comma in object literal");
 					}
 					needsComma = false;
-					break;
-				case '"':
+				}
+				case '"' -> {
 					if (needsComma) {
 						throw new ParseException("Missing comma in object literal");
 					}
 					id = readString();
 					consume(':');
 					value = readValue();
-
 					long index = ScriptRuntime.indexFromString(id);
 					if (index < 0) {
 						object.put(id, object, value);
 					} else {
 						object.put((int) index, object, value);
 					}
-
 					needsComma = true;
-					break;
-				default:
-					throw new ParseException("Unexpected token in object literal");
+				}
+				default -> throw new ParseException("Unexpected token in object literal");
 			}
 			consumeWhitespace();
 		}
@@ -148,25 +129,27 @@ public class JsonParser {
 		while (pos < length) {
 			char c = src.charAt(pos);
 			switch (c) {
-				case ']':
+				case ']' -> {
 					if (!needsComma) {
 						throw new ParseException("Unexpected comma in array literal");
 					}
 					pos += 1;
 					return cx.newArray(scope, list.toArray());
-				case ',':
+				}
+				case ',' -> {
 					if (!needsComma) {
 						throw new ParseException("Unexpected comma in array literal");
 					}
 					needsComma = false;
 					pos += 1;
-					break;
-				default:
+				}
+				default -> {
 					if (needsComma) {
 						throw new ParseException("Missing comma in array literal");
 					}
 					list.add(readValue());
 					needsComma = true;
+				}
 			}
 			consumeWhitespace();
 		}
@@ -204,31 +187,15 @@ public class JsonParser {
 			}
 			char c = src.charAt(pos++);
 			switch (c) {
-				case '"':
-					b.append('"');
-					break;
-				case '\\':
-					b.append('\\');
-					break;
-				case '/':
-					b.append('/');
-					break;
-				case 'b':
-					b.append('\b');
-					break;
-				case 'f':
-					b.append('\f');
-					break;
-				case 'n':
-					b.append('\n');
-					break;
-				case 'r':
-					b.append('\r');
-					break;
-				case 't':
-					b.append('\t');
-					break;
-				case 'u':
+				case '"' -> b.append('"');
+				case '\\' -> b.append('\\');
+				case '/' -> b.append('/');
+				case 'b' -> b.append('\b');
+				case 'f' -> b.append('\f');
+				case 'n' -> b.append('\n');
+				case 'r' -> b.append('\r');
+				case 't' -> b.append('\t');
+				case 'u' -> {
 					if (length - pos < 5) {
 						throw new ParseException("Invalid character code: \\u" + src.substring(pos));
 					}
@@ -238,9 +205,8 @@ public class JsonParser {
 					}
 					pos += 4;
 					b.append((char) code);
-					break;
-				default:
-					throw new ParseException("Unexpected character in string: '\\" + c + "'");
+				}
+				default -> throw new ParseException("Unexpected character in string: '\\" + c + "'");
 			}
 			stringStart = pos;
 			while (pos < length) {
@@ -381,6 +347,7 @@ public class JsonParser {
 
 	public static class ParseException extends Exception {
 
+		@Serial
 		private static final long serialVersionUID = 4804542791749920772L;
 
 		ParseException(String message) {

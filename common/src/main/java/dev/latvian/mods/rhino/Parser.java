@@ -12,6 +12,7 @@ import dev.latvian.mods.rhino.ast.ArrayLiteral;
 import dev.latvian.mods.rhino.ast.Assignment;
 import dev.latvian.mods.rhino.ast.AstNode;
 import dev.latvian.mods.rhino.ast.AstRoot;
+import dev.latvian.mods.rhino.ast.AstSymbol;
 import dev.latvian.mods.rhino.ast.Block;
 import dev.latvian.mods.rhino.ast.BreakStatement;
 import dev.latvian.mods.rhino.ast.CatchClause;
@@ -54,7 +55,6 @@ import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.ast.StringLiteral;
 import dev.latvian.mods.rhino.ast.SwitchCase;
 import dev.latvian.mods.rhino.ast.SwitchStatement;
-import dev.latvian.mods.rhino.ast.Symbol;
 import dev.latvian.mods.rhino.ast.TaggedTemplateLiteral;
 import dev.latvian.mods.rhino.ast.TemplateCharacters;
 import dev.latvian.mods.rhino.ast.TemplateLiteral;
@@ -68,6 +68,7 @@ import dev.latvian.mods.rhino.ast.WithStatement;
 import dev.latvian.mods.rhino.ast.Yield;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -110,7 +111,6 @@ public class Parser {
 	private final ErrorReporter errorReporter;
 	private IdeErrorReporter errorCollector;
 	private String sourceURI;
-	private char[] sourceChars;
 
 	boolean calledByCompileFunction;  // ugly - set directly by Context
 	private boolean parseFinished;  // set when finished to prevent reuse
@@ -150,6 +150,7 @@ public class Parser {
 
 	// Exception to unwind
 	private static class ParserException extends RuntimeException {
+		@Serial
 		private static final long serialVersionUID = 5882582646773765630L;
 	}
 
@@ -296,10 +297,7 @@ public class Parser {
 
 	void reportError(String messageId, String messageArg, int position, int length) {
 		addError(messageId, messageArg, position, length);
-
-		if (!compilerEnv.recoverFromErrors()) {
-			throw new ParserException();
-		}
+		throw new ParserException();
 	}
 
 	// Computes the absolute end offset of node N.
@@ -314,11 +312,6 @@ public class Parser {
 			scannedComments = new ArrayList<>();
 		}
 		Comment commentNode = new Comment(ts.tokenBeg, ts.getTokenLength(), ts.commentType, comment);
-		if (ts.commentType == Token.CommentType.JSDOC && compilerEnv.isRecordingLocalJsDocComments()) {
-			Comment jsDocCommentNode = new Comment(ts.tokenBeg, ts.getTokenLength(), ts.commentType, comment);
-			currentJsDocComment = jsDocCommentNode;
-			currentJsDocComment.setLineno(lineno);
-		}
 		commentNode.setLineno(lineno);
 		scannedComments.add(commentNode);
 	}
@@ -363,11 +356,6 @@ public class Parser {
 				sawEOL = true;
 				tt = ts.getToken();
 			} else {
-				if (compilerEnv.isRecordingComments()) {
-					String comment = ts.getAndResetCurrentComment();
-					recordComment(lineno, comment);
-					break;
-				}
 				tt = ts.getToken();
 			}
 		}
@@ -511,9 +499,6 @@ public class Parser {
 			throw new IllegalStateException("parser reused");
 		}
 		this.sourceURI = sourceURI;
-		if (compilerEnv.isIdeMode()) {
-			this.sourceChars = sourceString.toCharArray();
-		}
 		this.ts = new TokenStream(this, null, sourceString, lineno);
 		try {
 			return parse();
@@ -577,9 +562,7 @@ public class Parser {
 			}
 		} catch (StackOverflowError ex) {
 			String msg = lookupMessage("msg.too.deep.parser.recursion");
-			if (!compilerEnv.isIdeMode()) {
-				throw Context.reportRuntimeError(msg, sourceURI, ts.lineno, null, 0);
-			}
+			throw Context.reportRuntimeError(msg, sourceURI, ts.lineno, null, 0);
 		} finally {
 			inUseStrictDirective = savedStrictMode;
 		}
@@ -587,9 +570,7 @@ public class Parser {
 		if (this.syntaxErrorCount != 0) {
 			String msg = String.valueOf(this.syntaxErrorCount);
 			msg = lookupMessage("msg.got.syntax.errors", msg);
-			if (!compilerEnv.isIdeMode()) {
-				throw errorReporter.runtimeError(msg, sourceURI, baseLineno, null, 0);
-			}
+			throw errorReporter.runtimeError(msg, sourceURI, baseLineno, null, 0);
 		}
 
 		// add comments to root in lexical order
@@ -722,7 +703,7 @@ public class Parser {
 					destructuring = new HashMap<>();
 				}
 				String pname = currentScriptOrFn.getNextTempName();
-				defineSymbol(Token.LP, pname, false);
+				defineSymbol(Token.LP, pname);
 				destructuring.put(pname, expr);
 			} else {
 				if (mustMatchToken(Token.NAME, "msg.no.parm", true)) {
@@ -861,14 +842,7 @@ public class Parser {
 		fnNode.setSourceName(sourceURI);
 		fnNode.setBaseLineno(baseLineno);
 		fnNode.setEndLineno(ts.lineno);
-
-		// Set the parent scope.  Needed for finding undeclared vars.
-		// Have to wait until after parsing the function to set its parent
-		// scope, since defineSymbol needs the defining-scope check to stop
-		// at the function boundary when checking for redeclarations.
-		if (compilerEnv.isIdeMode()) {
-			fnNode.setParentScope(currentScope);
-		}
+		// fnNode.setParentScope(currentScope); // TODO: Check if this is required
 		return fnNode;
 	}
 
@@ -932,7 +906,7 @@ public class Parser {
 			markDestructuring(params);
 			fnNode.addParam(params);
 			String pname = currentScriptOrFn.getNextTempName();
-			defineSymbol(Token.LP, pname, false);
+			defineSymbol(Token.LP, pname);
 			destructuring.put(pname, params);
 		} else if (params instanceof InfixExpression && params.getType() == Token.COMMA) {
 			arrowFunctionParams(fnNode, ((InfixExpression) params).getLeft(), destructuring, paramNames);
@@ -966,8 +940,8 @@ public class Parser {
 	// node are given relative start positions and correct lengths.
 
 	private AstNode statements(AstNode parent) throws IOException {
-		if (currentToken != Token.LC  // assertion can be invalid in bad code
-				&& !compilerEnv.isIdeMode()) {
+		// assertion can be invalid in bad code
+		if (currentToken != Token.LC) {
 			codeBug();
 		}
 		int pos = ts.tokenBeg;
@@ -1021,7 +995,6 @@ public class Parser {
 			if (pn != null) {
 				if (compilerEnv.isStrictMode() && !pn.hasSideEffects()) {
 					int beg = pn.getPosition();
-					beg = Math.max(beg, lineBeginningFor(beg));
 					addStrictWarning(pn instanceof EmptyStatement ? "msg.extra.trailing.semi" : "msg.no.side.effects", "", beg, nodeEnd(pn) - beg);
 				}
 				int ntt = peekToken();
@@ -1118,12 +1091,6 @@ public class Parser {
 			case Token.RETURN:
 			case Token.YIELD:
 				pn = returnOrYield(tt, false);
-				break;
-
-			case Token.DEBUGGER:
-				consumeToken();
-				pn = new KeywordLiteral(ts.tokenBeg, ts.tokenEnd - ts.tokenBeg, tt);
-				pn.setLineno(ts.lineno);
 				break;
 
 			case Token.LC:
@@ -1391,10 +1358,10 @@ public class Parser {
 		int forPos = ts.tokenBeg, lineno = ts.lineno;
 		boolean isForEach = false, isForIn = false, isForOf = false;
 		int eachPos = -1, inPos = -1, lp = -1, rp = -1;
-		AstNode init = null;  // init is also foo in 'foo in object'
-		AstNode cond = null;  // cond is also object in 'foo in object'
+		AstNode init;  // init is also foo in 'foo in object'
+		AstNode cond;  // cond is also object in 'foo in object'
 		AstNode incr = null;
-		Loop pn = null;
+		Loop pn;
 
 		Scope tempScope = new Scope();
 		pushScope(tempScope);  // decide below what AST class to use
@@ -1502,21 +1469,49 @@ public class Parser {
 	private AstNode forLoopInit(int tt) throws IOException {
 		try {
 			inForInit = true;  // checked by variables() and relExpr()
-			AstNode init = null;
+			AstNode init;
 			if (tt == Token.SEMI) {
 				init = new EmptyExpression(ts.tokenBeg, 1);
 				init.setLineno(ts.lineno);
-			} else if (tt == Token.VAR || tt == Token.LET) {
+			} else if (tt == Token.VAR || tt == Token.LET || tt == Token.CONST) {
 				consumeToken();
-				init = variables(tt, ts.tokenBeg, false);
+				init = variables(Token.LET, ts.tokenBeg, false);
 			} else {
 				init = expr();
+
+				if (init instanceof Name) {
+					return nameToVariableDeclaration((Name) init, ts.tokenBeg, false);
+				}
+
 				markDestructuring(init);
 			}
+
 			return init;
 		} finally {
 			inForInit = false;
 		}
+	}
+
+	private AstNode nameToVariableDeclaration(Name name, int pos, boolean isStatement) throws IOException {
+		/*
+		int end = ts.tokenEnd;
+		VariableDeclaration pn = new VariableDeclaration(pos);
+		pn.setType(Token.LET);
+		pn.setLineno(ts.lineno);
+		int lineno = ts.lineno;
+
+		VariableInitializer vi = new VariableInitializer(pos, end - pos);
+		vi.setTarget(name);
+		vi.setType(Token.LET);
+		vi.setLineno(lineno);
+		pn.addVariable(vi);
+		pn.setLength(end - pos);
+		pn.setIsStatement(isStatement);
+		return pn;
+		 */
+
+		markDestructuring(name);
+		return name;
 	}
 
 	private TryStatement tryStatement() throws IOException {
@@ -1909,10 +1904,6 @@ public class Parser {
 		} else {
 			LabeledStatement ls = labelSet.get(name);
 			if (ls != null) {
-				if (compilerEnv.isIdeMode()) {
-					Label dup = ls.getLabelByName(name);
-					reportError("msg.dup.label", dup.getAbsolutePosition(), dup.getLength());
-				}
 				reportError("msg.dup.label", label.getPosition(), label.getLength());
 			}
 		}
@@ -2116,31 +2107,50 @@ public class Parser {
 	}
 
 	void defineSymbol(int declType, String name, boolean ignoreNotInBlock) {
+		// help me :(
+
 		if (name == null) {
-			if (compilerEnv.isIdeMode()) {  // be robust in IDE-mode
-				return;
-			}
 			codeBug();
 		}
+
 		Scope definingScope = currentScope.getDefiningScope(name);
-		dev.latvian.mods.rhino.ast.Symbol symbol = definingScope != null ? definingScope.getSymbol(name) : null;
+		AstSymbol symbol = definingScope != null ? definingScope.getSymbol(name) : null;
+
+		if (symbol != null && definingScope == currentScope) {
+			addError(switch (symbol.getDeclType()) {
+				case Token.LET -> "msg.let.redecl";
+				case Token.VAR -> "msg.var.redecl";
+				case Token.CONST -> "msg.const.redecl";
+				case Token.FUNCTION -> "msg.fn.redecl";
+				default -> "msg.parm.redecl";
+			}, name);
+
+			return;
+		}
+
+		/*
 		int symDeclType = symbol != null ? symbol.getDeclType() : -1;
 		if (symbol != null && (symDeclType == Token.CONST || declType == Token.CONST || (definingScope == currentScope && symDeclType == Token.LET))) {
 			addError(symDeclType == Token.CONST ? "msg.const.redecl" : symDeclType == Token.LET ? "msg.let.redecl" : symDeclType == Token.VAR ? "msg.var.redecl" : symDeclType == Token.FUNCTION ? "msg.fn.redecl" : "msg.parm.redecl", name);
 			return;
 		}
+		 */
+
 		switch (declType) {
-			case Token.LET:
+			case Token.LET, Token.VAR, Token.CONST, Token.FUNCTION, Token.LP -> currentScope.putSymbol(new AstSymbol(declType, name));
+			default -> throw Kit.codeBug();
+		}
+
+		/*
+		switch (declType) {
+			case Token.LET -> {
 				if (!ignoreNotInBlock && ((currentScope.getType() == Token.IF) || currentScope instanceof Loop)) {
 					addError("msg.let.decl.not.in.block");
 					return;
 				}
-				currentScope.putSymbol(new dev.latvian.mods.rhino.ast.Symbol(declType, name));
-				return;
-
-			case Token.VAR:
-			case Token.CONST:
-			case Token.FUNCTION:
+				currentScope.putSymbol(new Symbol(declType, name));
+			}
+			case Token.VAR, Token.CONST, Token.FUNCTION -> {
 				if (symbol != null) {
 					if (symDeclType == Token.VAR) {
 						addStrictWarning("msg.var.redecl", name);
@@ -2148,22 +2158,20 @@ public class Parser {
 						addStrictWarning("msg.var.hides.arg", name);
 					}
 				} else {
-					currentScriptOrFn.putSymbol(new dev.latvian.mods.rhino.ast.Symbol(declType, name));
+					currentScriptOrFn.putSymbol(new Symbol(declType, name));
 				}
-				return;
-
-			case Token.LP:
+			}
+			case Token.LP -> {
 				if (symbol != null) {
 					// must be duplicate parameter. Second parameter hides the
 					// first, so go ahead and add the second parameter
 					addWarning("msg.dup.parms", name);
 				}
 				currentScriptOrFn.putSymbol(new Symbol(declType, name));
-				return;
-
-			default:
-				throw codeBug();
+			}
+			default -> throw codeBug();
 		}
+		 */
 	}
 
 	private AstNode expr() throws IOException {
@@ -2313,13 +2321,11 @@ public class Parser {
 		for (; ; ) {
 			int tt = peekToken(), opPos = ts.tokenBeg;
 			switch (tt) {
-				case Token.EQ:
-				case Token.NE:
-				case Token.SHEQ:
-				case Token.SHNE:
+				case Token.EQ, Token.NE, Token.SHEQ, Token.SHNE -> {
 					consumeToken();
 					pn = new InfixExpression(tt, pn, relExpr(), opPos);
 					continue;
+				}
 			}
 			break;
 		}
@@ -2355,12 +2361,11 @@ public class Parser {
 		for (; ; ) {
 			int tt = peekToken(), opPos = ts.tokenBeg;
 			switch (tt) {
-				case Token.LSH:
-				case Token.URSH:
-				case Token.RSH:
+				case Token.LSH, Token.URSH, Token.RSH -> {
 					consumeToken();
 					pn = new InfixExpression(tt, pn, addExpr(), opPos);
 					continue;
+				}
 			}
 			break;
 		}
@@ -2386,12 +2391,11 @@ public class Parser {
 		for (; ; ) {
 			int tt = peekToken(), opPos = ts.tokenBeg;
 			switch (tt) {
-				case Token.MUL:
-				case Token.DIV:
-				case Token.MOD:
+				case Token.MUL, Token.DIV, Token.MOD -> {
 					consumeToken();
 					pn = new InfixExpression(tt, pn, unaryExpr(), opPos);
 					continue;
+				}
 			}
 			break;
 		}
@@ -2408,48 +2412,38 @@ public class Parser {
 		int line = ts.lineno;
 
 		switch (tt) {
-			case Token.VOID:
-			case Token.NOT:
-			case Token.BITNOT:
-			case Token.TYPEOF:
+			case Token.VOID, Token.NOT, Token.BITNOT, Token.TYPEOF, Token.DELPROP -> {
 				consumeToken();
 				node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
 				node.setLineno(line);
 				return node;
-
-			case Token.ADD:
+			}
+			case Token.ADD -> {
 				consumeToken();
 				// Convert to special POS token in parse tree
 				node = new UnaryExpression(Token.POS, ts.tokenBeg, unaryExpr());
 				node.setLineno(line);
 				return node;
-
-			case Token.SUB:
+			}
+			case Token.SUB -> {
 				consumeToken();
 				// Convert to special NEG token in parse tree
 				node = new UnaryExpression(Token.NEG, ts.tokenBeg, unaryExpr());
 				node.setLineno(line);
 				return node;
-
-			case Token.INC:
-			case Token.DEC:
+			}
+			case Token.INC, Token.DEC -> {
 				consumeToken();
 				UnaryExpression expr = new UnaryExpression(tt, ts.tokenBeg, memberExpr(true));
 				expr.setLineno(line);
 				checkBadIncDec(expr);
 				return expr;
-
-			case Token.DELPROP:
-				consumeToken();
-				node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
-				node.setLineno(line);
-				return node;
-
-			case Token.ERROR:
+			}
+			case Token.ERROR -> {
 				consumeToken();
 				return makeErrorNode();
-
-			default:
+			}
+			default -> {
 				AstNode pn = memberExpr(true);
 				// Don't look across a newline boundary for a postfix incop.
 				tt = peekTokenOrEOL();
@@ -2461,6 +2455,7 @@ public class Parser {
 				uexpr.setLineno(line);
 				checkBadIncDec(uexpr);
 				return uexpr;
+			}
 		}
 	}
 
@@ -2946,18 +2941,16 @@ public class Parser {
 
 			AstNode iter = null;
 			switch (peekToken()) {
-				case Token.LB:
-				case Token.LC:
+				case Token.LB, Token.LC -> {
 					// handle destructuring assignment
 					iter = destructuringPrimaryExpr();
 					markDestructuring(iter);
-					break;
-				case Token.NAME:
+				}
+				case Token.NAME -> {
 					consumeToken();
 					iter = createNameNode();
-					break;
-				default:
-					reportError("msg.bad.var");
+				}
+				default -> reportError("msg.bad.var");
 			}
 
 			// Define as a let since we want the scope of the variable to
@@ -3050,18 +3043,16 @@ public class Parser {
 
 			AstNode iter = null;
 			switch (peekToken()) {
-				case Token.LB:
-				case Token.LC:
+				case Token.LB, Token.LC -> {
 					// handle destructuring assignment
 					iter = destructuringPrimaryExpr();
 					markDestructuring(iter);
-					break;
-				case Token.NAME:
+				}
+				case Token.NAME -> {
 					consumeToken();
 					iter = createNameNode();
-					break;
-				default:
-					reportError("msg.bad.var");
+				}
+				default -> reportError("msg.bad.var");
 			}
 
 			// Define as a let since we want the scope of the variable to
@@ -3171,26 +3162,25 @@ public class Parser {
 
 			if (this.inUseStrictDirective && propertyName != null) {
 				switch (entryKind) {
-					case PROP_ENTRY:
-					case METHOD_ENTRY:
+					case PROP_ENTRY, METHOD_ENTRY -> {
 						if (getterNames.contains(propertyName) || setterNames.contains(propertyName)) {
 							addError("msg.dup.obj.lit.prop.strict", propertyName);
 						}
 						getterNames.add(propertyName);
 						setterNames.add(propertyName);
-						break;
-					case GET_ENTRY:
+					}
+					case GET_ENTRY -> {
 						if (getterNames.contains(propertyName)) {
 							addError("msg.dup.obj.lit.prop.strict", propertyName);
 						}
 						getterNames.add(propertyName);
-						break;
-					case SET_ENTRY:
+					}
+					case SET_ENTRY -> {
 						if (setterNames.contains(propertyName)) {
 							addError("msg.dup.obj.lit.prop.strict", propertyName);
 						}
 						setterNames.add(propertyName);
-						break;
+					}
 				}
 			}
 
@@ -3218,25 +3208,17 @@ public class Parser {
 		AstNode pname;
 		int tt = peekToken();
 		switch (tt) {
-			case Token.NAME:
-				pname = createNameNode();
-				break;
-
-			case Token.STRING:
-				pname = createStringLiteral();
-				break;
-
-			case Token.NUMBER:
-				pname = new NumberLiteral(ts.tokenBeg, ts.getString(), ts.getNumber());
-				break;
-
-			default:
+			case Token.NAME -> pname = createNameNode();
+			case Token.STRING -> pname = createStringLiteral();
+			case Token.NUMBER -> pname = new NumberLiteral(ts.tokenBeg, ts.getString(), ts.getNumber());
+			default -> {
 				if (compilerEnv.isReservedKeywordAsIdentifier() && TokenStream.isKeyword(ts.getString(), inUseStrictDirective)) {
 					// convert keyword to property name, e.g. ({if: 1})
 					pname = createNameNode();
 					break;
 				}
 				return null;
+			}
 		}
 
 		return pname;
@@ -3272,18 +3254,18 @@ public class Parser {
 		}
 		ObjectProperty pn = new ObjectProperty(pos);
 		switch (entryKind) {
-			case GET_ENTRY:
+			case GET_ENTRY -> {
 				pn.setIsGetterMethod();
 				fn.setFunctionIsGetterMethod();
-				break;
-			case SET_ENTRY:
+			}
+			case SET_ENTRY -> {
 				pn.setIsSetterMethod();
 				fn.setFunctionIsSetterMethod();
-				break;
-			case METHOD_ENTRY:
+			}
+			case METHOD_ENTRY -> {
 				pn.setIsNormalMethod();
 				fn.setFunctionIsNormalMethod();
-				break;
+			}
 		}
 		int end = getNodeEnd(fn);
 		pn.setLeft(propName);
@@ -3316,11 +3298,7 @@ public class Parser {
 			prevNameTokenLineno = 0;
 		}
 		if (s == null) {
-			if (compilerEnv.isIdeMode()) {
-				s = "";
-			} else {
-				codeBug();
-			}
+			codeBug();
 		}
 		Name name = new Name(beg, s);
 		name.setLineno(lineno);
@@ -3379,14 +3357,9 @@ public class Parser {
 		if (!insideFunction()) {
 			return;
 		}
-		boolean activation = false;
-		if ("arguments".equals(name) &&
+		boolean activation = "arguments".equals(name) &&
 				// An arrow function not generate arguments. So it not need activation.
-				((FunctionNode) currentScriptOrFn).getFunctionType() != FunctionNode.ARROW_FUNCTION) {
-			activation = true;
-		} else if (compilerEnv.getActivationNames() != null && compilerEnv.getActivationNames().contains(name)) {
-			activation = true;
-		}
+				((FunctionNode) currentScriptOrFn).getFunctionType() != FunctionNode.ARROW_FUNCTION;
 		if (activation) {
 			setRequiresActivation();
 		}
@@ -3435,38 +3408,6 @@ public class Parser {
 		prevNameTokenLineno = lineno;
 	}
 
-	/**
-	 * Return the file offset of the beginning of the input source line
-	 * containing the passed position.
-	 *
-	 * @param pos an offset into the input source stream.  If the offset
-	 *            is negative, it's converted to 0, and if it's beyond the end of
-	 *            the source buffer, the last source position is used.
-	 * @return the offset of the beginning of the line containing pos
-	 * (i.e. 1+ the offset of the first preceding newline).  Returns -1
-	 * if the {@link CompilerEnvirons} is not set to ide-mode,
-	 * and {@link #parse(String, String, int)} was used.
-	 */
-	private int lineBeginningFor(int pos) {
-		if (sourceChars == null) {
-			return -1;
-		}
-		if (pos <= 0) {
-			return 0;
-		}
-		char[] buf = sourceChars;
-		if (pos >= buf.length) {
-			pos = buf.length - 1;
-		}
-		while (--pos >= 0) {
-			char c = buf[pos];
-			if (ScriptRuntime.isJSLineTerminator(c)) {
-				return pos + 1; // want position after the newline
-			}
-		}
-		return 0;
-	}
-
 	private void warnMissingSemi(int pos, int end) {
 		// Should probably change this to be a CompilerEnvirons setting,
 		// with an enum Never, Always, Permissive, where Permissive means
@@ -3474,28 +3415,16 @@ public class Parser {
 		if (compilerEnv.isStrictMode()) {
 			int[] linep = new int[2];
 			String line = ts.getLine(end, linep);
-			// this code originally called lineBeginningFor() and in order to
-			// preserve its different line-offset handling, we need to special
-			// case ide-mode here
-			int beg = compilerEnv.isIdeMode() ? Math.max(pos, end - linep[1]) : pos;
 			if (line != null) {
-				addStrictWarning("msg.missing.semi", "", beg, end - beg, linep[0], line, linep[1]);
+				addStrictWarning("msg.missing.semi", "", pos, end - pos, linep[0], line, linep[1]);
 			} else {
 				// no line information available, report warning at current line
-				addStrictWarning("msg.missing.semi", "", beg, end - beg);
+				addStrictWarning("msg.missing.semi", "", pos, end - pos);
 			}
 		}
 	}
 
 	private void warnTrailingComma(int pos, List<?> elems, int commaPos) {
-		if (compilerEnv.getWarnTrailingComma()) {
-			// back up from comma to beginning of line or array/objlit
-			if (!elems.isEmpty()) {
-				pos = ((AstNode) elems.get(0)).getPosition();
-			}
-			pos = Math.max(pos, lineBeginningFor(commaPos));
-			addWarning("msg.extra.trailing.comma", pos, commaPos - pos);
-		}
 	}
 
 	// helps reduce clutter in the already-large function() method
@@ -3577,24 +3506,15 @@ public class Parser {
 		List<String> destructuringNames = new ArrayList<>();
 		boolean empty = true;
 		switch (left.getType()) {
-			case Token.ARRAYLIT:
-				empty = destructuringArray((ArrayLiteral) left, variableType, tempName, comma, destructuringNames);
-				break;
-			case Token.OBJECTLIT:
-				empty = destructuringObject((ObjectLiteral) left, variableType, tempName, comma, destructuringNames);
-				break;
-			case Token.GETPROP:
-			case Token.GETELEM:
+			case Token.ARRAYLIT -> empty = destructuringArray((ArrayLiteral) left, variableType, tempName, comma, destructuringNames);
+			case Token.OBJECTLIT -> empty = destructuringObject((ObjectLiteral) left, variableType, tempName, comma, destructuringNames);
+			case Token.GETPROP, Token.GETELEM -> {
 				switch (variableType) {
-					case Token.CONST:
-					case Token.LET:
-					case Token.VAR:
-						reportError("msg.bad.assign.left");
+					case Token.CONST, Token.LET, Token.VAR -> reportError("msg.bad.assign.left");
 				}
 				comma.addChildToBack(simpleAssignment(left, createName(tempName)));
-				break;
-			default:
-				reportError("msg.bad.assign.left");
+			}
+			default -> reportError("msg.bad.assign.left");
 		}
 		if (empty) {
 			// Don't want a COMMA node with no children. Just add a zero.
@@ -3731,16 +3651,15 @@ public class Parser {
 	protected Node simpleAssignment(Node left, Node right) {
 		int nodeType = left.getType();
 		switch (nodeType) {
-			case Token.NAME:
+			case Token.NAME -> {
 				String name = ((Name) left).getIdentifier();
 				if (inUseStrictDirective && ("eval".equals(name) || "arguments".equals(name))) {
 					reportError("msg.bad.id.strict", name);
 				}
 				left.setType(Token.BINDNAME);
 				return new Node(Token.SETNAME, left, right);
-
-			case Token.GETPROP:
-			case Token.GETELEM: {
+			}
+			case Token.GETPROP, Token.GETELEM -> {
 				Node obj, id;
 				// If it's a PropertyGet or ElementGet, we're in the parse pass.
 				// We could alternately have PropertyGet and ElementGet
@@ -3771,7 +3690,7 @@ public class Parser {
 				}
 				return new Node(type, obj, id, right);
 			}
-			case Token.GET_REF: {
+			case Token.GET_REF -> {
 				Node ref = left.getFirstChild();
 				checkMutableReference(ref);
 				return new Node(Token.SET_REF, ref, right);

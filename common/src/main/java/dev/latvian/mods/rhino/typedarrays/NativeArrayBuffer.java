@@ -13,12 +13,15 @@ import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.Undefined;
 
+import java.io.Serial;
+
 /**
  * A NativeArrayBuffer is the backing buffer for a typed array. Used inside JavaScript code,
  * it implements the ArrayBuffer interface. Used directly from Java, it simply holds a byte array.
  */
 
 public class NativeArrayBuffer extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = 3110411773054879549L;
 
 	public static final String CLASS_NAME = "ArrayBuffer";
@@ -151,16 +154,15 @@ public class NativeArrayBuffer extends IdScriptableObject {
 		String s;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 1;
 				s = "constructor";
-				break;
-			case Id_slice:
+			}
+			case Id_slice -> {
 				arity = 2;
 				s = "slice";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(CLASS_NAME, id, s, arity);
 	}

@@ -12,6 +12,8 @@ import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.Undefined;
 
+import java.io.Serial;
+
 /**
  * This class represents the JavaScript "DataView" interface, which allows direct manipulations of the
  * bytes in a NativeArrayBuffer. Java programmers would be best off getting the underling "byte[]" array
@@ -19,6 +21,7 @@ import dev.latvian.mods.rhino.Undefined;
  */
 
 public class NativeDataView extends NativeArrayBufferView {
+	@Serial
 	private static final long serialVersionUID = 1427967607557438968L;
 
 	public static final String CLASS_NAME = "DataView";
@@ -66,11 +69,9 @@ public class NativeDataView extends NativeArrayBufferView {
 	}
 
 	private static NativeDataView js_constructor(Object[] args) {
-		if (!isArg(args, 0) || !(args[0] instanceof NativeArrayBuffer)) {
+		if (!isArg(args, 0) || !(args[0] instanceof NativeArrayBuffer ab)) {
 			throw ScriptRuntime.constructError("TypeError", "Missing parameters");
 		}
-
-		NativeArrayBuffer ab = (NativeArrayBuffer) args[0];
 
 		int pos;
 		if (isArg(args, 1)) {
@@ -135,14 +136,11 @@ public class NativeDataView extends NativeArrayBufferView {
 
 		boolean littleEndian = isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]);
 
-		switch (bytes) {
-			case 4:
-				return ByteIo.readFloat32(arrayBuffer.buffer, offset + pos, littleEndian);
-			case 8:
-				return ByteIo.readFloat64(arrayBuffer.buffer, offset + pos, littleEndian);
-			default:
-				throw new AssertionError();
-		}
+		return switch (bytes) {
+			case 4 -> ByteIo.readFloat32(arrayBuffer.buffer, offset + pos, littleEndian);
+			case 8 -> ByteIo.readFloat64(arrayBuffer.buffer, offset + pos, littleEndian);
+			default -> throw new AssertionError();
+		};
 	}
 
 	private void js_setInt(int bytes, boolean signed, Object[] args) {
@@ -227,14 +225,9 @@ public class NativeDataView extends NativeArrayBufferView {
 		}
 
 		switch (bytes) {
-			case 4:
-				ByteIo.writeFloat32(arrayBuffer.buffer, offset + pos, val, littleEndian);
-				break;
-			case 8:
-				ByteIo.writeFloat64(arrayBuffer.buffer, offset + pos, val, littleEndian);
-				break;
-			default:
-				throw new AssertionError();
+			case 4 -> ByteIo.writeFloat32(arrayBuffer.buffer, offset + pos, val, littleEndian);
+			case 8 -> ByteIo.writeFloat64(arrayBuffer.buffer, offset + pos, val, littleEndian);
+			default -> throw new AssertionError();
 		}
 	}
 
@@ -298,76 +291,75 @@ public class NativeDataView extends NativeArrayBufferView {
 		String s;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 3;
 				s = "constructor";
-				break;
-			case Id_getInt8:
+			}
+			case Id_getInt8 -> {
 				arity = 1;
 				s = "getInt8";
-				break;
-			case Id_getUint8:
+			}
+			case Id_getUint8 -> {
 				arity = 1;
 				s = "getUint8";
-				break;
-			case Id_getInt16:
+			}
+			case Id_getInt16 -> {
 				arity = 1;
 				s = "getInt16";
-				break;
-			case Id_getUint16:
+			}
+			case Id_getUint16 -> {
 				arity = 1;
 				s = "getUint16";
-				break;
-			case Id_getInt32:
+			}
+			case Id_getInt32 -> {
 				arity = 1;
 				s = "getInt32";
-				break;
-			case Id_getUint32:
+			}
+			case Id_getUint32 -> {
 				arity = 1;
 				s = "getUint32";
-				break;
-			case Id_getFloat32:
+			}
+			case Id_getFloat32 -> {
 				arity = 1;
 				s = "getFloat32";
-				break;
-			case Id_getFloat64:
+			}
+			case Id_getFloat64 -> {
 				arity = 1;
 				s = "getFloat64";
-				break;
-			case Id_setInt8:
+			}
+			case Id_setInt8 -> {
 				arity = 2;
 				s = "setInt8";
-				break;
-			case Id_setUint8:
+			}
+			case Id_setUint8 -> {
 				arity = 2;
 				s = "setUint8";
-				break;
-			case Id_setInt16:
+			}
+			case Id_setInt16 -> {
 				arity = 2;
 				s = "setInt16";
-				break;
-			case Id_setUint16:
+			}
+			case Id_setUint16 -> {
 				arity = 2;
 				s = "setUint16";
-				break;
-			case Id_setInt32:
+			}
+			case Id_setInt32 -> {
 				arity = 2;
 				s = "setInt32";
-				break;
-			case Id_setUint32:
+			}
+			case Id_setUint32 -> {
 				arity = 2;
 				s = "setUint32";
-				break;
-			case Id_setFloat32:
+			}
+			case Id_setFloat32 -> {
 				arity = 2;
 				s = "setFloat32";
-				break;
-			case Id_setFloat64:
+			}
+			case Id_setFloat64 -> {
 				arity = 2;
 				s = "setFloat64";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(getClassName(), id, s, arity);
 	}
@@ -385,7 +377,7 @@ public class NativeDataView extends NativeArrayBufferView {
 			int c;
 			L:
 			switch (s.length()) {
-				case 7:
+				case 7 -> {
 					c = s.charAt(0);
 					if (c == 'g') {
 						X = "getInt8";
@@ -394,8 +386,8 @@ public class NativeDataView extends NativeArrayBufferView {
 						X = "setInt8";
 						id = Id_setInt8;
 					}
-					break L;
-				case 8:
+				}
+				case 8 -> {
 					c = s.charAt(6);
 					if (c == '1') {
 						c = s.charAt(0);
@@ -425,8 +417,8 @@ public class NativeDataView extends NativeArrayBufferView {
 							id = Id_setUint8;
 						}
 					}
-					break L;
-				case 9:
+				}
+				case 9 -> {
 					c = s.charAt(0);
 					if (c == 'g') {
 						c = s.charAt(8);
@@ -447,8 +439,8 @@ public class NativeDataView extends NativeArrayBufferView {
 							id = Id_setUint16;
 						}
 					}
-					break L;
-				case 10:
+				}
+				case 10 -> {
 					c = s.charAt(0);
 					if (c == 'g') {
 						c = s.charAt(9);
@@ -469,11 +461,11 @@ public class NativeDataView extends NativeArrayBufferView {
 							id = Id_setFloat64;
 						}
 					}
-					break L;
-				case 11:
+				}
+				case 11 -> {
 					X = "constructor";
 					id = Id_constructor;
-					break L;
+				}
 			}
 			if (X != null && X != s && !X.equals(s)) {
 				id = 0;

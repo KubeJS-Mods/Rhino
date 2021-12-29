@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 /**
  * This class is used by the V8 extension "Error.prepareStackTrace." It is
  * passed to that function, which may then use it to format the stack as it sees
@@ -13,6 +15,7 @@ package dev.latvian.mods.rhino;
  */
 
 public class NativeCallSite extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = 2688372752566593594L;
 	private static final String CALLSITE_TAG = "CallSite";
 	private ScriptStackElement element;
@@ -47,68 +50,67 @@ public class NativeCallSite extends IdScriptableObject {
 		String s;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 0;
 				s = "constructor";
-				break;
-			case Id_getThis:
+			}
+			case Id_getThis -> {
 				arity = 0;
 				s = "getThis";
-				break;
-			case Id_getTypeName:
+			}
+			case Id_getTypeName -> {
 				arity = 0;
 				s = "getTypeName";
-				break;
-			case Id_getFunction:
+			}
+			case Id_getFunction -> {
 				arity = 0;
 				s = "getFunction";
-				break;
-			case Id_getFunctionName:
+			}
+			case Id_getFunctionName -> {
 				arity = 0;
 				s = "getFunctionName";
-				break;
-			case Id_getMethodName:
+			}
+			case Id_getMethodName -> {
 				arity = 0;
 				s = "getMethodName";
-				break;
-			case Id_getFileName:
+			}
+			case Id_getFileName -> {
 				arity = 0;
 				s = "getFileName";
-				break;
-			case Id_getLineNumber:
+			}
+			case Id_getLineNumber -> {
 				arity = 0;
 				s = "getLineNumber";
-				break;
-			case Id_getColumnNumber:
+			}
+			case Id_getColumnNumber -> {
 				arity = 0;
 				s = "getColumnNumber";
-				break;
-			case Id_getEvalOrigin:
+			}
+			case Id_getEvalOrigin -> {
 				arity = 0;
 				s = "getEvalOrigin";
-				break;
-			case Id_isToplevel:
+			}
+			case Id_isToplevel -> {
 				arity = 0;
 				s = "isToplevel";
-				break;
-			case Id_isEval:
+			}
+			case Id_isEval -> {
 				arity = 0;
 				s = "isEval";
-				break;
-			case Id_isNative:
+			}
+			case Id_isNative -> {
 				arity = 0;
 				s = "isNative";
-				break;
-			case Id_isConstructor:
+			}
+			case Id_isConstructor -> {
 				arity = 0;
 				s = "isConstructor";
-				break;
-			case Id_toString:
+			}
+			case Id_toString -> {
 				arity = 0;
 				s = "toString";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(CALLSITE_TAG, id, s, arity);
 	}
@@ -119,33 +121,17 @@ public class NativeCallSite extends IdScriptableObject {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
-		switch (id) {
-			case Id_constructor:
-				return make(scope, f);
-			case Id_getFunctionName:
-				return getFunctionName(thisObj);
-			case Id_getFileName:
-				return getFileName(thisObj);
-			case Id_getLineNumber:
-				return getLineNumber(thisObj);
-			case Id_getThis:
-			case Id_getTypeName:
-			case Id_getFunction:
-			case Id_getColumnNumber:
-				return Undefined.instance;
-			case Id_getMethodName:
-				return null;
-			case Id_getEvalOrigin:
-			case Id_isEval:
-			case Id_isConstructor:
-			case Id_isNative:
-			case Id_isToplevel:
-				return Boolean.FALSE;
-			case Id_toString:
-				return js_toString(thisObj);
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
-		}
+		return switch (id) {
+			case Id_constructor -> make(scope, f);
+			case Id_getFunctionName -> getFunctionName(thisObj);
+			case Id_getFileName -> getFileName(thisObj);
+			case Id_getLineNumber -> getLineNumber(thisObj);
+			case Id_getThis, Id_getTypeName, Id_getFunction, Id_getColumnNumber -> Undefined.instance;
+			case Id_getMethodName -> null;
+			case Id_getEvalOrigin, Id_isEval, Id_isConstructor, Id_isNative, Id_isToplevel -> Boolean.FALSE;
+			case Id_toString -> js_toString(thisObj);
+			default -> throw new IllegalArgumentException(String.valueOf(id));
+		};
 	}
 
 	@Override

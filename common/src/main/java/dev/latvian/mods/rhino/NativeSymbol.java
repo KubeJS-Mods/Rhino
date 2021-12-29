@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +17,7 @@ import java.util.Map;
  */
 
 public class NativeSymbol extends IdScriptableObject implements Symbol {
+	@Serial
 	private static final long serialVersionUID = -589539749749830003L;
 
 	public static final String CLASS_NAME = "Symbol";
@@ -155,24 +157,12 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 	@Override
 	protected void initPrototypeId(int id) {
 		switch (id) {
-			case Id_constructor:
-				initPrototypeMethod(CLASS_NAME, id, "constructor", 0);
-				break;
-			case Id_toString:
-				initPrototypeMethod(CLASS_NAME, id, "toString", 0);
-				break;
-			case Id_valueOf:
-				initPrototypeMethod(CLASS_NAME, id, "valueOf", 0);
-				break;
-			case SymbolId_toStringTag:
-				initPrototypeValue(id, SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
-				break;
-			case SymbolId_toPrimitive:
-				initPrototypeMethod(CLASS_NAME, id, SymbolKey.TO_PRIMITIVE, "Symbol.toPrimitive", 1);
-				break;
-			default:
-				super.initPrototypeId(id);
-				break;
+			case Id_constructor -> initPrototypeMethod(CLASS_NAME, id, "constructor", 0);
+			case Id_toString -> initPrototypeMethod(CLASS_NAME, id, "toString", 0);
+			case Id_valueOf -> initPrototypeMethod(CLASS_NAME, id, "valueOf", 0);
+			case SymbolId_toStringTag -> initPrototypeValue(id, SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
+			case SymbolId_toPrimitive -> initPrototypeMethod(CLASS_NAME, id, SymbolKey.TO_PRIMITIVE, "Symbol.toPrimitive", 1);
+			default -> super.initPrototypeId(id);
 		}
 	}
 
@@ -256,10 +246,9 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 
 	private Object js_keyFor(Context cx, Scriptable scope, Object[] args) {
 		Object s = (args.length > 0 ? args[0] : Undefined.instance);
-		if (!(s instanceof NativeSymbol)) {
+		if (!(s instanceof NativeSymbol sym)) {
 			throw ScriptRuntime.throwCustomError(cx, scope, "TypeError", "Not a Symbol");
 		}
-		NativeSymbol sym = (NativeSymbol) s;
 
 		Map<String, NativeSymbol> table = getGlobalMap();
 		for (Map.Entry<String, NativeSymbol> e : table.entrySet()) {

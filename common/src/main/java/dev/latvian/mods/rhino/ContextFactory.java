@@ -10,9 +10,6 @@ package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
 /**
  * Factory class that Rhino runtime uses to create new {@link Context}
  * instances.  A <code>ContextFactory</code> can also notify listeners
@@ -106,15 +103,13 @@ import java.security.PrivilegedAction;
  */
 
 public class ContextFactory {
-	private static volatile boolean hasCustomGlobal;
-	private static ContextFactory global = new ContextFactory();
+	private static final ContextFactory global = new ContextFactory();
 
 	private volatile boolean sealed;
 
 	private final Object listenersLock = new Object();
 	private volatile Object listeners;
 	private boolean disabledListening;
-	private ClassLoader applicationClassLoader;
 	TypeWrappers typeWrappers;
 
 	/**
@@ -144,62 +139,6 @@ public class ContextFactory {
 	}
 
 	/**
-	 * Check if global factory was set.
-	 * Return true to indicate that {@link #initGlobal(ContextFactory)} was
-	 * already called and false to indicate that the global factory was not
-	 * explicitly set.
-	 *
-	 * @see #getGlobal()
-	 * @see #initGlobal(ContextFactory)
-	 */
-	public static boolean hasExplicitGlobal() {
-		return hasCustomGlobal;
-	}
-
-	/**
-	 * Set global ContextFactory.
-	 * The method can only be called once.
-	 *
-	 * @see #getGlobal()
-	 * @see #hasExplicitGlobal()
-	 */
-	public synchronized static void initGlobal(ContextFactory factory) {
-		if (factory == null) {
-			throw new IllegalArgumentException();
-		}
-		if (hasCustomGlobal) {
-			throw new IllegalStateException();
-		}
-		hasCustomGlobal = true;
-		global = factory;
-	}
-
-	public interface GlobalSetter {
-		void setContextFactoryGlobal(ContextFactory factory);
-
-		ContextFactory getContextFactoryGlobal();
-	}
-
-	public synchronized static GlobalSetter getGlobalSetter() {
-		if (hasCustomGlobal) {
-			throw new IllegalStateException();
-		}
-		hasCustomGlobal = true;
-		class GlobalSetterImpl implements GlobalSetter {
-			@Override
-			public void setContextFactoryGlobal(ContextFactory factory) {
-				global = factory == null ? new ContextFactory() : factory;
-			}
-
-			@Override
-			public ContextFactory getContextFactoryGlobal() {
-				return global;
-			}
-		}
-		return new GlobalSetterImpl();
-	}
-
-	/**
 	 * Create new {@link Context} instance to be associated with the current
 	 * thread.
 	 * This is a callback method used by Rhino to create {@link Context}
@@ -218,66 +157,23 @@ public class ContextFactory {
 	 * additional subclasses.
 	 */
 	protected boolean hasFeature(Context cx, int featureIndex) {
-		switch (featureIndex) {
-			case Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME:
-				return false;
-
-			case Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER:
-				return true;
-
-			case Context.FEATURE_PARENT_PROTO_PROPERTIES:
-				return true;
-
-			case Context.FEATURE_DYNAMIC_SCOPE:
-				return false;
-
-			case Context.FEATURE_STRICT_VARS:
-				return false;
-
-			case Context.FEATURE_STRICT_EVAL:
-				return false;
-
-			case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
-				return false;
-
-			case Context.FEATURE_STRICT_MODE:
-				return false;
-
-			case Context.FEATURE_WARNING_AS_ERROR:
-				return false;
-
-			case Context.FEATURE_ENHANCED_JAVA_ACCESS:
-				return false;
-
-			case Context.FEATURE_V8_EXTENSIONS:
-				return true;
-
-			case Context.FEATURE_THREAD_SAFE_OBJECTS:
-				return false;
-
-			case Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE:
-				return false;
-
-			case Context.FEATURE_LITTLE_ENDIAN:
-				return false;
-		}
-		// It is a bug to call the method with unknown featureIndex
-		throw new IllegalArgumentException(String.valueOf(featureIndex));
-	}
-
-	private static boolean isDom3Present() {
-		Class<?> nodeClass = Kit.classOrNull("org.w3c.dom.Node");
-		if (nodeClass == null) {
-			return false;
-		}
-		// Check to see whether DOM3 is present; use a new method defined in
-		// DOM3 that is vital to our implementation
-		try {
-			nodeClass.getMethod("getUserData", String.class);
-			return true;
-		} catch (NoSuchMethodException e) {
-			return false;
-		}
+		return switch (featureIndex) {
+			case Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME -> false;
+			case Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER -> true;
+			case Context.FEATURE_PARENT_PROTO_PROPERTIES -> true;
+			case Context.FEATURE_DYNAMIC_SCOPE -> false;
+			case Context.FEATURE_STRICT_VARS -> false;
+			case Context.FEATURE_STRICT_EVAL -> false;
+			case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR -> false;
+			case Context.FEATURE_STRICT_MODE -> false;
+			case Context.FEATURE_WARNING_AS_ERROR -> false;
+			case Context.FEATURE_ENHANCED_JAVA_ACCESS -> false;
+			case Context.FEATURE_V8_EXTENSIONS -> true;
+			case Context.FEATURE_THREAD_SAFE_OBJECTS -> false;
+			case Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE -> false;
+			case Context.FEATURE_LITTLE_ENDIAN -> false;
+			default -> throw new IllegalArgumentException(String.valueOf(featureIndex));
+		};
 	}
 
 	/**
@@ -289,7 +185,7 @@ public class ContextFactory {
 	 * Application can override the method to provide custom class loading.
 	 */
 	protected GeneratedClassLoader createClassLoader(final ClassLoader parent) {
-		return AccessController.doPrivileged((PrivilegedAction<DefiningClassLoader>) () -> new DefiningClassLoader(parent));
+		return new DefiningClassLoader(parent);
 	}
 
 	/**
@@ -299,28 +195,7 @@ public class ContextFactory {
 	 * null to indicate that Thread.getContextClassLoader() should be used.
 	 */
 	public final ClassLoader getApplicationClassLoader() {
-		return applicationClassLoader;
-	}
-
-	/**
-	 * Set explicit class loader to use when searching for Java classes.
-	 *
-	 * @see #getApplicationClassLoader()
-	 */
-	public final void initApplicationClassLoader(ClassLoader loader) {
-		if (loader == null) {
-			throw new IllegalArgumentException("loader is null");
-		}
-		if (!Kit.testIfCanLoadRhinoClasses(loader)) {
-			throw new IllegalArgumentException("Loader can not resolve Rhino classes");
-		}
-
-		if (this.applicationClassLoader != null) {
-			throw new IllegalStateException("applicationClassLoader can only be set once");
-		}
-		checkNotSealed();
-
-		this.applicationClassLoader = loader;
+		return null;
 	}
 
 	/**

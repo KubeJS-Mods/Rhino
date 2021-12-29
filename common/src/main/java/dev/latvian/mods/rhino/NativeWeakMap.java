@@ -8,6 +8,7 @@ package dev.latvian.mods.rhino;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serial;
 import java.util.WeakHashMap;
 
 /**
@@ -19,6 +20,7 @@ import java.util.WeakHashMap;
  * WeakHashMap as the basis of this implementation and preserve the same semantics.
  */
 public class NativeWeakMap extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = 8670434366883930453L;
 
 	private static final Object MAP_TAG = "WeakMap";
@@ -137,28 +139,27 @@ public class NativeWeakMap extends IdScriptableObject {
 		String s, fnName = null;
 		int arity;
 		switch (id) {
-			case Id_constructor:
+			case Id_constructor -> {
 				arity = 0;
 				s = "constructor";
-				break;
-			case Id_delete:
+			}
+			case Id_delete -> {
 				arity = 1;
 				s = "delete";
-				break;
-			case Id_get:
+			}
+			case Id_get -> {
 				arity = 1;
 				s = "get";
-				break;
-			case Id_has:
+			}
+			case Id_has -> {
 				arity = 1;
 				s = "has";
-				break;
-			case Id_set:
+			}
+			case Id_set -> {
 				arity = 2;
 				s = "set";
-				break;
-			default:
-				throw new IllegalArgumentException(String.valueOf(id));
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(MAP_TAG, id, s, fnName, arity);
 	}
@@ -221,6 +222,7 @@ public class NativeWeakMap extends IdScriptableObject {
 
 	// #/string_id_map#
 
+	@Serial
 	private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
 		stream.defaultReadObject();
 		map = new WeakHashMap<>();

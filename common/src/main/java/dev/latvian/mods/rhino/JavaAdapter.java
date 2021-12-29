@@ -17,8 +17,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -42,10 +40,9 @@ public final class JavaAdapter implements IdFunctionCall {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (!(obj instanceof JavaAdapterSignature)) {
+			if (!(obj instanceof JavaAdapterSignature sig)) {
 				return false;
 			}
-			JavaAdapterSignature sig = (JavaAdapterSignature) obj;
 			if (superClass != sig.superClass) {
 				return false;
 			}
@@ -280,13 +277,11 @@ public final class JavaAdapter implements IdFunctionCall {
 		Object[] ids = ScriptableObject.getPropertyIds(obj);
 		ObjToIntMap map = new ObjToIntMap(ids.length);
 		for (int i = 0; i != ids.length; ++i) {
-			if (!(ids[i] instanceof String)) {
+			if (!(ids[i] instanceof String id)) {
 				continue;
 			}
-			String id = (String) ids[i];
 			Object value = ScriptableObject.getProperty(obj, id);
-			if (value instanceof Function) {
-				Function f = (Function) value;
+			if (value instanceof Function f) {
 				int length = ScriptRuntime.toInt32(ScriptableObject.getProperty(f, "length"));
 				if (length < 0) {
 					length = 0;
@@ -473,81 +468,11 @@ public final class JavaAdapter implements IdFunctionCall {
 	}
 
 	static Class<?> loadAdapterClass(String className, byte[] classBytes) {
-		Object staticDomain;
-		Class<?> domainClass = SecurityController.getStaticSecurityDomainClass();
-		if (domainClass == CodeSource.class || domainClass == ProtectionDomain.class) {
-			// use the calling script's security domain if available
-			ProtectionDomain protectionDomain = SecurityUtilities.getScriptProtectionDomain();
-			if (protectionDomain == null) {
-				protectionDomain = JavaAdapter.class.getProtectionDomain();
-			}
-			if (domainClass == CodeSource.class) {
-				staticDomain = protectionDomain == null ? null : protectionDomain.getCodeSource();
-			} else {
-				staticDomain = protectionDomain;
-			}
-		} else {
-			staticDomain = null;
-		}
-		GeneratedClassLoader loader = SecurityController.createLoader(null, staticDomain);
+		Context cx = Context.getContext();
+		GeneratedClassLoader loader = cx.createClassLoader(cx.getApplicationClassLoader());
 		Class<?> result = loader.defineClass(className, classBytes);
 		loader.linkClass(result);
 		return result;
-	}
-
-	public static Function getFunction(Scriptable obj, String functionName) {
-		Object x = ScriptableObject.getProperty(obj, functionName);
-		if (x == Scriptable.NOT_FOUND) {
-			// This method used to swallow the exception from calling
-			// an undefined method. People have come to depend on this
-			// somewhat dubious behavior. It allows people to avoid
-			// implementing listener methods that they don't care about,
-			// for instance.
-			return null;
-		}
-		if (!(x instanceof Function)) {
-			throw ScriptRuntime.notFunctionError(x, functionName);
-		}
-
-		return (Function) x;
-	}
-
-	/**
-	 * Utility method which dynamically binds a Context to the current thread,
-	 * if none already exists.
-	 */
-	public static Object callMethod(ContextFactory factory, final Scriptable thisObj, final Function f, final Object[] args, final long argsToWrap) {
-		if (f == null) {
-			// See comments in getFunction
-			return null;
-		}
-		if (factory == null) {
-			factory = ContextFactory.getGlobal();
-		}
-
-		final Scriptable scope = f.getParentScope();
-		if (argsToWrap == 0) {
-			return Context.call(factory, f, scope, thisObj, args);
-		}
-
-		Context cx = Context.getCurrentContext();
-		if (cx != null) {
-			return doCall(cx, scope, thisObj, f, args, argsToWrap);
-		}
-		return factory.call(cx2 -> doCall(cx2, scope, thisObj, f, args, argsToWrap));
-	}
-
-	private static Object doCall(Context cx, Scriptable scope, Scriptable thisObj, Function f, Object[] args, long argsToWrap) {
-		// Wrap the rest of objects
-		for (int i = 0; i != args.length; ++i) {
-			if (0 != (argsToWrap & (1 << i))) {
-				Object arg = args[i];
-				if (!(arg instanceof Scriptable)) {
-					args[i] = cx.getWrapFactory().wrap(cx, scope, arg, null);
-				}
-			}
-		}
-		return f.call(cx, scope, thisObj, args);
 	}
 
 	private static void generateCtor(ClassFileWriter cfw, String adapterName, String superName, Constructor<?> superCtor) {
@@ -711,28 +636,26 @@ public final class JavaAdapter implements IdFunctionCall {
 			cfw.add(ByteCode.DUP);
 			String typeName = argType.getName();
 			switch (typeName.charAt(0)) {
-				case 'b':
-				case 's':
-				case 'i':
+				case 'b', 's', 'i' -> {
 					// load an int value, convert to double.
 					cfw.add(ByteCode.ILOAD, paramOffset);
 					cfw.add(ByteCode.I2D);
-					break;
-				case 'l':
+				}
+				case 'l' -> {
 					// load a long, convert to double.
 					cfw.add(ByteCode.LLOAD, paramOffset);
 					cfw.add(ByteCode.L2D);
 					size = 2;
-					break;
-				case 'f':
+				}
+				case 'f' -> {
 					// load a float, convert to double.
 					cfw.add(ByteCode.FLOAD, paramOffset);
 					cfw.add(ByteCode.F2D);
-					break;
-				case 'd':
+				}
+				case 'd' -> {
 					cfw.add(ByteCode.DLOAD, paramOffset);
 					size = 2;
-					break;
+				}
 			}
 			cfw.addInvoke(ByteCode.INVOKESPECIAL, "java/lang/Double", "<init>", "(D)V");
 		}
@@ -768,25 +691,20 @@ public final class JavaAdapter implements IdFunctionCall {
 			cfw.addInvoke(ByteCode.INVOKESTATIC, "dev/latvian/mods/rhino/Context", "toNumber", "(Ljava/lang/Object;)D");
 			String typeName = retType.getName();
 			switch (typeName.charAt(0)) {
-				case 'b':
-				case 's':
-				case 'i':
+				case 'b', 's', 'i' -> {
 					cfw.add(ByteCode.D2I);
 					cfw.add(ByteCode.IRETURN);
-					break;
-				case 'l':
+				}
+				case 'l' -> {
 					cfw.add(ByteCode.D2L);
 					cfw.add(ByteCode.LRETURN);
-					break;
-				case 'f':
+				}
+				case 'f' -> {
 					cfw.add(ByteCode.D2F);
 					cfw.add(ByteCode.FRETURN);
-					break;
-				case 'd':
-					cfw.add(ByteCode.DRETURN);
-					break;
-				default:
-					throw new RuntimeException("Unexpected return type " + retType);
+				}
+				case 'd' -> cfw.add(ByteCode.DRETURN);
+				default -> throw new RuntimeException("Unexpected return type " + retType);
 			}
 
 		} else {
@@ -862,25 +780,25 @@ public final class JavaAdapter implements IdFunctionCall {
 		}
 		String typeName = paramType.getName();
 		switch (typeName.charAt(0)) {
-			case 'z':
-			case 'b':
-			case 'c':
-			case 's':
-			case 'i':
+			case 'z', 'b', 'c', 's', 'i' -> {
 				// load an int value, convert to double.
 				cfw.addILoad(paramOffset);
 				return 1;
-			case 'l':
+			}
+			case 'l' -> {
 				// load a long, convert to double.
 				cfw.addLLoad(paramOffset);
 				return 2;
-			case 'f':
+			}
+			case 'f' -> {
 				// load a float, convert to double.
 				cfw.addFLoad(paramOffset);
 				return 1;
-			case 'd':
+			}
+			case 'd' -> {
 				cfw.addDLoad(paramOffset);
 				return 2;
+			}
 		}
 		throw Kit.codeBug();
 	}
@@ -894,22 +812,10 @@ public final class JavaAdapter implements IdFunctionCall {
 		if (retType.isPrimitive()) {
 			String typeName = retType.getName();
 			switch (typeName.charAt(0)) {
-				case 'b':
-				case 'c':
-				case 's':
-				case 'i':
-				case 'z':
-					cfw.add(ByteCode.IRETURN);
-					break;
-				case 'l':
-					cfw.add(ByteCode.LRETURN);
-					break;
-				case 'f':
-					cfw.add(ByteCode.FRETURN);
-					break;
-				case 'd':
-					cfw.add(ByteCode.DRETURN);
-					break;
+				case 'b', 'c', 's', 'i', 'z' -> cfw.add(ByteCode.IRETURN);
+				case 'l' -> cfw.add(ByteCode.LRETURN);
+				case 'f' -> cfw.add(ByteCode.FRETURN);
+				case 'd' -> cfw.add(ByteCode.DRETURN);
 			}
 		} else {
 			cfw.add(ByteCode.ARETURN);

@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import java.io.Serial;
+
 /**
  * This class implements the activation object.
  * <p>
@@ -15,6 +17,7 @@ package dev.latvian.mods.rhino;
  * @see Arguments
  */
 public final class NativeCall extends IdScriptableObject {
+	@Serial
 	private static final long serialVersionUID = -7471457301304454454L;
 
 	private static final Object CALL_TAG = "Call";

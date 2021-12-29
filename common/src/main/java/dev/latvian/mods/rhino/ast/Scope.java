@@ -22,7 +22,7 @@ import java.util.Map;
 public class Scope extends Jump {
 
 	// Use LinkedHashMap so that the iteration order is the insertion order
-	protected Map<String, Symbol> symbolTable;
+	protected Map<String, AstSymbol> symbolTable;
 	protected Scope parentScope;
 	protected ScriptNode top;     // current script or function scope
 
@@ -145,13 +145,13 @@ public class Scope extends Jump {
 	 * Copies all symbols from source scope to dest scope.
 	 */
 	public static void joinScopes(Scope source, Scope dest) {
-		Map<String, Symbol> src = source.ensureSymbolTable();
-		Map<String, Symbol> dst = dest.ensureSymbolTable();
+		Map<String, AstSymbol> src = source.ensureSymbolTable();
+		Map<String, AstSymbol> dst = dest.ensureSymbolTable();
 		if (!Collections.disjoint(src.keySet(), dst.keySet())) {
 			codeBug();
 		}
-		for (Map.Entry<String, Symbol> entry : src.entrySet()) {
-			Symbol sym = entry.getValue();
+		for (Map.Entry<String, AstSymbol> entry : src.entrySet()) {
+			AstSymbol sym = entry.getValue();
 			sym.setContainingTable(dest);
 			dst.put(entry.getKey(), sym);
 		}
@@ -166,7 +166,7 @@ public class Scope extends Jump {
 	 */
 	public Scope getDefiningScope(String name) {
 		for (Scope s = this; s != null; s = s.parentScope) {
-			Map<String, Symbol> symbolTable = s.getSymbolTable();
+			Map<String, AstSymbol> symbolTable = s.getSymbolTable();
 			if (symbolTable != null && symbolTable.containsKey(name)) {
 				return s;
 			}
@@ -180,14 +180,14 @@ public class Scope extends Jump {
 	 * @param name the symbol name
 	 * @return the Symbol, or {@code null} if not found
 	 */
-	public Symbol getSymbol(String name) {
+	public AstSymbol getSymbol(String name) {
 		return symbolTable == null ? null : symbolTable.get(name);
 	}
 
 	/**
 	 * Enters a symbol into this scope.
 	 */
-	public void putSymbol(Symbol symbol) {
+	public void putSymbol(AstSymbol symbol) {
 		if (symbol.getName() == null) {
 			throw new IllegalArgumentException("null symbol name");
 		}
@@ -202,18 +202,18 @@ public class Scope extends Jump {
 	 *
 	 * @return the symbol table.  May be {@code null}.
 	 */
-	public Map<String, Symbol> getSymbolTable() {
+	public Map<String, AstSymbol> getSymbolTable() {
 		return symbolTable;
 	}
 
 	/**
 	 * Sets the symbol table for this scope.  May be {@code null}.
 	 */
-	public void setSymbolTable(Map<String, Symbol> table) {
+	public void setSymbolTable(Map<String, AstSymbol> table) {
 		symbolTable = table;
 	}
 
-	private Map<String, Symbol> ensureSymbolTable() {
+	private Map<String, AstSymbol> ensureSymbolTable() {
 		if (symbolTable == null) {
 			symbolTable = new LinkedHashMap<>(5);
 		}
