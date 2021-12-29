@@ -69,6 +69,7 @@ if (ENV.CURSEFORGE_KEY) {
 			releaseType = project.curseforge_type
 			addGameVersion "Fabric"
 			addGameVersion "1.18"
+			addGameVersion "1.18.1"
 			mainArtifact(remapJar.archivePath)
 			relations {
 				requiredDependency 'fabric-api'
