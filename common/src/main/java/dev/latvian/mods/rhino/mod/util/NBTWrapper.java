@@ -16,6 +16,9 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.Map;
+
 public interface NBTWrapper {
 	@Nullable
 	static Object fromTag(@Nullable Tag t) {
@@ -42,6 +45,10 @@ public interface NBTWrapper {
 			return DoubleTag.valueOf(((Number) v).doubleValue());
 		} else if (v instanceof Boolean) {
 			return ByteTag.valueOf((Boolean) v);
+		} else if (v instanceof Map) {
+			return compoundTag((Map) v);
+		} else if (v instanceof List<?>) {
+			return listTag((List) v);
 		}
 
 		return null;
@@ -51,8 +58,28 @@ public interface NBTWrapper {
 		return new OrderedCompoundTag();
 	}
 
+	static Tag compoundTag(Map<String, Object> map) {
+		OrderedCompoundTag tag = new OrderedCompoundTag();
+
+		for (Map.Entry<String, Object> e : map.entrySet()) {
+			tag.put(e.getKey(), toTag(e.getValue()));
+		}
+
+		return tag;
+	}
+
 	static Tag listTag() {
 		return new ListTag();
+	}
+
+	static Tag listTag(List<Object> list) {
+		ListTag tag = new ListTag();
+
+		for (Object v : list) {
+			tag.add(toTag(v));
+		}
+
+		return tag;
 	}
 
 	static Tag byteTag(byte v) {
