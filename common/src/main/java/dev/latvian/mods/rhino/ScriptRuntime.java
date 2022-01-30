@@ -96,9 +96,24 @@ public class ScriptRuntime {
 	 * that they won't cause problems by being loaded early.
 	 */
 
-	public final static Class<?> BooleanClass = Kit.classOrNull("java.lang.Boolean"), ByteClass = Kit.classOrNull("java.lang.Byte"), CharacterClass = Kit.classOrNull("java.lang.Character"), ClassClass = Kit.classOrNull("java.lang.Class"), DoubleClass = Kit.classOrNull("java.lang.Double"), FloatClass = Kit.classOrNull("java.lang.Float"), IntegerClass = Kit.classOrNull("java.lang.Integer"), LongClass = Kit.classOrNull("java.lang.Long"), NumberClass = Kit.classOrNull("java.lang.Number"), ObjectClass = Kit.classOrNull("java.lang.Object"), ShortClass = Kit.classOrNull("java.lang.Short"), StringClass = Kit.classOrNull("java.lang.String"), DateClass = Kit.classOrNull("java.util.Date");
+	public final static Class<?> BooleanClass = Kit.classOrNull("java.lang.Boolean");
+	public final static Class<?> ByteClass = Kit.classOrNull("java.lang.Byte");
+	public final static Class<?> CharacterClass = Kit.classOrNull("java.lang.Character");
+	public final static Class<?> ClassClass = Kit.classOrNull("java.lang.Class");
+	public final static Class<?> DoubleClass = Kit.classOrNull("java.lang.Double");
+	public final static Class<?> FloatClass = Kit.classOrNull("java.lang.Float");
+	public final static Class<?> IntegerClass = Kit.classOrNull("java.lang.Integer");
+	public final static Class<?> LongClass = Kit.classOrNull("java.lang.Long");
+	public final static Class<?> NumberClass = Kit.classOrNull("java.lang.Number");
+	public final static Class<?> ObjectClass = Kit.classOrNull("java.lang.Object");
+	public final static Class<?> ShortClass = Kit.classOrNull("java.lang.Short");
+	public final static Class<?> StringClass = Kit.classOrNull("java.lang.String");
+	public final static Class<?> DateClass = Kit.classOrNull("java.util.Date");
 
-	public final static Class<?> ContextClass = Kit.classOrNull("dev.latvian.mods.rhino.Context"), ContextFactoryClass = Kit.classOrNull("dev.latvian.mods.rhino.ContextFactory"), FunctionClass = Kit.classOrNull("dev.latvian.mods.rhino.Function"), ScriptableObjectClass = Kit.classOrNull("dev.latvian.mods.rhino.ScriptableObject");
+	public final static Class<?> ContextClass = Kit.classOrNull("dev.latvian.mods.rhino.Context");
+	public final static Class<?> ContextFactoryClass = Kit.classOrNull("dev.latvian.mods.rhino.ContextFactory");
+	public final static Class<?> FunctionClass = Kit.classOrNull("dev.latvian.mods.rhino.Function");
+	public final static Class<?> ScriptableObjectClass = Kit.classOrNull("dev.latvian.mods.rhino.ScriptableObject");
 	public static final Class<Scriptable> ScriptableClass = Scriptable.class;
 
 	private static final Object LIBRARY_SCOPE_KEY = "LIBRARY_SCOPE";

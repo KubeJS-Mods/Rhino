@@ -364,119 +364,46 @@ public class NativeDataView extends NativeArrayBufferView {
 		initPrototypeMethod(getClassName(), id, s, arity);
 	}
 
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2014-12-08 17:26:24 PST
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 7 -> {
-					c = s.charAt(0);
-					if (c == 'g') {
-						X = "getInt8";
-						id = Id_getInt8;
-					} else if (c == 's') {
-						X = "setInt8";
-						id = Id_setInt8;
-					}
-				}
-				case 8 -> {
-					c = s.charAt(6);
-					if (c == '1') {
-						c = s.charAt(0);
-						if (c == 'g') {
-							X = "getInt16";
-							id = Id_getInt16;
-						} else if (c == 's') {
-							X = "setInt16";
-							id = Id_setInt16;
-						}
-					} else if (c == '3') {
-						c = s.charAt(0);
-						if (c == 'g') {
-							X = "getInt32";
-							id = Id_getInt32;
-						} else if (c == 's') {
-							X = "setInt32";
-							id = Id_setInt32;
-						}
-					} else if (c == 't') {
-						c = s.charAt(0);
-						if (c == 'g') {
-							X = "getUint8";
-							id = Id_getUint8;
-						} else if (c == 's') {
-							X = "setUint8";
-							id = Id_setUint8;
-						}
-					}
-				}
-				case 9 -> {
-					c = s.charAt(0);
-					if (c == 'g') {
-						c = s.charAt(8);
-						if (c == '2') {
-							X = "getUint32";
-							id = Id_getUint32;
-						} else if (c == '6') {
-							X = "getUint16";
-							id = Id_getUint16;
-						}
-					} else if (c == 's') {
-						c = s.charAt(8);
-						if (c == '2') {
-							X = "setUint32";
-							id = Id_setUint32;
-						} else if (c == '6') {
-							X = "setUint16";
-							id = Id_setUint16;
-						}
-					}
-				}
-				case 10 -> {
-					c = s.charAt(0);
-					if (c == 'g') {
-						c = s.charAt(9);
-						if (c == '2') {
-							X = "getFloat32";
-							id = Id_getFloat32;
-						} else if (c == '4') {
-							X = "getFloat64";
-							id = Id_getFloat64;
-						}
-					} else if (c == 's') {
-						c = s.charAt(9);
-						if (c == '2') {
-							X = "setFloat32";
-							id = Id_setFloat32;
-						} else if (c == '4') {
-							X = "setFloat64";
-							id = Id_setFloat64;
-						}
-					}
-				}
-				case 11 -> {
-					X = "constructor";
-					id = Id_constructor;
-				}
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "getInt8" -> Id_getInt8;
+			case "getUint8" -> Id_getUint8;
+			case "getInt16" -> Id_getInt16;
+			case "getUint16" -> Id_getUint16;
+			case "getInt32" -> Id_getInt32;
+			case "getUint32" -> Id_getUint32;
+			case "getFloat32" -> Id_getFloat32;
+			case "getFloat64" -> Id_getFloat64;
+			case "setInt8" -> Id_setInt8;
+			case "setUint8" -> Id_setUint8;
+			case "setInt16" -> Id_setInt16;
+			case "setUint16" -> Id_setUint16;
+			case "setInt32" -> Id_setInt32;
+			case "setUint32" -> Id_setUint32;
+			case "setFloat32" -> Id_setFloat32;
+			case "setFloat64" -> Id_setFloat64;
+			default -> super.findPrototypeId(s);
+		};
 	}
 
-	private static final int Id_constructor = 1, Id_getInt8 = 2, Id_getUint8 = 3, Id_getInt16 = 4, Id_getUint16 = 5, Id_getInt32 = 6, Id_getUint32 = 7, Id_getFloat32 = 8, Id_getFloat64 = 9, Id_setInt8 = 10, Id_setUint8 = 11, Id_setInt16 = 12, Id_setUint16 = 13, Id_setInt32 = 14, Id_setUint32 = 15, Id_setFloat32 = 16, Id_setFloat64 = 17, MAX_PROTOTYPE_ID = Id_setFloat64;
-
-	// #/string_id_map#
+	private static final int Id_constructor = 1;
+	private static final int Id_getInt8 = 2;
+	private static final int Id_getUint8 = 3;
+	private static final int Id_getInt16 = 4;
+	private static final int Id_getUint16 = 5;
+	private static final int Id_getInt32 = 6;
+	private static final int Id_getUint32 = 7;
+	private static final int Id_getFloat32 = 8;
+	private static final int Id_getFloat64 = 9;
+	private static final int Id_setInt8 = 10;
+	private static final int Id_setUint8 = 11;
+	private static final int Id_setInt16 = 12;
+	private static final int Id_setUint16 = 13;
+	private static final int Id_setInt32 = 14;
+	private static final int Id_setUint32 = 15;
+	private static final int Id_setFloat32 = 16;
+	private static final int Id_setFloat64 = 17;
+	private static final int MAX_PROTOTYPE_ID = Id_setFloat64;
 }

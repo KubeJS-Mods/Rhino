@@ -677,9 +677,21 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
 
 	private static final Object FTAG = "Global";
 
-	private static final int Id_decodeURI = 1, Id_decodeURIComponent = 2, Id_encodeURI = 3, Id_encodeURIComponent = 4, Id_escape = 5, Id_eval = 6, Id_isFinite = 7, Id_isNaN = 8, Id_isXMLName = 9, Id_parseFloat = 10, Id_parseInt = 11, Id_unescape = 12, Id_uneval = 13,
+	private static final int Id_decodeURI = 1;
+	private static final int Id_decodeURIComponent = 2;
+	private static final int Id_encodeURI = 3;
+	private static final int Id_encodeURIComponent = 4;
+	private static final int Id_escape = 5;
+	private static final int Id_eval = 6;
+	private static final int Id_isFinite = 7;
+	private static final int Id_isNaN = 8;
+	private static final int Id_isXMLName = 9;
+	private static final int Id_parseFloat = 10;
+	private static final int Id_parseInt = 11;
+	private static final int Id_unescape = 12;
+	private static final int Id_uneval = 13;
 
-	LAST_SCOPE_FUNCTION_ID = 13,
+	private static final int LAST_SCOPE_FUNCTION_ID = 13;
 
-	Id_new_CommonError = 14;
+	private static final int Id_new_CommonError = 14;
 }

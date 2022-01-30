@@ -22,7 +22,11 @@ import java.util.NoSuchElementException;
  * @author Mike McCabe
  */
 public class Node implements Iterable<Node> {
-	public static final int FUNCTION_PROP = 1, LOCAL_PROP = 2, LOCAL_BLOCK_PROP = 3, REGEXP_PROP = 4, CASEARRAY_PROP = 5,
+	public static final int FUNCTION_PROP = 1;
+	public static final int LOCAL_PROP = 2;
+	public static final int LOCAL_BLOCK_PROP = 3;
+	public static final int REGEXP_PROP = 4;
+	public static final int CASEARRAY_PROP = 5;
 
 	//  the following properties are defined and manipulated by the
 	//  optimizer -
@@ -34,33 +38,50 @@ public class Node implements Iterable<Node> {
 	//                    object against the known class and call direct if it
 	//                    matches.
 
-	TARGETBLOCK_PROP = 6, VARIABLE_PROP = 7, ISNUMBER_PROP = 8, DIRECTCALL_PROP = 9, SPECIALCALL_PROP = 10, SKIP_INDEXES_PROP = 11, // array of skipped indexes of array literal
-			OBJECT_IDS_PROP = 12, // array of properties for object literal
-			INCRDECR_PROP = 13, // pre or post type of increment/decrement
-			CATCH_SCOPE_PROP = 14, // index of catch scope block in catch
-			LABEL_ID_PROP = 15, // label id: code generation uses it
-			MEMBER_TYPE_PROP = 16, // type of element access operation
-			NAME_PROP = 17, // property name
-			CONTROL_BLOCK_PROP = 18, // flags a control block that can drop off
-			PARENTHESIZED_PROP = 19, // expression is parenthesized
-			GENERATOR_END_PROP = 20, DESTRUCTURING_ARRAY_LENGTH = 21, DESTRUCTURING_NAMES = 22, DESTRUCTURING_PARAMS = 23, JSDOC_PROP = 24, EXPRESSION_CLOSURE_PROP = 25, // JS 1.8 expression closure pseudo-return
-			DESTRUCTURING_SHORTHAND = 26, // JS 1.8 destructuring shorthand
-			ARROW_FUNCTION_PROP = 27, TEMPLATE_LITERAL_PROP = 28, LAST_PROP = 28;
+	public static final int TARGETBLOCK_PROP = 6;
+	public static final int VARIABLE_PROP = 7;
+	public static final int ISNUMBER_PROP = 8;
+	public static final int DIRECTCALL_PROP = 9;
+	public static final int SPECIALCALL_PROP = 10;
+	public static final int SKIP_INDEXES_PROP = 11; // array of skipped indexes of array literal
+	public static final int OBJECT_IDS_PROP = 12; // array of properties for object literal
+	public static final int INCRDECR_PROP = 13; // pre or post type of increment/decrement
+	public static final int CATCH_SCOPE_PROP = 14; // index of catch scope block in catch
+	public static final int LABEL_ID_PROP = 15; // label id: code generation uses it
+	public static final int MEMBER_TYPE_PROP = 16; // type of element access operation
+	public static final int NAME_PROP = 17; // property name
+	public static final int CONTROL_BLOCK_PROP = 18; // flags a control block that can drop off
+	public static final int PARENTHESIZED_PROP = 19; // expression is parenthesized
+	public static final int GENERATOR_END_PROP = 20;
+	public static final int DESTRUCTURING_ARRAY_LENGTH = 21;
+	public static final int DESTRUCTURING_NAMES = 22;
+	public static final int DESTRUCTURING_PARAMS = 23;
+	public static final int JSDOC_PROP = 24;
+	public static final int EXPRESSION_CLOSURE_PROP = 25; // JS 1.8 expression closure pseudo-return
+	public static final int DESTRUCTURING_SHORTHAND = 26; // JS 1.8 destructuring shorthand
+	public static final int ARROW_FUNCTION_PROP = 27;
+	public static final int TEMPLATE_LITERAL_PROP = 28;
+	public static final int LAST_PROP = 28;
 
 	// values of ISNUMBER_PROP to specify
 	// which of the children are Number types
-	public static final int BOTH = 0, LEFT = 1, RIGHT = 2;
+	public static final int BOTH = 0;
+	public static final int LEFT = 1;
+	public static final int RIGHT = 2;
 
 	public static final int    // values for SPECIALCALL_PROP
-			NON_SPECIALCALL = 0, SPECIALCALL_EVAL = 1, SPECIALCALL_WITH = 2;
+			NON_SPECIALCALL = 0;
+	public static final int SPECIALCALL_EVAL = 1;
+	public static final int SPECIALCALL_WITH = 2;
 
 	public static final int   // flags for INCRDECR_PROP
-			DECR_FLAG = 0x1, POST_FLAG = 0x2;
+			DECR_FLAG = 0x1;
+	public static final int POST_FLAG = 0x2;
 
 	public static final int   // flags for MEMBER_TYPE_PROP
-			PROPERTY_FLAG = 0x1, // property access: element is valid name
-			ATTRIBUTE_FLAG = 0x2, // x.@y or x..@y
-			DESCENDANTS_FLAG = 0x4; // x..y or x..@i
+			PROPERTY_FLAG = 0x1; // property access: element is valid name
+	public static final int ATTRIBUTE_FLAG = 0x2; // x.@y or x..@y
+	public static final int DESCENDANTS_FLAG = 0x4; // x..y or x..@i
 
 	private static class PropListItem {
 		PropListItem next;

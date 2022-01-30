@@ -28,17 +28,15 @@ package dev.latvian.mods.rhino;
 import java.math.BigInteger;
 
 class DToA {
-
-
 	private static char BASEDIGIT(int digit) {
 		return (char) ((digit >= 10) ? 'a' - 10 + digit : '0' + digit);
 	}
 
-	static final int DTOSTR_STANDARD = 0,              /* Either fixed or exponential format; round-trip */
-			DTOSTR_STANDARD_EXPONENTIAL = 1,  /* Always exponential format; round-trip */
-			DTOSTR_FIXED = 2,                 /* Round to <precision> digits after the decimal point; exponential if number is large */
-			DTOSTR_EXPONENTIAL = 3,           /* Always exponential format; <precision> significant digits */
-			DTOSTR_PRECISION = 4;             /* Either fixed or exponential format; <precision> significant digits */
+	static final int DTOSTR_STANDARD = 0;              /* Either fixed or exponential format; round-trip */
+	static final int DTOSTR_STANDARD_EXPONENTIAL = 1;  /* Always exponential format; round-trip */
+	static final int DTOSTR_FIXED = 2;                 /* Round to <precision> digits after the decimal point; exponential if number is large */
+	static final int DTOSTR_EXPONENTIAL = 3;           /* Always exponential format; <precision> significant digits */
+	static final int DTOSTR_PRECISION = 4;             /* Either fixed or exponential format; <precision> significant digits */
 
 
 	private static final int Frac_mask = 0xfffff;

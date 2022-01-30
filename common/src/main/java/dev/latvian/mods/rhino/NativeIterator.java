@@ -234,35 +234,18 @@ public final class NativeIterator extends IdScriptableObject {
 
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2007-06-11 09:43:19 EDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int s_length = s.length();
-			if (s_length == 4) {
-				X = "next";
-				id = Id_next;
-			} else if (s_length == 11) {
-				X = "constructor";
-				id = Id_constructor;
-			} else if (s_length == 12) {
-				X = "__iterator__";
-				id = Id___iterator__;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "next" -> Id_next;
+			case "__iterator__" -> Id___iterator__;
+			case "constructor" -> Id_constructor;
+			default -> 0;
+		};
 	}
 
-	private static final int Id_constructor = 1, Id_next = 2, Id___iterator__ = 3, MAX_PROTOTYPE_ID = 3;
-
-	// #/string_id_map#
+	private static final int Id_constructor = 1;
+	private static final int Id_next = 2;
+	private static final int Id___iterator__ = 3;
+	private static final int MAX_PROTOTYPE_ID = 3;
 
 	private IdEnumeration objectIterator;
 }

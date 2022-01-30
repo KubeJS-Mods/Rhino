@@ -2466,9 +2466,13 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 	// #string_id_map#
 
-	private static final int Id_lastIndex = 1, Id_source = 2, Id_global = 3, Id_ignoreCase = 4, Id_multiline = 5,
+	private static final int Id_lastIndex = 1;
+	private static final int Id_source = 2;
+	private static final int Id_global = 3;
+	private static final int Id_ignoreCase = 4;
+	private static final int Id_multiline = 5;
 
-	MAX_INSTANCE_ID = 5;
+	private static final int MAX_INSTANCE_ID = 5;
 
 	@Override
 	protected int getMaxInstanceId() {
@@ -2477,43 +2481,14 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 	@Override
 	protected int findInstanceIdInfo(String s) {
-		int id;
-		// #generated# Last update: 2007-05-09 08:16:24 EDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			int s_length = s.length();
-			if (s_length == 6) {
-				c = s.charAt(0);
-				if (c == 'g') {
-					X = "global";
-					id = Id_global;
-				} else if (c == 's') {
-					X = "source";
-					id = Id_source;
-				}
-			} else if (s_length == 9) {
-				c = s.charAt(0);
-				if (c == 'l') {
-					X = "lastIndex";
-					id = Id_lastIndex;
-				} else if (c == 'm') {
-					X = "multiline";
-					id = Id_multiline;
-				}
-			} else if (s_length == 10) {
-				X = "ignoreCase";
-				id = Id_ignoreCase;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		// #/string_id_map#
+		int id = switch (s) {
+			case "lastIndex" -> Id_lastIndex;
+			case "source" -> Id_source;
+			case "global" -> Id_global;
+			case "ignoreCase" -> Id_ignoreCase;
+			case "multiline" -> Id_multiline;
+			default -> 0;
+		};
 
 		if (id == 0) {
 			return super.findInstanceIdInfo(s);
@@ -2684,56 +2659,27 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	// #string_id_map#
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2007-05-09 08:16:24 EDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 4 -> {
-					c = s.charAt(0);
-					if (c == 'e') {
-						X = "exec";
-						id = Id_exec;
-					} else if (c == 't') {
-						X = "test";
-						id = Id_test;
-					}
-				}
-				case 6 -> {
-					X = "prefix";
-					id = Id_prefix;
-				}
-				case 7 -> {
-					X = "compile";
-					id = Id_compile;
-				}
-				case 8 -> {
-					c = s.charAt(3);
-					if (c == 'o') {
-						X = "toSource";
-						id = Id_toSource;
-					} else if (c == 't') {
-						X = "toString";
-						id = Id_toString;
-					}
-				}
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "compile" -> Id_compile;
+			case "toString" -> Id_toString;
+			case "toSource" -> Id_toSource;
+			case "exec" -> Id_exec;
+			case "test" -> Id_test;
+			case "prefix" -> Id_prefix;
+			default -> super.findPrototypeId(s);
+		};
 	}
 
-	private static final int Id_compile = 1, Id_toString = 2, Id_toSource = 3, Id_exec = 4, Id_test = 5, Id_prefix = 6, SymbolId_match = 7, SymbolId_search = 8,
+	private static final int Id_compile = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toSource = 3;
+	private static final int Id_exec = 4;
+	private static final int Id_test = 5;
+	private static final int Id_prefix = 6;
+	private static final int SymbolId_match = 7;
+	private static final int SymbolId_search = 8;
 
-	MAX_PROTOTYPE_ID = SymbolId_search;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_search;
 
 	// #/string_id_map#
 

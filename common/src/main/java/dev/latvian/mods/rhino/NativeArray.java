@@ -98,7 +98,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		return "Array";
 	}
 
-	private static final int Id_length = 1, MAX_INSTANCE_ID = 1;
+	private static final int Id_length = 1;
+	private static final int MAX_INSTANCE_ID = 1;
 
 	@Override
 	protected int getMaxInstanceId() {
@@ -2283,181 +2284,105 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		}
 	}
 
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2019-05-11 10:25:01 MESZ
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 3:
-					c = s.charAt(0);
-					if (c == 'm') {
-						if (s.charAt(2) == 'p' && s.charAt(1) == 'a') {
-							id = Id_map;
-							break L0;
-						}
-					} else if (c == 'p') {
-						if (s.charAt(2) == 'p' && s.charAt(1) == 'o') {
-							id = Id_pop;
-							break L0;
-						}
-					}
-					break L;
-				case 4:
-					switch (s.charAt(2)) {
-						case 'i':
-							X = "join";
-							id = Id_join;
-							break L;
-						case 'l':
-							X = "fill";
-							id = Id_fill;
-							break L;
-						case 'm':
-							X = "some";
-							id = Id_some;
-							break L;
-						case 'n':
-							X = "find";
-							id = Id_find;
-							break L;
-						case 'r':
-							X = "sort";
-							id = Id_sort;
-							break L;
-						case 's':
-							X = "push";
-							id = Id_push;
-							break L;
-						case 'y':
-							X = "keys";
-							id = Id_keys;
-							break L;
-					}
-					break L;
-				case 5:
-					c = s.charAt(1);
-					if (c == 'h') {
-						X = "shift";
-						id = Id_shift;
-					} else if (c == 'l') {
-						X = "slice";
-						id = Id_slice;
-					} else if (c == 'v') {
-						X = "every";
-						id = Id_every;
-					}
-					break L;
-				case 6:
-					switch (s.charAt(0)) {
-						case 'c':
-							X = "concat";
-							id = Id_concat;
-							break L;
-						case 'f':
-							X = "filter";
-							id = Id_filter;
-							break L;
-						case 'r':
-							X = "reduce";
-							id = Id_reduce;
-							break L;
-						case 's':
-							X = "splice";
-							id = Id_splice;
-							break L;
-						case 'v':
-							X = "values";
-							id = Id_values;
-							break L;
-					}
-					break L;
-				case 7:
-					switch (s.charAt(0)) {
-						case 'e':
-							X = "entries";
-							id = Id_entries;
-							break L;
-						case 'f':
-							X = "forEach";
-							id = Id_forEach;
-							break L;
-						case 'i':
-							X = "indexOf";
-							id = Id_indexOf;
-							break L;
-						case 'r':
-							X = "reverse";
-							id = Id_reverse;
-							break L;
-						case 'u':
-							X = "unshift";
-							id = Id_unshift;
-							break L;
-					}
-					break L;
-				case 8:
-					c = s.charAt(3);
-					if (c == 'l') {
-						X = "includes";
-						id = Id_includes;
-					} else if (c == 'o') {
-						X = "toSource";
-						id = Id_toSource;
-					} else if (c == 't') {
-						X = "toString";
-						id = Id_toString;
-					}
-					break L;
-				case 9:
-					X = "findIndex";
-					id = Id_findIndex;
-					break L;
-				case 10:
-					X = "copyWithin";
-					id = Id_copyWithin;
-					break L;
-				case 11:
-					c = s.charAt(0);
-					if (c == 'c') {
-						X = "constructor";
-						id = Id_constructor;
-					} else if (c == 'l') {
-						X = "lastIndexOf";
-						id = Id_lastIndexOf;
-					} else if (c == 'r') {
-						X = "reduceRight";
-						id = Id_reduceRight;
-					}
-					break L;
-				case 14:
-					X = "toLocaleString";
-					id = Id_toLocaleString;
-					break L;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "toString" -> Id_toString;
+			case "toLocaleString" -> Id_toLocaleString;
+			case "toSource" -> Id_toSource;
+			case "join" -> Id_join;
+			case "reverse" -> Id_reverse;
+			case "sort" -> Id_sort;
+			case "push" -> Id_push;
+			case "pop" -> Id_pop;
+			case "shift" -> Id_shift;
+			case "unshift" -> Id_unshift;
+			case "splice" -> Id_splice;
+			case "concat" -> Id_concat;
+			case "slice" -> Id_slice;
+			case "indexOf" -> Id_indexOf;
+			case "lastIndexOf" -> Id_lastIndexOf;
+			case "every" -> Id_every;
+			case "filter" -> Id_filter;
+			case "forEach" -> Id_forEach;
+			case "map" -> Id_map;
+			case "some" -> Id_some;
+			case "find" -> Id_find;
+			case "findIndex" -> Id_findIndex;
+			case "reduce" -> Id_reduce;
+			case "reduceRight" -> Id_reduceRight;
+			case "fill" -> Id_fill;
+			case "keys" -> Id_keys;
+			case "values" -> Id_values;
+			case "entries" -> Id_entries;
+			case "includes" -> Id_includes;
+			case "copyWithin" -> Id_copyWithin;
+			default -> 0;
+		};
 	}
 
-	private static final int Id_constructor = 1, Id_toString = 2, Id_toLocaleString = 3, Id_toSource = 4, Id_join = 5, Id_reverse = 6, Id_sort = 7, Id_push = 8, Id_pop = 9, Id_shift = 10, Id_unshift = 11, Id_splice = 12, Id_concat = 13, Id_slice = 14, Id_indexOf = 15, Id_lastIndexOf = 16, Id_every = 17, Id_filter = 18, Id_forEach = 19, Id_map = 20, Id_some = 21, Id_find = 22, Id_findIndex = 23, Id_reduce = 24, Id_reduceRight = 25, Id_fill = 26, Id_keys = 27, Id_values = 28, Id_entries = 29, Id_includes = 30, Id_copyWithin = 31, SymbolId_iterator = 32,
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toLocaleString = 3;
+	private static final int Id_toSource = 4;
+	private static final int Id_join = 5;
+	private static final int Id_reverse = 6;
+	private static final int Id_sort = 7;
+	private static final int Id_push = 8;
+	private static final int Id_pop = 9;
+	private static final int Id_shift = 10;
+	private static final int Id_unshift = 11;
+	private static final int Id_splice = 12;
+	private static final int Id_concat = 13;
+	private static final int Id_slice = 14;
+	private static final int Id_indexOf = 15;
+	private static final int Id_lastIndexOf = 16;
+	private static final int Id_every = 17;
+	private static final int Id_filter = 18;
+	private static final int Id_forEach = 19;
+	private static final int Id_map = 20;
+	private static final int Id_some = 21;
+	private static final int Id_find = 22;
+	private static final int Id_findIndex = 23;
+	private static final int Id_reduce = 24;
+	private static final int Id_reduceRight = 25;
+	private static final int Id_fill = 26;
+	private static final int Id_keys = 27;
+	private static final int Id_values = 28;
+	private static final int Id_entries = 29;
+	private static final int Id_includes = 30;
+	private static final int Id_copyWithin = 31;
+	private static final int SymbolId_iterator = 32;
 
-	MAX_PROTOTYPE_ID = SymbolId_iterator;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
 
 	// #/string_id_map#
 
-	private static final int ConstructorId_join = -Id_join, ConstructorId_reverse = -Id_reverse, ConstructorId_sort = -Id_sort, ConstructorId_push = -Id_push, ConstructorId_pop = -Id_pop, ConstructorId_shift = -Id_shift, ConstructorId_unshift = -Id_unshift, ConstructorId_splice = -Id_splice, ConstructorId_concat = -Id_concat, ConstructorId_slice = -Id_slice, ConstructorId_indexOf = -Id_indexOf, ConstructorId_lastIndexOf = -Id_lastIndexOf, ConstructorId_every = -Id_every, ConstructorId_filter = -Id_filter, ConstructorId_forEach = -Id_forEach, ConstructorId_map = -Id_map, ConstructorId_some = -Id_some, ConstructorId_find = -Id_find, ConstructorId_findIndex = -Id_findIndex, ConstructorId_reduce = -Id_reduce, ConstructorId_reduceRight = -Id_reduceRight, ConstructorId_isArray = -26, ConstructorId_of = -27, ConstructorId_from = -28;
+	private static final int ConstructorId_join = -Id_join;
+	private static final int ConstructorId_reverse = -Id_reverse;
+	private static final int ConstructorId_sort = -Id_sort;
+	private static final int ConstructorId_push = -Id_push;
+	private static final int ConstructorId_pop = -Id_pop;
+	private static final int ConstructorId_shift = -Id_shift;
+	private static final int ConstructorId_unshift = -Id_unshift;
+	private static final int ConstructorId_splice = -Id_splice;
+	private static final int ConstructorId_concat = -Id_concat;
+	private static final int ConstructorId_slice = -Id_slice;
+	private static final int ConstructorId_indexOf = -Id_indexOf;
+	private static final int ConstructorId_lastIndexOf = -Id_lastIndexOf;
+	private static final int ConstructorId_every = -Id_every;
+	private static final int ConstructorId_filter = -Id_filter;
+	private static final int ConstructorId_forEach = -Id_forEach;
+	private static final int ConstructorId_map = -Id_map;
+	private static final int ConstructorId_some = -Id_some;
+	private static final int ConstructorId_find = -Id_find;
+	private static final int ConstructorId_findIndex = -Id_findIndex;
+	private static final int ConstructorId_reduce = -Id_reduce;
+	private static final int ConstructorId_reduceRight = -Id_reduceRight;
+	private static final int ConstructorId_isArray = -26;
+	private static final int ConstructorId_of = -27;
+	private static final int ConstructorId_from = -28;
 
 	/**
 	 * Internal representation of the JavaScript array's length property.

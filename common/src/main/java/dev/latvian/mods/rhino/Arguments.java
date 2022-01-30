@@ -154,9 +154,11 @@ final class Arguments extends IdScriptableObject {
 
 	// #string_id_map#
 
-	private static final int Id_callee = 1, Id_length = 2, Id_caller = 3,
+	private static final int Id_callee = 1;
+	private static final int Id_length = 2;
+	private static final int Id_caller = 3;
 
-	MAX_INSTANCE_ID = Id_caller;
+	private static final int MAX_INSTANCE_ID = Id_caller;
 
 	@Override
 	protected int getMaxInstanceId() {
@@ -165,34 +167,15 @@ final class Arguments extends IdScriptableObject {
 
 	@Override
 	protected int findInstanceIdInfo(String s) {
-		int id;
-		// #generated# Last update: 2010-01-06 05:48:21 ARST
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			int s_length = s.length();
-			if (s_length == 6) {
-				c = s.charAt(5);
-				if (c == 'e') {
-					X = "callee";
-					id = Id_callee;
-				} else if (c == 'h') {
-					X = "length";
-					id = Id_length;
-				} else if (c == 'r') {
-					X = "caller";
-					id = Id_caller;
-				}
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
+		int id = switch (s) {
+			case "callee" -> Id_callee;
+			case "length" -> Id_length;
+			case "caller" -> Id_caller;
+			default -> 0;
+		};
+
 		Context cx = Context.getContext();
+
 		if (cx.isStrictMode()) {
 			if (id == Id_callee || id == Id_caller) {
 				return super.findInstanceIdInfo(s);

@@ -46,7 +46,10 @@ final class NativeString extends IdScriptableObject {
 		return "String";
 	}
 
-	private static final int Id_length = 1, Id_namespace = 2, Id_path = 3, MAX_INSTANCE_ID = Id_path;
+	private static final int Id_length = 1;
+	private static final int Id_namespace = 2;
+	private static final int Id_path = 3;
+	private static final int MAX_INSTANCE_ID = Id_path;
 
 	@Override
 	protected int getMaxInstanceId() {
@@ -1113,270 +1116,135 @@ final class NativeString extends IdScriptableObject {
 
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2020-06-27 11:15:47 CST
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 3:
-					c = s.charAt(2);
-					if (c == 'b') {
-						if (s.charAt(0) == 's' && s.charAt(1) == 'u') {
-							id = Id_sub;
-							break L0;
-						}
-					} else if (c == 'g') {
-						if (s.charAt(0) == 'b' && s.charAt(1) == 'i') {
-							id = Id_big;
-							break L0;
-						}
-					} else if (c == 'p') {
-						if (s.charAt(0) == 's' && s.charAt(1) == 'u') {
-							id = Id_sup;
-							break L0;
-						}
-					}
-					break L;
-				case 4:
-					c = s.charAt(0);
-					if (c == 'b') {
-						X = "bold";
-						id = Id_bold;
-					} else if (c == 'l') {
-						X = "link";
-						id = Id_link;
-					} else if (c == 't') {
-						X = "trim";
-						id = Id_trim;
-					}
-					break L;
-				case 5:
-					switch (s.charAt(4)) {
-						case 'd':
-							X = "fixed";
-							id = Id_fixed;
-							break L;
-						case 'e':
-							X = "slice";
-							id = Id_slice;
-							break L;
-						case 'h':
-							X = "match";
-							id = Id_match;
-							break L;
-						case 'k':
-							X = "blink";
-							id = Id_blink;
-							break L;
-						case 'l':
-							X = "small";
-							id = Id_small;
-							break L;
-						case 't':
-							X = "split";
-							id = Id_split;
-							break L;
-					}
-					break L;
-				case 6:
-					switch (s.charAt(1)) {
-						case 'a':
-							X = "padEnd";
-							id = Id_padEnd;
-							break L;
-						case 'e':
-							c = s.charAt(0);
-							if (c == 'r') {
-								X = "repeat";
-								id = Id_repeat;
-							} else if (c == 's') {
-								X = "search";
-								id = Id_search;
-							}
-							break L;
-						case 'h':
-							X = "charAt";
-							id = Id_charAt;
-							break L;
-						case 'n':
-							X = "anchor";
-							id = Id_anchor;
-							break L;
-						case 'o':
-							X = "concat";
-							id = Id_concat;
-							break L;
-						case 'q':
-							X = "equals";
-							id = Id_equals;
-							break L;
-						case 't':
-							X = "strike";
-							id = Id_strike;
-							break L;
-						case 'u':
-							X = "substr";
-							id = Id_substr;
-							break L;
-					}
-					break L;
-				case 7:
-					switch (s.charAt(1)) {
-						case 'a':
-							X = "valueOf";
-							id = Id_valueOf;
-							break L;
-						case 'e':
-							X = "replace";
-							id = Id_replace;
-							break L;
-						case 'n':
-							X = "indexOf";
-							id = Id_indexOf;
-							break L;
-						case 'r':
-							X = "trimEnd";
-							id = Id_trimEnd;
-							break L;
-						case 't':
-							X = "italics";
-							id = Id_italics;
-							break L;
-					}
-					break L;
-				case 8:
-					switch (s.charAt(6)) {
-						case 'c':
-							X = "toSource";
-							id = Id_toSource;
-							break L;
-						case 'e':
-							X = "includes";
-							id = Id_includes;
-							break L;
-						case 'f':
-							X = "trimLeft";
-							id = Id_trimLeft;
-							break L;
-						case 'n':
-							X = "toString";
-							id = Id_toString;
-							break L;
-						case 'r':
-							X = "padStart";
-							id = Id_padStart;
-							break L;
-						case 't':
-							X = "endsWith";
-							id = Id_endsWith;
-							break L;
-						case 'z':
-							X = "fontsize";
-							id = Id_fontsize;
-							break L;
-					}
-					break L;
-				case 9:
-					switch (s.charAt(4)) {
-						case 'R':
-							X = "trimRight";
-							id = Id_trimRight;
-							break L;
-						case 'S':
-							X = "trimStart";
-							id = Id_trimStart;
-							break L;
-						case 'a':
-							X = "normalize";
-							id = Id_normalize;
-							break L;
-						case 'c':
-							X = "fontcolor";
-							id = Id_fontcolor;
-							break L;
-						case 't':
-							X = "substring";
-							id = Id_substring;
-							break L;
-						case 's':
-							X = "namespace";
-							id = Id_namespace;
-							break L;
-					}
-					break L;
-				case 10:
-					c = s.charAt(0);
-					if (c == 'c') {
-						X = "charCodeAt";
-						id = Id_charCodeAt;
-					} else if (c == 's') {
-						X = "startsWith";
-						id = Id_startsWith;
-					}
-					break L;
-				case 11:
-					switch (s.charAt(2)) {
-						case 'L':
-							X = "toLowerCase";
-							id = Id_toLowerCase;
-							break L;
-						case 'U':
-							X = "toUpperCase";
-							id = Id_toUpperCase;
-							break L;
-						case 'd':
-							X = "codePointAt";
-							id = Id_codePointAt;
-							break L;
-						case 'n':
-							X = "constructor";
-							id = Id_constructor;
-							break L;
-						case 's':
-							X = "lastIndexOf";
-							id = Id_lastIndexOf;
-							break L;
-					}
-					break L;
-				case 13:
-					X = "localeCompare";
-					id = Id_localeCompare;
-					break L;
-				case 16:
-					X = "equalsIgnoreCase";
-					id = Id_equalsIgnoreCase;
-					break L;
-				case 17:
-					c = s.charAt(8);
-					if (c == 'L') {
-						X = "toLocaleLowerCase";
-						id = Id_toLocaleLowerCase;
-					} else if (c == 'U') {
-						X = "toLocaleUpperCase";
-						id = Id_toLocaleUpperCase;
-					}
-					break L;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "toString" -> Id_toString;
+			case "toSource" -> Id_toSource;
+			case "valueOf" -> Id_valueOf;
+			case "charAt" -> Id_charAt;
+			case "charCodeAt" -> Id_charCodeAt;
+			case "indexOf" -> Id_indexOf;
+			case "lastIndexOf" -> Id_lastIndexOf;
+			case "split" -> Id_split;
+			case "substring" -> Id_substring;
+			case "toLowerCase" -> Id_toLowerCase;
+			case "toUpperCase" -> Id_toUpperCase;
+			case "substr" -> Id_substr;
+			case "concat" -> Id_concat;
+			case "slice" -> Id_slice;
+			case "bold" -> Id_bold;
+			case "italics" -> Id_italics;
+			case "fixed" -> Id_fixed;
+			case "strike" -> Id_strike;
+			case "small" -> Id_small;
+			case "big" -> Id_big;
+			case "blink" -> Id_blink;
+			case "sup" -> Id_sup;
+			case "sub" -> Id_sub;
+			case "fontsize" -> Id_fontsize;
+			case "fontcolor" -> Id_fontcolor;
+			case "link" -> Id_link;
+			case "anchor" -> Id_anchor;
+			case "equals" -> Id_equals;
+			case "equalsIgnoreCase" -> Id_equalsIgnoreCase;
+			case "match" -> Id_match;
+			case "search" -> Id_search;
+			case "replace" -> Id_replace;
+			case "localeCompare" -> Id_localeCompare;
+			case "toLocaleLowerCase" -> Id_toLocaleLowerCase;
+			case "toLocaleUpperCase" -> Id_toLocaleUpperCase;
+			case "trim" -> Id_trim;
+			case "trimLeft" -> Id_trimLeft;
+			case "trimRight" -> Id_trimRight;
+			case "includes" -> Id_includes;
+			case "startsWith" -> Id_startsWith;
+			case "endsWith" -> Id_endsWith;
+			case "normalize" -> Id_normalize;
+			case "repeat" -> Id_repeat;
+			case "codePointAt" -> Id_codePointAt;
+			case "padStart" -> Id_padStart;
+			case "padEnd" -> Id_padEnd;
+			case "trimStart" -> Id_trimStart;
+			case "trimEnd" -> Id_trimEnd;
+			default -> super.findPrototypeId(s);
+		};
 	}
 
-	private static final int ConstructorId_fromCharCode = -1, ConstructorId_fromCodePoint = -2, ConstructorId_raw = -3,
+	private static final int ConstructorId_fromCharCode = -1;
+	private static final int ConstructorId_fromCodePoint = -2;
+	private static final int ConstructorId_raw = -3;
 
-	Id_constructor = 1, Id_toString = 2, Id_toSource = 3, Id_valueOf = 4, Id_charAt = 5, Id_charCodeAt = 6, Id_indexOf = 7, Id_lastIndexOf = 8, Id_split = 9, Id_substring = 10, Id_toLowerCase = 11, Id_toUpperCase = 12, Id_substr = 13, Id_concat = 14, Id_slice = 15, Id_bold = 16, Id_italics = 17, Id_fixed = 18, Id_strike = 19, Id_small = 20, Id_big = 21, Id_blink = 22, Id_sup = 23, Id_sub = 24, Id_fontsize = 25, Id_fontcolor = 26, Id_link = 27, Id_anchor = 28, Id_equals = 29, Id_equalsIgnoreCase = 30, Id_match = 31, Id_search = 32, Id_replace = 33, Id_localeCompare = 34, Id_toLocaleLowerCase = 35, Id_toLocaleUpperCase = 36, Id_trim = 37, Id_trimLeft = 38, Id_trimRight = 39, Id_includes = 40, Id_startsWith = 41, Id_endsWith = 42, Id_normalize = 43, Id_repeat = 44, Id_codePointAt = 45, Id_padStart = 46, Id_padEnd = 47, SymbolId_iterator = 48, Id_trimStart = 49, Id_trimEnd = 50, MAX_PROTOTYPE_ID = Id_trimEnd;
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toSource = 3;
+	private static final int Id_valueOf = 4;
+	private static final int Id_charAt = 5;
+	private static final int Id_charCodeAt = 6;
+	private static final int Id_indexOf = 7;
+	private static final int Id_lastIndexOf = 8;
+	private static final int Id_split = 9;
+	private static final int Id_substring = 10;
+	private static final int Id_toLowerCase = 11;
+	private static final int Id_toUpperCase = 12;
+	private static final int Id_substr = 13;
+	private static final int Id_concat = 14;
+	private static final int Id_slice = 15;
+	private static final int Id_bold = 16;
+	private static final int Id_italics = 17;
+	private static final int Id_fixed = 18;
+	private static final int Id_strike = 19;
+	private static final int Id_small = 20;
+	private static final int Id_big = 21;
+	private static final int Id_blink = 22;
+	private static final int Id_sup = 23;
+	private static final int Id_sub = 24;
+	private static final int Id_fontsize = 25;
+	private static final int Id_fontcolor = 26;
+	private static final int Id_link = 27;
+	private static final int Id_anchor = 28;
+	private static final int Id_equals = 29;
+	private static final int Id_equalsIgnoreCase = 30;
+	private static final int Id_match = 31;
+	private static final int Id_search = 32;
+	private static final int Id_replace = 33;
+	private static final int Id_localeCompare = 34;
+	private static final int Id_toLocaleLowerCase = 35;
+	private static final int Id_toLocaleUpperCase = 36;
+	private static final int Id_trim = 37;
+	private static final int Id_trimLeft = 38;
+	private static final int Id_trimRight = 39;
+	private static final int Id_includes = 40;
+	private static final int Id_startsWith = 41;
+	private static final int Id_endsWith = 42;
+	private static final int Id_normalize = 43;
+	private static final int Id_repeat = 44;
+	private static final int Id_codePointAt = 45;
+	private static final int Id_padStart = 46;
+	private static final int Id_padEnd = 47;
+	private static final int Id_trimStart = 48;
+	private static final int Id_trimEnd = 49;
+	private static final int SymbolId_iterator = 50;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
 
 	// #/string_id_map#
 
-	private static final int ConstructorId_charAt = -Id_charAt, ConstructorId_charCodeAt = -Id_charCodeAt, ConstructorId_indexOf = -Id_indexOf, ConstructorId_lastIndexOf = -Id_lastIndexOf, ConstructorId_split = -Id_split, ConstructorId_substring = -Id_substring, ConstructorId_toLowerCase = -Id_toLowerCase, ConstructorId_toUpperCase = -Id_toUpperCase, ConstructorId_substr = -Id_substr, ConstructorId_concat = -Id_concat, ConstructorId_slice = -Id_slice, ConstructorId_equalsIgnoreCase = -Id_equalsIgnoreCase, ConstructorId_match = -Id_match, ConstructorId_search = -Id_search, ConstructorId_replace = -Id_replace, ConstructorId_localeCompare = -Id_localeCompare, ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
+	private static final int ConstructorId_charAt = -Id_charAt;
+	private static final int ConstructorId_charCodeAt = -Id_charCodeAt;
+	private static final int ConstructorId_indexOf = -Id_indexOf;
+	private static final int ConstructorId_lastIndexOf = -Id_lastIndexOf;
+	private static final int ConstructorId_split = -Id_split;
+	private static final int ConstructorId_substring = -Id_substring;
+	private static final int ConstructorId_toLowerCase = -Id_toLowerCase;
+	private static final int ConstructorId_toUpperCase = -Id_toUpperCase;
+	private static final int ConstructorId_substr = -Id_substr;
+	private static final int ConstructorId_concat = -Id_concat;
+	private static final int ConstructorId_slice = -Id_slice;
+	private static final int ConstructorId_equalsIgnoreCase = -Id_equalsIgnoreCase;
+	private static final int ConstructorId_match = -Id_match;
+	private static final int ConstructorId_search = -Id_search;
+	private static final int ConstructorId_replace = -Id_replace;
+	private static final int ConstructorId_localeCompare = -Id_localeCompare;
+	private static final int ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
 
 	private final CharSequence string;
 }

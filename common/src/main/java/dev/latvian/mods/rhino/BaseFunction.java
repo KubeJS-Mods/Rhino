@@ -98,9 +98,13 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
 	// #string_id_map#
 
-	private static final int Id_length = 1, Id_arity = 2, Id_name = 3, Id_prototype = 4, Id_arguments = 5,
+	private static final int Id_length = 1;
+	private static final int Id_arity = 2;
+	private static final int Id_name = 3;
+	private static final int Id_prototype = 4;
+	private static final int Id_arguments = 5;
 
-	MAX_INSTANCE_ID = 5;
+	private static final int MAX_INSTANCE_ID = 5;
 
 	@Override
 	protected int getMaxInstanceId() {
@@ -109,45 +113,14 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
 	@Override
 	protected int findInstanceIdInfo(String s) {
-		int id;
-		// #generated# Last update: 2007-05-09 08:15:15 EDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 4 -> {
-					X = "name";
-					id = Id_name;
-				}
-				case 5 -> {
-					X = "arity";
-					id = Id_arity;
-				}
-				case 6 -> {
-					X = "length";
-					id = Id_length;
-				}
-				case 9 -> {
-					c = s.charAt(0);
-					if (c == 'a') {
-						X = "arguments";
-						id = Id_arguments;
-					} else if (c == 'p') {
-						X = "prototype";
-						id = Id_prototype;
-					}
-				}
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		// #/string_id_map#
+		int id = switch (s) {
+			case "name" -> Id_name;
+			case "length" -> Id_length;
+			case "arity" -> Id_arity;
+			case "prototype" -> Id_prototype;
+			case "arguments" -> Id_arguments;
+			default -> 0;
+		};
 
 		if (id == 0) {
 			return super.findInstanceIdInfo(s);
@@ -546,57 +519,25 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #string_id_map#
-		// #generated# Last update: 2009-07-24 16:00:52 EST
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 4 -> {
-					c = s.charAt(0);
-					if (c == 'b') {
-						X = "bind";
-						id = Id_bind;
-					} else if (c == 'c') {
-						X = "call";
-						id = Id_call;
-					}
-				}
-				case 5 -> {
-					X = "apply";
-					id = Id_apply;
-				}
-				case 8 -> {
-					c = s.charAt(3);
-					if (c == 'o') {
-						X = "toSource";
-						id = Id_toSource;
-					} else if (c == 't') {
-						X = "toString";
-						id = Id_toString;
-					}
-				}
-				case 11 -> {
-					X = "constructor";
-					id = Id_constructor;
-				}
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "toString" -> Id_toString;
+			case "toSource" -> Id_toSource;
+			case "apply" -> Id_apply;
+			case "call" -> Id_call;
+			case "bind" -> Id_bind;
+			default -> super.findPrototypeId(s);
+		};
 	}
 
-	private static final int Id_constructor = 1, Id_toString = 2, Id_toSource = 3, Id_apply = 4, Id_call = 5, Id_bind = 6,
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toSource = 3;
+	private static final int Id_apply = 4;
+	private static final int Id_call = 5;
+	private static final int Id_bind = 6;
 
-	MAX_PROTOTYPE_ID = Id_bind;
+	private static final int MAX_PROTOTYPE_ID = Id_bind;
 
 	// #/string_id_map#
 

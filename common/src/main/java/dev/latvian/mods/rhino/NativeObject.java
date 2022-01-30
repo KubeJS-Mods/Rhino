@@ -825,91 +825,58 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		}
 	}
 
-
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2007-05-09 08:15:55 EDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 7 -> {
-					X = "valueOf";
-					id = Id_valueOf;
-				}
-				case 8 -> {
-					c = s.charAt(3);
-					if (c == 'o') {
-						X = "toSource";
-						id = Id_toSource;
-					} else if (c == 't') {
-						X = "toString";
-						id = Id_toString;
-					}
-				}
-				case 11 -> {
-					X = "constructor";
-					id = Id_constructor;
-				}
-				case 13 -> {
-					X = "isPrototypeOf";
-					id = Id_isPrototypeOf;
-				}
-				case 14 -> {
-					c = s.charAt(0);
-					if (c == 'h') {
-						X = "hasOwnProperty";
-						id = Id_hasOwnProperty;
-					} else if (c == 't') {
-						X = "toLocaleString";
-						id = Id_toLocaleString;
-					}
-				}
-				case 16 -> {
-					c = s.charAt(2);
-					if (c == 'd') {
-						c = s.charAt(8);
-						if (c == 'G') {
-							X = "__defineGetter__";
-							id = Id___defineGetter__;
-						} else if (c == 'S') {
-							X = "__defineSetter__";
-							id = Id___defineSetter__;
-						}
-					} else if (c == 'l') {
-						c = s.charAt(8);
-						if (c == 'G') {
-							X = "__lookupGetter__";
-							id = Id___lookupGetter__;
-						} else if (c == 'S') {
-							X = "__lookupSetter__";
-							id = Id___lookupSetter__;
-						}
-					}
-				}
-				case 20 -> {
-					X = "propertyIsEnumerable";
-					id = Id_propertyIsEnumerable;
-				}
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "toString" -> Id_toString;
+			case "toLocaleString" -> Id_toLocaleString;
+			case "valueOf" -> Id_valueOf;
+			case "hasOwnProperty" -> Id_hasOwnProperty;
+			case "propertyIsEnumerable" -> Id_propertyIsEnumerable;
+			case "isPrototypeOf" -> Id_isPrototypeOf;
+			case "toSource" -> Id_toSource;
+			case "__defineGetter__" -> Id___defineGetter__;
+			case "__defineSetter__" -> Id___defineSetter__;
+			case "__lookupGetter__" -> Id___lookupGetter__;
+			case "__lookupSetter__" -> Id___lookupSetter__;
+			default -> 0;
+		};
 	}
 
-	private static final int ConstructorId_getPrototypeOf = -1, ConstructorId_keys = -2, ConstructorId_getOwnPropertyNames = -3, ConstructorId_getOwnPropertyDescriptor = -4, ConstructorId_defineProperty = -5, ConstructorId_isExtensible = -6, ConstructorId_preventExtensions = -7, ConstructorId_defineProperties = -8, ConstructorId_create = -9, ConstructorId_isSealed = -10, ConstructorId_isFrozen = -11, ConstructorId_seal = -12, ConstructorId_freeze = -13, ConstructorId_getOwnPropertySymbols = -14, ConstructorId_assign = -15, ConstructorId_is = -16, ConstructorId_setPrototypeOf = -17, ConstructorId_entries = -18, ConstructorId_values = -19,
+	private static final int ConstructorId_getPrototypeOf = -1;
+	private static final int ConstructorId_keys = -2;
+	private static final int ConstructorId_getOwnPropertyNames = -3;
+	private static final int ConstructorId_getOwnPropertyDescriptor = -4;
+	private static final int ConstructorId_defineProperty = -5;
+	private static final int ConstructorId_isExtensible = -6;
+	private static final int ConstructorId_preventExtensions = -7;
+	private static final int ConstructorId_defineProperties = -8;
+	private static final int ConstructorId_create = -9;
+	private static final int ConstructorId_isSealed = -10;
+	private static final int ConstructorId_isFrozen = -11;
+	private static final int ConstructorId_seal = -12;
+	private static final int ConstructorId_freeze = -13;
+	private static final int ConstructorId_getOwnPropertySymbols = -14;
+	private static final int ConstructorId_assign = -15;
+	private static final int ConstructorId_is = -16;
+	private static final int ConstructorId_setPrototypeOf = -17;
+	private static final int ConstructorId_entries = -18;
+	private static final int ConstructorId_values = -19;
 
-	Id_constructor = 1, Id_toString = 2, Id_toLocaleString = 3, Id_valueOf = 4, Id_hasOwnProperty = 5, Id_propertyIsEnumerable = 6, Id_isPrototypeOf = 7, Id_toSource = 8, Id___defineGetter__ = 9, Id___defineSetter__ = 10, Id___lookupGetter__ = 11, Id___lookupSetter__ = 12, MAX_PROTOTYPE_ID = 12;
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toLocaleString = 3;
+	private static final int Id_valueOf = 4;
+	private static final int Id_hasOwnProperty = 5;
+	private static final int Id_propertyIsEnumerable = 6;
+	private static final int Id_isPrototypeOf = 7;
+	private static final int Id_toSource = 8;
+	private static final int Id___defineGetter__ = 9;
+	private static final int Id___defineSetter__ = 10;
+	private static final int Id___lookupGetter__ = 11;
+	private static final int Id___lookupSetter__ = 12;
+	private static final int MAX_PROTOTYPE_ID = 12;
 
 	@Override
 	public <T> T createDataObject(Supplier<T> instanceFactory) {

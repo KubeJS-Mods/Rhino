@@ -135,7 +135,10 @@ public abstract class ES6Iterator extends IdScriptableObject {
 		return iteratorResult;
 	}
 
-	private static final int Id_next = 1, SymbolId_iterator = 2, SymbolId_toStringTag = 3, MAX_PROTOTYPE_ID = SymbolId_toStringTag;
+	private static final int Id_next = 1;
+	private static final int SymbolId_iterator = 2;
+	private static final int SymbolId_toStringTag = 3;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	public static final String NEXT_METHOD = "next";
 	public static final String DONE_PROPERTY = "done";

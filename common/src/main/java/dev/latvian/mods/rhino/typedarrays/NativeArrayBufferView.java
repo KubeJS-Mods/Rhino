@@ -113,44 +113,25 @@ public abstract class NativeArrayBufferView extends IdScriptableObject {
 		};
 	}
 
-	// #string_id_map#
-
 	@Override
 	protected int findInstanceIdInfo(String s) {
-		int id;
-		// #generated# Last update: 2014-12-08 17:32:09 PST
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			int s_length = s.length();
-			if (s_length == 6) {
-				X = "buffer";
-				id = Id_buffer;
-			} else if (s_length == 10) {
-				c = s.charAt(4);
-				if (c == 'L') {
-					X = "byteLength";
-					id = Id_byteLength;
-				} else if (c == 'O') {
-					X = "byteOffset";
-					id = Id_byteOffset;
-				}
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
+		int id = switch (s) {
+			case "buffer" -> Id_buffer;
+			case "byteOffset" -> Id_byteOffset;
+			case "byteLength" -> Id_byteLength;
+			default -> 0;
+		};
+
 		if (id == 0) {
 			return super.findInstanceIdInfo(s);
 		}
+
 		return instanceIdInfo(READONLY | PERMANENT, id);
 	}
 
-	private static final int Id_buffer = 1, Id_byteOffset = 2, Id_byteLength = 3;
+	private static final int Id_buffer = 1;
+	private static final int Id_byteOffset = 2;
+	private static final int Id_byteLength = 3;
 
 	// to be visible by subclasses
 	protected static final int MAX_INSTANCE_ID = Id_byteLength;

@@ -361,55 +361,25 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 		return 0;
 	}
 
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2018-05-13 12:51:10 MESZ
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			int s_length = s.length();
-			if (s_length == 3) {
-				c = s.charAt(0);
-				if (c == 'g') {
-					if (s.charAt(2) == 't' && s.charAt(1) == 'e') {
-						id = Id_get;
-						break L0;
-					}
-				} else if (c == 's') {
-					if (s.charAt(2) == 't' && s.charAt(1) == 'e') {
-						id = Id_set;
-						break L0;
-					}
-				}
-			} else if (s_length == 8) {
-				c = s.charAt(0);
-				if (c == 's') {
-					X = "subarray";
-					id = Id_subarray;
-				} else if (c == 't') {
-					X = "toString";
-					id = Id_toString;
-				}
-			} else if (s_length == 11) {
-				X = "constructor";
-				id = Id_constructor;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "toString" -> Id_toString;
+			case "get" -> Id_get;
+			case "set" -> Id_set;
+			case "subarray" -> Id_subarray;
+			default -> super.findPrototypeId(s);
+		};
 	}
 
 	// Table of all functions
-	private static final int Id_constructor = 1, Id_toString = 2, Id_get = 3, Id_set = 4, Id_subarray = 5, SymbolId_iterator = 6;
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_get = 3;
+	private static final int Id_set = 4;
+	private static final int Id_subarray = 5;
+	private static final int SymbolId_iterator = 6;
 
 	protected static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
 
@@ -453,39 +423,29 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 
 	@Override
 	protected int findInstanceIdInfo(String s) {
-		int id;
-		// #generated# Last update: 2018-05-13 12:51:10 MESZ
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int s_length = s.length();
-			if (s_length == 6) {
-				X = "length";
-				id = Id_length;
-			} else if (s_length == 17) {
-				X = "BYTES_PER_ELEMENT";
-				id = Id_BYTES_PER_ELEMENT;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
+		int id = switch (s) {
+			case "length" -> Id_length;
+			case "BYTES_PER_ELEMENT" -> Id_BYTES_PER_ELEMENT;
+			default -> 0;
+		};
+
 		if (id == 0) {
 			return super.findInstanceIdInfo(s);
 		}
+
 		if (id == Id_BYTES_PER_ELEMENT) {
 			return instanceIdInfo(DONTENUM | READONLY | PERMANENT, id);
 		}
+
 		return instanceIdInfo(READONLY | PERMANENT, id);
 	}
 
 	/*
 	 * These must not conflict with ids in the parent since we delegate there for property dispatching.
 	 */
-	private static final int Id_length = NativeArrayBufferView.MAX_INSTANCE_ID + 1, Id_BYTES_PER_ELEMENT = Id_length + 1, MAX_INSTANCE_ID = Id_BYTES_PER_ELEMENT;
+	private static final int Id_length = NativeArrayBufferView.MAX_INSTANCE_ID + 1;
+	private static final int Id_BYTES_PER_ELEMENT = Id_length + 1;
+	private static final int MAX_INSTANCE_ID = Id_BYTES_PER_ELEMENT;
 
 	// #/string_id_map#
 

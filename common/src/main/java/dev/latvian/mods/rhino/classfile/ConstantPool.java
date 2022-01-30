@@ -18,7 +18,20 @@ final class ConstantPool {
 	}
 
 	private static final int ConstantPoolSize = 256;
-	static final byte CONSTANT_Class = 7, CONSTANT_Fieldref = 9, CONSTANT_Methodref = 10, CONSTANT_InterfaceMethodref = 11, CONSTANT_String = 8, CONSTANT_Integer = 3, CONSTANT_Float = 4, CONSTANT_Long = 5, CONSTANT_Double = 6, CONSTANT_NameAndType = 12, CONSTANT_Utf8 = 1, CONSTANT_MethodType = 16, CONSTANT_MethodHandle = 15, CONSTANT_InvokeDynamic = 18;
+	static final byte CONSTANT_Class = 7;
+	static final byte CONSTANT_Fieldref = 9;
+	static final byte CONSTANT_Methodref = 10;
+	static final byte CONSTANT_InterfaceMethodref = 11;
+	static final byte CONSTANT_String = 8;
+	static final byte CONSTANT_Integer = 3;
+	static final byte CONSTANT_Float = 4;
+	static final byte CONSTANT_Long = 5;
+	static final byte CONSTANT_Double = 6;
+	static final byte CONSTANT_NameAndType = 12;
+	static final byte CONSTANT_Utf8 = 1;
+	static final byte CONSTANT_MethodType = 16;
+	static final byte CONSTANT_MethodHandle = 15;
+	static final byte CONSTANT_InvokeDynamic = 18;
 
 	int write(byte[] data, int offset) {
 		offset = ClassFileWriter.putInt16((short) itsTopIndex, data, offset);

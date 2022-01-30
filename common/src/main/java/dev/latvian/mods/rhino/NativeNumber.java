@@ -308,72 +308,38 @@ final class NativeNumber extends IdScriptableObject {
 	private static boolean isDoubleSafeInteger(double d) {
 		return isDoubleInteger(d) && (d <= MAX_SAFE_INTEGER) && (d >= MIN_SAFE_INTEGER);
 	}
-	// #string_id_map#
 
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2007-05-09 08:15:50 EDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 7 -> {
-					c = s.charAt(0);
-					if (c == 't') {
-						X = "toFixed";
-						id = Id_toFixed;
-					} else if (c == 'v') {
-						X = "valueOf";
-						id = Id_valueOf;
-					}
-				}
-				case 8 -> {
-					c = s.charAt(3);
-					if (c == 'o') {
-						X = "toSource";
-						id = Id_toSource;
-					} else if (c == 't') {
-						X = "toString";
-						id = Id_toString;
-					}
-				}
-				case 11 -> {
-					c = s.charAt(0);
-					if (c == 'c') {
-						X = "constructor";
-						id = Id_constructor;
-					} else if (c == 't') {
-						X = "toPrecision";
-						id = Id_toPrecision;
-					}
-				}
-				case 13 -> {
-					X = "toExponential";
-					id = Id_toExponential;
-				}
-				case 14 -> {
-					X = "toLocaleString";
-					id = Id_toLocaleString;
-				}
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "toString" -> Id_toString;
+			case "toLocaleString" -> Id_toLocaleString;
+			case "toSource" -> Id_toSource;
+			case "valueOf" -> Id_valueOf;
+			case "toFixed" -> Id_toFixed;
+			case "toExponential" -> Id_toExponential;
+			case "toPrecision" -> Id_toPrecision;
+			default -> super.findPrototypeId(s);
+		};
 	}
 
-	private static final int ConstructorId_isFinite = -1, ConstructorId_isNaN = -2, ConstructorId_isInteger = -3, ConstructorId_isSafeInteger = -4, ConstructorId_parseFloat = -5, ConstructorId_parseInt = -6,
+	private static final int ConstructorId_isFinite = -1;
+	private static final int ConstructorId_isNaN = -2;
+	private static final int ConstructorId_isInteger = -3;
+	private static final int ConstructorId_isSafeInteger = -4;
+	private static final int ConstructorId_parseFloat = -5;
+	private static final int ConstructorId_parseInt = -6;
 
-	Id_constructor = 1, Id_toString = 2, Id_toLocaleString = 3, Id_toSource = 4, Id_valueOf = 5, Id_toFixed = 6, Id_toExponential = 7, Id_toPrecision = 8, MAX_PROTOTYPE_ID = 8;
-
-	// #/string_id_map#
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toLocaleString = 3;
+	private static final int Id_toSource = 4;
+	private static final int Id_valueOf = 5;
+	private static final int Id_toFixed = 6;
+	private static final int Id_toExponential = 7;
+	private static final int Id_toPrecision = 8;
+	private static final int MAX_PROTOTYPE_ID = 8;
 
 	private final double doubleValue;
 }

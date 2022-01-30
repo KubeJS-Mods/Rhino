@@ -53,6 +53,8 @@ final class ClassFileField {
 	private final short itsTypeIndex;
 	private final short itsFlags;
 	private boolean itsHasAttributes;
-	private short itsAttr1, itsAttr2, itsAttr3;
+	private short itsAttr1;
+	private short itsAttr2;
+	private short itsAttr3;
 	private int itsIndex;
 }

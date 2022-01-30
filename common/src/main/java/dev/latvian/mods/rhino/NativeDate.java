@@ -1744,279 +1744,112 @@ final class NativeDate extends IdScriptableObject {
 		return TimeClip(result);
 	}
 
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2009-07-22 05:44:02 EST
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 6:
-					c = s.charAt(0);
-					if (c == 'g') {
-						X = "getDay";
-						id = Id_getDay;
-					} else if (c == 't') {
-						X = "toJSON";
-						id = Id_toJSON;
-					}
-					break L;
-				case 7:
-					switch (s.charAt(3)) {
-						case 'D':
-							c = s.charAt(0);
-							if (c == 'g') {
-								X = "getDate";
-								id = Id_getDate;
-							} else if (c == 's') {
-								X = "setDate";
-								id = Id_setDate;
-							}
-							break L;
-						case 'T':
-							c = s.charAt(0);
-							if (c == 'g') {
-								X = "getTime";
-								id = Id_getTime;
-							} else if (c == 's') {
-								X = "setTime";
-								id = Id_setTime;
-							}
-							break L;
-						case 'Y':
-							c = s.charAt(0);
-							if (c == 'g') {
-								X = "getYear";
-								id = Id_getYear;
-							} else if (c == 's') {
-								X = "setYear";
-								id = Id_setYear;
-							}
-							break L;
-						case 'u':
-							X = "valueOf";
-							id = Id_valueOf;
-							break L;
-					}
-					break L;
-				case 8:
-					switch (s.charAt(3)) {
-						case 'H':
-							c = s.charAt(0);
-							if (c == 'g') {
-								X = "getHours";
-								id = Id_getHours;
-							} else if (c == 's') {
-								X = "setHours";
-								id = Id_setHours;
-							}
-							break L;
-						case 'M':
-							c = s.charAt(0);
-							if (c == 'g') {
-								X = "getMonth";
-								id = Id_getMonth;
-							} else if (c == 's') {
-								X = "setMonth";
-								id = Id_setMonth;
-							}
-							break L;
-						case 'o':
-							X = "toSource";
-							id = Id_toSource;
-							break L;
-						case 't':
-							X = "toString";
-							id = Id_toString;
-							break L;
-					}
-					break L;
-				case 9:
-					X = "getUTCDay";
-					id = Id_getUTCDay;
-					break L;
-				case 10:
-					c = s.charAt(3);
-					if (c == 'M') {
-						c = s.charAt(0);
-						if (c == 'g') {
-							X = "getMinutes";
-							id = Id_getMinutes;
-						} else if (c == 's') {
-							X = "setMinutes";
-							id = Id_setMinutes;
-						}
-					} else if (c == 'S') {
-						c = s.charAt(0);
-						if (c == 'g') {
-							X = "getSeconds";
-							id = Id_getSeconds;
-						} else if (c == 's') {
-							X = "setSeconds";
-							id = Id_setSeconds;
-						}
-					} else if (c == 'U') {
-						c = s.charAt(0);
-						if (c == 'g') {
-							X = "getUTCDate";
-							id = Id_getUTCDate;
-						} else if (c == 's') {
-							X = "setUTCDate";
-							id = Id_setUTCDate;
-						}
-					}
-					break L;
-				case 11:
-					switch (s.charAt(3)) {
-						case 'F':
-							c = s.charAt(0);
-							if (c == 'g') {
-								X = "getFullYear";
-								id = Id_getFullYear;
-							} else if (c == 's') {
-								X = "setFullYear";
-								id = Id_setFullYear;
-							}
-							break L;
-						case 'M':
-							X = "toGMTString";
-							id = Id_toGMTString;
-							break L;
-						case 'S':
-							X = "toISOString";
-							id = Id_toISOString;
-							break L;
-						case 'T':
-							X = "toUTCString";
-							id = Id_toUTCString;
-							break L;
-						case 'U':
-							c = s.charAt(0);
-							if (c == 'g') {
-								c = s.charAt(9);
-								if (c == 'r') {
-									X = "getUTCHours";
-									id = Id_getUTCHours;
-								} else if (c == 't') {
-									X = "getUTCMonth";
-									id = Id_getUTCMonth;
-								}
-							} else if (c == 's') {
-								c = s.charAt(9);
-								if (c == 'r') {
-									X = "setUTCHours";
-									id = Id_setUTCHours;
-								} else if (c == 't') {
-									X = "setUTCMonth";
-									id = Id_setUTCMonth;
-								}
-							}
-							break L;
-						case 's':
-							X = "constructor";
-							id = Id_constructor;
-							break L;
-					}
-					break L;
-				case 12:
-					c = s.charAt(2);
-					if (c == 'D') {
-						X = "toDateString";
-						id = Id_toDateString;
-					} else if (c == 'T') {
-						X = "toTimeString";
-						id = Id_toTimeString;
-					}
-					break L;
-				case 13:
-					c = s.charAt(0);
-					if (c == 'g') {
-						c = s.charAt(6);
-						if (c == 'M') {
-							X = "getUTCMinutes";
-							id = Id_getUTCMinutes;
-						} else if (c == 'S') {
-							X = "getUTCSeconds";
-							id = Id_getUTCSeconds;
-						}
-					} else if (c == 's') {
-						c = s.charAt(6);
-						if (c == 'M') {
-							X = "setUTCMinutes";
-							id = Id_setUTCMinutes;
-						} else if (c == 'S') {
-							X = "setUTCSeconds";
-							id = Id_setUTCSeconds;
-						}
-					}
-					break L;
-				case 14:
-					c = s.charAt(0);
-					if (c == 'g') {
-						X = "getUTCFullYear";
-						id = Id_getUTCFullYear;
-					} else if (c == 's') {
-						X = "setUTCFullYear";
-						id = Id_setUTCFullYear;
-					} else if (c == 't') {
-						X = "toLocaleString";
-						id = Id_toLocaleString;
-					}
-					break L;
-				case 15:
-					c = s.charAt(0);
-					if (c == 'g') {
-						X = "getMilliseconds";
-						id = Id_getMilliseconds;
-					} else if (c == 's') {
-						X = "setMilliseconds";
-						id = Id_setMilliseconds;
-					}
-					break L;
-				case 17:
-					X = "getTimezoneOffset";
-					id = Id_getTimezoneOffset;
-					break L;
-				case 18:
-					c = s.charAt(0);
-					if (c == 'g') {
-						X = "getUTCMilliseconds";
-						id = Id_getUTCMilliseconds;
-					} else if (c == 's') {
-						X = "setUTCMilliseconds";
-						id = Id_setUTCMilliseconds;
-					} else if (c == 't') {
-						c = s.charAt(8);
-						if (c == 'D') {
-							X = "toLocaleDateString";
-							id = Id_toLocaleDateString;
-						} else if (c == 'T') {
-							X = "toLocaleTimeString";
-							id = Id_toLocaleTimeString;
-						}
-					}
-					break L;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "toString" -> Id_toString;
+			case "toTimeString" -> Id_toTimeString;
+			case "toDateString" -> Id_toDateString;
+			case "toLocaleString" -> Id_toLocaleString;
+			case "toLocaleTimeString" -> Id_toLocaleTimeString;
+			case "toLocaleDateString" -> Id_toLocaleDateString;
+			case "toUTCString" -> Id_toUTCString;
+			case "toSource" -> Id_toSource;
+			case "valueOf" -> Id_valueOf;
+			case "getTime" -> Id_getTime;
+			case "getYear" -> Id_getYear;
+			case "getFullYear" -> Id_getFullYear;
+			case "getUTCFullYear" -> Id_getUTCFullYear;
+			case "getMonth" -> Id_getMonth;
+			case "getUTCMonth" -> Id_getUTCMonth;
+			case "getDate" -> Id_getDate;
+			case "getUTCDate" -> Id_getUTCDate;
+			case "getDay" -> Id_getDay;
+			case "getUTCDay" -> Id_getUTCDay;
+			case "getHours" -> Id_getHours;
+			case "getUTCHours" -> Id_getUTCHours;
+			case "getMinutes" -> Id_getMinutes;
+			case "getUTCMinutes" -> Id_getUTCMinutes;
+			case "getSeconds" -> Id_getSeconds;
+			case "getUTCSeconds" -> Id_getUTCSeconds;
+			case "getMilliseconds" -> Id_getMilliseconds;
+			case "getUTCMilliseconds" -> Id_getUTCMilliseconds;
+			case "getTimezoneOffset" -> Id_getTimezoneOffset;
+			case "setTime" -> Id_setTime;
+			case "setMilliseconds" -> Id_setMilliseconds;
+			case "setUTCMilliseconds" -> Id_setUTCMilliseconds;
+			case "setSeconds" -> Id_setSeconds;
+			case "setUTCSeconds" -> Id_setUTCSeconds;
+			case "setMinutes" -> Id_setMinutes;
+			case "setUTCMinutes" -> Id_setUTCMinutes;
+			case "setHours" -> Id_setHours;
+			case "setUTCHours" -> Id_setUTCHours;
+			case "setDate" -> Id_setDate;
+			case "setUTCDate" -> Id_setUTCDate;
+			case "setMonth" -> Id_setMonth;
+			case "setUTCMonth" -> Id_setUTCMonth;
+			case "setFullYear" -> Id_setFullYear;
+			case "setUTCFullYear" -> Id_setUTCFullYear;
+			case "setYear" -> Id_setYear;
+			case "toISOString" -> Id_toISOString;
+			case "toJSON" -> Id_toJSON;
+			default -> super.findPrototypeId(s);
+		};
 	}
 
-	private static final int ConstructorId_now = -3, ConstructorId_parse = -2, ConstructorId_UTC = -1,
+	private static final int ConstructorId_now = -3;
+	private static final int ConstructorId_parse = -2;
+	private static final int ConstructorId_UTC = -1;
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toTimeString = 3;
+	private static final int Id_toDateString = 4;
+	private static final int Id_toLocaleString = 5;
+	private static final int Id_toLocaleTimeString = 6;
+	private static final int Id_toLocaleDateString = 7;
+	private static final int Id_toUTCString = 8;
+	private static final int Id_toSource = 9;
+	private static final int Id_valueOf = 10;
+	private static final int Id_getTime = 11;
+	private static final int Id_getYear = 12;
+	private static final int Id_getFullYear = 13;
+	private static final int Id_getUTCFullYear = 14;
+	private static final int Id_getMonth = 15;
+	private static final int Id_getUTCMonth = 16;
+	private static final int Id_getDate = 17;
+	private static final int Id_getUTCDate = 18;
+	private static final int Id_getDay = 19;
+	private static final int Id_getUTCDay = 20;
+	private static final int Id_getHours = 21;
+	private static final int Id_getUTCHours = 22;
+	private static final int Id_getMinutes = 23;
+	private static final int Id_getUTCMinutes = 24;
+	private static final int Id_getSeconds = 25;
+	private static final int Id_getUTCSeconds = 26;
+	private static final int Id_getMilliseconds = 27;
+	private static final int Id_getUTCMilliseconds = 28;
+	private static final int Id_getTimezoneOffset = 29;
+	private static final int Id_setTime = 30;
+	private static final int Id_setMilliseconds = 31;
+	private static final int Id_setUTCMilliseconds = 32;
+	private static final int Id_setSeconds = 33;
+	private static final int Id_setUTCSeconds = 34;
+	private static final int Id_setMinutes = 35;
+	private static final int Id_setUTCMinutes = 36;
+	private static final int Id_setHours = 37;
+	private static final int Id_setUTCHours = 38;
+	private static final int Id_setDate = 39;
+	private static final int Id_setUTCDate = 40;
+	private static final int Id_setMonth = 41;
+	private static final int Id_setUTCMonth = 42;
+	private static final int Id_setFullYear = 43;
+	private static final int Id_setUTCFullYear = 44;
+	private static final int Id_setYear = 45;
+	private static final int Id_toISOString = 46;
+	private static final int Id_toJSON = 47;
 
-	Id_constructor = 1, Id_toString = 2, Id_toTimeString = 3, Id_toDateString = 4, Id_toLocaleString = 5, Id_toLocaleTimeString = 6, Id_toLocaleDateString = 7, Id_toUTCString = 8, Id_toSource = 9, Id_valueOf = 10, Id_getTime = 11, Id_getYear = 12, Id_getFullYear = 13, Id_getUTCFullYear = 14, Id_getMonth = 15, Id_getUTCMonth = 16, Id_getDate = 17, Id_getUTCDate = 18, Id_getDay = 19, Id_getUTCDay = 20, Id_getHours = 21, Id_getUTCHours = 22, Id_getMinutes = 23, Id_getUTCMinutes = 24, Id_getSeconds = 25, Id_getUTCSeconds = 26, Id_getMilliseconds = 27, Id_getUTCMilliseconds = 28, Id_getTimezoneOffset = 29, Id_setTime = 30, Id_setMilliseconds = 31, Id_setUTCMilliseconds = 32, Id_setSeconds = 33, Id_setUTCSeconds = 34, Id_setMinutes = 35, Id_setUTCMinutes = 36, Id_setHours = 37, Id_setUTCHours = 38, Id_setDate = 39, Id_setUTCDate = 40, Id_setMonth = 41, Id_setUTCMonth = 42, Id_setFullYear = 43, Id_setUTCFullYear = 44, Id_setYear = 45, Id_toISOString = 46, Id_toJSON = 47,
-
-	MAX_PROTOTYPE_ID = Id_toJSON;
+	private static final int MAX_PROTOTYPE_ID = Id_toJSON;
 
 	private static final int Id_toGMTString = Id_toUTCString; // Alias, see Ecma B.2.6
 	// #/string_id_map#
