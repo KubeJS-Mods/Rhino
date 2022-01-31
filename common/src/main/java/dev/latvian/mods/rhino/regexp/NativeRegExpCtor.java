@@ -73,31 +73,37 @@ class NativeRegExpCtor extends BaseFunction {
 
 	// #string_id_map#
 
-	private static final int Id_multiline = 1, Id_STAR = 2,  // #string=$*#
+	private static final int Id_multiline = 1;
+	private static final int Id_STAR = 2;  // #string=$*#
 
-	Id_input = 3, Id_UNDERSCORE = 4,  // #string=$_#
+	private static final int Id_input = 3;
+	private static final int Id_UNDERSCORE = 4;  // #string=$_#
 
-	Id_lastMatch = 5, Id_AMPERSAND = 6,  // #string=$&#
+	private static final int Id_lastMatch = 5;
+	private static final int Id_AMPERSAND = 6;  // #string=$&#
 
-	Id_lastParen = 7, Id_PLUS = 8,  // #string=$+#
+	private static final int Id_lastParen = 7;
+	private static final int Id_PLUS = 8;  // #string=$+#
 
-	Id_leftContext = 9, Id_BACK_QUOTE = 10, // #string=$`#
+	private static final int Id_leftContext = 9;
+	private static final int Id_BACK_QUOTE = 10; // #string=$`#
 
-	Id_rightContext = 11, Id_QUOTE = 12, // #string=$'#
+	private static final int Id_rightContext = 11;
+	private static final int Id_QUOTE = 12; // #string=$'#
 
-	DOLLAR_ID_BASE = 12;
+	private static final int DOLLAR_ID_BASE = 12;
 
-	private static final int Id_DOLLAR_1 = DOLLAR_ID_BASE + 1, // #string=$1#
-			Id_DOLLAR_2 = DOLLAR_ID_BASE + 2, // #string=$2#
-			Id_DOLLAR_3 = DOLLAR_ID_BASE + 3, // #string=$3#
-			Id_DOLLAR_4 = DOLLAR_ID_BASE + 4, // #string=$4#
-			Id_DOLLAR_5 = DOLLAR_ID_BASE + 5, // #string=$5#
-			Id_DOLLAR_6 = DOLLAR_ID_BASE + 6, // #string=$6#
-			Id_DOLLAR_7 = DOLLAR_ID_BASE + 7, // #string=$7#
-			Id_DOLLAR_8 = DOLLAR_ID_BASE + 8, // #string=$8#
-			Id_DOLLAR_9 = DOLLAR_ID_BASE + 9, // #string=$9#
+	private static final int Id_DOLLAR_1 = DOLLAR_ID_BASE + 1; // #string=$1#
+	private static final int Id_DOLLAR_2 = DOLLAR_ID_BASE + 2; // #string=$2#
+	private static final int Id_DOLLAR_3 = DOLLAR_ID_BASE + 3; // #string=$3#
+	private static final int Id_DOLLAR_4 = DOLLAR_ID_BASE + 4; // #string=$4#
+	private static final int Id_DOLLAR_5 = DOLLAR_ID_BASE + 5; // #string=$5#
+	private static final int Id_DOLLAR_6 = DOLLAR_ID_BASE + 6; // #string=$6#
+	private static final int Id_DOLLAR_7 = DOLLAR_ID_BASE + 7; // #string=$7#
+	private static final int Id_DOLLAR_8 = DOLLAR_ID_BASE + 8; // #string=$8#
+	private static final int Id_DOLLAR_9 = DOLLAR_ID_BASE + 9; // #string=$9#
 
-	MAX_INSTANCE_ID = DOLLAR_ID_BASE + 9;
+	private static final int MAX_INSTANCE_ID = DOLLAR_ID_BASE + 9;
 
 	@Override
 	protected int getMaxInstanceId() {
@@ -106,140 +112,30 @@ class NativeRegExpCtor extends BaseFunction {
 
 	@Override
 	protected int findInstanceIdInfo(String s) {
-		int id;
-		// #generated# Last update: 2001-05-24 16:09:31 GMT+02:00
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 2:
-					switch (s.charAt(1)) {
-						case '&':
-							if (s.charAt(0) == '$') {
-								id = Id_AMPERSAND;
-								break L0;
-							}
-							break L;
-						case '\'':
-							if (s.charAt(0) == '$') {
-								id = Id_QUOTE;
-								break L0;
-							}
-							break L;
-						case '*':
-							if (s.charAt(0) == '$') {
-								id = Id_STAR;
-								break L0;
-							}
-							break L;
-						case '+':
-							if (s.charAt(0) == '$') {
-								id = Id_PLUS;
-								break L0;
-							}
-							break L;
-						case '1':
-							if (s.charAt(0) == '$') {
-								id = Id_DOLLAR_1;
-								break L0;
-							}
-							break L;
-						case '2':
-							if (s.charAt(0) == '$') {
-								id = Id_DOLLAR_2;
-								break L0;
-							}
-							break L;
-						case '3':
-							if (s.charAt(0) == '$') {
-								id = Id_DOLLAR_3;
-								break L0;
-							}
-							break L;
-						case '4':
-							if (s.charAt(0) == '$') {
-								id = Id_DOLLAR_4;
-								break L0;
-							}
-							break L;
-						case '5':
-							if (s.charAt(0) == '$') {
-								id = Id_DOLLAR_5;
-								break L0;
-							}
-							break L;
-						case '6':
-							if (s.charAt(0) == '$') {
-								id = Id_DOLLAR_6;
-								break L0;
-							}
-							break L;
-						case '7':
-							if (s.charAt(0) == '$') {
-								id = Id_DOLLAR_7;
-								break L0;
-							}
-							break L;
-						case '8':
-							if (s.charAt(0) == '$') {
-								id = Id_DOLLAR_8;
-								break L0;
-							}
-							break L;
-						case '9':
-							if (s.charAt(0) == '$') {
-								id = Id_DOLLAR_9;
-								break L0;
-							}
-							break L;
-						case '_':
-							if (s.charAt(0) == '$') {
-								id = Id_UNDERSCORE;
-								break L0;
-							}
-							break L;
-						case '`':
-							if (s.charAt(0) == '$') {
-								id = Id_BACK_QUOTE;
-								break L0;
-							}
-							break L;
-					}
-					break L;
-				case 5:
-					X = "input";
-					id = Id_input;
-					break L;
-				case 9:
-					c = s.charAt(4);
-					if (c == 'M') {
-						X = "lastMatch";
-						id = Id_lastMatch;
-					} else if (c == 'P') {
-						X = "lastParen";
-						id = Id_lastParen;
-					} else if (c == 'i') {
-						X = "multiline";
-						id = Id_multiline;
-					}
-					break L;
-				case 11:
-					X = "leftContext";
-					id = Id_leftContext;
-					break L;
-				case 12:
-					X = "rightContext";
-					id = Id_rightContext;
-					break L;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-		}
-		// #/generated#
+		int id = switch (s) {
+			case "multiline" -> Id_multiline;
+			case "$*" -> Id_STAR;
+			case "input" -> Id_input;
+			case "$_" -> Id_UNDERSCORE;
+			case "lastMatch" -> Id_lastMatch;
+			case "$&" -> Id_AMPERSAND;
+			case "lastParen" -> Id_lastParen;
+			case "$+" -> Id_PLUS;
+			case "leftContext" -> Id_leftContext;
+			case "$`" -> Id_BACK_QUOTE;
+			case "rightContext" -> Id_rightContext;
+			case "$'" -> Id_QUOTE;
+			case "$1" -> Id_DOLLAR_1;
+			case "$2" -> Id_DOLLAR_2;
+			case "$3" -> Id_DOLLAR_3;
+			case "$4" -> Id_DOLLAR_4;
+			case "$5" -> Id_DOLLAR_5;
+			case "$6" -> Id_DOLLAR_6;
+			case "$7" -> Id_DOLLAR_7;
+			case "$8" -> Id_DOLLAR_8;
+			case "$9" -> Id_DOLLAR_9;
+			default -> 0;
+		};
 
 		if (id == 0) {
 			return super.findInstanceIdInfo(s);
@@ -261,43 +157,34 @@ class NativeRegExpCtor extends BaseFunction {
 	@Override
 	protected String getInstanceIdName(int id) {
 		int shifted = id - super.getMaxInstanceId();
+
 		if (1 <= shifted && shifted <= MAX_INSTANCE_ID) {
-			switch (shifted) {
-				case Id_multiline:
-					return "multiline";
-				case Id_STAR:
-					return "$*";
-
-				case Id_input:
-					return "input";
-				case Id_UNDERSCORE:
-					return "$_";
-
-				case Id_lastMatch:
-					return "lastMatch";
-				case Id_AMPERSAND:
-					return "$&";
-
-				case Id_lastParen:
-					return "lastParen";
-				case Id_PLUS:
-					return "$+";
-
-				case Id_leftContext:
-					return "leftContext";
-				case Id_BACK_QUOTE:
-					return "$`";
-
-				case Id_rightContext:
-					return "rightContext";
-				case Id_QUOTE:
-					return "$'";
-			}
-			// Must be one of $1..$9, convert to 0..8
-			int substring_number = shifted - DOLLAR_ID_BASE - 1;
-			char[] buf = {'$', (char) ('1' + substring_number)};
-			return new String(buf);
+			return switch (shifted) {
+				case Id_multiline -> "multiline";
+				case Id_STAR -> "$*";
+				case Id_input -> "input";
+				case Id_UNDERSCORE -> "$_";
+				case Id_lastMatch -> "lastMatch";
+				case Id_AMPERSAND -> "$&";
+				case Id_lastParen -> "lastParen";
+				case Id_PLUS -> "$+";
+				case Id_leftContext -> "leftContext";
+				case Id_BACK_QUOTE -> "$`";
+				case Id_rightContext -> "rightContext";
+				case Id_QUOTE -> "$'";
+				case Id_DOLLAR_1 -> "$1";
+				case Id_DOLLAR_2 -> "$2";
+				case Id_DOLLAR_3 -> "$3";
+				case Id_DOLLAR_4 -> "$4";
+				case Id_DOLLAR_5 -> "$5";
+				case Id_DOLLAR_6 -> "$6";
+				case Id_DOLLAR_7 -> "$7";
+				case Id_DOLLAR_8 -> "$8";
+				case Id_DOLLAR_9 -> "$9";
+				default -> super.getInstanceIdName(id);
+			};
 		}
+
 		return super.getInstanceIdName(id);
 	}
 

@@ -8,9 +8,20 @@ for (let string of console.testArray) {
 	console.info(string)
 }
 
-for (let string of console.testList) {
+let testList = console.testList
+
+for (let string of testList) {
 	console.info(string)
 }
+
+console.info('init ' + testList.length)
+testList.add('abcawidawidaiwdjawd')
+console.info('add ' + testList.length)
+testList.push('abcawidawidaiwdjawd')
+console.info('push ' + testList.length)
+console.info('pop ' + testList.pop() + ' ' + testList.length)
+console.info('unshift ' + testList.shift() + ' ' + testList.length)
+console.info('map ' + testList.concat(['xyz']).reverse().map(e => e.toUpperCase()).join(" | "))
 
 console.info(Object.keys(testObject))
 console.info(Object.values(testObject))

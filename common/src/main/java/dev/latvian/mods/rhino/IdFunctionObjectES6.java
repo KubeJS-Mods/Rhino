@@ -11,7 +11,8 @@ public class IdFunctionObjectES6 extends IdFunctionObject {
 		super(idcall, tag, id, name, arity, scope);
 	}
 
-	private static final int Id_length = 1, Id_name = 3;
+	private static final int Id_length = 1;
+	private static final int Id_name = 3;
 	private boolean myLength = true;
 	private boolean myName = true;
 

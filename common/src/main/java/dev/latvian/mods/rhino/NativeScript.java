@@ -147,41 +147,20 @@ class NativeScript extends BaseFunction {
 
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2007-05-09 08:16:01 EDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			L:
-			switch (s.length()) {
-				case 4 -> {
-					X = "exec";
-					id = Id_exec;
-				}
-				case 7 -> {
-					X = "compile";
-					id = Id_compile;
-				}
-				case 8 -> {
-					X = "toString";
-					id = Id_toString;
-				}
-				case 11 -> {
-					X = "constructor";
-					id = Id_constructor;
-				}
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "toString" -> Id_toString;
+			case "compile" -> Id_compile;
+			case "exec" -> Id_exec;
+			default -> 0;
+		};
 	}
 
-	private static final int Id_constructor = 1, Id_toString = 2, Id_compile = 3, Id_exec = 4, MAX_PROTOTYPE_ID = 4;
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_compile = 3;
+	private static final int Id_exec = 4;
+	private static final int MAX_PROTOTYPE_ID = 4;
 
 	// #/string_id_map#
 

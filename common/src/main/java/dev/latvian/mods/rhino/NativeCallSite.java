@@ -195,97 +195,41 @@ public class NativeCallSite extends IdScriptableObject {
 
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2015-03-02 23:42:12 PST
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 6:
-					X = "isEval";
-					id = Id_isEval;
-					break L;
-				case 7:
-					X = "getThis";
-					id = Id_getThis;
-					break L;
-				case 8:
-					c = s.charAt(0);
-					if (c == 'i') {
-						X = "isNative";
-						id = Id_isNative;
-					} else if (c == 't') {
-						X = "toString";
-						id = Id_toString;
-					}
-					break L;
-				case 10:
-					X = "isToplevel";
-					id = Id_isToplevel;
-					break L;
-				case 11:
-					switch (s.charAt(4)) {
-						case 'i':
-							X = "getFileName";
-							id = Id_getFileName;
-							break L;
-						case 't':
-							X = "constructor";
-							id = Id_constructor;
-							break L;
-						case 'u':
-							X = "getFunction";
-							id = Id_getFunction;
-							break L;
-						case 'y':
-							X = "getTypeName";
-							id = Id_getTypeName;
-							break L;
-					}
-					break L;
-				case 13:
-					switch (s.charAt(3)) {
-						case 'E':
-							X = "getEvalOrigin";
-							id = Id_getEvalOrigin;
-							break L;
-						case 'L':
-							X = "getLineNumber";
-							id = Id_getLineNumber;
-							break L;
-						case 'M':
-							X = "getMethodName";
-							id = Id_getMethodName;
-							break L;
-						case 'o':
-							X = "isConstructor";
-							id = Id_isConstructor;
-							break L;
-					}
-					break L;
-				case 15:
-					c = s.charAt(3);
-					if (c == 'C') {
-						X = "getColumnNumber";
-						id = Id_getColumnNumber;
-					} else if (c == 'F') {
-						X = "getFunctionName";
-						id = Id_getFunctionName;
-					}
-					break L;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "isEval" -> Id_isEval;
+			case "getThis" -> Id_getThis;
+			case "isNative" -> Id_isNative;
+			case "toString" -> Id_toString;
+			case "isToplevel" -> Id_isToplevel;
+			case "getFileName" -> Id_getFileName;
+			case "constructor" -> Id_constructor;
+			case "getFunction" -> Id_getFunction;
+			case "getTypeName" -> Id_getTypeName;
+			case "getEvalOrigin" -> Id_getEvalOrigin;
+			case "getLineNumber" -> Id_getLineNumber;
+			case "getMethodName" -> Id_getMethodName;
+			case "isConstructor" -> Id_isConstructor;
+			case "getColumnNumber" -> Id_getColumnNumber;
+			case "getFunctionName" -> Id_getFunctionName;
+			default -> 0;
+		};
 	}
 
-	private static final int Id_constructor = 1, Id_getThis = 2, Id_getTypeName = 3, Id_getFunction = 4, Id_getFunctionName = 5, Id_getMethodName = 6, Id_getFileName = 7, Id_getLineNumber = 8, Id_getColumnNumber = 9, Id_getEvalOrigin = 10, Id_isToplevel = 11, Id_isEval = 12, Id_isNative = 13, Id_isConstructor = 14, Id_toString = 15, MAX_PROTOTYPE_ID = 15;
+	private static final int Id_constructor = 1;
+	private static final int Id_getThis = 2;
+	private static final int Id_getTypeName = 3;
+	private static final int Id_getFunction = 4;
+	private static final int Id_getFunctionName = 5;
+	private static final int Id_getMethodName = 6;
+	private static final int Id_getFileName = 7;
+	private static final int Id_getLineNumber = 8;
+	private static final int Id_getColumnNumber = 9;
+	private static final int Id_getEvalOrigin = 10;
+	private static final int Id_isToplevel = 11;
+	private static final int Id_isEval = 12;
+	private static final int Id_isNative = 13;
+	private static final int Id_isConstructor = 14;
+	private static final int Id_toString = 15;
+	private static final int MAX_PROTOTYPE_ID = 15;
 	// #/string_id_map#
 }

@@ -91,26 +91,14 @@ public final class NativeContinuation extends IdScriptableObject implements Func
 
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2007-05-09 08:16:40 EDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			if (s.length() == 11) {
-				X = "constructor";
-				id = Id_constructor;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			default -> 0;
+		};
 	}
 
-	private static final int Id_constructor = 1, MAX_PROTOTYPE_ID = 1;
+	private static final int Id_constructor = 1;
+	private static final int MAX_PROTOTYPE_ID = 1;
 
 	// #/string_id_map#
 }

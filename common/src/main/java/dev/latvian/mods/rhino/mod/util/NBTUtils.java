@@ -39,14 +39,13 @@ public class NBTUtils {
 	public static Tag toNBT(@Nullable Object o) {
 		if (o instanceof Tag) {
 			return (Tag) o;
-		} else if (o instanceof NBTSerializable) {
-			return ((NBTSerializable) o).toNBT();
+		} else if (o instanceof NBTSerializable s) {
+			return s.toNBT();
 		} else if (o instanceof CharSequence || o instanceof Character) {
 			return StringTag.valueOf(o.toString());
-		} else if (o instanceof Boolean) {
-			return ByteTag.valueOf((Boolean) o ? (byte) 1 : (byte) 0);
+		} else if (o instanceof Boolean b) {
+			return ByteTag.valueOf(b ? (byte) 1 : (byte) 0);
 		} else if (o instanceof Number number) {
-
 			if (number instanceof Byte) {
 				return ByteTag.valueOf(number.byteValue());
 			} else if (number instanceof Short) {
@@ -60,10 +59,10 @@ public class NBTUtils {
 			}
 
 			return DoubleTag.valueOf(number.doubleValue());
-		} else if (o instanceof Map) {
+		} else if (o instanceof Map<?, ?> map) {
 			CompoundTag tag = new OrderedCompoundTag();
 
-			for (Map.Entry<?, ?> entry : ((Map<?, ?>) o).entrySet()) {
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
 				Tag nbt1 = NBTUtils.toNBT(entry.getValue());
 
 				if (nbt1 != null) {
@@ -72,8 +71,8 @@ public class NBTUtils {
 			}
 
 			return tag;
-		} else if (o instanceof Collection) {
-			return toNBT((Collection<?>) o);
+		} else if (o instanceof Collection<?> c) {
+			return toNBT(c);
 		}
 
 		return null;

@@ -149,7 +149,14 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 		return 0;
 	}
 
-	private static final int ConstructorId_keyFor = -2, ConstructorId_for = -1, Id_constructor = 1, Id_toString = 2, Id_valueOf = 4, SymbolId_toStringTag = 3, SymbolId_toPrimitive = 5, MAX_PROTOTYPE_ID = SymbolId_toPrimitive;
+	private static final int ConstructorId_keyFor = -2;
+	private static final int ConstructorId_for = -1;
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_valueOf = 4;
+	private static final int SymbolId_toStringTag = 3;
+	private static final int SymbolId_toPrimitive = 5;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_toPrimitive;
 
 	// #/string_id_map#
 

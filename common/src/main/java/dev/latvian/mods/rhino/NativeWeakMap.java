@@ -172,55 +172,25 @@ public class NativeWeakMap extends IdScriptableObject {
 		return 0;
 	}
 
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2018-08-24 15:27:45 PDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			int s_length = s.length();
-			if (s_length == 3) {
-				c = s.charAt(0);
-				if (c == 'g') {
-					if (s.charAt(2) == 't' && s.charAt(1) == 'e') {
-						id = Id_get;
-						break L0;
-					}
-				} else if (c == 'h') {
-					if (s.charAt(2) == 's' && s.charAt(1) == 'a') {
-						id = Id_has;
-						break L0;
-					}
-				} else if (c == 's') {
-					if (s.charAt(2) == 't' && s.charAt(1) == 'e') {
-						id = Id_set;
-						break L0;
-					}
-				}
-			} else if (s_length == 6) {
-				X = "delete";
-				id = Id_delete;
-			} else if (s_length == 11) {
-				X = "constructor";
-				id = Id_constructor;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "delete" -> Id_delete;
+			case "get" -> Id_get;
+			case "has" -> Id_has;
+			case "set" -> Id_set;
+			default -> super.findPrototypeId(s);
+		};
 	}
 
-	private static final int Id_constructor = 1, Id_delete = 2, Id_get = 3, Id_has = 4, Id_set = 5, SymbolId_toStringTag = 6, MAX_PROTOTYPE_ID = SymbolId_toStringTag;
-
-	// #/string_id_map#
+	private static final int Id_constructor = 1;
+	private static final int Id_delete = 2;
+	private static final int Id_get = 3;
+	private static final int Id_has = 4;
+	private static final int Id_set = 5;
+	private static final int SymbolId_toStringTag = 6;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	@Serial
 	private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {

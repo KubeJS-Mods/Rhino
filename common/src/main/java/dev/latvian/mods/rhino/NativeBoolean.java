@@ -46,28 +46,13 @@ final class NativeBoolean extends IdScriptableObject {
 
 	@Override
 	protected void initPrototypeId(int id) {
-		String s;
-		int arity;
 		switch (id) {
-			case Id_constructor -> {
-				arity = 1;
-				s = "constructor";
-			}
-			case Id_toString -> {
-				arity = 0;
-				s = "toString";
-			}
-			case Id_toSource -> {
-				arity = 0;
-				s = "toSource";
-			}
-			case Id_valueOf -> {
-				arity = 0;
-				s = "valueOf";
-			}
+			case Id_constructor -> initPrototypeMethod(BOOLEAN_TAG, id, "constructor", 1);
+			case Id_toString -> initPrototypeMethod(BOOLEAN_TAG, id, "toString", 0);
+			case Id_toSource -> initPrototypeMethod(BOOLEAN_TAG, id, "toSource", 0);
+			case Id_valueOf -> initPrototypeMethod(BOOLEAN_TAG, id, "valueOf", 0);
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
-		initPrototypeMethod(BOOLEAN_TAG, id, s, arity);
 	}
 
 	@Override
@@ -117,46 +102,22 @@ final class NativeBoolean extends IdScriptableObject {
 		throw new IllegalArgumentException(String.valueOf(id));
 	}
 
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2007-05-09 08:15:31 EDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			int s_length = s.length();
-			if (s_length == 7) {
-				X = "valueOf";
-				id = Id_valueOf;
-			} else if (s_length == 8) {
-				c = s.charAt(3);
-				if (c == 'o') {
-					X = "toSource";
-					id = Id_toSource;
-				} else if (c == 't') {
-					X = "toString";
-					id = Id_toString;
-				}
-			} else if (s_length == 11) {
-				X = "constructor";
-				id = Id_constructor;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "toString" -> Id_toString;
+			case "toSource" -> Id_toSource;
+			case "valueOf" -> Id_valueOf;
+			default -> 0;
+		};
 	}
 
-	private static final int Id_constructor = 1, Id_toString = 2, Id_toSource = 3, Id_valueOf = 4, MAX_PROTOTYPE_ID = 4;
-
-	// #/string_id_map#
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toSource = 3;
+	private static final int Id_valueOf = 4;
+	private static final int MAX_PROTOTYPE_ID = 4;
 
 	private final boolean booleanValue;
 }

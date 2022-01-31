@@ -7,7 +7,6 @@
 package dev.latvian.mods.rhino;
 
 import java.io.IOException;
-import java.io.Reader;
 
 /**
  * This class implements the JavaScript scanner.
@@ -30,23 +29,14 @@ class TokenStream {
 
 	private final static char BYTE_ORDER_MARK = '\uFEFF';
 
-	TokenStream(Parser parser, Reader sourceReader, String sourceString, int lineno) {
+	TokenStream(Parser parser, String sourceString, int lineno) {
 		this.parser = parser;
 		this.lineno = lineno;
-		if (sourceReader != null) {
-			if (sourceString != null) {
-				Kit.codeBug();
-			}
-			this.sourceReader = sourceReader;
-			this.sourceBuffer = new char[512];
-			this.sourceEnd = 0;
-		} else {
-			if (sourceString == null) {
-				Kit.codeBug();
-			}
-			this.sourceString = sourceString;
-			this.sourceEnd = sourceString.length();
+		if (sourceString == null) {
+			Kit.codeBug();
 		}
+		this.sourceString = sourceString;
+		this.sourceEnd = sourceString.length();
 		this.sourceCursor = this.cursor = 0;
 	}
 
@@ -62,307 +52,41 @@ class TokenStream {
 	 * ECMAScript 6.
 	 */
 	private static int stringToKeywordForES(String name, boolean isStrict) {
-		// #string_id_map#
-		// The following assumes that Token.EOF == 0
-		final int
-				// 11.6.2.1 Keywords (ECMAScript2015)
-				Id_break = Token.BREAK, Id_case = Token.CASE, Id_catch = Token.CATCH, Id_class = Token.RESERVED, Id_const = Token.CONST, Id_continue = Token.CONTINUE, Id_default = Token.DEFAULT, Id_delete = Token.DELPROP, Id_do = Token.DO, Id_else = Token.ELSE, Id_export = Token.RESERVED, Id_extends = Token.RESERVED, Id_finally = Token.FINALLY, Id_for = Token.FOR, Id_function = Token.FUNCTION, Id_if = Token.IF, Id_import = Token.RESERVED, Id_in = Token.IN, Id_instanceof = Token.INSTANCEOF, Id_new = Token.NEW, Id_return = Token.RETURN, Id_super = Token.RESERVED, Id_switch = Token.SWITCH, Id_this = Token.THIS, Id_throw = Token.THROW, Id_try = Token.TRY, Id_typeof = Token.TYPEOF, Id_var = Token.VAR, Id_void = Token.VOID, Id_while = Token.WHILE, Id_with = Token.WITH, Id_yield = Token.YIELD,
-
-				// 11.6.2.2 Future Reserved Words
-				Id_await = Token.RESERVED, Id_enum = Token.RESERVED,
-
-				// 11.6.2.2 NOTE Strict Future Reserved Words
-				Id_implements = Token.RESERVED, Id_interface = Token.RESERVED, Id_package = Token.RESERVED, Id_private = Token.RESERVED, Id_protected = Token.RESERVED, Id_public = Token.RESERVED,
-
-				// 11.8 Literals
-				Id_false = Token.FALSE, Id_null = Token.NULL, Id_true = Token.TRUE,
-
-				// Non ReservedWord, but Non IdentifierName in strict mode code.
-				// 12.1.1 Static Semantics: Early Errors
-				Id_let = Token.LET,   // TODO : Valid IdentifierName in non-strict mode.
-				Id_static = Token.RESERVED;
-
-		int id;
-		String s = name;
-		// #generated# Last update: 2007-04-18 13:53:30 PDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 2:
-					c = s.charAt(1);
-					if (c == 'f') {
-						if (s.charAt(0) == 'i') {
-							id = Id_if;
-							break L0;
-						}
-					} else if (c == 'n') {
-						if (s.charAt(0) == 'i') {
-							id = Id_in;
-							break L0;
-						}
-					} else if (c == 'o') {
-						if (s.charAt(0) == 'd') {
-							id = Id_do;
-							break L0;
-						}
-					}
-					break;
-				case 3:
-					switch (s.charAt(0)) {
-						case 'f':
-							if (s.charAt(2) == 'r' && s.charAt(1) == 'o') {
-								id = Id_for;
-								break L0;
-							}
-							break L;
-						case 'l':
-							if (s.charAt(2) == 't' && s.charAt(1) == 'e') {
-								id = Id_let;
-								break L0;
-							}
-							break L;
-						case 'n':
-							if (s.charAt(2) == 'w' && s.charAt(1) == 'e') {
-								id = Id_new;
-								break L0;
-							}
-							break L;
-						case 't':
-							if (s.charAt(2) == 'y' && s.charAt(1) == 'r') {
-								id = Id_try;
-								break L0;
-							}
-							break L;
-						case 'v':
-							if (s.charAt(2) == 'r' && s.charAt(1) == 'a') {
-								id = Id_var;
-								break L0;
-							}
-							break L;
-					}
-					break;
-				case 4:
-					switch (s.charAt(0)) {
-						case 'c':
-							c = s.charAt(3);
-							if (c == 'e') {
-								if (s.charAt(2) == 's' && s.charAt(1) == 'a') {
-									id = Id_case;
-									break L0;
-								}
-							}
-							break L;
-						case 'e':
-							c = s.charAt(3);
-							if (c == 'e') {
-								if (s.charAt(2) == 's' && s.charAt(1) == 'l') {
-									id = Id_else;
-									break L0;
-								}
-							} else if (c == 'm') {
-								if (s.charAt(2) == 'u' && s.charAt(1) == 'n') {
-									id = Id_enum;
-									break L0;
-								}
-							}
-							break L;
-						case 'n':
-							X = "null";
-							id = Id_null;
-							break L;
-						case 't':
-							c = s.charAt(3);
-							if (c == 'e') {
-								if (s.charAt(2) == 'u' && s.charAt(1) == 'r') {
-									id = Id_true;
-									break L0;
-								}
-							} else if (c == 's') {
-								if (s.charAt(2) == 'i' && s.charAt(1) == 'h') {
-									id = Id_this;
-									break L0;
-								}
-							}
-							break L;
-						case 'v':
-							X = "void";
-							id = Id_void;
-							break L;
-						case 'w':
-							X = "with";
-							id = Id_with;
-							break L;
-					}
-					break;
-				case 5:
-					switch (s.charAt(2)) {
-						case 'a':
-							c = s.charAt(0);
-							if (c == 'c') {
-								X = "class";
-								id = Id_class;
-							} else if (c == 'a') {
-								X = "await";
-								id = Id_await;
-							}
-							break L;
-						case 'e':
-							c = s.charAt(0);
-							if (c == 'b') {
-								X = "break";
-								id = Id_break;
-							} else if (c == 'y') {
-								X = "yield";
-								id = Id_yield;
-							}
-							break L;
-						case 'i':
-							X = "while";
-							id = Id_while;
-							break L;
-						case 'l':
-							X = "false";
-							id = Id_false;
-							break L;
-						case 'n':
-							X = "const";
-							id = Id_const;
-							break L;
-						case 'p':
-							X = "super";
-							id = Id_super;
-							break L;
-						case 'r':
-							X = "throw";
-							id = Id_throw;
-							break L;
-						case 't':
-							X = "catch";
-							id = Id_catch;
-							break L;
-					}
-					break;
-				case 6:
-					switch (s.charAt(1)) {
-						case 'e':
-							c = s.charAt(0);
-							if (c == 'd') {
-								X = "delete";
-								id = Id_delete;
-							} else if (c == 'r') {
-								X = "return";
-								id = Id_return;
-							}
-							break L;
-						case 'm':
-							X = "import";
-							id = Id_import;
-							break L;
-						case 't':
-							if (isStrict) {
-								X = "static";
-								id = Id_static;
-								break L;
-							}
-							// fall through
-						case 'u':
-							if (isStrict) {
-								X = "public";
-								id = Id_public;
-								break L;
-							}
-							// fall through
-						case 'w':
-							X = "switch";
-							id = Id_switch;
-							break L;
-						case 'x':
-							X = "export";
-							id = Id_export;
-							break L;
-						case 'y':
-							X = "typeof";
-							id = Id_typeof;
-							break L;
-					}
-					break;
-				case 7:
-					switch (s.charAt(1)) {
-						case 'a':
-							if (isStrict) {
-								X = "package";
-								id = Id_package;
-								break L;
-							}
-							// fall through
-						case 'e':
-							X = "default";
-							id = Id_default;
-							break L;
-						case 'i':
-							X = "finally";
-							id = Id_finally;
-							break L;
-						case 'r':
-							if (isStrict) {
-								X = "private";
-								id = Id_private;
-								break L;
-							}
-							// fall through
-						case 'x':
-							X = "extends";
-							id = Id_extends;
-							break L;
-					}
-					break;
-				case 8:
-					switch (s.charAt(0)) {
-						case 'c':
-							X = "continue";
-							id = Id_continue;
-							break L;
-						case 'f':
-							X = "function";
-							id = Id_function;
-							break L;
-					}
-					break;
-				case 9:
-					c = s.charAt(0);
-					if (c == 'i' && isStrict) {
-						X = "interface";
-						id = Id_interface;
-					} else if (c == 'p' && isStrict) {
-						X = "protected";
-						id = Id_protected;
-					}
-					break;
-				case 10:
-					c = s.charAt(1);
-					if (c == 'm' && isStrict) {
-						X = "implements";
-						id = Id_implements;
-					} else if (c == 'n') {
-						X = "instanceof";
-						id = Id_instanceof;
-					}
-					break;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-		}
-		// #/generated#
-		// #/string_id_map#
-		if (id == 0) {
-			return Token.EOF;
-		}
-		return id & 0xff;
+		return switch (name) {
+			case "break" -> Token.BREAK;
+			case "case" -> Token.CASE;
+			case "catch" -> Token.CATCH;
+			case "const" -> Token.CONST;
+			case "continue" -> Token.CONTINUE;
+			case "default" -> Token.DEFAULT;
+			case "delprop" -> Token.DELPROP;
+			case "do" -> Token.DO;
+			case "else" -> Token.ELSE;
+			case "finally" -> Token.FINALLY;
+			case "for" -> Token.FOR;
+			case "function" -> Token.FUNCTION;
+			case "if" -> Token.IF;
+			case "in" -> Token.IN;
+			case "instanceof" -> Token.INSTANCEOF;
+			case "new" -> Token.NEW;
+			case "return" -> Token.RETURN;
+			case "switch" -> Token.SWITCH;
+			case "this" -> Token.THIS;
+			case "throw" -> Token.THROW;
+			case "try" -> Token.TRY;
+			case "typeof" -> Token.TYPEOF;
+			case "var" -> Token.VAR;
+			case "void" -> Token.VOID;
+			case "while" -> Token.WHILE;
+			case "with" -> Token.WITH;
+			case "yield" -> Token.YIELD;
+			case "false" -> Token.FALSE;
+			case "null" -> Token.NULL;
+			case "true" -> Token.TRUE;
+			case "let" -> Token.LET;
+			case "class", "export", "static", "public", "protected", "private", "package", "interface", "implements", "enum", "await", "super", "import", "extends" -> Token.RESERVED;
+			default -> Token.EOF;
+		}; // & 0xFF;
 	}
 
 	final String getSourceString() {
@@ -1344,23 +1068,12 @@ class TokenStream {
 
 		for (; ; ) {
 			int c;
-			if (sourceString != null) {
-				if (sourceCursor == sourceEnd) {
-					hitEOF = true;
-					return EOF_CHAR;
-				}
-				cursor++;
-				c = sourceString.charAt(sourceCursor++);
-			} else {
-				if (sourceCursor == sourceEnd) {
-					if (!fillSourceBuffer()) {
-						hitEOF = true;
-						return EOF_CHAR;
-					}
-				}
-				cursor++;
-				c = sourceBuffer[sourceCursor++];
+			if (sourceCursor == sourceEnd) {
+				hitEOF = true;
+				return EOF_CHAR;
 			}
+			cursor++;
+			c = sourceString.charAt(sourceCursor++);
 
 			if (lineEndChar >= 0) {
 				if (lineEndChar == '\r' && c == '\n') {
@@ -1405,23 +1118,12 @@ class TokenStream {
 
 		for (; ; ) {
 			int c;
-			if (sourceString != null) {
-				if (sourceCursor == sourceEnd) {
-					hitEOF = true;
-					return EOF_CHAR;
-				}
-				cursor++;
-				c = sourceString.charAt(sourceCursor++);
-			} else {
-				if (sourceCursor == sourceEnd) {
-					if (!fillSourceBuffer()) {
-						hitEOF = true;
-						return EOF_CHAR;
-					}
-				}
-				cursor++;
-				c = sourceBuffer[sourceCursor++];
+			if (sourceCursor == sourceEnd) {
+				hitEOF = true;
+				return EOF_CHAR;
 			}
+			cursor++;
+			c = sourceString.charAt(sourceCursor++);
 
 			if (c <= 127) {
 				if (c == '\n' || c == '\r') {
@@ -1469,39 +1171,12 @@ class TokenStream {
 		return n;
 	}
 
-	private final int charAt(int index) {
-		if (index < 0) {
-			return EOF_CHAR;
-		}
-		if (sourceString != null) {
-			if (index >= sourceEnd) {
-				return EOF_CHAR;
-			}
-			return sourceString.charAt(index);
-		}
-		if (index >= sourceEnd) {
-			int oldSourceCursor = sourceCursor;
-			try {
-				if (!fillSourceBuffer()) {
-					return EOF_CHAR;
-				}
-			} catch (IOException ioe) {
-				// ignore it, we're already displaying an error...
-				return EOF_CHAR;
-			}
-			// index recalculuation as fillSourceBuffer can move saved
-			// line buffer and change sourceCursor
-			index -= (oldSourceCursor - sourceCursor);
-		}
-		return sourceBuffer[index];
+	private int charAt(int index) {
+		return index < 0 || index >= sourceEnd ? EOF_CHAR : sourceString.charAt(index);
 	}
 
-	private final String substring(int beginIndex, int endIndex) {
-		if (sourceString != null) {
-			return sourceString.substring(beginIndex, endIndex);
-		}
-		int count = endIndex - beginIndex;
-		return new String(sourceBuffer, beginIndex, count);
+	private String substring(int beginIndex, int endIndex) {
+		return sourceString.substring(beginIndex, endIndex);
 	}
 
 	final String getLine() {
@@ -1567,30 +1242,6 @@ class TokenStream {
 		return substring(start, end);
 	}
 
-	private boolean fillSourceBuffer() throws IOException {
-		if (sourceString != null) {
-			Kit.codeBug();
-		}
-		if (sourceEnd == sourceBuffer.length) {
-			if (lineStart != 0 && !isMarkingComment()) {
-				System.arraycopy(sourceBuffer, lineStart, sourceBuffer, 0, sourceEnd - lineStart);
-				sourceEnd -= lineStart;
-				sourceCursor -= lineStart;
-				lineStart = 0;
-			} else {
-				char[] tmp = new char[sourceBuffer.length * 2];
-				System.arraycopy(sourceBuffer, 0, tmp, 0, sourceEnd);
-				sourceBuffer = tmp;
-			}
-		}
-		int n = sourceReader.read(sourceBuffer, sourceEnd, sourceBuffer.length - sourceEnd);
-		if (n < 0) {
-			return false;
-		}
-		sourceEnd += n;
-		return true;
-	}
-
 	/**
 	 * Return the current position of the scanner cursor.
 	 */
@@ -1633,10 +1284,6 @@ class TokenStream {
 	}
 
 	private void markCommentStart(String prefix) {
-	}
-
-	private boolean isMarkingComment() {
-		return commentCursor != -1;
 	}
 
 	private static String convertLastCharToHex(String str) {
@@ -1684,10 +1331,8 @@ class TokenStream {
 	private int lineEndChar = -1;
 	int lineno;
 
-	private String sourceString;
-	private Reader sourceReader;
-	private char[] sourceBuffer;
-	private int sourceEnd;
+	private final String sourceString;
+	private final int sourceEnd;
 
 	// sourceCursor is an index into a small buffer that keeps a
 	// sliding window of the source stream.
@@ -1706,7 +1351,4 @@ class TokenStream {
 	Token.CommentType commentType;
 
 	private final Parser parser;
-
-	private final String commentPrefix = "";
-	private final int commentCursor = -1;
 }

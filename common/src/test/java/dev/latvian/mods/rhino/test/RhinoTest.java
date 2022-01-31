@@ -3,6 +3,9 @@ package dev.latvian.mods.rhino.test;
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.NativeJavaClass;
 import dev.latvian.mods.rhino.ScriptableObject;
+import dev.latvian.mods.rhino.mod.util.NBTUtils;
+import dev.latvian.mods.rhino.mod.util.NBTWrapper;
+import net.minecraft.nbt.CompoundTag;
 import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedInputStream;
@@ -15,8 +18,13 @@ public class RhinoTest {
 
 		RhinoTest test = new RhinoTest(context);
 		test.add("console", TestConsole.class);
+		test.add("NBT", NBTWrapper.class);
 
-		test.load("/rhinotest/test.js");
+		var typeWrappers = context.getTypeWrappers();
+		typeWrappers.register(CompoundTag.class, o -> (CompoundTag) NBTUtils.toNBT(o));
+
+		// test.load("/rhinotest/test.js");
+		test.load("/rhinotest/nbt.js");
 	}
 
 	public final Context context;

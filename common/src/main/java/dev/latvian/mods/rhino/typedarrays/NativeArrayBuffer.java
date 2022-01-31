@@ -171,31 +171,17 @@ public class NativeArrayBuffer extends IdScriptableObject {
 
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2018-07-20 08:21:54 MESZ
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int s_length = s.length();
-			if (s_length == 5) {
-				X = "slice";
-				id = Id_slice;
-			} else if (s_length == 11) {
-				X = "constructor";
-				id = Id_constructor;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "slice" -> Id_slice;
+			default -> super.findPrototypeId(s);
+		};
 	}
 
 	// Table of all functions
-	private static final int Id_constructor = 1, Id_slice = 2, MAX_PROTOTYPE_ID = Id_slice;
+	private static final int Id_constructor = 1;
+	private static final int Id_slice = 2;
+	private static final int MAX_PROTOTYPE_ID = Id_slice;
 
 	// #/string_id_map#
 
@@ -240,5 +226,6 @@ public class NativeArrayBuffer extends IdScriptableObject {
 	}
 
 	// Table of all properties
-	private static final int Id_byteLength = 1, MAX_INSTANCE_ID = Id_byteLength;
+	private static final int Id_byteLength = 1;
+	private static final int MAX_INSTANCE_ID = Id_byteLength;
 }

@@ -118,7 +118,8 @@ public final class NativeCall extends IdScriptableObject {
 		}
 	}
 
-	private static final int Id_constructor = 1, MAX_PROTOTYPE_ID = 1;
+	private static final int Id_constructor = 1;
+	private static final int MAX_PROTOTYPE_ID = 1;
 
 	NativeFunction function;
 	Object[] originalArgs;

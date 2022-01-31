@@ -379,33 +379,19 @@ public final class ES6Generator extends IdScriptableObject {
 
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2017-08-04 17:30:46 PDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int s_length = s.length();
-			if (s_length == 4) {
-				X = "next";
-				id = Id_next;
-			} else if (s_length == 5) {
-				X = "throw";
-				id = Id_throw;
-			} else if (s_length == 6) {
-				X = "return";
-				id = Id_return;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "next" -> Id_next;
+			case "return" -> Id_return;
+			case "throw" -> Id_throw;
+			default -> 0;
+		};
 	}
 
-	private static final int Id_next = 1, Id_return = 2, Id_throw = 3, SymbolId_iterator = 4, MAX_PROTOTYPE_ID = SymbolId_iterator;
+	private static final int Id_next = 1;
+	private static final int Id_return = 2;
+	private static final int Id_throw = 3;
+	private static final int SymbolId_iterator = 4;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
 
 	// #/string_id_map#
 

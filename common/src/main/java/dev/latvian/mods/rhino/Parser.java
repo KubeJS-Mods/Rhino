@@ -103,9 +103,9 @@ public class Parser {
 
 	// TokenInformation flags : currentFlaggedToken stores them together
 	// with token type
-	final static int CLEAR_TI_MASK = 0xFFFF,  // mask to clear token information bits
-			TI_AFTER_EOL = 1 << 16, // first token of the source line
-			TI_CHECK_LABEL = 1 << 17; // indicates to check for label
+	public final static int CLEAR_TI_MASK = 0xFFFF;  // mask to clear token information bits
+	public final static int TI_AFTER_EOL = 1 << 16; // first token of the source line
+	public final static int TI_CHECK_LABEL = 1 << 17; // indicates to check for label
 
 	CompilerEnvirons compilerEnv;
 	private final ErrorReporter errorReporter;
@@ -499,7 +499,7 @@ public class Parser {
 			throw new IllegalStateException("parser reused");
 		}
 		this.sourceURI = sourceURI;
-		this.ts = new TokenStream(this, null, sourceString, lineno);
+		this.ts = new TokenStream(this, sourceString, lineno);
 		try {
 			return parse();
 		} catch (IOException iox) {

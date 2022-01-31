@@ -31,7 +31,8 @@ public class ConsString implements CharSequence, Serializable {
 	@Serial
 	private static final long serialVersionUID = -8432806714471372570L;
 
-	private CharSequence left, right;
+	private CharSequence left;
+	private CharSequence right;
 	private final int length;
 	private boolean isFlat;
 

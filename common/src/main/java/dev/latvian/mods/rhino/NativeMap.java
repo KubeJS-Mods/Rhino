@@ -295,83 +295,36 @@ public class NativeMap extends IdScriptableObject {
 		return 0;
 	}
 
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2018-03-22 02:20:25 MDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 3 -> {
-					c = s.charAt(0);
-					if (c == 'g') {
-						if (s.charAt(2) == 't' && s.charAt(1) == 'e') {
-							id = Id_get;
-							break L0;
-						}
-					} else if (c == 'h') {
-						if (s.charAt(2) == 's' && s.charAt(1) == 'a') {
-							id = Id_has;
-							break L0;
-						}
-					} else if (c == 's') {
-						if (s.charAt(2) == 't' && s.charAt(1) == 'e') {
-							id = Id_set;
-							break L0;
-						}
-					}
-				}
-				case 4 -> {
-					X = "keys";
-					id = Id_keys;
-				}
-				case 5 -> {
-					X = "clear";
-					id = Id_clear;
-				}
-				case 6 -> {
-					c = s.charAt(0);
-					if (c == 'd') {
-						X = "delete";
-						id = Id_delete;
-					} else if (c == 'v') {
-						X = "values";
-						id = Id_values;
-					}
-				}
-				case 7 -> {
-					c = s.charAt(0);
-					if (c == 'e') {
-						X = "entries";
-						id = Id_entries;
-					} else if (c == 'f') {
-						X = "forEach";
-						id = Id_forEach;
-					}
-				}
-				case 11 -> {
-					X = "constructor";
-					id = Id_constructor;
-				}
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "set" -> Id_set;
+			case "get" -> Id_get;
+			case "delete" -> Id_delete;
+			case "has" -> Id_has;
+			case "clear" -> Id_clear;
+			case "keys" -> Id_keys;
+			case "values" -> Id_values;
+			case "entries" -> Id_entries;
+			case "forEach" -> Id_forEach;
+			default -> 0;
+		};
 	}
 
 	// Note that "SymbolId_iterator" is not present here. That's because the spec
 	// requires that it be the same value as the "entries" prototype property.
-	private static final int Id_constructor = 1, Id_set = 2, Id_get = 3, Id_delete = 4, Id_has = 5, Id_clear = 6, Id_keys = 7, Id_values = 8, Id_entries = 9, Id_forEach = 10, SymbolId_getSize = 11, SymbolId_toStringTag = 12, MAX_PROTOTYPE_ID = SymbolId_toStringTag;
-
-	// #/string_id_map#
+	private static final int Id_constructor = 1;
+	private static final int Id_set = 2;
+	private static final int Id_get = 3;
+	private static final int Id_delete = 4;
+	private static final int Id_has = 5;
+	private static final int Id_clear = 6;
+	private static final int Id_keys = 7;
+	private static final int Id_values = 8;
+	private static final int Id_entries = 9;
+	private static final int Id_forEach = 10;
+	private static final int SymbolId_getSize = 11;
+	private static final int SymbolId_toStringTag = 12;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 }

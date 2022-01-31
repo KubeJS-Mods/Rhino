@@ -252,82 +252,37 @@ public class NativeSet extends IdScriptableObject {
 		return 0;
 	}
 
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2018-03-22 00:54:31 MDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			L:
-			switch (s.length()) {
-				case 3 -> {
-					c = s.charAt(0);
-					if (c == 'a') {
-						if (s.charAt(2) == 'd' && s.charAt(1) == 'd') {
-							id = Id_add;
-							break L0;
-						}
-					} else if (c == 'h') {
-						if (s.charAt(2) == 's' && s.charAt(1) == 'a') {
-							id = Id_has;
-							break L0;
-						}
-					}
-				}
-				case 4 -> {
-					X = "keys";
-					id = Id_keys;
-				}
-				case 5 -> {
-					X = "clear";
-					id = Id_clear;
-				}
-				case 6 -> {
-					c = s.charAt(0);
-					if (c == 'd') {
-						X = "delete";
-						id = Id_delete;
-					} else if (c == 'v') {
-						X = "values";
-						id = Id_values;
-					}
-				}
-				case 7 -> {
-					c = s.charAt(0);
-					if (c == 'e') {
-						X = "entries";
-						id = Id_entries;
-					} else if (c == 'f') {
-						X = "forEach";
-						id = Id_forEach;
-					}
-				}
-				case 11 -> {
-					X = "constructor";
-					id = Id_constructor;
-				}
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "add" -> Id_add;
+			case "delete" -> Id_delete;
+			case "has" -> Id_has;
+			case "clear" -> Id_clear;
+			case "keys" -> Id_keys;
+			case "values" -> Id_values;
+			case "entries" -> Id_entries;
+			case "forEach" -> Id_forEach;
+			default -> 0;
+		};
 	}
 
 	// Note that SymbolId_iterator is not present because it is required to have the
 	// same value as the "values" entry.
 	// Similarly, "keys" is supposed to have the same value as "values," which is why
 	// both have the same ID.
-	private static final int Id_constructor = 1, Id_add = 2, Id_delete = 3, Id_has = 4, Id_clear = 5, Id_keys = 6, Id_values = 6,  // These are deliberately the same to match the spec
-			Id_entries = 7, Id_forEach = 8, SymbolId_getSize = 9, SymbolId_toStringTag = 10, MAX_PROTOTYPE_ID = SymbolId_toStringTag;
-
-	// #/string_id_map#
+	private static final int Id_constructor = 1;
+	private static final int Id_add = 2;
+	private static final int Id_delete = 3;
+	private static final int Id_has = 4;
+	private static final int Id_clear = 5;
+	private static final int Id_keys = 6;
+	private static final int Id_values = 6;  // These are deliberately the same to match the spec
+	private static final int Id_entries = 7;
+	private static final int Id_forEach = 8;
+	private static final int SymbolId_getSize = 9;
+	private static final int SymbolId_toStringTag = 10;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 }
 

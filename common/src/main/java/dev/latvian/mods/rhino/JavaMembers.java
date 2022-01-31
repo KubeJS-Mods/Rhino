@@ -9,7 +9,6 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.util.HideFromJS;
 import dev.latvian.mods.rhino.util.RemapForJS;
 
-import java.io.Serial;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -159,7 +158,7 @@ class JavaMembers {
 
 	Object[] getIds(boolean isStatic) {
 		Map<String, Object> map = isStatic ? staticMembers : members;
-		return map.keySet().toArray(new Object[0]);
+		return map.keySet().toArray(ScriptRuntime.emptyArgs);
 	}
 
 	static String javaSignature(Class<?> type) {
@@ -817,50 +816,3 @@ class JavaMembers {
 	NativeJavaMethod ctors; // we use NativeJavaMethod for ctor overload resolution
 }
 
-class BeanProperty {
-	BeanProperty(MemberBox getter, MemberBox setter, NativeJavaMethod setters) {
-		this.getter = getter;
-		this.setter = setter;
-		this.setters = setters;
-	}
-
-	MemberBox getter;
-	MemberBox setter;
-	NativeJavaMethod setters;
-}
-
-class FieldAndMethods extends NativeJavaMethod {
-	@Serial
-	private static final long serialVersionUID = -9222428244284796755L;
-
-	FieldAndMethods(Scriptable scope, MemberBox[] methods, Field field) {
-		super(methods);
-		this.field = field;
-		setParentScope(scope);
-		setPrototype(getFunctionPrototype(scope));
-	}
-
-	@Override
-	public Object getDefaultValue(Class<?> hint) {
-		if (hint == ScriptRuntime.FunctionClass) {
-			return this;
-		}
-		Object rval;
-		Class<?> type;
-		try {
-			rval = field.get(javaObject);
-			type = field.getType();
-		} catch (IllegalAccessException accEx) {
-			throw Context.reportRuntimeError1("msg.java.internal.private", field.getName());
-		}
-		Context cx = Context.getContext();
-		rval = cx.getWrapFactory().wrap(cx, this, rval, type);
-		if (rval instanceof Scriptable) {
-			rval = ((Scriptable) rval).getDefaultValue(hint);
-		}
-		return rval;
-	}
-
-	Field field;
-	Object javaObject;
-}

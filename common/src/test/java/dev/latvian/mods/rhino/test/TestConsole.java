@@ -1,5 +1,6 @@
 package dev.latvian.mods.rhino.test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,6 +18,6 @@ public class TestConsole {
 	}
 
 	public static List<String> getTestList() {
-		return Arrays.asList(getTestArray());
+		return new ArrayList<>(Arrays.asList(getTestArray()));
 	}
 }

@@ -812,11 +812,11 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 	}
 
 	protected void initPrototypeId(int id) {
-		throw new IllegalStateException(String.valueOf(id));
+		throw new IllegalArgumentException(String.valueOf(id));
 	}
 
 	protected int findPrototypeId(String name) {
-		throw new IllegalStateException(name);
+		throw new IllegalArgumentException(name);
 	}
 
 	protected int findPrototypeId(Symbol key) {

@@ -153,44 +153,21 @@ public class NativeWeakSet extends IdScriptableObject {
 
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #generated# Last update: 2018-08-27 10:45:54 PDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			int s_length = s.length();
-			if (s_length == 3) {
-				c = s.charAt(0);
-				if (c == 'a') {
-					if (s.charAt(2) == 'd' && s.charAt(1) == 'd') {
-						id = Id_add;
-						break L0;
-					}
-				} else if (c == 'h') {
-					if (s.charAt(2) == 's' && s.charAt(1) == 'a') {
-						id = Id_has;
-						break L0;
-					}
-				}
-			} else if (s_length == 6) {
-				X = "delete";
-				id = Id_delete;
-			} else if (s_length == 11) {
-				X = "constructor";
-				id = Id_constructor;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "add" -> Id_add;
+			case "delete" -> Id_delete;
+			case "has" -> Id_has;
+			default -> super.findPrototypeId(s);
+		};
 	}
 
-	private static final int Id_constructor = 1, Id_add = 2, Id_delete = 3, Id_has = 4, SymbolId_toStringTag = 5, MAX_PROTOTYPE_ID = SymbolId_toStringTag;
+	private static final int Id_constructor = 1;
+	private static final int Id_add = 2;
+	private static final int Id_delete = 3;
+	private static final int Id_has = 4;
+	private static final int SymbolId_toStringTag = 5;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	// #/string_id_map#
 

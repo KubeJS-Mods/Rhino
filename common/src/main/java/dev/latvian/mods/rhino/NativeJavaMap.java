@@ -11,15 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class NativeJavaMap extends NativeJavaObject {
+	private final Map map;
 
-	private final Map<Object, Object> map;
-
-	@SuppressWarnings("unchecked")
-	public NativeJavaMap(Scriptable scope, Object map) {
-		super(scope, map, map.getClass());
-		assert map instanceof Map;
-		this.map = (Map<Object, Object>) map;
+	public NativeJavaMap(Scriptable scope, Object jo, Map map) {
+		super(scope, jo, jo.getClass());
+		this.map = map;
 	}
 
 	@Override
@@ -95,5 +93,15 @@ public class NativeJavaMap extends NativeJavaObject {
 	@Override
 	public void delete(int index) {
 		Deletable.deleteObject(map.remove(index));
+	}
+
+	@Override
+	protected void initMembers() {
+		super.initMembers();
+		addCustomFunction("hasOwnProperty", this::hasOwnProperty, String.class);
+	}
+
+	private boolean hasOwnProperty(Object[] args) {
+		return map.containsKey(ScriptRuntime.toString(args[0]));
 	}
 }

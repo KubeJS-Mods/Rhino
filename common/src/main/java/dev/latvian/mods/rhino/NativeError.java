@@ -269,40 +269,20 @@ final class NativeError extends IdScriptableObject {
 
 	@Override
 	protected int findPrototypeId(String s) {
-		int id;
-		// #string_id_map#
-		// #generated# Last update: 2007-05-09 08:15:45 EDT
-		L0:
-		{
-			id = 0;
-			String X = null;
-			int c;
-			int s_length = s.length();
-			if (s_length == 8) {
-				c = s.charAt(3);
-				if (c == 'o') {
-					X = "toSource";
-					id = Id_toSource;
-				} else if (c == 't') {
-					X = "toString";
-					id = Id_toString;
-				}
-			} else if (s_length == 11) {
-				X = "constructor";
-				id = Id_constructor;
-			}
-			if (X != null && X != s && !X.equals(s)) {
-				id = 0;
-			}
-			break L0;
-		}
-		// #/generated#
-		return id;
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "toString" -> Id_toString;
+			case "toSource" -> Id_toSource;
+			default -> super.findPrototypeId(s);
+		};
 	}
 
-	private static final int Id_constructor = 1, Id_toString = 2, Id_toSource = 3, ConstructorId_captureStackTrace = -1,
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toSource = 3;
+	private static final int ConstructorId_captureStackTrace = -1;
 
-	MAX_PROTOTYPE_ID = 3;
+	private static final int MAX_PROTOTYPE_ID = 3;
 
 	// #/string_id_map#
 
