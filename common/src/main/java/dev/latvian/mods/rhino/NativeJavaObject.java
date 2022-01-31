@@ -21,6 +21,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -62,11 +63,32 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 		}
 		members = JavaMembers.lookupClass(parent, dynamicType, staticType, isAdapter);
 		fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false);
+		customMembers = null;
+	}
+
+	protected void addCustomMember(String name, Object fm) {
+		if (customMembers == null) {
+			customMembers = new HashMap<>();
+		}
+
+		customMembers.put(name, fm);
+	}
+
+	protected void addCustomFunction(String name, CustomFunction.Func func, Class<?>... argTypes) {
+		addCustomMember(name, new CustomFunction(name, func, argTypes));
+	}
+
+	protected void addCustomFunction(String name, CustomFunction.NoArgFunc func) {
+		addCustomFunction(name, func, CustomFunction.NO_ARGS);
+	}
+
+	public void addCustomProperty(String name, CustomProperty getter) {
+		addCustomMember(name, getter);
 	}
 
 	@Override
 	public boolean has(String name, Scriptable start) {
-		return members.has(name, false);
+		return members.has(name, false) || customMembers != null && customMembers.containsKey(name);
 	}
 
 	@Override
@@ -87,6 +109,32 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 				return result;
 			}
 		}
+
+		if (customMembers != null) {
+			Object result = customMembers.get(name);
+
+			if (result != null) {
+				if (result instanceof CustomProperty) {
+					Object r = ((CustomProperty) result).get();
+
+					if (r == null) {
+						return Undefined.instance;
+					}
+
+					Context cx = Context.getContext();
+					Object r1 = cx.getWrapFactory().wrap(cx, this, r, r.getClass());
+
+					if (r1 instanceof Scriptable) {
+						return ((Scriptable) r1).getDefaultValue(null);
+					}
+
+					return r1;
+				}
+
+				return result;
+			}
+		}
+
 		// TODO: passing 'this' as the scope is bogus since it has
 		//  no parent scope
 		return members.get(this, name, javaObject, false);
@@ -153,6 +201,14 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 			}
 		}
 
+		if (customMembers != null) {
+			Object result = customMembers.get(name);
+			if (result != null) {
+				Deletable.deleteObject(result);
+				return;
+			}
+		}
+
 		Deletable.deleteObject(members.get(this, name, javaObject, false));
 	}
 
@@ -198,6 +254,15 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
 	@Override
 	public Object[] getIds() {
+		if (customMembers != null) {
+			Object[] c = customMembers.keySet().toArray(ScriptRuntime.emptyArgs);
+			Object[] m = members.getIds(false);
+			Object[] result = new Object[c.length + m.length];
+			System.arraycopy(c, 0, result, 0, c.length);
+			System.arraycopy(m, 0, result, c.length, m.length);
+			return result;
+		}
+
 		return members.getIds(false);
 	}
 
@@ -847,7 +912,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
 	protected transient Class<?> staticType;
 	protected transient JavaMembers members;
-	private transient Map<String, FieldAndMethods> fieldAndMethods;
+	protected transient Map<String, FieldAndMethods> fieldAndMethods;
+	protected transient Map<String, Object> customMembers;
 	protected transient boolean isAdapter;
 
 	private static final Object COERCED_INTERFACE_KEY = "Coerced Interface";

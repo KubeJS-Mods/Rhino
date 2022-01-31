@@ -854,8 +854,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			if (length - longVal > 0x1000) {
 				// assume that the representation is sparse
 				Object[] e = getIds(); // will only find in object itself
-				for (int i = 0; i < e.length; i++) {
-					Object id = e[i];
+				for (Object id : e) {
 					if (id instanceof String strId) {
 						// > MAXINT will appear as string
 						long index = toArrayIndex(strId);
@@ -1203,8 +1202,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 		if (o instanceof NativeArray na) {
 			if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
-				for (int i = 0; i < args.length; i++) {
-					na.dense[(int) na.length++] = args[i];
+				for (Object arg : args) {
+					na.dense[(int) na.length++] = arg;
 				}
 				return ScriptRuntime.wrapNumber(na.length);
 			}

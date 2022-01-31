@@ -1,37 +1,50 @@
 package dev.latvian.mods.rhino.util;
 
 import dev.latvian.mods.rhino.Context;
-import dev.latvian.mods.rhino.NativeJavaMapLike;
+import dev.latvian.mods.rhino.NativeJavaMap;
 import dev.latvian.mods.rhino.Scriptable;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-public interface MapLike<K, T> extends CustomJavaObjectWrapper {
+public interface MapLike<K, V> extends CustomJavaObjectWrapper {
 	@Override
 	default Scriptable wrapAsJavaObject(Context cx, Scriptable scope, Class<?> staticType) {
-		return new NativeJavaMapLike(scope, this);
+		return new NativeJavaMap(scope, new MapLikeWrapper<>(this));
 	}
 
 	@Nullable
-	T getML(K key);
+	V getML(Object key);
 
-	default boolean containsKeyML(K key) {
+	default boolean containsKeyML(Object key) {
 		return getML(key) != null;
 	}
 
-	default void putML(K key, T value) {
-		throw new UnsupportedOperationException("Can't insert values in this map!");
+	default V putML(K key, V value) {
+		throw new UnsupportedOperationException("Can't put values in this map!");
 	}
 
-	default Collection<K> keysML() {
+	default Set<K> keysML() {
 		return Collections.emptySet();
 	}
 
-	default void removeML(K key) {
-		throw new UnsupportedOperationException("Can't delete values from this map!");
+	default Set<Map.Entry<K, V>> entrySetML() {
+		Set<Map.Entry<K, V>> set = new HashSet<>();
+
+		for (K key : keysML()) {
+			set.add(new AbstractMap.SimpleEntry<>(key, getML(key)));
+		}
+
+		return set;
+	}
+
+	default V removeML(Object key) {
+		throw new UnsupportedOperationException("Can't remove values from this map!");
 	}
 
 	default void clearML() {

@@ -10,8 +10,10 @@ package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.CustomJavaObjectWrapper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Embeddings that wish to provide their own custom wrappings for Java
@@ -49,16 +51,14 @@ public class WrapFactory {
 	public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
 		if (obj == null || obj == Undefined.instance || obj instanceof Scriptable) {
 			return obj;
-		}
-		if (staticType != null && staticType.isPrimitive()) {
-			if (staticType == Void.TYPE) {
-				return Undefined.instance;
-			}
-			if (staticType == Character.TYPE) {
-				return (int) (Character) obj;
-			}
+		} else if (staticType == Void.TYPE) {
+			return Undefined.instance;
+		} else if (staticType == Character.TYPE) {
+			return (int) (Character) obj;
+		} else if (staticType != null && staticType.isPrimitive()) {
 			return obj;
 		}
+
 		if (!isJavaPrimitiveWrap()) {
 			if (obj instanceof String || obj instanceof Boolean || obj instanceof Integer || obj instanceof Short || obj instanceof Long || obj instanceof Float || obj instanceof Double) {
 				return obj;
@@ -66,10 +66,13 @@ public class WrapFactory {
 				return String.valueOf(((Character) obj).charValue());
 			}
 		}
+
 		Class<?> cls = obj.getClass();
+
 		if (cls.isArray()) {
 			return NativeJavaArray.wrap(scope, obj);
 		}
+
 		return wrapAsJavaObject(cx, scope, obj, staticType);
 	}
 
@@ -114,11 +117,16 @@ public class WrapFactory {
 	public Scriptable wrapAsJavaObject(Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
 		if (javaObject instanceof CustomJavaObjectWrapper) {
 			return ((CustomJavaObjectWrapper) javaObject).wrapAsJavaObject(cx, scope, staticType);
-		} else if (List.class.isAssignableFrom(javaObject.getClass())) {
-			return new NativeJavaList(scope, javaObject);
 		} else if (Map.class.isAssignableFrom(javaObject.getClass())) {
 			return new NativeJavaMap(scope, javaObject);
+		} else if (List.class.isAssignableFrom(javaObject.getClass())) {
+			return new NativeJavaList(scope, javaObject);
+		} else if (Set.class.isAssignableFrom(javaObject.getClass())) {
+			return new NativeJavaList(scope, new ArrayList<>((Set) javaObject));
 		}
+
+		// TODO: Wrap Gson
+
 		return new NativeJavaObject(scope, javaObject, staticType);
 	}
 

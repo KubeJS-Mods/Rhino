@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 public class NativeJavaMap extends NativeJavaObject {
-
 	private final Map<Object, Object> map;
 
 	@SuppressWarnings("unchecked")
@@ -95,5 +94,15 @@ public class NativeJavaMap extends NativeJavaObject {
 	@Override
 	public void delete(int index) {
 		Deletable.deleteObject(map.remove(index));
+	}
+
+	@Override
+	protected void initMembers() {
+		super.initMembers();
+		addCustomFunction("hasOwnProperty", this::hasOwnProperty, String.class);
+	}
+
+	private boolean hasOwnProperty(Object[] args) {
+		return map.containsKey(ScriptRuntime.toString(args[0]));
 	}
 }

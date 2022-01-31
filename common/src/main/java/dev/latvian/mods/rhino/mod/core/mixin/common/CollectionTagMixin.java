@@ -8,30 +8,44 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(CollectionTag.class)
-public abstract class CollectionTagMixin implements ListLike<Object> {
-	@Nullable
-	@Override
-	public Object getLL(int index) {
-		return NBTWrapper.fromTag((Tag) ((CollectionTag) (Object) this).get(index));
+public abstract class CollectionTagMixin<T extends Tag> implements ListLike<T> {
+	public CollectionTag<T> getCollectionLL() {
+		return (CollectionTag<T>) (Object) this;
 	}
 
+	@Nullable
 	@Override
-	public void setLL(int index, Object value) {
-		((CollectionTag) (Object) this).set(index, NBTWrapper.toTag(value));
+	public T getLL(int index) {
+		return (T) NBTWrapper.fromTag(getCollectionLL().get(index));
 	}
 
 	@Override
 	public int sizeLL() {
-		return ((CollectionTag) (Object) this).size();
+		return getCollectionLL().size();
 	}
 
 	@Override
-	public void removeLL(int index) {
-		((CollectionTag) (Object) this).remove(index);
+	public boolean addLL(T value) {
+		return getCollectionLL().add((T) NBTWrapper.toTag(value));
+	}
+
+	@Override
+	public void addLL(int index, T value) {
+		getCollectionLL().add(index, (T) NBTWrapper.toTag(value));
+	}
+
+	@Override
+	public T setLL(int index, T value) {
+		return getCollectionLL().set(index, (T) NBTWrapper.toTag(value));
+	}
+
+	@Override
+	public T removeLL(int index) {
+		return getCollectionLL().remove(index);
 	}
 
 	@Override
 	public void clearLL() {
-		((CollectionTag) (Object) this).clear();
+		getCollectionLL().clear();
 	}
 }
