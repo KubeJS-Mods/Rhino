@@ -1960,10 +1960,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	}
 
 	private static boolean js_isArray(Object o) {
-		if (!(o instanceof Scriptable)) {
-			return false;
-		}
-		return "Array".equals(((Scriptable) o).getClassName());
+		return o instanceof NativeJavaList || o instanceof List || o instanceof Scriptable s && "Array".equals(s.getClassName());
 	}
 
 	// methods to implement java.util.List
