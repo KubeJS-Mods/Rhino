@@ -2666,7 +2666,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			case "exec" -> Id_exec;
 			case "test" -> Id_test;
 			case "prefix" -> Id_prefix;
-			default -> super.findPrototypeId(s);
+			default -> 0;
 		};
 	}
 
