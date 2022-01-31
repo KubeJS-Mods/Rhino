@@ -676,7 +676,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 	class EntrySet extends AbstractSet<Entry<Object, Object>> {
 		@Override
 		public Iterator<Entry<Object, Object>> iterator() {
-			return new Iterator<Map.Entry<Object, Object>>() {
+			return new Iterator<>() {
 				final Object[] ids = getIds();
 				Object key = null;
 				int index = 0;
@@ -690,7 +690,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				public Map.Entry<Object, Object> next() {
 					final Object ekey = key = ids[index++];
 					final Object value = get(key);
-					return new Map.Entry<Object, Object>() {
+					return new Map.Entry<>() {
 						@Override
 						public Object getKey() {
 							return ekey;
@@ -752,7 +752,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 
 		@Override
 		public Iterator<Object> iterator() {
-			return new Iterator<Object>() {
+			return new Iterator<>() {
 				final Object[] ids = getIds();
 				Object key;
 				int index = 0;
@@ -793,7 +793,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 
 		@Override
 		public Iterator<Object> iterator() {
-			return new Iterator<Object>() {
+			return new Iterator<>() {
 				final Object[] ids = getIds();
 				Object key;
 				int index = 0;

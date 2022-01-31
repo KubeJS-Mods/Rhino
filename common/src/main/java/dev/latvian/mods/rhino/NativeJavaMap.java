@@ -11,14 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class NativeJavaMap extends NativeJavaObject {
-	private final Map<Object, Object> map;
+	private final Map map;
 
-	@SuppressWarnings("unchecked")
-	public NativeJavaMap(Scriptable scope, Object map) {
-		super(scope, map, map.getClass());
-		assert map instanceof Map;
-		this.map = (Map<Object, Object>) map;
+	public NativeJavaMap(Scriptable scope, Object jo, Map map) {
+		super(scope, jo, jo.getClass());
+		this.map = map;
 	}
 
 	@Override

@@ -8,6 +8,7 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.util.Deletable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BinaryOperator;
@@ -16,13 +17,11 @@ import java.util.function.Predicate;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class NativeJavaList extends NativeJavaObject {
-	private final List<Object> list;
+	private final List list;
 
-	@SuppressWarnings("unchecked")
-	public NativeJavaList(Scriptable scope, Object list) {
-		super(scope, list, list.getClass());
-		assert list instanceof List;
-		this.list = (List<Object>) list;
+	public NativeJavaList(Scriptable scope, Object jo, List list) {
+		super(scope, jo, jo.getClass());
+		this.list = list;
 	}
 
 	@Override
@@ -121,8 +120,10 @@ public class NativeJavaList extends NativeJavaObject {
 	}
 
 	private int push(Object[] args) {
-		for (Object o : args) {
-			list.add(o);
+		if (args.length == 1) {
+			list.add(args[0]);
+		} else if (args.length > 1) {
+			list.addAll(Arrays.asList(args));
 		}
 
 		return list.size();

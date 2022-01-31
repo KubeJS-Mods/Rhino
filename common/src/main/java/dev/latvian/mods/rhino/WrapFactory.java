@@ -9,8 +9,8 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.CustomJavaObjectWrapper;
+import dev.latvian.mods.rhino.util.JavaSetWrapper;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -115,14 +115,14 @@ public class WrapFactory {
 	 * @return the wrapped value which shall not be null
 	 */
 	public Scriptable wrapAsJavaObject(Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
-		if (javaObject instanceof CustomJavaObjectWrapper) {
-			return ((CustomJavaObjectWrapper) javaObject).wrapAsJavaObject(cx, scope, staticType);
-		} else if (Map.class.isAssignableFrom(javaObject.getClass())) {
-			return new NativeJavaMap(scope, javaObject);
-		} else if (List.class.isAssignableFrom(javaObject.getClass())) {
-			return new NativeJavaList(scope, javaObject);
-		} else if (Set.class.isAssignableFrom(javaObject.getClass())) {
-			return new NativeJavaList(scope, new ArrayList<>((Set) javaObject));
+		if (javaObject instanceof CustomJavaObjectWrapper w) {
+			return w.wrapAsJavaObject(cx, scope, staticType);
+		} else if (javaObject instanceof Map map) {
+			return new NativeJavaMap(scope, map, map);
+		} else if (javaObject instanceof List list) {
+			return new NativeJavaList(scope, list, list);
+		} else if (javaObject instanceof Set<?> set) {
+			return new NativeJavaList(scope, set, new JavaSetWrapper<>(set));
 		}
 
 		// TODO: Wrap Gson
