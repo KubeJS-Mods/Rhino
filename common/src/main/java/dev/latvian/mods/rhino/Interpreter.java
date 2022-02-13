@@ -996,6 +996,9 @@ public final class Interpreter extends Icode implements Evaluator {
 								stackTop = doBitOp(frame, op, stack, sDbl, stackTop);
 								continue;
 							}
+							case Token.NULLISH_COALESCING:
+								stackTop = doNullishCoalescing(frame, stack, sDbl, stackTop);
+								continue;
 							case Token.URSH: {
 								double lDbl = stack_double(frame, stackTop - 1);
 								int rIntValue = stack_int32(frame, stackTop) & 0x1F;
@@ -1894,14 +1897,21 @@ public final class Interpreter extends Icode implements Evaluator {
 		int lIntValue = stack_int32(frame, stackTop - 1);
 		int rIntValue = stack_int32(frame, stackTop);
 		stack[--stackTop] = UniqueTag.DOUBLE_MARK;
-		switch (op) {
-			case Token.BITAND -> lIntValue &= rIntValue;
-			case Token.BITOR -> lIntValue |= rIntValue;
-			case Token.BITXOR -> lIntValue ^= rIntValue;
-			case Token.LSH -> lIntValue <<= rIntValue;
-			case Token.RSH -> lIntValue >>= rIntValue;
-		}
-		sDbl[stackTop] = lIntValue;
+		sDbl[stackTop] = switch (op) {
+			case Token.BITAND -> lIntValue & rIntValue;
+			case Token.BITOR -> lIntValue | rIntValue;
+			case Token.BITXOR -> lIntValue ^ rIntValue;
+			case Token.LSH -> lIntValue << rIntValue;
+			case Token.RSH -> lIntValue >> rIntValue;
+			default -> lIntValue;
+		};
+		return stackTop;
+	}
+
+	private static int doNullishCoalescing(CallFrame frame, Object[] stack, double[] sDbl, int stackTop) {
+		Object a = frame.stack[stackTop - 1];
+		Object b = frame.stack[stackTop];
+		stack[--stackTop] = a == null || Undefined.isUndefined(a) ? b : a;
 		return stackTop;
 	}
 

@@ -905,6 +905,7 @@ public class Node implements Iterable<Node> {
 
 			case Token.AND:
 			case Token.OR:
+			case Token.NULLISH_COALESCING:
 				if (first == null || last == null) {
 					Kit.codeBug();
 				}

@@ -2235,30 +2235,10 @@ public class Parser {
 	}
 
 	private AstNode condExpr() throws IOException {
-		AstNode pn = orExpr();
+		AstNode pn = ncoExpr();
 		if (matchToken(Token.HOOK, true)) {
 			int line = ts.lineno;
 			int qmarkPos = ts.tokenBeg, colonPos = -1;
-
-			if (peekToken() == Token.HOOK) {
-				throw errorReporter.runtimeError("Nullish Coalescing Operator is not supported yet!", sourceURI, line, null, 0);
-
-				/*
-				consumeToken();
-
-				AstNode ifFalse = assignExpr();
-				int beg = pn.getPosition(), len = getNodeEnd(ifFalse) - beg;
-				ConditionalExpression ce = new ConditionalExpression(beg, len);
-				ce.setLineno(line);
-				// ce.setTestExpression(new InfixExpression(Token.NE, pn, new KeywordLiteral(beg, len, Token.NULL), beg));
-				ce.setTestExpression(new KeywordLiteral(beg, len, Token.TRUE));
-				ce.setTrueExpression(pn);
-				ce.setFalseExpression(ifFalse);
-				ce.setQuestionMarkPosition(qmarkPos - beg);
-				ce.setColonPosition(colonPos - beg);
-				return ce;
-				 */
-			}
 
 			/*
 			 * Always accept the 'in' operator in the middle clause of a ternary,
@@ -2288,6 +2268,15 @@ public class Parser {
 			return ce;
 		}
 
+		return pn;
+	}
+
+	private AstNode ncoExpr() throws IOException {
+		AstNode pn = orExpr();
+		if (matchToken(Token.NULLISH_COALESCING, true)) {
+			int opPos = ts.tokenBeg;
+			pn = new InfixExpression(Token.NULLISH_COALESCING, pn, ncoExpr(), opPos);
+		}
 		return pn;
 	}
 

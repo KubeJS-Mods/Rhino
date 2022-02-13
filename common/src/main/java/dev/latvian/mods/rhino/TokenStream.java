@@ -509,12 +509,15 @@ class TokenStream {
 				case ',':
 					return Token.COMMA;
 				case '?':
-					return Token.HOOK;
+					if (matchChar('?')) {
+						return Token.NULLISH_COALESCING;
+					} else {
+						return Token.HOOK;
+					}
 				case ':':
 					return Token.COLON;
 				case '.':
 					return Token.DOT;
-
 				case '|':
 					if (matchChar('|')) {
 						return Token.OR;

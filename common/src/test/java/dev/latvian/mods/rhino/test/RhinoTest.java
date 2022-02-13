@@ -25,7 +25,7 @@ public class RhinoTest {
 
 		test.load("/rhinotest/test.js");
 		// test.load("/rhinotest/nbt.js");
-		test.load("/rhinotest/nullish_coalescing_operator.js");
+		test.load("/rhinotest/nullish_coalescing.js");
 	}
 
 	public final Context context;
