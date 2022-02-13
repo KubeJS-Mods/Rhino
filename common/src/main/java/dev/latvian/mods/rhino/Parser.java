@@ -2290,10 +2290,19 @@ public class Parser {
 	}
 
 	private AstNode andExpr() throws IOException {
-		AstNode pn = bitOrExpr();
+		AstNode pn = powExpr();
 		if (matchToken(Token.AND, true)) {
 			int opPos = ts.tokenBeg;
 			pn = new InfixExpression(Token.AND, pn, andExpr(), opPos);
+		}
+		return pn;
+	}
+
+	private AstNode powExpr() throws IOException {
+		AstNode pn = bitOrExpr();
+		while (matchToken(Token.POW, true)) {
+			int opPos = ts.tokenBeg;
+			pn = new InfixExpression(Token.POW, pn, bitOrExpr(), opPos);
 		}
 		return pn;
 	}

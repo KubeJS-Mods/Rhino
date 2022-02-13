@@ -1023,7 +1023,8 @@ public final class Interpreter extends Icode implements Evaluator {
 							case Token.SUB:
 							case Token.MUL:
 							case Token.DIV:
-							case Token.MOD: {
+							case Token.MOD:
+							case Token.POW: {
 								stackTop = doArithmetic(frame, op, stack, sDbl, stackTop);
 								continue;
 							}
@@ -2586,13 +2587,14 @@ public final class Interpreter extends Icode implements Evaluator {
 		--stackTop;
 		double lDbl = stack_double(frame, stackTop);
 		stack[stackTop] = UniqueTag.DOUBLE_MARK;
-		switch (op) {
-			case Token.SUB -> lDbl -= rDbl;
-			case Token.MUL -> lDbl *= rDbl;
-			case Token.DIV -> lDbl /= rDbl;
-			case Token.MOD -> lDbl %= rDbl;
-		}
-		sDbl[stackTop] = lDbl;
+		sDbl[stackTop] = switch (op) {
+			case Token.SUB -> lDbl - rDbl;
+			case Token.MUL -> lDbl * rDbl;
+			case Token.DIV -> lDbl / rDbl;
+			case Token.MOD -> lDbl % rDbl;
+			case Token.POW -> Math.pow(lDbl, rDbl);
+			default -> lDbl;
+		};
 		return stackTop;
 	}
 

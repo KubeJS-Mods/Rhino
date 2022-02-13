@@ -109,9 +109,10 @@ public interface Token {
 	int YIELD = 73;  // JS 1.7 yield pseudo keyword
 	int STRICT_SETNAME = 74;
 	int NULLISH_COALESCING = 75; // nullish coalescing operator (??)
+	int POW = 76; // power (**)
 
 	// End of interpreter bytecodes
-	int LAST_BYTECODE_TOKEN = NULLISH_COALESCING;
+	int LAST_BYTECODE_TOKEN = 81;
 
 	int TRY = 82;
 	int SEMI = 83;  // semicolon

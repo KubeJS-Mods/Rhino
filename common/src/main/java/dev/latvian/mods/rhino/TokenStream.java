@@ -609,8 +609,11 @@ class TokenStream {
 				case '*':
 					if (matchChar('=')) {
 						return Token.ASSIGN_MUL;
+					} else if (matchChar('*')) {
+						return Token.POW;
+					} else {
+						return Token.MUL;
 					}
-					return Token.MUL;
 
 				case '/':
 					markCommentStart();
