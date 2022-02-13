@@ -38,13 +38,6 @@ public abstract class NativeFunction extends BaseFunction {
 	}
 
 	/**
-	 * Get encoded source string.
-	 */
-	public String getEncodedSource() {
-		return null;
-	}
-
-	/**
 	 * Resume execution of a suspended generator.
 	 *
 	 * @param cx        The current context

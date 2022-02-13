@@ -813,7 +813,6 @@ public class Parser {
 		try {
 			parseFunctionParams(fnNode);
 			fnNode.setBody(parseFunctionBody(type, fnNode));
-			fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
 			fnNode.setLength(ts.tokenEnd - functionSourceStart);
 
 			if (compilerEnv.isStrictMode() && !fnNode.getBody().hasConsistentReturnUsage()) {
@@ -883,7 +882,6 @@ public class Parser {
 			}
 
 			fnNode.setBody(parseFunctionBody(FunctionNode.ARROW_FUNCTION, fnNode));
-			fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
 			fnNode.setLength(ts.tokenEnd - functionSourceStart);
 		} finally {
 			savedVars.restore();
@@ -2242,9 +2240,10 @@ public class Parser {
 			int line = ts.lineno;
 			int qmarkPos = ts.tokenBeg, colonPos = -1;
 
-			/*
 			if (peekToken() == Token.HOOK) {
-				// throw errorReporter.runtimeError("Nullish Coalescing Operator is not supported yet!", sourceURI, line, null, 0);
+				throw errorReporter.runtimeError("Nullish Coalescing Operator is not supported yet!", sourceURI, line, null, 0);
+
+				/*
 				consumeToken();
 
 				AstNode ifFalse = assignExpr();
@@ -2258,8 +2257,8 @@ public class Parser {
 				ce.setQuestionMarkPosition(qmarkPos - beg);
 				ce.setColonPosition(colonPos - beg);
 				return ce;
+				 */
 			}
-			 */
 
 			/*
 			 * Always accept the 'in' operator in the middle clause of a ternary,

@@ -96,11 +96,6 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	}
 
 	@Override
-	public String getEncodedSource() {
-		return Interpreter.getEncodedSource(idata);
-	}
-
-	@Override
 	public Object resumeGenerator(Context cx, Scriptable scope, int operation, Object state, Object value) {
 		return Interpreter.resumeGenerator(cx, scope, operation, state, value);
 	}

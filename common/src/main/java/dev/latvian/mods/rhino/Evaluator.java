@@ -22,13 +22,12 @@ public interface Evaluator {
 	 *
 	 * @param compilerEnv    Compiler environment
 	 * @param tree           parse tree
-	 * @param encodedSource  encoding of the source code for decompilation
 	 * @param returnFunction if true, compiling a function
 	 * @return an opaque object that can be passed to either
 	 * createFunctionObject or createScriptObject, depending on the
 	 * value of returnFunction
 	 */
-	Object compile(CompilerEnvirons compilerEnv, ScriptNode tree, String encodedSource, boolean returnFunction);
+	Object compile(CompilerEnvirons compilerEnv, ScriptNode tree, boolean returnFunction);
 
 	/**
 	 * Create a function object.

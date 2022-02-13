@@ -54,7 +54,7 @@ class CodeGenerator extends Icode {
 	// ECF_ or Expression Context Flags constants: for now only TAIL
 	private static final int ECF_TAIL = 1 << 0;
 
-	public InterpreterData compile(CompilerEnvirons compilerEnv, ScriptNode tree, String encodedSource, boolean returnFunction) {
+	public InterpreterData compile(CompilerEnvirons compilerEnv, ScriptNode tree, boolean returnFunction) {
 		this.compilerEnv = compilerEnv;
 
 		new NodeTransformer().transform(tree, compilerEnv);
@@ -65,7 +65,7 @@ class CodeGenerator extends Icode {
 			scriptOrFn = tree;
 		}
 
-		itsData = new InterpreterData(scriptOrFn.getSourceName(), encodedSource, scriptOrFn.isInStrictMode());
+		itsData = new InterpreterData(scriptOrFn.getSourceName(), scriptOrFn.isInStrictMode());
 		itsData.topLevel = true;
 
 		if (returnFunction) {
@@ -158,9 +158,6 @@ class CodeGenerator extends Icode {
 		itsData.argNames = scriptOrFn.getParamAndVarNames();
 		itsData.argIsConst = scriptOrFn.getParamAndVarConst();
 		itsData.argCount = scriptOrFn.getParamCount();
-
-		itsData.encodedSourceStart = scriptOrFn.getEncodedSourceStart();
-		itsData.encodedSourceEnd = scriptOrFn.getEncodedSourceEnd();
 
 		if (literalIds.size() != 0) {
 			itsData.literalIds = literalIds.toArray();

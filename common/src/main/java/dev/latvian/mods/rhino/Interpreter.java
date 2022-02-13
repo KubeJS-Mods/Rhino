@@ -14,7 +14,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public final class Interpreter extends Icode implements Evaluator {
 	// data for parsing
@@ -279,7 +278,7 @@ public final class Interpreter extends Icode implements Evaluator {
 	}
 
 	private static boolean compareIdata(InterpreterData i1, InterpreterData i2) {
-		return i1 == i2 || Objects.equals(getEncodedSource(i1), getEncodedSource(i2));
+		return i1 == i2;
 	}
 
 	private static final class ContinuationJump implements Serializable {
@@ -366,9 +365,9 @@ public final class Interpreter extends Icode implements Evaluator {
 	}
 
 	@Override
-	public Object compile(CompilerEnvirons compilerEnv, ScriptNode tree, String encodedSource, boolean returnFunction) {
+	public Object compile(CompilerEnvirons compilerEnv, ScriptNode tree, boolean returnFunction) {
 		CodeGenerator cgen = new CodeGenerator();
-		itsData = cgen.compile(compilerEnv, tree, encodedSource, returnFunction);
+		itsData = cgen.compile(compilerEnv, tree, returnFunction);
 		return itsData;
 	}
 
@@ -628,13 +627,6 @@ public final class Interpreter extends Icode implements Evaluator {
 			list.add(group.toArray(new ScriptStackElement[0]));
 		}
 		return list.toArray(new ScriptStackElement[list.size()][]);
-	}
-
-	static String getEncodedSource(InterpreterData idata) {
-		if (idata.encodedSource == null) {
-			return null;
-		}
-		return idata.encodedSource.substring(idata.encodedSourceStart, idata.encodedSourceEnd);
 	}
 
 	private static void initFunction(Context cx, Scriptable scope, InterpretedFunction parent, int index) {
