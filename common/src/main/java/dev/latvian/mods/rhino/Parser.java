@@ -2241,6 +2241,26 @@ public class Parser {
 		if (matchToken(Token.HOOK, true)) {
 			int line = ts.lineno;
 			int qmarkPos = ts.tokenBeg, colonPos = -1;
+
+			/*
+			if (peekToken() == Token.HOOK) {
+				// throw errorReporter.runtimeError("Nullish Coalescing Operator is not supported yet!", sourceURI, line, null, 0);
+				consumeToken();
+
+				AstNode ifFalse = assignExpr();
+				int beg = pn.getPosition(), len = getNodeEnd(ifFalse) - beg;
+				ConditionalExpression ce = new ConditionalExpression(beg, len);
+				ce.setLineno(line);
+				// ce.setTestExpression(new InfixExpression(Token.NE, pn, new KeywordLiteral(beg, len, Token.NULL), beg));
+				ce.setTestExpression(new KeywordLiteral(beg, len, Token.TRUE));
+				ce.setTrueExpression(pn);
+				ce.setFalseExpression(ifFalse);
+				ce.setQuestionMarkPosition(qmarkPos - beg);
+				ce.setColonPosition(colonPos - beg);
+				return ce;
+			}
+			 */
+
 			/*
 			 * Always accept the 'in' operator in the middle clause of a ternary,
 			 * where it's unambiguous, even if we might be parsing the init of a
@@ -2266,8 +2286,9 @@ public class Parser {
 			ce.setFalseExpression(ifFalse);
 			ce.setQuestionMarkPosition(qmarkPos - beg);
 			ce.setColonPosition(colonPos - beg);
-			pn = ce;
+			return ce;
 		}
+
 		return pn;
 	}
 

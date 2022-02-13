@@ -822,7 +822,6 @@ class CodeGenerator extends Icode {
 				stackChange(-1);
 				visitExpression(with.getFirstChild(), 0);
 				addToken(Token.LEAVEWITH);
-				break;
 			}
 			case Token.TEMPLATE_LITERAL -> visitTemplateLiteral(node);
 			default -> throw badTree(node);
@@ -841,7 +840,6 @@ class CodeGenerator extends Icode {
 				// stack: ... -> ... function thisObj
 				addStringOp(Icode_NAME_AND_THIS, name);
 				stackChange(2);
-				break;
 			}
 			case Token.GETPROP, Token.GETELEM -> {
 				Node target = left.getFirstChild();
@@ -857,7 +855,6 @@ class CodeGenerator extends Icode {
 					// stack: ... target id -> ... function thisObj
 					addIcode(Icode_ELEM_AND_THIS);
 				}
-				break;
 			}
 			default -> {
 				// Including Token.GETVAR
@@ -882,14 +879,12 @@ class CodeGenerator extends Icode {
 				addVarOp(Icode_VAR_INC_DEC, i);
 				addUint8(incrDecrMask);
 				stackChange(1);
-				break;
 			}
 			case Token.NAME -> {
 				String name = child.getString();
 				addStringOp(Icode_NAME_INC_DEC, name);
 				addUint8(incrDecrMask);
 				stackChange(1);
-				break;
 			}
 			case Token.GETPROP -> {
 				Node object = child.getFirstChild();
@@ -897,7 +892,6 @@ class CodeGenerator extends Icode {
 				String property = object.getNext().getString();
 				addStringOp(Icode_PROP_INC_DEC, property);
 				addUint8(incrDecrMask);
-				break;
 			}
 			case Token.GETELEM -> {
 				Node object = child.getFirstChild();
@@ -907,18 +901,14 @@ class CodeGenerator extends Icode {
 				addIcode(Icode_ELEM_INC_DEC);
 				addUint8(incrDecrMask);
 				stackChange(-1);
-				break;
 			}
 			case Token.GET_REF -> {
 				Node ref = child.getFirstChild();
 				visitExpression(ref, 0);
 				addIcode(Icode_REF_INC_DEC);
 				addUint8(incrDecrMask);
-				break;
 			}
-			default -> {
-				throw badTree(node);
-			}
+			default -> throw badTree(node);
 		}
 	}
 

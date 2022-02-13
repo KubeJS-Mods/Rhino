@@ -24,7 +24,8 @@ public class RhinoTest {
 		typeWrappers.register(CompoundTag.class, o -> (CompoundTag) NBTUtils.toNBT(o));
 
 		// test.load("/rhinotest/test.js");
-		test.load("/rhinotest/nbt.js");
+		// test.load("/rhinotest/nbt.js");
+		test.load("/rhinotest/nullish_coalescing_operator.js");
 	}
 
 	public final Context context;

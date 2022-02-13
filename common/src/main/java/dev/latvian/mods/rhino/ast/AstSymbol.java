@@ -94,11 +94,6 @@ public class AstSymbol {
 
 	@Override
 	public String toString() {
-		StringBuilder result = new StringBuilder();
-		result.append("Symbol (");
-		result.append(getDeclTypeName());
-		result.append(") name=");
-		result.append(name);
-		return result.toString();
+		return "Symbol (" + getDeclTypeName() + ") name=" + name;
 	}
 }
