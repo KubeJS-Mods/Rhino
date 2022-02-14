@@ -10,7 +10,6 @@ public class CompilerEnvirons {
 	public CompilerEnvirons() {
 		errorReporter = DefaultErrorReporter.instance;
 		reservedKeywordAsIdentifier = true;
-		generatingSource = true;
 	}
 
 	public void initFromContext(Context cx) {
@@ -19,8 +18,6 @@ public class CompilerEnvirons {
 		allowMemberExprAsFunctionName = cx.hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME);
 		strictMode = cx.hasFeature(Context.FEATURE_STRICT_MODE);
 		warningAsError = cx.hasFeature(Context.FEATURE_WARNING_AS_ERROR);
-
-		generatingSource = cx.isGeneratingSource();
 	}
 
 	public final ErrorReporter getErrorReporter() {
@@ -46,10 +43,6 @@ public class CompilerEnvirons {
 		return allowMemberExprAsFunctionName;
 	}
 
-	public final boolean isGeneratingSource() {
-		return generatingSource;
-	}
-
 	public final boolean isStrictMode() {
 		return strictMode;
 	}
@@ -62,24 +55,10 @@ public class CompilerEnvirons {
 		return warningAsError;
 	}
 
-	/**
-	 * Specify whether or not source information should be generated.
-	 * <p>
-	 * Without source information, evaluating the "toString" method
-	 * on JavaScript functions produces only "[native code]" for
-	 * the body of the function.
-	 * Note that code generated without source is not fully ECMA
-	 * conformant.
-	 */
-	public void setGeneratingSource(boolean generatingSource) {
-		this.generatingSource = generatingSource;
-	}
-
 	private ErrorReporter errorReporter;
 
 	private boolean reservedKeywordAsIdentifier;
 	private boolean allowMemberExprAsFunctionName;
-	private boolean generatingSource;
 	private boolean strictMode;
 	private boolean warningAsError;
 }

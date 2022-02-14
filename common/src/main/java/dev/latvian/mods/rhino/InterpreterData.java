@@ -18,9 +18,8 @@ final class InterpreterData implements Serializable {
 	static final int INITIAL_STRINGTABLE_SIZE = 64;
 	static final int INITIAL_NUMBERTABLE_SIZE = 64;
 
-	InterpreterData(String sourceFile, String encodedSource, boolean isStrict) {
+	InterpreterData(String sourceFile, boolean isStrict) {
 		this.itsSourceFile = sourceFile;
-		this.encodedSource = encodedSource;
 		this.isStrict = isStrict;
 		init();
 	}
@@ -28,7 +27,6 @@ final class InterpreterData implements Serializable {
 	InterpreterData(InterpreterData parent) {
 		this.parentData = parent;
 		this.itsSourceFile = parent.itsSourceFile;
-		this.encodedSource = parent.encodedSource;
 		this.isStrict = parent.isStrict;
 		init();
 	}
@@ -64,10 +62,6 @@ final class InterpreterData implements Serializable {
 	int argCount;
 
 	int itsMaxCalleeArgs;
-
-	String encodedSource;
-	int encodedSourceStart;
-	int encodedSourceEnd;
 
 	boolean isStrict;
 	boolean topLevel;

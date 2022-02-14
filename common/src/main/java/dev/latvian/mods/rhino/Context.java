@@ -1044,9 +1044,6 @@ public class Context {
 		boolean errorseen = false;
 		CompilerEnvirons compilerEnv = new CompilerEnvirons();
 		compilerEnv.initFromContext(this);
-		// no source name or source text manager, because we're just
-		// going to throw away the result.
-		compilerEnv.setGeneratingSource(false);
 		Parser p = new Parser(compilerEnv, DefaultErrorReporter.instance);
 		try {
 			p.parse(source, null, 1);
@@ -1409,33 +1406,6 @@ public class Context {
 			throw (RhinoException) e;
 		}
 		throw new WrappedException(e);
-	}
-
-	/**
-	 * Tell whether source information is being generated.
-	 *
-	 * @since 1.3
-	 */
-	public final boolean isGeneratingSource() {
-		return generatingSource;
-	}
-
-	/**
-	 * Specify whether or not source information should be generated.
-	 * <p>
-	 * Without source information, evaluating the "toString" method
-	 * on JavaScript functions produces only "[native code]" for
-	 * the body of the function.
-	 * Note that code generated without source is not fully ECMA
-	 * conformant.
-	 *
-	 * @since 1.3
-	 */
-	public final void setGeneratingSource(boolean generatingSource) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		this.generatingSource = generatingSource;
 	}
 
 	/**
@@ -1823,7 +1793,7 @@ public class Context {
 				compiler = createCompiler();
 			}
 
-			bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
+			bytecode = compiler.compile(compilerEnv, tree, returnFunction);
 		} catch (ClassFileFormatException e) {
 			// we hit some class file limit, fall back to interpreter or report
 
@@ -1831,7 +1801,7 @@ public class Context {
 			tree = parse(sourceString, sourceName, lineno, compilerEnv, compilationErrorReporter, returnFunction);
 
 			compiler = createInterpreter();
-			bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
+			bytecode = compiler.compile(compilerEnv, tree, returnFunction);
 		}
 
 		Object result;
@@ -1950,7 +1920,6 @@ public class Context {
 	private ErrorReporter errorReporter;
 	RegExpProxy regExpProxy;
 	private Locale locale;
-	private boolean generatingSource = true;
 	boolean useDynamicScope;
 	private int maximumInterpreterStackDepth;
 	private WrapFactory wrapFactory;

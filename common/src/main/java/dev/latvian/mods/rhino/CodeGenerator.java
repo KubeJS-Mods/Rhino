@@ -54,7 +54,7 @@ class CodeGenerator extends Icode {
 	// ECF_ or Expression Context Flags constants: for now only TAIL
 	private static final int ECF_TAIL = 1 << 0;
 
-	public InterpreterData compile(CompilerEnvirons compilerEnv, ScriptNode tree, String encodedSource, boolean returnFunction) {
+	public InterpreterData compile(CompilerEnvirons compilerEnv, ScriptNode tree, boolean returnFunction) {
 		this.compilerEnv = compilerEnv;
 
 		new NodeTransformer().transform(tree, compilerEnv);
@@ -65,7 +65,7 @@ class CodeGenerator extends Icode {
 			scriptOrFn = tree;
 		}
 
-		itsData = new InterpreterData(scriptOrFn.getSourceName(), encodedSource, scriptOrFn.isInStrictMode());
+		itsData = new InterpreterData(scriptOrFn.getSourceName(), scriptOrFn.isInStrictMode());
 		itsData.topLevel = true;
 
 		if (returnFunction) {
@@ -158,9 +158,6 @@ class CodeGenerator extends Icode {
 		itsData.argNames = scriptOrFn.getParamAndVarNames();
 		itsData.argIsConst = scriptOrFn.getParamAndVarConst();
 		itsData.argCount = scriptOrFn.getParamCount();
-
-		itsData.encodedSourceStart = scriptOrFn.getEncodedSourceStart();
-		itsData.encodedSourceEnd = scriptOrFn.getEncodedSourceEnd();
 
 		if (literalIds.size() != 0) {
 			itsData.literalIds = literalIds.toArray();
@@ -625,7 +622,7 @@ class CodeGenerator extends Icode {
 				}
 				stackChange(-1);
 			}
-			case Token.GETELEM, Token.BITAND, Token.BITOR, Token.BITXOR, Token.LSH, Token.RSH, Token.URSH, Token.ADD, Token.SUB, Token.MOD, Token.DIV, Token.MUL, Token.EQ, Token.NE, Token.SHEQ, Token.SHNE, Token.IN, Token.INSTANCEOF, Token.LE, Token.LT, Token.GE, Token.GT -> {
+			case Token.GETELEM, Token.BITAND, Token.BITOR, Token.BITXOR, Token.LSH, Token.RSH, Token.URSH, Token.ADD, Token.SUB, Token.MOD, Token.DIV, Token.MUL, Token.EQ, Token.NE, Token.SHEQ, Token.SHNE, Token.IN, Token.INSTANCEOF, Token.LE, Token.LT, Token.GE, Token.GT, Token.NULLISH_COALESCING, Token.POW -> {
 				visitExpression(child, 0);
 				child = child.getNext();
 				visitExpression(child, 0);
@@ -822,7 +819,6 @@ class CodeGenerator extends Icode {
 				stackChange(-1);
 				visitExpression(with.getFirstChild(), 0);
 				addToken(Token.LEAVEWITH);
-				break;
 			}
 			case Token.TEMPLATE_LITERAL -> visitTemplateLiteral(node);
 			default -> throw badTree(node);
@@ -841,7 +837,6 @@ class CodeGenerator extends Icode {
 				// stack: ... -> ... function thisObj
 				addStringOp(Icode_NAME_AND_THIS, name);
 				stackChange(2);
-				break;
 			}
 			case Token.GETPROP, Token.GETELEM -> {
 				Node target = left.getFirstChild();
@@ -857,7 +852,6 @@ class CodeGenerator extends Icode {
 					// stack: ... target id -> ... function thisObj
 					addIcode(Icode_ELEM_AND_THIS);
 				}
-				break;
 			}
 			default -> {
 				// Including Token.GETVAR
@@ -882,14 +876,12 @@ class CodeGenerator extends Icode {
 				addVarOp(Icode_VAR_INC_DEC, i);
 				addUint8(incrDecrMask);
 				stackChange(1);
-				break;
 			}
 			case Token.NAME -> {
 				String name = child.getString();
 				addStringOp(Icode_NAME_INC_DEC, name);
 				addUint8(incrDecrMask);
 				stackChange(1);
-				break;
 			}
 			case Token.GETPROP -> {
 				Node object = child.getFirstChild();
@@ -897,7 +889,6 @@ class CodeGenerator extends Icode {
 				String property = object.getNext().getString();
 				addStringOp(Icode_PROP_INC_DEC, property);
 				addUint8(incrDecrMask);
-				break;
 			}
 			case Token.GETELEM -> {
 				Node object = child.getFirstChild();
@@ -907,18 +898,14 @@ class CodeGenerator extends Icode {
 				addIcode(Icode_ELEM_INC_DEC);
 				addUint8(incrDecrMask);
 				stackChange(-1);
-				break;
 			}
 			case Token.GET_REF -> {
 				Node ref = child.getFirstChild();
 				visitExpression(ref, 0);
 				addIcode(Icode_REF_INC_DEC);
 				addUint8(incrDecrMask);
-				break;
 			}
-			default -> {
-				throw badTree(node);
-			}
+			default -> throw badTree(node);
 		}
 	}
 

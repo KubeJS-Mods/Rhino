@@ -159,20 +159,18 @@ final class EqualObjectGraphs {
 		}
 
 		// Handle special Scriptable implementations
-		if (s1 instanceof NativeContinuation) {
-			return s2 instanceof NativeContinuation && NativeContinuation.equalImplementations((NativeContinuation) s1, (NativeContinuation) s2);
+		if (s1 instanceof NativeContinuation s3) {
+			return s2 instanceof NativeContinuation s4 && NativeContinuation.equalImplementations(s3, s4);
 		} else if (s1 instanceof NativeJavaPackage) {
 			return s1.equals(s2); // Overridden appropriately
-		} else if (s1 instanceof IdFunctionObject) {
-			return s2 instanceof IdFunctionObject && IdFunctionObject.equalObjectGraphs((IdFunctionObject) s1, (IdFunctionObject) s2, this);
-		} else if (s1 instanceof InterpretedFunction) {
-			return s2 instanceof InterpretedFunction && equalInterpretedFunctions((InterpretedFunction) s1, (InterpretedFunction) s2);
-		} else if (s1 instanceof ArrowFunction) {
-			return s2 instanceof ArrowFunction && ArrowFunction.equalObjectGraphs((ArrowFunction) s1, (ArrowFunction) s2, this);
-		} else if (s1 instanceof BoundFunction) {
-			return s2 instanceof BoundFunction && BoundFunction.equalObjectGraphs((BoundFunction) s1, (BoundFunction) s2, this);
-		} else if (s1 instanceof NativeSymbol) {
-			return s2 instanceof NativeSymbol && equalGraphs(((NativeSymbol) s1).getKey(), ((NativeSymbol) s2).getKey());
+		} else if (s1 instanceof IdFunctionObject s3) {
+			return s2 instanceof IdFunctionObject s4 && IdFunctionObject.equalObjectGraphs(s3, s4, this);
+		} else if (s1 instanceof ArrowFunction s3) {
+			return s2 instanceof ArrowFunction s4 && ArrowFunction.equalObjectGraphs(s3, s4, this);
+		} else if (s1 instanceof BoundFunction s3) {
+			return s2 instanceof BoundFunction s4 && BoundFunction.equalObjectGraphs(s3, s4, this);
+		} else if (s1 instanceof NativeSymbol s3) {
+			return s2 instanceof NativeSymbol s4 && equalGraphs(s3.getKey(), s4.getKey());
 		}
 		return true;
 	}
@@ -241,10 +239,6 @@ final class EqualObjectGraphs {
 		final Object[] a = s.toArray();
 		Arrays.sort(a); // ClassCastException possible
 		return a;
-	}
-
-	private static boolean equalInterpretedFunctions(final InterpretedFunction f1, final InterpretedFunction f2) {
-		return Objects.equals(f1.getEncodedSource(), f2.getEncodedSource());
 	}
 
 	// Sort IDs deterministically

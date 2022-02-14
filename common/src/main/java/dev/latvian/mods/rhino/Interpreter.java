@@ -14,7 +14,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public final class Interpreter extends Icode implements Evaluator {
 	// data for parsing
@@ -279,7 +278,7 @@ public final class Interpreter extends Icode implements Evaluator {
 	}
 
 	private static boolean compareIdata(InterpreterData i1, InterpreterData i2) {
-		return i1 == i2 || Objects.equals(getEncodedSource(i1), getEncodedSource(i2));
+		return i1 == i2;
 	}
 
 	private static final class ContinuationJump implements Serializable {
@@ -366,9 +365,9 @@ public final class Interpreter extends Icode implements Evaluator {
 	}
 
 	@Override
-	public Object compile(CompilerEnvirons compilerEnv, ScriptNode tree, String encodedSource, boolean returnFunction) {
+	public Object compile(CompilerEnvirons compilerEnv, ScriptNode tree, boolean returnFunction) {
 		CodeGenerator cgen = new CodeGenerator();
-		itsData = cgen.compile(compilerEnv, tree, encodedSource, returnFunction);
+		itsData = cgen.compile(compilerEnv, tree, returnFunction);
 		return itsData;
 	}
 
@@ -628,13 +627,6 @@ public final class Interpreter extends Icode implements Evaluator {
 			list.add(group.toArray(new ScriptStackElement[0]));
 		}
 		return list.toArray(new ScriptStackElement[list.size()][]);
-	}
-
-	static String getEncodedSource(InterpreterData idata) {
-		if (idata.encodedSource == null) {
-			return null;
-		}
-		return idata.encodedSource.substring(idata.encodedSourceStart, idata.encodedSourceEnd);
 	}
 
 	private static void initFunction(Context cx, Scriptable scope, InterpretedFunction parent, int index) {
@@ -1004,6 +996,9 @@ public final class Interpreter extends Icode implements Evaluator {
 								stackTop = doBitOp(frame, op, stack, sDbl, stackTop);
 								continue;
 							}
+							case Token.NULLISH_COALESCING:
+								stackTop = doNullishCoalescing(frame, stack, sDbl, stackTop);
+								continue;
 							case Token.URSH: {
 								double lDbl = stack_double(frame, stackTop - 1);
 								int rIntValue = stack_int32(frame, stackTop) & 0x1F;
@@ -1028,7 +1023,8 @@ public final class Interpreter extends Icode implements Evaluator {
 							case Token.SUB:
 							case Token.MUL:
 							case Token.DIV:
-							case Token.MOD: {
+							case Token.MOD:
+							case Token.POW: {
 								stackTop = doArithmetic(frame, op, stack, sDbl, stackTop);
 								continue;
 							}
@@ -1902,14 +1898,21 @@ public final class Interpreter extends Icode implements Evaluator {
 		int lIntValue = stack_int32(frame, stackTop - 1);
 		int rIntValue = stack_int32(frame, stackTop);
 		stack[--stackTop] = UniqueTag.DOUBLE_MARK;
-		switch (op) {
-			case Token.BITAND -> lIntValue &= rIntValue;
-			case Token.BITOR -> lIntValue |= rIntValue;
-			case Token.BITXOR -> lIntValue ^= rIntValue;
-			case Token.LSH -> lIntValue <<= rIntValue;
-			case Token.RSH -> lIntValue >>= rIntValue;
-		}
-		sDbl[stackTop] = lIntValue;
+		sDbl[stackTop] = switch (op) {
+			case Token.BITAND -> lIntValue & rIntValue;
+			case Token.BITOR -> lIntValue | rIntValue;
+			case Token.BITXOR -> lIntValue ^ rIntValue;
+			case Token.LSH -> lIntValue << rIntValue;
+			case Token.RSH -> lIntValue >> rIntValue;
+			default -> lIntValue;
+		};
+		return stackTop;
+	}
+
+	private static int doNullishCoalescing(CallFrame frame, Object[] stack, double[] sDbl, int stackTop) {
+		Object a = frame.stack[stackTop - 1];
+		Object b = frame.stack[stackTop];
+		stack[--stackTop] = a == null || Undefined.isUndefined(a) ? b : a;
 		return stackTop;
 	}
 
@@ -2584,13 +2587,14 @@ public final class Interpreter extends Icode implements Evaluator {
 		--stackTop;
 		double lDbl = stack_double(frame, stackTop);
 		stack[stackTop] = UniqueTag.DOUBLE_MARK;
-		switch (op) {
-			case Token.SUB -> lDbl -= rDbl;
-			case Token.MUL -> lDbl *= rDbl;
-			case Token.DIV -> lDbl /= rDbl;
-			case Token.MOD -> lDbl %= rDbl;
-		}
-		sDbl[stackTop] = lDbl;
+		sDbl[stackTop] = switch (op) {
+			case Token.SUB -> lDbl - rDbl;
+			case Token.MUL -> lDbl * rDbl;
+			case Token.DIV -> lDbl / rDbl;
+			case Token.MOD -> lDbl % rDbl;
+			case Token.POW -> Math.pow(lDbl, rDbl);
+			default -> lDbl;
+		};
 		return stackTop;
 	}
 

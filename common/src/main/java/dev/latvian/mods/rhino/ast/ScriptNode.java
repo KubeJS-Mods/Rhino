@@ -6,7 +6,6 @@
 
 package dev.latvian.mods.rhino.ast;
 
-import dev.latvian.mods.rhino.Decompiler;
 import dev.latvian.mods.rhino.Node;
 import dev.latvian.mods.rhino.Token;
 
@@ -20,10 +19,7 @@ import java.util.List;
  */
 public class ScriptNode extends Scope {
 
-	private int encodedSourceStart = -1;
-	private int encodedSourceEnd = -1;
 	private String sourceName;
-	private String encodedSource;
 	private int endLineno = -1;
 
 	private List<FunctionNode> functions;
@@ -66,78 +62,6 @@ public class ScriptNode extends Scope {
 	 */
 	public void setSourceName(String sourceName) {
 		this.sourceName = sourceName;
-	}
-
-	/**
-	 * Returns the start offset of the encoded source.
-	 * Only valid if {@link #getEncodedSource} returns non-{@code null}.
-	 */
-	public int getEncodedSourceStart() {
-		return encodedSourceStart;
-	}
-
-	/**
-	 * Used by code generator.
-	 *
-	 * @see #getEncodedSource
-	 */
-	public void setEncodedSourceStart(int start) {
-		this.encodedSourceStart = start;
-	}
-
-	/**
-	 * Returns the end offset of the encoded source.
-	 * Only valid if {@link #getEncodedSource} returns non-{@code null}.
-	 */
-	public int getEncodedSourceEnd() {
-		return encodedSourceEnd;
-	}
-
-	/**
-	 * Used by code generator.
-	 *
-	 * @see #getEncodedSource
-	 */
-	public void setEncodedSourceEnd(int end) {
-		this.encodedSourceEnd = end;
-	}
-
-	/**
-	 * Used by code generator.
-	 *
-	 * @see #getEncodedSource
-	 */
-	public void setEncodedSourceBounds(int start, int end) {
-		this.encodedSourceStart = start;
-		this.encodedSourceEnd = end;
-	}
-
-	/**
-	 * Used by the code generator.
-	 *
-	 * @see #getEncodedSource
-	 */
-	public void setEncodedSource(String encodedSource) {
-		this.encodedSource = encodedSource;
-	}
-
-	/**
-	 * Returns a canonical version of the source for this script or function,
-	 * for use in implementing the {@code Object.toSource} method of
-	 * JavaScript objects.  This source encoding is only recorded during code
-	 * generation.  It must be passed back to
-	 * {@link Decompiler#decompile} to construct the
-	 * human-readable source string.<p>
-	 * <p>
-	 * Given a parsed AST, you can always convert it to source code using the
-	 * {@link AstNode#toSource} method, although it's not guaranteed to produce
-	 * exactly the same results as {@code Object.toSource} with respect to
-	 * formatting, parenthesization and other details.
-	 *
-	 * @return the encoded source, or {@code null} if it was not recorded.
-	 */
-	public String getEncodedSource() {
-		return encodedSource;
 	}
 
 	public int getBaseLineno() {

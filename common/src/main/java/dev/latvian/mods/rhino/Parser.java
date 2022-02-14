@@ -813,7 +813,6 @@ public class Parser {
 		try {
 			parseFunctionParams(fnNode);
 			fnNode.setBody(parseFunctionBody(type, fnNode));
-			fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
 			fnNode.setLength(ts.tokenEnd - functionSourceStart);
 
 			if (compilerEnv.isStrictMode() && !fnNode.getBody().hasConsistentReturnUsage()) {
@@ -883,7 +882,6 @@ public class Parser {
 			}
 
 			fnNode.setBody(parseFunctionBody(FunctionNode.ARROW_FUNCTION, fnNode));
-			fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
 			fnNode.setLength(ts.tokenEnd - functionSourceStart);
 		} finally {
 			savedVars.restore();
@@ -2237,10 +2235,11 @@ public class Parser {
 	}
 
 	private AstNode condExpr() throws IOException {
-		AstNode pn = orExpr();
+		AstNode pn = ncoExpr();
 		if (matchToken(Token.HOOK, true)) {
 			int line = ts.lineno;
 			int qmarkPos = ts.tokenBeg, colonPos = -1;
+
 			/*
 			 * Always accept the 'in' operator in the middle clause of a ternary,
 			 * where it's unambiguous, even if we might be parsing the init of a
@@ -2266,7 +2265,17 @@ public class Parser {
 			ce.setFalseExpression(ifFalse);
 			ce.setQuestionMarkPosition(qmarkPos - beg);
 			ce.setColonPosition(colonPos - beg);
-			pn = ce;
+			return ce;
+		}
+
+		return pn;
+	}
+
+	private AstNode ncoExpr() throws IOException {
+		AstNode pn = orExpr();
+		if (matchToken(Token.NULLISH_COALESCING, true)) {
+			int opPos = ts.tokenBeg;
+			pn = new InfixExpression(Token.NULLISH_COALESCING, pn, ncoExpr(), opPos);
 		}
 		return pn;
 	}
@@ -2281,10 +2290,19 @@ public class Parser {
 	}
 
 	private AstNode andExpr() throws IOException {
-		AstNode pn = bitOrExpr();
+		AstNode pn = powExpr();
 		if (matchToken(Token.AND, true)) {
 			int opPos = ts.tokenBeg;
 			pn = new InfixExpression(Token.AND, pn, andExpr(), opPos);
+		}
+		return pn;
+	}
+
+	private AstNode powExpr() throws IOException {
+		AstNode pn = bitOrExpr();
+		while (matchToken(Token.POW, true)) {
+			int opPos = ts.tokenBeg;
+			pn = new InfixExpression(Token.POW, pn, bitOrExpr(), opPos);
 		}
 		return pn;
 	}
