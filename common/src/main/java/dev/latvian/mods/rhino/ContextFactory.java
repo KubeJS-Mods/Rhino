@@ -8,6 +8,8 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.DefaultRemapper;
+import dev.latvian.mods.rhino.util.Remapper;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 
 /**
@@ -111,6 +113,7 @@ public class ContextFactory {
 	private volatile Object listeners;
 	private boolean disabledListening;
 	TypeWrappers typeWrappers;
+	Remapper remapper = DefaultRemapper.INSTANCE;
 
 	/**
 	 * Listener of {@link Context} creation and release events.

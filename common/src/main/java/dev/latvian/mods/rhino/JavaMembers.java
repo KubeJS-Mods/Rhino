@@ -7,7 +7,6 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.HideFromJS;
-import dev.latvian.mods.rhino.util.RemapForJS;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -395,12 +394,8 @@ class JavaMembers {
 			int mods = method.getModifiers();
 			boolean isStatic = Modifier.isStatic(mods);
 			Map<String, Object> ht = isStatic ? staticMembers : members;
-			String name = method.getName();
-			RemapForJS remap = method.getAnnotation(RemapForJS.class);
-
-			if (remap != null) {
-				name = remap.value();
-			}
+			String remap = cx.getRemapper().remap(cl, method);
+			String name = remap.isEmpty() ? method.getName() : remap;
 
 			Object value = ht.get(name);
 			if (value == null) {
@@ -456,12 +451,8 @@ class JavaMembers {
 
 		// Reflect fields.
 		for (Field field : getAccessibleFields(includeProtected, includePrivate)) {
-			String name = field.getName();
-			RemapForJS remap = field.getAnnotation(RemapForJS.class);
-
-			if (remap != null) {
-				name = remap.value();
-			}
+			String remap = cx.getRemapper().remap(cl, field);
+			String name = remap.isEmpty() ? field.getName() : remap;
 
 			int mods = field.getModifiers();
 			try {
