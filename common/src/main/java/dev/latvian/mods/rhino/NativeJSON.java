@@ -15,7 +15,6 @@ import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonWriter;
 import dev.latvian.mods.rhino.json.JsonParser;
 import dev.latvian.mods.rhino.util.HideFromJS;
-import dev.latvian.mods.rhino.util.RemapForJS;
 
 import java.io.Serial;
 import java.io.StringWriter;
@@ -223,7 +222,7 @@ public final class NativeJSON extends IdScriptableObject {
 	}
 
 	public static String stringify(Context cx, Scriptable scope, Object value, Object replacer, Object space) {
-		JsonElement e = stringify0(scope, value);
+		JsonElement e = stringify0(cx, scope, value);
 
 		StringWriter stringWriter = new StringWriter();
 		JsonWriter writer = new JsonWriter(stringWriter);
@@ -288,7 +287,7 @@ public final class NativeJSON extends IdScriptableObject {
 		builder.append(')');
 	}
 
-	private static JsonElement stringify0(Scriptable scope, Object v) {
+	private static JsonElement stringify0(Context cx, Scriptable scope, Object v) {
 		if (v == null) {
 			return JsonNull.INSTANCE;
 		} else if (v instanceof Boolean) {
@@ -305,7 +304,7 @@ public final class NativeJSON extends IdScriptableObject {
 			JsonObject json = new JsonObject();
 
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>) v).entrySet()) {
-				json.add(entry.getKey().toString(), stringify0(scope, entry.getValue()));
+				json.add(entry.getKey().toString(), stringify0(cx, scope, entry.getValue()));
 			}
 
 			return json;
@@ -313,7 +312,7 @@ public final class NativeJSON extends IdScriptableObject {
 			JsonArray json = new JsonArray();
 
 			for (Object o : (Iterable<?>) v) {
-				json.add(stringify0(scope, o));
+				json.add(stringify0(cx, scope, o));
 
 				return json;
 			}
@@ -380,12 +379,12 @@ public final class NativeJSON extends IdScriptableObject {
 			type(builder, field.getType());
 			builder.append(' ');
 
-			RemapForJS remap = field.getAnnotation(RemapForJS.class);
+			String remap = cx.getRemapper().remap(cl, field);
 
-			if (remap != null) {
-				builder.append(remap.value());
-			} else {
+			if (remap.isEmpty()) {
 				builder.append(field.getName());
+			} else {
+				builder.append(remap);
 			}
 
 			list.add(builder.toString());
@@ -411,12 +410,12 @@ public final class NativeJSON extends IdScriptableObject {
 			type(builder, method.getReturnType());
 			builder.append(' ');
 
-			RemapForJS remap = method.getAnnotation(RemapForJS.class);
+			String remap = cx.getRemapper().remap(cl, method);
 
-			if (remap != null) {
-				builder.append(remap.value());
-			} else {
+			if (remap.isEmpty()) {
 				builder.append(method.getName());
+			} else {
+				builder.append(remap);
 			}
 
 			params(builder, method.getParameterTypes());
