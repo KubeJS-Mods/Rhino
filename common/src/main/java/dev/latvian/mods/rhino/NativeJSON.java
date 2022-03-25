@@ -15,6 +15,7 @@ import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonWriter;
 import dev.latvian.mods.rhino.json.JsonParser;
 import dev.latvian.mods.rhino.util.HideFromJS;
+import dev.latvian.mods.rhino.util.Remapper;
 
 import java.io.Serial;
 import java.io.StringWriter;
@@ -137,7 +138,7 @@ public final class NativeJSON extends IdScriptableObject {
 						/* fall through */
 					default:
 				}
-				return stringify(cx, scope, value, replacer, space);
+				return stringify(cx, value, replacer, space);
 			}
 
 			default:
@@ -221,8 +222,8 @@ public final class NativeJSON extends IdScriptableObject {
 		return new String(chars);
 	}
 
-	public static String stringify(Context cx, Scriptable scope, Object value, Object replacer, Object space) {
-		JsonElement e = stringify0(cx, scope, value);
+	public static String stringify(Context cx, Object value, Object replacer, Object space) {
+		JsonElement e = stringify0(cx.getRemapper(), value);
 
 		StringWriter stringWriter = new StringWriter();
 		JsonWriter writer = new JsonWriter(stringWriter);
@@ -287,7 +288,7 @@ public final class NativeJSON extends IdScriptableObject {
 		builder.append(')');
 	}
 
-	private static JsonElement stringify0(Context cx, Scriptable scope, Object v) {
+	public static JsonElement stringify0(Remapper remapper, Object v) {
 		if (v == null) {
 			return JsonNull.INSTANCE;
 		} else if (v instanceof Boolean) {
@@ -304,7 +305,7 @@ public final class NativeJSON extends IdScriptableObject {
 			JsonObject json = new JsonObject();
 
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>) v).entrySet()) {
-				json.add(entry.getKey().toString(), stringify0(cx, scope, entry.getValue()));
+				json.add(entry.getKey().toString(), stringify0(remapper, entry.getValue()));
 			}
 
 			return json;
@@ -312,7 +313,7 @@ public final class NativeJSON extends IdScriptableObject {
 			JsonArray json = new JsonArray();
 
 			for (Object o : (Iterable<?>) v) {
-				json.add(stringify0(cx, scope, o));
+				json.add(stringify0(remapper, o));
 
 				return json;
 			}
@@ -323,7 +324,8 @@ public final class NativeJSON extends IdScriptableObject {
 		}
 
 		Class<?> cl = v.getClass();
-		StringBuilder clName = new StringBuilder(cl.getName());
+		String cln = remapper.remapClass(cl);
+		StringBuilder clName = new StringBuilder(cln.isEmpty() ? cl.getName() : cln);
 
 		while (cl.isArray()) {
 			cl = cl.getComponentType();
@@ -379,7 +381,7 @@ public final class NativeJSON extends IdScriptableObject {
 			type(builder, field.getType());
 			builder.append(' ');
 
-			String remap = cx.getRemapper().remap(cl, field);
+			String remap = remapper.remapField(cl, field);
 
 			if (remap.isEmpty()) {
 				builder.append(field.getName());
@@ -410,7 +412,7 @@ public final class NativeJSON extends IdScriptableObject {
 			type(builder, method.getReturnType());
 			builder.append(' ');
 
-			String remap = cx.getRemapper().remap(cl, method);
+			String remap = remapper.remapMethod(cl, method);
 
 			if (remap.isEmpty()) {
 				builder.append(method.getName());

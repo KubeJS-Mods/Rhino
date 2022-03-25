@@ -1,7 +1,12 @@
 package dev.latvian.mods.rhino.util;
 
-import java.lang.reflect.Member;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 public interface Remapper {
-	String remap(Class<?> from, Member member);
+	String remapClass(Class<?> from);
+
+	String remapField(Class<?> from, Field field);
+
+	String remapMethod(Class<?> from, Method method);
 }
