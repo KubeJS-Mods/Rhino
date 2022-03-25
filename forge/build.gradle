@@ -89,6 +89,7 @@ if (ENV.CURSEFORGE_KEY) {
 			addGameVersion "Forge"
 			addGameVersion "1.18"
 			addGameVersion "1.18.1"
+			addGameVersion "1.18.2"
 			mainArtifact(remapJar.archivePath)
 			changelog = getGitChangelog
 			changelogType = 'markdown'

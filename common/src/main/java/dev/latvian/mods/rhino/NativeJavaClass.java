@@ -48,7 +48,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 	@Override
 	protected void initMembers() {
 		Class<?> cl = (Class<?>) javaObject;
-		members = JavaMembers.lookupClass(parent, cl, cl, isAdapter);
+		members = JavaMembers.lookupClass(ClassCache.get(parent), cl, cl, isAdapter);
 		staticFieldAndMethods = members.getFieldAndMethodsObjects(this, cl, true);
 	}
 

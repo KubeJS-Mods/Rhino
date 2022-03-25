@@ -49,7 +49,7 @@ class JavaMembers {
 		}
 	}
 
-	boolean has(String name, boolean isStatic) {
+	public boolean has(String name, boolean isStatic) {
 		Map<String, Object> ht = isStatic ? staticMembers : members;
 		Object obj = ht.get(name);
 		if (obj != null) {
@@ -58,7 +58,7 @@ class JavaMembers {
 		return findExplicitFunction(name, isStatic) != null;
 	}
 
-	Object get(Scriptable scope, String name, Object javaObject, boolean isStatic) {
+	public Object get(Scriptable scope, String name, Object javaObject, boolean isStatic) {
 		Map<String, Object> ht = isStatic ? staticMembers : members;
 		Object member = ht.get(name);
 		if (!isStatic && member == null) {
@@ -97,7 +97,7 @@ class JavaMembers {
 		return cx.getWrapFactory().wrap(cx, scope, rval, type);
 	}
 
-	void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic) {
+	public void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic) {
 		Map<String, Object> ht = isStatic ? staticMembers : members;
 		Object member = ht.get(name);
 		if (!isStatic && member == null) {
@@ -155,12 +155,12 @@ class JavaMembers {
 		}
 	}
 
-	Object[] getIds(boolean isStatic) {
+	public Object[] getIds(boolean isStatic) {
 		Map<String, Object> map = isStatic ? staticMembers : members;
 		return map.keySet().toArray(ScriptRuntime.emptyArgs);
 	}
 
-	static String javaSignature(Class<?> type) {
+	public static String javaSignature(Class<?> type) {
 		if (!type.isArray()) {
 			return type.getName();
 		}
@@ -184,7 +184,7 @@ class JavaMembers {
 		return sb.toString();
 	}
 
-	static String liveConnectSignature(Class<?>[] argTypes) {
+	public static String liveConnectSignature(Class<?>[] argTypes) {
 		int N = argTypes.length;
 		if (N == 0) {
 			return "()";
@@ -276,7 +276,7 @@ class JavaMembers {
 	 * interfaces (if they exist). Basically upcasts every method to the
 	 * nearest accessible method.
 	 */
-	private static Map<MethodSignature, Method> discoverAccessibleMethods(Class<?> clazz, boolean includeProtected, boolean includePrivate) {
+	public static Map<MethodSignature, Method> discoverAccessibleMethods(Class<?> clazz, boolean includeProtected, boolean includePrivate) {
 		Map<MethodSignature, Method> map = new HashMap<>();
 		discoverAccessibleMethods(clazz, map, includeProtected, includePrivate);
 		return map;
@@ -347,7 +347,7 @@ class JavaMembers {
 
 	private static void addMethod(Map<MethodSignature, Method> map, Method method) throws SecurityException {
 		if (!method.isAnnotationPresent(HideFromJS.class)) {
-			MethodSignature sig = new MethodSignature(method.getName(), method.getParameterTypes());
+			MethodSignature sig = new MethodSignature(method.getName(), method.getParameterCount() == 0 ? MethodSignature.NO_ARGS : method.getParameterTypes());
 			// Array may contain methods with same signature but different return value!
 			if (!map.containsKey(sig)) {
 				map.put(sig, method);
@@ -355,16 +355,8 @@ class JavaMembers {
 		}
 	}
 
-	private static final class MethodSignature {
+	public record MethodSignature(String name, Class<?>[] args) {
 		private static final Class<?>[] NO_ARGS = new Class<?>[0];
-
-		private final String name;
-		private final Class<?>[] args;
-
-		private MethodSignature(String name, Class<?>[] args) {
-			this.name = name;
-			this.args = args;
-		}
 
 		@Override
 		public boolean equals(Object o) {
@@ -593,7 +585,7 @@ class JavaMembers {
 		ctors = new NativeJavaMethod(ctorMembers, cl.getSimpleName());
 	}
 
-	private List<Constructor<?>> getAccessibleConstructors(boolean includePrivate) {
+	public List<Constructor<?>> getAccessibleConstructors(boolean includePrivate) {
 		// The JVM currently doesn't allow changing access on java.lang.Class
 		// constructors, so don't try
 		if (cl == ScriptRuntime.ClassClass) {
@@ -621,7 +613,7 @@ class JavaMembers {
 		return constructorsList;
 	}
 
-	private List<Field> getAccessibleFields(boolean includeProtected, boolean includePrivate) {
+	public List<Field> getAccessibleFields(boolean includeProtected, boolean includePrivate) {
 		List<Field> fieldsList = new ArrayList<>();
 
 		try {
@@ -727,7 +719,7 @@ class JavaMembers {
 		return null;
 	}
 
-	Map<String, FieldAndMethods> getFieldAndMethodsObjects(Scriptable scope, Object javaObject, boolean isStatic) {
+	public Map<String, FieldAndMethods> getFieldAndMethodsObjects(Scriptable scope, Object javaObject, boolean isStatic) {
 		Map<String, FieldAndMethods> ht = isStatic ? staticFieldAndMethods : fieldAndMethods;
 		if (ht == null) {
 			return null;
@@ -742,9 +734,8 @@ class JavaMembers {
 		return result;
 	}
 
-	static JavaMembers lookupClass(Scriptable scope, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
+	public static JavaMembers lookupClass(ClassCache cache, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
 		JavaMembers members;
-		ClassCache cache = ClassCache.get(scope);
 		Map<Class<?>, JavaMembers> ct = cache.getClassCacheMap();
 
 		Class<?> cl = dynamicType;

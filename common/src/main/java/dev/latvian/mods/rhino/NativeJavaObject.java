@@ -61,7 +61,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 		} else {
 			dynamicType = staticType;
 		}
-		members = JavaMembers.lookupClass(parent, dynamicType, staticType, isAdapter);
+		members = JavaMembers.lookupClass(ClassCache.get(parent), dynamicType, staticType, isAdapter);
 		fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false);
 		customMembers = null;
 	}
