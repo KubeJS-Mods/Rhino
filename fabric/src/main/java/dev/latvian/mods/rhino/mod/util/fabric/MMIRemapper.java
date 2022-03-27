@@ -1,6 +1,8 @@
 package dev.latvian.mods.rhino.mod.util.fabric;
 
 import dev.latvian.mods.rhino.mod.util.MojangMappingRemapper;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import net.fabricmc.mapping.tree.ClassDef;
 import net.fabricmc.mapping.tree.FieldDef;
@@ -14,17 +16,27 @@ public class MMIRemapper extends MojangMappingRemapper {
 	public static final MMIRemapper INSTANCE = new MMIRemapper();
 
 	private MMIRemapper() {
-		super("fabric");
 	}
 
 	@Override
-	public boolean isInvalid() {
-		return !FabricLauncherBase.getLauncher().getTargetNamespace().equals("intermediary");
+	public String getModLoader() {
+		return "fabric";
+	}
+
+	@Override
+	public boolean isServer() {
+		return FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER;
+	}
+
+	@Override
+	public String getRuntimeMappings() {
+		// still doesnt know difference between mojamp and yarn in dev, but better than nothing
+		return FabricLauncherBase.getLauncher().getTargetNamespace();
 	}
 
 	@Override
 	public void init(MojMapClasses mojMapClasses) {
-		String runtimeNamespace = "intermediary";
+		String runtimeNamespace = FabricLauncherBase.getLauncher().getTargetNamespace();
 		String rawNamespace = "official";
 		TinyTree tinyTree = FabricLauncherBase.getLauncher().getMappingConfiguration().getMappings();
 

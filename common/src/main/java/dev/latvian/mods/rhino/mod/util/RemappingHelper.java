@@ -11,16 +11,6 @@ public class RemappingHelper {
 		throw new AssertionError();
 	}
 
-	@ExpectPlatform
-	public static boolean isServer() {
-		throw new ArithmeticException();
-	}
-
-	@ExpectPlatform
-	public static boolean isDev() {
-		throw new ArithmeticException();
-	}
-
 	public static Remapper createModRemapper() {
 		return new FallbackRemapper(DefaultRemapper.INSTANCE, getMojMapRemapper());
 	}

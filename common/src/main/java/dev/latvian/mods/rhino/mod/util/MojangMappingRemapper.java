@@ -24,8 +24,8 @@ public abstract class MojangMappingRemapper implements Remapper {
 		public final String mappedName;
 		public Map<String, String> children;
 
-		public RemappedClass(String s) {
-			mappedName = s;
+		public RemappedClass(String mn) {
+			mappedName = mn;
 		}
 
 		@Override
@@ -95,22 +95,21 @@ public abstract class MojangMappingRemapper implements Remapper {
 		}
 	}
 
-	public final String modloader;
 	public final Map<String, RemappedClass> classMap;
+	private Map<String, String> inverseClassMap;
 	private boolean empty;
 
-	public MojangMappingRemapper(String m) {
-		modloader = m;
+	public MojangMappingRemapper() {
 		classMap = new HashMap<>();
 		empty = true;
 
-		if (isInvalid()) {
+		if (!isValid()) {
 			return;
 		}
 
 		try {
-			boolean isServer = RemappingHelper.isServer();
-			Path remappedPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_" + modloader + "_remapped_" + SharedConstants.getCurrentVersion().getName() + (isServer ? "_server.txt" : "_client.txt"));
+			boolean isServer = isServer();
+			Path remappedPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + SharedConstants.getCurrentVersion().getName() + (isServer ? "_server.txt" : "_client.txt"));
 
 			if (Files.exists(remappedPath)) {
 				RemappedClass current = null;
@@ -231,7 +230,15 @@ public abstract class MojangMappingRemapper implements Remapper {
 		}
 	}
 
-	public abstract boolean isInvalid();
+	public boolean isValid() {
+		return true;
+	}
+
+	public abstract String getModLoader();
+
+	public abstract boolean isServer();
+
+	public abstract String getRuntimeMappings();
 
 	public abstract void init(MojMapClasses mojMapClasses) throws Exception;
 
@@ -239,6 +246,21 @@ public abstract class MojangMappingRemapper implements Remapper {
 	public String remapClass(Class<?> from) {
 		RemappedClass c = empty ? null : classMap.get(from.getName());
 		return c == null ? "" : c.mappedName;
+	}
+
+	@Override
+	public String unmapClass(String from) {
+		if (empty) {
+			return "";
+		} else if (inverseClassMap == null) {
+			inverseClassMap = new HashMap<>(classMap.size());
+
+			for (var entry : classMap.entrySet()) {
+				inverseClassMap.put(entry.getValue().mappedName, entry.getKey());
+			}
+		}
+
+		return inverseClassMap.getOrDefault(from, "");
 	}
 
 	@Override

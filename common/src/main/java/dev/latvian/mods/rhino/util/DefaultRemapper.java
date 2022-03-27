@@ -15,6 +15,11 @@ public class DefaultRemapper implements Remapper {
 	}
 
 	@Override
+	public String unmapClass(String from) {
+		return "";
+	}
+
+	@Override
 	public String remapField(Class<?> from, Field field) {
 		RemapForJS remap = field.getAnnotation(RemapForJS.class);
 

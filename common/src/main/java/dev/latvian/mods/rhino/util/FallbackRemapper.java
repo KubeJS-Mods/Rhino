@@ -11,6 +11,12 @@ public record FallbackRemapper(Remapper main, Remapper fallback) implements Rema
 	}
 
 	@Override
+	public String unmapClass(String from) {
+		String s = main.unmapClass(from);
+		return s.isEmpty() ? fallback.unmapClass(from) : s;
+	}
+
+	@Override
 	public String remapField(Class<?> from, Field field) {
 		String s = main.remapField(from, field);
 		return s.isEmpty() ? fallback.remapField(from, field) : s;
