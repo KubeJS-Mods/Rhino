@@ -55,7 +55,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 					if (mappedFieldName != null) {
 						String runtimeFieldName = fieldDef.getName(runtimeNamespace);
 
-						if (!runtimeFieldName.equals(mappedFieldName) && !mappedFieldName.startsWith("this$") && !mappedFieldName.startsWith("access$")) {
+						if (!runtimeFieldName.equals(mappedFieldName) && !mappedFieldName.startsWith("this$") && !mappedFieldName.startsWith("access$") && !mappedFieldName.startsWith("val$")) {
 							children.put(runtimeFieldName, mappedFieldName);
 						}
 					}
@@ -68,7 +68,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 					if (mappedMethodName != null) {
 						String runtimeMethodName = methodDef.getName(runtimeNamespace);
 
-						if (!runtimeMethodName.equals(mappedMethodName) && !mappedMethodName.startsWith("lambda$")) {
+						if (!runtimeMethodName.equals(mappedMethodName) && !mappedMethodName.startsWith("lambda$") && !mappedMethodName.startsWith("access$")) {
 							children.put(runtimeMethodName + methodDef.getDescriptor(runtimeNamespace), mappedMethodName);
 						}
 					}
