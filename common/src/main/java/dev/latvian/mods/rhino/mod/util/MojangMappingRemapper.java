@@ -20,6 +20,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class MojangMappingRemapper implements Remapper {
+	public static final int VERSION = 1;
+
 	public static class RemappedClass {
 		public final String mappedName;
 		public Map<String, String> children;
@@ -109,6 +111,7 @@ public abstract class MojangMappingRemapper implements Remapper {
 
 		try {
 			boolean isServer = isServer();
+			int version = 0;
 			Path remappedPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + (isServer ? "_server.txt" : "_client.txt"));
 
 			if (Files.exists(remappedPath)) {
@@ -117,7 +120,9 @@ public abstract class MojangMappingRemapper implements Remapper {
 				for (String line : Files.readAllLines(remappedPath, StandardCharsets.UTF_8)) {
 					String[] l = line.split(" ");
 
-					if (l[0].equals("*")) {
+					if (l[0].equals("#")) {
+						version = Integer.parseInt(l[1]);
+					} else if (l[0].equals("*")) {
 						current = new RemappedClass(l[2]);
 						classMap.put(l[1], current);
 
@@ -204,23 +209,24 @@ public abstract class MojangMappingRemapper implements Remapper {
 				}
 
 				init(mojMapClasses);
+			}
 
-				if (!classMap.isEmpty()) {
-					List<String> list = new ArrayList<>();
+			if (version != VERSION) {
+				List<String> list = new ArrayList<>();
+				list.add("# " + VERSION);
 
-					for (var entry : classMap.entrySet()) {
-						RemappedClass rc = entry.getValue();
-						list.add("* " + entry.getKey() + " " + rc.mappedName + " " + (rc.children == null ? 0 : rc.children.size()));
+				for (var entry : classMap.entrySet()) {
+					RemappedClass rc = entry.getValue();
+					list.add("* " + entry.getKey() + " " + rc.mappedName + " " + (rc.children == null ? 0 : rc.children.size()));
 
-						if (rc.children != null) {
-							for (var entry1 : rc.children.entrySet()) {
-								list.add(entry1.getKey() + " " + entry1.getValue());
-							}
+					if (rc.children != null) {
+						for (var entry1 : rc.children.entrySet()) {
+							list.add(entry1.getKey() + " " + entry1.getValue());
 						}
 					}
-
-					Files.write(remappedPath, list);
 				}
+
+				Files.write(remappedPath, list);
 			}
 
 			empty = false;
