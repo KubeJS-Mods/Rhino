@@ -20,7 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class MojangMappingRemapper implements Remapper {
-	public static final int VERSION = 2;
+	public static final int VERSION = 3;
 
 	public static class RemappedClass {
 		public final String mappedName;
@@ -120,7 +120,7 @@ public abstract class MojangMappingRemapper implements Remapper {
 				for (String line : Files.readAllLines(remappedPath, StandardCharsets.UTF_8)) {
 					String[] l = line.split(" ");
 
-					if (l[0].equals("#")) {
+					if (l[0].equals("#version")) {
 						version = Integer.parseInt(l[1]);
 					} else if (l[0].equals("*")) {
 						current = new RemappedClass(l[2]);
@@ -135,7 +135,9 @@ public abstract class MojangMappingRemapper implements Remapper {
 						current.children.put(l[0], l[1]);
 					}
 				}
-			} else {
+			}
+
+			if (version != VERSION) {
 				Path tmpPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("rhino_mojang_mappings_" + getMcVersion() + (isServer ? "_server.txt" : "_client.txt"));
 				String[] mojmaps;
 
@@ -209,11 +211,9 @@ public abstract class MojangMappingRemapper implements Remapper {
 				}
 
 				init(mojMapClasses);
-			}
 
-			if (version != VERSION) {
 				List<String> list = new ArrayList<>();
-				list.add("# " + VERSION);
+				list.add("#version " + VERSION);
 
 				for (var entry : classMap.entrySet()) {
 					RemappedClass rc = entry.getValue();
