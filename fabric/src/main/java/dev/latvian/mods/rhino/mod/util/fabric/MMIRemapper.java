@@ -39,6 +39,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 		String runtimeNamespace = FabricLauncherBase.getLauncher().getTargetNamespace();
 		String rawNamespace = "official";
 		TinyTree tinyTree = FabricLauncherBase.getLauncher().getMappingConfiguration().getMappings();
+		Map<String, String> children = new HashMap<>();
 
 		for (ClassDef classDef : tinyTree.getClasses()) {
 			String runtimeClassName = classDef.getName(runtimeNamespace).replace('/', '.');
@@ -46,8 +47,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 			MojMapClass c = mojMapClasses.rawLookup().get(rawClassName);
 
 			if (c != null) {
-				Map<String, String> children = new HashMap<>();
-
+				children.clear();
 				for (FieldDef fieldDef : classDef.getFields()) {
 					String rawFieldName = fieldDef.getName(rawNamespace);
 					String mappedFieldName = c.children().get(rawFieldName);
@@ -55,7 +55,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 					if (mappedFieldName != null) {
 						String runtimeFieldName = fieldDef.getName(runtimeNamespace);
 
-						if (!runtimeFieldName.equals(mappedFieldName) && !runtimeFieldName.startsWith("this$") && !runtimeFieldName.startsWith("access$")) {
+						if (!runtimeFieldName.equals(mappedFieldName) && !mappedFieldName.startsWith("this$") && !mappedFieldName.startsWith("access$")) {
 							children.put(runtimeFieldName, mappedFieldName);
 						}
 					}

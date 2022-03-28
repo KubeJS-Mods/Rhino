@@ -20,7 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class MojangMappingRemapper implements Remapper {
-	public static final int VERSION = 1;
+	public static final int VERSION = 2;
 
 	public static class RemappedClass {
 		public final String mappedName;
