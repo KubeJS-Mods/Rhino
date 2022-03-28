@@ -20,7 +20,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class MojangMappingRemapper implements Remapper {
+public abstract class MinecraftRemapper implements Remapper {
 	public static final int MM_VERSION = 1;
 	public static final int VERSION = 1;
 
@@ -44,7 +44,7 @@ public abstract class MojangMappingRemapper implements Remapper {
 		}
 	}
 
-	public record MojMapClasses(Map<String, RemappedClass> rawLookup, Map<String, RemappedClass> mappedLookup) implements Function<String, String> {
+	public record MinecraftClasses(Map<String, RemappedClass> rawLookup, Map<String, RemappedClass> mappedLookup) implements Function<String, String> {
 		@Override
 		public String apply(String s) {
 			RemappedClass c = mappedLookup.get(s);
@@ -56,7 +56,7 @@ public abstract class MojangMappingRemapper implements Remapper {
 	private Map<String, String> inverseClassMap;
 	private boolean empty;
 
-	public MojangMappingRemapper() {
+	public MinecraftRemapper() {
 		classMap = new HashMap<>();
 		empty = true;
 
@@ -87,21 +87,19 @@ public abstract class MojangMappingRemapper implements Remapper {
 					}
 				}
 			} else {
-				MojMapClasses mojMapClasses = loadMojMapClasses();
-				init(mojMapClasses);
+				MinecraftClasses minecraftClasses = loadMojMapClasses();
+				init(minecraftClasses);
 
 				List<String> list = new ArrayList<>();
 				list.add("#version " + VERSION);
 
 				for (var entry : classMap.entrySet()) {
 					RemappedClass rc = entry.getValue();
-					RemappedClass mc = mojMapClasses.mappedLookup.get(rc.originalName);
-					list.add("* " + rc.originalName + " " + rc.mappedName + " " + (rc.children == null ? 0 : rc.children.size()) + " " + (mc == null ? "?" : mc.originalName));
+					list.add("* " + rc.originalName + " " + rc.mappedName + " " + (rc.children == null ? 0 : rc.children.size()));
 
 					if (rc.children != null) {
 						for (var entry1 : rc.children.entrySet()) {
-							String ch = mc == null ? "" : mc.getChild(entry1.getKey());
-							list.add(entry1.getKey() + " " + entry1.getValue() + " " + (ch.isEmpty() ? "?" : ch));
+							list.add(entry1.getKey() + " " + entry1.getValue());
 						}
 					}
 				}
@@ -116,18 +114,18 @@ public abstract class MojangMappingRemapper implements Remapper {
 		}
 	}
 
-	public MojMapClasses loadMojMapClasses() throws Exception {
+	public MinecraftClasses loadMojMapClasses() throws Exception {
 		Path mojmapPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("rhino_mojang_mappings_" + getMcVersion() + "_v" + MM_VERSION + (isServer() ? "_server.txt" : "_client.txt"));
 
 		if (Files.exists(mojmapPath)) {
 			return readMojMapClasses(mojmapPath);
 		} else {
-			MojMapClasses mojMapClasses = fetchMojMapClasses();
+			MinecraftClasses minecraftClasses = fetchMojMapClasses();
 
 			List<String> list = new ArrayList<>();
 			list.add("#version " + MM_VERSION);
 
-			for (var entry : mojMapClasses.rawLookup.entrySet()) {
+			for (var entry : minecraftClasses.rawLookup.entrySet()) {
 				RemappedClass rc = entry.getValue();
 				list.add("* " + rc.originalName + " " + rc.mappedName + " " + (rc.children == null ? 0 : rc.children.size()));
 
@@ -139,12 +137,12 @@ public abstract class MojangMappingRemapper implements Remapper {
 			}
 
 			Files.write(mojmapPath, list);
-			return mojMapClasses;
+			return minecraftClasses;
 		}
 	}
 
-	public MojMapClasses readMojMapClasses(Path path) throws Exception {
-		MojMapClasses mojMapClasses = new MojMapClasses(new HashMap<>(), new HashMap<>());
+	public MinecraftClasses readMojMapClasses(Path path) throws Exception {
+		MinecraftClasses minecraftClasses = new MinecraftClasses(new HashMap<>(), new HashMap<>());
 
 		RemappedClass current = null;
 
@@ -153,8 +151,8 @@ public abstract class MojangMappingRemapper implements Remapper {
 
 			if (l[0].equals("*")) {
 				current = new RemappedClass(l[1], l[2]);
-				mojMapClasses.rawLookup.put(current.originalName, current);
-				mojMapClasses.mappedLookup.put(current.mappedName, current);
+				minecraftClasses.rawLookup.put(current.originalName, current);
+				minecraftClasses.mappedLookup.put(current.mappedName, current);
 
 				int cc = Integer.parseInt(l[3]);
 
@@ -166,11 +164,11 @@ public abstract class MojangMappingRemapper implements Remapper {
 			}
 		}
 
-		return mojMapClasses;
+		return minecraftClasses;
 	}
 
-	public MojMapClasses fetchMojMapClasses() throws Exception {
-		MojMapClasses mojMapClasses = new MojMapClasses(new HashMap<>(), new HashMap<>());
+	public MinecraftClasses fetchMojMapClasses() throws Exception {
+		MinecraftClasses minecraftClasses = new MinecraftClasses(new HashMap<>(), new HashMap<>());
 
 		String str = IOUtils.toString(new URL("https://kubejs.com/mappings/" + getMcVersion() + (isServer() ? "/server.txt" : "/client.txt")), StandardCharsets.UTF_8);
 		String[] mojmaps = IOUtils.toString(new URL(str), StandardCharsets.UTF_8).split("\n");
@@ -183,8 +181,8 @@ public abstract class MojangMappingRemapper implements Remapper {
 
 				if (s1.length == 2 && !s1[0].endsWith(".package-info")) {
 					RemappedClass c = new RemappedClass(s1[1], s1[0]);
-					mojMapClasses.rawLookup.put(c.originalName, c);
-					mojMapClasses.mappedLookup.put(c.mappedName, c);
+					minecraftClasses.rawLookup.put(c.originalName, c);
+					minecraftClasses.mappedLookup.put(c.mappedName, c);
 				}
 			}
 		}
@@ -198,7 +196,7 @@ public abstract class MojangMappingRemapper implements Remapper {
 			if (!s.isEmpty() && !s.startsWith("#")) {
 				if (s.endsWith(":")) {
 					String raw = s.substring(s.lastIndexOf(' ') + 1, s.length() - 1);
-					current = mojMapClasses.rawLookup.get(raw);
+					current = minecraftClasses.rawLookup.get(raw);
 				} else if (current != null) {
 					Matcher matcher = pattern.matcher(s);
 
@@ -224,7 +222,7 @@ public abstract class MojangMappingRemapper implements Remapper {
 									String[] a1 = a.split(",");
 
 									for (String value : a1) {
-										sb.append(Remapper.getTypeName(value, mojMapClasses));
+										sb.append(Remapper.getTypeName(value, minecraftClasses));
 									}
 								}
 
@@ -239,7 +237,7 @@ public abstract class MojangMappingRemapper implements Remapper {
 			}
 		}
 
-		return mojMapClasses;
+		return minecraftClasses;
 	}
 
 	public boolean isValid() {
@@ -256,7 +254,7 @@ public abstract class MojangMappingRemapper implements Remapper {
 		return SharedConstants.getCurrentVersion().getName();
 	}
 
-	public abstract void init(MojMapClasses mojMapClasses) throws Exception;
+	public abstract void init(MinecraftClasses minecraftClasses) throws Exception;
 
 	@Override
 	public String remapClass(Class<?> from, String className) {

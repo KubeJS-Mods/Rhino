@@ -1,6 +1,6 @@
 package dev.latvian.mods.rhino.mod.util.fabric;
 
-import dev.latvian.mods.rhino.mod.util.MojangMappingRemapper;
+import dev.latvian.mods.rhino.mod.util.MinecraftRemapper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
@@ -12,10 +12,10 @@ import net.fabricmc.mapping.tree.TinyTree;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MMIRemapper extends MojangMappingRemapper {
-	public static final MMIRemapper INSTANCE = new MMIRemapper();
+public class FabricRemapper extends MinecraftRemapper {
+	public static final FabricRemapper INSTANCE = new FabricRemapper();
 
-	private MMIRemapper() {
+	private FabricRemapper() {
 	}
 
 	@Override
@@ -35,7 +35,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 	}
 
 	@Override
-	public void init(MojMapClasses mojMapClasses) {
+	public void init(MinecraftClasses minecraftClasses) {
 		String runtimeNamespace = FabricLauncherBase.getLauncher().getTargetNamespace();
 		String rawNamespace = "official";
 		TinyTree tinyTree = FabricLauncherBase.getLauncher().getMappingConfiguration().getMappings();
@@ -44,7 +44,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 		for (ClassDef classDef : tinyTree.getClasses()) {
 			String runtimeClassName = classDef.getName(runtimeNamespace).replace('/', '.');
 			String rawClassName = classDef.getName(rawNamespace).replace('/', '.');
-			RemappedClass mm = mojMapClasses.rawLookup().get(rawClassName);
+			RemappedClass mm = minecraftClasses.rawLookup().get(rawClassName);
 
 			if (mm != null) {
 				children.clear();
@@ -55,7 +55,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 					if (!mappedFieldName.isEmpty()) {
 						String runtimeFieldName = fieldDef.getName(runtimeNamespace);
 
-						if (!runtimeFieldName.equals(mappedFieldName) && !mappedFieldName.startsWith("this$") && !mappedFieldName.startsWith("access$") && !mappedFieldName.startsWith("val$")) {
+						if (!runtimeFieldName.equals(mappedFieldName)) {
 							children.put(runtimeFieldName, mappedFieldName);
 						}
 					}
@@ -69,7 +69,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 					if (!mappedMethodName.isEmpty()) {
 						String runtimeMethodName = methodDef.getName(runtimeNamespace);
 
-						if (!runtimeMethodName.equals(mappedMethodName) && !mappedMethodName.startsWith("lambda$") && !mappedMethodName.startsWith("access$")) {
+						if (!runtimeMethodName.equals(mappedMethodName)) {
 							String runtimeMethodDesc = methodDef.getDescriptor(runtimeNamespace);
 							children.put(runtimeMethodName + runtimeMethodDesc.substring(0, runtimeMethodDesc.lastIndexOf(')') + 1), mappedMethodName);
 						}

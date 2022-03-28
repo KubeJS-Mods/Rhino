@@ -1,9 +1,9 @@
 package dev.latvian.mods.rhino.mod.util.fabric;
 
-import dev.latvian.mods.rhino.mod.util.MojangMappingRemapper;
+import dev.latvian.mods.rhino.mod.util.MinecraftRemapper;
 
 public class RemappingHelperImpl {
-	public static MojangMappingRemapper getMojMapRemapper() {
-		return MMIRemapper.INSTANCE;
+	public static MinecraftRemapper getMinecraftRemapper() {
+		return FabricRemapper.INSTANCE;
 	}
 }
