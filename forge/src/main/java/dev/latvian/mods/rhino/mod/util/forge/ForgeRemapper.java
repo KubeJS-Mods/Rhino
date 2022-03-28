@@ -6,7 +6,6 @@ import org.apache.commons.io.IOUtils;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
@@ -44,7 +43,9 @@ public class ForgeRemapper extends MinecraftRemapper {
 
 			if (s.length < 3 || s[1].isEmpty()) {
 				continue;
-			} else if (!s[0].isEmpty()) {
+			}
+
+			if (!s[0].isEmpty()) {
 				mmCurrent = minecraftClasses.rawLookup().get(s[0]);
 
 				if (mmCurrent != null) {
@@ -78,8 +79,6 @@ public class ForgeRemapper extends MinecraftRemapper {
 					}
 				}
 			}
-
-			System.out.println(Arrays.toString(s));
 		}
 
 		classMap.entrySet().removeIf(RemappedClass::isUseless);
