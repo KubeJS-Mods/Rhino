@@ -264,8 +264,8 @@ public final class NativeJSON extends IdScriptableObject {
 		}
 	}
 
-	private static void type(StringBuilder builder, Class<?> type) {
-		String s = type.getName();
+	private static void type(Remapper remapper, StringBuilder builder, Class<?> type) {
+		String s = remapper.getMappedClass(type);
 
 		if (s.startsWith("java.lang.") || s.startsWith("java.util.")) {
 			builder.append(s.substring(10));
@@ -274,7 +274,7 @@ public final class NativeJSON extends IdScriptableObject {
 		}
 	}
 
-	private static void params(StringBuilder builder, Class<?>[] params) {
+	private static void params(Remapper remapper, StringBuilder builder, Class<?>[] params) {
 		builder.append('(');
 
 		for (int i = 0; i < params.length; i++) {
@@ -282,7 +282,7 @@ public final class NativeJSON extends IdScriptableObject {
 				builder.append(", ");
 			}
 
-			type(builder, params[i]);
+			type(remapper, builder, params[i]);
 		}
 
 		builder.append(')');
@@ -324,11 +324,17 @@ public final class NativeJSON extends IdScriptableObject {
 		}
 
 		Class<?> cl = v.getClass();
-		StringBuilder clName = new StringBuilder(remapper.getMappedClass(cl));
+		int array = 0;
 
 		while (cl.isArray()) {
 			cl = cl.getComponentType();
-			clName.append("[]");
+			array++;
+		}
+
+		StringBuilder clName = new StringBuilder(remapper.getMappedClass(cl));
+
+		if (array > 0) {
+			clName.append("[]".repeat(array));
 		}
 
 		JsonArray list = new JsonArray();
@@ -351,8 +357,10 @@ public final class NativeJSON extends IdScriptableObject {
 			}
 
 			StringBuilder builder = new StringBuilder("new ");
-			builder.append(cl.getSimpleName());
-			params(builder, constructor.getParameterTypes());
+			String s = remapper.getMappedClass(constructor.getDeclaringClass());
+			int si = s.lastIndexOf('.');
+			builder.append(si == -1 || si >= s.length() ? s : s.substring(si + 1));
+			params(remapper, builder, constructor.getParameterTypes());
 			list.add(builder.toString());
 		}
 
@@ -377,7 +385,7 @@ public final class NativeJSON extends IdScriptableObject {
 				builder.append("native ");
 			}
 
-			type(builder, field.getType());
+			type(remapper, builder, field.getType());
 			builder.append(' ');
 			builder.append(remapper.getMappedField(cl, field));
 			list.add(builder.toString());
@@ -400,10 +408,10 @@ public final class NativeJSON extends IdScriptableObject {
 				builder.append("native ");
 			}
 
-			type(builder, method.getReturnType());
+			type(remapper, builder, method.getReturnType());
 			builder.append(' ');
 			builder.append(remapper.getMappedMethod(cl, method));
-			params(builder, method.getParameterTypes());
+			params(remapper, builder, method.getParameterTypes());
 
 			String s = builder.toString();
 
