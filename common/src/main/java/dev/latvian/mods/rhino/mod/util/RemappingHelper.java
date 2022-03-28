@@ -7,7 +7,7 @@ import dev.latvian.mods.rhino.util.Remapper;
 
 public class RemappingHelper {
 	@ExpectPlatform
-	public static Remapper getMojMapRemapper() {
+	public static MojangMappingRemapper getMojMapRemapper() {
 		throw new AssertionError();
 	}
 

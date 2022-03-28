@@ -39,6 +39,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 		String runtimeNamespace = FabricLauncherBase.getLauncher().getTargetNamespace();
 		String rawNamespace = "official";
 		TinyTree tinyTree = FabricLauncherBase.getLauncher().getMappingConfiguration().getMappings();
+		Map<String, String> children = new HashMap<>();
 
 		for (ClassDef classDef : tinyTree.getClasses()) {
 			String runtimeClassName = classDef.getName(runtimeNamespace).replace('/', '.');
@@ -46,8 +47,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 			MojMapClass c = mojMapClasses.rawLookup().get(rawClassName);
 
 			if (c != null) {
-				Map<String, String> children = new HashMap<>();
-
+				children.clear();
 				for (FieldDef fieldDef : classDef.getFields()) {
 					String rawFieldName = fieldDef.getName(rawNamespace);
 					String mappedFieldName = c.children().get(rawFieldName);
@@ -55,7 +55,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 					if (mappedFieldName != null) {
 						String runtimeFieldName = fieldDef.getName(runtimeNamespace);
 
-						if (!runtimeFieldName.equals(mappedFieldName)) {
+						if (!runtimeFieldName.equals(mappedFieldName) && !mappedFieldName.startsWith("this$") && !mappedFieldName.startsWith("access$") && !mappedFieldName.startsWith("val$")) {
 							children.put(runtimeFieldName, mappedFieldName);
 						}
 					}
@@ -68,7 +68,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 					if (mappedMethodName != null) {
 						String runtimeMethodName = methodDef.getName(runtimeNamespace);
 
-						if (!runtimeMethodName.equals(mappedMethodName)) {
+						if (!runtimeMethodName.equals(mappedMethodName) && !mappedMethodName.startsWith("lambda$") && !mappedMethodName.startsWith("access$")) {
 							children.put(runtimeMethodName + methodDef.getDescriptor(runtimeNamespace), mappedMethodName);
 						}
 					}

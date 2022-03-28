@@ -20,6 +20,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class MojangMappingRemapper implements Remapper {
+	public static final int VERSION = 1;
+
 	public static class RemappedClass {
 		public final String mappedName;
 		public Map<String, String> children;
@@ -109,7 +111,7 @@ public abstract class MojangMappingRemapper implements Remapper {
 
 		try {
 			boolean isServer = isServer();
-			Path remappedPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + SharedConstants.getCurrentVersion().getName() + (isServer ? "_server.txt" : "_client.txt"));
+			Path remappedPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("rhino_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + "_v" + VERSION + (isServer ? "_server.txt" : "_client.txt"));
 
 			if (Files.exists(remappedPath)) {
 				RemappedClass current = null;
@@ -126,18 +128,18 @@ public abstract class MojangMappingRemapper implements Remapper {
 						if (cc > 0) {
 							current.children = new HashMap<>(cc);
 						}
-					} else if (current != null) {
+					} else if (current != null && !l[0].startsWith("#")) {
 						current.children.put(l[0], l[1]);
 					}
 				}
 			} else {
-				Path tmpPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_mojang_mappings_" + SharedConstants.getCurrentVersion().getName() + (isServer ? "_server.txt" : "_client.txt"));
+				Path tmpPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("rhino_mojang_mappings_" + getMcVersion() + (isServer ? "_server.txt" : "_client.txt"));
 				String[] mojmaps;
 
 				if (Files.exists(tmpPath)) {
 					mojmaps = Files.readString(tmpPath, StandardCharsets.UTF_8).split("\n");
 				} else {
-					String str = IOUtils.toString(new URL("https://kubejs.com/mappings/" + SharedConstants.getCurrentVersion().getName() + "/" + (isServer ? "server" : "client") + ".txt"), StandardCharsets.UTF_8);
+					String str = IOUtils.toString(new URL("https://kubejs.com/mappings/" + getMcVersion() + (isServer ? "/server.txt" : "/client.txt")), StandardCharsets.UTF_8);
 					String mojmaps0 = IOUtils.toString(new URL(str), StandardCharsets.UTF_8);
 					mojmaps = mojmaps0.split("\n");
 					Files.writeString(tmpPath, mojmaps0, StandardCharsets.UTF_8);
@@ -205,22 +207,21 @@ public abstract class MojangMappingRemapper implements Remapper {
 
 				init(mojMapClasses);
 
-				if (!classMap.isEmpty()) {
-					List<String> list = new ArrayList<>();
+				List<String> list = new ArrayList<>();
+				list.add("#version " + VERSION);
 
-					for (var entry : classMap.entrySet()) {
-						RemappedClass rc = entry.getValue();
-						list.add("* " + entry.getKey() + " " + rc.mappedName + " " + (rc.children == null ? 0 : rc.children.size()));
+				for (var entry : classMap.entrySet()) {
+					RemappedClass rc = entry.getValue();
+					list.add("* " + entry.getKey() + " " + rc.mappedName + " " + (rc.children == null ? 0 : rc.children.size()));
 
-						if (rc.children != null) {
-							for (var entry1 : rc.children.entrySet()) {
-								list.add(entry1.getKey() + " " + entry1.getValue());
-							}
+					if (rc.children != null) {
+						for (var entry1 : rc.children.entrySet()) {
+							list.add(entry1.getKey() + " " + entry1.getValue());
 						}
 					}
-
-					Files.write(remappedPath, list);
 				}
+
+				Files.write(remappedPath, list);
 			}
 
 			empty = false;
@@ -239,6 +240,10 @@ public abstract class MojangMappingRemapper implements Remapper {
 	public abstract boolean isServer();
 
 	public abstract String getRuntimeMappings();
+
+	public String getMcVersion() {
+		return SharedConstants.getCurrentVersion().getName();
+	}
 
 	public abstract void init(MojMapClasses mojMapClasses) throws Exception;
 

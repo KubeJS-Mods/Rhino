@@ -380,15 +380,7 @@ public final class NativeJSON extends IdScriptableObject {
 
 			type(builder, field.getType());
 			builder.append(' ');
-
-			String remap = remapper.remapField(cl, field);
-
-			if (remap.isEmpty()) {
-				builder.append(field.getName());
-			} else {
-				builder.append(remap);
-			}
-
+			builder.append(remapper.getMappedField(cl, field));
 			list.add(builder.toString());
 		}
 
@@ -411,15 +403,7 @@ public final class NativeJSON extends IdScriptableObject {
 
 			type(builder, method.getReturnType());
 			builder.append(' ');
-
-			String remap = remapper.remapMethod(cl, method);
-
-			if (remap.isEmpty()) {
-				builder.append(method.getName());
-			} else {
-				builder.append(remap);
-			}
-
+			builder.append(remapper.getMappedMethod(cl, method));
 			params(builder, method.getParameterTypes());
 
 			String s = builder.toString();
