@@ -6,16 +6,14 @@ import org.apache.commons.io.IOUtils;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.regex.Pattern;
 
 public class ForgeRemapper extends MinecraftRemapper {
 	public static final ForgeRemapper INSTANCE = new ForgeRemapper();
 
 	private ForgeRemapper() {
-	}
-
-	@Override
-	public boolean isValid() {
-		return false;
 	}
 
 	@Override
@@ -35,10 +33,55 @@ public class ForgeRemapper extends MinecraftRemapper {
 
 	@Override
 	public void init(MinecraftClasses minecraftClasses) throws Exception {
-		// TODO: Implement SRG -> MM mapping
+		RemappedClass current = null;
+		RemappedClass mmCurrent = null;
 
-		for (String s : IOUtils.toString(new URL("https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/" + getMcVersion() + "/joined.tsrg"), StandardCharsets.UTF_8).split("\n")) {
-			s = s.trim();
+		String[] srg = IOUtils.toString(new URL("https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/" + getMcVersion() + "/joined.tsrg"), StandardCharsets.UTF_8).split("\n");
+		Pattern pattern = Pattern.compile("[\t ]");
+
+		for (int i = 1; i < srg.length; i++) {
+			String[] s = pattern.split(srg[i]);
+
+			if (s.length < 3 || s[1].isEmpty()) {
+				continue;
+			} else if (!s[0].isEmpty()) {
+				mmCurrent = minecraftClasses.rawLookup().get(s[0]);
+
+				if (mmCurrent != null) {
+					current = new RemappedClass(mmCurrent.mappedName, mmCurrent.mappedName);
+					classMap.put(mmCurrent.mappedName, current);
+				}
+			} else if (current != null && mmCurrent != null) {
+				if (s.length == 5) {
+					if (s[1].equals("<init>") || s[1].equals("<clinit>")) {
+						continue;
+					}
+
+					String m = mmCurrent.getChild(s[1] + s[2].substring(0, s[2].lastIndexOf(')') + 1));
+
+					if (!m.isEmpty()) {
+						if (current.children == null) {
+							current.children = new HashMap<>();
+						}
+
+						current.children.put(m, s[3]);
+					}
+				} else if (s.length == 4) {
+					String m = mmCurrent.getChild(s[1]);
+
+					if (!m.isEmpty()) {
+						if (current.children == null) {
+							current.children = new HashMap<>();
+						}
+
+						current.children.put(m, s[2]);
+					}
+				}
+			}
+
+			System.out.println(Arrays.toString(s));
 		}
+
+		classMap.entrySet().removeIf(RemappedClass::isUseless);
 	}
 }

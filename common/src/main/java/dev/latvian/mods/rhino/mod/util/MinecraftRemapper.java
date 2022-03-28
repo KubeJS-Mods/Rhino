@@ -42,6 +42,14 @@ public abstract class MinecraftRemapper implements Remapper {
 		public String getChild(String s) {
 			return children == null || children.isEmpty() ? "" : children.getOrDefault(s, "");
 		}
+
+		public boolean isUseless() {
+			return (children == null || children.isEmpty()) && originalName.equals(mappedName);
+		}
+
+		public static boolean isUseless(Map.Entry<String, RemappedClass> entry) {
+			return entry.getValue().isUseless();
+		}
 	}
 
 	public record MinecraftClasses(Map<String, RemappedClass> rawLookup, Map<String, RemappedClass> mappedLookup) implements Function<String, String> {
