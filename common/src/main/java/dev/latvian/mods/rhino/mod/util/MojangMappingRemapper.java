@@ -112,7 +112,7 @@ public abstract class MojangMappingRemapper implements Remapper {
 		try {
 			boolean isServer = isServer();
 			int version = 0;
-			Path remappedPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + (isServer ? "_server.txt" : "_client.txt"));
+			Path remappedPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("rhino_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + (isServer ? "_server.txt" : "_client.txt"));
 
 			if (Files.exists(remappedPath)) {
 				RemappedClass current = null;
@@ -136,7 +136,7 @@ public abstract class MojangMappingRemapper implements Remapper {
 					}
 				}
 			} else {
-				Path tmpPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_mojang_mappings_" + getMcVersion() + (isServer ? "_server.txt" : "_client.txt"));
+				Path tmpPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("rhino_mojang_mappings_" + getMcVersion() + (isServer ? "_server.txt" : "_client.txt"));
 				String[] mojmaps;
 
 				if (Files.exists(tmpPath)) {
@@ -287,13 +287,13 @@ public abstract class MojangMappingRemapper implements Remapper {
 
 	public void clearCache() {
 		try {
-			Files.deleteIfExists(Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + (isServer() ? "_server.txt" : "_client.txt")));
+			Files.deleteIfExists(Paths.get(System.getProperty("java.io.tmpdir")).resolve("rhino_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + (isServer() ? "_server.txt" : "_client.txt")));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 
 		try {
-			Files.deleteIfExists(Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_mojang_mappings_" + getMcVersion() + (isServer() ? "_server.txt" : "_client.txt")));
+			Files.deleteIfExists(Paths.get(System.getProperty("java.io.tmpdir")).resolve("rhino_mojang_mappings_" + getMcVersion() + (isServer() ? "_server.txt" : "_client.txt")));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
