@@ -5,9 +5,9 @@ import java.lang.reflect.Method;
 
 public record FallbackRemapper(Remapper main, Remapper fallback) implements Remapper {
 	@Override
-	public String remapClass(Class<?> from) {
-		String s = main.remapClass(from);
-		return s.isEmpty() ? fallback.remapClass(from) : s;
+	public String remapClass(Class<?> from, String className) {
+		String s = main.remapClass(from, className);
+		return s.isEmpty() ? fallback.remapClass(from, className) : s;
 	}
 
 	@Override
@@ -17,14 +17,14 @@ public record FallbackRemapper(Remapper main, Remapper fallback) implements Rema
 	}
 
 	@Override
-	public String remapField(Class<?> from, Field field) {
-		String s = main.remapField(from, field);
-		return s.isEmpty() ? fallback.remapField(from, field) : s;
+	public String remapField(Class<?> from, Field field, String fieldName) {
+		String s = main.remapField(from, field, fieldName);
+		return s.isEmpty() ? fallback.remapField(from, field, fieldName) : s;
 	}
 
 	@Override
-	public String remapMethod(Class<?> from, Method method) {
-		String s = main.remapMethod(from, method);
-		return s.isEmpty() ? fallback.remapMethod(from, method) : s;
+	public String remapMethod(Class<?> from, Method method, String methodString) {
+		String s = main.remapMethod(from, method, methodString);
+		return s.isEmpty() ? fallback.remapMethod(from, method, methodString) : s;
 	}
 }

@@ -10,7 +10,7 @@ public class DefaultRemapper implements Remapper {
 	}
 
 	@Override
-	public String remapClass(Class<?> from) {
+	public String remapClass(Class<?> from, String className) {
 		return "";
 	}
 
@@ -20,7 +20,7 @@ public class DefaultRemapper implements Remapper {
 	}
 
 	@Override
-	public String remapField(Class<?> from, Field field) {
+	public String remapField(Class<?> from, Field field, String fieldName) {
 		RemapForJS remap = field.getAnnotation(RemapForJS.class);
 
 		if (remap != null) {
@@ -31,7 +31,7 @@ public class DefaultRemapper implements Remapper {
 	}
 
 	@Override
-	public String remapMethod(Class<?> from, Method method) {
+	public String remapMethod(Class<?> from, Method method, String methodString) {
 		RemapForJS remap = method.getAnnotation(RemapForJS.class);
 
 		if (remap != null) {

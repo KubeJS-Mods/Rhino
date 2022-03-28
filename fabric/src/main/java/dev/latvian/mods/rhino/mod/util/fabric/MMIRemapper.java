@@ -44,15 +44,15 @@ public class MMIRemapper extends MojangMappingRemapper {
 		for (ClassDef classDef : tinyTree.getClasses()) {
 			String runtimeClassName = classDef.getName(runtimeNamespace).replace('/', '.');
 			String rawClassName = classDef.getName(rawNamespace).replace('/', '.');
-			MojMapClass c = mojMapClasses.rawLookup().get(rawClassName);
+			RemappedClass mm = mojMapClasses.rawLookup().get(rawClassName);
 
-			if (c != null) {
+			if (mm != null) {
 				children.clear();
 				for (FieldDef fieldDef : classDef.getFields()) {
 					String rawFieldName = fieldDef.getName(rawNamespace);
-					String mappedFieldName = c.children().get(rawFieldName);
+					String mappedFieldName = mm.getChild(rawFieldName);
 
-					if (mappedFieldName != null) {
+					if (!mappedFieldName.isEmpty()) {
 						String runtimeFieldName = fieldDef.getName(runtimeNamespace);
 
 						if (!runtimeFieldName.equals(mappedFieldName) && !mappedFieldName.startsWith("this$") && !mappedFieldName.startsWith("access$") && !mappedFieldName.startsWith("val$")) {
@@ -62,20 +62,22 @@ public class MMIRemapper extends MojangMappingRemapper {
 				}
 
 				for (MethodDef methodDef : classDef.getMethods()) {
-					String rawMethodName = methodDef.getName(rawNamespace) + methodDef.getDescriptor(rawNamespace);
-					String mappedMethodName = c.children().get(rawMethodName.substring(0, rawMethodName.lastIndexOf(')') + 1));
+					String rawMethodName0 = methodDef.getName(rawNamespace) + methodDef.getDescriptor(rawNamespace);
+					String rawMethodName = rawMethodName0.substring(0, rawMethodName0.lastIndexOf(')') + 1);
+					String mappedMethodName = mm.getChild(rawMethodName);
 
-					if (mappedMethodName != null) {
+					if (!mappedMethodName.isEmpty()) {
 						String runtimeMethodName = methodDef.getName(runtimeNamespace);
 
 						if (!runtimeMethodName.equals(mappedMethodName) && !mappedMethodName.startsWith("lambda$") && !mappedMethodName.startsWith("access$")) {
-							children.put(runtimeMethodName + methodDef.getDescriptor(runtimeNamespace), mappedMethodName);
+							String runtimeMethodDesc = methodDef.getDescriptor(runtimeNamespace);
+							children.put(runtimeMethodName + runtimeMethodDesc.substring(0, runtimeMethodDesc.lastIndexOf(')') + 1), mappedMethodName);
 						}
 					}
 				}
 
-				if (!children.isEmpty() || !runtimeClassName.equals(c.mappedName())) {
-					RemappedClass rc = new RemappedClass(c.mappedName());
+				if (!children.isEmpty() || !runtimeClassName.equals(mm.mappedName)) {
+					RemappedClass rc = new RemappedClass(runtimeClassName, mm.mappedName);
 
 					if (!children.isEmpty()) {
 						rc.children = new HashMap<>(children);
