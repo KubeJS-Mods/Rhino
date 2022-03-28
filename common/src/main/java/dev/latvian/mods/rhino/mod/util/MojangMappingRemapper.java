@@ -109,7 +109,7 @@ public abstract class MojangMappingRemapper implements Remapper {
 
 		try {
 			boolean isServer = isServer();
-			Path remappedPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + SharedConstants.getCurrentVersion().getName() + (isServer ? "_server.txt" : "_client.txt"));
+			Path remappedPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + (isServer ? "_server.txt" : "_client.txt"));
 
 			if (Files.exists(remappedPath)) {
 				RemappedClass current = null;
@@ -131,13 +131,13 @@ public abstract class MojangMappingRemapper implements Remapper {
 					}
 				}
 			} else {
-				Path tmpPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_mojang_mappings_" + SharedConstants.getCurrentVersion().getName() + (isServer ? "_server.txt" : "_client.txt"));
+				Path tmpPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_mojang_mappings_" + getMcVersion() + (isServer ? "_server.txt" : "_client.txt"));
 				String[] mojmaps;
 
 				if (Files.exists(tmpPath)) {
 					mojmaps = Files.readString(tmpPath, StandardCharsets.UTF_8).split("\n");
 				} else {
-					String str = IOUtils.toString(new URL("https://kubejs.com/mappings/" + SharedConstants.getCurrentVersion().getName() + "/" + (isServer ? "server" : "client") + ".txt"), StandardCharsets.UTF_8);
+					String str = IOUtils.toString(new URL("https://kubejs.com/mappings/" + getMcVersion() + (isServer ? "/server.txt" : "/client.txt")), StandardCharsets.UTF_8);
 					String mojmaps0 = IOUtils.toString(new URL(str), StandardCharsets.UTF_8);
 					mojmaps = mojmaps0.split("\n");
 					Files.writeString(tmpPath, mojmaps0, StandardCharsets.UTF_8);
@@ -240,6 +240,10 @@ public abstract class MojangMappingRemapper implements Remapper {
 
 	public abstract String getRuntimeMappings();
 
+	public String getMcVersion() {
+		return SharedConstants.getCurrentVersion().getName();
+	}
+
 	public abstract void init(MojMapClasses mojMapClasses) throws Exception;
 
 	@Override
@@ -273,5 +277,19 @@ public abstract class MojangMappingRemapper implements Remapper {
 	public String remapMethod(Class<?> from, Method method) {
 		RemappedClass c = empty ? null : classMap.get(from.getName());
 		return c == null ? "" : c.getMethodName(method);
+	}
+
+	public void clearCache() {
+		try {
+			Files.deleteIfExists(Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + (isServer() ? "_server.txt" : "_client.txt")));
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+
+		try {
+			Files.deleteIfExists(Paths.get(System.getProperty("java.io.tmpdir")).resolve("kubejs_mojang_mappings_" + getMcVersion() + (isServer() ? "_server.txt" : "_client.txt")));
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
 	}
 }

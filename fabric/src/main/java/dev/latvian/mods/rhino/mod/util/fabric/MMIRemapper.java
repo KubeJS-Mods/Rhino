@@ -68,7 +68,7 @@ public class MMIRemapper extends MojangMappingRemapper {
 					if (mappedMethodName != null) {
 						String runtimeMethodName = methodDef.getName(runtimeNamespace);
 
-						if (!runtimeMethodName.equals(mappedMethodName)) {
+						if (!runtimeMethodName.equals(mappedMethodName) && !mappedMethodName.startsWith("this$") && !mappedMethodName.startsWith("lambda$")) {
 							children.put(runtimeMethodName + methodDef.getDescriptor(runtimeNamespace), mappedMethodName);
 						}
 					}
