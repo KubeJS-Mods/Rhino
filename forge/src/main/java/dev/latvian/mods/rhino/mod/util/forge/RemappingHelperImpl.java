@@ -1,9 +1,9 @@
 package dev.latvian.mods.rhino.mod.util.forge;
 
-import dev.latvian.mods.rhino.mod.util.MojangMappingRemapper;
+import dev.latvian.mods.rhino.mod.util.MinecraftRemapper;
 
 public class RemappingHelperImpl {
-	public static MojangMappingRemapper getMojMapRemapper() {
-		return MMSRemapper.INSTANCE;
+	public static MinecraftRemapper getMinecraftRemapper() {
+		return ForgeRemapper.INSTANCE;
 	}
 }

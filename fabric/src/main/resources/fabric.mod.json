@@ -24,8 +24,6 @@
 		"rhino.mixins.json"
 	],
 	"depends": {
-		"fabric": "*",
-		"minecraft": ">=1.18-pre1"
 	},
 	"custom": {
 		"modmenu:api": true

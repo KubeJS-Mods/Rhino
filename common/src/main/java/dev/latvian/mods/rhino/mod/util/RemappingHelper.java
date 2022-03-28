@@ -7,11 +7,11 @@ import dev.latvian.mods.rhino.util.Remapper;
 
 public class RemappingHelper {
 	@ExpectPlatform
-	public static MojangMappingRemapper getMojMapRemapper() {
+	public static MinecraftRemapper getMinecraftRemapper() {
 		throw new AssertionError();
 	}
 
 	public static Remapper createModRemapper() {
-		return new FallbackRemapper(DefaultRemapper.INSTANCE, getMojMapRemapper());
+		return new FallbackRemapper(DefaultRemapper.INSTANCE, getMinecraftRemapper());
 	}
 }
