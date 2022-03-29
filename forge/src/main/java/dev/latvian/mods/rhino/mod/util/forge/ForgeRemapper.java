@@ -58,14 +58,15 @@ public class ForgeRemapper extends MinecraftRemapper {
 						continue;
 					}
 
-					String m = mmCurrent.getChild(s[1] + s[2].substring(0, s[2].lastIndexOf(')') + 1));
+					String a = s[2].substring(0, s[2].lastIndexOf(')') + 1);
+					String m = mmCurrent.getChild(s[1] + a);
 
 					if (!m.isEmpty()) {
 						if (current.children == null) {
 							current.children = new HashMap<>();
 						}
 
-						current.children.put(s[3], m);
+						current.children.put(s[3] + a, m);
 					}
 				} else if (s.length == 4) {
 					String m = mmCurrent.getChild(s[1]);
