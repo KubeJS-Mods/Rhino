@@ -65,7 +65,7 @@ public class ForgeRemapper extends MinecraftRemapper {
 							current.children = new HashMap<>();
 						}
 
-						current.children.put(m, s[3]);
+						current.children.put(s[3], m);
 					}
 				} else if (s.length == 4) {
 					String m = mmCurrent.getChild(s[1]);
@@ -75,7 +75,7 @@ public class ForgeRemapper extends MinecraftRemapper {
 							current.children = new HashMap<>();
 						}
 
-						current.children.put(m, s[2]);
+						current.children.put(s[2], m);
 					}
 				}
 			}
