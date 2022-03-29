@@ -7,6 +7,7 @@ import org.apache.commons.io.IOUtils;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ForgeRemapper extends MinecraftRemapper {
@@ -37,6 +38,7 @@ public class ForgeRemapper extends MinecraftRemapper {
 
 		String[] srg = IOUtils.toString(new URL("https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/" + getMcVersion() + "/joined.tsrg"), StandardCharsets.UTF_8).split("\n");
 		Pattern pattern = Pattern.compile("[\t ]");
+		Pattern argPattern = Pattern.compile("L([\\w/$]+);");
 
 		for (int i = 1; i < srg.length; i++) {
 			String[] s = pattern.split(srg[i]);
@@ -66,7 +68,17 @@ public class ForgeRemapper extends MinecraftRemapper {
 							current.children = new HashMap<>();
 						}
 
-						current.children.put(s[3] + a, m);
+						StringBuilder sb = new StringBuilder(s[3]);
+						Matcher matcher = argPattern.matcher(a);
+
+						while (matcher.find()) {
+							String g = matcher.group(1);
+							RemappedClass c = minecraftClasses.rawLookup().get(g);
+							matcher.appendReplacement(sb, "L" + (c == null ? g : c.mappedName.replace('.', '/')).replace("$", "\\$") + ";");
+						}
+
+						matcher.appendTail(sb);
+						current.children.put(sb.toString(), m);
 					}
 				} else if (s.length == 4) {
 					String m = mmCurrent.getChild(s[1]);
