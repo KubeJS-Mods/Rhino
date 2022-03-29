@@ -4,4 +4,6 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod("rhino")
 public class RhinoModForge {
+	public RhinoModForge() {
+	}
 }
