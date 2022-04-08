@@ -1,5 +1,6 @@
 package dev.latvian.mods.rhino.util.wrap;
 
+import dev.latvian.mods.rhino.util.EnumTypeWrapper;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
@@ -71,7 +72,10 @@ public class TypeWrappers {
 
 		if (wrapper != null && wrapper.validator.test(from)) {
 			return wrapper.factory;
+		} else if (target.isEnum()) {
+			return EnumTypeWrapper.get(target);
 		}
+
 		//else if (from != null && target.isArray() && !from.getClass().isArray() && target.getComponentType() == from.getClass() && !target.isPrimitive())
 		//{
 		//	return TypeWrapperFactory.OBJECT_TO_ARRAY;

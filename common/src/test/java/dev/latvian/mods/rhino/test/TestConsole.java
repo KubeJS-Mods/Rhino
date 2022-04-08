@@ -20,4 +20,8 @@ public class TestConsole {
 	public static List<String> getTestList() {
 		return new ArrayList<>(Arrays.asList(getTestArray()));
 	}
+
+	public static void setTheme(ConsoleTheme theme) {
+		System.out.println("Set theme to " + theme);
+	}
 }

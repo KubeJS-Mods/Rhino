@@ -47,3 +47,4 @@ let scopes2 = () => {
 }
 
 console.info(scopes2())
+console.theme = 'Dark'
