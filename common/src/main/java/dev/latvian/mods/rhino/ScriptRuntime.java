@@ -2336,10 +2336,10 @@ public class ScriptRuntime {
 
 		if (x1 == y1) {
 			return true;
-		} else if (x1 instanceof SpecialEquality) {
-			return ((SpecialEquality) x1).specialEquals(y1, false);
-		} else if (y1 instanceof SpecialEquality) {
-			return ((SpecialEquality) y1).specialEquals(x1, false);
+		} else if (SpecialEquality.checkSpecialEquality(x1, y1, false)) {
+			return true;
+		} else if (SpecialEquality.checkSpecialEquality(y1, x1, false)) {
+			return true;
 		} else if (x instanceof Number) {
 			return eqNumber(((Number) x).doubleValue(), y);
 		} else if (x instanceof CharSequence) {
@@ -2520,10 +2520,10 @@ public class ScriptRuntime {
 
 		if (x1 == y1) {
 			return true;
-		} else if (x1 instanceof SpecialEquality) {
-			return ((SpecialEquality) x1).specialEquals(y1, true);
-		} else if (y1 instanceof SpecialEquality) {
-			return ((SpecialEquality) y1).specialEquals(x1, true);
+		} else if (SpecialEquality.checkSpecialEquality(x1, y1, true)) {
+			return true;
+		} else if (SpecialEquality.checkSpecialEquality(y1, x1, true)) {
+			return true;
 		} else if (x1 instanceof Number) {
 			if (y1 instanceof Number) {
 				return ((Number) x1).doubleValue() == ((Number) y1).doubleValue();

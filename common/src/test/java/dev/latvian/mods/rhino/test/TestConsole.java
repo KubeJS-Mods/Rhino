@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TestConsole {
+	private static ConsoleTheme theme;
+
 	public static void info(Object o) {
 		System.out.println(o);
 	}
@@ -21,7 +23,12 @@ public class TestConsole {
 		return new ArrayList<>(Arrays.asList(getTestArray()));
 	}
 
-	public static void setTheme(ConsoleTheme theme) {
-		System.out.println("Set theme to " + theme);
+	public static void setTheme(ConsoleTheme t) {
+		System.out.println("Set theme to " + t);
+		theme = t;
+	}
+
+	public static ConsoleTheme getTheme() {
+		return theme;
 	}
 }

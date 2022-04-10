@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 	private static final Map<Class<?>, EnumTypeWrapper<?>> WRAPPERS = new HashMap<>();
+	private static final Map<Enum<?>, String> CACHED_NAMES = new HashMap<>();
 
 	@SuppressWarnings("unchecked")
 	public static <T> EnumTypeWrapper<T> get(Class<T> enumType) {
@@ -19,7 +20,11 @@ public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 		return (EnumTypeWrapper<T>) WRAPPERS.computeIfAbsent(enumType, EnumTypeWrapper::new);
 	}
 
-	public static String getName(Class<?> enumType, Enum<?> e) {
+	public static String getName(Class<?> enumType, Enum<?> e, boolean cache) {
+		if (cache) {
+			return get(enumType).valueNames.getOrDefault(e, e.name());
+		}
+
 		String name = e.name();
 
 		if (e instanceof RemappedEnumConstant c) {
@@ -47,14 +52,18 @@ public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 	public final Class<T> enumType;
 	public final T[] indexValues;
 	public final Map<String, T> nameValues;
+	public final Map<T, String> valueNames;
 
 	private EnumTypeWrapper(Class<T> enumType) {
 		this.enumType = enumType;
 		this.indexValues = enumType.getEnumConstants();
 		this.nameValues = new HashMap<>();
+		this.valueNames = new HashMap<>();
 
 		for (T t : indexValues) {
-			nameValues.put(getName(enumType, (Enum<?>) t).toLowerCase(), t);
+			String name = getName(enumType, (Enum<?>) t, false).toLowerCase();
+			nameValues.put(name, t);
+			valueNames.put(t, name);
 		}
 	}
 
