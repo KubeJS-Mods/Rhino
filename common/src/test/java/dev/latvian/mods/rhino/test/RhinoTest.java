@@ -23,10 +23,11 @@ public class RhinoTest {
 		var typeWrappers = context.getTypeWrappers();
 		typeWrappers.register(CompoundTag.class, o -> (CompoundTag) NBTUtils.toNBT(o));
 
-		test.load("/rhinotest/test.js");
+		// test.load("/rhinotest/test.js");
 		// test.load("/rhinotest/nbt.js");
-		test.load("/rhinotest/nullish_coalescing.js");
-		test.load("/rhinotest/pow.js");
+		// test.load("/rhinotest/nullish_coalescing.js");
+		// test.load("/rhinotest/pow.js");
+		test.load("/rhinotest/units.js");
 	}
 
 	public final Context context;

@@ -1,5 +1,7 @@
 package dev.latvian.mods.rhino.test;
 
+import dev.latvian.mods.unit.UnitContext;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,5 +32,10 @@ public class TestConsole {
 
 	public static ConsoleTheme getTheme() {
 		return theme;
+	}
+
+	public static void printUnit(String input) {
+		System.out.println("# " + input);
+		System.out.println("> " + UnitContext.DEFAULT.parse(input));
 	}
 }
