@@ -18,18 +18,18 @@ public class StringUnitToken implements UnitToken {
 
 	@Override
 	public Unit interpret(UnitTokenStream stream) {
-		if (stream.nextIf(SymbolUnitToken.LP)) {
+		if (stream.nextTokenIf(SymbolUnitToken.LP)) {
 			FuncUnit func = stream.context.getFunction(string);
 
 			if (func == null) {
 				throw new IllegalStateException("Unknown function: " + string);
 			}
 
-			int arg = 0;
-
-			while (true) {
-				// UnitToken token = next();
+			for (int i = 0; i < func.args.length; i++) {
+				func.args[i] = stream.nextUnit();
 			}
+
+			return func;
 		}
 
 		return VariableUnit.of(string);

@@ -2,6 +2,7 @@ package dev.latvian.mods.unit.token;
 
 import dev.latvian.mods.unit.ColorUnit;
 import dev.latvian.mods.unit.FixedNumberUnit;
+import dev.latvian.mods.unit.OpGroupUnit;
 import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitContext;
 import org.jetbrains.annotations.Nullable;
@@ -100,18 +101,14 @@ public final class UnitTokenStream {
 		}
 	}
 
-	public Unit parse() {
-		if (input.isEmpty()) {
-			return null;
-		}
-
-		UnitToken token = next();
+	public Unit nextUnit() {
+		UnitToken token = nextToken();
 
 		if (token == null) {
 			throw new IllegalStateException("EOL!");
 		}
 
-		return token.interpret(this);
+		return OpGroupUnit.interpret(token.interpret(this), this, null);
 	}
 
 	private void add(UnitToken token, int pos) {
@@ -143,7 +140,7 @@ public final class UnitTokenStream {
 	}
 
 	@Nullable
-	public UnitToken next() {
+	public UnitToken nextToken() {
 		if (++position >= tokens.size()) {
 			return null;
 		}
@@ -151,9 +148,9 @@ public final class UnitTokenStream {
 		return tokens.get(position).token();
 	}
 
-	public boolean nextIf(UnitToken match) {
-		if (match.equals(peek())) {
-			next();
+	public boolean nextTokenIf(UnitToken match) {
+		if (match.equals(peekToken())) {
+			nextToken();
 			return true;
 		}
 
@@ -161,7 +158,7 @@ public final class UnitTokenStream {
 	}
 
 	@Nullable
-	public UnitToken peek(int ahead) {
+	public UnitToken peekToken(int ahead) {
 		if (position + ahead >= tokens.size()) {
 			return null;
 		}
@@ -169,8 +166,9 @@ public final class UnitTokenStream {
 		return tokens.get(position + ahead).token();
 	}
 
-	public UnitToken peek() {
-		return peek(1);
+	@Nullable
+	public UnitToken peekToken() {
+		return peekToken(1);
 	}
 
 	public List<String> toTokenStrings() {

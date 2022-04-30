@@ -89,7 +89,8 @@ public class UnitContext {
 		Unit u = cache.get(input);
 
 		if (u == null) {
-			u = createStream(input).parse();
+			u = createStream(input).nextUnit();
+			u = u.optimize();
 			cache.put(input, u);
 		}
 

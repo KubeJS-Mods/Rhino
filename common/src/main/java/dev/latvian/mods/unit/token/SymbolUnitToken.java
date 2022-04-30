@@ -1,22 +1,27 @@
 package dev.latvian.mods.unit.token;
 
+import dev.latvian.mods.unit.OpGroupUnit;
 import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.operator.AddOpUnit;
 import dev.latvian.mods.unit.operator.AndOpUnit;
 import dev.latvian.mods.unit.operator.BitAndOpUnit;
+import dev.latvian.mods.unit.operator.BitNotOpUnit;
 import dev.latvian.mods.unit.operator.BitOrOpUnit;
 import dev.latvian.mods.unit.operator.DivOpUnit;
 import dev.latvian.mods.unit.operator.EqOpUnit;
 import dev.latvian.mods.unit.operator.GtOpUnit;
 import dev.latvian.mods.unit.operator.GteOpUnit;
+import dev.latvian.mods.unit.operator.LshOpUnit;
 import dev.latvian.mods.unit.operator.LtOpUnit;
 import dev.latvian.mods.unit.operator.LteOpUnit;
 import dev.latvian.mods.unit.operator.ModOpUnit;
 import dev.latvian.mods.unit.operator.MulOpUnit;
+import dev.latvian.mods.unit.operator.NegateOpUnit;
 import dev.latvian.mods.unit.operator.NeqOpUnit;
 import dev.latvian.mods.unit.operator.OpUnit;
 import dev.latvian.mods.unit.operator.OrOpUnit;
 import dev.latvian.mods.unit.operator.PowOpUnit;
+import dev.latvian.mods.unit.operator.RshOpUnit;
 import dev.latvian.mods.unit.operator.SubOpUnit;
 import dev.latvian.mods.unit.operator.XorOpUnit;
 import org.jetbrains.annotations.Nullable;
@@ -36,21 +41,21 @@ public enum SymbolUnitToken implements UnitToken {
 	POW("**", PowOpUnit::new, 4),
 	DIV("/", DivOpUnit::new, 3),
 	MOD("%", ModOpUnit::new, 2),
-	SET("="),
+	SET("=", null, 4),
 	EQ("==", EqOpUnit::new, 1),
 	NEQ("!=", NeqOpUnit::new, 1),
 	LT("<", LtOpUnit::new, 1),
 	GT(">", GtOpUnit::new, 1),
 	LTE("<=", LteOpUnit::new, 1),
 	GTE(">=", GteOpUnit::new, 1),
-	LSH("<<"),
-	RSH(">>"),
+	LSH("<<", LshOpUnit::new, 2),
+	RSH(">>", RshOpUnit::new, 2),
 	AND("&&", AndOpUnit::new, 1),
 	OR("||", OrOpUnit::new, 1),
-	BIT_AND("&", BitAndOpUnit::new, 1),
-	BIT_OR("|", BitOrOpUnit::new, 1),
+	BIT_AND("&", BitAndOpUnit::new, 2),
+	BIT_OR("|", BitOrOpUnit::new, 2),
 	BIT_NOT("!"),
-	XOR("^", XorOpUnit::new, 1),
+	XOR("^", XorOpUnit::new, 2),
 	;
 
 	public final String symbol;
@@ -103,8 +108,22 @@ public enum SymbolUnitToken implements UnitToken {
 
 	@Override
 	public Unit interpret(UnitTokenStream stream) {
-		if (this == LP) {
-			// do its thing
+		if (this == NEGATE) {
+			NegateOpUnit unit = new NegateOpUnit();
+			unit.unit = stream.nextUnit();
+			return unit;
+		} else if (this == BIT_NOT) {
+			BitNotOpUnit unit = new BitNotOpUnit();
+			unit.unit = stream.nextUnit();
+			return unit;
+		} else if (this == LP) {
+			if (stream.peekToken() == RP) {
+				throw new IllegalStateException("Empty group '()' is not allowed!");
+			}
+
+			return OpGroupUnit.interpret(stream.nextUnit(), stream, RP);
+		} else if (operatorUnit != null) {
+			return operatorUnit.get();
 		}
 
 		throw new IllegalStateException("Symbol '" + symbol + "' can't be interpreted!");
