@@ -1,5 +1,8 @@
 package dev.latvian.mods.rhino.mod.util;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import dev.latvian.mods.rhino.Undefined;
 import dev.latvian.mods.rhino.util.ValueUnwrapper;
@@ -32,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -64,7 +68,7 @@ public interface NBTUtils {
 		} else if (v instanceof CharSequence || v instanceof Character) {
 			return StringTag.valueOf(v.toString());
 		} else if (v instanceof Boolean b) {
-			return ByteTag.valueOf(b ? (byte) 1 : (byte) 0);
+			return ByteTag.valueOf(b);
 		} else if (v instanceof Number number) {
 			if (number instanceof Byte) {
 				return ByteTag.valueOf(number.byteValue());
@@ -79,6 +83,14 @@ public interface NBTUtils {
 			}
 
 			return DoubleTag.valueOf(number.doubleValue());
+		} else if (v instanceof JsonPrimitive json) {
+			if (json.isNumber()) {
+				return toTag(json.getAsNumber());
+			} else if (json.isBoolean()) {
+				return ByteTag.valueOf(json.getAsBoolean());
+			} else {
+				return StringTag.valueOf(json.getAsString());
+			}
 		} else if (v instanceof Map<?, ?> map) {
 			CompoundTag tag = new OrderedCompoundTag();
 
@@ -91,55 +103,89 @@ public interface NBTUtils {
 			}
 
 			return tag;
+		} else if (v instanceof JsonObject json) {
+			CompoundTag tag = new OrderedCompoundTag();
+
+			for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+				Tag nbt1 = toTag(entry.getValue());
+
+				if (nbt1 != null) {
+					tag.put(entry.getKey(), nbt1);
+				}
+			}
+
+			return tag;
 		} else if (v instanceof Collection<?> c) {
 			return toTagCollection(c);
+		} else if (v instanceof JsonArray array) {
+			List<Tag> list = new ArrayList<>(array.size());
+
+			for (JsonElement element : array) {
+				list.add(toTag(element));
+			}
+
+			return toTagCollection(list);
 		}
 
 		return null;
 	}
 
 	static boolean isTagCompound(Object o) {
-		return o == null || Undefined.isUndefined(o) || o instanceof CompoundTag || o instanceof CharSequence || o instanceof Map;
+		return o == null || Undefined.isUndefined(o) || o instanceof CompoundTag || o instanceof CharSequence || o instanceof Map || o instanceof JsonElement;
 	}
 
 	@Nullable
-	static CompoundTag toTagCompound(@Nullable Object o) {
-		if (o instanceof CompoundTag nbt) {
+	static CompoundTag toTagCompound(@Nullable Object v) {
+		if (v instanceof CompoundTag nbt) {
 			return nbt;
-		} else if (o instanceof CharSequence) {
+		} else if (v instanceof CharSequence) {
 			try {
-				return TagParser.parseTag(o.toString());
+				return TagParser.parseTag(v.toString());
 			} catch (Exception ex) {
 				return null;
 			}
-		} else if (o instanceof JsonPrimitive json) {
+		} else if (v instanceof JsonPrimitive json) {
 			try {
 				return TagParser.parseTag(json.getAsString());
 			} catch (Exception ex) {
 				return null;
 			}
-		}
-
-		return (CompoundTag) toTag(o);
-	}
-
-	static boolean isTagCollection(Object o) {
-		return o == null || Undefined.isUndefined(o) || o instanceof CharSequence || o instanceof Collection<?>;
-	}
-
-	@Nullable
-	static CollectionTag<?> toTagCollection(@Nullable Object list) {
-		if (list instanceof CollectionTag tag) {
-			return tag;
-		} else if (list instanceof CharSequence) {
+		} else if (v instanceof JsonObject json) {
 			try {
-				return (CollectionTag<?>) TagParser.parseTag("{a:" + list + "}").get("a");
+				return TagParser.parseTag(json.toString());
 			} catch (Exception ex) {
 				return null;
 			}
 		}
 
-		return list == null ? null : toTagCollection((Collection<?>) list);
+		return (CompoundTag) toTag(v);
+	}
+
+	static boolean isTagCollection(Object o) {
+		return o == null || Undefined.isUndefined(o) || o instanceof CharSequence || o instanceof Collection<?> || o instanceof JsonArray;
+	}
+
+	@Nullable
+	static CollectionTag<?> toTagCollection(@Nullable Object v) {
+		if (v instanceof CollectionTag tag) {
+			return tag;
+		} else if (v instanceof CharSequence) {
+			try {
+				return (CollectionTag<?>) TagParser.parseTag("{a:" + v + "}").get("a");
+			} catch (Exception ex) {
+				return null;
+			}
+		} else if (v instanceof JsonArray array) {
+			List<Tag> list = new ArrayList<>(array.size());
+
+			for (JsonElement element : array) {
+				list.add(toTag(element));
+			}
+
+			return toTagCollection(list);
+		}
+
+		return v == null ? null : toTagCollection((Collection<?>) v);
 	}
 
 	@Nullable
