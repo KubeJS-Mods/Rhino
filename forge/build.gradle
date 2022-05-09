@@ -24,8 +24,12 @@ artifacts {
 }
 
 loom {
+	accessWidenerPath = project(":common").file("src/main/resources/rhino.accesswidener")
+
 	forge {
 		mixinConfigs = ["rhino.mixins.json", "rhino-common.mixins.json"]
+		convertAccessWideners = true
+		extraAccessWideners.add("rhino.accesswidener")
 	}
 }
 
