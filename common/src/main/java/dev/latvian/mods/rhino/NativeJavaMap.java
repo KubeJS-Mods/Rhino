@@ -6,6 +6,7 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.Deletable;
+import dev.latvian.mods.rhino.util.ValueUnwrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,17 +15,24 @@ import java.util.Map;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class NativeJavaMap extends NativeJavaObject {
 	private final Map map;
+	private final Class<?> mapValueType;
+	private final ValueUnwrapper valueUnwrapper;
 
-	public NativeJavaMap(Scriptable scope, Object jo, Map map) {
+	public NativeJavaMap(Scriptable scope, Object jo, Map map, Class<?> mapValueType, ValueUnwrapper valueUnwrapper) {
 		super(scope, jo, jo.getClass());
 		this.map = map;
+		this.mapValueType = mapValueType;
+		this.valueUnwrapper = valueUnwrapper;
+	}
+
+	public NativeJavaMap(Scriptable scope, Object jo, Map map) {
+		this(scope, jo, map, Object.class, ValueUnwrapper.DEFAULT);
 	}
 
 	@Override
 	public String getClassName() {
 		return "JavaMap";
 	}
-
 
 	@Override
 	public boolean has(String name, Scriptable start) {
@@ -45,9 +53,7 @@ public class NativeJavaMap extends NativeJavaObject {
 	@Override
 	public Object get(String name, Scriptable start) {
 		if (map.containsKey(name)) {
-			Context cx = Context.getContext();
-			Object obj = map.get(name);
-			return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+			return valueUnwrapper.unwrap(this, map.get(name));
 		}
 		return super.get(name, start);
 	}
@@ -55,21 +61,19 @@ public class NativeJavaMap extends NativeJavaObject {
 	@Override
 	public Object get(int index, Scriptable start) {
 		if (map.containsKey(index)) {
-			Context cx = Context.getContext();
-			Object obj = map.get(index);
-			return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+			return valueUnwrapper.unwrap(this, map.get(index));
 		}
 		return super.get(index, start);
 	}
 
 	@Override
 	public void put(String name, Scriptable start, Object value) {
-		map.put(name, Context.jsToJava(value, Object.class));
+		map.put(name, Context.jsToJava(value, mapValueType));
 	}
 
 	@Override
 	public void put(int index, Scriptable start, Object value) {
-		map.put(index, Context.jsToJava(value, Object.class));
+		map.put(index, Context.jsToJava(value, mapValueType));
 	}
 
 	@Override

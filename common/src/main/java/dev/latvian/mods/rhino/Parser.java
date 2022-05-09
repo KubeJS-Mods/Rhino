@@ -2585,7 +2585,7 @@ public class Parser {
 		for (; ; ) {
 			int tt = peekToken();
 			switch (tt) {
-				case Token.DOT:
+				case Token.DOT, Token.HOOK:
 					lineno = ts.lineno;
 					pn = propertyAccess(tt, pn);
 					pn.setLineno(lineno);
@@ -2665,6 +2665,12 @@ public class Parser {
 	private AstNode propertyAccess(int tt, AstNode pn) throws IOException {
 		if (pn == null) {
 			codeBug();
+		}
+
+		boolean optionalChaining = tt == Token.HOOK && matchToken(Token.DOT, false);
+
+		if (tt == Token.HOOK && !optionalChaining) {
+			reportError("msg.no.dot.after.hook");
 		}
 
 		int lineno = ts.lineno, dotPos = ts.tokenBeg;

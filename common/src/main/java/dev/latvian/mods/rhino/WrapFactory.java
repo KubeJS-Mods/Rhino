@@ -8,7 +8,7 @@
 
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.util.CustomJavaObjectWrapper;
+import dev.latvian.mods.rhino.util.CustomJavaToJsWrapper;
 import dev.latvian.mods.rhino.util.JavaSetWrapper;
 
 import java.util.List;
@@ -115,9 +115,17 @@ public class WrapFactory {
 	 * @return the wrapped value which shall not be null
 	 */
 	public Scriptable wrapAsJavaObject(Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
-		if (javaObject instanceof CustomJavaObjectWrapper w) {
-			return w.wrapAsJavaObject(cx, scope, staticType);
-		} else if (javaObject instanceof Map map) {
+		if (javaObject instanceof CustomJavaToJsWrapper w) {
+			return w.convertJavaToJs(cx, scope, staticType);
+		}
+
+		CustomJavaToJsWrapper w = cx.wrapCustomJavaToJs(javaObject);
+
+		if (w != null) {
+			return w.convertJavaToJs(cx, scope, staticType);
+		}
+
+		if (javaObject instanceof Map map) {
 			return new NativeJavaMap(scope, map, map);
 		} else if (javaObject instanceof List list) {
 			return new NativeJavaList(scope, list, list);

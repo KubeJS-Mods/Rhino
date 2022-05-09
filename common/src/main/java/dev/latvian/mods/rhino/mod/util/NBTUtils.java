@@ -1,5 +1,6 @@
 package dev.latvian.mods.rhino.mod.util;
 
+import dev.latvian.mods.rhino.util.ValueUnwrapper;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.EncoderException;
 import net.minecraft.nbt.ByteArrayTag;
@@ -7,6 +8,7 @@ import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CollectionTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.EndTag;
 import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.nbt.IntTag;
@@ -29,23 +31,38 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-/**
- * @author LatvianModder
- */
-public class NBTUtils {
+public interface NBTUtils {
+	ValueUnwrapper VALUE_UNWRAPPER = (scope, value) -> value instanceof Tag tag ? fromTag(tag) : value;
+
 	@Nullable
-	public static Tag toNBT(@Nullable Object o) {
-		if (o instanceof Tag) {
-			return (Tag) o;
-		} else if (o instanceof NBTSerializable s) {
+	static Object fromTag(@Nullable Tag t) {
+		if (t == null || t == EndTag.INSTANCE) {
+			return null;
+		} else if (t instanceof StringTag) {
+			return t.getAsString();
+		} else if (t instanceof NumericTag) {
+			return ((NumericTag) t).getAsNumber();
+		}
+
+		return t;
+	}
+
+	@Nullable
+	static Tag toTag(@Nullable Object v) {
+		if (v == null || v instanceof EndTag) {
+			return null;
+		} else if (v instanceof Tag) {
+			return (Tag) v;
+		} else if (v instanceof NBTSerializable s) {
 			return s.toNBT();
-		} else if (o instanceof CharSequence || o instanceof Character) {
-			return StringTag.valueOf(o.toString());
-		} else if (o instanceof Boolean b) {
+		} else if (v instanceof CharSequence || v instanceof Character) {
+			return StringTag.valueOf(v.toString());
+		} else if (v instanceof Boolean b) {
 			return ByteTag.valueOf(b ? (byte) 1 : (byte) 0);
-		} else if (o instanceof Number number) {
+		} else if (v instanceof Number number) {
 			if (number instanceof Byte) {
 				return ByteTag.valueOf(number.byteValue());
 			} else if (number instanceof Short) {
@@ -59,11 +76,11 @@ public class NBTUtils {
 			}
 
 			return DoubleTag.valueOf(number.doubleValue());
-		} else if (o instanceof Map<?, ?> map) {
+		} else if (v instanceof Map<?, ?> map) {
 			CompoundTag tag = new OrderedCompoundTag();
 
 			for (Map.Entry<?, ?> entry : map.entrySet()) {
-				Tag nbt1 = NBTUtils.toNBT(entry.getValue());
+				Tag nbt1 = toTag(entry.getValue());
 
 				if (nbt1 != null) {
 					tag.put(String.valueOf(entry.getKey()), nbt1);
@@ -71,14 +88,19 @@ public class NBTUtils {
 			}
 
 			return tag;
-		} else if (o instanceof Collection<?> c) {
-			return toNBT(c);
+		} else if (v instanceof Collection<?> c) {
+			return toTagCollection(c);
 		}
 
 		return null;
 	}
 
-	public static CollectionTag<?> toNBT(Collection<?> c) {
+	@Nullable
+	static CompoundTag toTagCompound(@Nullable Object o) {
+		return (CompoundTag) toTag(o);
+	}
+
+	static CollectionTag<?> toTagCollection(Collection<?> c) {
 		if (c.isEmpty()) {
 			return new ListTag();
 		}
@@ -88,7 +110,7 @@ public class NBTUtils {
 		byte commmonId = -1;
 
 		for (Object o : c) {
-			values[s] = toNBT(o);
+			values[s] = toTag(o);
 
 			if (values[s] != null) {
 				if (commmonId == -1) {
@@ -142,7 +164,115 @@ public class NBTUtils {
 		return nbt;
 	}
 
-	public static void quoteAndEscapeForJS(StringBuilder stringBuilder, String string) {
+	static Tag compoundTag() {
+		return new OrderedCompoundTag();
+	}
+
+	static Tag compoundTag(Map<?, ?> map) {
+		OrderedCompoundTag tag = new OrderedCompoundTag();
+
+		for (var entry : map.entrySet()) {
+			var tag1 = toTag(entry.getValue());
+
+			if (tag1 != null) {
+				tag.put(String.valueOf(entry.getKey()), tag1);
+			}
+		}
+
+		return tag;
+	}
+
+	static Tag listTag() {
+		return new ListTag();
+	}
+
+	static Tag listTag(List<?> list) {
+		ListTag tag = new ListTag();
+
+		for (Object v : list) {
+			tag.add(toTag(v));
+		}
+
+		return tag;
+	}
+
+	static Tag byteTag(byte v) {
+		return ByteTag.valueOf(v);
+	}
+
+	static Tag b(byte v) {
+		return ByteTag.valueOf(v);
+	}
+
+	static Tag shortTag(short v) {
+		return ShortTag.valueOf(v);
+	}
+
+	static Tag s(short v) {
+		return ShortTag.valueOf(v);
+	}
+
+	static Tag intTag(int v) {
+		return IntTag.valueOf(v);
+	}
+
+	static Tag i(int v) {
+		return IntTag.valueOf(v);
+	}
+
+	static Tag longTag(long v) {
+		return LongTag.valueOf(v);
+	}
+
+	static Tag l(long v) {
+		return LongTag.valueOf(v);
+	}
+
+	static Tag floatTag(float v) {
+		return FloatTag.valueOf(v);
+	}
+
+	static Tag f(float v) {
+		return FloatTag.valueOf(v);
+	}
+
+	static Tag doubleTag(double v) {
+		return DoubleTag.valueOf(v);
+	}
+
+	static Tag d(double v) {
+		return DoubleTag.valueOf(v);
+	}
+
+	static Tag stringTag(String v) {
+		return StringTag.valueOf(v);
+	}
+
+	static Tag intArrayTag(int[] v) {
+		return new IntArrayTag(v);
+	}
+
+	static Tag ia(int[] v) {
+		return new IntArrayTag(v);
+	}
+
+	static Tag longArrayTag(long[] v) {
+		return new LongArrayTag(v);
+	}
+
+	static Tag la(long[] v) {
+		return new LongArrayTag(v);
+	}
+
+	static Tag byteArrayTag(byte[] v) {
+		return new ByteArrayTag(v);
+	}
+
+	static Tag ba(byte[] v) {
+		return new ByteArrayTag(v);
+	}
+
+	static void quoteAndEscapeForJS(StringBuilder stringBuilder, String string) {
 		int start = stringBuilder.length();
 		stringBuilder.append(' ');
 		char c = 0;
@@ -172,11 +302,11 @@ public class NBTUtils {
 		stringBuilder.append(c);
 	}
 
-	private static TagType<?> convertType(TagType<?> tagType) {
+	static TagType<?> convertType(TagType<?> tagType) {
 		return tagType == CompoundTag.TYPE ? COMPOUND_TYPE : tagType == ListTag.TYPE ? LIST_TYPE : tagType;
 	}
 
-	private static final TagType<OrderedCompoundTag> COMPOUND_TYPE = new TagType.VariableSize<OrderedCompoundTag>() {
+	TagType<OrderedCompoundTag> COMPOUND_TYPE = new TagType.VariableSize<>() {
 		@Override
 		public OrderedCompoundTag load(DataInput dataInput, int i, NbtAccounter nbtAccounter) throws IOException {
 			nbtAccounter.accountBits(384L);
@@ -272,7 +402,7 @@ public class NBTUtils {
 		}
 	};
 
-	private static final TagType<ListTag> LIST_TYPE = new TagType.VariableSize<ListTag>() {
+	TagType<ListTag> LIST_TYPE = new TagType.VariableSize<>() {
 		@Override
 		public ListTag load(DataInput dataInput, int i, NbtAccounter nbtAccounter) throws IOException {
 			nbtAccounter.accountBits(296L);
@@ -359,7 +489,7 @@ public class NBTUtils {
 	};
 
 	@Nullable
-	public static OrderedCompoundTag read(FriendlyByteBuf buf) {
+	static OrderedCompoundTag read(FriendlyByteBuf buf) {
 		int i = buf.readerIndex();
 		byte b = buf.readByte();
 		if (b == 0) {

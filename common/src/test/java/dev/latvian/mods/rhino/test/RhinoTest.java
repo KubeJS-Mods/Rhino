@@ -3,55 +3,65 @@ package dev.latvian.mods.rhino.test;
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.NativeJavaClass;
 import dev.latvian.mods.rhino.ScriptableObject;
+import dev.latvian.mods.rhino.mod.util.CollectionTagWrapper;
+import dev.latvian.mods.rhino.mod.util.CompoundTagWrapper;
 import dev.latvian.mods.rhino.mod.util.NBTUtils;
-import dev.latvian.mods.rhino.mod.util.NBTWrapper;
+import net.minecraft.nbt.CollectionTag;
 import net.minecraft.nbt.CompoundTag;
-import org.apache.commons.io.IOUtils;
+import net.minecraft.nbt.Tag;
+import org.junit.jupiter.api.Assertions;
 
-import java.io.BufferedInputStream;
-import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RhinoTest {
-	public static void main(String[] args) {
-		var context = Context.enterWithNewFactory();
+	private static Context context;
+
+	public static Context getContext() {
+		if (context != null) {
+			return context;
+		}
+
+		context = Context.enterWithNewFactory();
 		// context.setClassShutter((fullClassName, type) -> type != ClassShutter.TYPE_CLASS_IN_PACKAGE || isClassAllowed(fullClassName));
 
-		RhinoTest test = new RhinoTest(context);
-		test.add("console", TestConsole.class);
-		test.add("NBT", NBTWrapper.class);
-
 		var typeWrappers = context.getTypeWrappers();
-		typeWrappers.register(CompoundTag.class, o -> (CompoundTag) NBTUtils.toNBT(o));
+		typeWrappers.register(CompoundTag.class, NBTUtils::toTagCompound);
+		typeWrappers.register(Tag.class, NBTUtils::toTag);
 
-		// test.load("/rhinotest/test.js");
-		// test.load("/rhinotest/nbt.js");
-		// test.load("/rhinotest/nullish_coalescing.js");
-		// test.load("/rhinotest/pow.js");
-		test.load("/rhinotest/units.js");
+		context.addCustomJavaToJsWrapper(CompoundTag.class, CompoundTagWrapper::new);
+		context.addCustomJavaToJsWrapper(CollectionTag.class, CollectionTagWrapper::new);
+
+		return context;
 	}
 
-	public final Context context;
-	public final ScriptableObject scope;
+	public final String testName;
+	public final Map<String, Object> include;
 
-	public RhinoTest(Context c) {
-		context = c;
-		scope = context.initStandardObjects();
+	public RhinoTest(String n) {
+		testName = n;
+		include = new HashMap<>();
+		add("console", TestConsole.class);
+		add("NBT", NBTUtils.class);
 	}
 
-	public void add(String name, Object value) {
-		if (value.getClass() == Class.class) {
-			ScriptableObject.putProperty(scope, name, new NativeJavaClass(scope, (Class<?>) value));
-		} else {
-			ScriptableObject.putProperty(scope, name, Context.javaToJS(value, scope));
+	public RhinoTest add(String name, Object value) {
+		include.put(name, value);
+		return this;
+	}
+
+	public void test(String name, String script, String console) {
+		var scope = getContext().initStandardObjects();
+
+		for (var entry : include.entrySet()) {
+			if (entry.getValue() instanceof Class<?> c) {
+				ScriptableObject.putProperty(scope, entry.getKey(), new NativeJavaClass(scope, c));
+			} else {
+				ScriptableObject.putProperty(scope, entry.getKey(), Context.javaToJS(entry.getValue(), scope));
+			}
 		}
-	}
 
-	public void load(String file) {
-		try (var stream = RhinoTest.class.getResourceAsStream(file)) {
-			var script = new String(IOUtils.toByteArray(new BufferedInputStream(stream)), StandardCharsets.UTF_8);
-			context.evaluateString(scope, script, file, 1, null);
-		} catch (Throwable ex) {
-			ex.printStackTrace();
-		}
+		getContext().evaluateString(scope, script, testName + "/" + name, 1, null);
+		Assertions.assertEquals(console.trim(), TestConsole.getConsoleOutput().trim());
 	}
 }
