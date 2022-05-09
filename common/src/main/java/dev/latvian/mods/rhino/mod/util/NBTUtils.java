@@ -518,4 +518,8 @@ public interface NBTUtils {
 			}
 		}
 	}
+
+	static Map<String, Tag> accessTagMap(CompoundTag tag) {
+		return tag.tags;
+	}
 }
