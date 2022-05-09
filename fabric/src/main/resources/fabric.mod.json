@@ -27,5 +27,6 @@
 	},
 	"custom": {
 		"modmenu:api": true
-	}
+	},
+	"accessWidener": "rhino.accesswidener"
 }

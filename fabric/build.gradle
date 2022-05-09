@@ -19,6 +19,12 @@ configurations {
 	dev
 }
 
+def accessWidenerFile = project(":common").file("src/main/resources/rhino.accesswidener")
+
+loom {
+	accessWidenerPath = accessWidenerFile
+}
+
 artifacts {
 	dev(jar)
 }
