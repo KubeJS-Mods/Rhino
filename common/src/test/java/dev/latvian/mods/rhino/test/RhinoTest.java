@@ -8,6 +8,7 @@ import dev.latvian.mods.rhino.mod.util.CompoundTagWrapper;
 import dev.latvian.mods.rhino.mod.util.NBTUtils;
 import net.minecraft.nbt.CollectionTag;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import org.junit.jupiter.api.Assertions;
 
@@ -26,7 +27,9 @@ public class RhinoTest {
 		// context.setClassShutter((fullClassName, type) -> type != ClassShutter.TYPE_CLASS_IN_PACKAGE || isClassAllowed(fullClassName));
 
 		var typeWrappers = context.getTypeWrappers();
-		typeWrappers.register(CompoundTag.class, NBTUtils::toTagCompound);
+		typeWrappers.register(CompoundTag.class, NBTUtils::isTagCompound, NBTUtils::toTagCompound);
+		typeWrappers.register(CollectionTag.class, NBTUtils::isTagCollection, NBTUtils::toTagCollection);
+		typeWrappers.register(ListTag.class, NBTUtils::isTagCollection, NBTUtils::toTagList);
 		typeWrappers.register(Tag.class, NBTUtils::toTag);
 
 		context.addCustomJavaToJsWrapper(CompoundTag.class, CompoundTagWrapper::new);

@@ -1,5 +1,7 @@
 package dev.latvian.mods.rhino.mod.util;
 
+import com.google.gson.JsonPrimitive;
+import dev.latvian.mods.rhino.Undefined;
 import dev.latvian.mods.rhino.util.ValueUnwrapper;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.EncoderException;
@@ -21,6 +23,7 @@ import net.minecraft.nbt.ShortTag;
 import net.minecraft.nbt.StreamTagVisitor;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.nbt.TagType;
 import net.minecraft.nbt.TagTypes;
 import net.minecraft.network.FriendlyByteBuf;
@@ -95,9 +98,53 @@ public interface NBTUtils {
 		return null;
 	}
 
+	static boolean isTagCompound(Object o) {
+		return o == null || Undefined.isUndefined(o) || o instanceof CompoundTag || o instanceof CharSequence || o instanceof Map;
+	}
+
 	@Nullable
 	static CompoundTag toTagCompound(@Nullable Object o) {
+		if (o instanceof CompoundTag nbt) {
+			return nbt;
+		} else if (o instanceof CharSequence) {
+			try {
+				return TagParser.parseTag(o.toString());
+			} catch (Exception ex) {
+				return null;
+			}
+		} else if (o instanceof JsonPrimitive json) {
+			try {
+				return TagParser.parseTag(json.getAsString());
+			} catch (Exception ex) {
+				return null;
+			}
+		}
+
 		return (CompoundTag) toTag(o);
+	}
+
+	static boolean isTagCollection(Object o) {
+		return o == null || Undefined.isUndefined(o) || o instanceof CharSequence || o instanceof Collection<?>;
+	}
+
+	@Nullable
+	static CollectionTag<?> toTagCollection(@Nullable Object list) {
+		if (list instanceof CollectionTag tag) {
+			return tag;
+		} else if (list instanceof CharSequence) {
+			try {
+				return (CollectionTag<?>) TagParser.parseTag("{a:" + list + "}").get("a");
+			} catch (Exception ex) {
+				return null;
+			}
+		}
+
+		return list == null ? null : toTagCollection((Collection<?>) list);
+	}
+
+	@Nullable
+	static ListTag toTagList(@Nullable Object list) {
+		return (ListTag) toTagCollection(list);
 	}
 
 	static CollectionTag<?> toTagCollection(Collection<?> c) {
