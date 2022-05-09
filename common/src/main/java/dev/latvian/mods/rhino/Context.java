@@ -11,8 +11,12 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.ast.AstRoot;
 import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter.ClassFileFormatException;
+import dev.latvian.mods.rhino.util.CustomJavaToJsWrapper;
+import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProvider;
+import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProviderHolder;
 import dev.latvian.mods.rhino.util.Remapper;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -25,6 +29,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * This class represents the runtime context of an executing script.
@@ -1370,8 +1375,12 @@ public class Context {
 	 * @throws EvaluatorException if the conversion cannot be performed
 	 */
 	public static Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
+		if (desiredType == null) {
+			return value;
+		}
+
 		Context cx = getCurrentContext();
-		return NativeJavaObject.coerceTypeImpl(cx.hasTypeWrappers() ? cx.getTypeWrappers() : null, desiredType, value);
+		return NativeJavaObject.coerceTypeImpl(cx, cx.hasTypeWrappers() ? cx.getTypeWrappers() : null, desiredType, value);
 	}
 
 	/**
@@ -1908,6 +1917,42 @@ public class Context {
 
 	public Remapper getRemapper() {
 		return factory.remapper;
+	}
+
+	@Nullable
+	@SuppressWarnings("unchecked")
+	public CustomJavaToJsWrapper wrapCustomJavaToJs(Object javaObject) {
+		if (factory.customScriptableWrappers.isEmpty()) {
+			return null;
+		}
+
+		var provider = factory.customScriptableWrapperCache.get(javaObject.getClass());
+
+		if (provider == null) {
+			for (CustomJavaToJsWrapperProviderHolder wrapper : factory.customScriptableWrappers) {
+				provider = wrapper.create(javaObject);
+
+				if (provider != null) {
+					break;
+				}
+			}
+
+			if (provider == null) {
+				provider = CustomJavaToJsWrapperProvider.NONE;
+			}
+
+			factory.customScriptableWrapperCache.put(javaObject.getClass(), provider);
+		}
+
+		return provider.create(javaObject);
+	}
+
+	public <T> void addCustomJavaToJsWrapper(Predicate<T> predicate, CustomJavaToJsWrapperProvider<T> provider) {
+		factory.customScriptableWrappers.add(new CustomJavaToJsWrapperProviderHolder<>(predicate, provider));
+	}
+
+	public <T> void addCustomJavaToJsWrapper(Class<T> type, CustomJavaToJsWrapperProvider<T> provider) {
+		addCustomJavaToJsWrapper(new CustomJavaToJsWrapperProviderHolder.PredicateFromClass<>(type), provider);
 	}
 
 	private final ContextFactory factory;

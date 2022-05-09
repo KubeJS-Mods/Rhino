@@ -8,9 +8,16 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProvider;
+import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProviderHolder;
 import dev.latvian.mods.rhino.util.DefaultRemapper;
 import dev.latvian.mods.rhino.util.Remapper;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Factory class that Rhino runtime uses to create new {@link Context}
@@ -114,6 +121,8 @@ public class ContextFactory {
 	private boolean disabledListening;
 	TypeWrappers typeWrappers;
 	Remapper remapper = DefaultRemapper.INSTANCE;
+	final List<CustomJavaToJsWrapperProviderHolder<?>> customScriptableWrappers = new ArrayList<>();
+	final Map<Class<?>, CustomJavaToJsWrapperProvider> customScriptableWrapperCache = new HashMap<>();
 
 	/**
 	 * Listener of {@link Context} creation and release events.

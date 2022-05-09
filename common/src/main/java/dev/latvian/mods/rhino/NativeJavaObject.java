@@ -538,7 +538,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	 * Type-munging for field setting and method invocation.
 	 * Conforms to LC3 specification
 	 */
-	static Object coerceTypeImpl(@Nullable TypeWrappers typeWrappers, Class<?> type, Object value) {
+	static Object coerceTypeImpl(Context cx, @Nullable TypeWrappers typeWrappers, Class<?> type, Object value) {
 		if (value == null || value.getClass() == type) {
 			return value;
 		}
@@ -578,8 +578,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 				if (type == ScriptRuntime.StringClass) {
 					return ScriptRuntime.toString(value);
 				} else if (type == ScriptRuntime.ObjectClass) {
-					Context context = Context.getCurrentContext();
-					if ((context != null) && context.hasFeature(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE)) {
+					if (cx.hasFeature(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE)) {
 						//to process numbers like 2.0 as 2 without decimal place
 						long roundedValue = Math.round(toDouble(value));
 						if (roundedValue == toDouble(value)) {
@@ -657,7 +656,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 					Object Result = Array.newInstance(arrayType, (int) length);
 					for (int i = 0; i < length; ++i) {
 						try {
-							Array.set(Result, i, coerceTypeImpl(typeWrappers, arrayType, array.get(i, array)));
+							Array.set(Result, i, coerceTypeImpl(cx, typeWrappers, arrayType, array.get(i, array)));
 						} catch (EvaluatorException ee) {
 							return reportConversionError(value, type);
 						}
@@ -676,6 +675,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 					return reportConversionError(value, type);
 				}
 		}
+
 
 		return value;
 	}

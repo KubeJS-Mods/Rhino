@@ -71,6 +71,11 @@ public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 	public T wrap(Object o) {
 		if (o instanceof CharSequence) {
 			String s = o.toString().toLowerCase();
+
+			if (s.isEmpty()) {
+				return null;
+			}
+
 			T t = nameValues.get(s);
 
 			if (t == null) {

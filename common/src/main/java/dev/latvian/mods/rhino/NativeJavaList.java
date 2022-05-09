@@ -6,6 +6,8 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.Deletable;
+import dev.latvian.mods.rhino.util.ValueUnwrapper;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,10 +20,18 @@ import java.util.function.Predicate;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class NativeJavaList extends NativeJavaObject {
 	private final List list;
+	private final Class<?> listType;
+	private final ValueUnwrapper valueUnwrapper;
 
-	public NativeJavaList(Scriptable scope, Object jo, List list) {
+	public NativeJavaList(Scriptable scope, Object jo, List list, @Nullable Class<?> listType, ValueUnwrapper valueUnwrapper) {
 		super(scope, jo, jo.getClass());
 		this.list = list;
+		this.listType = listType;
+		this.valueUnwrapper = valueUnwrapper;
+	}
+
+	public NativeJavaList(Scriptable scope, Object jo, List list) {
+		this(scope, jo, list, null, ValueUnwrapper.DEFAULT);
 	}
 
 	@Override
@@ -48,9 +58,7 @@ public class NativeJavaList extends NativeJavaObject {
 	@Override
 	public Object get(int index, Scriptable start) {
 		if (isWithValidIndex(index)) {
-			Context cx = Context.getContext();
-			Object obj = list.get(index);
-			return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+			return valueUnwrapper.unwrap(this, list.get(index));
 		}
 		return Undefined.instance;
 	}
@@ -66,7 +74,7 @@ public class NativeJavaList extends NativeJavaObject {
 	@Override
 	public void put(int index, Scriptable start, Object value) {
 		if (isWithValidIndex(index)) {
-			list.set(index, Context.jsToJava(value, Object.class));
+			list.set(index, Context.jsToJava(value, listType));
 			return;
 		}
 		super.put(index, start, value);
@@ -121,9 +129,15 @@ public class NativeJavaList extends NativeJavaObject {
 
 	private int push(Object[] args) {
 		if (args.length == 1) {
-			list.add(args[0]);
+			list.add(Context.jsToJava(args[0], listType));
 		} else if (args.length > 1) {
-			list.addAll(Arrays.asList(args));
+			Object[] args1 = new Object[args.length];
+
+			for (int i = 0; i < args.length; i++) {
+				args1[i] = Context.jsToJava(args[i], listType);
+			}
+
+			list.addAll(Arrays.asList(args1));
 		}
 
 		return list.size();
@@ -147,7 +161,7 @@ public class NativeJavaList extends NativeJavaObject {
 
 	private int unshift(Object[] args) {
 		for (int i = args.length - 1; i >= 0; i--) {
-			list.add(0, args[i]);
+			list.add(0, Context.jsToJava(args[i], listType));
 		}
 
 		return list.size();
@@ -265,10 +279,10 @@ public class NativeJavaList extends NativeJavaObject {
 		}
 
 		BinaryOperator operator = (BinaryOperator) args[0];
-		Object o = list.get(0);
+		Object o = valueUnwrapper.unwrap(this, list.get(0));
 
 		for (int i = 1; i < list.size(); i++) {
-			o = operator.apply(o, list.get(i));
+			o = valueUnwrapper.unwrap(this, operator.apply(o, valueUnwrapper.unwrap(this, list.get(i))));
 		}
 
 		return o;
@@ -282,10 +296,10 @@ public class NativeJavaList extends NativeJavaObject {
 		}
 
 		BinaryOperator operator = (BinaryOperator) args[0];
-		Object o = list.get(0);
+		Object o = valueUnwrapper.unwrap(this, list.get(0));
 
 		for (int i = list.size() - 1; i >= 1; i--) {
-			o = operator.apply(o, list.get(i));
+			o = valueUnwrapper.unwrap(this, operator.apply(o, valueUnwrapper.unwrap(this, list.get(i))));
 		}
 
 		return o;

@@ -15,10 +15,6 @@ import java.util.function.Predicate;
 public class TypeWrappers {
 	private final Map<Class<?>, TypeWrapper<?>> wrappers = new LinkedHashMap<>();
 
-	public void removeAll() {
-		wrappers.clear();
-	}
-
 	@Deprecated
 	public <F, T> void register(String id, Class<F> from, Class<T> to, Function<F, T> factory) {
 		// Keep old one for now so that it doesn't crash
