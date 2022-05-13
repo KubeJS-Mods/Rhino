@@ -15,7 +15,7 @@ public class OptionalChainingTests {
 				let h = null
 				console.info(a.b.c)
 				console.info(e.f.g)
-				console.info(h.i)
+				console.info(h.i.j)
 				""", """
 				d
 				undefined
@@ -24,12 +24,12 @@ public class OptionalChainingTests {
 	}
 
 	@Test
-	@DisplayName("Null Object")
-	public void nullObject() {
-		TEST.test("nullObject", """
+	@DisplayName("Shouldnt Error")
+	public void shouldntError() {
+		TEST.test("shouldntError", """
 				let a = { b: { c: 'd' } }
 				let e = { f: {} }
-				let h = { }
+				let h = null
 				console.info(a?.b?.c)
 				console.info(e?.f?.g)
 				console.info(h?.i?.j)
