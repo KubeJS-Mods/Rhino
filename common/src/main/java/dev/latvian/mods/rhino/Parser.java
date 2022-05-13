@@ -2585,7 +2585,7 @@ public class Parser {
 		for (; ; ) {
 			int tt = peekToken();
 			switch (tt) {
-				case Token.DOT:
+				case Token.DOT, Token.OPTIONAL_CHAINING:
 					lineno = ts.lineno;
 					pn = propertyAccess(tt, pn);
 					pn.setLineno(lineno);
@@ -2657,7 +2657,7 @@ public class Parser {
 	}
 
 	/**
-	 * Handles any construct following a "." or ".." operator.
+	 * Handles any construct following a "." or "?." operator.
 	 *
 	 * @param pn the left-hand side (target) of the operator.  Never null.
 	 * @return a PropertyGet or ErrorNode
@@ -2665,12 +2665,6 @@ public class Parser {
 	private AstNode propertyAccess(int tt, AstNode pn) throws IOException {
 		if (pn == null) {
 			codeBug();
-		}
-
-		boolean optionalChaining = false;// tt == Token.HOOK && matchToken(Token.DOT, false);
-
-		if (tt == Token.HOOK && !optionalChaining) {
-			reportError("msg.no.dot.after.hook");
 		}
 
 		int lineno = ts.lineno, dotPos = ts.tokenBeg;
@@ -2683,6 +2677,11 @@ public class Parser {
 
 		Name name = createNameNode(true, Token.GETPROP);
 		PropertyGet pg = new PropertyGet(pn, name, dotPos);
+
+		if (tt == Token.OPTIONAL_CHAINING) {
+			pg.setType(Token.GETOPTIONAL);
+		}
+
 		pg.setLineno(lineno);
 		return pg;
 	}

@@ -131,6 +131,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 		operatorNames.put(Token.VOID, "void");
 		operatorNames.put(Token.NULLISH_COALESCING, "??");
 		operatorNames.put(Token.POW, "**");
+		operatorNames.put(Token.OPTIONAL_CHAINING, "?.");
 	}
 
 	public static class PositionComparator implements Comparator<AstNode>, Serializable {

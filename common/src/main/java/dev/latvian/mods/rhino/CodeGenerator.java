@@ -604,7 +604,7 @@ class CodeGenerator extends Icode {
 				visitExpression(ifElse, contextFlags & ECF_TAIL);
 				resolveForwardGoto(afterElseJumpStart);
 			}
-			case Token.GETPROP, Token.GETPROPNOWARN -> {
+			case Token.GETPROP, Token.GETPROPNOWARN, Token.GETOPTIONAL -> {
 				visitExpression(child, 0);
 				child = child.getNext();
 				addStringOp(type, child.getString());

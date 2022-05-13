@@ -54,17 +54,23 @@ public class RhinoTest {
 	}
 
 	public void test(String name, String script, String console) {
-		var scope = getContext().initStandardObjects();
+		try {
+			var scope = getContext().initStandardObjects();
 
-		for (var entry : include.entrySet()) {
-			if (entry.getValue() instanceof Class<?> c) {
-				ScriptableObject.putProperty(scope, entry.getKey(), new NativeJavaClass(scope, c));
-			} else {
-				ScriptableObject.putProperty(scope, entry.getKey(), Context.javaToJS(entry.getValue(), scope));
+			for (var entry : include.entrySet()) {
+				if (entry.getValue() instanceof Class<?> c) {
+					ScriptableObject.putProperty(scope, entry.getKey(), new NativeJavaClass(scope, c));
+				} else {
+					ScriptableObject.putProperty(scope, entry.getKey(), Context.javaToJS(entry.getValue(), scope));
+				}
 			}
+
+			getContext().evaluateString(scope, script, testName + "/" + name, 1, null);
+		} catch (Exception ex) {
+			TestConsole.info("Error: " + ex.getMessage());
+			// ex.printStackTrace();
 		}
 
-		getContext().evaluateString(scope, script, testName + "/" + name, 1, null);
 		Assertions.assertEquals(console.trim(), TestConsole.getConsoleOutput().trim());
 	}
 }

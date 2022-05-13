@@ -12,34 +12,6 @@ import dev.latvian.mods.rhino.Token;
  * AST node for the '.' operator.  Node type is {@link Token#GETPROP}.
  */
 public class PropertyGet extends InfixExpression {
-
-	{
-		type = Token.GETPROP;
-	}
-
-	public PropertyGet() {
-	}
-
-	public PropertyGet(int pos) {
-		super(pos);
-	}
-
-	public PropertyGet(int pos, int len) {
-		super(pos, len);
-	}
-
-	public PropertyGet(int pos, int len, AstNode target, Name property) {
-		super(pos, len, target, property);
-	}
-
-	/**
-	 * Constructor.  Updates bounds to include left ({@code target}) and
-	 * right ({@code property}) nodes.
-	 */
-	public PropertyGet(AstNode target, Name property) {
-		super(target, property);
-	}
-
 	public PropertyGet(AstNode target, Name property, int dotPosition) {
 		super(Token.GETPROP, target, property, dotPosition);
 	}

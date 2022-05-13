@@ -110,6 +110,8 @@ public interface Token {
 	int STRICT_SETNAME = 74;
 	int NULLISH_COALESCING = 75; // nullish coalescing operator (??)
 	int POW = 76; // power (**)
+	int OPTIONAL_CHAINING = 77; // optional chaining operator (?.)
+	int GETOPTIONAL = 78;
 
 	// End of interpreter bytecodes
 	int LAST_BYTECODE_TOKEN = 81;
@@ -387,6 +389,9 @@ public interface Token {
 			case TEMPLATE_LITERAL_SUBST -> "TEMPLATE_LITERAL_SUBST";
 			case TAGGED_TEMPLATE_LITERAL -> "TAGGED_TEMPLATE_LITERAL";
 			case NULLISH_COALESCING -> "NULLISH_COALESCING";
+			case POW -> "POW";
+			case OPTIONAL_CHAINING -> "OPTIONAL_CHAINING";
+			case GETOPTIONAL -> "GETOPTIONAL";
 			default -> throw new IllegalStateException(String.valueOf(token));
 		};
 	}
