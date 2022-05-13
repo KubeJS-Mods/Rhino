@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 public class NullishCoalescingTests {
-	public static RhinoTest TEST = new RhinoTest("nullishCoalescing");
+	public static final RhinoTest TEST = new RhinoTest("nullishCoalescing");
 
 	@Test
 	@DisplayName("Both Non-Null")

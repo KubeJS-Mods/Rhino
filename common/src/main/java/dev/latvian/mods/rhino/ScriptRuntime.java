@@ -1305,6 +1305,18 @@ public class ScriptRuntime {
 		return result;
 	}
 
+	public static Object getObjectPropOptional(Object obj, String property, Context cx, Scriptable scope) {
+		Scriptable sobj = toObjectOrNull(cx, obj, scope);
+		if (sobj == null) {
+			return Undefined.instance;
+		}
+		Object result = ScriptableObject.getProperty(sobj, property);
+		if (result == Scriptable.NOT_FOUND) {
+			return Undefined.instance;
+		}
+		return result;
+	}
+
 	/**
 	 * A cheaper and less general version of the above for well-known argument
 	 * types.

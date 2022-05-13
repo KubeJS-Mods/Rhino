@@ -1076,6 +1076,14 @@ public final class Interpreter extends Icode implements Evaluator {
 								stack[stackTop] = ScriptRuntime.getObjectProp(lhs, stringReg, cx, frame.scope);
 								continue;
 							}
+							case Token.GETOPTIONAL: {
+								Object lhs = stack[stackTop];
+								if (lhs == DBL_MRK) {
+									lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+								}
+								stack[stackTop] = ScriptRuntime.getObjectPropOptional(lhs, stringReg, cx, frame.scope);
+								continue;
+							}
 							case Token.SETPROP: {
 								Object rhs = stack[stackTop];
 								if (rhs == DBL_MRK) {
