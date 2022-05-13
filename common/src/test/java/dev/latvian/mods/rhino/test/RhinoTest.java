@@ -2,6 +2,7 @@ package dev.latvian.mods.rhino.test;
 
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.NativeJavaClass;
+import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.ScriptableObject;
 import dev.latvian.mods.rhino.mod.util.CollectionTagWrapper;
 import dev.latvian.mods.rhino.mod.util.CompoundTagWrapper;
@@ -40,6 +41,7 @@ public class RhinoTest {
 
 	public final String testName;
 	public final Map<String, Object> include;
+	public Scriptable sharedScope;
 
 	public RhinoTest(String n) {
 		testName = n;
@@ -53,9 +55,14 @@ public class RhinoTest {
 		return this;
 	}
 
+	public RhinoTest shareScope() {
+		sharedScope = getContext().initStandardObjects();
+		return this;
+	}
+
 	public void test(String name, String script, String console) {
 		try {
-			var scope = getContext().initStandardObjects();
+			var scope = sharedScope == null ? getContext().initStandardObjects() : sharedScope;
 
 			for (var entry : include.entrySet()) {
 				if (entry.getValue() instanceof Class<?> c) {

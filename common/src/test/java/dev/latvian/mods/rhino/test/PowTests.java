@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 public class PowTests {
-	public static RhinoTest TEST = new RhinoTest("pow");
+	public static final RhinoTest TEST = new RhinoTest("pow");
 
 	@Test
 	@DisplayName("Both Whole")

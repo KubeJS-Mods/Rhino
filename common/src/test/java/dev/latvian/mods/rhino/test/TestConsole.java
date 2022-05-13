@@ -59,7 +59,7 @@ public class TestConsole {
 	}
 
 	public static void setTheme(ConsoleTheme t) {
-		System.out.println("Set theme to " + t);
+		info("Set theme to " + t);
 		theme = t;
 	}
 
@@ -68,7 +68,6 @@ public class TestConsole {
 	}
 
 	public static void printUnit(String input) {
-		System.out.println("# " + input);
-		System.out.println("> " + UnitContext.DEFAULT.parse(input));
+		info(input + " -> " + UnitContext.DEFAULT.parse(input));
 	}
 }

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 public class NBTTests {
-	public static RhinoTest TEST = new RhinoTest("nbt");
+	public static final RhinoTest TEST = new RhinoTest("nbt");
 
 	@Test
 	@DisplayName("Compound")
