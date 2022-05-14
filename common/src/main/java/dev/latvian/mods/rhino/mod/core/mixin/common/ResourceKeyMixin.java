@@ -1,6 +1,6 @@
 package dev.latvian.mods.rhino.mod.core.mixin.common;
 
-import dev.latvian.mods.rhino.util.RemapForJS;
+import dev.latvian.mods.rhino.util.RemapPrefixForJS;
 import dev.latvian.mods.rhino.util.SpecialEquality;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -11,19 +11,18 @@ import org.spongepowered.asm.mixin.Shadow;
 /**
  * @author LatvianModder
  */
+@RemapPrefixForJS("rhino$")
 @Mixin(value = ResourceKey.class, priority = 1001)
 public abstract class ResourceKeyMixin implements SpecialEquality {
 	@Shadow
 	@Final
 	private ResourceLocation location;
 
-	@RemapForJS("getNamespace")
-	public String rhino_getNamespace() {
+	public String rhino$getNamespace() {
 		return location.getNamespace();
 	}
 
-	@RemapForJS("getPath")
-	public String rhino_getPath() {
+	public String rhino$getPath() {
 		return location.getPath();
 	}
 

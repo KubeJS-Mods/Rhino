@@ -1,12 +1,15 @@
 package dev.latvian.mods.rhino.test;
 
 import dev.latvian.mods.rhino.Context;
+import dev.latvian.mods.rhino.util.RemapPrefixForJS;
 import dev.latvian.mods.unit.UnitContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@RemapPrefixForJS("test1$")
+@RemapPrefixForJS("test2$")
 public class TestConsole {
 	private static ConsoleTheme theme;
 	public static StringBuilder consoleOutput = new StringBuilder();
@@ -58,12 +61,12 @@ public class TestConsole {
 		return new ArrayList<>(Arrays.asList(getTestArray()));
 	}
 
-	public static void setTheme(ConsoleTheme t) {
+	public static void test1$setTheme(ConsoleTheme t) {
 		info("Set theme to " + t);
 		theme = t;
 	}
 
-	public static ConsoleTheme getTheme() {
+	public static ConsoleTheme test2$getTheme() {
 		return theme;
 	}
 
