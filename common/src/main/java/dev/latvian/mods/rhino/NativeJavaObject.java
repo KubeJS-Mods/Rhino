@@ -680,7 +680,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 		return value;
 	}
 
-	protected static Object createInterfaceAdapter(Class<?> type, ScriptableObject so) {
+	public static Object createInterfaceAdapter(Class<?> type, ScriptableObject so) {
 		// XXX: Currently only instances of ScriptableObject are
 		// supported since the resulting interface proxies should
 		// be reused next time conversion is made and generic
