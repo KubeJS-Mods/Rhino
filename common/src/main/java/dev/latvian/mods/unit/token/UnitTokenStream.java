@@ -112,11 +112,11 @@ public final class UnitTokenStream {
 	}
 
 	private void add(UnitToken token, int pos) {
-		tokens.add(new PositionedUnitToken(token, pos));
+		tokens.add(new PositionedUnitToken(token, pos, tokens.isEmpty() ? null : tokens.get(tokens.size() - 1)));
 	}
 
 	private void replaceLast(UnitToken token) {
-		tokens.set(tokens.size() - 1, new PositionedUnitToken(token, tokens.get(tokens.size() - 1).position()));
+		add(token, tokens.remove(tokens.size() - 1).position());
 	}
 
 	private void addString(String input, int pos) {

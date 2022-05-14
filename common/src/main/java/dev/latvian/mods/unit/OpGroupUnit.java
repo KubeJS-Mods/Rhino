@@ -49,6 +49,19 @@ public class OpGroupUnit extends Unit {
 
 	@Override
 	public Unit optimize() {
+		if (units.size() == 1 && ops.size() == 0) {
+			return units.get(0).optimize();
+		} else if (units.size() == 2 && ops.size() == 1) {
+			OpUnit op = ops.get(0);
+			op.left = units.get(0);
+			op.right = units.get(1);
+			return op.optimize();
+		}
+
+		for (int i = 0; i < units.size(); i++) {
+			units.set(i, units.get(i).optimize());
+		}
+
 		// TODO: Figure out how to sort operators
 		return this;
 	}

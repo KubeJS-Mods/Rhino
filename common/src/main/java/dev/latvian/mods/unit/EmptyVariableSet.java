@@ -2,7 +2,7 @@ package dev.latvian.mods.unit;
 
 import org.jetbrains.annotations.Nullable;
 
-public class EmptyVariableSet extends VariableSet implements UnitVariables {
+public class EmptyVariableSet extends VariableSet {
 
 	public static final EmptyVariableSet INSTANCE = new EmptyVariableSet();
 
@@ -28,10 +28,5 @@ public class EmptyVariableSet extends VariableSet implements UnitVariables {
 	@Override
 	public VariableSet createSubset() {
 		return new VariableSet();
-	}
-
-	@Override
-	public VariableSet getVariables() {
-		return this;
 	}
 }
