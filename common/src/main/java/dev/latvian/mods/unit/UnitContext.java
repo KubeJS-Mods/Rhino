@@ -72,7 +72,18 @@ public class UnitContext {
 	@Nullable
 	public FuncUnit getFunction(String name) {
 		FunctionFactory func = functions.get(name.toLowerCase());
-		return func == null ? null : func.factory().get();
+
+		if (func == null) {
+			return null;
+		}
+
+		FuncUnit unit = func.factory().get();
+
+		if (unit != null) {
+			unit.factory = func;
+		}
+
+		return unit;
 	}
 
 	public UnitContext sub() {
@@ -89,7 +100,7 @@ public class UnitContext {
 		Unit u = cache.get(input);
 
 		if (u == null) {
-			u = createStream(input).nextUnit();
+			u = createStream(input).getUnit();
 			u = u.optimize();
 			cache.put(input, u);
 		}

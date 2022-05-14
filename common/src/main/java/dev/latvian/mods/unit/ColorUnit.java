@@ -25,4 +25,9 @@ public class ColorUnit extends Unit implements UnitToken {
 	public void toString(StringBuilder builder) {
 		builder.append(String.format(alpha ? "#%08X" : "#%06X", color));
 	}
+
+	@Override
+	public Unit interpret(UnitContext context) {
+		return this;
+	}
 }

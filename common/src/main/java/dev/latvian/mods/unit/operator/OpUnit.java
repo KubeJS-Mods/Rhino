@@ -11,10 +11,6 @@ public abstract class OpUnit extends Unit {
 	public Unit right;
 	public SymbolUnitToken symbol;
 
-	public boolean hasHigherPrecedenceThan(OpUnit op) {
-		return symbol.precedence > op.symbol.precedence;
-	}
-
 	@Override
 	public Unit optimize() {
 		left = left.optimize();
@@ -31,8 +27,10 @@ public abstract class OpUnit extends Unit {
 
 	@Override
 	public void toString(StringBuilder builder) {
+		builder.append('(');
 		left.toString(builder);
 		builder.append(symbol.symbol);
 		right.toString(builder);
+		builder.append(')');
 	}
 }

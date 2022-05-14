@@ -1,11 +1,10 @@
 package dev.latvian.mods.unit.token;
 
-import dev.latvian.mods.unit.OpGroupUnit;
 import dev.latvian.mods.unit.Unit;
+import dev.latvian.mods.unit.UnitContext;
 import dev.latvian.mods.unit.operator.AddOpUnit;
 import dev.latvian.mods.unit.operator.AndOpUnit;
 import dev.latvian.mods.unit.operator.BitAndOpUnit;
-import dev.latvian.mods.unit.operator.BitNotOpUnit;
 import dev.latvian.mods.unit.operator.BitOrOpUnit;
 import dev.latvian.mods.unit.operator.DivOpUnit;
 import dev.latvian.mods.unit.operator.EqOpUnit;
@@ -16,13 +15,14 @@ import dev.latvian.mods.unit.operator.LtOpUnit;
 import dev.latvian.mods.unit.operator.LteOpUnit;
 import dev.latvian.mods.unit.operator.ModOpUnit;
 import dev.latvian.mods.unit.operator.MulOpUnit;
-import dev.latvian.mods.unit.operator.NegateOpUnit;
 import dev.latvian.mods.unit.operator.NeqOpUnit;
 import dev.latvian.mods.unit.operator.OpUnit;
 import dev.latvian.mods.unit.operator.OrOpUnit;
 import dev.latvian.mods.unit.operator.PowOpUnit;
 import dev.latvian.mods.unit.operator.RshOpUnit;
 import dev.latvian.mods.unit.operator.SubOpUnit;
+import dev.latvian.mods.unit.operator.TernaryCondOpUnit;
+import dev.latvian.mods.unit.operator.TernaryValuesOpUnit;
 import dev.latvian.mods.unit.operator.XorOpUnit;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,8 +32,8 @@ public enum SymbolUnitToken implements UnitToken {
 	COMMA(","),
 	LP("("),
 	RP(")"),
-	HOOK("?"),
-	COLON(":"),
+	HOOK("?", TernaryCondOpUnit::new, -2),
+	COLON(":", TernaryValuesOpUnit::new, -1),
 	NEGATE("-"),
 	ADD("+", AddOpUnit::new, 2),
 	SUB("-", SubOpUnit::new, 2),
@@ -59,7 +59,7 @@ public enum SymbolUnitToken implements UnitToken {
 	;
 
 	public final String symbol;
-	public final Supplier<OpUnit> operatorUnit;
+	private final Supplier<OpUnit> operatorUnit;
 	public final int precedence;
 
 	SymbolUnitToken(String s, Supplier<OpUnit> op, int p) {
@@ -107,25 +107,26 @@ public enum SymbolUnitToken implements UnitToken {
 	}
 
 	@Override
-	public Unit interpret(UnitTokenStream stream) {
-		if (this == NEGATE) {
-			NegateOpUnit unit = new NegateOpUnit();
-			unit.unit = stream.nextUnit();
-			return unit;
-		} else if (this == BIT_NOT) {
-			BitNotOpUnit unit = new BitNotOpUnit();
-			unit.unit = stream.nextUnit();
-			return unit;
-		} else if (this == LP) {
-			if (stream.peekToken() == RP) {
-				throw new IllegalStateException("Empty group '()' is not allowed!");
-			}
+	public Unit interpret(UnitContext context) {
+		throw new IllegalStateException(String.format("Can't interpret symbol '%s'!", symbol));
+	}
 
-			return OpGroupUnit.interpret(stream.nextUnit(), stream, RP);
-		} else if (operatorUnit != null) {
-			return operatorUnit.get();
+	public boolean isOp() {
+		return operatorUnit != null;
+	}
+
+	@Nullable
+	public OpUnit createOpUnit() {
+		if (operatorUnit == null) {
+			return null;
 		}
 
-		throw new IllegalStateException("Symbol '" + symbol + "' can't be interpreted!");
+		OpUnit unit = operatorUnit.get();
+
+		if (unit != null) {
+			unit.symbol = this;
+		}
+
+		return unit;
 	}
 }

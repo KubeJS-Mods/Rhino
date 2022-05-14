@@ -1,7 +1,9 @@
 package dev.latvian.mods.rhino.test;
 
+import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitContext;
 import dev.latvian.mods.unit.VariableSet;
+import dev.latvian.mods.unit.function.TimeUnit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,7 +23,8 @@ public class UnitTests {
 	}
 
 	public static double eval(String input) {
-		return UnitContext.DEFAULT.parse(input).get(VARIABLE_SET);
+		Unit unit = UnitContext.DEFAULT.parse(input);
+		return unit.get(VARIABLE_SET);
 	}
 
 	public static void assertEval(String input, double expected) {
@@ -65,7 +68,7 @@ public class UnitTests {
 	@Test
 	@DisplayName("Complex eval")
 	public void complexEval() {
-		assertEval("($test<0.5?($test2<1.5?1.5:-4):($test3<50*-3?1.5:-4))", (TEST_VAR < 0.5 ? (TEST_VAR_2 < 1.5 ? 1.5 : -4) : (TEST_VAR_3 < 50 * -3 ? 1.5 : -4)));
+		assertEval("$test<0.5?($test2<1.5?1.5:-4):($test3<50*-3?1.5:-4)", TEST_VAR < 0.5 ? (TEST_VAR_2 < 1.5 ? 1.5 : -4) : (TEST_VAR_3 < 50 * -3 ? 1.5 : -4));
 	}
 
 	@Test
@@ -119,6 +122,6 @@ public class UnitTests {
 	@Test
 	@DisplayName("time function")
 	public void timeFunction() {
-		assertEval("(sin((time() * 1.1)) * (($screenW - 32) / 2))", 0.0);
+		assertEval("sin(time() * 1.1) * (($test - 32) / 2)", Math.sin(TimeUnit.time() * 1.1D) * ((TEST_VAR - 32D) / 2D));
 	}
 }

@@ -21,4 +21,13 @@ public class IfFuncUnit extends FuncUnit {
 	public boolean getBoolean(UnitVariables variables) {
 		return args[0].getBoolean(variables);
 	}
+
+	@Override
+	public void toString(StringBuilder builder) {
+		args[0].toString(builder);
+		builder.append(" ? ");
+		args[1].toString(builder);
+		builder.append(" : ");
+		args[2].toString(builder);
+	}
 }

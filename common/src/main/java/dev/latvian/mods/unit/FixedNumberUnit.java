@@ -74,4 +74,21 @@ public final class FixedNumberUnit extends Unit implements UnitToken {
 			builder.append(value);
 		}
 	}
+
+	@Override
+	public Unit interpret(UnitContext context) {
+		return this;
+	}
+
+	@Override
+	public UnitToken negate() {
+		return value == 0D ? this : ofFixed(-value);
+	}
+
+	@Override
+	public UnitToken bitNot() {
+		int i = (int) value;
+		int v = value < (double) i ? i - 1 : i;
+		return value == 0D ? this : ofFixed(~v);
+	}
 }
