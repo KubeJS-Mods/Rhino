@@ -1,5 +1,6 @@
 package dev.latvian.mods.unit.operator;
 
+import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
 
 public class TernaryValuesOpUnit extends OpUnit {
@@ -16,5 +17,12 @@ public class TernaryValuesOpUnit extends OpUnit {
 	@Override
 	public boolean getBoolean(UnitVariables variables) {
 		throw new IllegalStateException("Can't invoke getters in TernaryValuesOpUnit!");
+	}
+
+	@Override
+	public Unit optimize() {
+		left = left.optimize();
+		right = right.optimize();
+		return this;
 	}
 }

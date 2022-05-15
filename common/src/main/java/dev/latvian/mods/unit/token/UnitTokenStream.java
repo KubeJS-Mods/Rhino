@@ -4,10 +4,10 @@ import dev.latvian.mods.unit.ColorUnit;
 import dev.latvian.mods.unit.FixedNumberUnit;
 import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitContext;
-import dev.latvian.mods.unit.VariableUnit;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,16 +24,14 @@ public final class UnitTokenStream {
 
 	public final String input;
 	public final CharStream charStream;
-	public final List<UnitToken> tokens;
+	public final LinkedList<UnitToken> tokens;
 	public final UnitToken root;
-	private int position;
 
 	public UnitTokenStream(UnitContext context, String input, CharStream charStream) {
 		this.context = context;
 		this.input = input;
 		this.charStream = charStream;
-		this.tokens = new ArrayList<>();
-		this.position = -1;
+		this.tokens = new LinkedList<>();
 
 		var current = new StringBuilder();
 
@@ -42,7 +40,11 @@ public final class UnitTokenStream {
 
 			if (c == 0) {
 				break;
-			} else if (c == '#') {
+			}
+
+			var symbol = SymbolUnitToken.read(c, charStream);
+
+			if (symbol == SymbolUnitToken.HASH) {
 				if (isHex(charStream.peek(1)) && isHex(charStream.peek(2)) && isHex(charStream.peek(3)) && isHex(charStream.peek(4)) && isHex(charStream.peek(5)) && isHex(charStream.peek(6))) {
 					var alpha = isHex(charStream.peek(7)) && isHex(charStream.peek(8));
 
@@ -55,22 +57,20 @@ public final class UnitTokenStream {
 					var color = Long.decode(current.toString()).intValue();
 					current.setLength(0);
 
-					add(new ColorUnit(color, alpha));
+					tokens.add(new ColorUnit(color, alpha));
 				} else {
 					throw new IllegalStateException("Invalid color code @ " + charStream.position);
 				}
 			} else {
-				var symbol = SymbolUnitToken.read(c, charStream);
-
 				if (symbol != null && current.length() > 0) {
-					add(createTokenFromString(current.toString()));
+					tokens.add(createTokenFromString(current.toString()));
 					current.setLength(0);
 				}
 
 				if (symbol == SymbolUnitToken.SUB && shouldNegate()) {
-					add(SymbolUnitToken.NEGATE);
+					tokens.add(SymbolUnitToken.NEGATE);
 				} else if (symbol != null) {
-					add(symbol);
+					tokens.add(symbol);
 				} else {
 					current.append(c);
 				}
@@ -78,7 +78,7 @@ public final class UnitTokenStream {
 		}
 
 		if (current.length() > 0) {
-			add(createTokenFromString(current.toString()));
+			tokens.add(createTokenFromString(current.toString()));
 			current.setLength(0);
 		}
 
@@ -87,15 +87,6 @@ public final class UnitTokenStream {
 
 	public Unit getUnit() {
 		return root.interpret(context);
-	}
-
-	private void add(UnitToken token) {
-		tokens.add(token);
-	}
-
-	private void replaceLast(UnitToken token) {
-		tokens.remove(tokens.size() - 1);
-		add(token);
 	}
 
 	private static UnitToken createTokenFromString(String input) {
@@ -108,7 +99,7 @@ public final class UnitTokenStream {
 		try {
 			return FixedNumberUnit.ofFixed(Double.parseDouble(input));
 		} catch (Exception ex) {
-			return VariableUnit.of(input);
+			return new NameUnitToken(input);
 		}
 	}
 
@@ -125,16 +116,16 @@ public final class UnitTokenStream {
 	private UnitToken readToken0() {
 		var token = nextToken();
 
-		if (token instanceof VariableUnit varUnit) {
+		if (token instanceof NameUnitToken nameUnit) {
 			if (nextTokenIf(SymbolUnitToken.LP)) {
-				var func = new FunctionUnitToken(varUnit.name, new ArrayList<>());
+				var func = new FunctionUnitToken(nameUnit.name(), new ArrayList<>());
 
 				while (true) {
 					var arg = readToken();
 
 					if (arg == SymbolUnitToken.RP) {
 						break;
-					} else {
+					} else if (arg != SymbolUnitToken.COMMA) {
 						func.args().add(arg);
 					}
 				}
@@ -195,7 +186,12 @@ public final class UnitTokenStream {
 
 	@Nullable
 	public UnitToken nextToken() {
-		return ++position >= tokens.size() ? null : tokens.get(position);
+		return tokens.isEmpty() ? null : tokens.removeFirst();
+	}
+
+	@Nullable
+	public UnitToken peekToken() {
+		return tokens.isEmpty() ? null : tokens.getFirst();
 	}
 
 	public boolean nextTokenIf(UnitToken match) {
@@ -205,20 +201,6 @@ public final class UnitTokenStream {
 		}
 
 		return false;
-	}
-
-	@Nullable
-	public UnitToken peekToken(int ahead) {
-		if (position + ahead >= tokens.size()) {
-			return null;
-		}
-
-		return tokens.get(position + ahead);
-	}
-
-	@Nullable
-	public UnitToken peekToken() {
-		return peekToken(1);
 	}
 
 	public List<String> toTokenStrings() {

@@ -32,6 +32,7 @@ public enum SymbolUnitToken implements UnitToken {
 	COMMA(","),
 	LP("("),
 	RP(")"),
+	HASH("#"),
 	HOOK("?", TernaryCondOpUnit::new, -2),
 	COLON(":", TernaryValuesOpUnit::new, -1),
 	NEGATE("-"),
@@ -83,6 +84,7 @@ public enum SymbolUnitToken implements UnitToken {
 			case ',' -> COMMA;
 			case '(' -> LP;
 			case ')' -> RP;
+			case '#' -> HASH;
 			case '?' -> HOOK;
 			case ':' -> COLON;
 			case '+' -> ADD;

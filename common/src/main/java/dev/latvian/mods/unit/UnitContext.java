@@ -63,6 +63,7 @@ public class UnitContext {
 
 	private final Map<String, FunctionFactory> functions = new HashMap<>();
 	private final Map<String, Unit> cache = new HashMap<>();
+	public boolean debug = false;
 
 	public void addFunction(String name, Supplier<FuncUnit> func) {
 		FunctionFactory factory = new FunctionFactory(name.toLowerCase(), func);
@@ -89,6 +90,7 @@ public class UnitContext {
 	public UnitContext sub() {
 		UnitContext ctx = new UnitContext();
 		ctx.functions.putAll(functions);
+		ctx.debug = debug;
 		return ctx;
 	}
 

@@ -8,37 +8,29 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-
 public class UnitTests {
+	public static UnitContext CONTEXT = UnitContext.DEFAULT.sub();
 	public static VariableSet VARIABLE_SET = new VariableSet();
 	public static final double TEST_VAR = 3.5D * Math.random();
 	public static final double TEST_VAR_2 = 2D * Math.random();
 	public static final double TEST_VAR_3 = 100D * Math.random();
 
 	static {
+		CONTEXT.debug = true;
 		VARIABLE_SET.set("$test", TEST_VAR);
 		VARIABLE_SET.set("$test2", TEST_VAR_2);
 		VARIABLE_SET.set("$test3", TEST_VAR_3);
 	}
 
 	public static double eval(String input) {
-		Unit unit = UnitContext.DEFAULT.parse(input);
+		System.out.println("Parsing: " + input);
+		Unit unit = CONTEXT.parse(input);
+		System.out.println("Result: " + unit);
 		return unit.get(VARIABLE_SET);
 	}
 
 	public static void assertEval(String input, double expected) {
 		Assertions.assertEquals(expected, eval(input), 0.00001D);
-	}
-
-	public static void assertStream(String input, String... expected) {
-		Assertions.assertEquals(Arrays.asList(expected), UnitContext.DEFAULT.createStream(input).toTokenStrings());
-	}
-
-	@Test
-	@DisplayName("Ternary Token Stream")
-	public void ternaryTokenStream() {
-		assertStream("0 < 5 ? 1.5 : 2", "0.0", "<", "5.0", "?", "1.5", ":", "2.0");
 	}
 
 	@Test

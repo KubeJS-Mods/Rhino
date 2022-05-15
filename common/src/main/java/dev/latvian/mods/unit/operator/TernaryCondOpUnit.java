@@ -1,5 +1,6 @@
 package dev.latvian.mods.unit.operator;
 
+import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
 
 public class TernaryCondOpUnit extends OpUnit {
@@ -28,5 +29,12 @@ public class TernaryCondOpUnit extends OpUnit {
 		}
 
 		throw new IllegalStateException("Right side is not TernaryValuesOpUnit!");
+	}
+
+	@Override
+	public Unit optimize() {
+		left = left.optimize();
+		right = right.optimize();
+		return this;
 	}
 }
