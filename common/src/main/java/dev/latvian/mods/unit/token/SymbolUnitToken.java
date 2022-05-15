@@ -1,7 +1,5 @@
 package dev.latvian.mods.unit.token;
 
-import dev.latvian.mods.unit.Unit;
-import dev.latvian.mods.unit.UnitContext;
 import dev.latvian.mods.unit.operator.AddOpUnit;
 import dev.latvian.mods.unit.operator.AndOpUnit;
 import dev.latvian.mods.unit.operator.BitAndOpUnit;
@@ -21,42 +19,47 @@ import dev.latvian.mods.unit.operator.OrOpUnit;
 import dev.latvian.mods.unit.operator.PowOpUnit;
 import dev.latvian.mods.unit.operator.RshOpUnit;
 import dev.latvian.mods.unit.operator.SubOpUnit;
-import dev.latvian.mods.unit.operator.TernaryCondOpUnit;
-import dev.latvian.mods.unit.operator.TernaryValuesOpUnit;
+import dev.latvian.mods.unit.operator.TernaryOpUnit;
 import dev.latvian.mods.unit.operator.XorOpUnit;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
 public enum SymbolUnitToken implements UnitToken {
+	// Misc
 	COMMA(","),
 	LP("("),
 	RP(")"),
 	HASH("#"),
-	HOOK("?", TernaryCondOpUnit::new, -2),
-	COLON(":", TernaryValuesOpUnit::new, -1),
+	HOOK("?", TernaryOpUnit::new, 1),
+	COLON(":"),
 	NEGATE("-"),
-	ADD("+", AddOpUnit::new, 2),
-	SUB("-", SubOpUnit::new, 2),
+	BOOL_NOT("!"),
+	BIT_NOT("~"),
+	SET("="),
+	// Operators
+	ADD("+", AddOpUnit::new, 4),
+	SUB("-", SubOpUnit::new, 4),
 	MUL("*", MulOpUnit::new, 3),
-	POW("**", PowOpUnit::new, 4),
 	DIV("/", DivOpUnit::new, 3),
-	MOD("%", ModOpUnit::new, 2),
-	SET("=", null, 4),
-	EQ("==", EqOpUnit::new, 1),
-	NEQ("!=", NeqOpUnit::new, 1),
-	LT("<", LtOpUnit::new, 1),
-	GT(">", GtOpUnit::new, 1),
-	LTE("<=", LteOpUnit::new, 1),
-	GTE(">=", GteOpUnit::new, 1),
-	LSH("<<", LshOpUnit::new, 2),
-	RSH(">>", RshOpUnit::new, 2),
-	AND("&&", AndOpUnit::new, 1),
-	OR("||", OrOpUnit::new, 1),
-	BIT_AND("&", BitAndOpUnit::new, 2),
-	BIT_OR("|", BitOrOpUnit::new, 2),
-	BIT_NOT("!"),
-	XOR("^", XorOpUnit::new, 2),
+	MOD("%", ModOpUnit::new, 3),
+	POW("**", PowOpUnit::new, 2),
+	// Int Operators
+	LSH("<<", LshOpUnit::new, 4),
+	RSH(">>", RshOpUnit::new, 4),
+	BIT_AND("&", BitAndOpUnit::new, 4),
+	BIT_OR("|", BitOrOpUnit::new, 4),
+	XOR("^", XorOpUnit::new, 4),
+	// Conditions
+	EQ("==", EqOpUnit::new, 5),
+	NEQ("!=", NeqOpUnit::new, 5),
+	LT("<", LtOpUnit::new, 5),
+	GT(">", GtOpUnit::new, 5),
+	LTE("<=", LteOpUnit::new, 5),
+	GTE(">=", GteOpUnit::new, 5),
+	AND("&&", AndOpUnit::new, 5),
+	OR("||", OrOpUnit::new, 5),
+
 	;
 
 	public final String symbol;
@@ -70,7 +73,7 @@ public enum SymbolUnitToken implements UnitToken {
 	}
 
 	SymbolUnitToken(String s) {
-		this(s, null, 0);
+		this(s, null, Integer.MAX_VALUE);
 	}
 
 	@Override
@@ -93,9 +96,10 @@ public enum SymbolUnitToken implements UnitToken {
 			case '/' -> DIV;
 			case '%' -> MOD;
 			case '^' -> XOR;
+			case '~' -> BIT_NOT;
 			case '&' -> stream.nextIf('&') ? AND : BIT_AND;
 			case '|' -> stream.nextIf('|') ? OR : BIT_OR;
-			case '!' -> stream.nextIf('=') ? NEQ : BIT_NOT;
+			case '!' -> stream.nextIf('=') ? NEQ : BOOL_NOT;
 			case '<' -> stream.nextIf('=') ? LTE : stream.nextIf('<') ? LSH : LT;
 			case '>' -> stream.nextIf('=') ? GTE : stream.nextIf('>') ? RSH : GT;
 			case '=' -> stream.nextIf('=') ? EQ : SET;
@@ -106,11 +110,6 @@ public enum SymbolUnitToken implements UnitToken {
 	@Override
 	public boolean shouldNegate() {
 		return this != RP;
-	}
-
-	@Override
-	public Unit interpret(UnitContext context) {
-		throw new IllegalStateException(String.format("Can't interpret symbol '%s'!", symbol));
 	}
 
 	public boolean isOp() {

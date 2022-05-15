@@ -16,7 +16,7 @@ public class UnitTests {
 	public static final double TEST_VAR_3 = 100D * Math.random();
 
 	static {
-		CONTEXT.debug = true;
+		CONTEXT.pushDebug();
 		VARIABLE_SET.set("$test", TEST_VAR);
 		VARIABLE_SET.set("$test2", TEST_VAR_2);
 		VARIABLE_SET.set("$test3", TEST_VAR_3);
@@ -34,15 +34,33 @@ public class UnitTests {
 	}
 
 	@Test
+	@DisplayName("Simple order of operations I")
+	public void simpleOrderOfOperations1() {
+		assertEval("2 + 3 * 4", 14);
+	}
+
+	@Test
+	@DisplayName("Simple order of operations II")
+	public void simpleOrderOfOperations2() {
+		assertEval("2 + -(3 * 4)", 14);
+	}
+
+	@Test
+	@DisplayName("Simple order of operations III")
+	public void simpleOrderOfOperations3() {
+		assertEval("(2 + 3) * 4", 20);
+	}
+
+	@Test
 	@DisplayName("Order of operations")
 	public void orderOfOperations() {
-		assertEval("4 - (2 + 8* 2 - 1) / 5", 0.6);
+		assertEval("4 * -(2 + 8 * 2 - 1) / 5", -13.6);
 	}
 
 	@Test
 	@DisplayName("abs Function")
 	public void absFunction() {
-		assertEval("abs(-4.0)", 4.0);
+		assertEval("-abs(-4.0)", -4.0);
 	}
 
 	@Test
@@ -52,9 +70,15 @@ public class UnitTests {
 	}
 
 	@Test
+	@DisplayName("Simple Ternary")
+	public void simpleTernary() {
+		assertEval("2 + 3.5 + 4 == 7.5", 1.0);
+	}
+
+	@Test
 	@DisplayName("Variable Ternary")
 	public void variableTernary() {
-		assertEval("$test<0.5?-30:40", TEST_VAR < 0.5 ? -30 : 40);
+		assertEval("$test < 0.5 ? -30 : 40", TEST_VAR < 0.5 ? -30 : 40);
 	}
 
 	@Test

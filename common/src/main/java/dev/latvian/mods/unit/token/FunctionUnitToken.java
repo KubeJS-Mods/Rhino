@@ -6,7 +6,7 @@ import dev.latvian.mods.unit.function.FuncUnit;
 
 import java.util.List;
 
-public record FunctionUnitToken(String name, List<UnitToken> args) implements UnitToken {
+public record FunctionUnitToken(String name, List<InterpretableUnitToken> args) implements InterpretableUnitToken {
 	@Override
 	public Unit interpret(UnitContext context) {
 		FuncUnit func = context.getFunction(name);

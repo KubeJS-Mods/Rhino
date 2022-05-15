@@ -4,7 +4,7 @@ import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitContext;
 import dev.latvian.mods.unit.operator.BitNotOpUnit;
 
-public record BitNotUnitToken(UnitToken token) implements UnitToken {
+public record BitNotUnitToken(InterpretableUnitToken token) implements InterpretableUnitToken {
 	@Override
 	public Unit interpret(UnitContext context) {
 		var unit = new BitNotOpUnit();
@@ -13,12 +13,12 @@ public record BitNotUnitToken(UnitToken token) implements UnitToken {
 	}
 
 	@Override
-	public UnitToken bitNot() {
+	public InterpretableUnitToken bitNot() {
 		return token;
 	}
 
 	@Override
 	public String toString() {
-		return "~" + token.toString();
+		return "BitNot[" + token.toString() + ']';
 	}
 }

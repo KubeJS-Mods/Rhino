@@ -1,6 +1,8 @@
 package dev.latvian.mods.unit;
 
-public class BooleanUnit extends Unit {
+import dev.latvian.mods.unit.token.InterpretableUnitToken;
+
+public class BooleanUnit extends Unit implements InterpretableUnitToken {
 	public static final BooleanUnit TRUE = new BooleanUnit(true);
 	public static final BooleanUnit FALSE = new BooleanUnit(false);
 
@@ -47,5 +49,15 @@ public class BooleanUnit extends Unit {
 	@Override
 	public void toString(StringBuilder builder) {
 		builder.append(value);
+	}
+
+	@Override
+	public InterpretableUnitToken negate() {
+		return of(!value);
+	}
+
+	@Override
+	public InterpretableUnitToken bitNot() {
+		return of(!value);
 	}
 }

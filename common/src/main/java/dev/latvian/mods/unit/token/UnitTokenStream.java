@@ -25,7 +25,7 @@ public final class UnitTokenStream {
 	public final String input;
 	public final CharStream charStream;
 	public final LinkedList<UnitToken> tokens;
-	public final UnitToken root;
+	public final InterpretableUnitToken root;
 
 	public UnitTokenStream(UnitContext context, String input, CharStream charStream) {
 		this.context = context;
@@ -67,7 +67,7 @@ public final class UnitTokenStream {
 					current.setLength(0);
 				}
 
-				if (symbol == SymbolUnitToken.SUB && shouldNegate()) {
+				if (symbol == SymbolUnitToken.SUB && (tokens.isEmpty() || tokens.getLast().shouldNegate())) {
 					tokens.add(SymbolUnitToken.NEGATE);
 				} else if (symbol != null) {
 					tokens.add(symbol);
@@ -82,14 +82,14 @@ public final class UnitTokenStream {
 			current.setLength(0);
 		}
 
-		this.root = readToken();
+		this.root = readFully();
 	}
 
 	public Unit getUnit() {
 		return root.interpret(context);
 	}
 
-	private static UnitToken createTokenFromString(String input) {
+	private static InterpretableUnitToken createTokenFromString(String input) {
 		var constant = FixedNumberUnit.CONSTANTS.get(input);
 
 		if (constant != null) {
@@ -103,85 +103,100 @@ public final class UnitTokenStream {
 		}
 	}
 
-	@Nullable
-	public UnitToken last() {
-		return tokens.isEmpty() ? null : tokens.get(tokens.size() - 1);
-	}
-
-	public boolean shouldNegate() {
-		var last = last();
-		return last == null || last.shouldNegate();
-	}
-
-	private UnitToken readToken0() {
+	private InterpretableUnitToken readInterpretableToken() {
 		var token = nextToken();
 
-		if (token instanceof NameUnitToken nameUnit) {
-			if (nextTokenIf(SymbolUnitToken.LP)) {
-				var func = new FunctionUnitToken(nameUnit.name(), new ArrayList<>());
+		InterpretableUnitToken result = null;
 
-				while (true) {
-					var arg = readToken();
+		if (token instanceof NameUnitToken nameUnit && nextTokenIf(SymbolUnitToken.LP)) {
+			var func = new FunctionUnitToken(nameUnit.name(), new ArrayList<>());
 
-					if (arg == SymbolUnitToken.RP) {
-						break;
-					} else if (arg != SymbolUnitToken.COMMA) {
-						func.args().add(arg);
+			while (true) {
+				if (nextTokenIf(SymbolUnitToken.RP)) {
+					break;
+				} else {
+					func.args().add(readFully());
+
+					if (!nextTokenIf(SymbolUnitToken.COMMA) && peekToken() != SymbolUnitToken.RP) {
+						throw new IllegalStateException("Unexpected token " + peekToken() + "!");
 					}
 				}
-
-				return func;
 			}
+
+			result = func;
+		} else if (token instanceof InterpretableUnitToken it) {
+			result = it;
 		}
 
-		return token;
+		if (result == null) {
+			throw new IllegalStateException("Token " + token + " not interpretable!");
+		}
+
+		return result;
 	}
 
-	private UnitToken readToken1() {
-		var token = readToken0();
+	private InterpretableUnitToken readExpr() {
+		boolean negate = false;
+		boolean bitNot = false;
 
-		if (token == SymbolUnitToken.LP) {
-			var postfix = new PostfixUnitToken(new ArrayList<>(), true);
-			var t = readToken();
-
-			if (t instanceof PostfixUnitToken p) {
-				postfix.infix().addAll(p.infix());
-			} else {
-				postfix.infix().add(t);
+		while (peekToken() == SymbolUnitToken.NEGATE || peekToken() == SymbolUnitToken.BIT_NOT) {
+			if (nextTokenIf(SymbolUnitToken.NEGATE)) {
+				negate = !negate;
 			}
 
-			if (nextTokenIf(SymbolUnitToken.RP)) {
-				return postfix;
-			} else {
-				throw new IllegalStateException("Expected )!");
+			if (nextTokenIf(SymbolUnitToken.BIT_NOT)) {
+				bitNot = !bitNot;
 			}
-		} else if (peekToken() instanceof SymbolUnitToken symbol && symbol.isOp()) {
-			var postfix = new PostfixUnitToken(new ArrayList<>(), false);
-			postfix.infix().add(token);
-
-			while (peekToken() instanceof SymbolUnitToken symbol1 && symbol1.isOp()) {
-				postfix.infix().add(nextToken());
-				postfix.infix().add(readToken());
-			}
-
-			return postfix;
 		}
 
-		return token;
+		var postfix = new PostfixUnitToken(new ArrayList<>(), nextTokenIf(SymbolUnitToken.LP));
+
+		var firstToken = readInterpretableToken();
+
+		if (!postfix.group()) {
+			firstToken = firstToken.negateAndBitNot(negate, bitNot);
+		}
+
+		postfix.infix().add(firstToken);
+
+		if (postfix.group() && nextTokenIf(SymbolUnitToken.RP)) {
+			return firstToken;
+		}
+
+		while (peekToken() instanceof SymbolUnitToken symbol && symbol.isOp()) {
+			postfix.infix().add(nextToken());
+
+			var next = readFully();
+
+			if (next instanceof PostfixUnitToken npostfix && !npostfix.group()) {
+				postfix.infix().addAll(npostfix.infix());
+			} else {
+				postfix.infix().add(next);
+			}
+		}
+
+		if (postfix.group() && !nextTokenIf(SymbolUnitToken.RP)) {
+			throw new IllegalStateException("Expected ')'!");
+		}
+
+		return postfix.infix().size() == 1 ? firstToken : postfix.group() ? postfix.negateAndBitNot(negate, bitNot) : postfix;
 	}
 
-	private UnitToken readToken() {
-		var token = readToken1();
+	private InterpretableUnitToken readFully() {
+		var expr = readExpr();
 
-		if (token == null) {
-			throw new IllegalStateException("EOL!");
-		} else if (token == SymbolUnitToken.NEGATE) {
-			return readToken().negate();
-		} else if (token == SymbolUnitToken.BIT_NOT) {
-			return readToken().bitNot();
+		if (nextTokenIf(SymbolUnitToken.HOOK)) {
+			var ifTrue = readFully();
+
+			if (nextTokenIf(SymbolUnitToken.COLON)) {
+				var ifFalse = readFully();
+				return new TernaryOperatorUnitToken(expr, ifTrue, ifFalse);
+			} else {
+				throw new IllegalStateException("Expected ':'!");
+			}
 		}
 
-		return token;
+		return expr;
 	}
 
 	@Nullable

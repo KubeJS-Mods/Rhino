@@ -63,7 +63,7 @@ public class UnitContext {
 
 	private final Map<String, FunctionFactory> functions = new HashMap<>();
 	private final Map<String, Unit> cache = new HashMap<>();
-	public boolean debug = false;
+	private int debug = -1;
 
 	public void addFunction(String name, Supplier<FuncUnit> func) {
 		FunctionFactory factory = new FunctionFactory(name.toLowerCase(), func);
@@ -108,5 +108,27 @@ public class UnitContext {
 		}
 
 		return u;
+	}
+
+	public boolean isDebug() {
+		return debug >= 0;
+	}
+
+	public void pushDebug() {
+		debug++;
+	}
+
+	public void popDebug() {
+		debug--;
+	}
+
+	public void debugInfo(String s) {
+		if (debug >= 0) {
+			if (debug >= 2) {
+				System.out.println("  ".repeat(debug - 1) + s);
+			} else {
+				System.out.println(s);
+			}
+		}
 	}
 }

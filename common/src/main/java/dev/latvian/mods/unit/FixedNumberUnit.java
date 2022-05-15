@@ -1,11 +1,11 @@
 package dev.latvian.mods.unit;
 
-import dev.latvian.mods.unit.token.UnitToken;
+import dev.latvian.mods.unit.token.InterpretableUnitToken;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public final class FixedNumberUnit extends Unit implements UnitToken {
+public final class FixedNumberUnit extends Unit implements InterpretableUnitToken {
 	public static final FixedNumberUnit ZERO = new FixedNumberUnit(0);
 	public static final FixedNumberUnit ONE = new FixedNumberUnit(1);
 	public static final FixedNumberUnit MINUS_ONE = new FixedNumberUnit(-1);
@@ -76,17 +76,12 @@ public final class FixedNumberUnit extends Unit implements UnitToken {
 	}
 
 	@Override
-	public Unit interpret(UnitContext context) {
-		return this;
-	}
-
-	@Override
-	public UnitToken negate() {
+	public FixedNumberUnit negate() {
 		return value == 0D ? this : ofFixed(-value);
 	}
 
 	@Override
-	public UnitToken bitNot() {
+	public FixedNumberUnit bitNot() {
 		int i = (int) value;
 		int v = value < (double) i ? i - 1 : i;
 		return value == 0D ? this : ofFixed(~v);

@@ -1,11 +1,11 @@
 package dev.latvian.mods.unit;
 
-import dev.latvian.mods.unit.token.UnitToken;
+import dev.latvian.mods.unit.token.InterpretableUnitToken;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class VariableUnit extends Unit implements UnitToken {
+public class VariableUnit extends Unit implements InterpretableUnitToken {
 	private static final Object CACHE_LOCK = new Object();
 	private static final Map<String, VariableUnit> CACHE = new HashMap<>();
 
@@ -35,10 +35,5 @@ public class VariableUnit extends Unit implements UnitToken {
 	@Override
 	public void toString(StringBuilder builder) {
 		builder.append(name);
-	}
-
-	@Override
-	public Unit interpret(UnitContext context) {
-		return this;
 	}
 }

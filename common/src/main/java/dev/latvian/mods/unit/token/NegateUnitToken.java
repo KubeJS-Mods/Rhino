@@ -4,7 +4,7 @@ import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitContext;
 import dev.latvian.mods.unit.operator.NegateOpUnit;
 
-public record NegateUnitToken(UnitToken token) implements UnitToken {
+public record NegateUnitToken(InterpretableUnitToken token) implements InterpretableUnitToken {
 	@Override
 	public Unit interpret(UnitContext context) {
 		var unit = new NegateOpUnit();
@@ -13,12 +13,12 @@ public record NegateUnitToken(UnitToken token) implements UnitToken {
 	}
 
 	@Override
-	public UnitToken negate() {
+	public InterpretableUnitToken negate() {
 		return token;
 	}
 
 	@Override
 	public String toString() {
-		return "-" + token;
+		return "Negate[" + token + ']';
 	}
 }

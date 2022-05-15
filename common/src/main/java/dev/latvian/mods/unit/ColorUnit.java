@@ -1,8 +1,8 @@
 package dev.latvian.mods.unit;
 
-import dev.latvian.mods.unit.token.UnitToken;
+import dev.latvian.mods.unit.token.InterpretableUnitToken;
 
-public class ColorUnit extends Unit implements UnitToken {
+public class ColorUnit extends Unit implements InterpretableUnitToken {
 	public final int color;
 	public final boolean alpha;
 
