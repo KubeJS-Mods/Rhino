@@ -19,6 +19,7 @@ import dev.latvian.mods.unit.function.MinFuncUnit;
 import dev.latvian.mods.unit.function.PowFuncUnit;
 import dev.latvian.mods.unit.function.RadFuncUnit;
 import dev.latvian.mods.unit.function.RandomUnit;
+import dev.latvian.mods.unit.function.RoundedTimeUnit;
 import dev.latvian.mods.unit.function.SinFuncUnit;
 import dev.latvian.mods.unit.function.SqFuncUnit;
 import dev.latvian.mods.unit.function.SqrtFuncUnit;
@@ -38,6 +39,7 @@ public class UnitContext {
 
 	static {
 		DEFAULT.addFunction("time", TimeUnit::getInstance);
+		DEFAULT.addFunction("roundedTime", RoundedTimeUnit::getInstance);
 		DEFAULT.addFunction("random", RandomUnit::getInstance);
 		DEFAULT.addFunction("if", IfFuncUnit::new);
 		DEFAULT.addFunction("min", MinFuncUnit::new);

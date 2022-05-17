@@ -3,7 +3,7 @@ package dev.latvian.mods.rhino.test;
 import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitContext;
 import dev.latvian.mods.unit.VariableSet;
-import dev.latvian.mods.unit.function.TimeUnit;
+import dev.latvian.mods.unit.function.RoundedTimeUnit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -152,7 +152,7 @@ public class UnitTests {
 	@Test
 	@DisplayName("Functions I: time")
 	public void functions1() {
-		Assertions.assertEquals(Math.round(TimeUnit.time()), Math.round(eval("time()")));
+		assertEval("roundedTime()", RoundedTimeUnit.time());
 	}
 
 	@Test
@@ -176,6 +176,6 @@ public class UnitTests {
 	@Test
 	@DisplayName("Functions V: sin/time/var combo")
 	public void functions5() {
-		assertEval("sin(time() * 1.1) * (($test - 32) / 2)", Math.sin(TimeUnit.time() * 1.1D) * ((TEST_VAR - 32D) / 2D));
+		assertEval("sin(roundedTime() * 1.1) * (($test - 32) / 2)", Math.sin(RoundedTimeUnit.time() * 1.1D) * ((TEST_VAR - 32D) / 2D));
 	}
 }
