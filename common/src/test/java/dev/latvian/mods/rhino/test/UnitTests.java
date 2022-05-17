@@ -110,7 +110,7 @@ public class UnitTests {
 	@Test
 	@DisplayName("Simple order of operations II")
 	public void simpleOrderOfOperations2() {
-		assertEval("2 + -(3 * 4)", 14);
+		assertEval("2 + -(3 * 4)", -10);
 	}
 
 	@Test
