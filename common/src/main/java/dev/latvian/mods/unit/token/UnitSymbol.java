@@ -1,9 +1,13 @@
 package dev.latvian.mods.unit.token;
 
+import dev.latvian.mods.unit.SymbolUnit;
+import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.operator.AddOpUnit;
 import dev.latvian.mods.unit.operator.AndOpUnit;
 import dev.latvian.mods.unit.operator.BitAndOpUnit;
+import dev.latvian.mods.unit.operator.BitNotOpUnit;
 import dev.latvian.mods.unit.operator.BitOrOpUnit;
+import dev.latvian.mods.unit.operator.BoolNotOpUnit;
 import dev.latvian.mods.unit.operator.DivOpUnit;
 import dev.latvian.mods.unit.operator.EqOpUnit;
 import dev.latvian.mods.unit.operator.GtOpUnit;
@@ -13,11 +17,13 @@ import dev.latvian.mods.unit.operator.LtOpUnit;
 import dev.latvian.mods.unit.operator.LteOpUnit;
 import dev.latvian.mods.unit.operator.ModOpUnit;
 import dev.latvian.mods.unit.operator.MulOpUnit;
+import dev.latvian.mods.unit.operator.NegateOpUnit;
 import dev.latvian.mods.unit.operator.NeqOpUnit;
 import dev.latvian.mods.unit.operator.OpUnit;
 import dev.latvian.mods.unit.operator.OrOpUnit;
 import dev.latvian.mods.unit.operator.PowOpUnit;
 import dev.latvian.mods.unit.operator.RshOpUnit;
+import dev.latvian.mods.unit.operator.SkipOpUnit;
 import dev.latvian.mods.unit.operator.SubOpUnit;
 import dev.latvian.mods.unit.operator.TernaryOpUnit;
 import dev.latvian.mods.unit.operator.XorOpUnit;
@@ -25,55 +31,54 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-public enum SymbolUnitToken implements UnitToken {
+public enum UnitSymbol {
 	// Misc
 	COMMA(","),
 	LP("("),
 	RP(")"),
 	HASH("#"),
-	HOOK("?", TernaryOpUnit::new, 1),
-	COLON(":"),
-	NEGATE("-"),
-	BOOL_NOT("!"),
-	BIT_NOT("~"),
-	SET("="),
+	HOOK("?", TernaryOpUnit::new),
+	COLON(":", SkipOpUnit::new),
+	NEGATE("-", NegateOpUnit::new),
 	// Operators
-	ADD("+", AddOpUnit::new, 4),
-	SUB("-", SubOpUnit::new, 4),
-	MUL("*", MulOpUnit::new, 3),
-	DIV("/", DivOpUnit::new, 3),
-	MOD("%", ModOpUnit::new, 3),
-	POW("**", PowOpUnit::new, 2),
+	ADD("+", AddOpUnit::new),
+	SUB("-", SubOpUnit::new),
+	MUL("*", MulOpUnit::new),
+	DIV("/", DivOpUnit::new),
+	MOD("%", ModOpUnit::new),
+	POW("**", PowOpUnit::new),
 	// Int Operators
-	LSH("<<", LshOpUnit::new, 4),
-	RSH(">>", RshOpUnit::new, 4),
-	BIT_AND("&", BitAndOpUnit::new, 4),
-	BIT_OR("|", BitOrOpUnit::new, 4),
-	XOR("^", XorOpUnit::new, 4),
+	LSH("<<", LshOpUnit::new),
+	RSH(">>", RshOpUnit::new),
+	BIT_AND("&", BitAndOpUnit::new),
+	BIT_OR("|", BitOrOpUnit::new),
+	XOR("^", XorOpUnit::new),
+	BIT_NOT("~", BitNotOpUnit::new),
 	// Conditions
-	EQ("==", EqOpUnit::new, 5),
-	NEQ("!=", NeqOpUnit::new, 5),
-	LT("<", LtOpUnit::new, 5),
-	GT(">", GtOpUnit::new, 5),
-	LTE("<=", LteOpUnit::new, 5),
-	GTE(">=", GteOpUnit::new, 5),
-	AND("&&", AndOpUnit::new, 5),
-	OR("||", OrOpUnit::new, 5),
+	EQ("==", EqOpUnit::new),
+	NEQ("!=", NeqOpUnit::new),
+	LT("<", LtOpUnit::new),
+	GT(">", GtOpUnit::new),
+	LTE("<=", LteOpUnit::new),
+	GTE(">=", GteOpUnit::new),
+	AND("&&", AndOpUnit::new),
+	OR("||", OrOpUnit::new),
+	BOOL_NOT("!", BoolNotOpUnit::new),
 
 	;
 
 	public final String symbol;
-	private final Supplier<OpUnit> operatorUnit;
-	public final int precedence;
+	public final OperatorFactory op;
+	public final SymbolUnit unit;
 
-	SymbolUnitToken(String s, Supplier<OpUnit> op, int p) {
+	UnitSymbol(String s, Supplier<OpUnit> opUnit) {
 		symbol = s;
-		operatorUnit = op;
-		precedence = p;
+		op = opUnit == null ? null : new OperatorFactory(this, opUnit);
+		unit = new SymbolUnit(this);
 	}
 
-	SymbolUnitToken(String s) {
-		this(s, null, Integer.MAX_VALUE);
+	UnitSymbol(String s) {
+		this(s, null);
 	}
 
 	@Override
@@ -82,7 +87,8 @@ public enum SymbolUnitToken implements UnitToken {
 	}
 
 	@Nullable
-	public static SymbolUnitToken read(char first, CharStream stream) {
+	@SuppressWarnings("ConditionalExpressionWithIdenticalBranches")
+	public static UnitSymbol read(char first, CharStream stream) {
 		return switch (first) {
 			case ',' -> COMMA;
 			case '(' -> LP;
@@ -102,32 +108,12 @@ public enum SymbolUnitToken implements UnitToken {
 			case '!' -> stream.nextIf('=') ? NEQ : BOOL_NOT;
 			case '<' -> stream.nextIf('=') ? LTE : stream.nextIf('<') ? LSH : LT;
 			case '>' -> stream.nextIf('=') ? GTE : stream.nextIf('>') ? RSH : GT;
-			case '=' -> stream.nextIf('=') ? EQ : SET;
+			case '=' -> stream.nextIf('=') ? EQ : EQ; // Allow both == and =
 			default -> null;
 		};
 	}
 
-	@Override
-	public boolean shouldNegate() {
-		return this != RP;
-	}
-
-	public boolean isOp() {
-		return operatorUnit != null;
-	}
-
-	@Nullable
-	public OpUnit createOpUnit() {
-		if (operatorUnit == null) {
-			return null;
-		}
-
-		OpUnit unit = operatorUnit.get();
-
-		if (unit != null) {
-			unit.symbol = this;
-		}
-
-		return unit;
+	public boolean is(Unit unit) {
+		return unit instanceof SymbolUnit s && s.symbol == this;
 	}
 }

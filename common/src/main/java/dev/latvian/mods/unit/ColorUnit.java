@@ -1,8 +1,6 @@
 package dev.latvian.mods.unit;
 
-import dev.latvian.mods.unit.token.InterpretableUnitToken;
-
-public class ColorUnit extends Unit implements InterpretableUnitToken {
+public class ColorUnit extends Unit {
 	public final int color;
 	public final boolean alpha;
 
@@ -24,10 +22,5 @@ public class ColorUnit extends Unit implements InterpretableUnitToken {
 	@Override
 	public void toString(StringBuilder builder) {
 		builder.append(String.format(alpha ? "#%08X" : "#%06X", color));
-	}
-
-	@Override
-	public Unit interpret(UnitContext context) {
-		return this;
 	}
 }

@@ -1,5 +1,7 @@
 package dev.latvian.mods.unit;
 
+import dev.latvian.mods.unit.token.UnitTokenStream;
+
 public abstract class Unit {
 	public static Unit of(double value) {
 		return FixedNumberUnit.ofFixed(value);
@@ -29,9 +31,17 @@ public abstract class Unit {
 		builder.append(this);
 	}
 
-	public final String toString() {
+	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		toString(builder);
 		return builder.toString();
+	}
+
+	public boolean shouldNegate() {
+		return false;
+	}
+
+	public void interpret(UnitTokenStream tokenStream) {
+		tokenStream.resultStack.push(this);
 	}
 }

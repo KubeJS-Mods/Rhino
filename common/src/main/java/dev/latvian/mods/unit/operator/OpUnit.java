@@ -1,15 +1,27 @@
 package dev.latvian.mods.unit.operator;
 
-import dev.latvian.mods.unit.BooleanUnit;
 import dev.latvian.mods.unit.EmptyVariableSet;
 import dev.latvian.mods.unit.FixedNumberUnit;
 import dev.latvian.mods.unit.Unit;
-import dev.latvian.mods.unit.token.SymbolUnitToken;
+import dev.latvian.mods.unit.token.OperatorFactory;
+import dev.latvian.mods.unit.token.UnitTokenStream;
 
 public abstract class OpUnit extends Unit {
 	public Unit left;
 	public Unit right;
-	public SymbolUnitToken symbol;
+	public OperatorFactory op;
+
+	public int getPrecedence() {
+		return 2;
+	}
+
+	public boolean shouldSkip() {
+		return false;
+	}
+
+	public final boolean hasHigherPrecedenceThan(OpUnit operator) {
+		return operator.getPrecedence() <= getPrecedence();
+	}
 
 	@Override
 	public Unit optimize() {
@@ -18,8 +30,6 @@ public abstract class OpUnit extends Unit {
 
 		if (left instanceof FixedNumberUnit && right instanceof FixedNumberUnit) {
 			return FixedNumberUnit.ofFixed(get(EmptyVariableSet.INSTANCE));
-		} else if (left instanceof BooleanUnit && right instanceof BooleanUnit) {
-			return BooleanUnit.of(getBoolean(EmptyVariableSet.INSTANCE));
 		}
 
 		return this;
@@ -28,9 +38,33 @@ public abstract class OpUnit extends Unit {
 	@Override
 	public void toString(StringBuilder builder) {
 		builder.append('(');
-		left.toString(builder);
-		builder.append(symbol.symbol);
-		right.toString(builder);
+
+		if (left == null) {
+			builder.append("null");
+		} else {
+			left.toString(builder);
+		}
+
+		builder.append(op.symbol().symbol);
+
+		if (right == null) {
+			builder.append("null");
+		} else {
+			right.toString(builder);
+		}
+
 		builder.append(')');
+	}
+
+	@Override
+	public boolean shouldNegate() {
+		return true;
+	}
+
+	@Override
+	public void interpret(UnitTokenStream tokenStream) {
+		right = tokenStream.resultStack.pop();
+		left = tokenStream.resultStack.pop();
+		tokenStream.resultStack.push(this);
 	}
 }

@@ -1,11 +1,9 @@
 package dev.latvian.mods.unit;
 
-import dev.latvian.mods.unit.token.InterpretableUnitToken;
-
 import java.util.HashMap;
 import java.util.Map;
 
-public class VariableUnit extends Unit implements InterpretableUnitToken {
+public class VariableUnit extends Unit {
 	private static final Object CACHE_LOCK = new Object();
 	private static final Map<String, VariableUnit> CACHE = new HashMap<>();
 

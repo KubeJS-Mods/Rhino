@@ -4,6 +4,11 @@ import dev.latvian.mods.unit.UnitVariables;
 
 public abstract class BooleanOpUnit extends OpUnit {
 	@Override
+	public int getPrecedence() {
+		return 1;
+	}
+
+	@Override
 	public final double get(UnitVariables variables) {
 		return getBoolean(variables) ? 1D : 0D;
 	}

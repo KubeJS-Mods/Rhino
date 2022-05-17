@@ -1,11 +1,9 @@
 package dev.latvian.mods.unit;
 
-import dev.latvian.mods.unit.token.InterpretableUnitToken;
-
 import java.util.HashMap;
 import java.util.Map;
 
-public final class FixedNumberUnit extends Unit implements InterpretableUnitToken {
+public final class FixedNumberUnit extends Unit {
 	public static final FixedNumberUnit ZERO = new FixedNumberUnit(0);
 	public static final FixedNumberUnit ONE = new FixedNumberUnit(1);
 	public static final FixedNumberUnit MINUS_ONE = new FixedNumberUnit(-1);
@@ -71,19 +69,13 @@ public final class FixedNumberUnit extends Unit implements InterpretableUnitToke
 		if (s != null) {
 			builder.append(s);
 		} else {
-			builder.append(value);
+			long r = Math.round(value);
+
+			if (Math.abs(r - value) < 0.00001D) {
+				builder.append(r);
+			} else {
+				builder.append(value);
+			}
 		}
-	}
-
-	@Override
-	public FixedNumberUnit negate() {
-		return value == 0D ? this : ofFixed(-value);
-	}
-
-	@Override
-	public FixedNumberUnit bitNot() {
-		int i = (int) value;
-		int v = value < (double) i ? i - 1 : i;
-		return value == 0D ? this : ofFixed(~v);
 	}
 }

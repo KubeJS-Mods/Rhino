@@ -1,6 +1,7 @@
 package dev.latvian.mods.unit.function;
 
 import dev.latvian.mods.unit.Unit;
+import dev.latvian.mods.unit.token.UnitTokenStream;
 
 public abstract class FuncUnit extends Unit {
 	private static final Unit[] NO_ARGS = new Unit[0];
@@ -31,9 +32,22 @@ public abstract class FuncUnit extends Unit {
 				builder.append(',');
 			}
 
-			args[i].toString(builder);
+			if (args[i] == null) {
+				builder.append("null");
+			} else {
+				args[i].toString(builder);
+			}
 		}
 
 		builder.append(')');
+	}
+
+	@Override
+	public void interpret(UnitTokenStream tokenStream) {
+		for (int i = args.length - 1; i >= 0; i--) {
+			args[i] = tokenStream.resultStack.pop();
+		}
+
+		tokenStream.resultStack.push(this);
 	}
 }

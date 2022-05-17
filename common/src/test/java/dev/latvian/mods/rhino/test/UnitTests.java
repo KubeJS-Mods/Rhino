@@ -23,10 +23,12 @@ public class UnitTests {
 	}
 
 	public static double eval(String input) {
-		System.out.println("Parsing: " + input);
+		System.out.println("Input: " + input);
 		Unit unit = CONTEXT.parse(input);
 		System.out.println("Result: " + unit);
-		return unit.get(VARIABLE_SET);
+		double eval = unit.get(VARIABLE_SET);
+		System.out.println("Eval: " + eval);
+		return eval;
 	}
 
 	public static void assertEval(String input, double expected) {
@@ -34,57 +36,45 @@ public class UnitTests {
 	}
 
 	@Test
-	@DisplayName("Simple order of operations I")
-	public void simpleOrderOfOperations1() {
-		assertEval("2 + 3 * 4", 14);
+	@DisplayName("Number")
+	public void number() {
+		assertEval("2.8", 2.8);
 	}
 
 	@Test
-	@DisplayName("Simple order of operations II")
-	public void simpleOrderOfOperations2() {
-		assertEval("2 + -(3 * 4)", 14);
+	@DisplayName("Negative Number")
+	public void negativeNumber() {
+		assertEval("-2", -2.0);
 	}
 
 	@Test
-	@DisplayName("Simple order of operations III")
-	public void simpleOrderOfOperations3() {
-		assertEval("(2 + 3) * 4", 20);
+	@DisplayName("Variable")
+	public void variable() {
+		assertEval("$test", TEST_VAR);
 	}
 
 	@Test
-	@DisplayName("Order of operations")
-	public void orderOfOperations() {
-		assertEval("4 * -(2 + 8 * 2 - 1) / 5", -13.6);
+	@DisplayName("Negative Variable")
+	public void negativeVariable() {
+		assertEval("-$test", -TEST_VAR);
 	}
 
 	@Test
-	@DisplayName("abs Function")
-	public void absFunction() {
-		assertEval("-abs(-4.0)", -4.0);
+	@DisplayName("Subtraction")
+	public void subtraction() {
+		assertEval("4 -2.5", 1.5);
 	}
 
 	@Test
-	@DisplayName("sin Function")
-	public void sinFunction() {
-		assertEval("sin($test*10)*5", Math.sin(TEST_VAR * 10D) * 5D);
+	@DisplayName("NegSubtraction")
+	public void negSubtraction() {
+		assertEval("-2.3 -3", -5.3);
 	}
 
 	@Test
-	@DisplayName("Simple Ternary")
-	public void simpleTernary() {
-		assertEval("2 + 3.5 + 4 == 7.5", 1.0);
-	}
-
-	@Test
-	@DisplayName("Variable Ternary")
-	public void variableTernary() {
-		assertEval("$test < 0.5 ? -30 : 40", TEST_VAR < 0.5 ? -30 : 40);
-	}
-
-	@Test
-	@DisplayName("Complex eval")
-	public void complexEval() {
-		assertEval("$test<0.5?($test2<1.5?1.5:-4):($test3<50*-3?1.5:-4)", TEST_VAR < 0.5 ? (TEST_VAR_2 < 1.5 ? 1.5 : -4) : (TEST_VAR_3 < 50 * -3 ? 1.5 : -4));
+	@DisplayName("DoubleNegSubtraction")
+	public void doubleNegSubtraction() {
+		assertEval("-7 - --2", -9.0);
 	}
 
 	@Test
@@ -112,32 +102,80 @@ public class UnitTests {
 	}
 
 	@Test
-	@DisplayName("Negate")
-	public void negate() {
-		assertEval("-2", -2.0);
+	@DisplayName("Simple order of operations I")
+	public void simpleOrderOfOperations1() {
+		assertEval("2 + 3 * 4", 14);
 	}
 
 	@Test
-	@DisplayName("Subtraction")
-	public void subtraction() {
-		assertEval("4 -2", 2.0);
+	@DisplayName("Simple order of operations II")
+	public void simpleOrderOfOperations2() {
+		assertEval("2 + -(3 * 4)", 14);
 	}
 
 	@Test
-	@DisplayName("NegSubtraction")
-	public void negSubtraction() {
-		assertEval("-2 -2", -4.0);
+	@DisplayName("Simple order of operations III")
+	public void simpleOrderOfOperations3() {
+		assertEval("(2 + 3) * 4", 20);
 	}
 
 	@Test
-	@DisplayName("DoubleNegSubtraction")
-	public void doubleNegSubtraction() {
-		assertEval("-7 - --2", -9.0);
+	@DisplayName("Complex order of operations I")
+	public void orderOfOperations() {
+		assertEval("4 * -(2 + 8 * 2 - 1) / 5", -13.6);
 	}
 
 	@Test
-	@DisplayName("time function")
-	public void timeFunction() {
+	@DisplayName("Ternary I: simple")
+	public void ternary1() {
+		assertEval("3 > 2 ? 6 : 4", 6);
+	}
+
+	@Test
+	@DisplayName("Ternary II: double sum")
+	public void ternary2() {
+		assertEval("2.4 + 3.5 * 4 == 16.4 ? 4.0 : 2.0", 4.0);
+	}
+
+	@Test
+	@DisplayName("Ternary III: var/neg")
+	public void ternary3() {
+		assertEval("$test < 0.5 ? -30 : 40", TEST_VAR < 0.5 ? -30 : 40);
+	}
+
+	@Test
+	@DisplayName("Ternary IV: 3 vars")
+	public void ternary4() {
+		assertEval("$test<0.5?($test2<1.5?1.5:-4):($test3<50*-3?1.5:-4)", TEST_VAR < 0.5 ? (TEST_VAR_2 < 1.5 ? 1.5 : -4) : (TEST_VAR_3 < 50 * -3 ? 1.5 : -4));
+	}
+
+	@Test
+	@DisplayName("Functions I: time")
+	public void functions1() {
+		Assertions.assertEquals(Math.round(TimeUnit.time()), Math.round(eval("time()")));
+	}
+
+	@Test
+	@DisplayName("Functions II: sin")
+	public void functions2() {
+		assertEval("sin(3.0)", Math.sin(3D));
+	}
+
+	@Test
+	@DisplayName("Functions III: negative abs")
+	public void functions3() {
+		assertEval("-abs(-4.0)", -4.0);
+	}
+
+	@Test
+	@DisplayName("Functions IV: sin/var combo")
+	public void functions4() {
+		assertEval("sin($test*10)*5", Math.sin(TEST_VAR * 10D) * 5D);
+	}
+
+	@Test
+	@DisplayName("Functions V: sin/time/var combo")
+	public void functions5() {
 		assertEval("sin(time() * 1.1) * (($test - 32) / 2)", Math.sin(TimeUnit.time() * 1.1D) * ((TEST_VAR - 32D) / 2D));
 	}
 }

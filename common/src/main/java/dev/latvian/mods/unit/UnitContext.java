@@ -24,13 +24,14 @@ import dev.latvian.mods.unit.function.SqFuncUnit;
 import dev.latvian.mods.unit.function.SqrtFuncUnit;
 import dev.latvian.mods.unit.function.TanFuncUnit;
 import dev.latvian.mods.unit.function.TimeUnit;
-import dev.latvian.mods.unit.token.CharStream;
 import dev.latvian.mods.unit.token.UnitTokenStream;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class UnitContext {
 	public static final UnitContext DEFAULT = new UnitContext();
@@ -95,7 +96,7 @@ public class UnitContext {
 	}
 
 	public UnitTokenStream createStream(String input) {
-		return new UnitTokenStream(this, input, new CharStream(input.toCharArray()));
+		return new UnitTokenStream(this, input);
 	}
 
 	public Unit parse(String input) {
@@ -130,5 +131,9 @@ public class UnitContext {
 				System.out.println(s);
 			}
 		}
+	}
+
+	public void debugInfo(String s, Collection<?> values) {
+		debugInfo(s + ": " + values.stream().map(Object::toString).collect(Collectors.joining("  ")));
 	}
 }
