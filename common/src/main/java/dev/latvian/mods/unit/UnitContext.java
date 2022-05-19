@@ -61,10 +61,17 @@ public class UnitContext {
 		DEFAULT.addFunction("ceil", CeilFuncUnit::new);
 		DEFAULT.addFunction("bool", BoolFuncUnit::new);
 		DEFAULT.addFunctionFactory("color", ColorFuncUnit::colorOf);
-		// addFunc("color", a -> new ColorUnit(a.get(0), a.get(1), a.get(2), a.size() >= 4 ? a.get(3) : null));
+
+		DEFAULT.addConstant("true", FixedBooleanUnit.TRUE);
+		DEFAULT.addConstant("false", FixedBooleanUnit.FALSE);
+		DEFAULT.addConstant("PI", FixedNumberUnit.PI);
+		DEFAULT.addConstant("TWO_PI", FixedNumberUnit.TWO_PI);
+		DEFAULT.addConstant("HALF_PI", FixedNumberUnit.HALF_PI);
+		DEFAULT.addConstant("E", FixedNumberUnit.E);
 	}
 
 	private final Map<String, FunctionFactory> functions = new HashMap<>();
+	public final Map<String, Unit> constants = new HashMap<>();
 	private final Map<String, Unit> cache = new HashMap<>();
 	private int debug = -1;
 
@@ -80,6 +87,10 @@ public class UnitContext {
 	@Nullable
 	public FunctionFactory getFunctionFactory(String name) {
 		return functions.get(name.toLowerCase());
+	}
+
+	public void addConstant(String s, Unit u) {
+		constants.put(s, u);
 	}
 
 	public UnitContext sub() {
@@ -98,7 +109,6 @@ public class UnitContext {
 
 		if (u == null) {
 			u = createStream(input).getUnit();
-			u = u.optimize();
 			cache.put(input, u);
 		}
 

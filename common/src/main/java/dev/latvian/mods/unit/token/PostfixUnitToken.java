@@ -1,7 +1,6 @@
 package dev.latvian.mods.unit.token;
 
 import dev.latvian.mods.unit.Unit;
-import dev.latvian.mods.unit.operator.OpUnit;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -10,15 +9,6 @@ import java.util.Stack;
 public record PostfixUnitToken(List<UnitToken> infix) implements UnitToken {
 	@Override
 	public Unit interpret(UnitTokenStream stream) {
-		if (infix.size() == 1) {
-			return infix.get(0).interpret(stream);
-		} else if (infix.size() == 3 && infix.get(1) instanceof UnitSymbol symbol && symbol.op != null) {
-			OpUnit unit = symbol.op.create();
-			unit.left = infix.get(0).interpret(stream);
-			unit.right = infix.get(2).interpret(stream);
-			return unit;
-		}
-
 		Stack<UnitSymbol> operatorsStack = new Stack<>();
 		LinkedList<UnitToken> postfix = new LinkedList<>();
 
@@ -99,7 +89,13 @@ public record PostfixUnitToken(List<UnitToken> infix) implements UnitToken {
 	}
 
 	public UnitToken normalize() {
-		return infix.size() == 1 ? infix.get(0) : this;
+		if (infix.size() == 1) {
+			return infix.get(0);
+		} else if (infix.size() == 3 && infix.get(1) instanceof UnitSymbol symbol && symbol.op != null) {
+			return new OpResultUnitToken(symbol, infix.get(0), infix.get(2));
+		}
+
+		return this;
 	}
 
 	@Override

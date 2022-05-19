@@ -1,8 +1,14 @@
 package dev.latvian.mods.unit.operator;
 
+import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
+import dev.latvian.mods.unit.token.UnitSymbol;
 
 public class BitOrOpUnit extends OpUnit {
+	public BitOrOpUnit(Unit left, Unit right) {
+		super(UnitSymbol.BIT_OR, left, right);
+	}
+
 	@Override
 	public double get(UnitVariables variables) {
 		return getInt(variables);

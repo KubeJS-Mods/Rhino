@@ -13,15 +13,6 @@ public abstract class FuncUnit extends Unit {
 	}
 
 	@Override
-	public FuncUnit optimize() {
-		for (int i = 0; i < args.length; i++) {
-			args[i] = args[i].optimize();
-		}
-
-		return this;
-	}
-
-	@Override
 	public void toString(StringBuilder builder) {
 		builder.append(factory.name());
 		builder.append('(');

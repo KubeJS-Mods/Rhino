@@ -1,11 +1,14 @@
 package dev.latvian.mods.unit.operator;
 
-import dev.latvian.mods.unit.EmptyVariableSet;
-import dev.latvian.mods.unit.FixedNumberUnit;
 import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
+import dev.latvian.mods.unit.token.UnitSymbol;
 
 public class BitNotOpUnit extends UnaryOpUnit {
+	public BitNotOpUnit(Unit unit) {
+		super(UnitSymbol.BIT_NOT, unit);
+	}
+
 	@Override
 	public double get(UnitVariables variables) {
 		return getInt(variables);
@@ -19,16 +22,5 @@ public class BitNotOpUnit extends UnaryOpUnit {
 	@Override
 	public boolean getBoolean(UnitVariables variables) {
 		return !unit.getBoolean(variables);
-	}
-
-	@Override
-	public Unit optimize() {
-		unit = unit.optimize();
-
-		if (unit.isFixed()) {
-			return FixedNumberUnit.ofFixed(getInt(EmptyVariableSet.INSTANCE));
-		}
-
-		return this;
 	}
 }

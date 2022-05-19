@@ -7,7 +7,7 @@ import dev.latvian.mods.unit.VariableUnit;
 public record StringUnitToken(String name) implements UnitToken {
 	@Override
 	public Unit interpret(UnitTokenStream stream) {
-		var constant = FixedNumberUnit.CONSTANTS.get(name);
+		var constant = stream.context.constants.get(name);
 
 		if (constant != null) {
 			return constant;

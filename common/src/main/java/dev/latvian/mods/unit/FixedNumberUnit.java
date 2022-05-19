@@ -1,8 +1,5 @@
 package dev.latvian.mods.unit;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public final class FixedNumberUnit extends Unit {
 	public static final FixedNumberUnit ZERO = new FixedNumberUnit(0);
 	public static final FixedNumberUnit ONE = new FixedNumberUnit(1);
@@ -10,6 +7,8 @@ public final class FixedNumberUnit extends Unit {
 	public static final FixedNumberUnit TEN = new FixedNumberUnit(10);
 	public static final FixedNumberUnit SIXTEEN = new FixedNumberUnit(16);
 	public static final FixedNumberUnit PI = new FixedNumberUnit(Math.PI);
+	public static final FixedNumberUnit TWO_PI = new FixedNumberUnit(Math.PI * 2D);
+	public static final FixedNumberUnit HALF_PI = new FixedNumberUnit(Math.PI / 2D);
 	public static final FixedNumberUnit E = new FixedNumberUnit(Math.E);
 
 	public static FixedNumberUnit ofFixed(double value) {
@@ -26,19 +25,6 @@ public final class FixedNumberUnit extends Unit {
 		} else {
 			return new FixedNumberUnit(value);
 		}
-	}
-
-	public static final Map<String, FixedNumberUnit> CONSTANTS = new HashMap<>();
-	public static final Map<FixedNumberUnit, String> CONSTANTS_INV = new HashMap<>();
-
-	public static void addConstant(String s, FixedNumberUnit u) {
-		CONSTANTS.put(s, u);
-		CONSTANTS_INV.put(u, s);
-	}
-
-	static {
-		addConstant("PI", PI);
-		addConstant("E", E);
 	}
 
 	public final double value;
@@ -69,18 +55,49 @@ public final class FixedNumberUnit extends Unit {
 
 	@Override
 	public void toString(StringBuilder builder) {
-		String s = CONSTANTS_INV.get(this);
+		long r = Math.round(value);
 
-		if (s != null) {
-			builder.append(s);
+		if (Math.abs(r - value) < 0.00001D) {
+			builder.append(r);
 		} else {
-			long r = Math.round(value);
-
-			if (Math.abs(r - value) < 0.00001D) {
-				builder.append(r);
-			} else {
-				builder.append(value);
-			}
+			builder.append(value);
 		}
+	}
+
+	// Functions
+
+	@Override
+	public Unit negate() {
+		return ofFixed(-value);
+	}
+
+	@Override
+	public Unit add(Unit other) {
+		return other instanceof FixedNumberUnit u ? ofFixed(value + u.value) : super.add(other);
+	}
+
+	@Override
+	public Unit sub(Unit other) {
+		return other instanceof FixedNumberUnit u ? ofFixed(value - u.value) : super.sub(other);
+	}
+
+	@Override
+	public Unit mul(Unit other) {
+		return other instanceof FixedNumberUnit u ? ofFixed(value * u.value) : super.mul(other);
+	}
+
+	@Override
+	public Unit div(Unit other) {
+		return other instanceof FixedNumberUnit u ? ofFixed(value / u.value) : super.div(other);
+	}
+
+	@Override
+	public Unit mod(Unit other) {
+		return other instanceof FixedNumberUnit u ? ofFixed(value % u.value) : super.mod(other);
+	}
+
+	@Override
+	public Unit pow(Unit other) {
+		return other instanceof FixedNumberUnit u ? ofFixed(Math.pow(value, u.value)) : super.add(other);
 	}
 }

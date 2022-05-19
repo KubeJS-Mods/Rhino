@@ -65,9 +65,11 @@ public final class UnitTokenStream {
 					current.setLength(0);
 				}
 
-				if (symbol == UnitSymbol.SUB && (infix.isEmpty() || infix.get(infix.size() - 1).shouldNegate())) {
+				UnitSymbol unary = symbol == null ? null : symbol.getUnarySymbol();
+
+				if (unary != null && (infix.isEmpty() || infix.get(infix.size() - 1).nextUnaryOperator())) {
 					inputStringPos.add(cpos);
-					infix.add(UnitSymbol.NEGATE);
+					infix.add(unary);
 				} else if (symbol != null) {
 					inputStringPos.add(cpos);
 					infix.add(symbol);
@@ -94,8 +96,7 @@ public final class UnitTokenStream {
 
 		try {
 			var unitToken = readFully();
-			var rawUnit = unitToken.interpret(this);
-			this.unit = rawUnit.optimize();
+			this.unit = unitToken.interpret(this);
 		} catch (UnitInterpretException ex) {
 			throw new RuntimeException("Error parsing '" + input + "' @ " + (infixPos < 0 || infixPos >= inputStringPos.size() ? -1 : inputStringPos.get(infixPos)), ex);
 		}
@@ -166,7 +167,6 @@ public final class UnitTokenStream {
 			}
 
 			var right = readFully();
-
 			return new TernaryUnitToken(postfix.normalize(), left, right);
 		}
 

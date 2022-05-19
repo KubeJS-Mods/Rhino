@@ -18,6 +18,12 @@ public class VariableSet implements UnitVariables {
 		return set(name, FixedNumberUnit.ofFixed(value));
 	}
 
+	public MutableNumberUnit setMutable(String name, double initialValue) {
+		MutableNumberUnit unit = new MutableNumberUnit(initialValue);
+		set(name, unit);
+		return unit;
+	}
+
 	@Nullable
 	public Unit get(String entry) {
 		return variables.get(entry);

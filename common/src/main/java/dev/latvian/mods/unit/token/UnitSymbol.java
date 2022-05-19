@@ -1,29 +1,8 @@
 package dev.latvian.mods.unit.token;
 
-import dev.latvian.mods.unit.operator.AddOpUnit;
-import dev.latvian.mods.unit.operator.AndOpUnit;
-import dev.latvian.mods.unit.operator.BitAndOpUnit;
-import dev.latvian.mods.unit.operator.BitNotOpUnit;
-import dev.latvian.mods.unit.operator.BitOrOpUnit;
-import dev.latvian.mods.unit.operator.BoolNotOpUnit;
-import dev.latvian.mods.unit.operator.DivOpUnit;
-import dev.latvian.mods.unit.operator.EqOpUnit;
-import dev.latvian.mods.unit.operator.GtOpUnit;
-import dev.latvian.mods.unit.operator.GteOpUnit;
-import dev.latvian.mods.unit.operator.LshOpUnit;
-import dev.latvian.mods.unit.operator.LtOpUnit;
-import dev.latvian.mods.unit.operator.LteOpUnit;
-import dev.latvian.mods.unit.operator.ModOpUnit;
-import dev.latvian.mods.unit.operator.MulOpUnit;
-import dev.latvian.mods.unit.operator.NegateOpUnit;
-import dev.latvian.mods.unit.operator.NeqOpUnit;
+import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.operator.OperatorFactory;
-import dev.latvian.mods.unit.operator.OrOpUnit;
-import dev.latvian.mods.unit.operator.PowOpUnit;
-import dev.latvian.mods.unit.operator.RshOpUnit;
-import dev.latvian.mods.unit.operator.SubOpUnit;
 import dev.latvian.mods.unit.operator.UnaryOperatorFactory;
-import dev.latvian.mods.unit.operator.XorOpUnit;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Stack;
@@ -36,31 +15,32 @@ public enum UnitSymbol implements UnitToken {
 	HASH("#"),
 	HOOK("?"),
 	COLON(":"),
-	NEGATE("-", NegateOpUnit::new),
+	POSITIVE("+", Unit::positive),
+	NEGATE("-", Unit::negate),
 	// Operators
-	ADD("+", 2, AddOpUnit::new),
-	SUB("-", 2, SubOpUnit::new),
-	MUL("*", 3, MulOpUnit::new),
-	DIV("/", 3, DivOpUnit::new),
-	MOD("%", 3, ModOpUnit::new),
-	POW("**", 4, PowOpUnit::new),
+	ADD("+", 2, Unit::add),
+	SUB("-", 2, Unit::sub),
+	MUL("*", 3, Unit::mul),
+	DIV("/", 3, Unit::div),
+	MOD("%", 3, Unit::mod),
+	POW("**", 4, Unit::pow),
 	// Int Operators
-	LSH("<<", 2, LshOpUnit::new),
-	RSH(">>", 2, RshOpUnit::new),
-	BIT_AND("&", 2, BitAndOpUnit::new),
-	BIT_OR("|", 2, BitOrOpUnit::new),
-	XOR("^", 2, XorOpUnit::new),
-	BIT_NOT("~", BitNotOpUnit::new),
+	LSH("<<", 2, Unit::lsh),
+	RSH(">>", 2, Unit::rsh),
+	BIT_AND("&", 2, Unit::bitAnd),
+	BIT_OR("|", 2, Unit::bitOr),
+	XOR("^", 2, Unit::xor),
+	BIT_NOT("~", Unit::bitNot),
 	// Conditions
-	EQ("==", 1, EqOpUnit::new),
-	NEQ("!=", 1, NeqOpUnit::new),
-	LT("<", 1, LtOpUnit::new),
-	GT(">", 1, GtOpUnit::new),
-	LTE("<=", 1, LteOpUnit::new),
-	GTE(">=", 1, GteOpUnit::new),
-	AND("&&", 1, AndOpUnit::new),
-	OR("||", 1, OrOpUnit::new),
-	BOOL_NOT("!", BoolNotOpUnit::new),
+	EQ("==", 1, Unit::eq),
+	NEQ("!=", 1, Unit::neq),
+	LT("<", 1, Unit::lt),
+	GT(">", 1, Unit::gt),
+	LTE("<=", 1, Unit::lte),
+	GTE(">=", 1, Unit::gte),
+	AND("&&", 1, Unit::and),
+	OR("||", 1, Unit::or),
+	BOOL_NOT("!", Unit::boolNot),
 
 	;
 
@@ -76,18 +56,18 @@ public enum UnitSymbol implements UnitToken {
 		unaryOp = null;
 	}
 
-	UnitSymbol(String s, int p, OperatorFactory.OpSupplier opUnit) {
+	UnitSymbol(String s, int p, OperatorFactory opUnit) {
 		symbol = s;
 		precedence = p;
-		op = new OperatorFactory(this, opUnit);
+		op = opUnit;
 		unaryOp = null;
 	}
 
-	UnitSymbol(String s, UnaryOperatorFactory.OpSupplier unaryOpUnit) {
+	UnitSymbol(String s, UnaryOperatorFactory unaryOpUnit) {
 		symbol = s;
 		precedence = 0;
 		op = null;
-		unaryOp = new UnaryOperatorFactory(this, unaryOpUnit);
+		unaryOp = unaryOpUnit;
 	}
 
 	@Override
@@ -96,8 +76,17 @@ public enum UnitSymbol implements UnitToken {
 	}
 
 	@Override
-	public boolean shouldNegate() {
+	public boolean nextUnaryOperator() {
 		return this != RP;
+	}
+
+	@Nullable
+	public UnitSymbol getUnarySymbol() {
+		return switch (this) {
+			case ADD -> POSITIVE;
+			case SUB -> NEGATE;
+			default -> null;
+		};
 	}
 
 	@Nullable

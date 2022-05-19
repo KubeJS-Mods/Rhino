@@ -3,6 +3,10 @@ package dev.latvian.mods.unit;
 import dev.latvian.mods.unit.token.UnitToken;
 
 public class FixedColorUnit extends Unit implements UnitToken {
+	public static final FixedColorUnit WHITE = new FixedColorUnit(0xFFFFFFFF, true);
+	public static final FixedColorUnit BLACK = new FixedColorUnit(0xFF000000, true);
+	public static final FixedColorUnit TRANSPARENT = new FixedColorUnit(0x00000000, true);
+
 	public final int color;
 	public final boolean alpha;
 

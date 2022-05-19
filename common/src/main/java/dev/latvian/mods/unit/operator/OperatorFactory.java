@@ -1,22 +1,8 @@
 package dev.latvian.mods.unit.operator;
 
-import dev.latvian.mods.unit.token.UnitSymbol;
+import dev.latvian.mods.unit.Unit;
 
-import java.util.function.Supplier;
-
-public record OperatorFactory(UnitSymbol symbol, OpSupplier supplier) {
-	@FunctionalInterface
-	public interface OpSupplier extends Supplier<OpUnit> {
-	}
-
-	public OpUnit create() {
-		OpUnit u = supplier.get();
-		u.symbol = symbol;
-		return u;
-	}
-
-	@Override
-	public String toString() {
-		return symbol.symbol;
-	}
+@FunctionalInterface
+public interface OperatorFactory {
+	Unit create(Unit left, Unit right);
 }

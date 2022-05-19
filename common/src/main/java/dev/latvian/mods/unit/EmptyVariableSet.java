@@ -20,6 +20,11 @@ public class EmptyVariableSet extends VariableSet {
 	}
 
 	@Override
+	public MutableNumberUnit setMutable(String name, double initialValue) {
+		return new MutableNumberUnit(initialValue);
+	}
+
+	@Override
 	@Nullable
 	public Unit get(String entry) {
 		return null;

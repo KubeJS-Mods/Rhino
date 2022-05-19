@@ -9,7 +9,7 @@ public interface UnitToken {
 		return (Unit) this;
 	}
 
-	default boolean shouldNegate() {
+	default boolean nextUnaryOperator() {
 		return false;
 	}
 
