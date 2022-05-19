@@ -1,5 +1,6 @@
 package dev.latvian.mods.unit.operator;
 
+import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
 
 public abstract class BooleanOpUnit extends OpUnit {
@@ -20,4 +21,11 @@ public abstract class BooleanOpUnit extends OpUnit {
 
 	@Override
 	public abstract boolean getBoolean(UnitVariables variables);
+
+	@Override
+	public Unit optimize() {
+		left = left.optimize();
+		right = right.optimize();
+		return this;
+	}
 }

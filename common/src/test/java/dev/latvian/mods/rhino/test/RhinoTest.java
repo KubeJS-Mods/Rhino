@@ -2,6 +2,7 @@ package dev.latvian.mods.rhino.test;
 
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.NativeJavaClass;
+import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.ScriptableObject;
 import dev.latvian.mods.rhino.mod.util.CollectionTagWrapper;
 import dev.latvian.mods.rhino.mod.util.CompoundTagWrapper;
@@ -40,6 +41,7 @@ public class RhinoTest {
 
 	public final String testName;
 	public final Map<String, Object> include;
+	public Scriptable sharedScope;
 
 	public RhinoTest(String n) {
 		testName = n;
@@ -53,18 +55,29 @@ public class RhinoTest {
 		return this;
 	}
 
-	public void test(String name, String script, String console) {
-		var scope = getContext().initStandardObjects();
+	public RhinoTest shareScope() {
+		sharedScope = getContext().initStandardObjects();
+		return this;
+	}
 
-		for (var entry : include.entrySet()) {
-			if (entry.getValue() instanceof Class<?> c) {
-				ScriptableObject.putProperty(scope, entry.getKey(), new NativeJavaClass(scope, c));
-			} else {
-				ScriptableObject.putProperty(scope, entry.getKey(), Context.javaToJS(entry.getValue(), scope));
+	public void test(String name, String script, String console) {
+		try {
+			var scope = sharedScope == null ? getContext().initStandardObjects() : sharedScope;
+
+			for (var entry : include.entrySet()) {
+				if (entry.getValue() instanceof Class<?> c) {
+					ScriptableObject.putProperty(scope, entry.getKey(), new NativeJavaClass(scope, c));
+				} else {
+					ScriptableObject.putProperty(scope, entry.getKey(), Context.javaToJS(entry.getValue(), scope));
+				}
 			}
+
+			getContext().evaluateString(scope, script, testName + "/" + name, 1, null);
+		} catch (Exception ex) {
+			TestConsole.info("Error: " + ex.getMessage());
+			// ex.printStackTrace();
 		}
 
-		getContext().evaluateString(scope, script, testName + "/" + name, 1, null);
 		Assertions.assertEquals(console.trim(), TestConsole.getConsoleOutput().trim());
 	}
 }

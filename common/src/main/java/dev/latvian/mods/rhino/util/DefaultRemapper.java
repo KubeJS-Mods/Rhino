@@ -27,6 +27,14 @@ public class DefaultRemapper implements Remapper {
 			return remap.value();
 		}
 
+		for (RemapPrefixForJS prefix : from.getAnnotationsByType(RemapPrefixForJS.class)) {
+			String p = prefix.value();
+
+			if (fieldName.length() > p.length() && fieldName.startsWith(p)) {
+				return fieldName.substring(p.length());
+			}
+		}
+
 		return "";
 	}
 
@@ -36,6 +44,16 @@ public class DefaultRemapper implements Remapper {
 
 		if (remap != null) {
 			return remap.value();
+		}
+
+		String methodName = method.getName();
+
+		for (RemapPrefixForJS prefix : from.getAnnotationsByType(RemapPrefixForJS.class)) {
+			String p = prefix.value();
+
+			if (methodName.length() > p.length() && methodName.startsWith(p)) {
+				return methodName.substring(p.length());
+			}
 		}
 
 		return "";

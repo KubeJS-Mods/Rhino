@@ -29,7 +29,7 @@ public abstract class Unit {
 		builder.append(this);
 	}
 
-	public final String toString() {
+	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		toString(builder);
 		return builder.toString();

@@ -31,9 +31,24 @@ public abstract class FuncUnit extends Unit {
 				builder.append(',');
 			}
 
-			args[i].toString(builder);
+			if (args[i] == null) {
+				builder.append("null");
+			} else {
+				args[i].toString(builder);
+			}
 		}
 
 		builder.append(')');
 	}
+
+	/*
+	@Override
+	public void interpret(UnitTokenStream tokenStream) {
+		for (int i = args.length - 1; i >= 0; i--) {
+			args[i] = tokenStream.resultStack.pop();
+		}
+
+		tokenStream.resultStack.push(this);
+	}
+	 */
 }

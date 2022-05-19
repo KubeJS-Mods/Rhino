@@ -19,24 +19,27 @@ import dev.latvian.mods.unit.function.MinFuncUnit;
 import dev.latvian.mods.unit.function.PowFuncUnit;
 import dev.latvian.mods.unit.function.RadFuncUnit;
 import dev.latvian.mods.unit.function.RandomUnit;
+import dev.latvian.mods.unit.function.RoundedTimeUnit;
 import dev.latvian.mods.unit.function.SinFuncUnit;
 import dev.latvian.mods.unit.function.SqFuncUnit;
 import dev.latvian.mods.unit.function.SqrtFuncUnit;
 import dev.latvian.mods.unit.function.TanFuncUnit;
 import dev.latvian.mods.unit.function.TimeUnit;
-import dev.latvian.mods.unit.token.CharStream;
 import dev.latvian.mods.unit.token.UnitTokenStream;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class UnitContext {
 	public static final UnitContext DEFAULT = new UnitContext();
 
 	static {
 		DEFAULT.addFunction("time", TimeUnit::getInstance);
+		DEFAULT.addFunction("roundedTime", RoundedTimeUnit::getInstance);
 		DEFAULT.addFunction("random", RandomUnit::getInstance);
 		DEFAULT.addFunction("if", IfFuncUnit::new);
 		DEFAULT.addFunction("min", MinFuncUnit::new);
@@ -63,6 +66,7 @@ public class UnitContext {
 
 	private final Map<String, FunctionFactory> functions = new HashMap<>();
 	private final Map<String, Unit> cache = new HashMap<>();
+	private int debug = -1;
 
 	public void addFunction(String name, Supplier<FuncUnit> func) {
 		FunctionFactory factory = new FunctionFactory(name.toLowerCase(), func);
@@ -72,28 +76,66 @@ public class UnitContext {
 	@Nullable
 	public FuncUnit getFunction(String name) {
 		FunctionFactory func = functions.get(name.toLowerCase());
-		return func == null ? null : func.factory().get();
+
+		if (func == null) {
+			return null;
+		}
+
+		FuncUnit unit = func.factory().get();
+
+		if (unit != null) {
+			unit.factory = func;
+		}
+
+		return unit;
 	}
 
 	public UnitContext sub() {
 		UnitContext ctx = new UnitContext();
 		ctx.functions.putAll(functions);
+		ctx.debug = debug;
 		return ctx;
 	}
 
 	public UnitTokenStream createStream(String input) {
-		return new UnitTokenStream(this, input, new CharStream(input.toCharArray()));
+		return new UnitTokenStream(this, input);
 	}
 
 	public Unit parse(String input) {
 		Unit u = cache.get(input);
 
 		if (u == null) {
-			u = createStream(input).nextUnit();
+			u = createStream(input).getUnit();
 			u = u.optimize();
 			cache.put(input, u);
 		}
 
 		return u;
+	}
+
+	public boolean isDebug() {
+		return debug >= 0;
+	}
+
+	public void pushDebug() {
+		debug++;
+	}
+
+	public void popDebug() {
+		debug--;
+	}
+
+	public void debugInfo(String s) {
+		if (debug >= 0) {
+			if (debug >= 2) {
+				System.out.println("  ".repeat(debug - 1) + s);
+			} else {
+				System.out.println(s);
+			}
+		}
+	}
+
+	public void debugInfo(String s, Collection<?> values) {
+		debugInfo(s + ": " + values.stream().map(Object::toString).collect(Collectors.joining("  ")));
 	}
 }

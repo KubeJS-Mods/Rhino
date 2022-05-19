@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class VariableSet {
+public class VariableSet implements UnitVariables {
 
 	private final Map<String, Unit> variables = new HashMap<>();
 
@@ -25,5 +25,10 @@ public class VariableSet {
 
 	public VariableSet createSubset() {
 		return new VariableSubset(this);
+	}
+
+	@Override
+	public final VariableSet getVariables() {
+		return this;
 	}
 }

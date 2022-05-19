@@ -3,8 +3,9 @@ package dev.latvian.mods.rhino.test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("unused")
 public class NBTTests {
-	public static RhinoTest TEST = new RhinoTest("nbt");
+	public static final RhinoTest TEST = new RhinoTest("nbt");
 
 	@Test
 	@DisplayName("Compound")
