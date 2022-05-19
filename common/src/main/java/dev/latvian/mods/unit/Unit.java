@@ -1,8 +1,20 @@
 package dev.latvian.mods.unit;
 
 public abstract class Unit {
-	public static Unit of(double value) {
-		return FixedNumberUnit.ofFixed(value);
+	public static Unit[] EMPTY_ARRAY = new Unit[0];
+
+	public static Unit of(Object value) {
+		if (value instanceof Unit u) {
+			return u;
+		} else if (value instanceof Number num) {
+			return FixedNumberUnit.ofFixed(num.doubleValue());
+		} else {
+			return UnitContext.DEFAULT.parse(String.valueOf(value));
+		}
+	}
+
+	public boolean isFixed() {
+		return false;
 	}
 
 	public abstract double get(UnitVariables variables);

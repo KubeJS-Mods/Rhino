@@ -15,7 +15,7 @@ public class VariableSet implements UnitVariables {
 	}
 
 	public VariableSet set(String name, double value) {
-		return set(name, Unit.of(value));
+		return set(name, FixedNumberUnit.ofFixed(value));
 	}
 
 	@Nullable

@@ -14,7 +14,7 @@ public record StringUnitToken(String name) implements UnitToken {
 		}
 
 		try {
-			return Unit.of(Double.parseDouble(name));
+			return FixedNumberUnit.ofFixed(Double.parseDouble(name));
 		} catch (Exception ex) {
 			return VariableUnit.of(name);
 		}

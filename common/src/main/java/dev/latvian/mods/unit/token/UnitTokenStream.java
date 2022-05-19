@@ -1,6 +1,6 @@
 package dev.latvian.mods.unit.token;
 
-import dev.latvian.mods.unit.ColorUnit;
+import dev.latvian.mods.unit.FixedColorUnit;
 import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitContext;
 
@@ -54,9 +54,9 @@ public final class UnitTokenStream {
 					current.setLength(0);
 
 					inputStringPos.add(cpos);
-					infix.add(new ColorUnit(color, alpha));
+					infix.add(new FixedColorUnit(color, alpha));
 				} else {
-					throw new IllegalStateException("Invalid color code @ " + charStream.position);
+					throw new UnitParseException("Invalid color code @ " + charStream.position);
 				}
 			} else {
 				if (symbol != null && current.length() > 0) {
@@ -92,9 +92,13 @@ public final class UnitTokenStream {
 			context.debugInfo("Infix", infix);
 		}
 
-		var unitToken = readFully();
-		var rawUnit = unitToken.interpret(this);
-		this.unit = rawUnit.optimize();
+		try {
+			var unitToken = readFully();
+			var rawUnit = unitToken.interpret(this);
+			this.unit = rawUnit.optimize();
+		} catch (UnitInterpretException ex) {
+			throw new RuntimeException("Error parsing '" + input + "' @ " + (infixPos < 0 || infixPos >= inputStringPos.size() ? -1 : inputStringPos.get(infixPos)), ex);
+		}
 	}
 
 	public Unit getUnit() {
@@ -108,7 +112,7 @@ public final class UnitTokenStream {
 
 	public UnitToken nextToken() {
 		if (++infixPos >= infix.size()) {
-			throw parsingError("EOL!");
+			throw new UnitInterpretException("EOL!");
 		}
 
 		return infix.get(infixPos);
@@ -138,7 +142,7 @@ public final class UnitTokenStream {
 			postfix.infix().add(readFully());
 
 			if (!ifNextToken(UnitSymbol.RP)) {
-				throw parsingError("Expected ')', got '" + peekToken() + "'!");
+				throw new UnitInterpretException("Expected ')', got '" + peekToken() + "'!");
 			}
 		} else {
 			postfix.infix().add(readSingleToken());
@@ -158,7 +162,7 @@ public final class UnitTokenStream {
 			var left = readFully();
 
 			if (!ifNextToken(UnitSymbol.COLON)) {
-				throw parsingError("Expected ':', got '" + peekToken() + "'!");
+				throw new UnitInterpretException("Expected ':', got '" + peekToken() + "'!");
 			}
 
 			var right = readFully();
@@ -196,12 +200,10 @@ public final class UnitTokenStream {
 			}
 
 			return str;
+		} else if (token instanceof FixedColorUnit) {
+			return token;
 		}
 
-		throw parsingError("Unexpected token: " + token);
-	}
-
-	public IllegalStateException parsingError(String error) {
-		return new IllegalStateException("Error parsing '" + input + "' @ " + (infixPos < 0 || infixPos >= inputStringPos.size() ? -1 : inputStringPos.get(infixPos)) + ": " + error);
+		throw new UnitInterpretException("Unexpected token: " + token);
 	}
 }

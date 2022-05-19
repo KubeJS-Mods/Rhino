@@ -13,7 +13,7 @@ public interface UnitToken {
 		return false;
 	}
 
-	default void unstack(UnitTokenStream stream, Stack<UnitToken> resultStack) {
+	default void unstack(Stack<UnitToken> resultStack) {
 		resultStack.push(this);
 	}
 }

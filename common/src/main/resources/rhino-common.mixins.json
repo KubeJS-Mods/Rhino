@@ -4,16 +4,13 @@
 	"compatibilityLevel": "JAVA_17",
 	"mixins": [
 		"ChatFormattingMixin",
-		"CompoundTagMixin",
 		"DirectionMixin",
 		"DyeColorMixin",
 		"NumericTagMixin",
 		"ResourceKeyMixin",
 		"ResourceLocationMixin",
 		"StringTagMixin",
-		"TextColorMixin",
-		"Vec3iMixin",
-		"Vec3Mixin"
+		"TextColorMixin"
 	],
 	"client": [
 	],

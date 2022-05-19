@@ -93,13 +93,31 @@ public class UnitTests {
 	@Test
 	@DisplayName("Color RGB")
 	public void colorRGB() {
-		assertEval("#FF0044", 0xFF0044);
+		assertEval("#FF0044", 0xFFFF0044);
 	}
 
 	@Test
 	@DisplayName("Color ARGB")
 	public void colorARGB() {
 		assertEval("#FFFF0044", 0xFFFF0044);
+	}
+
+	@Test
+	@DisplayName("Color Function RGB")
+	public void colorFunc3() {
+		assertEval("color(1, 0, 0.5)", 0xFFFF007F);
+	}
+
+	@Test
+	@DisplayName("Color Function RGBA")
+	public void colorFunc4() {
+		assertEval("color(1, 0, 0.5, 0.5)", 0x7FFF007F);
+	}
+
+	@Test
+	@DisplayName("Color Function RGB+A")
+	public void colorFunc2() {
+		assertEval("color(#99FF007F, 0.5)", 0x7FFF007F);
 	}
 
 	@Test
@@ -129,7 +147,7 @@ public class UnitTests {
 	@Test
 	@DisplayName("Ternary I: simple")
 	public void ternary1() {
-		assertEval("3 > 2 ? 6 : 4", 6);
+		assertEval("3 >= 2 ? 6 : 4", 6);
 	}
 
 	@Test

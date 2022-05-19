@@ -1,25 +1,27 @@
 package dev.latvian.mods.unit.token;
 
 import dev.latvian.mods.unit.Unit;
-import dev.latvian.mods.unit.function.FuncUnit;
+import dev.latvian.mods.unit.function.FunctionFactory;
 
 import java.util.List;
 
 public record FunctionUnitToken(String name, List<UnitToken> args) implements UnitToken {
 	@Override
 	public Unit interpret(UnitTokenStream stream) {
-		FuncUnit func = stream.context.getFunction(name);
+		FunctionFactory factory = stream.context.getFunctionFactory(name);
 
-		if (func == null) {
+		if (factory == null) {
 			throw new IllegalStateException("Unknown function '" + name + "'!");
-		} else if (func.args.length != args.size()) {
-			throw new IllegalStateException("Function '" + name + "' expects " + func.args.length + " arguments, but " + args.size() + " were given!");
+		} else if (args.isEmpty()) {
+			return factory.supplier().create(factory, Unit.EMPTY_ARRAY);
 		}
+
+		Unit[] newArgs = new Unit[args.size()];
 
 		for (int i = 0; i < args.size(); i++) {
-			func.args[i] = args.get(i).interpret(stream);
+			newArgs[i] = args.get(i).interpret(stream);
 		}
 
-		return func;
+		return factory.supplier().create(factory, newArgs);
 	}
 }

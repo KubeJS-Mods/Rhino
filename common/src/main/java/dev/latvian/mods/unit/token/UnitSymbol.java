@@ -132,17 +132,17 @@ public enum UnitSymbol implements UnitToken {
 	}
 
 	@Override
-	public void unstack(UnitTokenStream stream, Stack<UnitToken> stack) {
+	public void unstack(Stack<UnitToken> stack) {
 		if (op != null) {
 			if (stack.size() < 2) {
-				throw stream.parsingError("Not enough elements in stack!");
+				throw new UnitInterpretException("Not enough elements in stack!");
 			}
 
 			var right = stack.pop();
 			var left = stack.pop();
 			stack.push(new OpResultUnitToken(this, left, right));
 		} else {
-			throw stream.parsingError("Unexpected symbol '" + this + "'!");
+			throw new UnitInterpretException("Unexpected symbol '" + this + "'!");
 		}
 	}
 

@@ -48,6 +48,11 @@ public final class FixedNumberUnit extends Unit {
 	}
 
 	@Override
+	public boolean isFixed() {
+		return true;
+	}
+
+	@Override
 	public double get(UnitVariables variables) {
 		return value;
 	}

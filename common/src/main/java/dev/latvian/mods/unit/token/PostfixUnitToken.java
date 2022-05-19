@@ -87,7 +87,7 @@ public record PostfixUnitToken(List<UnitToken> infix) implements UnitToken {
 		var resultStack = new Stack<UnitToken>();
 
 		for (var token : postfix) {
-			token.unstack(stream, resultStack);
+			token.unstack(resultStack);
 
 			if (stream.context.isDebug()) {
 				stream.context.debugInfo("Result Stack", resultStack);

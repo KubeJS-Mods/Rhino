@@ -25,8 +25,8 @@ public class BitNotOpUnit extends UnaryOpUnit {
 	public Unit optimize() {
 		unit = unit.optimize();
 
-		if (unit instanceof FixedNumberUnit) {
-			return Unit.of(getInt(EmptyVariableSet.INSTANCE));
+		if (unit.isFixed()) {
+			return FixedNumberUnit.ofFixed(getInt(EmptyVariableSet.INSTANCE));
 		}
 
 		return this;

@@ -5,10 +5,10 @@ import dev.latvian.mods.unit.function.Atan2FuncUnit;
 import dev.latvian.mods.unit.function.AtanFuncUnit;
 import dev.latvian.mods.unit.function.BoolFuncUnit;
 import dev.latvian.mods.unit.function.CeilFuncUnit;
+import dev.latvian.mods.unit.function.ColorFuncUnit;
 import dev.latvian.mods.unit.function.CosFuncUnit;
 import dev.latvian.mods.unit.function.DegFuncUnit;
 import dev.latvian.mods.unit.function.FloorFuncUnit;
-import dev.latvian.mods.unit.function.FuncUnit;
 import dev.latvian.mods.unit.function.FunctionFactory;
 import dev.latvian.mods.unit.function.IfFuncUnit;
 import dev.latvian.mods.unit.function.Log10FuncUnit;
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class UnitContext {
@@ -61,6 +60,7 @@ public class UnitContext {
 		DEFAULT.addFunction("floor", FloorFuncUnit::new);
 		DEFAULT.addFunction("ceil", CeilFuncUnit::new);
 		DEFAULT.addFunction("bool", BoolFuncUnit::new);
+		DEFAULT.addFunctionFactory("color", ColorFuncUnit::colorOf);
 		// addFunc("color", a -> new ColorUnit(a.get(0), a.get(1), a.get(2), a.size() >= 4 ? a.get(3) : null));
 	}
 
@@ -68,26 +68,18 @@ public class UnitContext {
 	private final Map<String, Unit> cache = new HashMap<>();
 	private int debug = -1;
 
-	public void addFunction(String name, Supplier<FuncUnit> func) {
+	public void addFunctionFactory(String name, FunctionFactory.FuncSupplier func) {
 		FunctionFactory factory = new FunctionFactory(name.toLowerCase(), func);
 		functions.put(factory.name(), factory);
 	}
 
+	public void addFunction(String name, FunctionFactory.SimpleFuncSupplier func) {
+		addFunctionFactory(name, func);
+	}
+
 	@Nullable
-	public FuncUnit getFunction(String name) {
-		FunctionFactory func = functions.get(name.toLowerCase());
-
-		if (func == null) {
-			return null;
-		}
-
-		FuncUnit unit = func.factory().get();
-
-		if (unit != null) {
-			unit.factory = func;
-		}
-
-		return unit;
+	public FunctionFactory getFunctionFactory(String name) {
+		return functions.get(name.toLowerCase());
 	}
 
 	public UnitContext sub() {
