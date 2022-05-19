@@ -2,15 +2,9 @@ package dev.latvian.mods.unit.operator;
 
 import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
-import dev.latvian.mods.unit.token.UnitTokenStream;
 
 public class TernaryOpUnit extends OpUnit {
 	public Unit cond;
-
-	@Override
-	public int getPrecedence() {
-		return 100;
-	}
 
 	@Override
 	public double get(UnitVariables variables) {
@@ -62,13 +56,5 @@ public class TernaryOpUnit extends OpUnit {
 		}
 
 		builder.append(')');
-	}
-
-	@Override
-	public void interpret(UnitTokenStream tokenStream) {
-		right = tokenStream.resultStack.pop();
-		left = tokenStream.resultStack.pop();
-		cond = tokenStream.resultStack.pop();
-		tokenStream.resultStack.push(this);
 	}
 }

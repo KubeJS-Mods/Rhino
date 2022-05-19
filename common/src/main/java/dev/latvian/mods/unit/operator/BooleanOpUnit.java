@@ -1,13 +1,9 @@
 package dev.latvian.mods.unit.operator;
 
+import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
 
 public abstract class BooleanOpUnit extends OpUnit {
-	@Override
-	public int getPrecedence() {
-		return 1;
-	}
-
 	@Override
 	public final double get(UnitVariables variables) {
 		return getBoolean(variables) ? 1D : 0D;
@@ -25,4 +21,11 @@ public abstract class BooleanOpUnit extends OpUnit {
 
 	@Override
 	public abstract boolean getBoolean(UnitVariables variables);
+
+	@Override
+	public Unit optimize() {
+		left = left.optimize();
+		right = right.optimize();
+		return this;
+	}
 }

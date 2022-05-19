@@ -1,7 +1,5 @@
 package dev.latvian.mods.unit.token;
 
-import dev.latvian.mods.unit.SymbolUnit;
-import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.operator.AddOpUnit;
 import dev.latvian.mods.unit.operator.AndOpUnit;
 import dev.latvian.mods.unit.operator.BitAndOpUnit;
@@ -19,71 +17,89 @@ import dev.latvian.mods.unit.operator.ModOpUnit;
 import dev.latvian.mods.unit.operator.MulOpUnit;
 import dev.latvian.mods.unit.operator.NegateOpUnit;
 import dev.latvian.mods.unit.operator.NeqOpUnit;
-import dev.latvian.mods.unit.operator.OpUnit;
+import dev.latvian.mods.unit.operator.OperatorFactory;
 import dev.latvian.mods.unit.operator.OrOpUnit;
 import dev.latvian.mods.unit.operator.PowOpUnit;
 import dev.latvian.mods.unit.operator.RshOpUnit;
 import dev.latvian.mods.unit.operator.SkipOpUnit;
 import dev.latvian.mods.unit.operator.SubOpUnit;
 import dev.latvian.mods.unit.operator.TernaryOpUnit;
+import dev.latvian.mods.unit.operator.UnaryOperatorFactory;
 import dev.latvian.mods.unit.operator.XorOpUnit;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Supplier;
+import java.util.Stack;
 
-public enum UnitSymbol {
+public enum UnitSymbol implements UnitToken {
 	// Misc
 	COMMA(","),
 	LP("("),
 	RP(")"),
 	HASH("#"),
-	HOOK("?", TernaryOpUnit::new),
-	COLON(":", SkipOpUnit::new),
+	HOOK("?", 0, TernaryOpUnit::new),
+	COLON(":", 100, SkipOpUnit::new),
 	NEGATE("-", NegateOpUnit::new),
 	// Operators
-	ADD("+", AddOpUnit::new),
-	SUB("-", SubOpUnit::new),
-	MUL("*", MulOpUnit::new),
-	DIV("/", DivOpUnit::new),
-	MOD("%", ModOpUnit::new),
-	POW("**", PowOpUnit::new),
+	ADD("+", 2, AddOpUnit::new),
+	SUB("-", 2, SubOpUnit::new),
+	MUL("*", 3, MulOpUnit::new),
+	DIV("/", 3, DivOpUnit::new),
+	MOD("%", 3, ModOpUnit::new),
+	POW("**", 4, PowOpUnit::new),
 	// Int Operators
-	LSH("<<", LshOpUnit::new),
-	RSH(">>", RshOpUnit::new),
-	BIT_AND("&", BitAndOpUnit::new),
-	BIT_OR("|", BitOrOpUnit::new),
-	XOR("^", XorOpUnit::new),
+	LSH("<<", 2, LshOpUnit::new),
+	RSH(">>", 2, RshOpUnit::new),
+	BIT_AND("&", 2, BitAndOpUnit::new),
+	BIT_OR("|", 2, BitOrOpUnit::new),
+	XOR("^", 2, XorOpUnit::new),
 	BIT_NOT("~", BitNotOpUnit::new),
 	// Conditions
-	EQ("==", EqOpUnit::new),
-	NEQ("!=", NeqOpUnit::new),
-	LT("<", LtOpUnit::new),
-	GT(">", GtOpUnit::new),
-	LTE("<=", LteOpUnit::new),
-	GTE(">=", GteOpUnit::new),
-	AND("&&", AndOpUnit::new),
-	OR("||", OrOpUnit::new),
+	EQ("==", 1, EqOpUnit::new),
+	NEQ("!=", 1, NeqOpUnit::new),
+	LT("<", 1, LtOpUnit::new),
+	GT(">", 1, GtOpUnit::new),
+	LTE("<=", 1, LteOpUnit::new),
+	GTE(">=", 1, GteOpUnit::new),
+	AND("&&", 1, AndOpUnit::new),
+	OR("||", 1, OrOpUnit::new),
 	BOOL_NOT("!", BoolNotOpUnit::new),
 
 	;
 
 	public final String symbol;
+	public final int precedence;
 	public final OperatorFactory op;
-	public final SymbolUnit unit;
-
-	UnitSymbol(String s, Supplier<OpUnit> opUnit) {
-		symbol = s;
-		op = opUnit == null ? null : new OperatorFactory(this, opUnit);
-		unit = new SymbolUnit(this);
-	}
+	public final UnaryOperatorFactory unaryOp;
 
 	UnitSymbol(String s) {
-		this(s, null);
+		symbol = s;
+		precedence = 0;
+		op = null;
+		unaryOp = null;
+	}
+
+	UnitSymbol(String s, int p, OperatorFactory.OpSupplier opUnit) {
+		symbol = s;
+		precedence = p;
+		op = new OperatorFactory(this, opUnit);
+		unaryOp = null;
+	}
+
+	UnitSymbol(String s, UnaryOperatorFactory.OpSupplier unaryOpUnit) {
+		symbol = s;
+		precedence = 0;
+		op = null;
+		unaryOp = new UnaryOperatorFactory(this, unaryOpUnit);
 	}
 
 	@Override
 	public String toString() {
 		return symbol;
+	}
+
+	@Override
+	public boolean shouldNegate() {
+		return this != RP;
 	}
 
 	@Nullable
@@ -113,7 +129,28 @@ public enum UnitSymbol {
 		};
 	}
 
-	public boolean is(Unit unit) {
-		return unit instanceof SymbolUnit s && s.symbol == this;
+	public boolean is(UnitToken next) {
+		return next == this;
+	}
+
+	@Override
+	public void unstack(Stack<UnitToken> stack) {
+		if (op != null) {
+			var right = stack.pop();
+			var left = stack.pop();
+
+			if (this == HOOK) {
+				var cond = stack.pop();
+				stack.push(new TernaryOpUnitToken(cond, left, right));
+			} else {
+				stack.push(new OpResultUnitToken(this, left, right));
+			}
+		} else {
+			throw new IllegalStateException("Unexpected symbol '" + this + "'!");
+		}
+	}
+
+	public final boolean hasHigherPrecedenceThan(UnitSymbol operator) {
+		return operator.precedence <= precedence;
 	}
 }

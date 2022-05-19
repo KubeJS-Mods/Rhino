@@ -1,31 +1,27 @@
 package dev.latvian.mods.unit.operator;
 
+import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
-import dev.latvian.mods.unit.token.UnitTokenStream;
 
-public class BoolNotOpUnit extends BooleanOpUnit {
+public class BoolNotOpUnit extends UnaryOpUnit {
+	@Override
+	public double get(UnitVariables variables) {
+		return getBoolean(variables) ? 1.0D : 0.0D;
+	}
+
+	@Override
+	public int getInt(UnitVariables variables) {
+		return getBoolean(variables) ? 1 : 0;
+	}
+
 	@Override
 	public boolean getBoolean(UnitVariables variables) {
-		return !right.getBoolean(variables);
+		return !unit.getBoolean(variables);
 	}
 
 	@Override
-	public void toString(StringBuilder builder) {
-		builder.append('(');
-		builder.append(op.symbol().symbol);
-
-		if (right == null) {
-			builder.append("null");
-		} else {
-			right.toString(builder);
-		}
-
-		builder.append(')');
-	}
-
-	@Override
-	public void interpret(UnitTokenStream tokenStream) {
-		right = tokenStream.resultStack.pop();
-		tokenStream.resultStack.push(this);
+	public Unit optimize() {
+		unit = unit.optimize();
+		return this;
 	}
 }
