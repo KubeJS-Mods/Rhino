@@ -8,18 +8,19 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("unused")
 public class UnitTests {
 	public static UnitContext CONTEXT = UnitContext.DEFAULT.sub();
 	public static VariableSet VARIABLE_SET = new VariableSet();
-	public static final double TEST_VAR = 3.5D * Math.random();
-	public static final double TEST_VAR_2 = 2D * Math.random();
-	public static final double TEST_VAR_3 = 100D * Math.random();
+	public static final double $test = 3.5D * Math.random();
+	public static final double $test2 = 2D * Math.random();
+	public static final double $test3 = 100D * Math.random();
 
 	static {
 		CONTEXT.pushDebug();
-		VARIABLE_SET.set("$test", TEST_VAR);
-		VARIABLE_SET.set("$test2", TEST_VAR_2);
-		VARIABLE_SET.set("$test3", TEST_VAR_3);
+		VARIABLE_SET.set("$test", $test);
+		VARIABLE_SET.set("$test2", $test2);
+		VARIABLE_SET.set("$test3", $test3);
 	}
 
 	public static double eval(String input) {
@@ -50,13 +51,13 @@ public class UnitTests {
 	@Test
 	@DisplayName("Variable")
 	public void variable() {
-		assertEval("$test", TEST_VAR);
+		assertEval("$test", $test);
 	}
 
 	@Test
 	@DisplayName("Negative Variable")
 	public void negativeVariable() {
-		assertEval("-$test", -TEST_VAR);
+		assertEval("-$test", -$test);
 	}
 
 	@Test
@@ -140,13 +141,13 @@ public class UnitTests {
 	@Test
 	@DisplayName("Ternary III: var/neg")
 	public void ternary3() {
-		assertEval("$test < 0.5 ? -30 : 40", TEST_VAR < 0.5 ? -30 : 40);
+		assertEval("$test < 0.5 ? -30 : 40", $test < 0.5 ? -30 : 40);
 	}
 
 	@Test
 	@DisplayName("Ternary IV: 3 vars")
 	public void ternary4() {
-		assertEval("$test<0.5?($test2<1.5?1.5:-4):($test3<50*-3?1.5:-4)", TEST_VAR < 0.5 ? (TEST_VAR_2 < 1.5 ? 1.5 : -4) : (TEST_VAR_3 < 50 * -3 ? 1.5 : -4));
+		assertEval("$test < 0.5 ? $test2 < 1.5 ? 1.5 : -4 : $test3 < 50 * -3 ? 1.5 : -4", $test < 0.5 ? $test2 < 1.5 ? 1.5 : -4 : $test3 < 50 * -3 ? 1.5 : -4);
 	}
 
 	@Test
@@ -170,12 +171,12 @@ public class UnitTests {
 	@Test
 	@DisplayName("Functions IV: sin/var combo")
 	public void functions4() {
-		assertEval("sin($test*10)*5", Math.sin(TEST_VAR * 10D) * 5D);
+		assertEval("sin($test*10)*5", Math.sin($test * 10D) * 5D);
 	}
 
 	@Test
 	@DisplayName("Functions V: sin/time/var combo")
 	public void functions5() {
-		assertEval("sin(roundedTime() * 1.1) * (($test - 32) / 2)", Math.sin(RoundedTimeUnit.time() * 1.1D) * ((TEST_VAR - 32D) / 2D));
+		assertEval("sin(roundedTime() * 1.1) * (($test - 32) / 2)", Math.sin(RoundedTimeUnit.time() * 1.1D) * (($test - 32D) / 2D));
 	}
 }

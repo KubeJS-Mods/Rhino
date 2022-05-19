@@ -16,7 +16,7 @@ public abstract class OpUnit extends Unit {
 		right = right.optimize();
 
 		if (left instanceof FixedNumberUnit && right instanceof FixedNumberUnit) {
-			return FixedNumberUnit.ofFixed(get(EmptyVariableSet.INSTANCE));
+			return Unit.of(get(EmptyVariableSet.INSTANCE));
 		}
 
 		return this;

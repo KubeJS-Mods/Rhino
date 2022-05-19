@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+@SuppressWarnings("unused")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class OptionalChainingTests {
 	public static final RhinoTest TEST = new RhinoTest("optionalChaining").shareScope();

@@ -14,7 +14,7 @@ public abstract class UnaryOpUnit extends Unit {
 		unit = unit.optimize();
 
 		if (unit instanceof FixedNumberUnit) {
-			return FixedNumberUnit.ofFixed(get(EmptyVariableSet.INSTANCE));
+			return Unit.of(get(EmptyVariableSet.INSTANCE));
 		}
 
 		return this;

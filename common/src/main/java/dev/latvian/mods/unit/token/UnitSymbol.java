@@ -21,9 +21,7 @@ import dev.latvian.mods.unit.operator.OperatorFactory;
 import dev.latvian.mods.unit.operator.OrOpUnit;
 import dev.latvian.mods.unit.operator.PowOpUnit;
 import dev.latvian.mods.unit.operator.RshOpUnit;
-import dev.latvian.mods.unit.operator.SkipOpUnit;
 import dev.latvian.mods.unit.operator.SubOpUnit;
-import dev.latvian.mods.unit.operator.TernaryOpUnit;
 import dev.latvian.mods.unit.operator.UnaryOperatorFactory;
 import dev.latvian.mods.unit.operator.XorOpUnit;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +34,8 @@ public enum UnitSymbol implements UnitToken {
 	LP("("),
 	RP(")"),
 	HASH("#"),
-	HOOK("?", 0, TernaryOpUnit::new),
-	COLON(":", 100, SkipOpUnit::new),
+	HOOK("?"),
+	COLON(":"),
 	NEGATE("-", NegateOpUnit::new),
 	// Operators
 	ADD("+", 2, AddOpUnit::new),
@@ -134,19 +132,17 @@ public enum UnitSymbol implements UnitToken {
 	}
 
 	@Override
-	public void unstack(Stack<UnitToken> stack) {
+	public void unstack(UnitTokenStream stream, Stack<UnitToken> stack) {
 		if (op != null) {
+			if (stack.size() < 2) {
+				throw stream.parsingError("Not enough elements in stack!");
+			}
+
 			var right = stack.pop();
 			var left = stack.pop();
-
-			if (this == HOOK) {
-				var cond = stack.pop();
-				stack.push(new TernaryOpUnitToken(cond, left, right));
-			} else {
-				stack.push(new OpResultUnitToken(this, left, right));
-			}
+			stack.push(new OpResultUnitToken(this, left, right));
 		} else {
-			throw new IllegalStateException("Unexpected symbol '" + this + "'!");
+			throw stream.parsingError("Unexpected symbol '" + this + "'!");
 		}
 	}
 

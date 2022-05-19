@@ -3,6 +3,7 @@ package dev.latvian.mods.rhino.test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("unused")
 public class ScopeTests {
 	public static final RhinoTest TEST = new RhinoTest("scope");
 

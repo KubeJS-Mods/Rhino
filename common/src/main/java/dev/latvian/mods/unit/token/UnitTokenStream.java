@@ -154,7 +154,19 @@ public final class UnitTokenStream {
 			}
 		}
 
-		return postfix.infix().size() == 1 ? postfix.infix().get(0) : postfix;
+		if (ifNextToken(UnitSymbol.HOOK)) {
+			var left = readFully();
+
+			if (!ifNextToken(UnitSymbol.COLON)) {
+				throw parsingError("Expected ':', got '" + peekToken() + "'!");
+			}
+
+			var right = readFully();
+
+			return new TernaryUnitToken(postfix.normalize(), left, right);
+		}
+
+		return postfix.normalize();
 	}
 
 	public UnitToken readSingleToken() {

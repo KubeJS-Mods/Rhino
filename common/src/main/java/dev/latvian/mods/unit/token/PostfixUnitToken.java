@@ -43,14 +43,11 @@ public record PostfixUnitToken(List<UnitToken> infix) implements UnitToken {
 							}
 						} else {
 							pushedCurrent = true;
+							operatorsStack.push(nextOperator);
 
-							if (!nextOperator.is(UnitSymbol.COLON)) {
-								operatorsStack.push(nextOperator);
-
-								if (stream.context.isDebug()) {
-									stream.context.debugInfo("Operator Stack", operatorsStack);
-									stream.context.debugInfo("Operand Stack", postfix);
-								}
+							if (stream.context.isDebug()) {
+								stream.context.debugInfo("Operator Stack", operatorsStack);
+								stream.context.debugInfo("Operand Stack", postfix);
 							}
 
 							break;
@@ -60,7 +57,7 @@ public record PostfixUnitToken(List<UnitToken> infix) implements UnitToken {
 					}
 				}
 
-				if (!pushedCurrent && !nextOperator.is(UnitSymbol.COLON)) {
+				if (!pushedCurrent) {
 					operatorsStack.push(nextOperator);
 
 					if (stream.context.isDebug()) {
@@ -90,7 +87,7 @@ public record PostfixUnitToken(List<UnitToken> infix) implements UnitToken {
 		var resultStack = new Stack<UnitToken>();
 
 		for (var token : postfix) {
-			token.unstack(resultStack);
+			token.unstack(stream, resultStack);
 
 			if (stream.context.isDebug()) {
 				stream.context.debugInfo("Result Stack", resultStack);
@@ -99,6 +96,10 @@ public record PostfixUnitToken(List<UnitToken> infix) implements UnitToken {
 
 		var lastUnit = resultStack.pop();
 		return lastUnit.interpret(stream);
+	}
+
+	public UnitToken normalize() {
+		return infix.size() == 1 ? infix.get(0) : this;
 	}
 
 	@Override
