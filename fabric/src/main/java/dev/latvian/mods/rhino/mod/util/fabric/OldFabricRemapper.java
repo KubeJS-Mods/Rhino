@@ -3,7 +3,7 @@ package dev.latvian.mods.rhino.mod.util.fabric;
 import dev.latvian.mods.rhino.mod.util.MinecraftRemapper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.impl.launch.FabricLauncherBase;
+import net.fabricmc.loader.launch.common.FabricLauncherBase;
 import net.fabricmc.mapping.tree.ClassDef;
 import net.fabricmc.mapping.tree.FieldDef;
 import net.fabricmc.mapping.tree.MethodDef;
@@ -12,8 +12,8 @@ import net.fabricmc.mapping.tree.TinyTree;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FabricRemapper extends MinecraftRemapper {
-	FabricRemapper() {
+public class OldFabricRemapper extends MinecraftRemapper {
+	OldFabricRemapper() {
 	}
 
 	@Override
@@ -28,7 +28,6 @@ public class FabricRemapper extends MinecraftRemapper {
 
 	@Override
 	public String getRuntimeMappings() {
-		// still doesnt know difference between mojamp and yarn in dev, but better than nothing
 		return FabricLauncherBase.getLauncher().getTargetNamespace();
 	}
 
