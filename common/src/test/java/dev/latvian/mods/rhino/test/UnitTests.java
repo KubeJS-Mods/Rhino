@@ -105,19 +105,19 @@ public class UnitTests {
 	@Test
 	@DisplayName("Color Function RGB")
 	public void colorFunc3() {
-		assertEval("color(1, 0, 0.5)", 0xFFFF007F);
+		assertEval("rgb(1, 0, 0.5)", 0xFFFF007F);
 	}
 
 	@Test
 	@DisplayName("Color Function RGBA")
 	public void colorFunc4() {
-		assertEval("color(1, 0, 0.5, 0.5)", 0x7FFF007F);
+		assertEval("rgb(1, 0, 0.5, 0.5)", 0x7FFF007F);
 	}
 
 	@Test
 	@DisplayName("Color Function RGB+A")
 	public void colorFunc2() {
-		assertEval("color(#99FF007F, 0.5)", 0x7FFF007F);
+		assertEval("rgb(#99FF007F, 0.5)", 0x7FFF007F);
 	}
 
 	@Test

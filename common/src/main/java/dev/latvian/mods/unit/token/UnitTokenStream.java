@@ -54,7 +54,7 @@ public final class UnitTokenStream {
 					current.setLength(0);
 
 					inputStringPos.add(cpos);
-					infix.add(new FixedColorUnit(color, alpha));
+					infix.add(FixedColorUnit.of(color, alpha));
 				} else {
 					throw new UnitParseException("Invalid color code @ " + charStream.position);
 				}

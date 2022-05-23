@@ -13,12 +13,12 @@ public abstract class ChatFormattingMixin implements Color {
 	private Integer color;
 
 	@Override
-	public int getArgbKJS() {
+	public int getArgbJS() {
 		return color == null ? 0xFF000000 : (0xFF000000 | color);
 	}
 
 	@Override
-	public int getRgbKJS() {
+	public int getRgbJS() {
 		return color == null ? 0 : color;
 	}
 }

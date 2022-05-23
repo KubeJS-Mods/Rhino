@@ -13,17 +13,17 @@ public abstract class TextColorMixin implements Color {
 	private int value;
 
 	@Override
-	public int getArgbKJS() {
+	public int getArgbJS() {
 		return 0xFF000000 | value;
 	}
 
 	@Override
-	public int getRgbKJS() {
+	public int getRgbJS() {
 		return value;
 	}
 
 	@Override
-	public String getSerializeKJS() {
+	public String getSerializeJS() {
 		return serialize();
 	}
 

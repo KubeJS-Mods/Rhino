@@ -3,18 +3,14 @@ package dev.latvian.mods.unit.function;
 import dev.latvian.mods.unit.UnitVariables;
 
 public class RoundedTimeUnit extends FuncUnit {
-	private static final RoundedTimeUnit INSTANCE = new RoundedTimeUnit();
+	public static final FunctionFactory FACTORY = FunctionFactory.of0("roundedTime", RoundedTimeUnit::new);
 
 	public static long time() {
-		return Math.round(System.nanoTime() / 1_000_000_000D);
-	}
-
-	public static RoundedTimeUnit getInstance() {
-		return INSTANCE;
+		return Math.round(System.currentTimeMillis() / 1000D);
 	}
 
 	private RoundedTimeUnit() {
-		super(0);
+		super(FACTORY);
 	}
 
 	@Override

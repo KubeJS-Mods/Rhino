@@ -11,14 +11,14 @@ public class SimpleColorWithAlpha implements Color {
 	}
 
 	@Override
-	public int getArgbKJS() {
+	public int getArgbJS() {
 		return value;
 	}
 
 	@Override
-	public TextColor createTextColorKJS() {
+	public TextColor createTextColorJS() {
 		if (textColor == null) {
-			textColor = TextColor.fromRgb(getRgbKJS());
+			textColor = TextColor.fromRgb(getRgbJS());
 		}
 
 		return textColor;
@@ -26,6 +26,6 @@ public class SimpleColorWithAlpha implements Color {
 
 	@Override
 	public String toString() {
-		return getHexKJS();
+		return getHexJS();
 	}
 }

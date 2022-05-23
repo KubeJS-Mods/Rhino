@@ -6,27 +6,27 @@ public final class NoColor implements Color {
 	private static final TextColor TEXT_COLOR = TextColor.fromRgb(0);
 
 	@Override
-	public int getArgbKJS() {
+	public int getArgbJS() {
 		return 0;
 	}
 
 	@Override
-	public int getRgbKJS() {
+	public int getRgbJS() {
 		return 0;
 	}
 
 	@Override
-	public String getHexKJS() {
+	public String getHexJS() {
 		return "#00000000";
 	}
 
 	@Override
-	public String getSerializeKJS() {
+	public String getSerializeJS() {
 		return "none";
 	}
 
 	@Override
-	public TextColor createTextColorKJS() {
+	public TextColor createTextColorJS() {
 		return TEXT_COLOR;
 	}
 }

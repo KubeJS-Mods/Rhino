@@ -1,14 +1,17 @@
 package dev.latvian.mods.unit.function;
 
+import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
 
-public class CosFuncUnit extends FuncUnit {
-	public CosFuncUnit() {
-		super(1);
+public class CosFuncUnit extends Func1Unit {
+	public static final FunctionFactory FACTORY = FunctionFactory.of1("cos", Unit::cos);
+
+	public CosFuncUnit(Unit a) {
+		super(FACTORY, a);
 	}
 
 	@Override
 	public double get(UnitVariables variables) {
-		return Math.cos(args[0].get(variables));
+		return Math.cos(a.get(variables));
 	}
 }

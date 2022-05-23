@@ -5,15 +5,11 @@ import dev.latvian.mods.unit.UnitVariables;
 import java.util.Random;
 
 public class RandomUnit extends FuncUnit {
-	private static final RandomUnit INSTANCE = new RandomUnit();
 	public static final Random RANDOM = new Random();
-
-	public static RandomUnit getInstance() {
-		return INSTANCE;
-	}
+	public static final FunctionFactory FACTORY = FunctionFactory.of0("random", RandomUnit::new);
 
 	private RandomUnit() {
-		super(0);
+		super(FACTORY);
 	}
 
 	@Override

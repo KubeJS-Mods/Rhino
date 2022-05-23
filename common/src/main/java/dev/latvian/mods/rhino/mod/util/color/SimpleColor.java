@@ -14,24 +14,24 @@ public class SimpleColor implements Color {
 	}
 
 	@Override
-	public int getArgbKJS() {
+	public int getArgbJS() {
 		return value;
 	}
 
 	@Override
-	public String getHexKJS() {
-		return String.format("#%06X", getRgbKJS());
+	public String getHexJS() {
+		return String.format("#%06X", getRgbJS());
 	}
 
 	@Override
 	public String toString() {
-		return getHexKJS();
+		return getHexJS();
 	}
 
 	@Override
-	public TextColor createTextColorKJS() {
+	public TextColor createTextColorJS() {
 		if (textColor == null) {
-			textColor = TextColor.fromRgb(getRgbKJS());
+			textColor = TextColor.fromRgb(getRgbJS());
 		}
 
 		return textColor;

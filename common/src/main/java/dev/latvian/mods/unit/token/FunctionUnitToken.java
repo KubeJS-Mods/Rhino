@@ -13,7 +13,7 @@ public record FunctionUnitToken(String name, List<UnitToken> args) implements Un
 		if (factory == null) {
 			throw new IllegalStateException("Unknown function '" + name + "'!");
 		} else if (args.isEmpty()) {
-			return factory.supplier().create(factory, Unit.EMPTY_ARRAY);
+			return factory.create(Unit.EMPTY_ARRAY);
 		}
 
 		Unit[] newArgs = new Unit[args.size()];
@@ -22,6 +22,6 @@ public record FunctionUnitToken(String name, List<UnitToken> args) implements Un
 			newArgs[i] = args.get(i).interpret(stream);
 		}
 
-		return factory.supplier().create(factory, newArgs);
+		return factory.create(newArgs);
 	}
 }

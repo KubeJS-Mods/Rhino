@@ -1,7 +1,13 @@
 package dev.latvian.mods.unit;
 
 public class TernaryUnit extends Unit {
-	public Unit cond, left, right;
+	public final Unit cond, left, right;
+
+	public TernaryUnit(Unit cond, Unit left, Unit right) {
+		this.cond = cond;
+		this.left = left;
+		this.right = right;
+	}
 
 	@Override
 	public double get(UnitVariables variables) {

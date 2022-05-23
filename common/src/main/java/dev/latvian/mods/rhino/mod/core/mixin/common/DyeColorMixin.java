@@ -17,17 +17,17 @@ public abstract class DyeColorMixin implements Color {
 	private int fireworkColor;
 
 	@Override
-	public int getArgbKJS() {
+	public int getArgbJS() {
 		return 0xFF000000 | textColor;
 	}
 
 	@Override
-	public int getRgbKJS() {
+	public int getRgbJS() {
 		return textColor;
 	}
 
 	@Override
-	public int getFireworkColorKJS() {
+	public int getFireworkColorJS() {
 		return fireworkColor;
 	}
 }

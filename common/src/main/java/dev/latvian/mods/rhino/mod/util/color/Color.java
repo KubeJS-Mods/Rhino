@@ -5,31 +5,31 @@ import dev.latvian.mods.rhino.util.SpecialEquality;
 import net.minecraft.network.chat.TextColor;
 
 public interface Color extends SpecialEquality {
-	int getArgbKJS();
+	int getArgbJS();
 
-	default int getRgbKJS() {
-		return getArgbKJS() & 0xFFFFFF;
+	default int getRgbJS() {
+		return getArgbJS() & 0xFFFFFF;
 	}
 
-	default int getFireworkColorKJS() {
-		return getRgbKJS();
+	default int getFireworkColorJS() {
+		return getRgbJS();
 	}
 
-	default String getHexKJS() {
-		return String.format("#%08X", getArgbKJS());
+	default String getHexJS() {
+		return String.format("#%08X", getArgbJS());
 	}
 
-	default String getSerializeKJS() {
-		return getHexKJS();
+	default String getSerializeJS() {
+		return getHexJS();
 	}
 
-	default TextColor createTextColorKJS() {
-		return TextColor.fromRgb(getRgbKJS());
+	default TextColor createTextColorJS() {
+		return TextColor.fromRgb(getRgbJS());
 	}
 
 	@Override
 	default boolean specialEquals(Object o, boolean shallow) {
 		Color c = ColorWrapper.of(o);
-		return shallow ? (getArgbKJS() == c.getArgbKJS()) : (getRgbKJS() == c.getRgbKJS());
+		return shallow ? (getArgbJS() == c.getArgbJS()) : (getRgbJS() == c.getRgbJS());
 	}
 }

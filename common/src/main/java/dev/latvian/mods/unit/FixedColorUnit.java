@@ -7,10 +7,22 @@ public class FixedColorUnit extends Unit implements UnitToken {
 	public static final FixedColorUnit BLACK = new FixedColorUnit(0xFF000000, true);
 	public static final FixedColorUnit TRANSPARENT = new FixedColorUnit(0x00000000, true);
 
+	public static FixedColorUnit of(int color, boolean alpha) {
+		if (color == 0xFFFFFFFF) {
+			return WHITE;
+		} else if (color == 0xFF000000) {
+			return BLACK;
+		} else if (color == 0x00000000) {
+			return TRANSPARENT;
+		}
+
+		return new FixedColorUnit(color, alpha);
+	}
+
 	public final int color;
 	public final boolean alpha;
 
-	public FixedColorUnit(int c, boolean a) {
+	private FixedColorUnit(int c, boolean a) {
 		color = c;
 		alpha = a;
 	}
@@ -35,11 +47,18 @@ public class FixedColorUnit extends Unit implements UnitToken {
 		builder.append(String.format(alpha ? "#%08X" : "#%06X", color));
 	}
 
-	public FixedColorUnit withAlpha(double v) {
-		if (v >= 1D) {
-			return new FixedColorUnit(color, false);
-		} else {
-			return new FixedColorUnit((color & 0xFFFFFF) | ((int) (v * 255) << 24), true);
+	@Override
+	public Unit withAlpha(Unit a) {
+		if (a instanceof FixedNumberUnit u) {
+			if (u.value >= 1D) {
+				return of(color, false);
+			} else if (u.value <= 0D) {
+				return of(color & 0xFFFFFF, true);
+			} else {
+				return of((color & 0xFFFFFF) | ((int) (u.value * 255D) << 24), true);
+			}
 		}
+
+		return super.withAlpha(a);
 	}
 }

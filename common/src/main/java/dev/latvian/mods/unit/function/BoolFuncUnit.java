@@ -1,10 +1,13 @@
 package dev.latvian.mods.unit.function;
 
+import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
 
-public class BoolFuncUnit extends FuncUnit {
-	public BoolFuncUnit() {
-		super(1);
+public class BoolFuncUnit extends Func1Unit {
+	public static final FunctionFactory FACTORY = FunctionFactory.of1("bool", Unit::bool);
+
+	public BoolFuncUnit(Unit a) {
+		super(FACTORY, a);
 	}
 
 	@Override
@@ -24,6 +27,6 @@ public class BoolFuncUnit extends FuncUnit {
 
 	@Override
 	public boolean getBoolean(UnitVariables variables) {
-		return args[0].getBoolean(variables);
+		return a.getBoolean(variables);
 	}
 }

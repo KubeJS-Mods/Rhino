@@ -1,5 +1,27 @@
 package dev.latvian.mods.unit;
 
+import dev.latvian.mods.unit.function.AbsFuncUnit;
+import dev.latvian.mods.unit.function.Atan2FuncUnit;
+import dev.latvian.mods.unit.function.AtanFuncUnit;
+import dev.latvian.mods.unit.function.BoolFuncUnit;
+import dev.latvian.mods.unit.function.CeilFuncUnit;
+import dev.latvian.mods.unit.function.ClampFuncUnit;
+import dev.latvian.mods.unit.function.CosFuncUnit;
+import dev.latvian.mods.unit.function.DegFuncUnit;
+import dev.latvian.mods.unit.function.FloorFuncUnit;
+import dev.latvian.mods.unit.function.LerpFuncUnit;
+import dev.latvian.mods.unit.function.Log10FuncUnit;
+import dev.latvian.mods.unit.function.Log1pFuncUnit;
+import dev.latvian.mods.unit.function.LogFuncUnit;
+import dev.latvian.mods.unit.function.MaxFuncUnit;
+import dev.latvian.mods.unit.function.MinFuncUnit;
+import dev.latvian.mods.unit.function.RadFuncUnit;
+import dev.latvian.mods.unit.function.SinFuncUnit;
+import dev.latvian.mods.unit.function.SmoothstepFuncUnit;
+import dev.latvian.mods.unit.function.SqFuncUnit;
+import dev.latvian.mods.unit.function.SqrtFuncUnit;
+import dev.latvian.mods.unit.function.TanFuncUnit;
+import dev.latvian.mods.unit.function.WithAlphaFuncUnit;
 import dev.latvian.mods.unit.operator.AddOpUnit;
 import dev.latvian.mods.unit.operator.AndOpUnit;
 import dev.latvian.mods.unit.operator.BitAndOpUnit;
@@ -25,16 +47,6 @@ import dev.latvian.mods.unit.operator.XorOpUnit;
 
 public abstract class Unit {
 	public static Unit[] EMPTY_ARRAY = new Unit[0];
-
-	public static Unit of(Object value) {
-		if (value instanceof Unit u) {
-			return u;
-		} else if (value instanceof Number num) {
-			return FixedNumberUnit.ofFixed(num.doubleValue());
-		} else {
-			return UnitContext.DEFAULT.parse(String.valueOf(value));
-		}
-	}
 
 	public boolean isFixed() {
 		return false;
@@ -66,7 +78,7 @@ public abstract class Unit {
 		return builder.toString();
 	}
 
-	// Functions
+	// Operators
 
 	public Unit positive() {
 		return this;
@@ -80,20 +92,40 @@ public abstract class Unit {
 		return new AddOpUnit(this, other);
 	}
 
+	public Unit add(double value) {
+		return add(FixedNumberUnit.of(value));
+	}
+
 	public Unit sub(Unit other) {
 		return new SubOpUnit(this, other);
+	}
+
+	public Unit sub(double value) {
+		return sub(FixedNumberUnit.of(value));
 	}
 
 	public Unit mul(Unit other) {
 		return new MulOpUnit(this, other);
 	}
 
+	public Unit mul(double value) {
+		return add(FixedNumberUnit.of(value));
+	}
+
 	public Unit div(Unit other) {
 		return new DivOpUnit(this, other);
 	}
 
+	public Unit div(double value) {
+		return add(FixedNumberUnit.of(value));
+	}
+
 	public Unit mod(Unit other) {
 		return new ModOpUnit(this, other);
+	}
+
+	public Unit mod(double value) {
+		return mod(FixedNumberUnit.of(value));
 	}
 
 	public Unit pow(Unit other) {
@@ -158,5 +190,95 @@ public abstract class Unit {
 
 	public Unit boolNot() {
 		return new BoolNotOpUnit(this);
+	}
+
+	// Functions
+
+	public Unit min(Unit other) {
+		return new MinFuncUnit(this, other);
+	}
+
+	public Unit max(Unit other) {
+		return new MaxFuncUnit(this, other);
+	}
+
+	public Unit abs() {
+		return new AbsFuncUnit(this);
+	}
+
+	public Unit sin() {
+		return new SinFuncUnit(this);
+	}
+
+	public Unit cos() {
+		return new CosFuncUnit(this);
+	}
+
+	public Unit tan() {
+		return new TanFuncUnit(this);
+	}
+
+	public Unit deg() {
+		return new DegFuncUnit(this);
+	}
+
+	public Unit rad() {
+		return new RadFuncUnit(this);
+	}
+
+	public Unit atan() {
+		return new AtanFuncUnit(this);
+	}
+
+	public Unit atan2(Unit other) {
+		return new Atan2FuncUnit(this, other);
+	}
+
+	public Unit log() {
+		return new LogFuncUnit(this);
+	}
+
+	public Unit log10() {
+		return new Log10FuncUnit(this);
+	}
+
+	public Unit log1p() {
+		return new Log1pFuncUnit(this);
+	}
+
+	public Unit sqrt() {
+		return new SqrtFuncUnit(this);
+	}
+
+	public Unit sq() {
+		return new SqFuncUnit(this);
+	}
+
+	public Unit floor() {
+		return new FloorFuncUnit(this);
+	}
+
+	public Unit ceil() {
+		return new CeilFuncUnit(this);
+	}
+
+	public Unit bool() {
+		return new BoolFuncUnit(this);
+	}
+
+	public Unit clamp(Unit a, Unit b) {
+		return new ClampFuncUnit(this, a, b);
+	}
+
+	public Unit lerp(Unit a, Unit b) {
+		return new LerpFuncUnit(this, a, b);
+	}
+
+	public Unit smoothstep() {
+		return new SmoothstepFuncUnit(this);
+	}
+
+	public Unit withAlpha(Unit a) {
+		return new WithAlphaFuncUnit(this, a);
 	}
 }

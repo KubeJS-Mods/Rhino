@@ -31,7 +31,8 @@ public abstract class DirectionMixin {
 	@RemapForJS("getYaw")
 	public abstract float toYRot();
 
-	public float getPitch() {
+	@RemapForJS("getPitch")
+	public float rhino$getPitch() {
 		Object o = this;
 		return o == Direction.UP ? 180F : o == Direction.DOWN ? 0F : 90F;
 	}

@@ -11,6 +11,6 @@ public class EqOpUnit extends BooleanOpUnit {
 
 	@Override
 	public boolean getBoolean(UnitVariables variables) {
-		return Math.abs(left.get(variables) - right.get(variables)) < 0.00001D;
+		return left == right || Math.abs(left.get(variables) - right.get(variables)) < 0.00001D;
 	}
 }

@@ -5,26 +5,30 @@ import dev.latvian.mods.unit.function.Atan2FuncUnit;
 import dev.latvian.mods.unit.function.AtanFuncUnit;
 import dev.latvian.mods.unit.function.BoolFuncUnit;
 import dev.latvian.mods.unit.function.CeilFuncUnit;
-import dev.latvian.mods.unit.function.ColorFuncUnit;
+import dev.latvian.mods.unit.function.ClampFuncUnit;
 import dev.latvian.mods.unit.function.CosFuncUnit;
 import dev.latvian.mods.unit.function.DegFuncUnit;
 import dev.latvian.mods.unit.function.FloorFuncUnit;
 import dev.latvian.mods.unit.function.FunctionFactory;
-import dev.latvian.mods.unit.function.IfFuncUnit;
+import dev.latvian.mods.unit.function.HsvFuncUnit;
+import dev.latvian.mods.unit.function.LerpFuncUnit;
 import dev.latvian.mods.unit.function.Log10FuncUnit;
 import dev.latvian.mods.unit.function.Log1pFuncUnit;
 import dev.latvian.mods.unit.function.LogFuncUnit;
+import dev.latvian.mods.unit.function.MapFuncUnit;
 import dev.latvian.mods.unit.function.MaxFuncUnit;
 import dev.latvian.mods.unit.function.MinFuncUnit;
-import dev.latvian.mods.unit.function.PowFuncUnit;
 import dev.latvian.mods.unit.function.RadFuncUnit;
 import dev.latvian.mods.unit.function.RandomUnit;
+import dev.latvian.mods.unit.function.RgbFuncUnit;
 import dev.latvian.mods.unit.function.RoundedTimeUnit;
 import dev.latvian.mods.unit.function.SinFuncUnit;
+import dev.latvian.mods.unit.function.SmoothstepFuncUnit;
 import dev.latvian.mods.unit.function.SqFuncUnit;
 import dev.latvian.mods.unit.function.SqrtFuncUnit;
 import dev.latvian.mods.unit.function.TanFuncUnit;
 import dev.latvian.mods.unit.function.TimeUnit;
+import dev.latvian.mods.unit.function.WithAlphaFuncUnit;
 import dev.latvian.mods.unit.token.UnitTokenStream;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,30 +41,36 @@ public class UnitContext {
 	public static final UnitContext DEFAULT = new UnitContext();
 
 	static {
-		DEFAULT.addFunction("time", TimeUnit::getInstance);
-		DEFAULT.addFunction("roundedTime", RoundedTimeUnit::getInstance);
-		DEFAULT.addFunction("random", RandomUnit::getInstance);
-		DEFAULT.addFunction("if", IfFuncUnit::new);
-		DEFAULT.addFunction("min", MinFuncUnit::new);
-		DEFAULT.addFunction("max", MaxFuncUnit::new);
-		DEFAULT.addFunction("pow", PowFuncUnit::new);
-		DEFAULT.addFunction("abs", AbsFuncUnit::new);
-		DEFAULT.addFunction("sin", SinFuncUnit::new);
-		DEFAULT.addFunction("cos", CosFuncUnit::new);
-		DEFAULT.addFunction("tan", TanFuncUnit::new);
-		DEFAULT.addFunction("deg", DegFuncUnit::new);
-		DEFAULT.addFunction("rad", RadFuncUnit::new);
-		DEFAULT.addFunction("atan", AtanFuncUnit::new);
-		DEFAULT.addFunction("atan2", Atan2FuncUnit::new);
-		DEFAULT.addFunction("log", LogFuncUnit::new);
-		DEFAULT.addFunction("log10", Log10FuncUnit::new);
-		DEFAULT.addFunction("log1p", Log1pFuncUnit::new);
-		DEFAULT.addFunction("sqrt", SqrtFuncUnit::new);
-		DEFAULT.addFunction("sq", SqFuncUnit::new);
-		DEFAULT.addFunction("floor", FloorFuncUnit::new);
-		DEFAULT.addFunction("ceil", CeilFuncUnit::new);
-		DEFAULT.addFunction("bool", BoolFuncUnit::new);
-		DEFAULT.addFunctionFactory("color", ColorFuncUnit::colorOf);
+		DEFAULT.addFunction(TimeUnit.FACTORY);
+		DEFAULT.addFunction(RoundedTimeUnit.FACTORY);
+		DEFAULT.addFunction(RandomUnit.FACTORY);
+		DEFAULT.addFunction(FunctionFactory.of3("if", TernaryUnit::new));
+		DEFAULT.addFunction(RgbFuncUnit.FACTORY);
+
+		DEFAULT.addFunction(MinFuncUnit.FACTORY);
+		DEFAULT.addFunction(MaxFuncUnit.FACTORY);
+		DEFAULT.addFunction(AbsFuncUnit.FACTORY);
+		DEFAULT.addFunction(SinFuncUnit.FACTORY);
+		DEFAULT.addFunction(CosFuncUnit.FACTORY);
+		DEFAULT.addFunction(TanFuncUnit.FACTORY);
+		DEFAULT.addFunction(DegFuncUnit.FACTORY);
+		DEFAULT.addFunction(RadFuncUnit.FACTORY);
+		DEFAULT.addFunction(AtanFuncUnit.FACTORY);
+		DEFAULT.addFunction(Atan2FuncUnit.FACTORY);
+		DEFAULT.addFunction(LogFuncUnit.FACTORY);
+		DEFAULT.addFunction(Log10FuncUnit.FACTORY);
+		DEFAULT.addFunction(Log1pFuncUnit.FACTORY);
+		DEFAULT.addFunction(SqrtFuncUnit.FACTORY);
+		DEFAULT.addFunction(SqFuncUnit.FACTORY);
+		DEFAULT.addFunction(FloorFuncUnit.FACTORY);
+		DEFAULT.addFunction(CeilFuncUnit.FACTORY);
+		DEFAULT.addFunction(BoolFuncUnit.FACTORY);
+		DEFAULT.addFunction(ClampFuncUnit.FACTORY);
+		DEFAULT.addFunction(LerpFuncUnit.FACTORY);
+		DEFAULT.addFunction(SmoothstepFuncUnit.FACTORY);
+		DEFAULT.addFunction(HsvFuncUnit.FACTORY);
+		DEFAULT.addFunction(WithAlphaFuncUnit.FACTORY);
+		DEFAULT.addFunction(MapFuncUnit.FACTORY);
 
 		DEFAULT.addConstant("true", FixedBooleanUnit.TRUE);
 		DEFAULT.addConstant("false", FixedBooleanUnit.FALSE);
@@ -75,18 +85,13 @@ public class UnitContext {
 	private final Map<String, Unit> cache = new HashMap<>();
 	private int debug = -1;
 
-	public void addFunctionFactory(String name, FunctionFactory.FuncSupplier func) {
-		FunctionFactory factory = new FunctionFactory(name.toLowerCase(), func);
+	public void addFunction(FunctionFactory factory) {
 		functions.put(factory.name(), factory);
-	}
-
-	public void addFunction(String name, FunctionFactory.SimpleFuncSupplier func) {
-		addFunctionFactory(name, func);
 	}
 
 	@Nullable
 	public FunctionFactory getFunctionFactory(String name) {
-		return functions.get(name.toLowerCase());
+		return functions.get(name);
 	}
 
 	public void addConstant(String s, Unit u) {

@@ -34,4 +34,9 @@ public class FixedBooleanUnit extends Unit {
 	public Unit boolNot() {
 		return value ? FALSE : TRUE;
 	}
+
+	@Override
+	public Unit bool() {
+		return this;
+	}
 }
