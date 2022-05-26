@@ -2,6 +2,7 @@ package dev.latvian.mods.rhino.mod.util;
 
 import dev.latvian.mods.rhino.util.Remapper;
 import net.minecraft.SharedConstants;
+import net.minecraft.client.Minecraft;
 import org.apache.commons.io.IOUtils;
 
 import java.lang.reflect.Field;
@@ -73,7 +74,7 @@ public abstract class MinecraftRemapper implements Remapper {
 		}
 
 		try {
-			Path remappedPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("rhino_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + "_v" + VERSION + (isServer() ? "_server.txt" : "_client.txt"));
+			Path remappedPath = Paths.get(Minecraft.getInstance().gameDirectory.getPath()).resolve("rhino_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + "_v" + VERSION + (isServer() ? "_server.txt" : "_client.txt"));
 
 			if (Files.exists(remappedPath)) {
 				RemappedClass current = null;
