@@ -1,10 +1,10 @@
-package dev.latvian.mods.unit.operator;
+package dev.latvian.mods.unit.operator.cond;
 
 import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
 import dev.latvian.mods.unit.token.UnitSymbol;
 
-public class EqOpUnit extends BooleanOpUnit {
+public class EqOpUnit extends CondOpUnit {
 	public EqOpUnit(Unit left, Unit right) {
 		super(UnitSymbol.EQ, left, right);
 	}

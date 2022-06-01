@@ -3,6 +3,7 @@ package dev.latvian.mods.unit.token;
 import dev.latvian.mods.unit.FixedColorUnit;
 import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitContext;
+import dev.latvian.mods.unit.operator.GroupUnit;
 
 import java.util.ArrayList;
 
@@ -85,21 +86,23 @@ public final class UnitTokenStream {
 			current.setLength(0);
 		}
 
-		if (infix.size() == 1) {
-			unit = infix.get(0).interpret(this);
-			return;
-		}
+		var interpretedUnits = new ArrayList<Unit>();
 
 		if (context.isDebug()) {
 			context.debugInfo("Infix", infix);
 		}
 
 		try {
-			var unitToken = readFully();
-			this.unit = unitToken.interpret(this);
+			do {
+				var unitToken = readFully();
+				interpretedUnits.add(unitToken.interpret(this));
+			}
+			while (ifNextToken(UnitSymbol.SEMICOLON));
 		} catch (UnitInterpretException ex) {
 			throw new RuntimeException("Error parsing '" + input + "' @ " + (infixPos < 0 || infixPos >= inputStringPos.size() ? -1 : inputStringPos.get(infixPos)), ex);
 		}
+
+		this.unit = interpretedUnits.size() == 1 ? interpretedUnits.get(0) : new GroupUnit(interpretedUnits.toArray(Unit.EMPTY_ARRAY));
 	}
 
 	public Unit getUnit() {

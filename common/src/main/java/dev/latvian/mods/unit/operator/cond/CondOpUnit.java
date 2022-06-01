@@ -1,11 +1,12 @@
-package dev.latvian.mods.unit.operator;
+package dev.latvian.mods.unit.operator.cond;
 
 import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
+import dev.latvian.mods.unit.operator.OpUnit;
 import dev.latvian.mods.unit.token.UnitSymbol;
 
-public abstract class BooleanOpUnit extends OpUnit {
-	public BooleanOpUnit(UnitSymbol symbol, Unit left, Unit right) {
+public abstract class CondOpUnit extends OpUnit {
+	public CondOpUnit(UnitSymbol symbol, Unit left, Unit right) {
 		super(symbol, left, right);
 	}
 

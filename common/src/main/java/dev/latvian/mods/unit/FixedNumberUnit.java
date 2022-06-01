@@ -10,6 +10,7 @@ public final class FixedNumberUnit extends Unit {
 	public static final FixedNumberUnit TWO_PI = new FixedNumberUnit(Math.PI * 2D);
 	public static final FixedNumberUnit HALF_PI = new FixedNumberUnit(Math.PI / 2D);
 	public static final FixedNumberUnit E = new FixedNumberUnit(Math.E);
+	public static final FixedNumberUnit NaN = new FixedNumberUnit(Double.NaN);
 
 	public static FixedNumberUnit of(double value) {
 		if (value == 0D) {

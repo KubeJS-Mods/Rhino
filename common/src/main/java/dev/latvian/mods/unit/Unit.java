@@ -22,28 +22,30 @@ import dev.latvian.mods.unit.function.SqFuncUnit;
 import dev.latvian.mods.unit.function.SqrtFuncUnit;
 import dev.latvian.mods.unit.function.TanFuncUnit;
 import dev.latvian.mods.unit.function.WithAlphaFuncUnit;
-import dev.latvian.mods.unit.operator.AddOpUnit;
-import dev.latvian.mods.unit.operator.AndOpUnit;
-import dev.latvian.mods.unit.operator.BitAndOpUnit;
 import dev.latvian.mods.unit.operator.BitNotOpUnit;
-import dev.latvian.mods.unit.operator.BitOrOpUnit;
 import dev.latvian.mods.unit.operator.BoolNotOpUnit;
-import dev.latvian.mods.unit.operator.DivOpUnit;
-import dev.latvian.mods.unit.operator.EqOpUnit;
-import dev.latvian.mods.unit.operator.GtOpUnit;
-import dev.latvian.mods.unit.operator.GteOpUnit;
-import dev.latvian.mods.unit.operator.LshOpUnit;
-import dev.latvian.mods.unit.operator.LtOpUnit;
-import dev.latvian.mods.unit.operator.LteOpUnit;
-import dev.latvian.mods.unit.operator.ModOpUnit;
-import dev.latvian.mods.unit.operator.MulOpUnit;
 import dev.latvian.mods.unit.operator.NegateOpUnit;
-import dev.latvian.mods.unit.operator.NeqOpUnit;
-import dev.latvian.mods.unit.operator.OrOpUnit;
-import dev.latvian.mods.unit.operator.PowOpUnit;
-import dev.latvian.mods.unit.operator.RshOpUnit;
-import dev.latvian.mods.unit.operator.SubOpUnit;
-import dev.latvian.mods.unit.operator.XorOpUnit;
+import dev.latvian.mods.unit.operator.SetUnit;
+import dev.latvian.mods.unit.operator.cond.AndOpUnit;
+import dev.latvian.mods.unit.operator.cond.EqOpUnit;
+import dev.latvian.mods.unit.operator.cond.GtOpUnit;
+import dev.latvian.mods.unit.operator.cond.GteOpUnit;
+import dev.latvian.mods.unit.operator.cond.LtOpUnit;
+import dev.latvian.mods.unit.operator.cond.LteOpUnit;
+import dev.latvian.mods.unit.operator.cond.NeqOpUnit;
+import dev.latvian.mods.unit.operator.cond.OrOpUnit;
+import dev.latvian.mods.unit.operator.op.AddOpUnit;
+import dev.latvian.mods.unit.operator.op.BitAndOpUnit;
+import dev.latvian.mods.unit.operator.op.BitOrOpUnit;
+import dev.latvian.mods.unit.operator.op.DivOpUnit;
+import dev.latvian.mods.unit.operator.op.LshOpUnit;
+import dev.latvian.mods.unit.operator.op.ModOpUnit;
+import dev.latvian.mods.unit.operator.op.MulOpUnit;
+import dev.latvian.mods.unit.operator.op.PowOpUnit;
+import dev.latvian.mods.unit.operator.op.RshOpUnit;
+import dev.latvian.mods.unit.operator.op.SubOpUnit;
+import dev.latvian.mods.unit.operator.op.XorOpUnit;
+import dev.latvian.mods.unit.token.UnitSymbol;
 
 public abstract class Unit {
 	public static Unit[] EMPTY_ARRAY = new Unit[0];
@@ -280,5 +282,29 @@ public abstract class Unit {
 
 	public Unit withAlpha(Unit a) {
 		return new WithAlphaFuncUnit(this, a);
+	}
+
+	public Unit set(Unit unit) {
+		return new SetUnit(UnitSymbol.SET, this, unit);
+	}
+
+	public Unit addSet(Unit unit) {
+		return new SetUnit(UnitSymbol.ADD_SET, this, add(unit));
+	}
+
+	public Unit subSet(Unit unit) {
+		return new SetUnit(UnitSymbol.SUB_SET, this, sub(unit));
+	}
+
+	public Unit mulSet(Unit unit) {
+		return new SetUnit(UnitSymbol.MUL_SET, this, mul(unit));
+	}
+
+	public Unit divSet(Unit unit) {
+		return new SetUnit(UnitSymbol.DIV_SET, this, div(unit));
+	}
+
+	public Unit modSet(Unit unit) {
+		return new SetUnit(UnitSymbol.MOD_SET, this, mod(unit));
 	}
 }

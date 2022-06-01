@@ -197,4 +197,22 @@ public class UnitTests {
 	public void functions5() {
 		assertEval("sin(roundedTime() * 1.1) * (($test - 32) / 2)", Math.sin(RoundedTimeUnit.time() * 1.1D) * (($test - 32D) / 2D));
 	}
+
+	@Test
+	@DisplayName("Semicolon I: Two numbers")
+	public void semicolon1() {
+		assertEval("5; 6", 6);
+	}
+
+	@Test
+	@DisplayName("Semicolon II: Variable setter")
+	public void semicolon2() {
+		assertEval("$setTest = 4 * 5; $setTest * 2", 40);
+	}
+
+	@Test
+	@DisplayName("Semicolon III: Variable multiplier")
+	public void semicolon3() {
+		assertEval("$setTest = 8; $setTest *= 0.5; $setTest * 3", 12);
+	}
 }

@@ -15,6 +15,7 @@ public enum UnitSymbol implements UnitToken {
 	HASH("#"),
 	HOOK("?"),
 	COLON(":"),
+	SEMICOLON(";"),
 	POSITIVE("+", Unit::positive),
 	NEGATE("-", Unit::negate),
 	// Operators
@@ -41,6 +42,13 @@ public enum UnitSymbol implements UnitToken {
 	AND("&&", 1, Unit::and),
 	OR("||", 1, Unit::or),
 	BOOL_NOT("!", Unit::boolNot),
+	// Mutators
+	SET("=", 0, Unit::set),
+	ADD_SET("+=", 0, Unit::addSet),
+	SUB_SET("-=", 0, Unit::subSet),
+	MUL_SET("*=", 0, Unit::mulSet),
+	DIV_SET("/=", 0, Unit::divSet),
+	MOD_SET("%=", 0, Unit::modSet),
 
 	;
 
@@ -90,7 +98,6 @@ public enum UnitSymbol implements UnitToken {
 	}
 
 	@Nullable
-	@SuppressWarnings("ConditionalExpressionWithIdenticalBranches")
 	public static UnitSymbol read(char first, CharStream stream) {
 		return switch (first) {
 			case ',' -> COMMA;
@@ -99,11 +106,12 @@ public enum UnitSymbol implements UnitToken {
 			case '#' -> HASH;
 			case '?' -> HOOK;
 			case ':' -> COLON;
-			case '+' -> ADD;
-			case '-' -> SUB;
-			case '*' -> stream.nextIf('*') ? POW : MUL;
-			case '/' -> DIV;
-			case '%' -> MOD;
+			case ';' -> SEMICOLON;
+			case '+' -> stream.nextIf('=') ? ADD_SET : ADD;
+			case '-' -> stream.nextIf('=') ? SUB_SET : SUB;
+			case '*' -> stream.nextIf('*') ? POW : stream.nextIf('=') ? MUL_SET : MUL;
+			case '/' -> stream.nextIf('=') ? DIV_SET : DIV;
+			case '%' -> stream.nextIf('=') ? MOD_SET : MOD;
 			case '^' -> XOR;
 			case '~' -> BIT_NOT;
 			case '&' -> stream.nextIf('&') ? AND : BIT_AND;
@@ -111,7 +119,7 @@ public enum UnitSymbol implements UnitToken {
 			case '!' -> stream.nextIf('=') ? NEQ : BOOL_NOT;
 			case '<' -> stream.nextIf('=') ? LTE : stream.nextIf('<') ? LSH : LT;
 			case '>' -> stream.nextIf('=') ? GTE : stream.nextIf('>') ? RSH : GT;
-			case '=' -> stream.nextIf('=') ? EQ : EQ; // Allow both == and =
+			case '=' -> stream.nextIf('=') ? EQ : SET;
 			default -> null;
 		};
 	}
