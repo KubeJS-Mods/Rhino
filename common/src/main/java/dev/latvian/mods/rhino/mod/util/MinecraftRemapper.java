@@ -73,7 +73,7 @@ public abstract class MinecraftRemapper implements Remapper {
 		}
 
 		try {
-			Path remappedPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("rhino_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + "_v" + VERSION + (isServer() ? "_server.txt" : "_client.txt"));
+			Path remappedPath = getPath("rhino_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + "_v" + VERSION + (isServer() ? "_server.txt" : "_client.txt"));
 
 			if (Files.exists(remappedPath)) {
 				RemappedClass current = null;
@@ -122,8 +122,32 @@ public abstract class MinecraftRemapper implements Remapper {
 		}
 	}
 
+	private Path getPath(String file) throws Exception {
+		try {
+			Path path = Paths.get(System.getProperty("java.io.tmpdir")).resolve(file);
+
+			if (Files.notExists(path)) {
+				Files.createFile(path);
+			}
+
+			if (Files.isWritable(path)) {
+				return path;
+			}
+		} catch (Exception ex) {
+			System.err.println("Failed to access system temp folder, using ./local/rhino instead: " + ex);
+		}
+
+		Path dir = getLocalRhinoDir();
+
+		if (Files.notExists(dir)) {
+			Files.createDirectories(dir);
+		}
+
+		return dir.resolve(file);
+	}
+
 	public MinecraftClasses loadMojMapClasses() throws Exception {
-		Path mojmapPath = Paths.get(System.getProperty("java.io.tmpdir")).resolve("rhino_mojang_mappings_" + getMcVersion() + "_v" + MM_VERSION + (isServer() ? "_server.txt" : "_client.txt"));
+		Path mojmapPath = getPath("rhino_mojang_mappings_" + getMcVersion() + "_v" + MM_VERSION + (isServer() ? "_server.txt" : "_client.txt"));
 
 		if (Files.exists(mojmapPath)) {
 			return readMojMapClasses(mojmapPath);
@@ -263,6 +287,8 @@ public abstract class MinecraftRemapper implements Remapper {
 	}
 
 	public abstract void init(MinecraftClasses minecraftClasses) throws Exception;
+
+	public abstract Path getLocalRhinoDir();
 
 	@Override
 	public String remapClass(Class<?> from, String className) {

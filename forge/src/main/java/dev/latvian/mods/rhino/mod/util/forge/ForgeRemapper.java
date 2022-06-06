@@ -2,10 +2,12 @@ package dev.latvian.mods.rhino.mod.util.forge;
 
 import dev.latvian.mods.rhino.mod.util.MinecraftRemapper;
 import net.minecraftforge.fml.loading.FMLLoader;
+import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.commons.io.IOUtils;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -95,5 +97,10 @@ public class ForgeRemapper extends MinecraftRemapper {
 		}
 
 		classMap.entrySet().removeIf(RemappedClass::isUseless);
+	}
+
+	@Override
+	public Path getLocalRhinoDir() {
+		return FMLPaths.GAMEDIR.get().resolve("local/rhino");
 	}
 }

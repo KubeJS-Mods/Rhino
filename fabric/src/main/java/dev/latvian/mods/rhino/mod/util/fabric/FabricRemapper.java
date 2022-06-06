@@ -9,6 +9,7 @@ import net.fabricmc.mapping.tree.FieldDef;
 import net.fabricmc.mapping.tree.MethodDef;
 import net.fabricmc.mapping.tree.TinyTree;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -85,5 +86,10 @@ public class FabricRemapper extends MinecraftRemapper {
 				}
 			}
 		}
+	}
+
+	@Override
+	public Path getLocalRhinoDir() {
+		return FabricLoader.getInstance().getGameDir().resolve("local/rhino");
 	}
 }
