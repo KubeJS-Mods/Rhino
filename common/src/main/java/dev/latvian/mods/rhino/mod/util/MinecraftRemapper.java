@@ -130,7 +130,7 @@ public abstract class MinecraftRemapper implements Remapper {
 				Files.createFile(path);
 			}
 
-			if (Files.isWritable(path)) {
+			if (Files.isReadable(path) && Files.isWritable(path)) {
 				return path;
 			}
 		} catch (Exception ex) {
