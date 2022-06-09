@@ -1,26 +1,73 @@
 plugins {
-	id "architectury-plugin" version "3.4-SNAPSHOT"
-	id "dev.architectury.loom" version "0.11.0-SNAPSHOT" apply false
-	id "io.github.juuxel.loom-quiltflower" version "1.7.0" apply false
+	id 'base'
+	id 'architectury-plugin' version '3.4-SNAPSHOT'
+	id "dev.architectury.loom" version "0.12.0-SNAPSHOT" apply false
+	id "io.github.juuxel.loom-quiltflower" version "1.7.2" apply false
+	id "com.github.johnrengelman.shadow" version "7.0.0" apply false
+	id "com.matthewprenger.cursegradle" version "1.4.0" apply false
+	id "com.modrinth.minotaur" version "2.2.0" apply false
 }
 
 architectury {
-	minecraft = rootProject.minecraft_version
+	minecraft = project.minecraft_version
+	injectInjectables = false
 }
 
+allprojects {
+	ext.ENV = System.getenv()
+
+	repositories {
+		maven {
+			url "https://maven.architectury.dev/"
+		}
+
+		maven {
+			url "https://maven.saps.dev/minecraft"
+			content {
+				includeGroup "dev.latvian.mods"
+				includeGroup "dev.ftb.mods"
+			}
+		}
+
+		mavenLocal()
+	}
+}
+
+version = "${mod_version}-build.${ENV.GITHUB_RUN_NUMBER ?: 9999}"
+group = project.maven_group
+base.archivesBaseName = project.archives_base_name
+
 subprojects {
+	apply plugin: "java"
 	apply plugin: "dev.architectury.loom"
+	apply plugin: 'architectury-plugin'
 	apply plugin: "io.github.juuxel.loom-quiltflower"
+	apply plugin: "maven-publish"
+	apply from: "https://files.latmod.com/public/markdown-git-changelog.gradle"
+
+	version = rootProject.version
+	group = rootProject.group
+	base.archivesBaseName = rootProject.base.archivesBaseName
 
 	loom {
 		silentMojangMappingsLicense()
+	}
+
+	compileJava {
+		options.encoding = "UTF-8"
+		options.release.set(17)
+	}
+
+	java {
+		sourceCompatibility = targetCompatibility = '17'
+		withSourcesJar()
 	}
 
 	dependencies {
 		minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
 		mappings loom.layered() {
 			officialMojangMappings()
-			// parchment("org.parchmentmc.data:parchment-${rootProject.minecraft_version}:2021.10.10")
+			// parchment("org.parchmentmc.data:parchment-1.17.1:2021.10.10")
 		}
 
 		// Unit Testing
@@ -33,54 +80,71 @@ subprojects {
 	}
 }
 
-allprojects {
-	apply plugin: "java"
-	apply plugin: "architectury-plugin"
-	apply plugin: "maven-publish"
-	apply from: "https://files.latmod.com/public/markdown-git-changelog.gradle"
+subprojects {
+	if (project.path != ':common') {
+		apply plugin: "com.github.johnrengelman.shadow"
+		apply plugin: "com.matthewprenger.cursegradle"
+		apply plugin: "com.modrinth.minotaur"
 
-	def ENV = System.getenv()
-	version = "${mod_version}-build.${ENV.GITHUB_RUN_NUMBER ?: 9999}"
-	group = project.maven_group
-	archivesBaseName = project.archives_base_name
-
-	sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '17'
-
-	compileJava {
-		options.encoding = "UTF-8"
-	}
-
-	repositories {
-		maven {
-			url "https://maven.architectury.dev/"
-		}
-
-		maven {
-			url "https://www.cursemaven.com"
-			content {
-				includeGroup "curse.maven"
+		/*loom {
+			runConfigs.configureEach { ideConfigGenerated = true }
+			mods {
+				main { // to match the default mod generated for Forge
+					sourceSet project.sourceSets.main
+					sourceSet project(':common').sourceSets.main
+				}
 			}
-		}
+		}*/
 
-		maven {
-			url "https://maven.saps.dev/minecraft"
-			content {
-				includeGroup "dev.latvian.mods"
-				includeGroup "dev.ftb.mods"
+		configurations {
+			bundle {
+				canBeResolved(true)
+				canBeConsumed(false)
 			}
+
+			common
+			compileClasspath.extendsFrom common
+			runtimeClasspath.extendsFrom common
 		}
 
-		maven {
-			url = "https://maven.parchmentmc.net/"
-			content {
-				includeGroup "org.parchmentmc.data"
+		jar {
+			archiveClassifier.set "dev"
+		}
+
+		shadowJar {
+			archiveClassifier.set "dev-shadow"
+			configurations = [
+					project.configurations.bundle
+			]
+		}
+
+		remapJar {
+			dependsOn shadowJar
+			inputFile.set shadowJar.archiveFile
+			archiveBaseName.set "${rootProject.archives_base_name}-${project.name}"
+			archiveClassifier.set null
+		}
+
+		/*loom {
+			mixin {
+				defaultRefmapName = "kubejs.refmap.json"
 			}
-		}
-	}
-
-	java {
-		withSourcesJar()
+		}*/
 	}
 }
 
-task curseforgePublish
+task collectJars(type: Copy) {
+	subprojects {
+		if (project.path != ":common") {
+			def remapJar = project.tasks.named('remapJar')
+			dependsOn remapJar
+			from remapJar
+		}
+	}
+
+	into(buildDir.toPath().resolve("libs"))
+}
+
+assemble {
+	dependsOn(collectJars)
+}
