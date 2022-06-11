@@ -4,6 +4,7 @@ import dev.latvian.mods.rhino.util.Remapper;
 import net.minecraft.SharedConstants;
 import org.apache.commons.io.IOUtils;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -124,14 +125,10 @@ public abstract class MinecraftRemapper implements Remapper {
 
 	private Path getPath(String file) throws Exception {
 		try {
-			Path path = Paths.get(System.getProperty("java.io.tmpdir")).resolve(file);
+			var path = Paths.get(System.getProperty("java.io.tmpdir"));
 
-			if (Files.notExists(path)) {
-				Files.createFile(path);
-			}
-
-			if (Files.isReadable(path) && Files.isWritable(path)) {
-				return path;
+			if(Files.isDirectory(path) && Files.isWritable(path)) {
+				return path.resolve(file);
 			}
 		} catch (Exception ex) {
 			System.err.println("Failed to access system temp folder, using ./local/rhino instead: " + ex);
