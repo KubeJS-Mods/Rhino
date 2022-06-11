@@ -2,22 +2,12 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 }
 
-def ENV = System.getenv()
-
 architectury {
-	common()
-}
-
-configurations {
-	dev
+	common("forge", "fabric")
 }
 
 loom {
 	accessWidenerPath = file("src/main/resources/rhino.accesswidener")
-}
-
-artifacts {
-	dev(jar)
 }
 
 publishing {

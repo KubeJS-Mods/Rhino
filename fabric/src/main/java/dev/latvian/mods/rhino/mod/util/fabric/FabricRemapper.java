@@ -14,8 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FabricRemapper extends MinecraftRemapper {
-	FabricRemapper() {
-	}
 
 	@Override
 	public String getModLoader() {

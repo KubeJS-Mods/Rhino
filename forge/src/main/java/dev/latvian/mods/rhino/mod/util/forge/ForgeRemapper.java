@@ -13,10 +13,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ForgeRemapper extends MinecraftRemapper {
-	public static final ForgeRemapper INSTANCE = new ForgeRemapper();
-
-	private ForgeRemapper() {
-	}
 
 	@Override
 	public String getModLoader() {

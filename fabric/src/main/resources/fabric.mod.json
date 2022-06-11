@@ -20,10 +20,12 @@
 		]
 	},
 	"mixins": [
-		"rhino-common.mixins.json",
-		"rhino.mixins.json"
+		"rhino-common.mixins.json"
 	],
 	"depends": {
+	},
+	"breaks": {
+		"quilt_loader": "<0.17.0"
 	},
 	"custom": {
 		"modmenu:api": true
