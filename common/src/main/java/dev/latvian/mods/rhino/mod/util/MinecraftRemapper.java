@@ -12,6 +12,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -24,6 +26,19 @@ import java.util.regex.Pattern;
 public abstract class MinecraftRemapper implements Remapper {
 	public static final int MM_VERSION = 1;
 	public static final int VERSION = 1;
+
+	public static final String MAPPINGS_HEADER_AND_WARNING = """
+					# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+					# IMPORTANT NOTE: This file is NOT meant to be published within public modpacks or repositories.  #
+					# Its purpose is solely to allow for the use of Minecraft's "official" mappings within scripts    #
+					# handled by Rhino, in order to enable script creators to interact with the game environment in   #
+					# a more direct way. The contents of this file are not meant to be used outside of the Rhino      #
+					# script environment, or for any other purpose than the one described here.                       #
+					# This use of Minecraft's obfuscation mappings is governed by the Minecraft EULA,                 #
+					# as well as the terms of the license provided within the original mappings file.                 #
+					#                                                                                                 #
+					# Mappings version: %s													                          #
+					# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #""".formatted(MM_VERSION);
 
 	public static class RemappedClass {
 		public final String originalName;
@@ -100,7 +115,7 @@ public abstract class MinecraftRemapper implements Remapper {
 				init(minecraftClasses);
 
 				List<String> list = new ArrayList<>();
-				list.add("#version " + VERSION);
+				list.add(MAPPINGS_HEADER_AND_WARNING);
 
 				for (var entry : classMap.entrySet()) {
 					RemappedClass rc = entry.getValue();
@@ -124,6 +139,22 @@ public abstract class MinecraftRemapper implements Remapper {
 	}
 
 	private Path getPath(String file) throws Exception {
+		try {
+			Path path = Paths.get(System.getProperty("java.io.tmpdir")).resolve(file);
+
+			if (Files.exists(path)) {
+				if (Files.isReadable(path) && Files.isWritable(path)) {
+					return path;
+				}
+			} else {
+				Files.write(path, new byte[0], StandardOpenOption.CREATE_NEW, StandardOpenOption.DELETE_ON_CLOSE);
+				return path;
+			}
+		} catch (Exception ex) {
+			System.err.println("Error while trying to access system temp folder: " + ex);
+		}
+
+		System.err.println("Failed to access mappings file in system temp, using local cache directory instead!");
 		Path dir = getLocalRhinoDir();
 
 		if (Files.notExists(dir)) {
@@ -131,6 +162,12 @@ public abstract class MinecraftRemapper implements Remapper {
 			if (Util.getPlatform() == Util.OS.WINDOWS) {
 				Files.setAttribute(dir, "dos:hidden", true, LinkOption.NOFOLLOW_LINKS);
 			}
+		}
+
+		// when using instance-specific temp folder, make sure modpack devs don't accidentally publish the mappings
+		var gitignore = dir.resolve(".gitignore");
+		if (Files.notExists(gitignore)) {
+			Files.writeString(gitignore, "*", StandardOpenOption.CREATE_NEW);
 		}
 
 		return dir.resolve(file);
@@ -145,18 +182,7 @@ public abstract class MinecraftRemapper implements Remapper {
 			MinecraftClasses minecraftClasses = fetchMojMapClasses();
 
 			List<String> list = new ArrayList<>();
-			list.add("""
-					# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-					# IMPORTANT NOTE: This file is NOT meant to be published within public modpacks or repositories.  #
-					# Its purpose is solely to allow for the use of Minecraft's "official" mappings within scripts    #
-					# handled by Rhino, in order to enable script creators to interact with the game environment in   #
-					# a more direct way. The contents of this file are not meant to be used outside of the Rhino      #
-					# script environment, or for any other purpose than the one described here.                       #
-					# This use of Minecraft's obfuscation mappings is governed by the Minecraft EULA,                 #
-					# as well as the terms of the license provided within the original mappings file.                 #
-					#                                                                                                 #
-					# Mappings version: %s													                          #
-					# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #""".formatted(MM_VERSION));
+			list.add(MAPPINGS_HEADER_AND_WARNING);
 			for (var entry : minecraftClasses.rawLookup.entrySet()) {
 				RemappedClass rc = entry.getValue();
 				list.add("* " + rc.originalName + " " + rc.mappedName + " " + (rc.children == null ? 0 : rc.children.size()));
