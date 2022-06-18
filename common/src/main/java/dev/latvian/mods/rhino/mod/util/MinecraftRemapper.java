@@ -2,16 +2,16 @@ package dev.latvian.mods.rhino.mod.util;
 
 import dev.latvian.mods.rhino.util.Remapper;
 import net.minecraft.SharedConstants;
+import net.minecraft.Util;
 import org.apache.commons.io.IOUtils;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -124,20 +124,13 @@ public abstract class MinecraftRemapper implements Remapper {
 	}
 
 	private Path getPath(String file) throws Exception {
-		try {
-			var path = Paths.get(System.getProperty("java.io.tmpdir"));
-
-			if(Files.isDirectory(path) && Files.isWritable(path)) {
-				return path.resolve(file);
-			}
-		} catch (Exception ex) {
-			System.err.println("Failed to access system temp folder, using ./local/rhino instead: " + ex);
-		}
-
 		Path dir = getLocalRhinoDir();
 
 		if (Files.notExists(dir)) {
 			Files.createDirectories(dir);
+			if (Util.getPlatform() == Util.OS.WINDOWS) {
+				Files.setAttribute(dir, "dos:hidden", true, LinkOption.NOFOLLOW_LINKS);
+			}
 		}
 
 		return dir.resolve(file);
@@ -152,8 +145,18 @@ public abstract class MinecraftRemapper implements Remapper {
 			MinecraftClasses minecraftClasses = fetchMojMapClasses();
 
 			List<String> list = new ArrayList<>();
-			list.add("#version " + MM_VERSION);
-
+			list.add("""
+					# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+					# IMPORTANT NOTE: This file is NOT meant to be published within public modpacks or repositories.  #
+					# Its purpose is solely to allow for the use of Minecraft's "official" mappings within scripts    #
+					# handled by Rhino, in order to enable script creators to interact with the game environment in   #
+					# a more direct way. The contents of this file are not meant to be used outside of the Rhino      #
+					# script environment, or for any other purpose than the one described here.                       #
+					# This use of Minecraft's obfuscation mappings is governed by the Minecraft EULA,                 #
+					# as well as the terms of the license provided within the original mappings file.                 #
+					#                                                                                                 #
+					# Mappings version: %s													                          #
+					# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #""".formatted(MM_VERSION));
 			for (var entry : minecraftClasses.rawLookup.entrySet()) {
 				RemappedClass rc = entry.getValue();
 				list.add("* " + rc.originalName + " " + rc.mappedName + " " + (rc.children == null ? 0 : rc.children.size()));

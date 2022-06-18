@@ -97,6 +97,6 @@ public class ForgeRemapper extends MinecraftRemapper {
 
 	@Override
 	public Path getLocalRhinoDir() {
-		return FMLPaths.GAMEDIR.get().resolve("local/rhino");
+		return FMLPaths.GAMEDIR.get().resolve(".rhino_cache");
 	}
 }
