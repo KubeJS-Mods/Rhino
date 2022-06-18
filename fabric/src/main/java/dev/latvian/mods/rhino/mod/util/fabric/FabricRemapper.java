@@ -88,6 +88,6 @@ public class FabricRemapper extends MinecraftRemapper {
 
 	@Override
 	public Path getLocalRhinoDir() {
-		return FabricLoader.getInstance().getGameDir().resolve("local/rhino");
+		return FabricLoader.getInstance().getGameDir().resolve(".rhino_cache");
 	}
 }

@@ -62,6 +62,7 @@ if (ENV.CURSEFORGE_KEY) {
 			releaseType = project.artifact_type
 			addGameVersion "Fabric"
 			addGameVersion "1.18.2"
+			addGameVersion "1.19"
 			mainArtifact(remapJar.archivePath)
 			changelog = getGitChangelog
 			changelogType = 'markdown'
@@ -78,7 +79,7 @@ if (ENV.MODRINTH_TOKEN) {
 		versionName = "[Fabric] $project.version"
 		changelog = getGitChangelog()
 		uploadFile = remapJar
-		gameVersions = ["1.18.2"]
+		gameVersions = ["1.18.2", "1.19"]
 		loaders = ["fabric", "quilt"]
 	}
 }
