@@ -28,17 +28,17 @@ public abstract class MinecraftRemapper implements Remapper {
 	public static final int VERSION = 1;
 
 	public static final String MAPPINGS_HEADER_AND_WARNING = """
-					# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-					# IMPORTANT NOTE: This file is NOT meant to be published within public modpacks or repositories.  #
-					# Its purpose is solely to allow for the use of Minecraft's "official" mappings within scripts    #
-					# handled by Rhino, in order to enable script creators to interact with the game environment in   #
-					# a more direct way. The contents of this file are not meant to be used outside of the Rhino      #
-					# script environment, or for any other purpose than the one described here.                       #
-					# This use of Minecraft's obfuscation mappings is governed by the Minecraft EULA,                 #
-					# as well as the terms of the license provided within the original mappings file.                 #
-					#                                                                                                 #
-					# Mappings version: %s													                          #
-					# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #""".formatted(MM_VERSION);
+			# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+			# IMPORTANT NOTE: This file is NOT meant to be published within public modpacks or repositories.  #
+			# Its purpose is solely to allow for the use of Minecraft's "official" mappings within scripts    #
+			# handled by Rhino, in order to enable script creators to interact with the game environment in   #
+			# a more direct way. The contents of this file are not meant to be used outside of the Rhino      #
+			# script environment, or for any other purpose than the one described here.                       #
+			# This use of Minecraft's obfuscation mappings is governed by the Minecraft EULA,                 #
+			# as well as the terms of the license provided within the original mappings file.                 #
+			#                                                                                                 #
+			# Mappings version: %s													                          #
+			# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #""".formatted(MM_VERSION);
 
 	public static class RemappedClass {
 		public final String originalName;
@@ -91,7 +91,7 @@ public abstract class MinecraftRemapper implements Remapper {
 		try {
 			Path remappedPath = getPath("rhino_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + "_v" + VERSION + (isServer() ? "_server.txt" : "_client.txt"));
 
-			if (Files.exists(remappedPath)) {
+			if (Files.exists(remappedPath) && Files.size(remappedPath) > 0) {
 				RemappedClass current = null;
 
 				for (String line : Files.readAllLines(remappedPath, StandardCharsets.UTF_8)) {
@@ -147,7 +147,7 @@ public abstract class MinecraftRemapper implements Remapper {
 					return path;
 				}
 			} else {
-				Files.write(path, new byte[0], StandardOpenOption.CREATE_NEW, StandardOpenOption.DELETE_ON_CLOSE);
+				Files.createFile(path);
 				return path;
 			}
 		} catch (Exception ex) {
@@ -176,7 +176,7 @@ public abstract class MinecraftRemapper implements Remapper {
 	public MinecraftClasses loadMojMapClasses() throws Exception {
 		Path mojmapPath = getPath("rhino_mojang_mappings_" + getMcVersion() + "_v" + MM_VERSION + (isServer() ? "_server.txt" : "_client.txt"));
 
-		if (Files.exists(mojmapPath)) {
+		if (Files.exists(mojmapPath) && Files.size(mojmapPath) > 0) {
 			return readMojMapClasses(mojmapPath);
 		} else {
 			MinecraftClasses minecraftClasses = fetchMojMapClasses();
