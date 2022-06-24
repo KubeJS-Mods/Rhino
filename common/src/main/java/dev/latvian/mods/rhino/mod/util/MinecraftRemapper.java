@@ -4,6 +4,8 @@ import dev.latvian.mods.rhino.util.Remapper;
 import net.minecraft.SharedConstants;
 import net.minecraft.Util;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -24,6 +26,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class MinecraftRemapper implements Remapper {
+
+	public static final Logger LOGGER = LoggerFactory.getLogger("Rhino Script Remapper");
+
 	public static final int MM_VERSION = 1;
 	public static final int VERSION = 1;
 
@@ -133,7 +138,7 @@ public abstract class MinecraftRemapper implements Remapper {
 
 			empty = false;
 		} catch (Exception ex) {
-			System.err.println("Failed to remap Rhino to Mojang Mappings:");
+			LOGGER.error("Failed to remap Rhino to Mojang Mappings:");
 			ex.printStackTrace();
 		}
 	}
@@ -151,10 +156,10 @@ public abstract class MinecraftRemapper implements Remapper {
 				return path;
 			}
 		} catch (Exception ex) {
-			System.err.println("Error while trying to access system temp folder: " + ex);
+			LOGGER.error("Error while trying to access system temp folder!", ex);
 		}
 
-		System.err.println("Failed to access mappings file in system temp, using local cache directory instead!");
+		LOGGER.error("Failed to access mappings file in system temp, using local cache directory instead!");
 		Path dir = getLocalRhinoDir();
 
 		if (Files.notExists(dir)) {
