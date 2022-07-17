@@ -50,8 +50,8 @@ public interface NBTUtils {
 			return null;
 		} else if (t instanceof StringTag) {
 			return t.getAsString();
-		} else if (t instanceof NumericTag) {
-			return ((NumericTag) t).getAsNumber();
+		} else if (t instanceof NumericTag num) {
+			return num.getAsNumber();
 		}
 
 		return t;
@@ -61,8 +61,8 @@ public interface NBTUtils {
 	static Tag toTag(@Nullable Object v) {
 		if (v == null || v instanceof EndTag) {
 			return null;
-		} else if (v instanceof Tag) {
-			return (Tag) v;
+		} else if (v instanceof Tag tag) {
+			return tag;
 		} else if (v instanceof NBTSerializable s) {
 			return s.toNBT();
 		} else if (v instanceof CharSequence || v instanceof Character) {
@@ -158,7 +158,7 @@ public interface NBTUtils {
 			}
 		}
 
-		return (CompoundTag) toTag(v);
+		return toTag(v) instanceof CompoundTag nbt ? nbt : null;
 	}
 
 	static boolean isTagCollection(Object o) {
