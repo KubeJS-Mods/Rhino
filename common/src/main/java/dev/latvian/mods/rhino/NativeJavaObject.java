@@ -849,12 +849,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
 		out.writeBoolean(isAdapter);
 		if (isAdapter) {
-			if (adapter_writeAdapterObject == null) {
-				throw new IOException();
-			}
-			Object[] args = {javaObject, out};
 			try {
-				adapter_writeAdapterObject.invoke(null, args);
+				JavaAdapter.writeAdapterObject(javaObject, out);
 			} catch (Exception ex) {
 				throw new IOException();
 			}
@@ -875,12 +871,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
 		isAdapter = in.readBoolean();
 		if (isAdapter) {
-			if (adapter_readAdapterObject == null) {
-				throw new ClassNotFoundException();
-			}
-			Object[] args = {this, in};
 			try {
-				javaObject = adapter_readAdapterObject.invoke(null, args);
+				javaObject = JavaAdapter.readAdapterObject(this, in);
 			} catch (Exception ex) {
 				throw new IOException();
 			}
@@ -917,28 +909,4 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	protected transient boolean isAdapter;
 
 	private static final Object COERCED_INTERFACE_KEY = "Coerced Interface";
-	private static Method adapter_writeAdapterObject;
-	private static Method adapter_readAdapterObject;
-
-	static {
-		// Reflection in java is verbose
-		Class<?>[] sig2 = new Class[2];
-		Class<?> cl = Kit.classOrNull("dev.latvian.mods.rhino.JavaAdapter");
-		if (cl != null) {
-			try {
-				sig2[0] = ScriptRuntime.ObjectClass;
-				sig2[1] = Kit.classOrNull("java.io.ObjectOutputStream");
-				adapter_writeAdapterObject = cl.getMethod("writeAdapterObject", sig2);
-
-				sig2[0] = ScriptRuntime.ScriptableClass;
-				sig2[1] = Kit.classOrNull("java.io.ObjectInputStream");
-				adapter_readAdapterObject = cl.getMethod("readAdapterObject", sig2);
-
-			} catch (NoSuchMethodException e) {
-				adapter_writeAdapterObject = null;
-				adapter_readAdapterObject = null;
-			}
-		}
-	}
-
 }

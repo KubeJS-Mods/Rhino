@@ -15,6 +15,7 @@ import dev.latvian.mods.rhino.v8dtoa.FastDtoa;
 import java.io.Serial;
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -87,34 +88,25 @@ public class ScriptRuntime {
 		}
 
 	}
-	/*
-	 * There's such a huge space (and some time) waste for the Foo.class
-	 * syntax: the compiler sticks in a test of a static field in the
-	 * enclosing class for null and the code for creating the class value.
-	 * It has to do this since the reference has to get pushed off until
-	 * execution time (i.e. can't force an early load), but for the
-	 * 'standard' classes - especially those in java.lang, we can trust
-	 * that they won't cause problems by being loaded early.
-	 */
 
-	public final static Class<?> BooleanClass = Kit.classOrNull("java.lang.Boolean");
-	public final static Class<?> ByteClass = Kit.classOrNull("java.lang.Byte");
-	public final static Class<?> CharacterClass = Kit.classOrNull("java.lang.Character");
-	public final static Class<?> ClassClass = Kit.classOrNull("java.lang.Class");
-	public final static Class<?> DoubleClass = Kit.classOrNull("java.lang.Double");
-	public final static Class<?> FloatClass = Kit.classOrNull("java.lang.Float");
-	public final static Class<?> IntegerClass = Kit.classOrNull("java.lang.Integer");
-	public final static Class<?> LongClass = Kit.classOrNull("java.lang.Long");
-	public final static Class<?> NumberClass = Kit.classOrNull("java.lang.Number");
-	public final static Class<?> ObjectClass = Kit.classOrNull("java.lang.Object");
-	public final static Class<?> ShortClass = Kit.classOrNull("java.lang.Short");
-	public final static Class<?> StringClass = Kit.classOrNull("java.lang.String");
-	public final static Class<?> DateClass = Kit.classOrNull("java.util.Date");
+	public final static Class<Boolean> BooleanClass = Boolean.class;
+	public final static Class<Byte> ByteClass = Byte.class;
+	public final static Class<Character> CharacterClass = Character.class;
+	public final static Class<Class> ClassClass = Class.class;
+	public final static Class<Double> DoubleClass = Double.class;
+	public final static Class<Float> FloatClass = Float.class;
+	public final static Class<Integer> IntegerClass = Integer.class;
+	public final static Class<Long> LongClass = Long.class;
+	public final static Class<Number> NumberClass = Number.class;
+	public final static Class<Object> ObjectClass = Object.class;
+	public final static Class<Short> ShortClass = Short.class;
+	public final static Class<String> StringClass = String.class;
+	public final static Class<Date> DateClass = Date.class;
 
-	public final static Class<?> ContextClass = Kit.classOrNull("dev.latvian.mods.rhino.Context");
-	public final static Class<?> ContextFactoryClass = Kit.classOrNull("dev.latvian.mods.rhino.ContextFactory");
-	public final static Class<?> FunctionClass = Kit.classOrNull("dev.latvian.mods.rhino.Function");
-	public final static Class<?> ScriptableObjectClass = Kit.classOrNull("dev.latvian.mods.rhino.ScriptableObject");
+	public final static Class<?> ContextClass = Context.class;
+	public final static Class<ContextFactory> ContextFactoryClass = ContextFactory.class;
+	public final static Class<Function> FunctionClass = Function.class;
+	public final static Class<ScriptableObject> ScriptableObjectClass = ScriptableObject.class;
 	public static final Class<Scriptable> ScriptableClass = Scriptable.class;
 
 	private static final Object LIBRARY_SCOPE_KEY = "LIBRARY_SCOPE";
