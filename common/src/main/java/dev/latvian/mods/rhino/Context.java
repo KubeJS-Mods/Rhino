@@ -11,6 +11,7 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.ast.AstRoot;
 import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter.ClassFileFormatException;
+import dev.latvian.mods.rhino.regexp.RegExp;
 import dev.latvian.mods.rhino.util.CustomJavaToJsWrapper;
 import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProvider;
 import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProviderHolder;
@@ -1885,14 +1886,11 @@ public class Context {
 		return null;
 	}
 
-	RegExpProxy getRegExpProxy() {
-		if (regExpProxy == null) {
-			Class<?> cl = Kit.classOrNull("dev.latvian.mods.rhino.regexp.RegExpImpl");
-			if (cl != null) {
-				regExpProxy = (RegExpProxy) Kit.newInstanceOrNull(cl);
-			}
+	RegExp getRegExp() {
+		if (regExp == null) {
+			regExp = new RegExp();
 		}
-		return regExpProxy;
+		return regExp;
 	}
 
 	public final boolean isStrictMode() {
@@ -1972,7 +1970,7 @@ public class Context {
 	private boolean hasClassShutter;
 	private ClassShutter classShutter;
 	private ErrorReporter errorReporter;
-	RegExpProxy regExpProxy;
+	RegExp regExp;
 	private Locale locale;
 	boolean useDynamicScope;
 	private int maximumInterpreterStackDepth;

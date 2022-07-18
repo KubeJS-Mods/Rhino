@@ -7,6 +7,7 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.ast.FunctionNode;
+import dev.latvian.mods.rhino.regexp.RegExp;
 import dev.latvian.mods.rhino.util.SpecialEquality;
 import dev.latvian.mods.rhino.v8dtoa.DoubleConversion;
 import dev.latvian.mods.rhino.v8dtoa.FastDtoa;
@@ -3354,27 +3355,19 @@ public class ScriptRuntime {
 		}
 	}
 
-	public static RegExpProxy getRegExpProxy(Context cx) {
-		return cx.getRegExpProxy();
+	public static RegExp getRegExpProxy(Context cx) {
+		return cx.getRegExp();
 	}
 
-	public static void setRegExpProxy(Context cx, RegExpProxy proxy) {
+	public static void setRegExpProxy(Context cx, RegExp proxy) {
 		if (proxy == null) {
 			throw new IllegalArgumentException();
 		}
-		cx.regExpProxy = proxy;
-	}
-
-	public static RegExpProxy checkRegExpProxy(Context cx) {
-		RegExpProxy result = getRegExpProxy(cx);
-		if (result == null) {
-			throw Context.reportRuntimeError0("msg.no.regexp");
-		}
-		return result;
+		cx.regExp = proxy;
 	}
 
 	public static Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled) {
-		return cx.getRegExpProxy().wrapRegExp(cx, scope, compiled);
+		return cx.getRegExp().wrapRegExp(cx, scope, compiled);
 	}
 
 	public static Scriptable getTemplateLiteralCallSite(Context cx, Scriptable scope, Object[] strings, int index) {
