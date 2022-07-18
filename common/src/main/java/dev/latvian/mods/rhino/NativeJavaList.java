@@ -121,6 +121,7 @@ public class NativeJavaList extends NativeJavaObject {
 		addCustomFunction("map", this::map, Function.class);
 		addCustomFunction("reduce", this::reduce, BinaryOperator.class);
 		addCustomFunction("reduceRight", this::reduceRight, BinaryOperator.class);
+		addCustomFunction("find", this::find, Predicate.class);
 	}
 
 	private int getLength() {
@@ -303,5 +304,21 @@ public class NativeJavaList extends NativeJavaObject {
 		}
 
 		return o;
+	}
+
+	private Object find(Object[] args) {
+		if (list.isEmpty()) {
+			return Undefined.instance;
+		}
+
+		Predicate predicate = (Predicate) args[0];
+
+		for (Object o : list) {
+			if (predicate.test(o)) {
+				return o;
+			}
+		}
+
+		return Undefined.instance;
 	}
 }
