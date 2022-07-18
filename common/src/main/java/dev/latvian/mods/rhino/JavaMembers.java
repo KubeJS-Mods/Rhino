@@ -112,6 +112,8 @@ class JavaMembers {
 			member = fam.field;
 		}
 
+		Context cx = Context.getContext();
+
 		// Is this a bean property "set"?
 		if (member instanceof BeanProperty bp) {
 			if (bp.setter == null) {
@@ -122,7 +124,7 @@ class JavaMembers {
 			// setter to use:
 			if (bp.setters == null || value == null) {
 				Class<?> setType = bp.setter.argTypes[0];
-				Object[] args = {Context.jsToJava(value, setType)};
+				Object[] args = {Context.jsToJava(cx, value, setType)};
 				try {
 					bp.setter.invoke(javaObject, args);
 				} catch (Exception ex) {
@@ -130,7 +132,7 @@ class JavaMembers {
 				}
 			} else {
 				Object[] args = {value};
-				bp.setters.call(Context.getContext(), ScriptableObject.getTopLevelScope(scope), scope, args);
+				bp.setters.call(cx, ScriptableObject.getTopLevelScope(scope), scope, args);
 			}
 		} else {
 			if (!(member instanceof Field field)) {
@@ -144,7 +146,7 @@ class JavaMembers {
 				throw Context.throwAsScriptRuntimeEx(new IllegalAccessException("Can't modify final field " + field.getName()));
 			}
 
-			Object javaValue = Context.jsToJava(value, field.getType());
+			Object javaValue = Context.jsToJava(cx, value, field.getType());
 			try {
 				field.set(javaObject, javaValue);
 			} catch (IllegalAccessException accessEx) {

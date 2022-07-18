@@ -121,6 +121,10 @@ public class NativeJavaList extends NativeJavaObject {
 		addCustomFunction("map", this::map, Function.class);
 		addCustomFunction("reduce", this::reduce, BinaryOperator.class);
 		addCustomFunction("reduceRight", this::reduceRight, BinaryOperator.class);
+		addCustomFunction("find", this::find, Predicate.class);
+		addCustomFunction("findIndex", this::findIndex, Predicate.class);
+		addCustomFunction("findLast", this::findLast, Predicate.class);
+		addCustomFunction("findLastIndex", this::findLastIndex, Predicate.class);
 	}
 
 	private int getLength() {
@@ -128,13 +132,15 @@ public class NativeJavaList extends NativeJavaObject {
 	}
 
 	private int push(Object[] args) {
+		Context cx = Context.getCurrentContext();
+
 		if (args.length == 1) {
-			list.add(Context.jsToJava(args[0], listType));
+			list.add(Context.jsToJava(cx, args[0], listType));
 		} else if (args.length > 1) {
 			Object[] args1 = new Object[args.length];
 
 			for (int i = 0; i < args.length; i++) {
-				args1[i] = Context.jsToJava(args[i], listType);
+				args1[i] = Context.jsToJava(cx, args[i], listType);
 			}
 
 			list.addAll(Arrays.asList(args1));
@@ -160,8 +166,10 @@ public class NativeJavaList extends NativeJavaObject {
 	}
 
 	private int unshift(Object[] args) {
+		Context cx = Context.getCurrentContext();
+
 		for (int i = args.length - 1; i >= 0; i--) {
-			list.add(0, Context.jsToJava(args[i], listType));
+			list.add(0, Context.jsToJava(cx, args[i], listType));
 		}
 
 		return list.size();
@@ -303,5 +311,71 @@ public class NativeJavaList extends NativeJavaObject {
 		}
 
 		return o;
+	}
+
+	private Object find(Object[] args) {
+		if (list.isEmpty()) {
+			return Undefined.instance;
+		}
+
+		Predicate predicate = (Predicate) args[0];
+
+		for (Object o : list) {
+			if (predicate.test(o)) {
+				return o;
+			}
+		}
+
+		return Undefined.instance;
+	}
+
+	private Object findIndex(Object[] args) {
+		if (list.isEmpty()) {
+			return -1;
+		}
+
+		Predicate predicate = (Predicate) args[0];
+
+		for (int i = 0; i < list.size(); i++) {
+			if (predicate.test(list.get(i))) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	private Object findLast(Object[] args) {
+		if (list.isEmpty()) {
+			return Undefined.instance;
+		}
+
+		Predicate predicate = (Predicate) args[0];
+
+		for (int i = list.size() - 1; i >= 0; i--) {
+			var o = list.get(i);
+
+			if (predicate.test(o)) {
+				return o;
+			}
+		}
+
+		return Undefined.instance;
+	}
+
+	private Object findLastIndex(Object[] args) {
+		if (list.isEmpty()) {
+			return -1;
+		}
+
+		Predicate predicate = (Predicate) args[0];
+
+		for (int i = list.size() - 1; i >= 0; i--) {
+			if (predicate.test(list.get(i))) {
+				return i;
+			}
+		}
+
+		return -1;
 	}
 }

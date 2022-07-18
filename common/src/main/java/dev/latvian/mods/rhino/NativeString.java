@@ -7,6 +7,7 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.regexp.NativeRegExp;
+import dev.latvian.mods.rhino.regexp.RegExp;
 
 import java.io.Serial;
 import java.text.Collator;
@@ -484,7 +485,7 @@ final class NativeString extends IdScriptableObject {
 
 				case Id_split: {
 					String thisStr = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
-					return ScriptRuntime.checkRegExpProxy(cx).js_split(cx, scope, thisStr, args);
+					return ScriptRuntime.getRegExpProxy(cx).js_split(cx, scope, thisStr, args);
 				}
 
 				case Id_substring: {
@@ -570,15 +571,15 @@ final class NativeString extends IdScriptableObject {
 				case Id_replace: {
 					int actionType;
 					if (id == Id_match) {
-						actionType = RegExpProxy.RA_MATCH;
+						actionType = RegExp.RA_MATCH;
 					} else if (id == Id_search) {
-						actionType = RegExpProxy.RA_SEARCH;
+						actionType = RegExp.RA_SEARCH;
 					} else {
-						actionType = RegExpProxy.RA_REPLACE;
+						actionType = RegExp.RA_REPLACE;
 					}
 
 					ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f);
-					return ScriptRuntime.checkRegExpProxy(cx).action(cx, scope, thisObj, args, actionType);
+					return ScriptRuntime.getRegExpProxy(cx).action(cx, scope, thisObj, args, actionType);
 				}
 				// ECMA-262 1 5.5.4.9
 				case Id_localeCompare: {

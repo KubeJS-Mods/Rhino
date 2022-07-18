@@ -39,7 +39,7 @@ public class CustomFunction extends BaseFunction {
 		Object[] origArgs = args;
 		for (int i = 0; i < args.length; i++) {
 			Object arg = args[i];
-			Object coerced = Context.jsToJava(arg, argTypes[i]);
+			Object coerced = Context.jsToJava(cx, arg, argTypes[i]);
 
 			if (coerced != arg) {
 				if (origArgs == args) {

@@ -212,8 +212,8 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	NativeRegExp() {
 	}
 
-	private static RegExpImpl getImpl(Context cx) {
-		return (RegExpImpl) ScriptRuntime.getRegExpProxy(cx);
+	private static RegExp getImpl(Context cx) {
+		return ScriptRuntime.getRegExpProxy(cx);
 	}
 
 	private static String escapeRegExp(Object src) {
@@ -241,7 +241,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	}
 
 	private Object execSub(Context cx, Scriptable scopeObj, Object[] args, int matchType) {
-		RegExpImpl reImpl = getImpl(cx);
+		RegExp reImpl = getImpl(cx);
 		String str;
 		if (args.length == 0) {
 			str = reImpl.input;
@@ -2348,7 +2348,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	/*
 	 * indexp is assumed to be an array of length 1
 	 */
-	Object executeRegExp(Context cx, Scriptable scope, RegExpImpl res, String str, int[] indexp, int matchType) {
+	Object executeRegExp(Context cx, Scriptable scope, RegExp res, String str, int[] indexp, int matchType) {
 		REGlobalData gData = new REGlobalData();
 
 		int start = indexp[0];

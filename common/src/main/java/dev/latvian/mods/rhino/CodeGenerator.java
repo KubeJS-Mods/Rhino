@@ -15,6 +15,7 @@ import dev.latvian.mods.rhino.ast.Scope;
 import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.ast.TemplateCharacters;
 import dev.latvian.mods.rhino.ast.VariableInitializer;
+import dev.latvian.mods.rhino.regexp.RegExp;
 
 import java.util.List;
 
@@ -195,7 +196,7 @@ class CodeGenerator extends Icode {
 		}
 
 		Context cx = Context.getContext();
-		RegExpProxy rep = ScriptRuntime.checkRegExpProxy(cx);
+		RegExp rep = ScriptRuntime.getRegExpProxy(cx);
 		Object[] array = new Object[N];
 		for (int i = 0; i != N; i++) {
 			String string = scriptOrFn.getRegexpString(i);
@@ -529,8 +530,8 @@ class CodeGenerator extends Icode {
 				visitExpression(child, contextFlags & ECF_TAIL);
 			}
 			case Token.USE_STACK ->
-					// Indicates that stack was modified externally,
-					// like placed catch object
+				// Indicates that stack was modified externally,
+				// like placed catch object
 					stackChange(1);
 			case Token.REF_CALL, Token.CALL, Token.NEW -> {
 				if (type == Token.NEW) {

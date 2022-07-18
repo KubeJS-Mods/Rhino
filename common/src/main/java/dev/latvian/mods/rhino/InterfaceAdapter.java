@@ -107,7 +107,7 @@ public class InterfaceAdapter {
 				if (resultType == Void.TYPE) {
 					return null;
 				}
-				return Context.jsToJava(null, resultType);
+				return Context.jsToJava(cx, null, resultType);
 			}
 			if (!(value instanceof Callable)) {
 				throw Context.reportRuntimeError1("msg.not.function.interface", methodName);
@@ -133,7 +133,7 @@ public class InterfaceAdapter {
 		if (javaResultType == Void.TYPE) {
 			result = null;
 		} else {
-			result = Context.jsToJava(result, javaResultType);
+			result = Context.jsToJava(cx, result, javaResultType);
 		}
 		return result;
 	}
