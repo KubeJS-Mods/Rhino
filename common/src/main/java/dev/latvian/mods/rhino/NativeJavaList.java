@@ -132,13 +132,15 @@ public class NativeJavaList extends NativeJavaObject {
 	}
 
 	private int push(Object[] args) {
+		Context cx = Context.getCurrentContext();
+
 		if (args.length == 1) {
-			list.add(Context.jsToJava(args[0], listType));
+			list.add(Context.jsToJava(cx, args[0], listType));
 		} else if (args.length > 1) {
 			Object[] args1 = new Object[args.length];
 
 			for (int i = 0; i < args.length; i++) {
-				args1[i] = Context.jsToJava(args[i], listType);
+				args1[i] = Context.jsToJava(cx, args[i], listType);
 			}
 
 			list.addAll(Arrays.asList(args1));
@@ -164,8 +166,10 @@ public class NativeJavaList extends NativeJavaObject {
 	}
 
 	private int unshift(Object[] args) {
+		Context cx = Context.getCurrentContext();
+
 		for (int i = args.length - 1; i >= 0; i--) {
-			list.add(0, Context.jsToJava(args[i], listType));
+			list.add(0, Context.jsToJava(cx, args[i], listType));
 		}
 
 		return list.size();

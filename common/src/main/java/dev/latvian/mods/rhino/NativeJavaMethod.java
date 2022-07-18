@@ -129,7 +129,7 @@ public class NativeJavaMethod extends BaseFunction {
 			// marshall the explicit parameters
 			Object[] newArgs = new Object[argTypes.length];
 			for (int i = 0; i < argTypes.length - 1; i++) {
-				newArgs[i] = Context.jsToJava(args[i], argTypes[i]);
+				newArgs[i] = Context.jsToJava(cx, args[i], argTypes[i]);
 			}
 
 			Object varArgs;
@@ -138,13 +138,13 @@ public class NativeJavaMethod extends BaseFunction {
 			// is given and it is a Java or ECMA array or is null.
 			if (args.length == argTypes.length && (args[args.length - 1] == null || args[args.length - 1] instanceof NativeArray || args[args.length - 1] instanceof NativeJavaArray)) {
 				// convert the ECMA array into a native array
-				varArgs = Context.jsToJava(args[args.length - 1], argTypes[argTypes.length - 1]);
+				varArgs = Context.jsToJava(cx, args[args.length - 1], argTypes[argTypes.length - 1]);
 			} else {
 				// marshall the variable parameters
 				Class<?> componentType = argTypes[argTypes.length - 1].getComponentType();
 				varArgs = Array.newInstance(componentType, args.length - argTypes.length + 1);
 				for (int i = 0; i < Array.getLength(varArgs); i++) {
-					Object value = Context.jsToJava(args[argTypes.length - 1 + i], componentType);
+					Object value = Context.jsToJava(cx, args[argTypes.length - 1 + i], componentType);
 					Array.set(varArgs, i, value);
 				}
 			}
@@ -170,7 +170,7 @@ public class NativeJavaMethod extends BaseFunction {
 				}
 				 */
 
-				coerced = Context.jsToJava(coerced, argTypes[i]);
+				coerced = Context.jsToJava(cx, coerced, argTypes[i]);
 
 				if (coerced != arg) {
 					if (origArgs == args) {

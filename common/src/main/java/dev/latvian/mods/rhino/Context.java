@@ -10,6 +10,7 @@ package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.ast.AstRoot;
 import dev.latvian.mods.rhino.ast.ScriptNode;
+import dev.latvian.mods.rhino.classdata.ClassDataCache;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter.ClassFileFormatException;
 import dev.latvian.mods.rhino.regexp.RegExp;
 import dev.latvian.mods.rhino.util.CustomJavaToJsWrapper;
@@ -1380,7 +1381,26 @@ public class Context {
 			return value;
 		}
 
-		Context cx = getCurrentContext();
+		return jsToJava(getCurrentContext(), value, desiredType);
+	}
+
+	/**
+	 * Convert a JavaScript value into the desired type.
+	 * Uses the semantics defined with LiveConnect3 and throws an
+	 * Illegal argument exception if the conversion cannot be performed.
+	 *
+	 * @param value       the JavaScript value to convert
+	 * @param desiredType the Java type to convert to. Primitive Java
+	 *                    types are represented using the TYPE fields in the corresponding
+	 *                    wrapper class in java.lang.
+	 * @return the converted value
+	 * @throws EvaluatorException if the conversion cannot be performed
+	 */
+	public static Object jsToJava(Context cx, Object value, Class<?> desiredType) throws EvaluatorException {
+		if (desiredType == null) {
+			return value;
+		}
+
 		return NativeJavaObject.coerceTypeImpl(cx, cx.hasTypeWrappers() ? cx.getTypeWrappers() : null, desiredType, value);
 	}
 
@@ -1917,6 +1937,14 @@ public class Context {
 		return factory.remapper;
 	}
 
+	public ClassDataCache getClassDataCache() {
+		if (classDataCache == null) {
+			classDataCache = new ClassDataCache(this);
+		}
+
+		return classDataCache;
+	}
+
 	@Nullable
 	@SuppressWarnings("unchecked")
 	public CustomJavaToJsWrapper wrapCustomJavaToJs(Object javaObject) {
@@ -2001,4 +2029,5 @@ public class Context {
 	public boolean generateObserverCount = false;
 
 	boolean isTopLevelStrict;
+	private ClassDataCache classDataCache;
 }
