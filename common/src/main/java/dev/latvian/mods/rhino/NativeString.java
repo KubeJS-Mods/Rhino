@@ -27,7 +27,7 @@ import java.util.Locale;
  * @author Norris Boyd
  * @author Ronald Brill
  */
-final class NativeString extends IdScriptableObject {
+final class NativeString extends IdScriptableObject implements Wrapper {
 	@Serial
 	private static final long serialVersionUID = 920268368584188687L;
 
@@ -45,6 +45,11 @@ final class NativeString extends IdScriptableObject {
 	@Override
 	public String getClassName() {
 		return "String";
+	}
+
+	@Override
+	public Object unwrap() {
+		return string;
 	}
 
 	private static final int Id_length = 1;

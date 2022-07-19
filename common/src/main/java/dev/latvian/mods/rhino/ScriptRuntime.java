@@ -2424,9 +2424,8 @@ public class ScriptRuntime {
 	 * Implement "SameValueZero" from ECMA 7.2.9
 	 */
 	public static boolean sameZero(Object x, Object y) {
-		if (x != null && y != null && (x instanceof CharSequence || y instanceof CharSequence) && x.toString().equals(y.toString())) {
-			return true;
-		}
+		x = Wrapper.unwrapped(x);
+		y = Wrapper.unwrapped(y);
 
 		if (!typeof(x).equals(typeof(y))) {
 			return false;
