@@ -11,6 +11,7 @@ import dev.latvian.mods.rhino.Function;
 import dev.latvian.mods.rhino.IdFunctionObject;
 import dev.latvian.mods.rhino.IdScriptableObject;
 import dev.latvian.mods.rhino.Kit;
+import dev.latvian.mods.rhino.MemberType;
 import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.ScriptableObject;
@@ -155,8 +156,8 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	 * @see ScriptableObject#getTypeOf()
 	 */
 	@Override
-	public String getTypeOf() {
-		return "object";
+	public MemberType getTypeOf() {
+		return MemberType.OBJECT;
 	}
 
 	@Override

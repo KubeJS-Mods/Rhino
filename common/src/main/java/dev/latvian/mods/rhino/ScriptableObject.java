@@ -370,8 +370,9 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @return default is "object" unless {@link #avoidObjectDetection()} is <code>true</code> in which
 	 * case it returns "undefined"
 	 */
-	public String getTypeOf() {
-		return avoidObjectDetection() ? "undefined" : "object";
+	@Override
+	public MemberType getTypeOf() {
+		return avoidObjectDetection() ? MemberType.UNDEFINED : MemberType.OBJECT;
 	}
 
 	/**

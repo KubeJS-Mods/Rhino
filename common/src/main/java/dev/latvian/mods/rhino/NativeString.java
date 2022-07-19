@@ -52,6 +52,11 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 		return string;
 	}
 
+	@Override
+	public MemberType getTypeOf() {
+		return MemberType.STRING;
+	}
+
 	private static final int Id_length = 1;
 	private static final int Id_namespace = 2;
 	private static final int Id_path = 3;

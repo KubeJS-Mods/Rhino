@@ -347,5 +347,9 @@ public interface Scriptable extends IdEnumerationIterator {
 		currentId.accept(f.call(cx, scope, this, ScriptRuntime.emptyArgs));
 		return true;
 	}
+
+	default MemberType getTypeOf() {
+		return MemberType.OBJECT;
+	}
 }
 
