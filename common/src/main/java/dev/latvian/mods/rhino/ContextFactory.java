@@ -13,6 +13,7 @@ import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProviderHolder;
 import dev.latvian.mods.rhino.util.DefaultRemapper;
 import dev.latvian.mods.rhino.util.Remapper;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -123,6 +124,7 @@ public class ContextFactory {
 	Remapper remapper = DefaultRemapper.INSTANCE;
 	final List<CustomJavaToJsWrapperProviderHolder<?>> customScriptableWrappers = new ArrayList<>();
 	final Map<Class<?>, CustomJavaToJsWrapperProvider> customScriptableWrapperCache = new HashMap<>();
+	private final Map<String, Object> extraProperties = new HashMap<>();
 
 	/**
 	 * Listener of {@link Context} creation and release events.
@@ -168,6 +170,7 @@ public class ContextFactory {
 	 * This can be used to customize {@link Context} without introducing
 	 * additional subclasses.
 	 */
+	@SuppressWarnings("DuplicateBranchesInSwitch")
 	protected boolean hasFeature(Context cx, int featureIndex) {
 		return switch (featureIndex) {
 			case Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME -> false;
@@ -390,5 +393,18 @@ public class ContextFactory {
 	 */
 	public final Context enterContext(Context cx) {
 		return Context.enter(cx, this);
+	}
+
+	public void setExtraProperty(String key, @Nullable Object value) {
+		if (value == null) {
+			extraProperties.remove(key);
+		} else {
+			extraProperties.put(key, value);
+		}
+	}
+
+	@Nullable
+	public Object getExtraProperty(String key) {
+		return extraProperties.get(key);
 	}
 }
