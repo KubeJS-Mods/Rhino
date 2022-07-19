@@ -21,7 +21,6 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 	private static final long serialVersionUID = -589539749749830003L;
 
 	public static final String CLASS_NAME = "Symbol";
-	public static final String TYPE_NAME = "symbol";
 
 	private static final Object GLOBAL_TABLE_KEY = new Object();
 	private static final Object CONSTRUCTOR_SLOT = new Object();
@@ -315,8 +314,8 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 	}
 
 	@Override
-	public String getTypeOf() {
-		return (isSymbol() ? TYPE_NAME : super.getTypeOf());
+	public MemberType getTypeOf() {
+		return (isSymbol() ? MemberType.SYMBOL : super.getTypeOf());
 	}
 
 	@Override

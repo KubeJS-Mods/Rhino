@@ -1353,11 +1353,11 @@ public final class Interpreter extends Icode implements Evaluator {
 								if (lhs == DBL_MRK) {
 									lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
-								stack[stackTop] = ScriptRuntime.typeof(lhs);
+								stack[stackTop] = ScriptRuntime.typeof(lhs).toString();
 								continue;
 							}
 							case Icode_TYPEOFNAME:
-								stack[++stackTop] = ScriptRuntime.typeofName(frame.scope, stringReg);
+								stack[++stackTop] = ScriptRuntime.typeofName(frame.scope, stringReg).toString();
 								continue;
 							case Token.STRING:
 								stack[++stackTop] = stringReg;

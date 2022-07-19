@@ -2080,39 +2080,18 @@ public class ScriptRuntime {
 	/**
 	 * The typeof operator
 	 */
-	public static String typeof(Object value) {
-		if (value == null) {
-			return "object";
-		}
-		if (value == Undefined.instance) {
-			return "undefined";
-		}
-		if (value instanceof ScriptableObject) {
-			return ((ScriptableObject) value).getTypeOf();
-		}
-		if (value instanceof Scriptable) {
-			return (value instanceof Callable) ? "function" : "object";
-		}
-		if (value instanceof CharSequence) {
-			return "string";
-		}
-		if (value instanceof Number) {
-			return "number";
-		}
-		if (value instanceof Boolean) {
-			return "boolean";
-		}
-		throw errorWithClassName("msg.invalid.type", value);
+	public static MemberType typeof(Object value) {
+		return MemberType.get(value);
 	}
 
 	/**
 	 * The typeof operator that correctly handles the undefined case
 	 */
-	public static String typeofName(Scriptable scope, String id) {
+	public static MemberType typeofName(Scriptable scope, String id) {
 		Context cx = Context.getContext();
 		Scriptable val = bind(cx, scope, id);
 		if (val == null) {
-			return "undefined";
+			return MemberType.UNDEFINED;
 		}
 		return typeof(getObjectProp(val, id, cx));
 	}
@@ -2125,8 +2104,8 @@ public class ScriptRuntime {
 			return false;
 		}
 		if (value instanceof ScriptableObject) {
-			String type = ((ScriptableObject) value).getTypeOf();
-			return "object".equals(type) || "function".equals(type);
+			var type = ((ScriptableObject) value).getTypeOf();
+			return type == MemberType.OBJECT || type == MemberType.FUNCTION;
 		}
 		if (value instanceof Scriptable) {
 			return (!(value instanceof Callable));
@@ -2408,7 +2387,7 @@ public class ScriptRuntime {
 	 * signed zeroes and NaNs differently.
 	 */
 	public static boolean same(Object x, Object y) {
-		if (!typeof(x).equals(typeof(y))) {
+		if (typeof(x) != typeof(y)) {
 			return false;
 		}
 		if (x instanceof Number) {
@@ -2424,7 +2403,10 @@ public class ScriptRuntime {
 	 * Implement "SameValueZero" from ECMA 7.2.9
 	 */
 	public static boolean sameZero(Object x, Object y) {
-		if (!typeof(x).equals(typeof(y))) {
+		x = Wrapper.unwrapped(x);
+		y = Wrapper.unwrapped(y);
+
+		if (typeof(x) != typeof(y)) {
 			return false;
 		}
 		if (x instanceof Number) {
@@ -3330,7 +3312,7 @@ public class ScriptRuntime {
 		if (value == Scriptable.NOT_FOUND) {
 			return typeError2("msg.function.not.found.in", propertyName, objString);
 		}
-		return typeError3("msg.isnt.function.in", propertyName, objString, typeof(value));
+		return typeError3("msg.isnt.function.in", propertyName, objString, typeof(value).toString());
 	}
 
 	private static RuntimeException notXmlError(Object value) {
@@ -3443,7 +3425,7 @@ public class ScriptRuntime {
 		return (((obj instanceof NativeSymbol) && ((NativeSymbol) obj).isSymbol())) || (obj instanceof SymbolKey);
 	}
 
-	private static RuntimeException errorWithClassName(String msg, Object val) {
+	public static RuntimeException errorWithClassName(String msg, Object val) {
 		return Context.reportRuntimeError1(msg, val.getClass().getName());
 	}
 

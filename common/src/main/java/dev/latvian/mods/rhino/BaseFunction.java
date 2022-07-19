@@ -70,8 +70,8 @@ public class BaseFunction extends IdScriptableObject implements Function {
 	 * @see ScriptableObject#getTypeOf()
 	 */
 	@Override
-	public String getTypeOf() {
-		return avoidObjectDetection() ? "undefined" : "function";
+	public MemberType getTypeOf() {
+		return avoidObjectDetection() ? MemberType.UNDEFINED : MemberType.FUNCTION;
 	}
 
 	/**

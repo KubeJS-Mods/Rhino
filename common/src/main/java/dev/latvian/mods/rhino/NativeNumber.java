@@ -244,6 +244,11 @@ final class NativeNumber extends IdScriptableObject {
 		return ScriptRuntime.numberToString(doubleValue, 10);
 	}
 
+	@Override
+	public MemberType getTypeOf() {
+		return MemberType.NUMBER;
+	}
+
 	private static String num_to(double val, Object[] args, int zeroArgMode, int oneArgMode, int precisionMin, int precisionOffset) {
 		int precision;
 		if (args.length == 0) {
