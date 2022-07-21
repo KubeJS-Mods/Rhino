@@ -68,6 +68,14 @@ subprojects {
 			officialMojangMappings()
 			// parchment("org.parchmentmc.data:parchment-1.17.1:2021.10.10")
 		}
+
+		// Unit Testing
+		testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+		testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+	}
+
+	test {
+		useJUnitPlatform()
 	}
 }
 
