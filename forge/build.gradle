@@ -63,7 +63,7 @@ components.java {
 unifiedPublishing {
 	project {
 		releaseType = rootProject.artifact_type
-		gameVersions = rootProject.supported_versions.split(',')
+		gameVersions = Arrays.asList(rootProject.supported_versions.split(','))
 		gameLoaders = ["forge"]
 		displayName = "$mod_name Forge $project.version"
 		changelog = getGitChangelog()
