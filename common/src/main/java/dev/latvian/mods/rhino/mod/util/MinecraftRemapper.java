@@ -144,22 +144,27 @@ public abstract class MinecraftRemapper implements Remapper {
 	}
 
 	private Path getPath(String file) throws Exception {
-		try {
-			Path path = Paths.get(System.getProperty("java.io.tmpdir")).resolve(file);
+		if (!RhinoProperties.INSTANCE.forceLocalMappings) {
+			try {
+				Path path = Paths.get(System.getProperty("java.io.tmpdir")).resolve(file);
 
-			if (Files.exists(path)) {
-				if (Files.isReadable(path) && Files.isWritable(path)) {
+				if (Files.exists(path)) {
+					if (Files.isReadable(path) && Files.isWritable(path)) {
+						return path;
+					}
+				} else {
+					Files.createFile(path);
 					return path;
 				}
-			} else {
-				Files.createFile(path);
-				return path;
+			} catch (Exception ex) {
+				LOGGER.error("Error while trying to access system temp folder!", ex);
 			}
-		} catch (Exception ex) {
-			LOGGER.error("Error while trying to access system temp folder!", ex);
+
+			LOGGER.error("Failed to access mappings file in system temp, using local cache directory instead!");
+		} else {
+			LOGGER.info("forceLocalMappings is set, we will not attempt to use the system temp folder");
 		}
 
-		LOGGER.error("Failed to access mappings file in system temp, using local cache directory instead!");
 		Path dir = getLocalRhinoDir();
 
 		if (Files.notExists(dir)) {
@@ -233,7 +238,7 @@ public abstract class MinecraftRemapper implements Remapper {
 	public MinecraftClasses fetchMojMapClasses() throws Exception {
 		MinecraftClasses minecraftClasses = new MinecraftClasses(new HashMap<>(), new HashMap<>());
 
-		String str = IOUtils.toString(new URL("https://kubejs.com/mappings/" + getMcVersion() + (isServer() ? "/server.txt" : "/client.txt")), StandardCharsets.UTF_8);
+		String str = IOUtils.toString(new URL("https://kubejs.com/mappings/%s/%s".formatted(getMcVersion(), isServer() ? "server.txt" : "client.txt")), StandardCharsets.UTF_8);
 		String[] mojmaps = IOUtils.toString(new URL(str), StandardCharsets.UTF_8).split("\n");
 
 		for (String s : mojmaps) {
