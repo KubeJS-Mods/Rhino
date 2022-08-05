@@ -1,10 +1,13 @@
 package dev.latvian.mods.rhino.mod.util.forge;
 
 import dev.latvian.mods.rhino.mod.util.MinecraftRemapper;
+import dev.latvian.mods.rhino.mod.util.RhinoProperties;
+import net.minecraft.Util;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.commons.io.IOUtils;
 
+import java.io.InterruptedIOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -34,7 +37,24 @@ public class ForgeRemapper extends MinecraftRemapper {
 		RemappedClass current = null;
 		RemappedClass mmCurrent = null;
 
-		String[] srg = IOUtils.toString(new URL("https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/" + getMcVersion() + "/joined.tsrg"), StandardCharsets.UTF_8).split("\n");
+		var url = new URL(RhinoProperties.INSTANCE.srgRemoteUrl.replace("$version", getMcVersion()));
+		String[] srg;
+
+		try {
+			srg = IOUtils.toString(Util.make(url.openConnection(), conn -> {
+				conn.setConnectTimeout(5000);
+				conn.setReadTimeout(10000);
+			}).getInputStream(), StandardCharsets.UTF_8).split("\n");
+		} catch (InterruptedIOException e) {
+			MinecraftRemapper.LOGGER.error("Timeout while downloading SRG mappings from {}!", url);
+			MinecraftRemapper.LOGGER.error("If the site is blocked in your country, try setting an alternative mirror in rhino.local.properties");
+			MinecraftRemapper.LOGGER.error("We will proceed without remapping here, so you will have to use obfuscated names for internal Minecraft classes!");
+			MinecraftRemapper.LOGGER.error("Full stacktrace:", e);
+			return;
+		} catch (Exception e) {
+			throw new RuntimeException("ERROR: Failed to download SRG mappings from %s!".formatted(url), e);
+		}
+
 		Pattern pattern = Pattern.compile("[\t ]");
 		Pattern argPattern = Pattern.compile("L([\\w/$]+);");
 
