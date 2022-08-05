@@ -37,7 +37,7 @@ public class ForgeRemapper extends MinecraftRemapper {
 		RemappedClass current = null;
 		RemappedClass mmCurrent = null;
 
-		var url = new URL(RhinoProperties.INSTANCE.srgRemoteUrl.formatted(getMcVersion()));
+		var url = new URL(RhinoProperties.INSTANCE.srgRemoteUrl.replace("$version", getMcVersion()));
 		String[] srg;
 
 		try {
