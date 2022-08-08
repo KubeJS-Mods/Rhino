@@ -45,14 +45,17 @@ public class ForgeRemapper extends MinecraftRemapper {
 				conn.setConnectTimeout(5000);
 				conn.setReadTimeout(10000);
 			}).getInputStream(), StandardCharsets.UTF_8).split("\n");
-		} catch (InterruptedIOException e) {
-			MinecraftRemapper.LOGGER.error("Timeout while downloading SRG mappings from {}!", url);
-			MinecraftRemapper.LOGGER.error("If the site is blocked in your country, try setting an alternative mirror in rhino.local.properties");
-			MinecraftRemapper.LOGGER.error("We will proceed without remapping here, so you will have to use obfuscated names for internal Minecraft classes!");
-			MinecraftRemapper.LOGGER.error("Full stacktrace:", e);
-			return;
 		} catch (Exception e) {
-			throw new RuntimeException("ERROR: Failed to download SRG mappings from %s!".formatted(url), e);
+			if (e instanceof InterruptedIOException) {
+				LOGGER.error("Timeout while downloading SRG mappings from {}!", url);
+			} else {
+				LOGGER.error("Failed to download SRG mappings from {}!", url);
+			}
+			LOGGER.error("If the site is blocked in your country, try setting an alternative mirror in rhino.local.properties");
+			LOGGER.error("We will proceed without remapping here, so you will have to use obfuscated names for internal Minecraft classes!");
+			LOGGER.error("As a workaround, you can try out the fix outlined here: https://github.com/KubeJS-Mods/Rhino/issues/26#issuecomment-1187123192");
+			// rethrow e to ensure no incorrect mappings are stored
+			throw e;
 		}
 
 		Pattern pattern = Pattern.compile("[\t ]");

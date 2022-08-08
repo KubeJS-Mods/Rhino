@@ -7,6 +7,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InterruptedIOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -27,7 +28,7 @@ import java.util.regex.Pattern;
 
 public abstract class MinecraftRemapper implements Remapper {
 
-	public static final Logger LOGGER = LoggerFactory.getLogger("Rhino Script Remapper");
+	protected static final Logger LOGGER = LoggerFactory.getLogger("Rhino Script Remapper");
 
 	public static final int MM_VERSION = 1;
 	public static final int VERSION = 1;
@@ -238,8 +239,42 @@ public abstract class MinecraftRemapper implements Remapper {
 	public MinecraftClasses fetchMojMapClasses() throws Exception {
 		MinecraftClasses minecraftClasses = new MinecraftClasses(new HashMap<>(), new HashMap<>());
 
-		String str = IOUtils.toString(new URL("https://kubejs.com/mappings/%s/%s".formatted(getMcVersion(), isServer() ? "server.txt" : "client.txt")), StandardCharsets.UTF_8);
-		String[] mojmaps = IOUtils.toString(new URL(str), StandardCharsets.UTF_8).split("\n");
+		URL kubejsMappings = new URL("https://kubejs.com/mappings/%s/%s".formatted(getMcVersion(), isServer() ? "server.txt" : "client.txt"));
+
+		URL mojmapUrl;
+
+		try {
+			mojmapUrl = new URL(IOUtils.toString(Util.make(kubejsMappings.openConnection(), conn -> {
+				conn.setConnectTimeout(5000);
+				conn.setReadTimeout(10000);
+			}).getInputStream(), StandardCharsets.UTF_8));
+		} catch (Exception e) {
+			LOGGER.error("Failed to fetch mojang mappings data from %s".formatted(kubejsMappings));
+			LOGGER.error("This likely either means that kubejs.com is down or blocked in your country.");
+			LOGGER.error("We will proceed without remapping here, so you will have to use obfuscated names for internal Minecraft classes!");
+			LOGGER.error("As a workaround, you can try out the fix outlined here: https://github.com/KubeJS-Mods/Rhino/issues/26#issuecomment-1187123192");
+			// rethrow e to ensure no incorrect mappings are stored
+			throw e;
+		}
+
+		String[] mojmaps;
+		try {
+			mojmaps = IOUtils.toString(Util.make(mojmapUrl.openConnection(), conn -> {
+				conn.setConnectTimeout(10000);
+				conn.setReadTimeout(60000);
+			}).getInputStream(), StandardCharsets.UTF_8).split("\n");
+		} catch (Exception e) {
+			if (e instanceof InterruptedIOException) {
+				MinecraftRemapper.LOGGER.error("Timeout while downloading mojang mappings from {}!", mojmapUrl);
+			} else {
+				MinecraftRemapper.LOGGER.error("Failed to download mojang mappings from {}!", mojmapUrl);
+			}
+			LOGGER.error("Your connection might be unstable or blocking Mojang's servers, please try again later.");
+			LOGGER.error("We will proceed without remapping here, so you will have to use obfuscated names for internal Minecraft classes!");
+			LOGGER.error("As a workaround, you can try out the fix outlined here: https://github.com/KubeJS-Mods/Rhino/issues/26#issuecomment-1187123192");
+			// rethrow e to ensure no incorrect mappings are stored
+			throw e;
+		}
 
 		for (String s : mojmaps) {
 			s = s.trim();
