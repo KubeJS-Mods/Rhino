@@ -178,7 +178,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				if (!(toString instanceof Callable fun)) {
 					throw ScriptRuntime.notFunctionError(toString);
 				}
-				return fun.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+				return fun.call(cx, scope, thisObj, ScriptRuntime.EMPTY_OBJECTS);
 			}
 
 			case Id_toString: {

@@ -328,7 +328,7 @@ public interface Scriptable extends IdEnumerationIterator {
 		}
 
 		Scriptable scope = getParentScope();
-		Object r = f.call(cx, scope, this, ScriptRuntime.emptyArgs);
+		Object r = f.call(cx, scope, this, ScriptRuntime.EMPTY_OBJECTS);
 		Scriptable iteratorResult = ScriptRuntime.toObject(cx, scope, r);
 		currentId.accept(ScriptableObject.getProperty(iteratorResult, ES6Iterator.VALUE_PROPERTY));
 		Object done = ScriptableObject.getProperty(iteratorResult, ES6Iterator.DONE_PROPERTY);
@@ -344,7 +344,7 @@ public interface Scriptable extends IdEnumerationIterator {
 		}
 
 		Scriptable scope = getParentScope();
-		currentId.accept(f.call(cx, scope, this, ScriptRuntime.emptyArgs));
+		currentId.accept(f.call(cx, scope, this, ScriptRuntime.EMPTY_OBJECTS));
 		return true;
 	}
 

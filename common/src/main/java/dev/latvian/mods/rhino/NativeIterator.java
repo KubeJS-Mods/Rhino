@@ -145,7 +145,7 @@ public final class NativeIterator extends IdScriptableObject {
 		return switch (id) {
 			case Id_next -> iterator.objectIterator.nextExec(cx, scope);
 			case Id___iterator__ ->
-					/// XXX: what about argument? SpiderMonkey apparently ignores it
+				/// XXX: what about argument? SpiderMonkey apparently ignores it
 					thisObj;
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		};
@@ -168,7 +168,8 @@ public final class NativeIterator extends IdScriptableObject {
 			Iterator<?> iterator = getJavaIterator(obj);
 			if (iterator != null) {
 				scope = getTopLevelScope(scope);
-				return cx.getWrapFactory().wrap(cx, scope, new WrappedJavaIterator(iterator, scope), WrappedJavaIterator.class);
+				var contextData = SharedContextData.get(cx, scope);
+				return contextData.getWrapFactory().wrap(contextData, scope, new WrappedJavaIterator(iterator, scope), WrappedJavaIterator.class);
 			}
 
 			// Otherwise, just call the runtime routine

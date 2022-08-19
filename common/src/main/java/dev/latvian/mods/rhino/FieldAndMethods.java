@@ -27,8 +27,8 @@ public class FieldAndMethods extends NativeJavaMethod {
 		} catch (IllegalAccessException accEx) {
 			throw Context.reportRuntimeError1("msg.java.internal.private", field.getName());
 		}
-		Context cx = Context.getContext();
-		rval = cx.getWrapFactory().wrap(cx, this, rval, type);
+		SharedContextData data = SharedContextData.get(getParentScope());
+		rval = data.getWrapFactory().wrap(data, this, rval, type);
 		if (rval instanceof Scriptable) {
 			rval = ((Scriptable) rval).getDefaultValue(hint);
 		}

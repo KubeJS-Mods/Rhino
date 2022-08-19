@@ -35,11 +35,12 @@ public class CustomFunction extends BaseFunction {
 
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		SharedContextData data = SharedContextData.get(cx, scope);
 		// First, we marshall the args.
 		Object[] origArgs = args;
 		for (int i = 0; i < args.length; i++) {
 			Object arg = args[i];
-			Object coerced = Context.jsToJava(cx, arg, argTypes[i]);
+			Object coerced = Context.jsToJava(data, arg, argTypes[i]);
 
 			if (coerced != arg) {
 				if (origArgs == args) {
@@ -55,7 +56,8 @@ public class CustomFunction extends BaseFunction {
 			return Undefined.instance;
 		}
 
-		Object wrapped = cx.getWrapFactory().wrap(cx, scope, retval, retval.getClass());
+		SharedContextData contextData = SharedContextData.get(cx, scope);
+		Object wrapped = contextData.getWrapFactory().wrap(contextData, scope, retval, retval.getClass());
 
 		if (wrapped == null) {
 			wrapped = Undefined.instance;

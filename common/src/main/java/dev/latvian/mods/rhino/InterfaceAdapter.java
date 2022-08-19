@@ -30,7 +30,7 @@ public class InterfaceAdapter {
 		}
 
 		Scriptable topScope = ScriptRuntime.getTopCallScope(cx);
-		ClassCache cache = ClassCache.get(topScope);
+		SharedContextData cache = SharedContextData.get(cx, topScope);
 		InterfaceAdapter adapter;
 		adapter = (InterfaceAdapter) cache.getInterfaceAdapter(cl);
 		ContextFactory cf = cx.getFactory();
@@ -91,6 +91,7 @@ public class InterfaceAdapter {
 	}
 
 	Object invokeImpl(Context cx, Object target, Scriptable topScope, Object thisObject, Method method, Object[] args) {
+		SharedContextData data = SharedContextData.get(cx, topScope);
 		Callable function;
 		if (target instanceof Callable) {
 			function = (Callable) target;
@@ -107,33 +108,34 @@ public class InterfaceAdapter {
 				if (resultType == Void.TYPE) {
 					return null;
 				}
-				return Context.jsToJava(cx, null, resultType);
+				return Context.jsToJava(data, null, resultType);
 			}
 			if (!(value instanceof Callable)) {
 				throw Context.reportRuntimeError1("msg.not.function.interface", methodName);
 			}
 			function = (Callable) value;
 		}
-		WrapFactory wf = cx.getWrapFactory();
+		var contextData = SharedContextData.get(cx, topScope);
+		WrapFactory wf = contextData.getWrapFactory();
 		if (args == null) {
-			args = ScriptRuntime.emptyArgs;
+			args = ScriptRuntime.EMPTY_OBJECTS;
 		} else {
 			for (int i = 0, N = args.length; i != N; ++i) {
 				Object arg = args[i];
 				// neutralize wrap factory java primitive wrap feature
 				if (!(arg instanceof String || arg instanceof Number || arg instanceof Boolean)) {
-					args[i] = wf.wrap(cx, topScope, arg, null);
+					args[i] = wf.wrap(contextData, topScope, arg, null);
 				}
 			}
 		}
-		Scriptable thisObj = wf.wrapAsJavaObject(cx, topScope, thisObject, null);
+		Scriptable thisObj = wf.wrapAsJavaObject(contextData, topScope, thisObject, null);
 
 		Object result = function.call(cx, topScope, thisObj, args);
 		Class<?> javaResultType = method.getReturnType();
 		if (javaResultType == Void.TYPE) {
 			result = null;
 		} else {
-			result = Context.jsToJava(cx, result, javaResultType);
+			result = Context.jsToJava(data, result, javaResultType);
 		}
 		return result;
 	}

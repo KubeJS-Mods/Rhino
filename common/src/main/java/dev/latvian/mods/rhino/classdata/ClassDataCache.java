@@ -1,20 +1,20 @@
 package dev.latvian.mods.rhino.classdata;
 
-import dev.latvian.mods.rhino.Context;
+import dev.latvian.mods.rhino.SharedContextData;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class ClassDataCache {
-	public final Context context;
+	public final SharedContextData data;
 	private final Object lock;
 	private final Map<Class<?>, ClassData> cache;
 	final ClassData objectClassData;
 	private final ClassData arrayClassData;
 	private final ClassData classClassData;
 
-	public ClassDataCache(Context cx) {
-		context = cx;
+	public ClassDataCache(SharedContextData d) {
+		data = d;
 		lock = new Object();
 		cache = new HashMap<>();
 		objectClassData = new ClassData(this, Object.class);

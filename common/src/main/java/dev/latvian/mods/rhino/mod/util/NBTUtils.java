@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface NBTUtils {
-	ValueUnwrapper VALUE_UNWRAPPER = (scope, value) -> value instanceof Tag tag ? fromTag(tag) : value;
+	ValueUnwrapper VALUE_UNWRAPPER = (contextData, scope, value) -> value instanceof Tag tag ? fromTag(tag) : value;
 
 	@Nullable
 	static Object fromTag(@Nullable Tag t) {

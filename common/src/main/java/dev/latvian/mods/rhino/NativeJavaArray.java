@@ -15,20 +15,24 @@ import java.lang.reflect.Array;
  * @author Mike Shaver
  * @see NativeJavaClass
  * @see NativeJavaObject
- * @see NativeJavaPackage
  */
 
 public class NativeJavaArray extends NativeJavaObject implements SymbolScriptable {
 	@Serial
 	private static final long serialVersionUID = -924022554283675333L;
 
+	SharedContextData contextData;
+	Object array;
+	int length;
+	Class<?> cls;
+
 	@Override
 	public String getClassName() {
 		return "JavaArray";
 	}
 
-	public static NativeJavaArray wrap(Scriptable scope, Object array) {
-		return new NativeJavaArray(scope, array);
+	public static NativeJavaArray wrap(SharedContextData data, Scriptable scope, Object array) {
+		return new NativeJavaArray(data, scope, array);
 	}
 
 	@Override
@@ -36,8 +40,9 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 		return array;
 	}
 
-	public NativeJavaArray(Scriptable scope, Object array) {
+	public NativeJavaArray(SharedContextData contextData, Scriptable scope, Object array) {
 		super(scope, null, ScriptRuntime.ObjectClass);
+		this.contextData = contextData;
 		Class<?> cl = array.getClass();
 		if (!cl.isArray()) {
 			throw new RuntimeException("Array expected");
@@ -77,9 +82,8 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	@Override
 	public Object get(int index, Scriptable start) {
 		if (0 <= index && index < length) {
-			Context cx = Context.getContext();
 			Object obj = Array.get(array, index);
-			return cx.getWrapFactory().wrap(cx, this, obj, cls);
+			return contextData.getWrapFactory().wrap(contextData, this, obj, cls);
 		}
 		return Undefined.instance;
 	}
@@ -103,7 +107,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	@Override
 	public void put(int index, Scriptable start, Object value) {
 		if (0 <= index && index < length) {
-			Array.set(array, index, Context.jsToJava(value, cls));
+			Array.set(array, index, Context.jsToJava(contextData, value, cls));
 		} else {
 			throw Context.reportRuntimeError2("msg.java.array.index.out.of.bounds", String.valueOf(index), String.valueOf(length - 1));
 		}
@@ -154,8 +158,4 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 		}
 		return prototype;
 	}
-
-	Object array;
-	int length;
-	Class<?> cls;
 }

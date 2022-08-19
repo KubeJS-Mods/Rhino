@@ -205,7 +205,7 @@ public final class Interpreter extends Icode implements Evaluator {
 			// are typically exposed as NativeContinuation.implementation,
 			// comparing them allows establishing whether the continuations
 			// are semantically equal.
-			if (other instanceof CallFrame) {
+			if (other instanceof CallFrame otherCallFrame) {
 				// If the call is not within a Context with a top call, we force
 				// one. It is required as some objects within fully initialized
 				// global scopes (notably, XMLLibImpl) need to have a top scope
@@ -213,10 +213,10 @@ public final class Interpreter extends Icode implements Evaluator {
 				final Context cx = Context.enter();
 				try {
 					if (ScriptRuntime.hasTopCall(cx)) {
-						return equalsInTopScope(other);
+						return equalsInTopScope(otherCallFrame);
 					}
 					final Scriptable top = ScriptableObject.getTopLevelScope(scope);
-					return (Boolean) ScriptRuntime.doTopCall((c, scope, thisObj, args) -> equalsInTopScope(other), cx, top, top, ScriptRuntime.emptyArgs, isStrictTopFrame());
+					return (Boolean) ScriptRuntime.doTopCall((c, scope, thisObj, args) -> equalsInTopScope(otherCallFrame), cx, top, top, ScriptRuntime.EMPTY_OBJECTS, isStrictTopFrame());
 				} finally {
 					Context.exit();
 				}
@@ -240,8 +240,8 @@ public final class Interpreter extends Icode implements Evaluator {
 			return h;
 		}
 
-		private Boolean equalsInTopScope(Object other) {
-			return EqualObjectGraphs.withThreadLocal(eq -> equals(this, (CallFrame) other, eq));
+		private Boolean equalsInTopScope(CallFrame other) {
+			return EqualObjectGraphs.withThreadLocal(eq -> equals(this, other, eq));
 		}
 
 		private boolean isStrictTopFrame() {
@@ -732,7 +732,7 @@ public final class Interpreter extends Icode implements Evaluator {
 				generatorState = (GeneratorState) throwable;
 
 				// reestablish this call frame
-				enterFrame(cx, frame, ScriptRuntime.emptyArgs, true);
+				enterFrame(cx, frame, ScriptRuntime.EMPTY_OBJECTS, true);
 				throwable = null;
 			} else if (!(throwable instanceof ContinuationJump)) {
 				// It should be continuation
@@ -1738,15 +1738,15 @@ public final class Interpreter extends Icode implements Evaluator {
 			} else if (throwable instanceof ContinuationPending) {
 				exState = EX_NO_JS_STATE;
 			} else if (throwable instanceof RuntimeException) {
-				exState = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS) ? EX_CATCH_STATE : EX_FINALLY_STATE;
+				exState = EX_FINALLY_STATE;
 			} else if (throwable instanceof Error) {
-				exState = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS) ? EX_CATCH_STATE : EX_NO_JS_STATE;
+				exState = EX_NO_JS_STATE;
 			} else if (throwable instanceof ContinuationJump) {
 				// It must be ContinuationJump
 				exState = EX_FINALLY_STATE;
 				cjump = (ContinuationJump) throwable;
 			} else {
-				exState = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS) ? EX_CATCH_STATE : EX_FINALLY_STATE;
+				exState = EX_FINALLY_STATE;
 			}
 
 			if (instructionCounting) {
@@ -2273,7 +2273,7 @@ public final class Interpreter extends Icode implements Evaluator {
 				// the capturedFrame, not branchFrame
 				--enterCount;
 				x = enterFrames[enterCount];
-				enterFrame(cx, x, ScriptRuntime.emptyArgs, true);
+				enterFrame(cx, x, ScriptRuntime.EMPTY_OBJECTS, true);
 			}
 
 			// Continuation jump is almost done: capturedFrame
@@ -2353,7 +2353,7 @@ public final class Interpreter extends Icode implements Evaluator {
 		}
 		final CallFrame calleeFrame;
 		if (BaseFunction.isApply(ifun)) {
-			Object[] callArgs = indexReg < 2 ? ScriptRuntime.emptyArgs : ScriptRuntime.getApplyArguments(cx, stack[stackTop + 3]);
+			Object[] callArgs = indexReg < 2 ? ScriptRuntime.EMPTY_OBJECTS : ScriptRuntime.getApplyArguments(cx, stack[stackTop + 3]);
 			calleeFrame = initFrame(cx, calleeScope, applyThis, callArgs, null, 0, callArgs.length, iApplyCallable, frame);
 		} else {
 			// Shift args left
@@ -2608,7 +2608,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
 	private static Object[] getArgsArray(Object[] stack, double[] sDbl, int shift, int count) {
 		if (count == 0) {
-			return ScriptRuntime.emptyArgs;
+			return ScriptRuntime.EMPTY_OBJECTS;
 		}
 		Object[] args = new Object[count];
 		for (int i = 0; i != count; ++i, ++shift) {

@@ -1,14 +1,11 @@
 package dev.latvian.mods.rhino.util;
 
-import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.Scriptable;
+import dev.latvian.mods.rhino.SharedContextData;
 
 @FunctionalInterface
 public interface ValueUnwrapper {
-	ValueUnwrapper DEFAULT = (scope, value) -> {
-		Context cx = Context.getContext();
-		return cx.getWrapFactory().wrap(cx, scope, value, value.getClass());
-	};
+	ValueUnwrapper DEFAULT = (contextData, scope, value) -> contextData.getWrapFactory().wrap(contextData, scope, value, value.getClass());
 
-	Object unwrap(Scriptable scope, Object value);
+	Object unwrap(SharedContextData contextData, Scriptable scope, Object value);
 }

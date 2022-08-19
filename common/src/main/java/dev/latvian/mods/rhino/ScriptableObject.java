@@ -262,11 +262,9 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			if (setter == null) {
 				if (getter != null) {
 					Context cx = Context.getContext();
-					if (cx.isStrictMode() ||
-							// Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
-							// we should throw a TypeError in this case.
-							cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
-
+					// Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
+					// we should throw a TypeError in this case.
+					if (cx.isStrictMode()) {
 						String prop = "";
 						if (name != null) {
 							prop = "[" + start.getClassName() + "]." + name;
@@ -312,7 +310,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 					Object[] args;
 					if (nativeGetter.delegateTo == null) {
 						getterThis = start;
-						args = ScriptRuntime.emptyArgs;
+						args = ScriptRuntime.EMPTY_OBJECTS;
 					} else {
 						getterThis = nativeGetter.delegateTo;
 						args = new Object[]{start};
@@ -320,7 +318,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 					return nativeGetter.invoke(getterThis, args);
 				} else if (getter instanceof Function f) {
 					Context cx = Context.getContext();
-					return f.call(cx, f.getParentScope(), start, ScriptRuntime.emptyArgs);
+					return f.call(cx, f.getParentScope(), start, ScriptRuntime.EMPTY_OBJECTS);
 				}
 			}
 			Object val = this.value;
@@ -343,10 +341,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	}
 
 	private static SlotMapContainer createSlotMap(int initialSize) {
-		Context cx = Context.getCurrentContext();
-		if ((cx != null) && cx.hasFeature(Context.FEATURE_THREAD_SAFE_OBJECTS)) {
-			return new ThreadSafeSlotMapContainer(initialSize);
-		}
 		return new SlotMapContainer(initialSize);
 	}
 
@@ -983,7 +977,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			if (cx == null) {
 				cx = Context.getContext();
 			}
-			v = fun.call(cx, fun.getParentScope(), object, ScriptRuntime.emptyArgs);
+			v = fun.call(cx, fun.getParentScope(), object, ScriptRuntime.EMPTY_OBJECTS);
 			if (v != null) {
 				if (!(v instanceof Scriptable)) {
 					return v;
@@ -1254,7 +1248,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			throw Context.reportRuntimeError1("msg.zero.arg.ctor", clazz.getName());
 		}
 
-		Scriptable proto = (Scriptable) protoCtor.newInstance(ScriptRuntime.emptyArgs);
+		Scriptable proto = (Scriptable) protoCtor.newInstance(ScriptRuntime.EMPTY_OBJECTS);
 		String className = proto.getClassName();
 
 		// check for possible redefinition
@@ -2186,34 +2180,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	}
 
 	/**
-	 * Gets an indexed property from an object or any object in its prototype
-	 * chain and coerces it to the requested Java type.
-	 * <p>
-	 * Searches the prototype chain for a property with integral index
-	 * <code>index</code>. Note that if you wish to look for properties with numerical
-	 * but non-integral indicies, you should use getProperty(Scriptable,String) with
-	 * the string value of the index.
-	 * <p>
-	 *
-	 * @param s     a JavaScript object
-	 * @param index an integral index
-	 * @param type  the required Java type of the result
-	 * @return the value of a property with name <code>name</code> found in
-	 * <code>obj</code> or any object in its prototype chain, or
-	 * null if not found. Note that it does not return
-	 * {@link Scriptable#NOT_FOUND} as it can ordinarily not be
-	 * converted to most of the types.
-	 * @since 1.7R3
-	 */
-	public static <T> T getTypedProperty(Scriptable s, int index, Class<T> type) {
-		Object val = getProperty(s, index);
-		if (val == NOT_FOUND) {
-			val = null;
-		}
-		return type.cast(Context.jsToJava(val, type));
-	}
-
-	/**
 	 * Gets an indexed property from an object or any object in its prototype chain.
 	 * <p>
 	 * Searches the prototype chain for a property with integral index
@@ -2240,31 +2206,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			obj = obj.getPrototype();
 		} while (obj != null);
 		return result;
-	}
-
-	/**
-	 * Gets a named property from an object or any object in its prototype chain
-	 * and coerces it to the requested Java type.
-	 * <p>
-	 * Searches the prototype chain for a property named <code>name</code>.
-	 * <p>
-	 *
-	 * @param s    a JavaScript object
-	 * @param name a property name
-	 * @param type the required Java type of the result
-	 * @return the value of a property with name <code>name</code> found in
-	 * <code>obj</code> or any object in its prototype chain, or
-	 * null if not found. Note that it does not return
-	 * {@link Scriptable#NOT_FOUND} as it can ordinarily not be
-	 * converted to most of the types.
-	 * @since 1.7R3
-	 */
-	public static <T> T getTypedProperty(Scriptable s, String name, Class<T> type) {
-		Object val = getProperty(s, name);
-		if (val == NOT_FOUND) {
-			val = null;
-		}
-		return type.cast(Context.jsToJava(val, type));
 	}
 
 	/**
@@ -2470,7 +2411,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 */
 	public static Object[] getPropertyIds(Scriptable obj) {
 		if (obj == null) {
-			return ScriptRuntime.emptyArgs;
+			return ScriptRuntime.EMPTY_OBJECTS;
 		}
 		Object[] result = obj.getIds();
 		ObjToIntMap map = null;
@@ -2748,7 +2689,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		int externalLen = (externalData == null ? 0 : externalData.getArrayLength());
 
 		if (externalLen == 0) {
-			a = ScriptRuntime.emptyArgs;
+			a = ScriptRuntime.EMPTY_OBJECTS;
 		} else {
 			a = new Object[externalLen];
 			for (int i = 0; i < externalLen; i++) {

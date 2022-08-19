@@ -6,7 +6,6 @@
 
 package dev.latvian.mods.rhino.typedarrays;
 
-import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.IdScriptableObject;
 import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.Undefined;
@@ -21,8 +20,6 @@ import java.io.Serial;
 public abstract class NativeArrayBufferView extends IdScriptableObject {
 	@Serial
 	private static final long serialVersionUID = 6884475582973958419L;
-
-	private static Boolean useLittleEndian = null;
 
 	/**
 	 * Many view objects can share the same backing array
@@ -71,15 +68,7 @@ public abstract class NativeArrayBufferView extends IdScriptableObject {
 	}
 
 	protected static boolean useLittleEndian() {
-		if (useLittleEndian == null) {
-			Context ctx = Context.getCurrentContext();
-			// for some unit tests this might be null
-			if (ctx == null) {
-				return false;
-			}
-			useLittleEndian = ctx.hasFeature(Context.FEATURE_LITTLE_ENDIAN);
-		}
-		return useLittleEndian;
+		return false;
 	}
 
 	protected static boolean isArg(Object[] args, int i) {

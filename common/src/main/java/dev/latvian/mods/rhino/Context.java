@@ -10,15 +10,8 @@ package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.ast.AstRoot;
 import dev.latvian.mods.rhino.ast.ScriptNode;
-import dev.latvian.mods.rhino.classdata.ClassDataCache;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter.ClassFileFormatException;
 import dev.latvian.mods.rhino.regexp.RegExp;
-import dev.latvian.mods.rhino.util.CustomJavaToJsWrapper;
-import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProvider;
-import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProviderHolder;
-import dev.latvian.mods.rhino.util.Remapper;
-import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
-import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -31,7 +24,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Predicate;
 
 /**
  * This class represents the runtime context of an executing script.
@@ -57,182 +49,56 @@ import java.util.function.Predicate;
 
 @SuppressWarnings("ThrowableNotThrown")
 public class Context {
-	/**
-	 * Control if member expression as function name extension is available.
-	 * If <code>hasFeature(FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME)</code> returns
-	 * true, allow <code>function memberExpression(args) { body }</code> to be
-	 * syntax sugar for <code>memberExpression = function(args) { body }</code>,
-	 * when memberExpression is not a simple identifier.
-	 * See ECMAScript-262, section 11.2 for definition of memberExpression.
-	 * By default {@link #hasFeature(int)} returns false.
-	 */
-	public static final int FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME = 2;
-
-	/**
-	 * Control if reserved keywords are treated as identifiers.
-	 * If <code>hasFeature(RESERVED_KEYWORD_AS_IDENTIFIER)</code> returns true,
-	 * treat future reserved keyword (see  Ecma-262, section 7.5.3) as ordinary
-	 * identifiers but warn about this usage.
-	 * <p>
-	 * By default {@link #hasFeature(int)} returns false.
-	 */
-	public static final int FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER = 3;
-
-	/**
-	 * Control if properties <code>__proto__</code> and <code>__parent__</code>
-	 * are treated specially.
-	 * If <code>hasFeature(FEATURE_PARENT_PROTO_PROPERTIES)</code> returns true,
-	 * treat <code>__parent__</code> and <code>__proto__</code> as special properties.
-	 * <p>
-	 * The properties allow to query and set scope and prototype chains for the
-	 * objects. The special meaning of the properties is available
-	 * only when they are used as the right hand side of the dot operator.
-	 * For example, while <code>x.__proto__ = y</code> changes the prototype
-	 * chain of the object <code>x</code> to point to <code>y</code>,
-	 * <code>x["__proto__"] = y</code> simply assigns a new value to the property
-	 * <code>__proto__</code> in <code>x</code> even when the feature is on.
-	 * <p>
-	 * By default {@link #hasFeature(int)} returns true.
-	 */
-	public static final int FEATURE_PARENT_PROTO_PROPERTIES = 5;
-
-	/**
-	 * Control if dynamic scope should be used for name access.
-	 * If hasFeature(FEATURE_DYNAMIC_SCOPE) returns true, then the name lookup
-	 * during name resolution will use the top scope of the script or function
-	 * which is at the top of JS execution stack instead of the top scope of the
-	 * script or function from the current stack frame if the top scope of
-	 * the top stack frame contains the top scope of the current stack frame
-	 * on its prototype chain.
-	 * <p>
-	 * This is useful to define shared scope containing functions that can
-	 * be called from scripts and functions using private scopes.
-	 * <p>
-	 * By default {@link #hasFeature(int)} returns false.
-	 *
-	 * @since 1.6 Release 1
-	 */
-	public static final int FEATURE_DYNAMIC_SCOPE = 7;
-
-	/**
-	 * Control if strict variable mode is enabled.
-	 * When the feature is on Rhino reports runtime errors if assignment
-	 * to a global variable that does not exist is executed. When the feature
-	 * is off such assignments create a new variable in the global scope as
-	 * required by ECMA 262.
-	 * <p>
-	 * By default {@link #hasFeature(int)} returns false.
-	 *
-	 * @since 1.6 Release 1
-	 */
-	public static final int FEATURE_STRICT_VARS = 8;
-
-	/**
-	 * Control if strict eval mode is enabled.
-	 * When the feature is on Rhino reports runtime errors if non-string
-	 * argument is passed to the eval function. When the feature is off
-	 * eval simply return non-string argument as is without performing any
-	 * evaluation as required by ECMA 262.
-	 * <p>
-	 * By default {@link #hasFeature(int)} returns false.
-	 *
-	 * @since 1.6 Release 1
-	 */
-	public static final int FEATURE_STRICT_EVAL = 9;
-
-	/**
-	 * When the feature is on Rhino will add a "fileName" and "lineNumber"
-	 * properties to Error objects automatically. When the feature is off, you
-	 * have to explicitly pass them as the second and third argument to the
-	 * Error constructor. Note that neither behavior is fully ECMA 262
-	 * compliant (as 262 doesn't specify a three-arg constructor), but keeping
-	 * the feature off results in Error objects that don't have
-	 * additional non-ECMA properties when constructed using the ECMA-defined
-	 * single-arg constructor and is thus desirable if a stricter ECMA
-	 * compliance is desired, specifically adherence to the point 15.11.5. of
-	 * the standard.
-	 * <p>
-	 * By default {@link #hasFeature(int)} returns false.
-	 *
-	 * @since 1.6 Release 6
-	 */
-	public static final int FEATURE_LOCATION_INFORMATION_IN_ERROR = 10;
-
-	/**
-	 * Controls whether JS 1.5 'strict mode' is enabled.
-	 * When the feature is on, Rhino reports more than a dozen different
-	 * warnings.  When the feature is off, these warnings are not generated.
-	 * FEATURE_STRICT_MODE implies FEATURE_STRICT_VARS and FEATURE_STRICT_EVAL.
-	 * <p>
-	 * By default {@link #hasFeature(int)} returns false.
-	 *
-	 * @since 1.6 Release 6
-	 */
-	public static final int FEATURE_STRICT_MODE = 11;
-
-	/**
-	 * Controls whether a warning should be treated as an error.
-	 *
-	 * @since 1.6 Release 6
-	 */
-	public static final int FEATURE_WARNING_AS_ERROR = 12;
-
-	/**
-	 * Enables enhanced access to Java.
-	 * Specifically, controls whether private and protected members can be
-	 * accessed, and whether scripts can catch all Java exceptions.
-	 * <p>
-	 * Note that this feature should only be enabled for trusted scripts.
-	 * <p>
-	 * By default {@link #hasFeature(int)} returns false.
-	 *
-	 * @since 1.7 Release 1
-	 */
-	public static final int FEATURE_ENHANCED_JAVA_ACCESS = 13;
-
-	/**
-	 * Enables access to JavaScript features from ECMAscript 6 that are present in
-	 * JavaScript engines that do not yet support version 6, such as V8.
-	 * This includes support for typed arrays. Default is true.
-	 *
-	 * @since 1.7 Release 3
-	 */
-	public static final int FEATURE_V8_EXTENSIONS = 14;
-
-	/**
-	 * If set, then all objects will have a thread-safe property map. (Note that this doesn't make
-	 * everything else that they do thread-safe -- that depends on the specific implementation.
-	 * If not set, users should not share Rhino objects between threads, unless the "sync"
-	 * function is used to wrap them with an explicit synchronizer. The default
-	 * is false, which means that by default, individual objects are not thread-safe.
-	 *
-	 * @since 1.7.8
-	 */
-	public static final int FEATURE_THREAD_SAFE_OBJECTS = 17;
-
-	/**
-	 * If set, then all integer numbers will be returned without decimal place. For instance
-	 * assume there is a function like this:
-	 * <code>function foo() {return 5;}</code>
-	 * 5 will be returned if feature is set, 5.0 otherwise.
-	 */
-	public static final int FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE = 18;
-
-	/**
-	 * TypedArray buffer uses little/big endian depending on the platform.
-	 * The default is big endian for Rhino.
-	 *
-	 * @since 1.7 Release 11
-	 */
-	public static final int FEATURE_LITTLE_ENDIAN = 19;
-
 	public static final String languageVersionProperty = "language version";
 	public static final String errorReporterProperty = "error reporter";
 
-	/**
-	 * Convenient value to use as zero-length array of objects.
-	 */
-	public static final Object[] emptyArgs = ScriptRuntime.emptyArgs;
+	private final ContextFactory factory;
+	private boolean sealed;
+	private Object sealKey;
+
+	Scriptable topCallScope;
+	boolean isContinuationsTopCall;
+	NativeCall currentActivationCall;
+	BaseFunction typeErrorThrower;
+
+	// for Objects, Arrays to tag themselves as being printed out,
+	// so they don't print themselves out recursively.
+	// Use ObjToIntMap instead of java.util.HashSet for JDK 1.1 compatibility
+	ObjToIntMap iterating;
+
+	private boolean hasClassShutter;
+	private ClassShutter classShutter;
+	private ErrorReporter errorReporter;
+	RegExp regExp;
+	private Locale locale;
+	private int maximumInterpreterStackDepth;
+	private int enterCount;
+	private Object propertyListeners;
+	private Map<Object, Object> threadLocalMap;
+	private ClassLoader applicationClassLoader;
+
+	// For the interpreter to store the last frame for error reports etc.
+	Object lastInterpreterFrame;
+
+	// For the interpreter to store information about previous invocations
+	// interpreter invocations
+	ObjArray previousInterpreterInvocations;
+
+	// For instruction counting (interpreter only)
+	int instructionCount;
+	int instructionThreshold;
+
+	// It can be used to return the second uint32 result from function
+	long scratchUint32;
+
+	// It can be used to return the second Scriptable result from function
+	Scriptable scratchScriptable;
+
+	// Generate an observer count on compiled code
+	public boolean generateObserverCount = false;
+
+	boolean isTopLevelStrict;
+	public SharedContextData sharedContextData;
 
 	/**
 	 * Creates a new context. Provided as a preferred super constructor for
@@ -604,11 +470,7 @@ public class Context {
 	 */
 	public static void reportWarning(String message, String sourceName, int lineno, String lineSource, int lineOffset) {
 		Context cx = Context.getContext();
-		if (cx.hasFeature(FEATURE_WARNING_AS_ERROR)) {
-			reportError(message, sourceName, lineno, lineSource, lineOffset);
-		} else {
-			cx.getErrorReporter().warning(message, sourceName, lineno, lineSource, lineOffset);
-		}
+		cx.getErrorReporter().warning(message, sourceName, lineno, lineSource, lineOffset);
 	}
 
 	/**
@@ -961,7 +823,7 @@ public class Context {
 			// Can only be applied to scripts
 			throw new IllegalArgumentException("Script argument was not" + " a script or was not created by interpreted mode ");
 		}
-		return callFunctionWithContinuations((InterpretedFunction) script, scope, ScriptRuntime.emptyArgs);
+		return callFunctionWithContinuations((InterpretedFunction) script, scope, ScriptRuntime.EMPTY_OBJECTS);
 	}
 
 	/**
@@ -1180,7 +1042,7 @@ public class Context {
 	 * @return the new object
 	 */
 	public Scriptable newObject(Scriptable scope, String constructorName) {
-		return newObject(scope, constructorName, ScriptRuntime.emptyArgs);
+		return newObject(scope, constructorName, ScriptRuntime.EMPTY_OBJECTS);
 	}
 
 	/**
@@ -1353,14 +1215,13 @@ public class Context {
 	 * @param scope top scope object
 	 * @return value suitable to pass to any API that takes JavaScript values.
 	 */
-	public static Object javaToJS(Object value, Scriptable scope) {
+	public static Object javaToJS(SharedContextData contextData, Object value, Scriptable scope) {
 		if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Scriptable) {
 			return value;
 		} else if (value instanceof Character) {
 			return String.valueOf(((Character) value).charValue());
 		} else {
-			Context cx = Context.getContext();
-			return cx.getWrapFactory().wrap(cx, scope, value, null);
+			return contextData.getWrapFactory().wrap(contextData, scope, value, null);
 		}
 	}
 
@@ -1376,32 +1237,12 @@ public class Context {
 	 * @return the converted value
 	 * @throws EvaluatorException if the conversion cannot be performed
 	 */
-	public static Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
+	public static Object jsToJava(SharedContextData data, Object value, Class<?> desiredType) throws EvaluatorException {
 		if (desiredType == null) {
 			return value;
 		}
 
-		return jsToJava(getCurrentContext(), value, desiredType);
-	}
-
-	/**
-	 * Convert a JavaScript value into the desired type.
-	 * Uses the semantics defined with LiveConnect3 and throws an
-	 * Illegal argument exception if the conversion cannot be performed.
-	 *
-	 * @param value       the JavaScript value to convert
-	 * @param desiredType the Java type to convert to. Primitive Java
-	 *                    types are represented using the TYPE fields in the corresponding
-	 *                    wrapper class in java.lang.
-	 * @return the converted value
-	 * @throws EvaluatorException if the conversion cannot be performed
-	 */
-	public static Object jsToJava(Context cx, Object value, Class<?> desiredType) throws EvaluatorException {
-		if (desiredType == null) {
-			return value;
-		}
-
-		return NativeJavaObject.coerceTypeImpl(cx, cx.hasTypeWrappers() ? cx.getTypeWrappers() : null, desiredType, value);
+		return NativeJavaObject.coerceTypeImpl(data.hasTypeWrappers() ? data.getTypeWrappers() : null, desiredType, value);
 	}
 
 	/**
@@ -1428,10 +1269,7 @@ public class Context {
 		}
 		// special handling of Error so scripts would not catch them
 		if (e instanceof Error) {
-			Context cx = getContext();
-			if (cx == null || !cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
-				throw (Error) e;
-			}
+			throw (Error) e;
 		}
 		if (e instanceof RhinoException) {
 			throw (RhinoException) e;
@@ -1482,58 +1320,6 @@ public class Context {
 			throw new IllegalArgumentException("Cannot set maximumInterpreterStackDepth to less than 1");
 		}
 		maximumInterpreterStackDepth = max;
-	}
-
-	/**
-	 * Set the LiveConnect access filter for this context.
-	 * <p> {@link ClassShutter} may only be set if it is currently null.
-	 * Otherwise a SecurityException is thrown.
-	 *
-	 * @param shutter a ClassShutter object
-	 * @throws SecurityException if there is already a ClassShutter
-	 *                           object for this Context
-	 */
-	public synchronized final void setClassShutter(ClassShutter shutter) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		if (shutter == null) {
-			throw new IllegalArgumentException();
-		}
-		if (hasClassShutter) {
-			throw new SecurityException("Cannot overwrite existing " + "ClassShutter object");
-		}
-		classShutter = shutter;
-		hasClassShutter = true;
-	}
-
-	public final synchronized ClassShutter getClassShutter() {
-		return classShutter;
-	}
-
-	public interface ClassShutterSetter {
-		void setClassShutter(ClassShutter shutter);
-
-		ClassShutter getClassShutter();
-	}
-
-	public final synchronized ClassShutterSetter getClassShutterSetter() {
-		if (hasClassShutter) {
-			return null;
-		}
-		hasClassShutter = true;
-		return new ClassShutterSetter() {
-
-			@Override
-			public void setClassShutter(ClassShutter shutter) {
-				classShutter = shutter;
-			}
-
-			@Override
-			public ClassShutter getClassShutter() {
-				return classShutter;
-			}
-		};
 	}
 
 	/**
@@ -1590,66 +1376,6 @@ public class Context {
 			return;
 		}
 		threadLocalMap.remove(key);
-	}
-
-	/**
-	 * Set a WrapFactory for this Context.
-	 * <p>
-	 * The WrapFactory allows custom object wrapping behavior for
-	 * Java object manipulated with JavaScript.
-	 *
-	 * @see WrapFactory
-	 * @since 1.5 Release 4
-	 */
-	public final void setWrapFactory(WrapFactory wrapFactory) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		if (wrapFactory == null) {
-			throw new IllegalArgumentException();
-		}
-		this.wrapFactory = wrapFactory;
-	}
-
-	/**
-	 * Return the current WrapFactory, or null if none is defined.
-	 *
-	 * @see WrapFactory
-	 * @since 1.5 Release 4
-	 */
-	public final WrapFactory getWrapFactory() {
-		if (wrapFactory == null) {
-			wrapFactory = new WrapFactory();
-		}
-		return wrapFactory;
-	}
-
-	/**
-	 * Controls certain aspects of script semantics.
-	 * Should be overwritten to alter default behavior.
-	 * <p>
-	 * The default implementation calls
-	 * {@link ContextFactory#hasFeature(Context cx, int featureIndex)}
-	 * that allows to customize Context behavior without introducing
-	 * Context subclasses.  {@link ContextFactory} documentation gives
-	 * an example of hasFeature implementation.
-	 *
-	 * @param featureIndex feature index to check
-	 * @return true if the <code>featureIndex</code> feature is turned on
-	 * @see #FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME
-	 * @see #FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER
-	 * @see #FEATURE_PARENT_PROTO_PROPERTIES
-	 * @see #FEATURE_DYNAMIC_SCOPE
-	 * @see #FEATURE_STRICT_VARS
-	 * @see #FEATURE_STRICT_EVAL
-	 * @see #FEATURE_LOCATION_INFORMATION_IN_ERROR
-	 * @see #FEATURE_STRICT_MODE
-	 * @see #FEATURE_WARNING_AS_ERROR
-	 * @see #FEATURE_ENHANCED_JAVA_ACCESS
-	 */
-	public boolean hasFeature(int featureIndex) {
-		ContextFactory f = getFactory();
-		return f.hasFeature(this, featureIndex);
 	}
 
 	/**
@@ -1916,118 +1642,4 @@ public class Context {
 	public final boolean isStrictMode() {
 		return isTopLevelStrict || (currentActivationCall != null && currentActivationCall.isStrict);
 	}
-
-	public TypeWrappers getTypeWrappers() {
-		if (factory.typeWrappers == null) {
-			factory.typeWrappers = new TypeWrappers();
-		}
-
-		return factory.typeWrappers;
-	}
-
-	public boolean hasTypeWrappers() {
-		return factory.typeWrappers != null;
-	}
-
-	public void setRemapper(Remapper remapper) {
-		factory.remapper = remapper;
-	}
-
-	public Remapper getRemapper() {
-		return factory.remapper;
-	}
-
-	public ClassDataCache getClassDataCache() {
-		if (classDataCache == null) {
-			classDataCache = new ClassDataCache(this);
-		}
-
-		return classDataCache;
-	}
-
-	@Nullable
-	@SuppressWarnings("unchecked")
-	public CustomJavaToJsWrapper wrapCustomJavaToJs(Object javaObject) {
-		if (factory.customScriptableWrappers.isEmpty()) {
-			return null;
-		}
-
-		var provider = factory.customScriptableWrapperCache.get(javaObject.getClass());
-
-		if (provider == null) {
-			for (CustomJavaToJsWrapperProviderHolder wrapper : factory.customScriptableWrappers) {
-				provider = wrapper.create(javaObject);
-
-				if (provider != null) {
-					break;
-				}
-			}
-
-			if (provider == null) {
-				provider = CustomJavaToJsWrapperProvider.NONE;
-			}
-
-			factory.customScriptableWrapperCache.put(javaObject.getClass(), provider);
-		}
-
-		return provider.create(javaObject);
-	}
-
-	public <T> void addCustomJavaToJsWrapper(Predicate<T> predicate, CustomJavaToJsWrapperProvider<T> provider) {
-		factory.customScriptableWrappers.add(new CustomJavaToJsWrapperProviderHolder<>(predicate, provider));
-	}
-
-	public <T> void addCustomJavaToJsWrapper(Class<T> type, CustomJavaToJsWrapperProvider<T> provider) {
-		addCustomJavaToJsWrapper(new CustomJavaToJsWrapperProviderHolder.PredicateFromClass<>(type), provider);
-	}
-
-	private final ContextFactory factory;
-	private boolean sealed;
-	private Object sealKey;
-
-	Scriptable topCallScope;
-	boolean isContinuationsTopCall;
-	NativeCall currentActivationCall;
-	BaseFunction typeErrorThrower;
-
-	// for Objects, Arrays to tag themselves as being printed out,
-	// so they don't print themselves out recursively.
-	// Use ObjToIntMap instead of java.util.HashSet for JDK 1.1 compatibility
-	ObjToIntMap iterating;
-
-	private boolean hasClassShutter;
-	private ClassShutter classShutter;
-	private ErrorReporter errorReporter;
-	RegExp regExp;
-	private Locale locale;
-	boolean useDynamicScope;
-	private int maximumInterpreterStackDepth;
-	private WrapFactory wrapFactory;
-	private int enterCount;
-	private Object propertyListeners;
-	private Map<Object, Object> threadLocalMap;
-	private ClassLoader applicationClassLoader;
-
-	// For the interpreter to store the last frame for error reports etc.
-	Object lastInterpreterFrame;
-
-	// For the interpreter to store information about previous invocations
-	// interpreter invocations
-	ObjArray previousInterpreterInvocations;
-
-	// For instruction counting (interpreter only)
-	int instructionCount;
-	int instructionThreshold;
-
-	// It can be used to return the second uint32 result from function
-	long scratchUint32;
-
-	// It can be used to return the second Scriptable result from function
-	Scriptable scratchScriptable;
-
-	// Generate an observer count on compiled code
-	public boolean generateObserverCount = false;
-
-	boolean isTopLevelStrict;
-	private ClassDataCache classDataCache;
 }

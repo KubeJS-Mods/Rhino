@@ -161,8 +161,6 @@ final class EqualObjectGraphs {
 		// Handle special Scriptable implementations
 		if (s1 instanceof NativeContinuation s3) {
 			return s2 instanceof NativeContinuation s4 && NativeContinuation.equalImplementations(s3, s4);
-		} else if (s1 instanceof NativeJavaPackage) {
-			return s1.equals(s2); // Overridden appropriately
 		} else if (s1 instanceof IdFunctionObject s3) {
 			return s2 instanceof IdFunctionObject s4 && IdFunctionObject.equalObjectGraphs(s3, s4, this);
 		} else if (s1 instanceof ArrowFunction s3) {

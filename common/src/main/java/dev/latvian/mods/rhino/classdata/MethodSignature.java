@@ -1,6 +1,6 @@
 package dev.latvian.mods.rhino.classdata;
 
-import dev.latvian.mods.rhino.Context;
+import dev.latvian.mods.rhino.SharedContextData;
 
 public class MethodSignature {
 	public static final MethodSignature EMPTY = new MethodSignature();
@@ -109,7 +109,7 @@ public class MethodSignature {
 		return hashCode;
 	}
 
-	public boolean matches(MethodSignature actualArguments, Context cx) {
+	public boolean matches(MethodSignature actualArguments, SharedContextData data) {
 		if (this == actualArguments) {
 			return true;
 		}

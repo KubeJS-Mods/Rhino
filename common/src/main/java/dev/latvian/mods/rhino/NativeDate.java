@@ -307,7 +307,7 @@ final class NativeDate extends IdScriptableObject {
 				if (!(toISO instanceof Callable)) {
 					throw ScriptRuntime.typeError3("msg.isnt.function.in", toISOString, ScriptRuntime.toString(o), ScriptRuntime.toString(toISO));
 				}
-				Object result = ((Callable) toISO).call(cx, scope, o, ScriptRuntime.emptyArgs);
+				Object result = ((Callable) toISO).call(cx, scope, o, ScriptRuntime.EMPTY_OBJECTS);
 				if (!ScriptRuntime.isPrimitive(result)) {
 					throw ScriptRuntime.typeError1("msg.toisostring.must.return.primitive", ScriptRuntime.toString(result));
 				}

@@ -32,7 +32,7 @@ public class ClassMember {
 
 	public Possible<?> get(@Nullable Object obj) throws Exception {
 		if (beanGet != null) {
-			return Possible.of(beanGet.method.invoke(obj, ScriptRuntime.emptyArgs));
+			return Possible.of(beanGet.method.invoke(obj, ScriptRuntime.EMPTY_OBJECTS));
 		} else if (field != null) {
 			return Possible.NULL;
 		}
@@ -76,7 +76,7 @@ public class ClassMember {
 			p = Possible.absent();
 
 			for (var m : methods.values()) {
-				if (m.signature.matches(sig, classData.cache.context)) {
+				if (m.signature.matches(sig, classData.cache.data)) {
 					p = Possible.of(m);
 					break;
 				}

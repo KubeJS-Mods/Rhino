@@ -297,7 +297,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 					System.arraycopy(args, 1, boundArgs, 0, argc - 1);
 				} else {
 					boundThis = null;
-					boundArgs = ScriptRuntime.emptyArgs;
+					boundArgs = ScriptRuntime.EMPTY_OBJECTS;
 				}
 				return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
 		}

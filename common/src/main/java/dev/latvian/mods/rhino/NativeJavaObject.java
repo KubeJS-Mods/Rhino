@@ -38,6 +38,25 @@ import java.util.Map;
 public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, Serializable {
 	@Serial
 	private static final long serialVersionUID = -6948590651130498591L;
+	private static final Object COERCED_INTERFACE_KEY = "Coerced Interface";
+
+	/**
+	 * The prototype of this object.
+	 */
+	protected Scriptable prototype;
+
+	/**
+	 * The parent scope of this object.
+	 */
+	protected Scriptable parent;
+
+	protected transient Object javaObject;
+
+	protected transient Class<?> staticType;
+	protected transient JavaMembers members;
+	protected transient Map<String, FieldAndMethods> fieldAndMethods;
+	protected transient Map<String, Object> customMembers;
+	protected transient boolean isAdapter;
 
 	public NativeJavaObject() {
 	}
@@ -61,7 +80,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 		} else {
 			dynamicType = staticType;
 		}
-		members = JavaMembers.lookupClass(ClassCache.get(parent), dynamicType, staticType, isAdapter);
+		members = JavaMembers.lookupClass(SharedContextData.get(parent), dynamicType, staticType, isAdapter);
 		fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false);
 		customMembers = null;
 	}
@@ -121,8 +140,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 						return Undefined.instance;
 					}
 
-					Context cx = Context.getContext();
-					Object r1 = cx.getWrapFactory().wrap(cx, this, r, r.getClass());
+					var contextData = SharedContextData.get(start);
+					Object r1 = contextData.getWrapFactory().wrap(contextData, this, r, r.getClass());
 
 					if (r1 instanceof Scriptable) {
 						return ((Scriptable) r1).getDefaultValue(null);
@@ -255,7 +274,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	@Override
 	public Object[] getIds() {
 		if (customMembers != null) {
-			Object[] c = customMembers.keySet().toArray(ScriptRuntime.emptyArgs);
+			Object[] c = customMembers.keySet().toArray(ScriptRuntime.EMPTY_OBJECTS);
 			Object[] m = members.getIds(false);
 			Object[] result = new Object[c.length + m.length];
 			System.arraycopy(c, 0, result, 0, c.length);
@@ -300,7 +319,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 			}
 			Object converterObject = get(converterName, this);
 			if (converterObject instanceof Function f) {
-				value = f.call(Context.getContext(), f.getParentScope(), this, ScriptRuntime.emptyArgs);
+				value = f.call(Context.getContext(), f.getParentScope(), this, ScriptRuntime.EMPTY_OBJECTS);
 			} else {
 				if (hint == ScriptRuntime.NumberClass && javaObject instanceof Boolean) {
 					boolean b = (Boolean) javaObject;
@@ -318,8 +337,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	 * desired one.  This should be superceded by a conversion-cost calculation
 	 * function, but for now I'll hide behind precedent.
 	 */
-	public static boolean canConvert(Context cx, Object fromObj, Class<?> to) {
-		return getConversionWeight(cx, fromObj, to) < CONVERSION_NONE;
+	public static boolean canConvert(SharedContextData data, Object fromObj, Class<?> to) {
+		return getConversionWeight(data, fromObj, to) < CONVERSION_NONE;
 	}
 
 	private static final int JSTYPE_UNDEFINED = 0; // undefined type
@@ -345,8 +364,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	 * <a href="http://www.mozilla.org/js/liveconnect/lc3_method_overloading.html">
 	 * "preferred method conversions" from Live Connect 3</a>
 	 */
-	static int getConversionWeight(Context cx, Object fromObj, Class<?> to) {
-		if (cx.hasTypeWrappers() && cx.getTypeWrappers().getWrapperFactory(to, fromObj) != null) {
+	static int getConversionWeight(SharedContextData data, Object fromObj, Class<?> to) {
+		if (data.hasTypeWrappers() && data.getTypeWrappers().getWrapperFactory(to, fromObj) != null) {
 			return CONVERSION_NONTRIVIAL;
 		}
 
@@ -538,7 +557,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 	 * Type-munging for field setting and method invocation.
 	 * Conforms to LC3 specification
 	 */
-	static Object coerceTypeImpl(Context cx, @Nullable TypeWrappers typeWrappers, Class<?> type, Object value) {
+	static Object coerceTypeImpl(@Nullable TypeWrappers typeWrappers, Class<?> type, Object value) {
 		if (value == null || value.getClass() == type) {
 			return value;
 		}
@@ -578,6 +597,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 				if (type == ScriptRuntime.StringClass) {
 					return ScriptRuntime.toString(value);
 				} else if (type == ScriptRuntime.ObjectClass) {
+					/*
 					if (cx.hasFeature(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE)) {
 						//to process numbers like 2.0 as 2 without decimal place
 						long roundedValue = Math.round(toDouble(value));
@@ -585,6 +605,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 							return coerceToNumber(Long.TYPE, value);
 						}
 					}
+					 */
 					return coerceToNumber(Double.TYPE, value);
 				} else if ((type.isPrimitive() && type != Boolean.TYPE) || ScriptRuntime.NumberClass.isAssignableFrom(type)) {
 					return coerceToNumber(type, value);
@@ -656,7 +677,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 					Object Result = Array.newInstance(arrayType, (int) length);
 					for (int i = 0; i < length; ++i) {
 						try {
-							Array.set(Result, i, coerceTypeImpl(cx, typeWrappers, arrayType, array.get(i, array)));
+							Array.set(Result, i, coerceTypeImpl(typeWrappers, arrayType, array.get(i, array)));
 						} catch (EvaluatorException ee) {
 							return reportConversionError(value, type);
 						}
@@ -889,24 +910,4 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
 		initMembers();
 	}
-
-	/**
-	 * The prototype of this object.
-	 */
-	protected Scriptable prototype;
-
-	/**
-	 * The parent scope of this object.
-	 */
-	protected Scriptable parent;
-
-	protected transient Object javaObject;
-
-	protected transient Class<?> staticType;
-	protected transient JavaMembers members;
-	protected transient Map<String, FieldAndMethods> fieldAndMethods;
-	protected transient Map<String, Object> customMembers;
-	protected transient boolean isAdapter;
-
-	private static final Object COERCED_INTERFACE_KEY = "Coerced Interface";
 }

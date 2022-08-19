@@ -19,19 +19,21 @@ import java.util.function.Predicate;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class NativeJavaList extends NativeJavaObject {
+	private final SharedContextData contextData;
 	private final List list;
 	private final Class<?> listType;
 	private final ValueUnwrapper valueUnwrapper;
 
-	public NativeJavaList(Scriptable scope, Object jo, List list, @Nullable Class<?> listType, ValueUnwrapper valueUnwrapper) {
+	public NativeJavaList(SharedContextData contextData, Scriptable scope, Object jo, List list, @Nullable Class<?> listType, ValueUnwrapper valueUnwrapper) {
 		super(scope, jo, jo.getClass());
+		this.contextData = contextData;
 		this.list = list;
 		this.listType = listType;
 		this.valueUnwrapper = valueUnwrapper;
 	}
 
-	public NativeJavaList(Scriptable scope, Object jo, List list) {
-		this(scope, jo, list, null, ValueUnwrapper.DEFAULT);
+	public NativeJavaList(SharedContextData contextData, Scriptable scope, Object jo, List list) {
+		this(contextData, scope, jo, list, null, ValueUnwrapper.DEFAULT);
 	}
 
 	@Override
@@ -58,7 +60,7 @@ public class NativeJavaList extends NativeJavaObject {
 	@Override
 	public Object get(int index, Scriptable start) {
 		if (isWithValidIndex(index)) {
-			return valueUnwrapper.unwrap(this, list.get(index));
+			return valueUnwrapper.unwrap(contextData, this, list.get(index));
 		}
 		return Undefined.instance;
 	}
@@ -74,7 +76,7 @@ public class NativeJavaList extends NativeJavaObject {
 	@Override
 	public void put(int index, Scriptable start, Object value) {
 		if (isWithValidIndex(index)) {
-			list.set(index, Context.jsToJava(value, listType));
+			list.set(index, Context.jsToJava(contextData, value, listType));
 			return;
 		}
 		super.put(index, start, value);
@@ -132,15 +134,13 @@ public class NativeJavaList extends NativeJavaObject {
 	}
 
 	private int push(Object[] args) {
-		Context cx = Context.getCurrentContext();
-
 		if (args.length == 1) {
-			list.add(Context.jsToJava(cx, args[0], listType));
+			list.add(Context.jsToJava(contextData, args[0], listType));
 		} else if (args.length > 1) {
 			Object[] args1 = new Object[args.length];
 
 			for (int i = 0; i < args.length; i++) {
-				args1[i] = Context.jsToJava(cx, args[i], listType);
+				args1[i] = Context.jsToJava(contextData, args[i], listType);
 			}
 
 			list.addAll(Arrays.asList(args1));
@@ -166,10 +166,8 @@ public class NativeJavaList extends NativeJavaObject {
 	}
 
 	private int unshift(Object[] args) {
-		Context cx = Context.getCurrentContext();
-
 		for (int i = args.length - 1; i >= 0; i--) {
-			list.add(0, Context.jsToJava(cx, args[i], listType));
+			list.add(0, Context.jsToJava(contextData, args[i], listType));
 		}
 
 		return list.size();
@@ -287,10 +285,10 @@ public class NativeJavaList extends NativeJavaObject {
 		}
 
 		BinaryOperator operator = (BinaryOperator) args[0];
-		Object o = valueUnwrapper.unwrap(this, list.get(0));
+		Object o = valueUnwrapper.unwrap(contextData, this, list.get(0));
 
 		for (int i = 1; i < list.size(); i++) {
-			o = valueUnwrapper.unwrap(this, operator.apply(o, valueUnwrapper.unwrap(this, list.get(i))));
+			o = valueUnwrapper.unwrap(contextData, this, operator.apply(o, valueUnwrapper.unwrap(contextData, this, list.get(i))));
 		}
 
 		return o;
@@ -304,10 +302,10 @@ public class NativeJavaList extends NativeJavaObject {
 		}
 
 		BinaryOperator operator = (BinaryOperator) args[0];
-		Object o = valueUnwrapper.unwrap(this, list.get(0));
+		Object o = valueUnwrapper.unwrap(contextData, this, list.get(0));
 
 		for (int i = list.size() - 1; i >= 1; i--) {
-			o = valueUnwrapper.unwrap(this, operator.apply(o, valueUnwrapper.unwrap(this, list.get(i))));
+			o = valueUnwrapper.unwrap(contextData, this, operator.apply(o, valueUnwrapper.unwrap(contextData, this, list.get(i))));
 		}
 
 		return o;

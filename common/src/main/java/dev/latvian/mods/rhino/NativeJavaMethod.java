@@ -17,7 +17,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @author Mike Shaver
  * @see NativeJavaArray
- * @see NativeJavaPackage
  * @see NativeJavaClass
  */
 
@@ -115,7 +114,9 @@ public class NativeJavaMethod extends BaseFunction {
 			throw new RuntimeException("No methods defined for call");
 		}
 
-		int index = findCachedFunction(cx, args);
+		SharedContextData data = SharedContextData.get(scope);
+
+		int index = findCachedFunction(data, args);
 		if (index < 0) {
 			Class<?> c = methods[0].method().getDeclaringClass();
 			String sig = c.getName() + '.' + getFunctionName() + '(' + scriptSignature(args) + ')';
@@ -129,7 +130,7 @@ public class NativeJavaMethod extends BaseFunction {
 			// marshall the explicit parameters
 			Object[] newArgs = new Object[argTypes.length];
 			for (int i = 0; i < argTypes.length - 1; i++) {
-				newArgs[i] = Context.jsToJava(cx, args[i], argTypes[i]);
+				newArgs[i] = Context.jsToJava(data, args[i], argTypes[i]);
 			}
 
 			Object varArgs;
@@ -138,13 +139,13 @@ public class NativeJavaMethod extends BaseFunction {
 			// is given and it is a Java or ECMA array or is null.
 			if (args.length == argTypes.length && (args[args.length - 1] == null || args[args.length - 1] instanceof NativeArray || args[args.length - 1] instanceof NativeJavaArray)) {
 				// convert the ECMA array into a native array
-				varArgs = Context.jsToJava(cx, args[args.length - 1], argTypes[argTypes.length - 1]);
+				varArgs = Context.jsToJava(data, args[args.length - 1], argTypes[argTypes.length - 1]);
 			} else {
 				// marshall the variable parameters
 				Class<?> componentType = argTypes[argTypes.length - 1].getComponentType();
 				varArgs = Array.newInstance(componentType, args.length - argTypes.length + 1);
 				for (int i = 0; i < Array.getLength(varArgs); i++) {
-					Object value = Context.jsToJava(cx, args[argTypes.length - 1 + i], componentType);
+					Object value = Context.jsToJava(data, args[argTypes.length - 1 + i], componentType);
 					Array.set(varArgs, i, value);
 				}
 			}
@@ -170,7 +171,7 @@ public class NativeJavaMethod extends BaseFunction {
 				}
 				 */
 
-				coerced = Context.jsToJava(cx, coerced, argTypes[i]);
+				coerced = Context.jsToJava(data, coerced, argTypes[i]);
 
 				if (coerced != arg) {
 					if (origArgs == args) {
@@ -211,7 +212,8 @@ public class NativeJavaMethod extends BaseFunction {
 			System.err.println(" ----- Returned " + retval + " actual = " + actualType + " expect = " + staticType);
 		}
 
-		Object wrapped = cx.getWrapFactory().wrap(cx, scope, retval, staticType);
+		SharedContextData contextData = SharedContextData.get(cx, scope);
+		Object wrapped = contextData.getWrapFactory().wrap(contextData, scope, retval, staticType);
 		if (debug) {
 			Class<?> actualType = (wrapped == null) ? null : wrapped.getClass();
 			System.err.println(" ----- Wrapped as " + wrapped + " class = " + actualType);
@@ -223,14 +225,14 @@ public class NativeJavaMethod extends BaseFunction {
 		return wrapped;
 	}
 
-	int findCachedFunction(Context cx, Object[] args) {
+	int findCachedFunction(SharedContextData data, Object[] args) {
 		if (methods.length > 1) {
 			for (ResolvedOverload ovl : overloadCache) {
 				if (ovl.matches(args)) {
 					return ovl.index;
 				}
 			}
-			int index = findFunction(cx, methods, args);
+			int index = findFunction(data, methods, args);
 			// As a sanity measure, don't let the lookup cache grow longer
 			// than twice the number of overloaded methods
 			if (overloadCache.size() < methods.length * 2) {
@@ -239,7 +241,7 @@ public class NativeJavaMethod extends BaseFunction {
 			}
 			return index;
 		}
-		return findFunction(cx, methods, args);
+		return findFunction(data, methods, args);
 	}
 
 	/**
@@ -247,7 +249,7 @@ public class NativeJavaMethod extends BaseFunction {
 	 * or constructors and the arguments.
 	 * If no function can be found to call, return -1.
 	 */
-	static int findFunction(Context cx, MemberBox[] methodsOrCtors, Object[] args) {
+	static int findFunction(SharedContextData data, MemberBox[] methodsOrCtors, Object[] args) {
 		if (methodsOrCtors.length == 0) {
 			return -1;
 		} else if (methodsOrCtors.length == 1) {
@@ -265,7 +267,7 @@ public class NativeJavaMethod extends BaseFunction {
 				}
 			}
 			for (int j = 0; j != alength; ++j) {
-				if (!NativeJavaObject.canConvert(cx, args[j], member.argTypes[j])) {
+				if (!NativeJavaObject.canConvert(data, args[j], member.argTypes[j])) {
 					if (debug) {
 						printDebug("Rejecting (args can't convert) ", member, args);
 					}
@@ -297,7 +299,7 @@ public class NativeJavaMethod extends BaseFunction {
 				}
 			}
 			for (int j = 0; j < alength; j++) {
-				if (!NativeJavaObject.canConvert(cx, args[j], member.argTypes[j])) {
+				if (!NativeJavaObject.canConvert(data, args[j], member.argTypes[j])) {
 					if (debug) {
 						printDebug("Rejecting (args can't convert) ", member, args);
 					}
@@ -326,52 +328,41 @@ public class NativeJavaMethod extends BaseFunction {
 						bestFitIndex = extraBestFits[j];
 					}
 					MemberBox bestFit = methodsOrCtors[bestFitIndex];
-					if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS) && bestFit.isPublic() != member.isPublic()) {
-						// When FEATURE_ENHANCED_JAVA_ACCESS gives us access
-						// to non-public members, continue to prefer public
-						// methods in overloading
-						if (!bestFit.isPublic()) {
-							++betterCount;
-						} else {
-							++worseCount;
-						}
+					int preference = preferSignature(data, args, member.argTypes, member.vararg, bestFit.argTypes, bestFit.vararg);
+					if (preference == PREFERENCE_AMBIGUOUS) {
+						break;
+					} else if (preference == PREFERENCE_FIRST_ARG) {
+						++betterCount;
+					} else if (preference == PREFERENCE_SECOND_ARG) {
+						++worseCount;
 					} else {
-						int preference = preferSignature(cx, args, member.argTypes, member.vararg, bestFit.argTypes, bestFit.vararg);
-						if (preference == PREFERENCE_AMBIGUOUS) {
-							break;
-						} else if (preference == PREFERENCE_FIRST_ARG) {
-							++betterCount;
-						} else if (preference == PREFERENCE_SECOND_ARG) {
-							++worseCount;
-						} else {
-							if (preference != PREFERENCE_EQUAL) {
-								Kit.codeBug();
-							}
-							// This should not happen in theory
-							// but on some JVMs, Class.getMethods will return all
+						if (preference != PREFERENCE_EQUAL) {
+							Kit.codeBug();
+						}
+						// This should not happen in theory
+						// but on some JVMs, Class.getMethods will return all
+						// static methods of the class hierarchy, even if
+						// a derived class's parameters match exactly.
+						// We want to call the derived class's method.
+						if (bestFit.isStatic() && bestFit.getDeclaringClass().isAssignableFrom(member.getDeclaringClass())) {
+							// On some JVMs, Class.getMethods will return all
 							// static methods of the class hierarchy, even if
 							// a derived class's parameters match exactly.
 							// We want to call the derived class's method.
-							if (bestFit.isStatic() && bestFit.getDeclaringClass().isAssignableFrom(member.getDeclaringClass())) {
-								// On some JVMs, Class.getMethods will return all
-								// static methods of the class hierarchy, even if
-								// a derived class's parameters match exactly.
-								// We want to call the derived class's method.
-								if (debug) {
-									printDebug("Substituting (overridden static)", member, args);
-								}
-								if (j == -1) {
-									firstBestFit = i;
-								} else {
-									extraBestFits[j] = i;
-								}
-							} else {
-								if (debug) {
-									printDebug("Ignoring same signature member ", member, args);
-								}
+							if (debug) {
+								printDebug("Substituting (overridden static)", member, args);
 							}
-							continue search;
+							if (j == -1) {
+								firstBestFit = i;
+							} else {
+								extraBestFits[j] = i;
+							}
+						} else {
+							if (debug) {
+								printDebug("Ignoring same signature member ", member, args);
+							}
 						}
+						continue search;
 					}
 				}
 				if (betterCount == 1 + extraBestFitsCount) {
@@ -448,7 +439,7 @@ public class NativeJavaMethod extends BaseFunction {
 	 * Returns one of PREFERENCE_EQUAL, PREFERENCE_FIRST_ARG,
 	 * PREFERENCE_SECOND_ARG, or PREFERENCE_AMBIGUOUS.
 	 */
-	private static int preferSignature(Context cx, Object[] args, Class<?>[] sig1, boolean vararg1, Class<?>[] sig2, boolean vararg2) {
+	private static int preferSignature(SharedContextData data, Object[] args, Class<?>[] sig1, boolean vararg1, Class<?>[] sig2, boolean vararg2) {
 		int totalPreference = 0;
 		for (int j = 0; j < args.length; j++) {
 			Class<?> type1 = vararg1 && j >= sig1.length ? sig1[sig1.length - 1] : sig1[j];
@@ -460,8 +451,8 @@ public class NativeJavaMethod extends BaseFunction {
 
 			// Determine which of type1, type2 is easier to convert from arg.
 
-			int rank1 = NativeJavaObject.getConversionWeight(cx, arg, type1);
-			int rank2 = NativeJavaObject.getConversionWeight(cx, arg, type2);
+			int rank1 = NativeJavaObject.getConversionWeight(data, arg, type1);
+			int rank2 = NativeJavaObject.getConversionWeight(data, arg, type2);
 
 			int preference;
 			if (rank1 < rank2) {

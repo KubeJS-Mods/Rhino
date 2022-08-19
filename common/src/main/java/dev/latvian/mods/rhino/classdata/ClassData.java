@@ -61,7 +61,7 @@ public class ClassData {
 				int m = field.getModifiers();
 
 				if (Modifier.isPublic(m) && !Modifier.isTransient(m) && !field.isAnnotationPresent(HideFromJS.class)) {
-					String n = cache.context.getRemapper().getMappedField(type, field);
+					String n = cache.data.getRemapper().getMappedField(type, field);
 					var cm = make(n);
 					cm.field = field;
 					cm.isFinal = Modifier.isFinal(m);
@@ -72,7 +72,7 @@ public class ClassData {
 				int m = method.getModifiers();
 
 				if (Modifier.isPublic(m) && !Modifier.isNative(m)) {
-					String n = cache.context.getRemapper().getMappedMethod(type, method);
+					String n = cache.data.getRemapper().getMappedMethod(type, method);
 					var cm = make(n);
 
 					if (cm.methods == null) {

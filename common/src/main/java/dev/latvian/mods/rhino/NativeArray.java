@@ -714,7 +714,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 		if (arg instanceof Function) {
 			try {
-				final Object[] args = (lengthAlways || (length > 0)) ? new Object[]{length} : ScriptRuntime.emptyArgs;
+				final Object[] args = (lengthAlways || (length > 0)) ? new Object[]{length} : ScriptRuntime.EMPTY_OBJECTS;
 				result = ((Function) arg).construct(cx, scope, args);
 			} catch (EcmaError ee) {
 				if (!"TypeError".equals(ee.getName())) {
@@ -1032,7 +1032,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 							Scriptable funThis;
 							fun = ScriptRuntime.getPropFunctionAndThis(elem, "toLocaleString", cx, scope);
 							funThis = ScriptRuntime.lastStoredScriptable(cx);
-							elem = fun.call(cx, scope, funThis, ScriptRuntime.emptyArgs);
+							elem = fun.call(cx, scope, funThis, ScriptRuntime.EMPTY_OBJECTS);
 						}
 						result.append(ScriptRuntime.toString(elem));
 					}
@@ -1972,7 +1972,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 	@Override
 	public Object[] toArray() {
-		return toArray(ScriptRuntime.emptyArgs);
+		return toArray(ScriptRuntime.EMPTY_OBJECTS);
 	}
 
 	@Override

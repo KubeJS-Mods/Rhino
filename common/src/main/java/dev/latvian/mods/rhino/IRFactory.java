@@ -596,7 +596,7 @@ public final class IRFactory extends Parser {
 		Node object = new Node(Token.OBJECTLIT);
 		Object[] properties;
 		if (elems.isEmpty()) {
-			properties = ScriptRuntime.emptyArgs;
+			properties = ScriptRuntime.EMPTY_OBJECTS;
 		} else {
 			int size = elems.size(), i = 0;
 			properties = new Object[size];

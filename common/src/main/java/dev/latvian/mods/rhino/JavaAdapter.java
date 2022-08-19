@@ -101,7 +101,14 @@ public final class JavaAdapter implements IdFunctionCall {
 			// Avoid an error for an undefined value; return null instead.
 			return null;
 		}
-		return Context.jsToJava(result, c);
+
+		if (c == null) {
+			return result;
+		}
+
+		// FIXME
+		Context cx = Context.getContext();
+		return Context.jsToJava(cx.sharedContextData, result, c);
 	}
 
 	public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter) {
@@ -121,6 +128,8 @@ public final class JavaAdapter implements IdFunctionCall {
 		if (N == 0) {
 			throw ScriptRuntime.typeError0("msg.adapter.zero.args");
 		}
+
+		SharedContextData contextData = SharedContextData.get(cx, scope);
 
 		// Expected arguments:
 		// Any number of NativeJavaClass objects representing the super-class
@@ -166,7 +175,7 @@ public final class JavaAdapter implements IdFunctionCall {
 		// next argument is implementation, must be scriptable
 		Scriptable obj = ScriptableObject.ensureScriptable(args[classCount]);
 
-		Class<?> adapterClass = getAdapterClass(scope, superClass, interfaces, obj);
+		Class<?> adapterClass = getAdapterClass(cx, scope, superClass, interfaces, obj);
 		Object adapter;
 
 		int argsCount = N - classCount - 1;
@@ -182,14 +191,14 @@ public final class JavaAdapter implements IdFunctionCall {
 				// TODO: cache class wrapper?
 				NativeJavaClass classWrapper = new NativeJavaClass(scope, adapterClass, true);
 				NativeJavaMethod ctors = classWrapper.members.ctors;
-				int index = ctors.findCachedFunction(cx, ctorArgs);
+				int index = ctors.findCachedFunction(contextData, ctorArgs);
 				if (index < 0) {
 					String sig = NativeJavaMethod.scriptSignature(args);
 					throw Context.reportRuntimeError2("msg.no.java.ctor", adapterClass.getName(), sig);
 				}
 
 				// Found the constructor, so try invoking it.
-				adapter = NativeJavaClass.constructInternal(ctorArgs, ctors.methods[index]);
+				adapter = NativeJavaClass.constructInternal(contextData, ctorArgs, ctors.methods[index]);
 			} else {
 				Class<?>[] ctorParms = {ScriptRuntime.ScriptableClass, ScriptRuntime.ContextFactoryClass};
 				Object[] ctorArgs = {obj, cx.getFactory()};
@@ -258,7 +267,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
 		Scriptable delegee = (Scriptable) in.readObject();
 
-		Class<?> adapterClass = getAdapterClass(self, superClass, interfaces, delegee);
+		Class<?> adapterClass = getAdapterClass(cx, self, superClass, interfaces, delegee);
 
 		Class<?>[] ctorParms = {ScriptRuntime.ContextFactoryClass, ScriptRuntime.ScriptableClass, ScriptRuntime.ScriptableClass};
 		Object[] ctorArgs = {factory, delegee, self};
@@ -292,8 +301,8 @@ public final class JavaAdapter implements IdFunctionCall {
 		return map;
 	}
 
-	private static Class<?> getAdapterClass(Scriptable scope, Class<?> superClass, Class<?>[] interfaces, Scriptable obj) {
-		ClassCache cache = ClassCache.get(scope);
+	private static Class<?> getAdapterClass(Context cx, Scriptable scope, Class<?> superClass, Class<?>[] interfaces, Scriptable obj) {
+		SharedContextData cache = SharedContextData.get(cx, scope);
 		Map<JavaAdapterSignature, Class<?>> generated = cache.getInterfaceAdapterCacheMap();
 
 		ObjToIntMap names = getObjectFunctionNames(obj);
@@ -305,9 +314,7 @@ public final class JavaAdapter implements IdFunctionCall {
 			byte[] code = createAdapterCode(names, adapterName, superClass, interfaces, null);
 
 			adapterClass = loadAdapterClass(adapterName, code);
-			if (cache.isCachingEnabled()) {
-				generated.put(sig, adapterClass);
-			}
+			generated.put(sig, adapterClass);
 		}
 		return adapterClass;
 	}

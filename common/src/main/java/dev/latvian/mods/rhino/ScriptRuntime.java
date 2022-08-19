@@ -26,6 +26,8 @@ import java.util.ResourceBundle;
  */
 
 public class ScriptRuntime {
+	public static final Object[] EMPTY_OBJECTS = new Object[0];
+	public static final String[] EMPTY_STRINGS = new String[0];
 
 	/**
 	 * No instances should be created.
@@ -123,7 +125,7 @@ public class ScriptRuntime {
 			scope = new NativeObject();
 		}
 		scope.associateValue(LIBRARY_SCOPE_KEY, scope);
-		(new ClassCache()).associate(scope);
+		scope.associateValue(SharedContextData.AKEY, cx.sharedContextData = new SharedContextData(scope));
 
 		BaseFunction.init(scope, sealed);
 		NativeObject.init(scope, sealed);
@@ -164,19 +166,17 @@ public class ScriptRuntime {
 		new LazilyLoadedCtor(scope, "RegExp", "dev.latvian.mods.rhino.regexp.NativeRegExp", sealed, true);
 		new LazilyLoadedCtor(scope, "Continuation", "dev.latvian.mods.rhino.NativeContinuation", sealed, true);
 
-		if (cx.hasFeature(Context.FEATURE_V8_EXTENSIONS)) {
-			new LazilyLoadedCtor(scope, "ArrayBuffer", "dev.latvian.mods.rhino.typedarrays.NativeArrayBuffer", sealed, true);
-			new LazilyLoadedCtor(scope, "Int8Array", "dev.latvian.mods.rhino.typedarrays.NativeInt8Array", sealed, true);
-			new LazilyLoadedCtor(scope, "Uint8Array", "dev.latvian.mods.rhino.typedarrays.NativeUint8Array", sealed, true);
-			new LazilyLoadedCtor(scope, "Uint8ClampedArray", "dev.latvian.mods.rhino.typedarrays.NativeUint8ClampedArray", sealed, true);
-			new LazilyLoadedCtor(scope, "Int16Array", "dev.latvian.mods.rhino.typedarrays.NativeInt16Array", sealed, true);
-			new LazilyLoadedCtor(scope, "Uint16Array", "dev.latvian.mods.rhino.typedarrays.NativeUint16Array", sealed, true);
-			new LazilyLoadedCtor(scope, "Int32Array", "dev.latvian.mods.rhino.typedarrays.NativeInt32Array", sealed, true);
-			new LazilyLoadedCtor(scope, "Uint32Array", "dev.latvian.mods.rhino.typedarrays.NativeUint32Array", sealed, true);
-			new LazilyLoadedCtor(scope, "Float32Array", "dev.latvian.mods.rhino.typedarrays.NativeFloat32Array", sealed, true);
-			new LazilyLoadedCtor(scope, "Float64Array", "dev.latvian.mods.rhino.typedarrays.NativeFloat64Array", sealed, true);
-			new LazilyLoadedCtor(scope, "DataView", "dev.latvian.mods.rhino.typedarrays.NativeDataView", sealed, true);
-		}
+		// new LazilyLoadedCtor(scope, "ArrayBuffer", "dev.latvian.mods.rhino.typedarrays.NativeArrayBuffer", sealed, true);
+		// new LazilyLoadedCtor(scope, "Int8Array", "dev.latvian.mods.rhino.typedarrays.NativeInt8Array", sealed, true);
+		// new LazilyLoadedCtor(scope, "Uint8Array", "dev.latvian.mods.rhino.typedarrays.NativeUint8Array", sealed, true);
+		// new LazilyLoadedCtor(scope, "Uint8ClampedArray", "dev.latvian.mods.rhino.typedarrays.NativeUint8ClampedArray", sealed, true);
+		// new LazilyLoadedCtor(scope, "Int16Array", "dev.latvian.mods.rhino.typedarrays.NativeInt16Array", sealed, true);
+		// new LazilyLoadedCtor(scope, "Uint16Array", "dev.latvian.mods.rhino.typedarrays.NativeUint16Array", sealed, true);
+		// new LazilyLoadedCtor(scope, "Int32Array", "dev.latvian.mods.rhino.typedarrays.NativeInt32Array", sealed, true);
+		// new LazilyLoadedCtor(scope, "Uint32Array", "dev.latvian.mods.rhino.typedarrays.NativeUint32Array", sealed, true);
+		// new LazilyLoadedCtor(scope, "Float32Array", "dev.latvian.mods.rhino.typedarrays.NativeFloat32Array", sealed, true);
+		// new LazilyLoadedCtor(scope, "Float64Array", "dev.latvian.mods.rhino.typedarrays.NativeFloat64Array", sealed, true);
+		// new LazilyLoadedCtor(scope, "DataView", "dev.latvian.mods.rhino.typedarrays.NativeDataView", sealed, true);
 
 		NativeSymbol.init(cx, scope, sealed);
 		NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed);
@@ -853,7 +853,7 @@ public class ScriptRuntime {
 			if (ScriptableObject.hasProperty(obj, "toSource")) {
 				Object v = ScriptableObject.getProperty(obj, "toSource");
 				if (v instanceof Function f) {
-					return toString(f.call(cx, scope, obj, emptyArgs));
+					return toString(f.call(cx, scope, obj, EMPTY_OBJECTS));
 				}
 			}
 			return toString(value);
@@ -939,8 +939,10 @@ public class ScriptRuntime {
 			return result;
 		}
 
+		var contextData = SharedContextData.get(cx, scope);
+
 		// Extension: Wrap as a LiveConnect object.
-		Object wrapped = cx.getWrapFactory().wrap(cx, scope, val, null);
+		Object wrapped = contextData.getWrapFactory().wrap(contextData, scope, val, null);
 		if (wrapped instanceof Scriptable) {
 			return (Scriptable) wrapped;
 		}
@@ -951,7 +953,7 @@ public class ScriptRuntime {
 		scope = ScriptableObject.getTopLevelScope(scope);
 		Function ctor = getExistingCtor(cx, scope, constructorName);
 		if (args == null) {
-			args = ScriptRuntime.emptyArgs;
+			args = ScriptRuntime.EMPTY_OBJECTS;
 		}
 		return ctor.construct(cx, scope, args);
 	}
@@ -960,7 +962,7 @@ public class ScriptRuntime {
 		scope = ScriptableObject.getTopLevelScope(scope);
 		Function ctor = TopLevel.getBuiltinCtor(cx, scope, type);
 		if (args == null) {
-			args = ScriptRuntime.emptyArgs;
+			args = ScriptRuntime.EMPTY_OBJECTS;
 		}
 		return ctor.construct(cx, scope, args);
 	}
@@ -969,7 +971,7 @@ public class ScriptRuntime {
 		scope = ScriptableObject.getTopLevelScope(scope);
 		Function ctor = TopLevel.getNativeErrorCtor(cx, scope, type);
 		if (args == null) {
-			args = ScriptRuntime.emptyArgs;
+			args = ScriptRuntime.EMPTY_OBJECTS;
 		}
 		return ctor.construct(cx, scope, args);
 	}
@@ -1277,10 +1279,7 @@ public class ScriptRuntime {
 
 		Object result = ScriptableObject.getProperty(obj, property);
 		if (result == Scriptable.NOT_FOUND) {
-			if (cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
-				Context.reportWarning(ScriptRuntime.getMessage1("msg.ref.undefined.prop", property));
-			}
-			result = Undefined.instance;
+			return Undefined.instance;
 		}
 
 		return result;
@@ -1557,9 +1556,6 @@ public class ScriptRuntime {
 	}
 
 	private static Object topScopeName(Context cx, Scriptable scope, String name) {
-		if (cx.useDynamicScope) {
-			scope = checkDynamicScope(cx.topCallScope, scope);
-		}
 		return ScriptableObject.getProperty(scope, name);
 	}
 
@@ -1607,9 +1603,6 @@ public class ScriptRuntime {
 			}
 		}
 		// scope here is top scope
-		if (cx.useDynamicScope) {
-			scope = checkDynamicScope(cx.topCallScope, scope);
-		}
 		if (ScriptableObject.hasProperty(scope, id)) {
 			return scope;
 		}
@@ -1627,14 +1620,9 @@ public class ScriptRuntime {
 			// "newname = 7;", where 'newname' has not yet
 			// been defined, creates a new property in the
 			// top scope unless strict mode is specified.
-			if (cx.hasFeature(Context.FEATURE_STRICT_MODE) || cx.hasFeature(Context.FEATURE_STRICT_VARS)) {
-				Context.reportWarning(ScriptRuntime.getMessage1("msg.assn.create.strict", id));
-			}
+			Context.reportError(ScriptRuntime.getMessage1("msg.assn.create.strict", id));
 			// Find the top scope by walking up the scope chain.
 			bound = ScriptableObject.getTopLevelScope(scope);
-			if (cx.useDynamicScope) {
-				bound = checkDynamicScope(cx.topCallScope, bound);
-			}
 			bound.put(id, bound, value);
 		}
 		return value;
@@ -1728,7 +1716,7 @@ public class ScriptRuntime {
 		}
 
 		Scriptable scope = x.obj.getParentScope();
-		Object v = f.call(cx, scope, x.obj, emptyArgs);
+		Object v = f.call(cx, scope, x.obj, EMPTY_OBJECTS);
 
 		if (!(v instanceof Scriptable)) {
 			if (v instanceof IdEnumerationIterator) {
@@ -1886,7 +1874,7 @@ public class ScriptRuntime {
 	public static Object callIterator(Object obj, Context cx, Scriptable scope) {
 		final Callable getIterator = ScriptRuntime.getElemFunctionAndThis(obj, SymbolKey.ITERATOR, cx, scope);
 		final Scriptable iterable = ScriptRuntime.lastStoredScriptable(cx);
-		return getIterator.call(cx, scope, iterable, ScriptRuntime.emptyArgs);
+		return getIterator.call(cx, scope, iterable, ScriptRuntime.EMPTY_OBJECTS);
 	}
 
 	/**
@@ -1985,11 +1973,11 @@ public class ScriptRuntime {
 		Object[] callArgs;
 		if (isApply) {
 			// Follow Ecma 15.3.4.3
-			callArgs = L <= 1 ? ScriptRuntime.emptyArgs : getApplyArguments(cx, args[1]);
+			callArgs = L <= 1 ? ScriptRuntime.EMPTY_OBJECTS : getApplyArguments(cx, args[1]);
 		} else {
 			// Follow Ecma 15.3.4.4
 			if (L <= 1) {
-				callArgs = ScriptRuntime.emptyArgs;
+				callArgs = ScriptRuntime.EMPTY_OBJECTS;
 			} else {
 				callArgs = new Object[L - 1];
 				System.arraycopy(args, 1, callArgs, 0, L - 1);
@@ -2008,11 +1996,11 @@ public class ScriptRuntime {
 
 	static Object[] getApplyArguments(Context cx, Object arg1) {
 		if (arg1 == null || arg1 == Undefined.instance) {
-			return ScriptRuntime.emptyArgs;
+			return ScriptRuntime.EMPTY_OBJECTS;
 		} else if (arg1 instanceof Scriptable && isArrayLike((Scriptable) arg1)) {
 			return cx.getElements((Scriptable) arg1);
 		} else if (arg1 instanceof ScriptableObject) {
-			return ScriptRuntime.emptyArgs;
+			return ScriptRuntime.EMPTY_OBJECTS;
 		} else {
 			throw ScriptRuntime.typeError0("msg.arg.isnt.array");
 		}
@@ -2043,9 +2031,6 @@ public class ScriptRuntime {
 		}
 		Object x = args[0];
 		if (!(x instanceof CharSequence)) {
-			if (cx.hasFeature(Context.FEATURE_STRICT_MODE) || cx.hasFeature(Context.FEATURE_STRICT_EVAL)) {
-				throw Context.reportRuntimeError0("msg.eval.nonstring.strict");
-			}
 			String message = ScriptRuntime.getMessage0("msg.eval.nonstring");
 			Context.reportWarning(message);
 			return x;
@@ -2074,7 +2059,7 @@ public class ScriptRuntime {
 		Script script = cx.compileString(x.toString(), evaluator, reporter, sourceName, 1, null);
 		evaluator.setEvalScriptFlag(script);
 		Callable c = (Callable) script;
-		return c.call(cx, scope, (Scriptable) thisArg, ScriptRuntime.emptyArgs);
+		return c.call(cx, scope, (Scriptable) thisArg, ScriptRuntime.EMPTY_OBJECTS);
 	}
 
 	/**
@@ -2161,9 +2146,6 @@ public class ScriptRuntime {
 		search:
 		{
 			do {
-				if (cx.useDynamicScope && scopeChain.getParentScope() == null) {
-					scopeChain = checkDynamicScope(cx.topCallScope, scopeChain);
-				}
 				target = scopeChain;
 				do {
 					value = target.get(id, scopeChain);
@@ -2663,7 +2645,6 @@ public class ScriptRuntime {
 
 		Object result;
 		cx.topCallScope = ScriptableObject.getTopLevelScope(scope);
-		cx.useDynamicScope = cx.hasFeature(Context.FEATURE_DYNAMIC_SCOPE);
 		boolean previousTopLevelStrict = cx.isTopLevelStrict;
 		cx.isTopLevelStrict = isTopLevelStrict;
 		ContextFactory f = cx.getFactory();
@@ -2681,37 +2662,6 @@ public class ScriptRuntime {
 			}
 		}
 		return result;
-	}
-
-	/**
-	 * Return <code>possibleDynamicScope</code> if <code>staticTopScope</code>
-	 * is present on its prototype chain and return <code>staticTopScope</code>
-	 * otherwise.
-	 * Should only be called when <code>staticTopScope</code> is top scope.
-	 */
-	static Scriptable checkDynamicScope(Scriptable possibleDynamicScope, Scriptable staticTopScope) {
-		// Return cx.topCallScope if scope
-		if (possibleDynamicScope == staticTopScope) {
-			return possibleDynamicScope;
-		}
-		Scriptable proto = possibleDynamicScope;
-		for (; ; ) {
-			proto = proto.getPrototype();
-			if (proto == staticTopScope) {
-				return possibleDynamicScope;
-			}
-			if (proto == null) {
-				return staticTopScope;
-			}
-		}
-	}
-
-	public static void addInstructionCount(Context cx, int instructionsToAdd) {
-		cx.instructionCount += instructionsToAdd;
-		if (cx.instructionCount > cx.instructionThreshold) {
-			cx.observeInstructionCount(cx.instructionCount);
-			cx.instructionCount = 0;
-		}
 	}
 
 	public static void initScript(NativeFunction funObj, Scriptable thisObj, Context cx, Scriptable scope, boolean evalScript) {
@@ -2791,6 +2741,8 @@ public class ScriptRuntime {
 		Object obj;
 		boolean cacheObj;
 
+		var contextData = SharedContextData.get(cx, scope);
+
 		getObj:
 		if (t instanceof JavaScriptException) {
 			cacheObj = false;
@@ -2829,12 +2781,6 @@ public class ScriptRuntime {
 				re = ee;
 				type = TopLevel.NativeErrors.InternalError;
 				errorMsg = ee.getMessage();
-			} else if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
-				// With FEATURE_ENHANCED_JAVA_ACCESS, scripts can catch
-				// all exception types
-				re = new WrappedException(t);
-				type = TopLevel.NativeErrors.JavaException;
-				errorMsg = t.toString();
 			} else {
 				// Script can catch only instances of JavaScriptException,
 				// EcmaError and EvaluatorException
@@ -2859,12 +2805,12 @@ public class ScriptRuntime {
 				((NativeError) errorObject).setStackProvider(re);
 			}
 
-			if (javaException != null && isVisible(cx, javaException, ClassShutter.TYPE_EXCEPTION)) {
-				Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+			if (javaException != null && isVisible(contextData, javaException, ClassShutter.TYPE_EXCEPTION)) {
+				Object wrap = contextData.getWrapFactory().wrap(contextData, scope, javaException, null);
 				ScriptableObject.defineProperty(errorObject, "javaException", wrap, ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
 			}
-			if (isVisible(cx, re, ClassShutter.TYPE_EXCEPTION)) {
-				Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+			if (isVisible(contextData, re, ClassShutter.TYPE_EXCEPTION)) {
+				Object wrap = contextData.getWrapFactory().wrap(contextData, scope, re, null);
 				ScriptableObject.defineProperty(errorObject, "rhinoException", wrap, ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
 			}
 			obj = errorObject;
@@ -2874,11 +2820,11 @@ public class ScriptRuntime {
 		// See ECMA 12.4
 		catchScopeObject.defineProperty(exceptionName, obj, ScriptableObject.PERMANENT);
 
-		if (isVisible(cx, t, ClassShutter.TYPE_EXCEPTION)) {
+		if (isVisible(contextData, t, ClassShutter.TYPE_EXCEPTION)) {
 			// Add special Rhino object __exception__ defined in the catch
 			// scope that can be used to retrieve the Java exception associated
 			// with the JavaScript exception (to get stack trace info, etc.)
-			catchScopeObject.defineProperty("__exception__", Context.javaToJS(t, scope), ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
+			catchScopeObject.defineProperty("__exception__", Context.javaToJS(contextData, t, scope), ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
 		}
 
 		if (cacheObj) {
@@ -2892,6 +2838,8 @@ public class ScriptRuntime {
 		String errorName;
 		String errorMsg;
 		Throwable javaException = null;
+
+		var contextData = SharedContextData.get(cx, scope);
 
 		if (t instanceof EcmaError ee) {
 			re = ee;
@@ -2907,12 +2855,6 @@ public class ScriptRuntime {
 			re = ee;
 			errorName = "InternalError";
 			errorMsg = ee.getMessage();
-		} else if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
-			// With FEATURE_ENHANCED_JAVA_ACCESS, scripts can catch
-			// all exception types
-			re = new WrappedException(t);
-			errorName = "JavaException";
-			errorMsg = t.toString();
 		} else {
 			// Script can catch only instances of JavaScriptException,
 			// EcmaError and EvaluatorException
@@ -2938,19 +2880,19 @@ public class ScriptRuntime {
 			((NativeError) errorObject).setStackProvider(re);
 		}
 
-		if (javaException != null && isVisible(cx, javaException, ClassShutter.TYPE_EXCEPTION)) {
-			Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+		if (javaException != null && isVisible(contextData, javaException, ClassShutter.TYPE_EXCEPTION)) {
+			Object wrap = contextData.getWrapFactory().wrap(contextData, scope, javaException, null);
 			ScriptableObject.defineProperty(errorObject, "javaException", wrap, ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
 		}
-		if (isVisible(cx, re, ClassShutter.TYPE_EXCEPTION)) {
-			Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+		if (isVisible(contextData, re, ClassShutter.TYPE_EXCEPTION)) {
+			Object wrap = contextData.getWrapFactory().wrap(contextData, scope, re, null);
 			ScriptableObject.defineProperty(errorObject, "rhinoException", wrap, ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
 		}
 		return errorObject;
 	}
 
-	private static boolean isVisible(Context cx, Object obj, int type) {
-		ClassShutter shutter = cx.getClassShutter();
+	private static boolean isVisible(SharedContextData data, Object obj, int type) {
+		ClassShutter shutter = data.getClassShutter();
 		return shutter == null || shutter.visibleToScripts(obj.getClass().getName(), type);
 	}
 
@@ -3122,7 +3064,7 @@ public class ScriptRuntime {
 		}
 		int len = (int) longLen;
 		if (len == 0) {
-			return ScriptRuntime.emptyArgs;
+			return ScriptRuntime.EMPTY_OBJECTS;
 		}
 		Object[] result = new Object[len];
 		for (int i = 0; i < len; i++) {
@@ -3459,7 +3401,4 @@ public class ScriptRuntime {
 		final Scriptable error = cx.newObject(scope, constructorName, new Object[]{message, filename, linep[0]});
 		return new JavaScriptException(error, filename, linep[0]);
 	}
-
-	public static final Object[] emptyArgs = new Object[0];
-	public static final String[] emptyStrings = new String[0];
 }

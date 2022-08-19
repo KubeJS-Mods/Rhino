@@ -817,7 +817,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 							 * http://wiki.ecmascript.org/doku.php?id=harmony:regexp_match_web_reality
 							 * http://wiki.ecmascript.org/doku.php?id=strawman:match_web_reality_spec
 							 */
-							reportWarning(state.cx, "msg.bad.backref", "");
 							/* octal escape */
 							num = 0;
 							// follow spidermonkey and allow multiple leading zeros,
@@ -845,9 +844,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 						case '9':
 							termStart = state.cp - 1;
 							num = getDecimalValue(c, state, 0xFFFF, "msg.overlarge.backref");
-							if (num > state.backReferenceLimit) {
-								reportWarning(state.cx, "msg.bad.backref", "");
-							}
 							/*
 							 * n > count of parentheses, then treat as octal instead.
 							 * Also see note above concerning 'web reality'
@@ -2451,13 +2447,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 	int getFlags() {
 		return re.flags;
-	}
-
-	private static void reportWarning(Context cx, String messageId, String arg) {
-		if (cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
-			String msg = ScriptRuntime.getMessage1(messageId, arg);
-			Context.reportWarning(msg);
-		}
 	}
 
 	private static void reportError(String messageId, String arg) {

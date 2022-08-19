@@ -201,9 +201,7 @@ public class Parser {
 
 	void addWarning(String messageId, String messageArg, int position, int length) {
 		String message = lookupMessage(messageId, messageArg);
-		if (compilerEnv.reportWarningAsError()) {
-			addError(messageId, messageArg, position, length);
-		} else if (errorCollector != null) {
+		if (errorCollector != null) {
 			errorCollector.warning(message, sourceURI, position, length);
 		} else {
 			errorReporter.warning(message, sourceURI, ts.getLineno(), ts.getLine(), ts.getOffset());
@@ -252,9 +250,7 @@ public class Parser {
 
 	private void addWarning(String messageId, String messageArg, int position, int length, int line, String lineSource, int lineOffset) {
 		String message = lookupMessage(messageId, messageArg);
-		if (compilerEnv.reportWarningAsError()) {
-			addError(messageId, messageArg, position, length, line, lineSource, lineOffset);
-		} else if (errorCollector != null) {
+		if (errorCollector != null) {
 			errorCollector.warning(message, sourceURI, position, length);
 		} else {
 			errorReporter.warning(message, sourceURI, line, lineSource, lineOffset);
@@ -766,11 +762,6 @@ public class Parser {
 				}
 			}
 			if (!matchToken(Token.LP, true)) {
-				if (compilerEnv.isAllowMemberExprAsFunctionName()) {
-					AstNode memberExprHead = name;
-					name = null;
-					memberExprNode = memberExprTail(false, memberExprHead);
-				}
 				mustMatchToken(Token.LP, "msg.no.paren.parms", true);
 			}
 		} else if (matchToken(Token.LP, true)) {
@@ -779,12 +770,6 @@ public class Parser {
 			// ES6 generator function
 			return function(type, true);
 		} else {
-			if (compilerEnv.isAllowMemberExprAsFunctionName()) {
-				// Note that memberExpr can not start with '(' like
-				// in function (1+2).toString(), because 'function (' already
-				// processed as anonymous function
-				memberExprNode = memberExpr(false);
-			}
 			mustMatchToken(Token.LP, "msg.no.paren.parms", true);
 		}
 		int lpPos = currentToken == Token.LP ? ts.tokenBeg : -1;
@@ -2671,7 +2656,7 @@ public class Parser {
 		consumeToken();
 
 		int maybeName = nextToken();
-		if (maybeName != Token.NAME && !(compilerEnv.isReservedKeywordAsIdentifier() && TokenStream.isKeyword(ts.getString(), inUseStrictDirective))) {
+		if (maybeName != Token.NAME && !(TokenStream.isKeyword(ts.getString(), inUseStrictDirective))) {
 			reportError("msg.no.name.after.dot");
 		}
 
@@ -3235,7 +3220,7 @@ public class Parser {
 			case Token.STRING -> pname = createStringLiteral();
 			case Token.NUMBER -> pname = new NumberLiteral(ts.tokenBeg, ts.getString(), ts.getNumber());
 			default -> {
-				if (compilerEnv.isReservedKeywordAsIdentifier() && TokenStream.isKeyword(ts.getString(), inUseStrictDirective)) {
+				if (TokenStream.isKeyword(ts.getString(), inUseStrictDirective)) {
 					// convert keyword to property name, e.g. ({if: 1})
 					pname = createNameNode();
 					break;

@@ -24,7 +24,6 @@ import java.util.Map;
  * @author Mike Shaver
  * @see NativeJavaArray
  * @see NativeJavaObject
- * @see NativeJavaPackage
  */
 
 public class NativeJavaClass extends NativeJavaObject implements Function {
@@ -48,7 +47,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 	@Override
 	protected void initMembers() {
 		Class<?> cl = (Class<?>) javaObject;
-		members = JavaMembers.lookupClass(ClassCache.get(parent), cl, cl, isAdapter);
+		members = JavaMembers.lookupClass(SharedContextData.get(parent), cl, cl, isAdapter);
 		staticFieldAndMethods = members.getFieldAndMethodsObjects(this, cl, true);
 	}
 
@@ -83,19 +82,19 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 			return members.get(this, name, javaObject, true);
 		}
 
-		Context cx = Context.getContext();
 		Scriptable scope = ScriptableObject.getTopLevelScope(start);
-		WrapFactory wrapFactory = cx.getWrapFactory();
+		var contextData = members.contextData;
+		WrapFactory wrapFactory = contextData.getWrapFactory();
 
 		if (javaClassPropertyName.equals(name)) {
-			return wrapFactory.wrap(cx, scope, javaObject, ScriptRuntime.ClassClass);
+			return wrapFactory.wrap(contextData, scope, javaObject, ScriptRuntime.ClassClass);
 		}
 
 		// experimental:  look for nested classes by appending $name to
 		// current class' name.
 		Class<?> nestedClass = findNestedClass(getClassObject(), name);
 		if (nestedClass != null) {
-			Scriptable nestedValue = wrapFactory.wrapJavaClass(cx, scope, nestedClass);
+			Scriptable nestedValue = wrapFactory.wrapJavaClass(contextData, scope, nestedClass);
 			nestedValue.setParentScope(this);
 			return nestedValue;
 		}
@@ -157,14 +156,14 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 		int modifiers = classObject.getModifiers();
 		if (!(Modifier.isInterface(modifiers) || Modifier.isAbstract(modifiers))) {
 			NativeJavaMethod ctors = members.ctors;
-			int index = ctors.findCachedFunction(cx, args);
+			int index = ctors.findCachedFunction(members.contextData, args);
 			if (index < 0) {
 				String sig = NativeJavaMethod.scriptSignature(args);
 				throw Context.reportRuntimeError2("msg.no.java.ctor", classObject.getName(), sig);
 			}
 
 			// Found the constructor, so try invoking it.
-			return constructSpecific(cx, scope, args, ctors.methods[index]);
+			return constructSpecific(members.contextData, scope, args, ctors.methods[index]);
 		}
 		if (args.length == 0) {
 			throw Context.reportRuntimeError0("msg.adapter.zero.args");
@@ -176,7 +175,8 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 			// bytecode generation won't work on Dalvik VM.
 			if ("Dalvik".equals(System.getProperty("java.vm.name")) && classObject.isInterface()) {
 				Object obj = createInterfaceAdapter(classObject, ScriptableObject.ensureScriptableObject(args[0]));
-				return cx.getWrapFactory().wrapAsJavaObject(cx, scope, obj, null);
+				var contextData = members.contextData;
+				return contextData.getWrapFactory().wrapAsJavaObject(contextData, scope, obj, null);
 			}
 			// use JavaAdapter to construct a new class on the fly that
 			// implements/extends this interface/abstract class.
@@ -197,23 +197,22 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 		throw Context.reportRuntimeError2("msg.cant.instantiate", msg, classObject.getName());
 	}
 
-	static Scriptable constructSpecific(Context cx, Scriptable scope, Object[] args, MemberBox ctor) {
-		Object instance = constructInternal(args, ctor);
+	static Scriptable constructSpecific(SharedContextData contextData, Scriptable scope, Object[] args, MemberBox ctor) {
+		Object instance = constructInternal(SharedContextData.get(scope), args, ctor);
 		// we need to force this to be wrapped, because construct _has_
 		// to return a scriptable
 		Scriptable topLevel = ScriptableObject.getTopLevelScope(scope);
-		return cx.getWrapFactory().wrapNewObject(cx, topLevel, instance);
+		return contextData.getWrapFactory().wrapNewObject(contextData, topLevel, instance);
 	}
 
-	static Object constructInternal(Object[] args, MemberBox ctor) {
+	static Object constructInternal(SharedContextData data, Object[] args, MemberBox ctor) {
 		Class<?>[] argTypes = ctor.argTypes;
-		Context cx = Context.getCurrentContext();
 
 		if (ctor.vararg) {
 			// marshall the explicit parameter
 			Object[] newArgs = new Object[argTypes.length];
 			for (int i = 0; i < argTypes.length - 1; i++) {
-				newArgs[i] = Context.jsToJava(cx, args[i], argTypes[i]);
+				newArgs[i] = Context.jsToJava(data, args[i], argTypes[i]);
 			}
 
 			Object varArgs;
@@ -222,13 +221,13 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 			// is given and it is a Java or ECMA array.
 			if (args.length == argTypes.length && (args[args.length - 1] == null || args[args.length - 1] instanceof NativeArray || args[args.length - 1] instanceof NativeJavaArray)) {
 				// convert the ECMA array into a native array
-				varArgs = Context.jsToJava(cx, args[args.length - 1], argTypes[argTypes.length - 1]);
+				varArgs = Context.jsToJava(data, args[args.length - 1], argTypes[argTypes.length - 1]);
 			} else {
 				// marshall the variable parameter
 				Class<?> componentType = argTypes[argTypes.length - 1].getComponentType();
 				varArgs = Array.newInstance(componentType, args.length - argTypes.length + 1);
 				for (int i = 0; i < Array.getLength(varArgs); i++) {
-					Object value = Context.jsToJava(cx, args[argTypes.length - 1 + i], componentType);
+					Object value = Context.jsToJava(data, args[argTypes.length - 1 + i], componentType);
 					Array.set(varArgs, i, value);
 				}
 			}
@@ -241,7 +240,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 			Object[] origArgs = args;
 			for (int i = 0; i < args.length; i++) {
 				Object arg = args[i];
-				Object x = Context.jsToJava(cx, arg, argTypes[i]);
+				Object x = Context.jsToJava(data, arg, argTypes[i]);
 				if (x != arg) {
 					if (args == origArgs) {
 						args = origArgs.clone();

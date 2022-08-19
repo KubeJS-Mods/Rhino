@@ -8,18 +8,6 @@
 
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProvider;
-import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProviderHolder;
-import dev.latvian.mods.rhino.util.DefaultRemapper;
-import dev.latvian.mods.rhino.util.Remapper;
-import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * Factory class that Rhino runtime uses to create new {@link Context}
  * instances.  A <code>ContextFactory</code> can also notify listeners
@@ -120,11 +108,6 @@ public class ContextFactory {
 	private final Object listenersLock = new Object();
 	private volatile Object listeners;
 	private boolean disabledListening;
-	TypeWrappers typeWrappers;
-	Remapper remapper = DefaultRemapper.INSTANCE;
-	final List<CustomJavaToJsWrapperProviderHolder<?>> customScriptableWrappers = new ArrayList<>();
-	final Map<Class<?>, CustomJavaToJsWrapperProvider> customScriptableWrapperCache = new HashMap<>();
-	private final Map<String, Object> extraProperties = new HashMap<>();
 
 	/**
 	 * Listener of {@link Context} creation and release events.
@@ -170,25 +153,8 @@ public class ContextFactory {
 	 * This can be used to customize {@link Context} without introducing
 	 * additional subclasses.
 	 */
-	@SuppressWarnings("DuplicateBranchesInSwitch")
 	protected boolean hasFeature(Context cx, int featureIndex) {
-		return switch (featureIndex) {
-			case Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME -> false;
-			case Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER -> true;
-			case Context.FEATURE_PARENT_PROTO_PROPERTIES -> true;
-			case Context.FEATURE_DYNAMIC_SCOPE -> false;
-			case Context.FEATURE_STRICT_VARS -> false;
-			case Context.FEATURE_STRICT_EVAL -> false;
-			case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR -> false;
-			case Context.FEATURE_STRICT_MODE -> false;
-			case Context.FEATURE_WARNING_AS_ERROR -> false;
-			case Context.FEATURE_ENHANCED_JAVA_ACCESS -> false;
-			case Context.FEATURE_V8_EXTENSIONS -> true;
-			case Context.FEATURE_THREAD_SAFE_OBJECTS -> false;
-			case Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE -> false;
-			case Context.FEATURE_LITTLE_ENDIAN -> false;
-			default -> throw new IllegalArgumentException(String.valueOf(featureIndex));
-		};
+		return false;
 	}
 
 	/**
@@ -393,18 +359,5 @@ public class ContextFactory {
 	 */
 	public final Context enterContext(Context cx) {
 		return Context.enter(cx, this);
-	}
-
-	public void setExtraProperty(String key, @Nullable Object value) {
-		if (value == null) {
-			extraProperties.remove(key);
-		} else {
-			extraProperties.put(key, value);
-		}
-	}
-
-	@Nullable
-	public Object getExtraProperty(String key) {
-		return extraProperties.get(key);
 	}
 }

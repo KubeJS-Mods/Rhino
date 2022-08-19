@@ -67,7 +67,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	 * @param scope   the scope used for the call
 	 * @param thisObj the value of "this"
 	 * @param args    function arguments. Must not be null. You can use
-	 *                {@link ScriptRuntime#emptyArgs} to pass empty arguments.
+	 *                {@link ScriptRuntime#EMPTY_OBJECTS} to pass empty arguments.
 	 * @return the result of the function call.
 	 */
 	@Override
@@ -86,9 +86,9 @@ final class InterpretedFunction extends NativeFunction implements Script {
 		}
 		if (!ScriptRuntime.hasTopCall(cx)) {
 			// It will go through "call" path. but they are equivalent
-			return ScriptRuntime.doTopCall(this, cx, scope, scope, ScriptRuntime.emptyArgs, idata.isStrict);
+			return ScriptRuntime.doTopCall(this, cx, scope, scope, ScriptRuntime.EMPTY_OBJECTS, idata.isStrict);
 		}
-		return Interpreter.interpret(this, cx, scope, scope, ScriptRuntime.emptyArgs);
+		return Interpreter.interpret(this, cx, scope, scope, ScriptRuntime.EMPTY_OBJECTS);
 	}
 
 	public boolean isScript() {

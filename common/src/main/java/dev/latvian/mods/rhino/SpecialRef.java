@@ -41,11 +41,6 @@ class SpecialRef extends Ref {
 			throw new IllegalArgumentException(name);
 		}
 
-		if (!cx.hasFeature(Context.FEATURE_PARENT_PROTO_PROPERTIES)) {
-			// Clear special after checking for valid name!
-			type = SPECIAL_NONE;
-		}
-
 		return new SpecialRef(target, type, name);
 	}
 

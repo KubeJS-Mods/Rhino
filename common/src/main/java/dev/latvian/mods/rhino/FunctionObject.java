@@ -396,7 +396,7 @@ public class FunctionObject extends BaseFunction {
 					}
 				}
 			} else if (parmsLength == 0) {
-				invokeArgs = ScriptRuntime.emptyArgs;
+				invokeArgs = ScriptRuntime.EMPTY_OBJECTS;
 			} else {
 				invokeArgs = new Object[parmsLength];
 				for (int i = 0; i != parmsLength; ++i) {
@@ -418,7 +418,8 @@ public class FunctionObject extends BaseFunction {
 			if (hasVoidReturn) {
 				result = Undefined.instance;
 			} else if (returnTypeTag == JAVA_UNSUPPORTED_TYPE) {
-				result = cx.getWrapFactory().wrap(cx, scope, result, null);
+				var contextData = SharedContextData.get(cx, scope);
+				result = contextData.getWrapFactory().wrap(contextData, scope, result, null);
 			}
 			// XXX: the code assumes that if returnTypeTag == JAVA_OBJECT_TYPE
 			// then the Java method did a proper job of converting the

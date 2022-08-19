@@ -138,7 +138,7 @@ public final class NativeJSON extends IdScriptableObject {
 						/* fall through */
 					default:
 				}
-				return stringify(cx, value, replacer, space);
+				return stringify(SharedContextData.get(cx, scope), value, replacer, space);
 			}
 
 			default:
@@ -222,8 +222,8 @@ public final class NativeJSON extends IdScriptableObject {
 		return new String(chars);
 	}
 
-	public static String stringify(Context cx, Object value, Object replacer, Object space) {
-		JsonElement e = stringify0(cx.getRemapper(), value);
+	public static String stringify(SharedContextData data, Object value, Object replacer, Object space) {
+		JsonElement e = stringify0(data.getRemapper(), value);
 
 		StringWriter stringWriter = new StringWriter();
 		JsonWriter writer = new JsonWriter(stringWriter);

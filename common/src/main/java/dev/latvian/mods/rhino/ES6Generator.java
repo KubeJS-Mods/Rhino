@@ -126,7 +126,7 @@ public final class ES6Generator extends IdScriptableObject {
 	private Scriptable resumeDelegee(Context cx, Scriptable scope, Object value) {
 		try {
 			// Be super-careful and only pass an arg to next if it expects one
-			Object[] nextArgs = Undefined.instance.equals(value) ? ScriptRuntime.emptyArgs : new Object[]{value};
+			Object[] nextArgs = Undefined.instance.equals(value) ? ScriptRuntime.EMPTY_OBJECTS : new Object[]{value};
 
 			Callable nextFn = ScriptRuntime.getPropFunctionAndThis(delegee, ES6Iterator.NEXT_METHOD, cx, scope);
 			Scriptable nextThis = ScriptRuntime.lastStoredScriptable(cx);
@@ -355,7 +355,7 @@ public final class ES6Generator extends IdScriptableObject {
 	}
 
 	private Object callReturnOptionally(Context cx, Scriptable scope, Object value) {
-		Object[] retArgs = Undefined.instance.equals(value) ? ScriptRuntime.emptyArgs : new Object[]{value};
+		Object[] retArgs = Undefined.instance.equals(value) ? ScriptRuntime.EMPTY_OBJECTS : new Object[]{value};
 		// Delegate to "return" method. If it's not defined we ignore it
 		Object retFnObj = ScriptRuntime.getObjectPropNoWarn(delegee, ES6Iterator.RETURN_METHOD, cx, scope);
 		if (!Undefined.instance.equals(retFnObj)) {
