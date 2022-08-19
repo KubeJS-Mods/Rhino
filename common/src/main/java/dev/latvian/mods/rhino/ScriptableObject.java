@@ -17,7 +17,6 @@ import dev.latvian.mods.rhino.util.Deletable;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serial;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
@@ -47,11 +46,7 @@ import java.util.Map;
  * @see Scriptable
  */
 
-public abstract class ScriptableObject implements Scriptable, SymbolScriptable, Serializable, ConstProperties {
-
-	@Serial
-	private static final long serialVersionUID = 2829861078851942586L;
-
+public abstract class ScriptableObject implements Scriptable, SymbolScriptable, ConstProperties {
 	/**
 	 * The empty property attribute.
 	 * <p>
@@ -114,7 +109,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * This holds all the slots. It may or may not be thread-safe, and may expand itself to
 	 * a different data structure depending on the size of the object.
 	 */
-	private transient SlotMapContainer slotMap;
+	private final transient SlotMapContainer slotMap;
 
 	// Where external array data is stored.
 	private transient ExternalArrayData externalData;
@@ -2735,37 +2730,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		}
 
 		return result;
-	}
-
-	@Serial
-	private void writeObject(ObjectOutputStream out) throws IOException {
-		out.defaultWriteObject();
-		final long stamp = slotMap.readLock();
-		try {
-			int objectsCount = slotMap.dirtySize();
-			if (objectsCount == 0) {
-				out.writeInt(0);
-			} else {
-				out.writeInt(objectsCount);
-				for (Slot slot : slotMap) {
-					out.writeObject(slot);
-				}
-			}
-		} finally {
-			slotMap.unlockRead(stamp);
-		}
-	}
-
-	@Serial
-	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		in.defaultReadObject();
-
-		int tableSize = in.readInt();
-		slotMap = createSlotMap(tableSize);
-		for (int i = 0; i < tableSize; i++) {
-			Slot slot = (Slot) in.readObject();
-			slotMap.addSlot(slot);
-		}
 	}
 
 	protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {

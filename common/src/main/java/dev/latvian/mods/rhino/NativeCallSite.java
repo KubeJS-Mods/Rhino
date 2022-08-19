@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 /**
  * This class is used by the V8 extension "Error.prepareStackTrace." It is
  * passed to that function, which may then use it to format the stack as it sees
@@ -15,8 +13,6 @@ import java.io.Serial;
  */
 
 public class NativeCallSite extends IdScriptableObject {
-	@Serial
-	private static final long serialVersionUID = 2688372752566593594L;
 	private static final String CALLSITE_TAG = "CallSite";
 	private ScriptStackElement element;
 

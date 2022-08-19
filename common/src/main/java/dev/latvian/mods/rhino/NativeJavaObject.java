@@ -12,11 +12,6 @@ import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serial;
-import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -35,9 +30,7 @@ import java.util.Map;
  * @see NativeJavaClass
  */
 
-public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, Serializable {
-	@Serial
-	private static final long serialVersionUID = -6948590651130498591L;
+public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	private static final Object COERCED_INTERFACE_KEY = "Coerced Interface";
 
 	/**
@@ -161,8 +154,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
 	@Override
 	public Object get(Symbol key, Scriptable start) {
-		if (javaObject instanceof Iterable<?> && SymbolKey.ITERATOR.equals(key)) {
-			return new JavaIteratorWrapper(((Iterable<?>) javaObject).iterator());
+		if (javaObject instanceof Iterable<?> itr && SymbolKey.ITERATOR.equals(key)) {
+			return new JavaIteratorWrapper(itr.iterator());
 		}
 
 		// Native Java objects have no Symbol members
@@ -862,52 +855,5 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 		// It uses String.valueOf(value), not value.toString() since
 		// value can be null, bug 282447.
 		throw Context.reportRuntimeError2("msg.conversion.not.allowed", String.valueOf(stringValue), JavaMembers.javaSignature(type));
-	}
-
-	@Serial
-	private void writeObject(ObjectOutputStream out) throws IOException {
-		out.defaultWriteObject();
-
-		out.writeBoolean(isAdapter);
-		if (isAdapter) {
-			try {
-				JavaAdapter.writeAdapterObject(javaObject, out);
-			} catch (Exception ex) {
-				throw new IOException();
-			}
-		} else {
-			out.writeObject(javaObject);
-		}
-
-		if (staticType != null) {
-			out.writeObject(staticType.getName());
-		} else {
-			out.writeObject(null);
-		}
-	}
-
-	@Serial
-	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		in.defaultReadObject();
-
-		isAdapter = in.readBoolean();
-		if (isAdapter) {
-			try {
-				javaObject = JavaAdapter.readAdapterObject(this, in);
-			} catch (Exception ex) {
-				throw new IOException();
-			}
-		} else {
-			javaObject = in.readObject();
-		}
-
-		String className = (String) in.readObject();
-		if (className != null) {
-			staticType = Class.forName(className);
-		} else {
-			staticType = null;
-		}
-
-		initMembers();
 	}
 }

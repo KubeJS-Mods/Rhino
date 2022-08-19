@@ -28,9 +28,6 @@ import java.util.function.Supplier;
  * @author Mike McCabe
  */
 public class NativeArray extends IdScriptableObject implements List, DataObject {
-	@Serial
-	private static final long serialVersionUID = 7331366857676127338L;
-
 	/*
 	 * Optimization possibilities and open issues:
 	 * - Long vs. double schizophrenia.  I suspect it might be better

@@ -9,7 +9,6 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.regexp.NativeRegExp;
 import dev.latvian.mods.rhino.regexp.RegExp;
 
-import java.io.Serial;
 import java.text.Collator;
 import java.text.Normalizer;
 import java.util.Locale;
@@ -28,9 +27,6 @@ import java.util.Locale;
  * @author Ronald Brill
  */
 final class NativeString extends IdScriptableObject implements Wrapper {
-	@Serial
-	private static final long serialVersionUID = 920268368584188687L;
-
 	private static final Object STRING_TAG = "String";
 
 	static void init(Scriptable scope, boolean sealed) {
@@ -598,18 +594,18 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 					// a la ClassCache, so we aren't trying to outsmart ourselves
 					// with a caching mechanism for now.
 					String thisStr = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
-					Collator collator = Collator.getInstance(cx.getLocale());
+					Collator collator = Collator.getInstance();
 					collator.setStrength(Collator.IDENTICAL);
 					collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
 					return ScriptRuntime.wrapNumber(collator.compare(thisStr, ScriptRuntime.toString(args, 0)));
 				}
 				case Id_toLocaleLowerCase: {
 					String thisStr = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
-					return thisStr.toLowerCase(cx.getLocale());
+					return thisStr.toLowerCase();
 				}
 				case Id_toLocaleUpperCase: {
 					String thisStr = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
-					return thisStr.toUpperCase(cx.getLocale());
+					return thisStr.toUpperCase();
 				}
 				case Id_trim: {
 					String str = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));

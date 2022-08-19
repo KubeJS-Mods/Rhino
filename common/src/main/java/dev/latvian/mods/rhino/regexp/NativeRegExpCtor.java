@@ -13,8 +13,6 @@ import dev.latvian.mods.rhino.Scriptable;
 import dev.latvian.mods.rhino.TopLevel;
 import dev.latvian.mods.rhino.Undefined;
 
-import java.io.Serial;
-
 /**
  * This class implements the RegExp constructor native object.
  * <p>
@@ -29,9 +27,6 @@ import java.io.Serial;
  * @author Norris Boyd
  */
 class NativeRegExpCtor extends BaseFunction {
-	@Serial
-	private static final long serialVersionUID = -5733330028285400526L;
-
 	NativeRegExpCtor() {
 	}
 

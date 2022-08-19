@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 /**
  * This class implements the Function native object.
  * See ECMA 15.3.
@@ -15,10 +13,6 @@ import java.io.Serial;
  * @author Norris Boyd
  */
 public abstract class NativeFunction extends BaseFunction {
-
-	@Serial
-	private static final long serialVersionUID = 8713897114082216401L;
-
 	public final void initScriptFunction(Context cx, Scriptable scope) {
 		initScriptFunction(cx, scope, isGeneratorFunction());
 	}

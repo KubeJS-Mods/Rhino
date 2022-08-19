@@ -16,9 +16,6 @@ import java.lang.reflect.Method;
  * ECMA 15.11
  */
 final class NativeError extends IdScriptableObject {
-	@Serial
-	private static final long serialVersionUID = -5338413581437645187L;
-
 	private static final Object ERROR_TAG = "Error";
 
 	private static final Method ERROR_DELEGATE_GET_STACK;

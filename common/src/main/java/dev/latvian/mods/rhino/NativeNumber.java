@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 /**
  * This class implements the Number native object.
  * <p>
@@ -16,9 +14,6 @@ import java.io.Serial;
  * @author Norris Boyd
  */
 final class NativeNumber extends IdScriptableObject {
-	@Serial
-	private static final long serialVersionUID = 3504516769741512101L;
-
 	/**
 	 * @see https://www.ecma-international.org/ecma-262/6.0/#sec-number.max_safe_integer
 	 */

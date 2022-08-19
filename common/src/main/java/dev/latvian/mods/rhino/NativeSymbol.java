@@ -6,7 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,9 +16,6 @@ import java.util.Map;
  */
 
 public class NativeSymbol extends IdScriptableObject implements Symbol {
-	@Serial
-	private static final long serialVersionUID = -589539749749830003L;
-
 	public static final String CLASS_NAME = "Symbol";
 
 	private static final Object GLOBAL_TABLE_KEY = new Object();

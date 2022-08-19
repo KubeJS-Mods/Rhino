@@ -12,7 +12,6 @@ import dev.latvian.mods.rhino.util.SpecialEquality;
 import dev.latvian.mods.rhino.v8dtoa.DoubleConversion;
 import dev.latvian.mods.rhino.v8dtoa.FastDtoa;
 
-import java.io.Serial;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -42,9 +41,6 @@ public class ScriptRuntime {
 	public static BaseFunction typeErrorThrower(Context cx) {
 		if (cx.typeErrorThrower == null) {
 			BaseFunction thrower = new BaseFunction() {
-				@Serial
-				private static final long serialVersionUID = -5891740962154902286L;
-
 				@Override
 				public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 					throw typeError0("msg.op.not.allowed");
@@ -166,18 +162,6 @@ public class ScriptRuntime {
 		new LazilyLoadedCtor(scope, "RegExp", "dev.latvian.mods.rhino.regexp.NativeRegExp", sealed, true);
 		new LazilyLoadedCtor(scope, "Continuation", "dev.latvian.mods.rhino.NativeContinuation", sealed, true);
 
-		// new LazilyLoadedCtor(scope, "ArrayBuffer", "dev.latvian.mods.rhino.typedarrays.NativeArrayBuffer", sealed, true);
-		// new LazilyLoadedCtor(scope, "Int8Array", "dev.latvian.mods.rhino.typedarrays.NativeInt8Array", sealed, true);
-		// new LazilyLoadedCtor(scope, "Uint8Array", "dev.latvian.mods.rhino.typedarrays.NativeUint8Array", sealed, true);
-		// new LazilyLoadedCtor(scope, "Uint8ClampedArray", "dev.latvian.mods.rhino.typedarrays.NativeUint8ClampedArray", sealed, true);
-		// new LazilyLoadedCtor(scope, "Int16Array", "dev.latvian.mods.rhino.typedarrays.NativeInt16Array", sealed, true);
-		// new LazilyLoadedCtor(scope, "Uint16Array", "dev.latvian.mods.rhino.typedarrays.NativeUint16Array", sealed, true);
-		// new LazilyLoadedCtor(scope, "Int32Array", "dev.latvian.mods.rhino.typedarrays.NativeInt32Array", sealed, true);
-		// new LazilyLoadedCtor(scope, "Uint32Array", "dev.latvian.mods.rhino.typedarrays.NativeUint32Array", sealed, true);
-		// new LazilyLoadedCtor(scope, "Float32Array", "dev.latvian.mods.rhino.typedarrays.NativeFloat32Array", sealed, true);
-		// new LazilyLoadedCtor(scope, "Float64Array", "dev.latvian.mods.rhino.typedarrays.NativeFloat64Array", sealed, true);
-		// new LazilyLoadedCtor(scope, "DataView", "dev.latvian.mods.rhino.typedarrays.NativeDataView", sealed, true);
-
 		NativeSymbol.init(cx, scope, sealed);
 		NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed);
 		NativeCollectionIterator.init(scope, NativeMap.ITERATOR_TAG, sealed);
@@ -196,21 +180,9 @@ public class ScriptRuntime {
 	public static ScriptableObject initStandardObjects(Context cx, ScriptableObject scope, boolean sealed) {
 		ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
 
-		new LazilyLoadedCtor(s, "Packages", "dev.latvian.mods.rhino.NativeJavaTopPackage", sealed, true);
-		new LazilyLoadedCtor(s, "getClass", "dev.latvian.mods.rhino.NativeJavaTopPackage", sealed, true);
 		new LazilyLoadedCtor(s, "JavaAdapter", "dev.latvian.mods.rhino.JavaAdapter", sealed, true);
-		new LazilyLoadedCtor(s, "JavaImporter", "dev.latvian.mods.rhino.ImporterTopLevel", sealed, true);
-
-		for (String packageName : getTopPackageNames()) {
-			new LazilyLoadedCtor(s, packageName, "dev.latvian.mods.rhino.NativeJavaTopPackage", sealed, true);
-		}
 
 		return s;
-	}
-
-	static String[] getTopPackageNames() {
-		// Include "android" top package if running on Android
-		return "Dalvik".equals(System.getProperty("java.vm.name")) ? new String[]{"java", "javax", "org", "com", "edu", "net", "android"} : new String[]{"java", "javax", "org", "com", "edu", "net"};
 	}
 
 	public static ScriptableObject getLibraryScopeOrNull(Scriptable scope) {
@@ -3135,8 +3107,7 @@ public class ScriptRuntime {
 		public String getMessage(String messageId, Object[] arguments) {
 			final String defaultResource = "dev.latvian.mods.rhino.resources.Messages";
 
-			Context cx = Context.getCurrentContext();
-			Locale locale = cx != null ? cx.getLocale() : Locale.getDefault();
+			Locale locale = Locale.getDefault();
 
 			// ResourceBundle does caching.
 			ResourceBundle rb = ResourceBundle.getBundle(defaultResource, locale);

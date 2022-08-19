@@ -1,17 +1,11 @@
 package dev.latvian.mods.rhino;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serial;
 import java.util.Collections;
 import java.util.Iterator;
 
 public class NativeCollectionIterator extends ES6Iterator {
-	@Serial
-	private static final long serialVersionUID = 7094840979404373443L;
-	private String className;
-	private Type type;
+	private final String className;
+	private final Type type;
 	private transient Iterator<Hashtable.Entry> iterator = Collections.emptyIterator();
 
 	enum Type {
@@ -52,22 +46,6 @@ public class NativeCollectionIterator extends ES6Iterator {
 			case KEYS -> e.key;
 			case VALUES -> e.value;
 			case BOTH -> cx.newArray(scope, new Object[]{e.key, e.value});
-			default -> throw new AssertionError();
 		};
-	}
-
-	@Serial
-	private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
-		stream.defaultReadObject();
-		className = (String) stream.readObject();
-		type = (Type) stream.readObject();
-		iterator = Collections.emptyIterator();
-	}
-
-	@Serial
-	private void writeObject(ObjectOutputStream stream) throws IOException {
-		stream.defaultWriteObject();
-		stream.writeObject(className);
-		stream.writeObject(type);
 	}
 }

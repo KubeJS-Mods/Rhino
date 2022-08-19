@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 /**
  * The class for results of the Function.bind operation
  * EcmaScript 5 spec, 15.3.4.5
@@ -15,10 +13,6 @@ import java.io.Serial;
  * @author Raphael Speyer
  */
 public class BoundFunction extends BaseFunction {
-
-	@Serial
-	private static final long serialVersionUID = 2118137342826470729L;
-
 	private final Callable targetFunction;
 	private final Scriptable boundThis;
 	private final Object[] boundArgs;

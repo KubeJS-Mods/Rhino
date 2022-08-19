@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 /**
  * The JavaScript Script object.
  * <p>
@@ -23,9 +21,6 @@ import java.io.Serial;
  */
 
 class NativeScript extends BaseFunction {
-	@Serial
-	private static final long serialVersionUID = -6795101161980121700L;
-
 	private static final Object SCRIPT_TAG = "Script";
 
 	static void init(Scriptable scope, boolean sealed) {

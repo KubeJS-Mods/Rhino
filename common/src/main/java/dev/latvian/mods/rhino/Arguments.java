@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 /**
  * This class implements the "arguments" object.
  * <p>
@@ -17,9 +15,6 @@ import java.io.Serial;
  * @see NativeCall
  */
 final class Arguments extends IdScriptableObject {
-	@Serial
-	private static final long serialVersionUID = 4275508002492040609L;
-
 	private static final String FTAG = "Arguments";
 
 	public Arguments(NativeCall activation) {
@@ -383,9 +378,6 @@ final class Arguments extends IdScriptableObject {
 	}
 
 	private static final BaseFunction iteratorMethod = new BaseFunction() {
-		@Serial
-		private static final long serialVersionUID = 4239122318596177391L;
-
 		@Override
 		public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 			// TODO : call %ArrayProto_values%
@@ -397,8 +389,6 @@ final class Arguments extends IdScriptableObject {
 	};
 
 	private static class ThrowTypeError extends BaseFunction {
-		@Serial
-		private static final long serialVersionUID = -744615873947395749L;
 		private final String propertyName;
 
 		ThrowTypeError(String propertyName) {

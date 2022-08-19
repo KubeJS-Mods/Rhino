@@ -8,7 +8,6 @@ package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.DataObject;
 
-import java.io.Serial;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.AbstractCollection;
@@ -30,9 +29,6 @@ import java.util.function.Supplier;
  * @author Norris Boyd
  */
 public class NativeObject extends IdScriptableObject implements Map, DataObject {
-	@Serial
-	private static final long serialVersionUID = -6345305608474346996L;
-
 	private static final Object OBJECT_TAG = "Object";
 
 	static void init(Scriptable scope, boolean sealed) {

@@ -8,18 +8,12 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serial;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public class FunctionObject extends BaseFunction {
-	@Serial
-	private static final long serialVersionUID = -5332312783643935019L;
-
 	/**
 	 * Create a JavaScript function object from a Java method.
 	 *
@@ -459,27 +453,6 @@ public class FunctionObject extends BaseFunction {
 
 	boolean isVarArgsConstructor() {
 		return parmsLength == VARARGS_CTOR;
-	}
-
-	@Serial
-	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		in.defaultReadObject();
-		if (parmsLength > 0) {
-			Class<?>[] types = member.argTypes;
-			typeTags = new byte[parmsLength];
-			for (int i = 0; i != parmsLength; ++i) {
-				typeTags[i] = (byte) getTypeTag(types[i]);
-			}
-		}
-		if (member.isMethod()) {
-			Method method = member.method();
-			Class<?> returnType = method.getReturnType();
-			if (returnType == Void.TYPE) {
-				hasVoidReturn = true;
-			} else {
-				returnTypeTag = getTypeTag(returnType);
-			}
-		}
 	}
 
 	private static final short VARARGS_METHOD = -1;

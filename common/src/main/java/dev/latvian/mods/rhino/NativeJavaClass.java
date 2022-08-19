@@ -6,7 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.Map;
@@ -27,9 +26,6 @@ import java.util.Map;
  */
 
 public class NativeJavaClass extends NativeJavaObject implements Function {
-	@Serial
-	private static final long serialVersionUID = -6460763940409461664L;
-
 	// Special property for getting the underlying Java class object.
 	static final String javaClassPropertyName = "__javaObject__";
 

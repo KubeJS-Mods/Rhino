@@ -39,9 +39,6 @@ import java.io.Serializable;
 
 
 public class NativeRegExp extends IdScriptableObject implements Function {
-	@Serial
-	private static final long serialVersionUID = 4965263491464903264L;
-
 	private static final Object REGEXP_TAG = new Object();
 
 	public static final int JSREG_GLOB = 0x1;       // 'g' flag: global

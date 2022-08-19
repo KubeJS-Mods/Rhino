@@ -6,12 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 final class InterpretedFunction extends NativeFunction implements Script {
-	@Serial
-	private static final long serialVersionUID = 541475680333911468L;
-
 	InterpreterData idata;
 
 	private InterpretedFunction(InterpreterData idata, Object staticSecurityDomain) {

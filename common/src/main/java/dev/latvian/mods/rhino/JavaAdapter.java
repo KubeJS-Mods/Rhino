@@ -9,12 +9,8 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.classfile.ByteCode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -220,66 +216,6 @@ public final class JavaAdapter implements IdFunctionCall {
 		} catch (Exception ex) {
 			throw Context.throwAsScriptRuntimeEx(ex);
 		}
-	}
-
-	// Needed by NativeJavaObject serializer
-	public static void writeAdapterObject(Object javaObject, ObjectOutputStream out) throws IOException {
-		Class<?> cl = javaObject.getClass();
-		out.writeObject(cl.getSuperclass().getName());
-
-		Class<?>[] interfaces = cl.getInterfaces();
-		String[] interfaceNames = new String[interfaces.length];
-
-		for (int i = 0; i < interfaces.length; i++) {
-			interfaceNames[i] = interfaces[i].getName();
-		}
-
-		out.writeObject(interfaceNames);
-
-		try {
-			Object delegee = cl.getField("delegee").get(javaObject);
-			out.writeObject(delegee);
-			return;
-		} catch (IllegalAccessException e) {
-		} catch (NoSuchFieldException e) {
-		}
-		throw new IOException();
-	}
-
-	// Needed by NativeJavaObject de-serializer
-	public static Object readAdapterObject(Scriptable self, ObjectInputStream in) throws IOException, ClassNotFoundException {
-		ContextFactory factory;
-		Context cx = Context.getCurrentContext();
-		if (cx != null) {
-			factory = cx.getFactory();
-		} else {
-			factory = null;
-		}
-
-		Class<?> superClass = Class.forName((String) in.readObject());
-
-		String[] interfaceNames = (String[]) in.readObject();
-		Class<?>[] interfaces = new Class[interfaceNames.length];
-
-		for (int i = 0; i < interfaceNames.length; i++) {
-			interfaces[i] = Class.forName(interfaceNames[i]);
-		}
-
-		Scriptable delegee = (Scriptable) in.readObject();
-
-		Class<?> adapterClass = getAdapterClass(cx, self, superClass, interfaces, delegee);
-
-		Class<?>[] ctorParms = {ScriptRuntime.ContextFactoryClass, ScriptRuntime.ScriptableClass, ScriptRuntime.ScriptableClass};
-		Object[] ctorArgs = {factory, delegee, self};
-		try {
-			return adapterClass.getConstructor(ctorParms).newInstance(ctorArgs);
-		} catch (InstantiationException e) {
-		} catch (IllegalAccessException e) {
-		} catch (InvocationTargetException e) {
-		} catch (NoSuchMethodException e) {
-		}
-
-		throw new ClassNotFoundException("adapter");
 	}
 
 	private static ObjToIntMap getObjectFunctionNames(Scriptable obj) {

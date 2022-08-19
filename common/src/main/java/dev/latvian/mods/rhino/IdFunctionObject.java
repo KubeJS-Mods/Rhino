@@ -8,13 +8,7 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 public class IdFunctionObject extends BaseFunction {
-
-	@Serial
-	private static final long serialVersionUID = -5332312783643935019L;
-
 	public IdFunctionObject(IdFunctionCall idcall, Object tag, int id, int arity) {
 		if (arity < 0) {
 			throw new IllegalArgumentException();

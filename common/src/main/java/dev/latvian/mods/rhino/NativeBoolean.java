@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 /**
  * This class implements the Boolean native object.
  * See ECMA 15.6.
@@ -15,9 +13,6 @@ import java.io.Serial;
  * @author Norris Boyd
  */
 final class NativeBoolean extends IdScriptableObject {
-	@Serial
-	private static final long serialVersionUID = -3716996899943880933L;
-
 	private static final Object BOOLEAN_TAG = "Boolean";
 
 	static void init(Scriptable scope, boolean sealed) {

@@ -17,7 +17,6 @@ import dev.latvian.mods.rhino.json.JsonParser;
 import dev.latvian.mods.rhino.util.HideFromJS;
 import dev.latvian.mods.rhino.util.Remapper;
 
-import java.io.Serial;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -34,9 +33,6 @@ import java.util.Map;
  * @author Matthew Crumley, Raphael Speyer
  */
 public final class NativeJSON extends IdScriptableObject {
-	@Serial
-	private static final long serialVersionUID = -4567599697595654984L;
-
 	private static final Object JSON_TAG = "JSON";
 
 	private static final int MAX_STRINGIFY_GAP_LENGTH = 10;

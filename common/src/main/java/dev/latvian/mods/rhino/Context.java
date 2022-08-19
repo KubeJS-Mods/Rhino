@@ -22,7 +22,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -66,11 +65,8 @@ public class Context {
 	// Use ObjToIntMap instead of java.util.HashSet for JDK 1.1 compatibility
 	ObjToIntMap iterating;
 
-	private boolean hasClassShutter;
-	private ClassShutter classShutter;
 	private ErrorReporter errorReporter;
 	RegExp regExp;
-	private Locale locale;
 	private int maximumInterpreterStackDepth;
 	private int enterCount;
 	private Object propertyListeners;
@@ -368,34 +364,6 @@ public class Context {
 		}
 		this.errorReporter = reporter;
 		return old;
-	}
-
-	/**
-	 * Get the current locale.  Returns the default locale if none has
-	 * been set.
-	 *
-	 * @see java.util.Locale
-	 */
-
-	public final Locale getLocale() {
-		if (locale == null) {
-			locale = Locale.getDefault();
-		}
-		return locale;
-	}
-
-	/**
-	 * Set the current locale.
-	 *
-	 * @see java.util.Locale
-	 */
-	public final Locale setLocale(Locale loc) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		Locale result = locale;
-		locale = loc;
-		return result;
 	}
 
 	/**

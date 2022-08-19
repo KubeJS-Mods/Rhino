@@ -6,7 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -22,9 +21,6 @@ import java.util.TimeZone;
  * https://dxr.mozilla.dev/latvian/repackaged/org/mozilla-central/source/js/src/jsdate.cpp
  */
 final class NativeDate extends IdScriptableObject {
-	@Serial
-	private static final long serialVersionUID = -8307438915861678966L;
-
 	private static final Object DATE_TAG = "Date";
 
 	private static final String js_NaN_date_str = "Invalid Date";

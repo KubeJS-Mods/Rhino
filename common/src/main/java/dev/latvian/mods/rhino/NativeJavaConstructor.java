@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 /**
  * This class reflects a single Java constructor into the JavaScript
  * environment.  It satisfies a request for an overloaded constructor,
@@ -22,9 +20,6 @@ import java.io.Serial;
  */
 
 public class NativeJavaConstructor extends BaseFunction {
-	@Serial
-	private static final long serialVersionUID = -8149253217482668463L;
-
 	MemberBox ctor;
 
 	public NativeJavaConstructor(MemberBox ctor) {

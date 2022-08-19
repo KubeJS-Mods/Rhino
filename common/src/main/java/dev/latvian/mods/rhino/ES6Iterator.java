@@ -6,13 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 public abstract class ES6Iterator extends IdScriptableObject {
-
-	@Serial
-	private static final long serialVersionUID = 2438373029140003950L;
-
 	protected static void init(ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag) {
 		if (scope != null) {
 			prototype.setParentScope(scope);

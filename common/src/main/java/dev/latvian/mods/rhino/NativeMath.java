@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 /**
  * This class implements the Math native object.
  * See ECMA 15.8.
@@ -16,9 +14,6 @@ import java.io.Serial;
  */
 
 final class NativeMath extends IdScriptableObject {
-	@Serial
-	private static final long serialVersionUID = -8838847185801131569L;
-
 	private static final Object MATH_TAG = "Math";
 	private static final double LOG2E = 1.4426950408889634;
 	private static final Double Double32 = 32d;

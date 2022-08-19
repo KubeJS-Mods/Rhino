@@ -6,7 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
 import java.util.Iterator;
 
 /**
@@ -16,8 +15,6 @@ import java.util.Iterator;
  * @author Norris Boyd
  */
 public final class NativeIterator extends IdScriptableObject {
-	@Serial
-	private static final long serialVersionUID = -4136968203581667681L;
 	private static final Object ITERATOR_TAG = "Iterator";
 
 	static void init(Context cx, ScriptableObject scope, boolean sealed) {
@@ -70,9 +67,6 @@ public final class NativeIterator extends IdScriptableObject {
 	public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
 
 	public static class StopIteration extends NativeObject {
-		@Serial
-		private static final long serialVersionUID = 2485151085722377663L;
-
 		private Object value = Undefined.instance;
 
 		public StopIteration() {

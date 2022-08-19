@@ -6,12 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 public final class ES6Generator extends IdScriptableObject {
-	@Serial
-	private static final long serialVersionUID = 1645892441041347273L;
-
 	private static final Object GENERATOR_TAG = "Generator";
 
 	static ES6Generator init(ScriptableObject scope, boolean sealed) {

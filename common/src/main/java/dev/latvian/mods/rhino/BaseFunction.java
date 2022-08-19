@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-
 /**
  * The base class for Function objects. That is one of two purposes. It is also
  * the prototype for every "function" defined except those that are used
@@ -18,9 +16,6 @@ import java.io.Serial;
  * @author Norris Boyd
  */
 public class BaseFunction extends IdScriptableObject implements Function {
-	@Serial
-	private static final long serialVersionUID = 5311394446546053859L;
-
 	private static final Object FUNCTION_TAG = "Function";
 	private static final String FUNCTION_CLASS = "Function";
 	static final String GENERATOR_FUNCTION_CLASS = "__GeneratorFunction";

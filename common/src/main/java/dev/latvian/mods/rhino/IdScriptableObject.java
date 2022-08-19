@@ -6,10 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -28,14 +24,9 @@ import java.io.Serializable;
  * may override scopeInit or fillConstructorProperties methods.
  */
 public abstract class IdScriptableObject extends ScriptableObject implements IdFunctionCall {
-	@Serial
-	private static final long serialVersionUID = -3744239272168621609L;
 	private transient PrototypeValues prototypeValues;
 
 	private static final class PrototypeValues implements Serializable {
-		@Serial
-		private static final long serialVersionUID = 3038645279153854371L;
-
 		private static final int NAME_SLOT = 1;
 		private static final int SLOT_SPAN = 2;
 
@@ -61,11 +52,11 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 			this.maxId = maxId;
 		}
 
-		final int getMaxId() {
+		int getMaxId() {
 			return maxId;
 		}
 
-		final void initValue(int id, String name, Object value, int attributes) {
+		void initValue(int id, String name, Object value, int attributes) {
 			if (!(1 <= id && id <= maxId)) {
 				throw new IllegalArgumentException();
 			}
@@ -92,7 +83,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 			initSlot(id, name, value, attributes);
 		}
 
-		final void initValue(int id, Symbol key, Object value, int attributes) {
+		void initValue(int id, Symbol key, Object value, int attributes) {
 			if (!(1 <= id && id <= maxId)) {
 				throw new IllegalArgumentException();
 			}
@@ -143,7 +134,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 			}
 		}
 
-		final IdFunctionObject createPrecachedConstructor() {
+		IdFunctionObject createPrecachedConstructor() {
 			if (constructorId != 0) {
 				throw new IllegalStateException();
 			}
@@ -160,15 +151,15 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 			return constructor;
 		}
 
-		final int findId(String name) {
+		int findId(String name) {
 			return obj.findPrototypeId(name);
 		}
 
-		final int findId(Symbol key) {
+		int findId(Symbol key) {
 			return obj.findPrototypeId(key);
 		}
 
-		final boolean has(int id) {
+		boolean has(int id) {
 			Object[] array = valueArray;
 			if (array == null) {
 				// Not yet initialized, assume all exists
@@ -183,7 +174,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 			return value != NOT_FOUND;
 		}
 
-		final Object get(int id) {
+		Object get(int id) {
 			Object value = ensureId(id);
 			if (value == UniqueTag.NULL_VALUE) {
 				value = null;
@@ -191,7 +182,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 			return value;
 		}
 
-		final void set(int id, Scriptable start, Object value) {
+		void set(int id, Scriptable start, Object value) {
 			if (value == NOT_FOUND) {
 				throw new IllegalArgumentException();
 			}
@@ -220,7 +211,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 			}
 		}
 
-		final void delete(int id) {
+		void delete(int id) {
 			ensureId(id);
 			int attr = attributeArray[id - 1];
 			// non-configurable
@@ -240,12 +231,12 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 			}
 		}
 
-		final int getAttributes(int id) {
+		int getAttributes(int id) {
 			ensureId(id);
 			return attributeArray[id - 1];
 		}
 
-		final void setAttributes(int id, int attributes) {
+		void setAttributes(int id, int attributes) {
 			ScriptableObject.checkValidAttributes(attributes);
 			ensureId(id);
 			synchronized (this) {
@@ -253,7 +244,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 			}
 		}
 
-		final Object[] getNames(boolean getAll, boolean getSymbols, Object[] extraEntries) {
+		Object[] getNames(boolean getAll, boolean getSymbols, Object[] extraEntries) {
 			Object[] names = null;
 			int count = 0;
 			for (int id = 1; id <= maxId; ++id) {
@@ -984,25 +975,5 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 		}
 		return null;
 	}
-
-	@Serial
-	private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
-		stream.defaultReadObject();
-		int maxPrototypeId = stream.readInt();
-		if (maxPrototypeId != 0) {
-			activatePrototypeMap(maxPrototypeId);
-		}
-	}
-
-	@Serial
-	private void writeObject(ObjectOutputStream stream) throws IOException {
-		stream.defaultWriteObject();
-		int maxPrototypeId = 0;
-		if (prototypeValues != null) {
-			maxPrototypeId = prototypeValues.getMaxId();
-		}
-		stream.writeInt(maxPrototypeId);
-	}
-
 }
 

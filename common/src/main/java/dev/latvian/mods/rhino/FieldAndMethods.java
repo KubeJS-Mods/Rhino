@@ -1,12 +1,8 @@
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
 import java.lang.reflect.Field;
 
 public class FieldAndMethods extends NativeJavaMethod {
-	@Serial
-	private static final long serialVersionUID = -9222428244284796755L;
-
 	FieldAndMethods(Scriptable scope, MemberBox[] methods, Field field) {
 		super(methods);
 		this.field = field;
