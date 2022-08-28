@@ -25,38 +25,18 @@ public interface Remapper {
 	}
 
 	default String getMappedField(Class<?> from, Field field) {
-		return getMappedField(from, field, field.getName());
-	}
-
-	default String getMappedField(Class<?> from, Field field, String fieldName) {
-		if (from == null || from == Object.class) {
-			return field.getName();
+		if (from == null || from == Object.class || from.getPackageName().startsWith("java.")) {
+			return "";
 		}
 
-		String s = remapField(from, field, fieldName);
-
-		if (!s.isEmpty()) {
-			return s;
-		}
-
-		String ss = getMappedField(from.getSuperclass(), field, fieldName);
-
-		if (!ss.isEmpty()) {
-			return ss;
-		}
-
-		for (Class<?> c : from.getInterfaces()) {
-			String si = getMappedField(c, field, fieldName);
-
-			if (!si.isEmpty()) {
-				return si;
-			}
-		}
-
-		return field.getName();
+		return remapField(from, field, field.getName());
 	}
 
 	default String getMappedMethod(Class<?> from, Method method) {
+		if (from == null || from == Object.class || from.getPackageName().startsWith("java.")) {
+			return "";
+		}
+
 		StringBuilder sb = new StringBuilder(method.getName());
 		sb.append('(');
 
@@ -67,35 +47,7 @@ public interface Remapper {
 		}
 
 		sb.append(')');
-		return getMappedMethod(from, method, sb.toString());
-	}
-
-	default String getMappedMethod(Class<?> from, Method method, String methodString) {
-		if (from == null || from == Object.class) {
-			return method.getName();
-		}
-
-		String s = remapMethod(from, method, methodString);
-
-		if (!s.isEmpty()) {
-			return s;
-		}
-
-		String ss = getMappedMethod(from.getSuperclass(), method, methodString);
-
-		if (!ss.isEmpty()) {
-			return ss;
-		}
-
-		for (Class<?> c : from.getInterfaces()) {
-			String si = getMappedMethod(c, method, methodString);
-
-			if (!si.isEmpty()) {
-				return si;
-			}
-		}
-
-		return method.getName();
+		return remapMethod(from, method, sb.toString());
 	}
 
 	static String getTypeName(String type, Function<String, String> remap) {

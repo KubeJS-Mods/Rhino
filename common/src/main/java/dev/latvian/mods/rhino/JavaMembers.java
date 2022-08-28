@@ -304,11 +304,12 @@ class JavaMembers {
 		// names to be allocated to the NativeJavaMethod before the field
 		// gets in the way.
 
-		for (Method method : getAccessibleMethods(includeProtected)) {
+		for (MethodInfo methodInfo : getAccessibleMethods(includeProtected)) {
+			var method = methodInfo.method;
 			int mods = method.getModifiers();
 			boolean isStatic = Modifier.isStatic(mods);
 			Map<String, Object> ht = isStatic ? staticMembers : members;
-			String name = contextData.getRemapper().getMappedMethod(cl, method);
+			String name = methodInfo.name.isEmpty() ? method.getName() : methodInfo.name;
 
 			Object value = ht.get(name);
 			if (value == null) {
@@ -365,7 +366,7 @@ class JavaMembers {
 		// Reflect fields.
 		for (FieldInfo fieldInfo : getAccessibleFields(includeProtected)) {
 			var field = fieldInfo.field;
-			String name = contextData.getRemapper().getMappedField(cl, field);
+			String name = fieldInfo.name.isEmpty() ? field.getName() : fieldInfo.name;
 
 			int mods = field.getModifiers();
 			try {
@@ -531,7 +532,11 @@ class JavaMembers {
 				Set<String> remapPrefixes = new HashSet<>();
 
 				for (RemapPrefixForJS r : currentClass.getAnnotationsByType(RemapPrefixForJS.class)) {
-					remapPrefixes.add(r.value().trim());
+					String s = r.value().trim();
+
+					if (!s.isEmpty()) {
+						remapPrefixes.add(s);
+					}
 				}
 
 				for (Field field : declared) {
@@ -548,16 +553,20 @@ class JavaMembers {
 							var remap = field.getAnnotation(RemapForJS.class);
 
 							if (remap != null) {
-								info.remappedName = remap.value().trim();
+								info.name = remap.value().trim();
 							}
 
-							if (info.remappedName.isEmpty()) {
+							if (info.name.isEmpty()) {
 								for (String s : remapPrefixes) {
 									if (field.getName().startsWith(s)) {
-										info.remappedName = field.getName().substring(s.length()).trim();
+										info.name = field.getName().substring(s.length()).trim();
 										break;
 									}
 								}
+							}
+
+							if (info.name.isEmpty()) {
+								info.name = contextData.getRemapper().getMappedField(currentClass, field);
 							}
 
 							fieldList.add(info);
@@ -578,52 +587,92 @@ class JavaMembers {
 		return fieldList;
 	}
 
-	public Collection<Method> getAccessibleMethods(boolean includeProtected) {
-		var methodMap = new HashMap<MethodSignature, Method>();
-		var hiddenSet = new HashSet<MethodSignature>();
+	public Collection<MethodInfo> getAccessibleMethods(boolean includeProtected) {
+		var methodMap = new HashMap<MethodSignature, MethodInfo>();
 
 		var stack = new ArrayDeque<Class<?>>();
 		stack.add(cl);
 
 		while (!stack.isEmpty()) {
-			var current = stack.pop();
+			var currentClass = stack.pop();
+			Set<String> remapPrefixes = new HashSet<>();
 
-			for (var method : current.getDeclaredMethods()) {
+			for (RemapPrefixForJS r : currentClass.getAnnotationsByType(RemapPrefixForJS.class)) {
+				String s = r.value().trim();
+
+				if (!s.isEmpty()) {
+					remapPrefixes.add(s);
+				}
+			}
+
+			for (var method : currentClass.getDeclaredMethods()) {
 				int mods = method.getModifiers();
 
 				if ((Modifier.isPublic(mods) || includeProtected && Modifier.isProtected(mods))) {
 					MethodSignature signature = new MethodSignature(method);
 
-					if (method.isAnnotationPresent(HideFromJS.class)) {
-						hiddenSet.add(signature);
-					} else if (!methodMap.containsKey(signature)) {
+					var info = methodMap.get(signature);
+					boolean hidden = method.isAnnotationPresent(HideFromJS.class);
+
+					if (info == null) {
 						try {
-							if (includeProtected && Modifier.isProtected(mods) && !method.isAccessible()) {
+							if (!hidden && includeProtected && Modifier.isProtected(mods) && !method.isAccessible()) {
 								method.setAccessible(true);
 							}
 
-							methodMap.put(signature, method);
+							info = new MethodInfo(method);
+							methodMap.put(signature, info);
 						} catch (Exception ex) {
 							// ex.printStackTrace();
+						}
+					}
+
+					if (info != null) {
+						if (hidden) {
+							info.hidden = true;
+							continue;
+						}
+
+						var remap = method.getAnnotation(RemapForJS.class);
+
+						if (remap != null) {
+							info.name = remap.value().trim();
+						}
+
+						if (info.name.isEmpty()) {
+							for (String s : remapPrefixes) {
+								if (method.getName().startsWith(s)) {
+									info.name = method.getName().substring(s.length()).trim();
+									break;
+								}
+							}
+						}
+
+						if (info.name.isEmpty()) {
+							info.name = contextData.getRemapper().getMappedMethod(currentClass, method);
 						}
 					}
 				}
 			}
 
-			stack.addAll(Arrays.asList(current.getInterfaces()));
+			stack.addAll(Arrays.asList(currentClass.getInterfaces()));
 
-			var parent = current.getSuperclass();
+			var parent = currentClass.getSuperclass();
 
 			if (parent != null) {
 				stack.add(parent);
 			}
 		}
 
-		for (var key : hiddenSet) {
-			methodMap.remove(key);
+		List<MethodInfo> list = new ArrayList<>(methodMap.size());
+
+		for (var m : methodMap.values()) {
+			if (!m.hidden) {
+				list.add(m);
+			}
 		}
 
-		return methodMap.values();
+		return list;
 	}
 
 	private static MemberBox findGetter(boolean isStatic, Map<String, Object> ht, String prefix, String propertyName) {
@@ -774,10 +823,20 @@ class JavaMembers {
 
 	public static class FieldInfo {
 		public final Field field;
-		public String remappedName = "";
+		public String name = "";
 
 		public FieldInfo(Field f) {
 			field = f;
+		}
+	}
+
+	public static class MethodInfo {
+		public final Method method;
+		public String name = "";
+		public boolean hidden = false;
+
+		public MethodInfo(Method m) {
+			method = m;
 		}
 	}
 }
