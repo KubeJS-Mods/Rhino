@@ -7,6 +7,8 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.HideFromJS;
+import dev.latvian.mods.rhino.util.RemapForJS;
+import dev.latvian.mods.rhino.util.RemapPrefixForJS;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -20,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Mike Shaver
@@ -360,7 +363,8 @@ class JavaMembers {
 		}
 
 		// Reflect fields.
-		for (Field field : getAccessibleFields(includeProtected)) {
+		for (FieldInfo fieldInfo : getAccessibleFields(includeProtected)) {
+			var field = fieldInfo.field;
 			String name = contextData.getRemapper().getMappedField(cl, field);
 
 			int mods = field.getModifiers();
@@ -514,18 +518,8 @@ class JavaMembers {
 		return constructorsList;
 	}
 
-	public List<Field> getAccessibleFields(boolean includeProtected) {
-		List<Field> fieldList = new ArrayList<>();
-
-		if (!includeProtected) {
-			for (Field field : cl.getFields()) {
-				if (!Modifier.isTransient(field.getModifiers()) && !field.isAnnotationPresent(HideFromJS.class)) {
-					fieldList.add(field);
-				}
-			}
-
-			return fieldList;
-		}
+	public List<FieldInfo> getAccessibleFields(boolean includeProtected) {
+		List<FieldInfo> fieldList = new ArrayList<>();
 
 		try {
 			Class<?> currentClass = cl;
@@ -534,15 +528,42 @@ class JavaMembers {
 				// get all declared fields in this class, make them
 				// accessible, and save
 				Field[] declared = currentClass.getDeclaredFields();
+				Set<String> remapPrefixes = new HashSet<>();
+
+				for (RemapPrefixForJS r : currentClass.getAnnotationsByType(RemapPrefixForJS.class)) {
+					remapPrefixes.add(r.value().trim());
+				}
 
 				for (Field field : declared) {
-					int mod = field.getModifiers();
-					if (!Modifier.isTransient(mod) && (Modifier.isPublic(mod) || Modifier.isProtected(mod)) && !field.isAnnotationPresent(HideFromJS.class)) {
-						if (!field.isAccessible()) {
-							field.setAccessible(true);
-						}
+					int mods = field.getModifiers();
 
-						fieldList.add(field);
+					if (!Modifier.isTransient(mods) && (Modifier.isPublic(mods) || includeProtected && Modifier.isProtected(mods)) && !field.isAnnotationPresent(HideFromJS.class)) {
+						try {
+							if (includeProtected && Modifier.isProtected(mods) && !field.isAccessible()) {
+								field.setAccessible(true);
+							}
+
+							FieldInfo info = new FieldInfo(field);
+
+							var remap = field.getAnnotation(RemapForJS.class);
+
+							if (remap != null) {
+								info.remappedName = remap.value().trim();
+							}
+
+							if (info.remappedName.isEmpty()) {
+								for (String s : remapPrefixes) {
+									if (field.getName().startsWith(s)) {
+										info.remappedName = field.getName().substring(s.length()).trim();
+										break;
+									}
+								}
+							}
+
+							fieldList.add(info);
+						} catch (Exception ex) {
+							// ex.printStackTrace();
+						}
 					}
 				}
 
@@ -570,17 +591,21 @@ class JavaMembers {
 			for (var method : current.getDeclaredMethods()) {
 				int mods = method.getModifiers();
 
-				if ((Modifier.isPublic(mods) || Modifier.isProtected(mods))) {
+				if ((Modifier.isPublic(mods) || includeProtected && Modifier.isProtected(mods))) {
 					MethodSignature signature = new MethodSignature(method);
 
 					if (method.isAnnotationPresent(HideFromJS.class)) {
 						hiddenSet.add(signature);
 					} else if (!methodMap.containsKey(signature)) {
-						if (!method.isAccessible()) {
-							method.setAccessible(true);
-						}
+						try {
+							if (includeProtected && Modifier.isProtected(mods) && !method.isAccessible()) {
+								method.setAccessible(true);
+							}
 
-						methodMap.put(signature, method);
+							methodMap.put(signature, method);
+						} catch (Exception ex) {
+							// ex.printStackTrace();
+						}
 					}
 				}
 			}
@@ -745,6 +770,15 @@ class JavaMembers {
 
 	RuntimeException reportMemberNotFound(String memberName) {
 		return Context.reportRuntimeError2("msg.java.member.not.found", cl.getName(), memberName);
+	}
+
+	public static class FieldInfo {
+		public final Field field;
+		public String remappedName = "";
+
+		public FieldInfo(Field f) {
+			field = f;
+		}
 	}
 }
 
