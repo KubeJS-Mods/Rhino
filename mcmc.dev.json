@@ -1,0 +1,33 @@
+{
+	"type" : "architectury",
+	"java" : "17",
+	"release" : {
+		"branch" : "1.18/main"
+	},
+	"dev" : {
+		"branch" : "1.18/dev"
+	},
+	"artifacts" : [
+		{
+			"suffix" : "common",
+			"directory" : "common/build/libs",
+			"pattern" : "rhino-{version}.jar"
+		},
+		{
+			"suffix" : "common",
+			"directory" : "common/build/libs",
+			"pattern" : "rhino-{version}-sources.jar",
+			"classifier" : "sources"
+		},
+		{
+			"suffix" : "forge",
+			"directory" : "forge/build/libs",
+			"pattern" : "rhino-forge-{version}.jar"
+		},
+		{
+			"suffix" : "fabric",
+			"directory" : "fabric/build/libs",
+			"pattern" : "rhino-fabric-{version}.jar"
+		}
+	]
+}
