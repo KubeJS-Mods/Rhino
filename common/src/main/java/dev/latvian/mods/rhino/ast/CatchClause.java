@@ -152,19 +152,4 @@ public class CatchClause extends AstNode {
 	public void setIfPosition(int ifPosition) {
 		this.ifPosition = ifPosition;
 	}
-
-	/**
-	 * Visits this node, the catch var name node, the condition if
-	 * non-{@code null}, and the catch body.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			varName.visit(v);
-			if (catchCondition != null) {
-				catchCondition.visit(v);
-			}
-			body.visit(v);
-		}
-	}
 }

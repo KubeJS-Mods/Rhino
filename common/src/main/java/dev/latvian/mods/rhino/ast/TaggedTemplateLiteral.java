@@ -45,15 +45,4 @@ public class TaggedTemplateLiteral extends AstNode {
 	public void setTemplateLiteral(AstNode templateLiteral) {
 		this.templateLiteral = templateLiteral;
 	}
-
-	/**
-	 * Visits this node.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			target.visit(v);
-			templateLiteral.visit(v);
-		}
-	}
 }

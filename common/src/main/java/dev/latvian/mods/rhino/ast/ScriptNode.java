@@ -274,13 +274,4 @@ public class ScriptNode extends Scope {
 	public void setInStrictMode(boolean inStrictMode) {
 		this.inStrictMode = inStrictMode;
 	}
-
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			for (Node kid : this) {
-				((AstNode) kid).visit(v);
-			}
-		}
-	}
 }

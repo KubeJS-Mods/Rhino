@@ -62,12 +62,4 @@ public class RegExpLiteral extends AstNode {
 	public void setFlags(String flags) {
 		this.flags = flags;
 	}
-
-	/**
-	 * Visits this node.  There are no children to visit.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		v.visit(this);
-	}
 }

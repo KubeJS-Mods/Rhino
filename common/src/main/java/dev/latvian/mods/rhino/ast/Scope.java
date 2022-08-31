@@ -236,13 +236,4 @@ public class Scope extends Jump {
 		}
 		return stmts;
 	}
-
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			for (Node kid : this) {
-				((AstNode) kid).visit(v);
-			}
-		}
-	}
 }

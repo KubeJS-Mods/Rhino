@@ -131,16 +131,4 @@ public class VariableDeclaration extends AstNode {
 	private String declTypeName() {
 		return Token.typeToName(type).toLowerCase();
 	}
-
-	/**
-	 * Visits this node, then each {@link VariableInitializer} child.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			for (AstNode var : variables) {
-				var.visit(v);
-			}
-		}
-	}
 }

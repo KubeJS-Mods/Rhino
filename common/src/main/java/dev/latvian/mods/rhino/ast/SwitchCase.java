@@ -116,22 +116,4 @@ public class SwitchCase extends AstNode {
 		statements.add(statement);
 		statement.setParent(this);
 	}
-
-	/**
-	 * Visits this node, then the case expression if present, then
-	 * each statement (if any are specified).
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			if (expression != null) {
-				expression.visit(v);
-			}
-			if (statements != null) {
-				for (AstNode s : statements) {
-					s.visit(v);
-				}
-			}
-		}
-	}
 }

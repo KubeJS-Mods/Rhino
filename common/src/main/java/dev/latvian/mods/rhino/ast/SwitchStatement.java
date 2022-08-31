@@ -150,18 +150,4 @@ public class SwitchStatement extends Jump {
 		this.lp = lp;
 		this.rp = rp;
 	}
-
-	/**
-	 * Visits this node, then the switch-expression, then the cases
-	 * in lexical order.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			expression.visit(v);
-			for (SwitchCase sc : getCases()) {
-				sc.visit(v);
-			}
-		}
-	}
 }

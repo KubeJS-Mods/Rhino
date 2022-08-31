@@ -140,17 +140,4 @@ public class FunctionCall extends AstNode {
 		this.lp = lp;
 		this.rp = rp;
 	}
-
-	/**
-	 * Visits this node, the target object, and the arguments.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			target.visit(v);
-			for (AstNode arg : getArguments()) {
-				arg.visit(v);
-			}
-		}
-	}
 }

@@ -44,13 +44,4 @@ public class ErrorNode extends AstNode {
 	public void setMessage(String message) {
 		this.message = message;
 	}
-
-	/**
-	 * Error nodes are not visited during normal visitor traversals,
-	 * but comply with the {@link AstNode#visit} interface.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		v.visit(this);
-	}
 }

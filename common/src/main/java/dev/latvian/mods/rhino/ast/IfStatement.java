@@ -146,21 +146,6 @@ public class IfStatement extends AstNode {
 		this.rp = rp;
 	}
 
-	/**
-	 * Visits this node, the condition, the then-part, and
-	 * if supplied, the else-part.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			condition.visit(v);
-			thenPart.visit(v);
-			if (elsePart != null) {
-				elsePart.visit(v);
-			}
-		}
-	}
-
 	public AstNode getElseKeyWordInlineComment() {
 		return elseKeyWordInlineComment;
 	}

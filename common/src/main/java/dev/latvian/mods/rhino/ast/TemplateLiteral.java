@@ -131,16 +131,4 @@ public class TemplateLiteral extends AstNode {
 		}
 		return elements.get(index);
 	}
-
-	/**
-	 * Visits this node.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			for (AstNode e : getElements()) {
-				e.visit(v);
-			}
-		}
-	}
 }

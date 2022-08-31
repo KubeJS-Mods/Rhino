@@ -101,18 +101,4 @@ public class VariableInitializer extends AstNode {
 			initializer.setParent(this);
 		}
 	}
-
-	/**
-	 * Visits this node, then the target expression, then the initializer
-	 * expression if present.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			target.visit(v);
-			if (initializer != null) {
-				initializer.visit(v);
-			}
-		}
-	}
 }

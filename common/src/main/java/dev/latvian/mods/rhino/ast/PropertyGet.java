@@ -50,15 +50,4 @@ public class PropertyGet extends InfixExpression {
 	public void setProperty(Name property) {
 		setRight(property);
 	}
-
-	/**
-	 * Visits this node, the target expression, and the property name.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			getTarget().visit(v);
-			getProperty().visit(v);
-		}
-	}
 }

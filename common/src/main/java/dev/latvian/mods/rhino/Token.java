@@ -36,29 +36,29 @@ public interface Token {
 	int IFEQ = 6;
 	int IFNE = 7;
 	int SETNAME = 8;
-	int BITOR = 9;
-	int BITXOR = 10;
-	int BITAND = 11;
-	int EQ = 12;
-	int NE = 13;
-	int LT = 14;
-	int LE = 15;
-	int GT = 16;
-	int GE = 17;
-	int LSH = 18;
-	int RSH = 19;
-	int URSH = 20;
-	int ADD = 21;
-	int SUB = 22;
-	int MUL = 23;
-	int DIV = 24;
-	int MOD = 25;
-	int NOT = 26;
-	int BITNOT = 27;
-	int POS = 28;
-	int NEG = 29;
+	int BITOR = 9; // |
+	int BITXOR = 10; // ^
+	int BITAND = 11; // &
+	int EQ = 12; // ==
+	int NE = 13; // !=
+	int LT = 14; // <
+	int LE = 15; // <=
+	int GT = 16; // >
+	int GE = 17; // >=
+	int LSH = 18; // <<
+	int RSH = 19; // >>
+	int URSH = 20; // >>>
+	int ADD = 21; // +
+	int SUB = 22; // -
+	int MUL = 23; // *
+	int DIV = 24; // /
+	int MOD = 25; // %
+	int NOT = 26; // !
+	int BITNOT = 27; // ~
+	int POS = 28; // +
+	int NEG = 29; // -
 	int NEW = 30;
-	int DELPROP = 31;
+	int DELPROP = 31; // delete
 	int TYPEOF = 32;
 	int GETPROP = 33;
 	int GETPROPNOWARN = 34;
@@ -116,7 +116,7 @@ public interface Token {
 	int RC = 87;
 	int LP = 88;  // left and right parentheses
 	int RP = 89;
-	int COMMA = 90;  // comma operator
+	int COMMA = 90;  // , comma operator
 	int ASSIGN = 91;  // simple assignment  (=)
 	int ASSIGN_BITOR = 92;  // |=
 	int ASSIGN_BITXOR = 93;  // ^=
@@ -132,11 +132,11 @@ public interface Token {
 	int FIRST_ASSIGN = ASSIGN;
 	int LAST_ASSIGN = ASSIGN_MOD;
 	int HOOK = 103; // conditional (?:)
-	int COLON = 104;
+	int COLON = 104; // :
 	int OR = 105; // logical or (||)
 	int AND = 106; // logical and (&&)
-	int INC = 107; // increment/decrement (++ --)
-	int DEC = 108;
+	int INC = 107; // increment (++)
+	int DEC = 108; // decrement (--)
 	int DOT = 109; // member operator (.)
 	int FUNCTION = 110; // function keyword
 	int EXPORT = 111; // export keyword

@@ -68,12 +68,4 @@ public class TemplateCharacters extends AstNode {
 		assertNotNull(rawValue);
 		this.rawValue = rawValue;
 	}
-
-	/**
-	 * Visits this node.  There are no children to visit.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		v.visit(this);
-	}
 }

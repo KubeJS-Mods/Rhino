@@ -65,15 +65,4 @@ public class DoLoop extends Loop {
 	public void setWhilePosition(int whilePosition) {
 		this.whilePosition = whilePosition;
 	}
-
-	/**
-	 * Visits this node, the body, and then the while-expression.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			body.visit(v);
-			condition.visit(v);
-		}
-	}
 }

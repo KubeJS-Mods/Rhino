@@ -55,14 +55,4 @@ public class ReturnStatement extends AstNode {
 			returnValue.setParent(this);
 		}
 	}
-
-	/**
-	 * Visits this node, then the return value if specified.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this) && returnValue != null) {
-			returnValue.visit(v);
-		}
-	}
 }

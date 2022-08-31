@@ -6,7 +6,6 @@
 
 package dev.latvian.mods.rhino.ast;
 
-import dev.latvian.mods.rhino.Node;
 import dev.latvian.mods.rhino.Token;
 
 /**
@@ -39,14 +38,5 @@ public class Block extends AstNode {
 	 */
 	public void addStatement(AstNode statement) {
 		addChild(statement);
-	}
-
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			for (Node kid : this) {
-				((AstNode) kid).visit(v);
-			}
-		}
 	}
 }

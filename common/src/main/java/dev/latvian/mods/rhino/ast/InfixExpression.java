@@ -158,15 +158,4 @@ public class InfixExpression extends AstNode {
 			default -> super.hasSideEffects();
 		};
 	}
-
-	/**
-	 * Visits this node, the left operand, and the right operand.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			left.visit(v);
-			right.visit(v);
-		}
-	}
 }

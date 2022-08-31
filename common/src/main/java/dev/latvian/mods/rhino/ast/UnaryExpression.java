@@ -124,14 +124,4 @@ public class UnaryExpression extends AstNode {
 	public void setIsPostfix(boolean isPostfix) {
 		this.isPostfix = isPostfix;
 	}
-
-	/**
-	 * Visits this node, then the operand.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			operand.visit(v);
-		}
-	}
 }

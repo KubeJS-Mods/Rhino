@@ -123,18 +123,4 @@ public class LetNode extends Scope {
 		this.lp = lp;
 		this.rp = rp;
 	}
-
-	/**
-	 * Visits this node, the variable list, and if present, the body
-	 * expression or statement.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			variables.visit(v);
-			if (body != null) {
-				body.visit(v);
-			}
-		}
-	}
 }

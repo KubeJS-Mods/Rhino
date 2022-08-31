@@ -50,15 +50,4 @@ public class WhileLoop extends Loop {
 		this.condition = condition;
 		condition.setParent(this);
 	}
-
-	/**
-	 * Visits this node, the condition, then the body.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			condition.visit(v);
-			body.visit(v);
-		}
-	}
 }

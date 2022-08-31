@@ -113,18 +113,4 @@ public class LabeledStatement extends AstNode {
 		// just to avoid the default case for EXPR_VOID in AstNode
 		return true;
 	}
-
-	/**
-	 * Visits this node, then each label in the label-list, and finally the
-	 * statement.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			for (AstNode label : labels) {
-				label.visit(v);
-			}
-			statement.visit(v);
-		}
-	}
 }

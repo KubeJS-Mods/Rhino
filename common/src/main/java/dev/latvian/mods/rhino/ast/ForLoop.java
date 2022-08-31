@@ -101,18 +101,4 @@ public class ForLoop extends Loop {
 		this.increment = increment;
 		increment.setParent(this);
 	}
-
-	/**
-	 * Visits this node, the initializer expression, the loop condition
-	 * expression, the increment expression, and then the loop body.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			initializer.visit(v);
-			condition.visit(v);
-			increment.visit(v);
-			body.visit(v);
-		}
-	}
 }

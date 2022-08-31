@@ -176,18 +176,4 @@ public class ArrayLiteral extends AstNode implements DestructuringForm {
 	public boolean isDestructuring() {
 		return isDestructuring;
 	}
-
-	/**
-	 * Visits this node, then visits its element expressions in order.
-	 * Any empty elements are represented by {@link EmptyExpression}
-	 * objects, so the callback will never be passed {@code null}.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			for (AstNode e : getElements()) {
-				e.visit(v);
-			}
-		}
-	}
 }

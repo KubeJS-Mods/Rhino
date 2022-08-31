@@ -63,21 +63,4 @@ public class NewExpression extends FunctionCall {
 			initializer.setParent(this);
 		}
 	}
-
-	/**
-	 * Visits this node, the target, and each argument.  If there is
-	 * a trailing initializer node, visits that last.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			target.visit(v);
-			for (AstNode arg : getArguments()) {
-				arg.visit(v);
-			}
-			if (initializer != null) {
-				initializer.visit(v);
-			}
-		}
-	}
 }

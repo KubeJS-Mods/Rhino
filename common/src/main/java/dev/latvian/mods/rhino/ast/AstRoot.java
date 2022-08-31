@@ -81,33 +81,4 @@ public class AstRoot extends ScriptNode {
 		comments.add(comment);
 		comment.setParent(this);
 	}
-
-	/**
-	 * Visits the comment nodes in the order they appear in the source code.
-	 * The comments are not visited by the {@link #visit} function - you must
-	 * use this function to visit them.
-	 *
-	 * @param visitor the callback object.  It is passed each comment node.
-	 *                The return value is ignored.
-	 */
-	public void visitComments(NodeVisitor visitor) {
-		if (comments != null) {
-			for (Comment c : comments) {
-				visitor.visit(c);
-			}
-		}
-	}
-
-	/**
-	 * Visits the AST nodes, then the comment nodes.
-	 * This method is equivalent to calling {@link #visit}, then
-	 * {@link #visitComments}.  The return value
-	 * is ignored while visiting comment nodes.
-	 *
-	 * @param visitor the callback object.
-	 */
-	public void visitAll(NodeVisitor visitor) {
-		visit(visitor);
-		visitComments(visitor);
-	}
 }

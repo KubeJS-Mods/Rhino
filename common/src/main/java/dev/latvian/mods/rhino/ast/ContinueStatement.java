@@ -93,14 +93,4 @@ public class ContinueStatement extends Jump {
 			label.setParent(this);
 		}
 	}
-
-	/**
-	 * Visits this node, then visits the label if non-{@code null}.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this) && label != null) {
-			label.visit(v);
-		}
-	}
 }

@@ -107,15 +107,4 @@ public class WithStatement extends AstNode {
 		this.lp = lp;
 		this.rp = rp;
 	}
-
-	/**
-	 * Visits this node, then the with-object, then the body statement.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			expression.visit(v);
-			statement.visit(v);
-		}
-	}
 }

@@ -37,16 +37,4 @@ public class GeneratorExpressionLoop extends ForInLoop {
 	public void setIsForEach(boolean isForEach) {
 		throw new UnsupportedOperationException("this node type does not support for each");
 	}
-
-	/**
-	 * Visits the iterator expression and the iterated object expression.
-	 * There is no body-expression for this loop type.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			iterator.visit(v);
-			iteratedObject.visit(v);
-		}
-	}
 }

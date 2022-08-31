@@ -147,22 +147,4 @@ public class ArrayComprehension extends Scope {
 	public void setFilterRp(int rp) {
 		this.rp = rp;
 	}
-
-	/**
-	 * Visits this node, the result expression, the loops, and the optional
-	 * filter.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (!v.visit(this)) {
-			return;
-		}
-		result.visit(v);
-		for (ArrayComprehensionLoop loop : loops) {
-			loop.visit(v);
-		}
-		if (filter != null) {
-			filter.visit(v);
-		}
-	}
 }

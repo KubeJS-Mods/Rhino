@@ -11,8 +11,6 @@ import dev.latvian.mods.rhino.Node;
 import dev.latvian.mods.rhino.Token;
 
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Base class for AST node types.  The goal of the AST is to represent the
@@ -60,61 +58,6 @@ import java.util.Map;
  * Java or C++.
  */
 public abstract class AstNode extends Node implements Comparable<AstNode> {
-
-	private static final Map<Integer, String> operatorNames = new HashMap<>();
-
-	static {
-		operatorNames.put(Token.IN, "in");
-		operatorNames.put(Token.TYPEOF, "typeof");
-		operatorNames.put(Token.INSTANCEOF, "instanceof");
-		operatorNames.put(Token.DELPROP, "delete");
-		operatorNames.put(Token.COMMA, ",");
-		operatorNames.put(Token.COLON, ":");
-		operatorNames.put(Token.OR, "||");
-		operatorNames.put(Token.AND, "&&");
-		operatorNames.put(Token.INC, "++");
-		operatorNames.put(Token.DEC, "--");
-		operatorNames.put(Token.BITOR, "|");
-		operatorNames.put(Token.BITXOR, "^");
-		operatorNames.put(Token.BITAND, "&");
-		operatorNames.put(Token.EQ, "==");
-		operatorNames.put(Token.NE, "!=");
-		operatorNames.put(Token.LT, "<");
-		operatorNames.put(Token.GT, ">");
-		operatorNames.put(Token.LE, "<=");
-		operatorNames.put(Token.GE, ">=");
-		operatorNames.put(Token.LSH, "<<");
-		operatorNames.put(Token.RSH, ">>");
-		operatorNames.put(Token.URSH, ">>>");
-		operatorNames.put(Token.ADD, "+");
-		operatorNames.put(Token.SUB, "-");
-		operatorNames.put(Token.MUL, "*");
-		operatorNames.put(Token.DIV, "/");
-		operatorNames.put(Token.MOD, "%");
-		operatorNames.put(Token.NOT, "!");
-		operatorNames.put(Token.BITNOT, "~");
-		operatorNames.put(Token.POS, "+");
-		operatorNames.put(Token.NEG, "-");
-		operatorNames.put(Token.SHEQ, "===");
-		operatorNames.put(Token.SHNE, "!==");
-		operatorNames.put(Token.ASSIGN, "=");
-		operatorNames.put(Token.ASSIGN_BITOR, "|=");
-		operatorNames.put(Token.ASSIGN_BITAND, "&=");
-		operatorNames.put(Token.ASSIGN_LSH, "<<=");
-		operatorNames.put(Token.ASSIGN_RSH, ">>=");
-		operatorNames.put(Token.ASSIGN_URSH, ">>>=");
-		operatorNames.put(Token.ASSIGN_ADD, "+=");
-		operatorNames.put(Token.ASSIGN_SUB, "-=");
-		operatorNames.put(Token.ASSIGN_MUL, "*=");
-		operatorNames.put(Token.ASSIGN_DIV, "/=");
-		operatorNames.put(Token.ASSIGN_MOD, "%=");
-		operatorNames.put(Token.ASSIGN_BITXOR, "^=");
-		operatorNames.put(Token.VOID, "void");
-		operatorNames.put(Token.NULLISH_COALESCING, "??");
-		operatorNames.put(Token.POW, "**");
-		operatorNames.put(Token.OPTIONAL_CHAINING, "?.");
-	}
-
 	public static class PositionComparator implements Comparator<AstNode> {
 		/**
 		 * Sorts nodes by (relative) start position.  The start positions are
@@ -125,20 +68,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 		public int compare(AstNode n1, AstNode n2) {
 			return n1.position - n2.position;
 		}
-	}
-
-	/**
-	 * Returns the string name for this operator.
-	 *
-	 * @param op the token type, e.g. {@link Token#ADD} or {@link Token#TYPEOF}
-	 * @return the source operator string, such as "+" or "typeof"
-	 */
-	public static String operatorToString(int op) {
-		String result = operatorNames.get(op);
-		if (result == null) {
-			throw new IllegalArgumentException("Invalid operator: " + op);
-		}
-		return result;
 	}
 
 	/**
@@ -326,25 +255,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 		int last = classname.lastIndexOf(".");
 		return classname.substring(last + 1);
 	}
-
-	/**
-	 * Visits this node and its children in an arbitrary order. <p>
-	 * <p>
-	 * It's up to each node subclass to decide the order for processing
-	 * its children.  The subclass also decides (and should document)
-	 * which child nodes are not passed to the {@code NodeVisitor}.
-	 * For instance, nodes representing keywords like {@code each} or
-	 * {@code in} may not be passed to the visitor object.  The visitor
-	 * can simply query the current node for these children if desired.<p>
-	 * <p>
-	 * Generally speaking, the order will be deterministic; the order is
-	 * whatever order is decided by each child node.  Normally child nodes
-	 * will try to visit their children in lexical order, but there may
-	 * be exceptions to this rule.<p>
-	 *
-	 * @param visitor the object to call with this node and its children
-	 */
-	public abstract void visit(NodeVisitor visitor);
 
 	// subclasses with potential side effects should override this
 	@Override

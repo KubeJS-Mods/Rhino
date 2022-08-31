@@ -389,29 +389,6 @@ public class FunctionNode extends ScriptNode {
 		}
 	}
 
-	/**
-	 * Visits this node, the function name node if supplied,
-	 * the parameters, and the body.  If there is a member-expr node,
-	 * it is visited last.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			if (functionName != null) {
-				functionName.visit(v);
-			}
-			for (AstNode param : getParams()) {
-				param.visit(v);
-			}
-			getBody().visit(v);
-			if (!isExpressionClosure) {
-				if (memberExprNode != null) {
-					memberExprNode.visit(v);
-				}
-			}
-		}
-	}
-
 	public enum Form {
 		FUNCTION, GETTER, SETTER, METHOD
 	}

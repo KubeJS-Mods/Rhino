@@ -59,14 +59,4 @@ public class ParenthesizedExpression extends AstNode {
 		this.expression = expression;
 		expression.setParent(this);
 	}
-
-	/**
-	 * Visits this node, then the child expression.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			expression.visit(v);
-		}
-	}
 }

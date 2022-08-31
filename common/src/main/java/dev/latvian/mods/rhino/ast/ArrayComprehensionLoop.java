@@ -47,16 +47,4 @@ public class ArrayComprehensionLoop extends ForInLoop {
 	public void setBody(AstNode body) {
 		throw new UnsupportedOperationException("this node type has no body");
 	}
-
-	/**
-	 * Visits the iterator expression and the iterated object expression.
-	 * There is no body-expression for this loop type.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			iterator.visit(v);
-			iteratedObject.visit(v);
-		}
-	}
 }

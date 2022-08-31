@@ -81,14 +81,4 @@ public class BreakStatement extends Jump {
 		this.target = target;
 		setJumpStatement(target);
 	}
-
-	/**
-	 * Visits this node, then visits the break label if non-{@code null}.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this) && breakLabel != null) {
-			breakLabel.visit(v);
-		}
-	}
 }

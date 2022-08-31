@@ -135,21 +135,4 @@ public class TryStatement extends AstNode {
 	public void setFinallyPosition(int finallyPosition) {
 		this.finallyPosition = finallyPosition;
 	}
-
-	/**
-	 * Visits this node, then the try-block, then any catch clauses,
-	 * and then any finally block.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			tryBlock.visit(v);
-			for (CatchClause cc : getCatchClauses()) {
-				cc.visit(v);
-			}
-			if (finallyBlock != null) {
-				finallyBlock.visit(v);
-			}
-		}
-	}
 }

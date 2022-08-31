@@ -140,14 +140,6 @@ public class Name extends AstNode {
 		return identifier == null ? 0 : identifier.length();
 	}
 
-	/**
-	 * Visits this node.  There are no children to visit.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		v.visit(this);
-	}
-
 	@Override
 	public String toString() {
 		return identifier;

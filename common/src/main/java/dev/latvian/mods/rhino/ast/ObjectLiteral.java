@@ -112,17 +112,4 @@ public class ObjectLiteral extends AstNode implements DestructuringForm {
 	public boolean isDestructuring() {
 		return isDestructuring;
 	}
-
-	/**
-	 * Visits this node, then visits each child property node, in lexical
-	 * (source) order.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			for (ObjectProperty prop : getElements()) {
-				prop.visit(v);
-			}
-		}
-	}
 }

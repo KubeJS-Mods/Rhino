@@ -116,15 +116,4 @@ public class ElementGet extends AstNode {
 		this.lb = lb;
 		this.rb = rb;
 	}
-
-	/**
-	 * Visits this node, the target, and the index expression.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			target.visit(v);
-			element.visit(v);
-		}
-	}
 }

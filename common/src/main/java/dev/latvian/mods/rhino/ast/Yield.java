@@ -57,14 +57,4 @@ public class Yield extends AstNode {
 			expr.setParent(this);
 		}
 	}
-
-	/**
-	 * Visits this node, and if present, the yielded value.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this) && value != null) {
-			value.visit(v);
-		}
-	}
 }

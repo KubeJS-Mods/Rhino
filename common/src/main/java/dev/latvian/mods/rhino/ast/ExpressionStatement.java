@@ -109,14 +109,4 @@ public class ExpressionStatement extends AstNode {
 	public boolean hasSideEffects() {
 		return type == Token.EXPR_RESULT || expr.hasSideEffects();
 	}
-
-	/**
-	 * Visits this node, then the wrapped statement.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			expr.visit(v);
-		}
-	}
 }

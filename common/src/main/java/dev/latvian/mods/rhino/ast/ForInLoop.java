@@ -138,16 +138,4 @@ public class ForInLoop extends Loop {
 	public void setEachPosition(int eachPosition) {
 		this.eachPosition = eachPosition;
 	}
-
-	/**
-	 * Visits this node, the iterator, the iterated object, and the body.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			iterator.visit(v);
-			iteratedObject.visit(v);
-			body.visit(v);
-		}
-	}
 }

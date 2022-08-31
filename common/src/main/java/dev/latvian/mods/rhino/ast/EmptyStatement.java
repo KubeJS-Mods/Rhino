@@ -27,12 +27,4 @@ public class EmptyStatement extends AstNode {
 	public EmptyStatement(int pos, int len) {
 		super(pos, len);
 	}
-
-	/**
-	 * Visits this node.  There are no children.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		v.visit(this);
-	}
 }

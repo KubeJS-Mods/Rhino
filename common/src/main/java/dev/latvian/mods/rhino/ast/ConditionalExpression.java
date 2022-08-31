@@ -144,17 +144,4 @@ public class ConditionalExpression extends AstNode {
 		}
 		return trueExpression.hasSideEffects() && falseExpression.hasSideEffects();
 	}
-
-	/**
-	 * Visits this node, then the test-expression, the true-expression,
-	 * and the false-expression.
-	 */
-	@Override
-	public void visit(NodeVisitor v) {
-		if (v.visit(this)) {
-			testExpression.visit(v);
-			trueExpression.visit(v);
-			falseExpression.visit(v);
-		}
-	}
 }
