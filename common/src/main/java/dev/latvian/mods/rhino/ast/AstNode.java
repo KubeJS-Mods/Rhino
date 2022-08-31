@@ -10,8 +10,6 @@ import dev.latvian.mods.rhino.Kit;
 import dev.latvian.mods.rhino.Node;
 import dev.latvian.mods.rhino.Token;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,23 +61,6 @@ import java.util.Map;
  */
 public abstract class AstNode extends Node implements Comparable<AstNode> {
 
-	protected int position = -1;
-	protected int length = 1;
-	protected AstNode parent;
-	/*
-	 * Holds comments that are on same line as of actual statement e.g.
-	 * For a for loop
-	 *      1) for(var i=0; i<10; i++) //test comment { }
-	 *      2) for(var i=0; i<10; i++)
-	 *          //test comment
-	 *          //test comment 2
-	 *          { }
-	 * For If Statement
-	 *      1) if (x == 2) //test if comment
-	 *             a = 3 + 4; //then comment
-	 * and so on
-	 */
-	protected AstNode inlineComment;
 	private static final Map<Integer, String> operatorNames = new HashMap<>();
 
 	static {
@@ -134,10 +115,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 		operatorNames.put(Token.OPTIONAL_CHAINING, "?.");
 	}
 
-	public static class PositionComparator implements Comparator<AstNode>, Serializable {
-		@Serial
-		private static final long serialVersionUID = 1L;
-
+	public static class PositionComparator implements Comparator<AstNode> {
 		/**
 		 * Sorts nodes by (relative) start position.  The start positions are
 		 * relative to their parent, so this comparator is only meaningful for
@@ -148,6 +126,45 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 			return n1.position - n2.position;
 		}
 	}
+
+	/**
+	 * Returns the string name for this operator.
+	 *
+	 * @param op the token type, e.g. {@link Token#ADD} or {@link Token#TYPEOF}
+	 * @return the source operator string, such as "+" or "typeof"
+	 */
+	public static String operatorToString(int op) {
+		String result = operatorNames.get(op);
+		if (result == null) {
+			throw new IllegalArgumentException("Invalid operator: " + op);
+		}
+		return result;
+	}
+
+	/**
+	 * @see Kit#codeBug
+	 */
+	public static RuntimeException codeBug() throws RuntimeException {
+		throw Kit.codeBug();
+	}
+
+	protected int position = -1;
+	protected int length = 1;
+	protected AstNode parent;
+	/*
+	 * Holds comments that are on same line as of actual statement e.g.
+	 * For a for loop
+	 *      1) for(var i=0; i<10; i++) //test comment { }
+	 *      2) for(var i=0; i<10; i++)
+	 *          //test comment
+	 *          //test comment 2
+	 *          { }
+	 * For If Statement
+	 *      1) if (x == 2) //test if comment
+	 *             a = 3 + 4; //then comment
+	 * and so on
+	 */
+	protected AstNode inlineComment;
 
 	public AstNode() {
 		super(Token.ERROR);
@@ -311,20 +328,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 	}
 
 	/**
-	 * Returns the string name for this operator.
-	 *
-	 * @param op the token type, e.g. {@link Token#ADD} or {@link Token#TYPEOF}
-	 * @return the source operator string, such as "+" or "typeof"
-	 */
-	public static String operatorToString(int op) {
-		String result = operatorNames.get(op);
-		if (result == null) {
-			throw new IllegalArgumentException("Invalid operator: " + op);
-		}
-		return result;
-	}
-
-	/**
 	 * Visits this node and its children in an arbitrary order. <p>
 	 * <p>
 	 * It's up to each node subclass to decide the order for processing
@@ -347,7 +350,8 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 	@Override
 	public boolean hasSideEffects() {
 		return switch (getType()) {         // Avoid cascaded error messages
-			case Token.ASSIGN, Token.ASSIGN_ADD, Token.ASSIGN_BITAND, Token.ASSIGN_BITOR, Token.ASSIGN_BITXOR, Token.ASSIGN_DIV, Token.ASSIGN_LSH, Token.ASSIGN_MOD, Token.ASSIGN_MUL, Token.ASSIGN_RSH, Token.ASSIGN_SUB, Token.ASSIGN_URSH, Token.BLOCK, Token.BREAK, Token.CALL, Token.CATCH, Token.CATCH_SCOPE, Token.CONST, Token.CONTINUE, Token.DEC, Token.DELPROP, Token.DEL_REF, Token.DO, Token.ELSE, Token.ENTERWITH, Token.ERROR, Token.EXPORT, Token.EXPR_RESULT, Token.FINALLY, Token.FUNCTION, Token.FOR, Token.GOTO, Token.IF, Token.IFEQ, Token.IFNE, Token.IMPORT, Token.INC, Token.JSR, Token.LABEL, Token.LEAVEWITH, Token.LET, Token.LETEXPR, Token.LOCAL_BLOCK, Token.LOOP, Token.NEW, Token.REF_CALL, Token.RETHROW, Token.RETURN, Token.RETURN_RESULT, Token.SEMI, Token.SETELEM, Token.SETELEM_OP, Token.SETNAME, Token.SETPROP, Token.SETPROP_OP, Token.SETVAR, Token.SET_REF, Token.SET_REF_OP, Token.SWITCH, Token.TARGET, Token.THROW, Token.TRY, Token.VAR, Token.WHILE, Token.WITH, Token.WITHEXPR, Token.YIELD, Token.YIELD_STAR -> true;
+			case Token.ASSIGN, Token.ASSIGN_ADD, Token.ASSIGN_BITAND, Token.ASSIGN_BITOR, Token.ASSIGN_BITXOR, Token.ASSIGN_DIV, Token.ASSIGN_LSH, Token.ASSIGN_MOD, Token.ASSIGN_MUL, Token.ASSIGN_RSH, Token.ASSIGN_SUB, Token.ASSIGN_URSH, Token.BLOCK, Token.BREAK, Token.CALL, Token.CATCH, Token.CATCH_SCOPE, Token.CONST, Token.CONTINUE, Token.DEC, Token.DELPROP, Token.DEL_REF, Token.DO, Token.ELSE, Token.ENTERWITH, Token.ERROR, Token.EXPORT, Token.EXPR_RESULT, Token.FINALLY, Token.FUNCTION, Token.FOR, Token.GOTO, Token.IF, Token.IFEQ, Token.IFNE, Token.IMPORT, Token.INC, Token.JSR, Token.LABEL, Token.LEAVEWITH, Token.LET, Token.LETEXPR, Token.LOCAL_BLOCK, Token.LOOP, Token.NEW, Token.REF_CALL, Token.RETHROW, Token.RETURN, Token.RETURN_RESULT, Token.SEMI, Token.SETELEM, Token.SETELEM_OP, Token.SETNAME, Token.SETPROP, Token.SETPROP_OP, Token.SETVAR, Token.SET_REF, Token.SET_REF_OP, Token.SWITCH, Token.TARGET, Token.THROW, Token.TRY, Token.VAR, Token.WHILE, Token.WITH, Token.WITHEXPR, Token.YIELD, Token.YIELD_STAR ->
+					true;
 			default -> false;
 		};
 	}
@@ -362,13 +366,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 		if (arg == null) {
 			throw new IllegalArgumentException("arg cannot be null");
 		}
-	}
-
-	/**
-	 * @see Kit#codeBug
-	 */
-	public static RuntimeException codeBug() throws RuntimeException {
-		throw Kit.codeBug();
 	}
 
 	// TODO(stevey):  think of a way to have polymorphic toString

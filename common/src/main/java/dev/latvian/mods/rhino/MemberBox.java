@@ -6,11 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serial;
-import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
@@ -25,10 +20,7 @@ import java.lang.reflect.Modifier;
  * @author Igor Bukanov
  */
 
-final class MemberBox implements Serializable {
-	@Serial
-	private static final long serialVersionUID = 6358550398665688245L;
-
+final class MemberBox {
 	private transient Member memberObject;
 	transient Class<?>[] argTypes;
 	transient Object delegateTo;
@@ -202,114 +194,6 @@ final class MemberBox implements Serializable {
 			}
 		}
 		return null;
-	}
-
-	@Serial
-	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		in.defaultReadObject();
-		Member member = readMember(in);
-		if (member instanceof Method) {
-			init((Method) member);
-		} else {
-			init((Constructor<?>) member);
-		}
-	}
-
-	@Serial
-	private void writeObject(ObjectOutputStream out) throws IOException {
-		out.defaultWriteObject();
-		writeMember(out, memberObject);
-	}
-
-	/**
-	 * Writes a Constructor or Method object.
-	 * <p>
-	 * Methods and Constructors are not serializable, so we must serialize
-	 * information about the class, the name, and the parameters and
-	 * recreate upon deserialization.
-	 */
-	private static void writeMember(ObjectOutputStream out, Member member) throws IOException {
-		if (member == null) {
-			out.writeBoolean(false);
-			return;
-		}
-		out.writeBoolean(true);
-		if (!(member instanceof Method || member instanceof Constructor)) {
-			throw new IllegalArgumentException("not Method or Constructor");
-		}
-		out.writeBoolean(member instanceof Method);
-		out.writeObject(member.getName());
-		out.writeObject(member.getDeclaringClass());
-		if (member instanceof Method) {
-			writeParameters(out, ((Method) member).getParameterTypes());
-		} else {
-			writeParameters(out, ((Constructor<?>) member).getParameterTypes());
-		}
-	}
-
-	/**
-	 * Reads a Method or a Constructor from the stream.
-	 */
-	private static Member readMember(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		if (!in.readBoolean()) {
-			return null;
-		}
-		boolean isMethod = in.readBoolean();
-		String name = (String) in.readObject();
-		Class<?> declaring = (Class<?>) in.readObject();
-		Class<?>[] parms = readParameters(in);
-		try {
-			if (isMethod) {
-				return declaring.getMethod(name, parms);
-			}
-			return declaring.getConstructor(parms);
-		} catch (NoSuchMethodException e) {
-			throw new IOException("Cannot find member: " + e);
-		}
-	}
-
-	private static final Class<?>[] primitives = {Boolean.TYPE, Byte.TYPE, Character.TYPE, Double.TYPE, Float.TYPE, Integer.TYPE, Long.TYPE, Short.TYPE, Void.TYPE};
-
-	/**
-	 * Writes an array of parameter types to the stream.
-	 * <p>
-	 * Requires special handling because primitive types cannot be
-	 * found upon deserialization by the default Java implementation.
-	 */
-	private static void writeParameters(ObjectOutputStream out, Class<?>[] parms) throws IOException {
-		out.writeShort(parms.length);
-		outer:
-		for (int i = 0; i < parms.length; i++) {
-			Class<?> parm = parms[i];
-			boolean primitive = parm.isPrimitive();
-			out.writeBoolean(primitive);
-			if (!primitive) {
-				out.writeObject(parm);
-				continue;
-			}
-			for (int j = 0; j < primitives.length; j++) {
-				if (parm.equals(primitives[j])) {
-					out.writeByte(j);
-					continue outer;
-				}
-			}
-			throw new IllegalArgumentException("Primitive " + parm + " not found");
-		}
-	}
-
-	/**
-	 * Reads an array of parameter types from the stream.
-	 */
-	private static Class<?>[] readParameters(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		Class<?>[] result = new Class[in.readShort()];
-		for (int i = 0; i < result.length; i++) {
-			if (!in.readBoolean()) {
-				result[i] = (Class<?>) in.readObject();
-				continue;
-			}
-			result[i] = primitives[in.readByte()];
-		}
-		return result;
 	}
 }
 

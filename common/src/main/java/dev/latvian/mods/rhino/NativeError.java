@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.lang.reflect.Method;
 
 /**
@@ -287,7 +285,7 @@ final class NativeError extends IdScriptableObject {
 	 * We will attch this object to the constructor and use it solely to store the constructor properties
 	 * that are "global." We can't make them static because there can be many contexts in the same JVM.
 	 */
-	private static final class ProtoProps implements Serializable {
+	private static final class ProtoProps {
 		static final String KEY = "_ErrorPrototypeProps";
 
 		static final Method GET_STACK_LIMIT;
@@ -305,9 +303,6 @@ final class NativeError extends IdScriptableObject {
 				throw new RuntimeException(nsm);
 			}
 		}
-
-		@Serial
-		private static final long serialVersionUID = 1907180507775337939L;
 
 		private int stackTraceLimit = DEFAULT_STACK_LIMIT;
 		private Function prepareStackTrace;

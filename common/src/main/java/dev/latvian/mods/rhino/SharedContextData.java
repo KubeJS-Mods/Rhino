@@ -15,7 +15,6 @@ import dev.latvian.mods.rhino.util.Remapper;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +29,7 @@ import java.util.function.Predicate;
  * @author Igor Bukanov
  * @since Rhino 1.5 Release 5
  */
-public class SharedContextData implements Serializable {
+public class SharedContextData {
 	public static final Object AKEY = "ClassCache";
 
 	public final Scriptable topLevelScope;

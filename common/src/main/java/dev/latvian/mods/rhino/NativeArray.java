@@ -9,8 +9,6 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.regexp.NativeRegExp;
 import dev.latvian.mods.rhino.util.DataObject;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -350,9 +348,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 					if (args.length > 0) {
 						thisObj = ScriptRuntime.toObject(cx, scope, args[0]);
 						Object[] newArgs = new Object[args.length - 1];
-						for (int i = 0; i < newArgs.length; i++) {
-							newArgs[i] = args[i + 1];
-						}
+						System.arraycopy(args, 1, newArgs, 0, newArgs.length);
 						args = newArgs;
 					}
 					id = -id;
@@ -1294,9 +1290,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		if (o instanceof NativeArray na) {
 			if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
 				System.arraycopy(na.dense, 0, na.dense, args.length, (int) na.length);
-				for (int i = 0; i < args.length; i++) {
-					na.dense[i] = args[i];
-				}
+				System.arraycopy(args, 0, na.dense, 0, args.length);
 				na.length += args.length;
 				return ScriptRuntime.wrapNumber(na.length);
 			}
@@ -2222,11 +2216,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static final Comparator<Object> STRING_COMPARATOR = new StringLikeComparator();
 	private static final Comparator<Object> DEFAULT_COMPARATOR = new ElementComparator();
 
-	public static final class StringLikeComparator implements Comparator<Object>, Serializable {
-
-		@Serial
-		private static final long serialVersionUID = 5299017659728190979L;
-
+	public static final class StringLikeComparator implements Comparator<Object> {
 		@Override
 		public int compare(final Object x, final Object y) {
 			final String a = ScriptRuntime.toString(x);
@@ -2235,11 +2225,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		}
 	}
 
-	public static final class ElementComparator implements Comparator<Object>, Serializable {
-
-		@Serial
-		private static final long serialVersionUID = -1189948017688708858L;
-
+	public static final class ElementComparator implements Comparator<Object> {
 		private final Comparator<Object> child;
 
 		public ElementComparator() {

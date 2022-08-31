@@ -15,8 +15,6 @@ import dev.latvian.mods.rhino.annotations.JSSetter;
 import dev.latvian.mods.rhino.annotations.JSStaticFunction;
 import dev.latvian.mods.rhino.util.Deletable;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serial;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
@@ -137,9 +135,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * This is the object that is stored in the SlotMap. For historical reasons it remains
 	 * inside this class. SlotMap references a number of members of this class directly.
 	 */
-	static class Slot implements Serializable {
-		@Serial
-		private static final long serialVersionUID = -6090581677123995491L;
+	static class Slot {
 		Object name; // This can change due to caching
 		int indexOrHash;
 		private short attributes;
@@ -151,14 +147,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			this.name = name;
 			this.indexOrHash = indexOrHash;
 			this.attributes = (short) attributes;
-		}
-
-		@Serial
-		private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-			in.defaultReadObject();
-			if (name != null) {
-				indexOrHash = name.hashCode();
-			}
 		}
 
 		boolean setValue(Object value, Scriptable owner, Scriptable start) {
@@ -209,9 +197,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * via Object.defineProperty() and its friends instead of regular values.
 	 */
 	static final class GetterSlot extends Slot {
-		@Serial
-		private static final long serialVersionUID = -4900574849788797588L;
-
 		Object getter;
 		Object setter;
 

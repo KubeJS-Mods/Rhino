@@ -1,7 +1,5 @@
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -21,10 +19,7 @@ import java.util.NoSuchElementException;
  * exist, and even lets an iterator keep on iterating on a collection that was
  * empty when it was created..
  */
-public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
-
-	@Serial
-	private static final long serialVersionUID = -7151554912419543747L;
+public class Hashtable implements Iterable<Hashtable.Entry> {
 	private final HashMap<Object, Entry> map = new HashMap<>();
 	private Entry first = null;
 	private Entry last = null;
@@ -35,14 +30,12 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
 	 * node in the linked list.
 	 */
 
-	public static final class Entry implements Serializable {
-		@Serial
-		private static final long serialVersionUID = 4086572107122965503L;
-		protected Object key;
-		protected Object value;
-		protected boolean deleted;
-		protected Entry next;
-		protected Entry prev;
+	public static final class Entry {
+		Object key;
+		Object value;
+		private boolean deleted;
+		private Entry next;
+		private Entry prev;
 		private final int hashCode;
 
 		Entry() {

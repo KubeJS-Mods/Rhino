@@ -6,9 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 /**
  * Class instances represent serializable tags to mark special Object values.
  * <p>
@@ -18,9 +15,7 @@ import java.io.Serializable;
  * ObjectInputStream would not restore them correctly as it lacks support
  * for readResolve method
  */
-public final class UniqueTag implements Serializable {
-	@Serial
-	private static final long serialVersionUID = -4320556826714577259L;
+public final class UniqueTag {
 
 	private static final int ID_NOT_FOUND = 1;
 	private static final int ID_NULL_VALUE = 2;
@@ -46,19 +41,6 @@ public final class UniqueTag implements Serializable {
 
 	private UniqueTag(int tagId) {
 		this.tagId = tagId;
-	}
-
-	@Serial
-	public Object readResolve() {
-		switch (tagId) {
-			case ID_NOT_FOUND:
-				return NOT_FOUND;
-			case ID_NULL_VALUE:
-				return NULL_VALUE;
-			case ID_DOUBLE_MARK:
-				return DOUBLE_MARK;
-		}
-		throw new IllegalStateException(String.valueOf(tagId));
 	}
 
 	// Overridden for better debug printouts

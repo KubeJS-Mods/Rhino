@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serializable;
-
 /**
  * Base class for native object implementation that uses IdFunctionObject to
  * export its methods to script via &lt;class-name&gt;.prototype object.
@@ -26,7 +24,7 @@ import java.io.Serializable;
 public abstract class IdScriptableObject extends ScriptableObject implements IdFunctionCall {
 	private transient PrototypeValues prototypeValues;
 
-	private static final class PrototypeValues implements Serializable {
+	private static final class PrototypeValues {
 		private static final int NAME_SLOT = 1;
 		private static final int SLOT_SPAN = 2;
 

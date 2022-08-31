@@ -6,12 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serial;
-import java.io.Serializable;
-
 /**
  * Map to associate non-negative integers to objects or integers.
  * The map does not synchronize any of its operation, so either use
@@ -21,12 +15,35 @@ import java.io.Serializable;
  * @author Igor Bukanov
  */
 @SuppressWarnings("unused")
-public class UintMap implements Serializable {
-	@Serial
-	private static final long serialVersionUID = 4242698212885848444L;
-
+public class UintMap {
 	// Map implementation via hashtable,
 	// follows "The Art of Computer Programming" by Donald E. Knuth
+
+	// A == golden_ratio * (1 << 32) = ((sqrt(5) - 1) / 2) * (1 << 32)
+	// See Knuth etc.
+	private static final int A = 0x9e3779b9;
+	private static final int EMPTY = -1;
+	private static final int DELETED = -2;
+	// If true, enables consitency checks
+	private static final boolean check = false;
+
+	private static int tableLookupStep(int fraction, int mask, int power) {
+		int shift = 32 - 2 * power;
+		if (shift >= 0) {
+			return ((fraction >>> shift) & mask) | 1;
+		}
+		return (fraction & (mask >>> -shift)) | 1;
+	}
+
+
+	private transient int[] keys;
+	private transient Object[] values;
+	private int power;
+	private int keyCount;
+	private transient int occupiedCount; // == keyCount + deleted_count
+	// If ivaluesShift != 0, keys[ivaluesShift + index] contains integer
+	// values associated with keys
+	private transient int ivaluesShift;
 
 	public UintMap() {
 		this(4);
@@ -159,6 +176,11 @@ public class UintMap implements Serializable {
 		keys[ivaluesShift + index] = value;
 	}
 
+	// Structure of kyes and values arrays (N == 1 << power):
+	// keys[0 <= i < N]: key value or EMPTY or DELETED mark
+	// values[0 <= i < N]: value of key at keys[i]
+	// keys[N <= i < 2N]: int values of keys at keys[i - N]
+
 	public void remove(int key) {
 		if (key < 0) {
 			Kit.codeBug();
@@ -209,14 +231,6 @@ public class UintMap implements Serializable {
 			}
 		}
 		return result;
-	}
-
-	private static int tableLookupStep(int fraction, int mask, int power) {
-		int shift = 32 - 2 * power;
-		if (shift >= 0) {
-			return ((fraction >>> shift) & mask) | 1;
-		}
-		return (fraction & (mask >>> -shift)) | 1;
 	}
 
 	private int findIndex(int key) {
@@ -386,291 +400,4 @@ public class UintMap implements Serializable {
 		++keyCount;
 		return index;
 	}
-
-	@Serial
-	private void writeObject(ObjectOutputStream out) throws IOException {
-		out.defaultWriteObject();
-
-		int count = keyCount;
-		if (count != 0) {
-			boolean hasIntValues = (ivaluesShift != 0);
-			boolean hasObjectValues = (values != null);
-			out.writeBoolean(hasIntValues);
-			out.writeBoolean(hasObjectValues);
-
-			for (int i = 0; count != 0; ++i) {
-				int key = keys[i];
-				if (key != EMPTY && key != DELETED) {
-					--count;
-					out.writeInt(key);
-					if (hasIntValues) {
-						out.writeInt(keys[ivaluesShift + i]);
-					}
-					if (hasObjectValues) {
-						out.writeObject(values[i]);
-					}
-				}
-			}
-		}
-	}
-
-	@Serial
-	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		in.defaultReadObject();
-
-		int writtenKeyCount = keyCount;
-		if (writtenKeyCount != 0) {
-			keyCount = 0;
-			boolean hasIntValues = in.readBoolean();
-			boolean hasObjectValues = in.readBoolean();
-
-			int N = 1 << power;
-			if (hasIntValues) {
-				keys = new int[2 * N];
-				ivaluesShift = N;
-			} else {
-				keys = new int[N];
-			}
-			for (int i = 0; i != N; ++i) {
-				keys[i] = EMPTY;
-			}
-			if (hasObjectValues) {
-				values = new Object[N];
-			}
-			for (int i = 0; i != writtenKeyCount; ++i) {
-				int key = in.readInt();
-				int index = insertNewKey(key);
-				if (hasIntValues) {
-					int ivalue = in.readInt();
-					keys[ivaluesShift + index] = ivalue;
-				}
-				if (hasObjectValues) {
-					values[index] = in.readObject();
-				}
-			}
-		}
-	}
-
-	// A == golden_ratio * (1 << 32) = ((sqrt(5) - 1) / 2) * (1 << 32)
-	// See Knuth etc.
-	private static final int A = 0x9e3779b9;
-
-	private static final int EMPTY = -1;
-	private static final int DELETED = -2;
-
-	// Structure of kyes and values arrays (N == 1 << power):
-	// keys[0 <= i < N]: key value or EMPTY or DELETED mark
-	// values[0 <= i < N]: value of key at keys[i]
-	// keys[N <= i < 2N]: int values of keys at keys[i - N]
-
-	private transient int[] keys;
-	private transient Object[] values;
-
-	private int power;
-	private int keyCount;
-	private transient int occupiedCount; // == keyCount + deleted_count
-
-	// If ivaluesShift != 0, keys[ivaluesShift + index] contains integer
-	// values associated with keys
-	private transient int ivaluesShift;
-
-	// If true, enables consitency checks
-	private static final boolean check = false;
-
-/* TEST START
-
-    public static void main(String[] args) {
-        if (!check) {
-            System.err.println("Set check to true and re-run");
-            throw new RuntimeException("Set check to true and re-run");
-        }
-
-        UintMap map;
-        map = new UintMap();
-        testHash(map, 2);
-        map = new UintMap();
-        testHash(map, 10 * 1000);
-        map = new UintMap(30 * 1000);
-        testHash(map, 10 * 100);
-        map.clear();
-        testHash(map, 4);
-        map = new UintMap(0);
-        testHash(map, 10 * 100);
-    }
-
-    private static void testHash(UintMap map, int N) {
-        System.out.print("."); System.out.flush();
-        for (int i = 0; i != N; ++i) {
-            map.put(i, i);
-            check(i == map.getInt(i, -1));
-        }
-
-        System.out.print("."); System.out.flush();
-        for (int i = 0; i != N; ++i) {
-            map.put(i, i);
-            check(i == map.getInt(i, -1));
-        }
-
-        System.out.print("."); System.out.flush();
-        for (int i = 0; i != N; ++i) {
-            map.put(i, new Integer(i));
-            check(-1 == map.getInt(i, -1));
-            Integer obj = (Integer)map.getObject(i);
-            check(obj != null && i == obj.intValue());
-        }
-
-        check(map.size() == N);
-
-        System.out.print("."); System.out.flush();
-        int[] keys = map.getKeys();
-        check(keys.length == N);
-        for (int i = 0; i != N; ++i) {
-            int key = keys[i];
-            check(map.has(key));
-            check(!map.isIntType(key));
-            check(map.isObjectType(key));
-            Integer obj = (Integer) map.getObject(key);
-            check(obj != null && key == obj.intValue());
-        }
-
-
-        System.out.print("."); System.out.flush();
-        for (int i = 0; i != N; ++i) {
-            check(-1 == map.getInt(i, -1));
-        }
-
-        System.out.print("."); System.out.flush();
-        for (int i = 0; i != N; ++i) {
-            map.put(i * i, i);
-            check(i == map.getInt(i * i, -1));
-        }
-
-        System.out.print("."); System.out.flush();
-        for (int i = 0; i != N; ++i) {
-            check(i == map.getInt(i * i, -1));
-        }
-
-        System.out.print("."); System.out.flush();
-        for (int i = 0; i != N; ++i) {
-            map.put(i * i, new Integer(i));
-            check(-1 == map.getInt(i * i, -1));
-            map.remove(i * i);
-            check(!map.has(i * i));
-            map.put(i * i, i);
-            check(map.isIntType(i * i));
-            check(null == map.getObject(i * i));
-            map.remove(i * i);
-            check(!map.isObjectType(i * i));
-            check(!map.isIntType(i * i));
-        }
-
-        int old_size = map.size();
-        for (int i = 0; i != N; ++i) {
-            map.remove(i * i);
-            check(map.size() == old_size);
-        }
-
-        System.out.print("."); System.out.flush();
-        map.clear();
-        check(map.size() == 0);
-        for (int i = 0; i != N; ++i) {
-            map.put(i * i, i);
-            map.put(i * i + 1, new Double(i+0.5));
-        }
-        checkSameMaps(map, (UintMap)writeAndRead(map));
-
-        System.out.print("."); System.out.flush();
-        map = new UintMap(0);
-        checkSameMaps(map, (UintMap)writeAndRead(map));
-        map = new UintMap(1);
-        checkSameMaps(map, (UintMap)writeAndRead(map));
-        map = new UintMap(1000);
-        checkSameMaps(map, (UintMap)writeAndRead(map));
-
-        System.out.print("."); System.out.flush();
-        map = new UintMap(N / 10);
-        for (int i = 0; i != N; ++i) {
-            map.put(2*i+1, i);
-        }
-        checkSameMaps(map, (UintMap)writeAndRead(map));
-
-        System.out.print("."); System.out.flush();
-        map = new UintMap(N / 10);
-        for (int i = 0; i != N; ++i) {
-            map.put(2*i+1, i);
-        }
-        for (int i = 0; i != N / 2; ++i) {
-            map.remove(2*i+1);
-        }
-        checkSameMaps(map, (UintMap)writeAndRead(map));
-
-        System.out.print("."); System.out.flush();
-        map = new UintMap();
-        for (int i = 0; i != N; ++i) {
-            map.put(2*i+1, new Double(i + 10));
-        }
-        for (int i = 0; i != N / 2; ++i) {
-            map.remove(2*i+1);
-        }
-        checkSameMaps(map, (UintMap)writeAndRead(map));
-
-        System.out.println(); System.out.flush();
-
-    }
-
-    private static void checkSameMaps(UintMap map1, UintMap map2) {
-        check(map1.size() == map2.size());
-        int[] keys = map1.getKeys();
-        check(keys.length == map1.size());
-        for (int i = 0; i != keys.length; ++i) {
-            int key = keys[i];
-            check(map2.has(key));
-            check(map1.isObjectType(key) == map2.isObjectType(key));
-            check(map1.isIntType(key) == map2.isIntType(key));
-            Object o1 = map1.getObject(key);
-            Object o2 = map2.getObject(key);
-            if (map1.isObjectType(key)) {
-                check(o1.equals(o2));
-            }else {
-                check(map1.getObject(key) == null);
-                check(map2.getObject(key) == null);
-            }
-            if (map1.isIntType(key)) {
-                check(map1.getExistingInt(key) == map2.getExistingInt(key));
-            }else {
-                check(map1.getInt(key, -10) == -10);
-                check(map1.getInt(key, -11) == -11);
-                check(map2.getInt(key, -10) == -10);
-                check(map2.getInt(key, -11) == -11);
-            }
-        }
-    }
-
-    private static void check(boolean condition) {
-        if (!condition) Kit.codeBug();
-    }
-
-    private static Object writeAndRead(Object obj) {
-        try {
-            java.io.ByteArrayOutputStream
-                bos = new java.io.ByteArrayOutputStream();
-            java.io.ObjectOutputStream
-                out = new java.io.ObjectOutputStream(bos);
-            out.writeObject(obj);
-            out.close();
-            byte[] data = bos.toByteArray();
-            java.io.ByteArrayInputStream
-                bis = new java.io.ByteArrayInputStream(data);
-            java.io.ObjectInputStream
-                in = new java.io.ObjectInputStream(bis);
-            Object result = in.readObject();
-            in.close();
-            return result;
-        }catch (Exception ex) {
-            ex.printStackTrace();
-            throw new RuntimeException("Unexpected");
-        }
-    }
-
-// TEST END */
 }

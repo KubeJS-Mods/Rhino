@@ -4,9 +4,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 /**
  * This class represents an element on the script execution stack.
  *
@@ -14,11 +11,7 @@ import java.io.Serializable;
  * @see RhinoException#getScriptStack()
  * @since 1.7R3
  */
-public final class ScriptStackElement implements Serializable {
-
-	@Serial
-	private static final long serialVersionUID = -6416688260860477449L;
-
+public final class ScriptStackElement {
 	public final String fileName;
 	public final String functionName;
 	public final int lineNumber;

@@ -6,14 +6,9 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.Arrays;
 
-final class InterpreterData implements Serializable {
-	@Serial
-	private static final long serialVersionUID = 5067677351589230234L;
-
+final class InterpreterData {
 	static final int INITIAL_MAX_ICODE_LENGTH = 1024;
 	static final int INITIAL_STRINGTABLE_SIZE = 64;
 	static final int INITIAL_NUMBERTABLE_SIZE = 64;

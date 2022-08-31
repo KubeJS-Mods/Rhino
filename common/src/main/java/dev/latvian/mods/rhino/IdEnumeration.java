@@ -1,7 +1,5 @@
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.function.Consumer;
 
 /**
@@ -18,9 +16,7 @@ import java.util.function.Consumer;
  * avoid maintaining a hash table and instead perform lookups
  * to see if a given property has already been enumerated.
  */
-public class IdEnumeration implements Serializable, Consumer<Object> {
-	@Serial
-	private static final long serialVersionUID = 1L;
+public class IdEnumeration implements Consumer<Object> {
 	Scriptable obj;
 	Object[] ids;
 	ObjToIntMap used;

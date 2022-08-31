@@ -20,9 +20,6 @@ import dev.latvian.mods.rhino.SymbolKey;
 import dev.latvian.mods.rhino.TopLevel;
 import dev.latvian.mods.rhino.Undefined;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 /**
  * This class implements the RegExp native object.
  * <p>
@@ -39,17 +36,14 @@ import java.io.Serializable;
 
 
 public class NativeRegExp extends IdScriptableObject implements Function {
-	private static final Object REGEXP_TAG = new Object();
-
 	public static final int JSREG_GLOB = 0x1;       // 'g' flag: global
 	public static final int JSREG_FOLD = 0x2;       // 'i' flag: fold
 	public static final int JSREG_MULTILINE = 0x4;  // 'm' flag: multiline
-
 	//type of match to perform
 	public static final int TEST = 0;
 	public static final int MATCH = 1;
 	public static final int PREFIX = 2;
-
+	private static final Object REGEXP_TAG = new Object();
 	private static final boolean debug = false;
 
 	private static final byte REOP_SIMPLE_START = 1;  /* start of 'simple opcodes' */
@@ -108,7 +102,22 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	private static final byte REOP_END = 57;
 
 	private static final int ANCHOR_BOL = -2;
-
+	private static final int INDEX_LEN = 2;
+	private static final int Id_lastIndex = 1;
+	private static final int Id_source = 2;
+	private static final int Id_global = 3;
+	private static final int Id_ignoreCase = 4;
+	private static final int Id_multiline = 5;
+	private static final int MAX_INSTANCE_ID = 5;
+	private static final int Id_compile = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toSource = 3;
+	private static final int Id_exec = 4;
+	private static final int Id_test = 5;
+	private static final int Id_prefix = 6;
+	private static final int SymbolId_match = 7;
+	private static final int SymbolId_search = 8;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_search;
 
 	public static void init(Context cx, Scriptable scope, boolean sealed) {
 
@@ -133,81 +142,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		}
 
 		defineProperty(scope, "RegExp", ctor, ScriptableObject.DONTENUM);
-	}
-
-	NativeRegExp(Scriptable scope, RECompiled regexpCompiled) {
-		this.re = regexpCompiled;
-		setLastIndex(ScriptRuntime.zeroObj);
-		ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.RegExp);
-	}
-
-	@Override
-	public String getClassName() {
-		return "RegExp";
-	}
-
-	/**
-	 * Gets the value to be returned by the typeof operator called on this object.
-	 *
-	 * @return "object"
-	 * @see ScriptableObject#getTypeOf()
-	 */
-	@Override
-	public MemberType getTypeOf() {
-		return MemberType.OBJECT;
-	}
-
-	@Override
-	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		throw ScriptRuntime.notFunctionError(thisObj);
-	}
-
-	@Override
-	public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-		throw ScriptRuntime.notFunctionError(this);
-	}
-
-	Scriptable compile(Context cx, Scriptable scope, Object[] args) {
-		if (args.length > 0 && args[0] instanceof NativeRegExp thatObj) {
-			if (args.length > 1 && args[1] != Undefined.instance) {
-				// report error
-				throw ScriptRuntime.typeError0("msg.bad.regexp.compile");
-			}
-			this.re = thatObj.re;
-			setLastIndex(thatObj.lastIndex);
-			return this;
-		}
-		String s = args.length == 0 || args[0] instanceof Undefined ? "" : escapeRegExp(args[0]);
-		String global = args.length > 1 && args[1] != Undefined.instance ? ScriptRuntime.toString(args[1]) : null;
-		this.re = compileRE(cx, s, global, false);
-		setLastIndex(ScriptRuntime.zeroObj);
-		return this;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder buf = new StringBuilder();
-		buf.append('/');
-		if (re.source.length != 0) {
-			buf.append(re.source);
-		} else {
-			// See bugzilla 226045
-			buf.append("(?:)");
-		}
-		buf.append('/');
-		if ((re.flags & JSREG_GLOB) != 0) {
-			buf.append('g');
-		}
-		if ((re.flags & JSREG_FOLD) != 0) {
-			buf.append('i');
-		}
-		if ((re.flags & JSREG_MULTILINE) != 0) {
-			buf.append('m');
-		}
-		return buf.toString();
-	}
-
-	NativeRegExp() {
 	}
 
 	private static RegExp getImpl(Context cx) {
@@ -236,40 +170,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			s = sb.toString();
 		}
 		return s;
-	}
-
-	private Object execSub(Context cx, Scriptable scopeObj, Object[] args, int matchType) {
-		RegExp reImpl = getImpl(cx);
-		String str;
-		if (args.length == 0) {
-			str = reImpl.input;
-			if (str == null) {
-				str = ScriptRuntime.toString(Undefined.instance);
-			}
-		} else {
-			str = ScriptRuntime.toString(args[0]);
-		}
-		double d = 0;
-		if ((re.flags & JSREG_GLOB) != 0) {
-			d = ScriptRuntime.toInteger(lastIndex);
-		}
-
-		Object rval;
-		if (d < 0 || str.length() < d) {
-			setLastIndex(ScriptRuntime.zeroObj);
-			rval = null;
-		} else {
-			int[] indexp = {(int) d};
-			rval = executeRegExp(cx, scopeObj, reImpl, str, indexp, matchType);
-			if ((re.flags & JSREG_GLOB) != 0) {
-				if (rval == null || rval == Undefined.instance) {
-					setLastIndex(ScriptRuntime.zeroObj);
-				} else {
-					setLastIndex((double) indexp[0]);
-				}
-			}
-		}
-		return rval;
 	}
 
 	static RECompiled compileRE(Context cx, String str, String global, boolean flat) {
@@ -383,6 +283,60 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	private static boolean isLineTerm(char c) {
 		return ScriptRuntime.isJSLineTerminator(c);
 	}
+
+	/*
+	 *  item:       assertion               An item is either an assertion or
+	 *              quantatom               a quantified atom.
+	 *
+	 *  assertion:  '^'                     Assertions match beginning of string
+	 *                                      (or line if the class static property
+	 *                                      RegExp.multiline is true).
+	 *              '$'                     End of string (or line if the class
+	 *                                      static property RegExp.multiline is
+	 *                                      true).
+	 *              '\b'                    Word boundary (between \w and \W).
+	 *              '\B'                    Word non-boundary.
+	 *
+	 *  quantatom:  atom                    An unquantified atom.
+	 *              quantatom '{' n ',' m '}'
+	 *                                      Atom must occur between n and m times.
+	 *              quantatom '{' n ',' '}' Atom must occur at least n times.
+	 *              quantatom '{' n '}'     Atom must occur exactly n times.
+	 *              quantatom '*'           Zero or more times (same as {0,}).
+	 *              quantatom '+'           One or more times (same as {1,}).
+	 *              quantatom '?'           Zero or one time (same as {0,1}).
+	 *
+	 *              any of which can be optionally followed by '?' for ungreedy
+	 *
+	 *  atom:       '(' regexp ')'          A parenthesized regexp (what matched
+	 *                                      can be addressed using a backreference,
+	 *                                      see '\' n below).
+	 *              '.'                     Matches any char except '\n'.
+	 *              '[' classlist ']'       A character class.
+	 *              '[' '^' classlist ']'   A negated character class.
+	 *              '\f'                    Form Feed.
+	 *              '\n'                    Newline (Line Feed).
+	 *              '\r'                    Carriage Return.
+	 *              '\t'                    Horizontal Tab.
+	 *              '\v'                    Vertical Tab.
+	 *              '\d'                    A digit (same as [0-9]).
+	 *              '\D'                    A non-digit.
+	 *              '\w'                    A word character, [0-9a-z_A-Z].
+	 *              '\W'                    A non-word character.
+	 *              '\s'                    A whitespace character, [ \b\f\n\r\t\v].
+	 *              '\S'                    A non-whitespace character.
+	 *              '\' n                   A backreference to the nth (n decimal
+	 *                                      and positive) parenthesized expression.
+	 *              '\' octal               An octal escape sequence (octal must be
+	 *                                      two or three digits long, unless it is
+	 *                                      0 for the null character).
+	 *              '\x' hex                A hex escape (hex must be two digits).
+	 *              '\c' ctrl               A control character, ctrl is a letter.
+	 *              '\' literalatomchar     Any character except one of the above
+	 *                                      that follow '\' in an atom.
+	 *              otheratomchar           Any character not first among the other
+	 *                                      atom right-hand sides.
+	 */
 
 	private static boolean isREWhiteSpace(int c) {
 		return ScriptRuntime.isJSWhitespaceOrLineTerminator(c);
@@ -551,109 +505,108 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		while (index != end) {
 			int localMax = 0;
 			nDigits = 2;
-			switch (src[index]) {
-				case '\\' -> {
-					++index;
-					c = src[index++];
-					switch (c) {
-						case 'b':
-							localMax = 0x8;
-							break;
-						case 'f':
-							localMax = 0xC;
-							break;
-						case 'n':
-							localMax = 0xA;
-							break;
-						case 'r':
-							localMax = 0xD;
-							break;
-						case 't':
-							localMax = 0x9;
-							break;
-						case 'v':
-							localMax = 0xB;
-							break;
-						case 'c':
-							if ((index < end) && isControlLetter(src[index])) {
-								localMax = (char) (src[index++] & 0x1F);
-							} else {
-								--index;
+			if (src[index] == '\\') {
+				++index;
+				c = src[index++];
+				switch (c) {
+					case 'b':
+						localMax = 0x8;
+						break;
+					case 'f':
+						localMax = 0xC;
+						break;
+					case 'n':
+						localMax = 0xA;
+						break;
+					case 'r':
+						localMax = 0xD;
+						break;
+					case 't':
+						localMax = 0x9;
+						break;
+					case 'v':
+						localMax = 0xB;
+						break;
+					case 'c':
+						if ((index < end) && isControlLetter(src[index])) {
+							localMax = (char) (src[index++] & 0x1F);
+						} else {
+							--index;
+						}
+						localMax = '\\';
+						break;
+					case 'u':
+						nDigits += 2;
+						// fall through
+					case 'x':
+						n = 0;
+						for (i = 0; (i < nDigits) && (index < end); i++) {
+							c = src[index++];
+							n = Kit.xDigitToInt(c, n);
+							if (n < 0) {
+								// Back off to accepting the original
+								// '\' as a literal
+								index -= (i + 1);
+								n = '\\';
+								break;
 							}
-							localMax = '\\';
-							break;
-						case 'u':
-							nDigits += 2;
-							// fall through
-						case 'x':
-							n = 0;
-							for (i = 0; (i < nDigits) && (index < end); i++) {
-								c = src[index++];
-								n = Kit.xDigitToInt(c, n);
-								if (n < 0) {
-									// Back off to accepting the original
-									// '\' as a literal
-									index -= (i + 1);
-									n = '\\';
-									break;
-								}
-							}
-							localMax = n;
-							break;
-						case 'd':
-							if (inRange) {
-								target.bmsize = 65536;
-								return true;
-							}
-							localMax = '9';
-							break;
-						case 'D':
-						case 'w':
-						case 'W':
-						case 'S':
-						case 's':
+						}
+						localMax = n;
+						break;
+					case 'd':
+						if (inRange) {
 							target.bmsize = 65536;
 							return true;
+						}
+						localMax = '9';
+						break;
+					case 'D':
+					case 'w':
+					case 'W':
+					case 'S':
+					case 's':
+						target.bmsize = 65536;
+						return true;
 
-						case '0':
-						case '1':
-						case '2':
-						case '3':
-						case '4':
-						case '5':
-						case '6':
-						case '7':
-							/*
-							 *  This is a non-ECMA extension - decimal escapes (in this
-							 *  case, octal!) are supposed to be an error inside class
-							 *  ranges, but supported here for backwards compatibility.
-							 *
-							 */
-							n = (c - '0');
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+						/*
+						 *  This is a non-ECMA extension - decimal escapes (in this
+						 *  case, octal!) are supposed to be an error inside class
+						 *  ranges, but supported here for backwards compatibility.
+						 *
+						 */
+						n = (c - '0');
+						c = src[index];
+						if ('0' <= c && c <= '7') {
+							index++;
+							n = 8 * n + (c - '0');
 							c = src[index];
 							if ('0' <= c && c <= '7') {
 								index++;
-								n = 8 * n + (c - '0');
-								c = src[index];
-								if ('0' <= c && c <= '7') {
-									index++;
-									i = 8 * n + (c - '0');
-									if (i <= 0377) {
-										n = i;
-									} else {
-										index--;
-									}
+								i = 8 * n + (c - '0');
+								if (i <= 0377) {
+									n = i;
+								} else {
+									index--;
 								}
 							}
-							localMax = n;
-							break;
+						}
+						localMax = n;
+						break;
 
-						default:
-							localMax = c;
-							break;
-					}
+					default:
+						localMax = c;
+						break;
 				}
-				default -> localMax = src[index++];
+			} else {
+				localMax = src[index++];
 			}
 			if (inRange) {
 				if (rangeStart > localMax) {
@@ -683,60 +636,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		target.bmsize = max + 1;
 		return true;
 	}
-
-	/*
-	 *  item:       assertion               An item is either an assertion or
-	 *              quantatom               a quantified atom.
-	 *
-	 *  assertion:  '^'                     Assertions match beginning of string
-	 *                                      (or line if the class static property
-	 *                                      RegExp.multiline is true).
-	 *              '$'                     End of string (or line if the class
-	 *                                      static property RegExp.multiline is
-	 *                                      true).
-	 *              '\b'                    Word boundary (between \w and \W).
-	 *              '\B'                    Word non-boundary.
-	 *
-	 *  quantatom:  atom                    An unquantified atom.
-	 *              quantatom '{' n ',' m '}'
-	 *                                      Atom must occur between n and m times.
-	 *              quantatom '{' n ',' '}' Atom must occur at least n times.
-	 *              quantatom '{' n '}'     Atom must occur exactly n times.
-	 *              quantatom '*'           Zero or more times (same as {0,}).
-	 *              quantatom '+'           One or more times (same as {1,}).
-	 *              quantatom '?'           Zero or one time (same as {0,1}).
-	 *
-	 *              any of which can be optionally followed by '?' for ungreedy
-	 *
-	 *  atom:       '(' regexp ')'          A parenthesized regexp (what matched
-	 *                                      can be addressed using a backreference,
-	 *                                      see '\' n below).
-	 *              '.'                     Matches any char except '\n'.
-	 *              '[' classlist ']'       A character class.
-	 *              '[' '^' classlist ']'   A negated character class.
-	 *              '\f'                    Form Feed.
-	 *              '\n'                    Newline (Line Feed).
-	 *              '\r'                    Carriage Return.
-	 *              '\t'                    Horizontal Tab.
-	 *              '\v'                    Vertical Tab.
-	 *              '\d'                    A digit (same as [0-9]).
-	 *              '\D'                    A non-digit.
-	 *              '\w'                    A word character, [0-9a-z_A-Z].
-	 *              '\W'                    A non-word character.
-	 *              '\s'                    A whitespace character, [ \b\f\n\r\t\v].
-	 *              '\S'                    A non-whitespace character.
-	 *              '\' n                   A backreference to the nth (n decimal
-	 *                                      and positive) parenthesized expression.
-	 *              '\' octal               An octal escape sequence (octal must be
-	 *                                      two or three digits long, unless it is
-	 *                                      0 for the null character).
-	 *              '\x' hex                A hex escape (hex must be two digits).
-	 *              '\c' ctrl               A control character, ctrl is a letter.
-	 *              '\' literalatomchar     Any character except one of the above
-	 *                                      that follow '\' in an atom.
-	 *              otheratomchar           Any character not first among the other
-	 *                                      atom right-hand sides.
-	 */
 
 	private static void doFlat(CompilerState state, char c) {
 		state.result = new RENode(REOP_FLAT);
@@ -1178,8 +1077,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		return ((array[pc] & 0xFF) << 8) | (array[pc + 1] & 0xFF);
 	}
 
-	private static final int INDEX_LEN = 2;
-
 	private static int emitREBytecode(CompilerState state, RECompiled re, int pc, RENode t) {
 		RENode nextAlt;
 		int nextAltFixup, nextTermFixup;
@@ -1420,7 +1317,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		return true;
 	}
 
-
 	/* Add a single character to the RECharSet */
 	private static void addCharacterToCharSet(RECharSet cs, char c) {
 		int byteIndex = (c / 8);
@@ -1429,7 +1325,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		}
 		cs.bits[byteIndex] |= 1 << (c & 0x7);
 	}
-
 
 	/* Add a character range, c1 to c2 (inclusive) to the RECharSet */
 	private static void addCharacterRangeToCharSet(RECharSet cs, char c1, char c2) {
@@ -1466,7 +1361,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		}
 	}
 
-
 	private static void processCharSetImpl(REGlobalData gData, RECharSet charSet) {
 		int src = charSet.startIndex;
 		int end = src + charSet.strlength;
@@ -1495,155 +1389,154 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 		while (src != end) {
 			nDigits = 2;
-			switch (gData.regexp.source[src]) {
-				case '\\' -> {
-					++src;
-					c = gData.regexp.source[src++];
-					switch (c) {
-						case 'b':
-							thisCh = 0x8;
-							break;
-						case 'f':
-							thisCh = 0xC;
-							break;
-						case 'n':
-							thisCh = 0xA;
-							break;
-						case 'r':
-							thisCh = 0xD;
-							break;
-						case 't':
-							thisCh = 0x9;
-							break;
-						case 'v':
-							thisCh = 0xB;
-							break;
-						case 'c':
-							if ((src < end) && isControlLetter(gData.regexp.source[src])) {
-								thisCh = (char) (gData.regexp.source[src++] & 0x1F);
-							} else {
-								--src;
-								thisCh = '\\';
+			if (gData.regexp.source[src] == '\\') {
+				++src;
+				c = gData.regexp.source[src++];
+				switch (c) {
+					case 'b':
+						thisCh = 0x8;
+						break;
+					case 'f':
+						thisCh = 0xC;
+						break;
+					case 'n':
+						thisCh = 0xA;
+						break;
+					case 'r':
+						thisCh = 0xD;
+						break;
+					case 't':
+						thisCh = 0x9;
+						break;
+					case 'v':
+						thisCh = 0xB;
+						break;
+					case 'c':
+						if ((src < end) && isControlLetter(gData.regexp.source[src])) {
+							thisCh = (char) (gData.regexp.source[src++] & 0x1F);
+						} else {
+							--src;
+							thisCh = '\\';
+						}
+						break;
+					case 'u':
+						nDigits += 2;
+						// fall through
+					case 'x':
+						n = 0;
+						for (i = 0; (i < nDigits) && (src < end); i++) {
+							c = gData.regexp.source[src++];
+							int digit = toASCIIHexDigit(c);
+							if (digit < 0) {
+								/* back off to accepting the original '\'
+								 * as a literal
+								 */
+								src -= (i + 1);
+								n = '\\';
+								break;
 							}
-							break;
-						case 'u':
-							nDigits += 2;
-							// fall through
-						case 'x':
-							n = 0;
-							for (i = 0; (i < nDigits) && (src < end); i++) {
-								c = gData.regexp.source[src++];
-								int digit = toASCIIHexDigit(c);
-								if (digit < 0) {
-									/* back off to accepting the original '\'
-									 * as a literal
-									 */
-									src -= (i + 1);
-									n = '\\';
-									break;
-								}
-								n = (n << 4) | digit;
-							}
-							thisCh = (char) (n);
-							break;
-						case '0':
-						case '1':
-						case '2':
-						case '3':
-						case '4':
-						case '5':
-						case '6':
-						case '7':
-							/*
-							 *  This is a non-ECMA extension - decimal escapes (in this
-							 *  case, octal!) are supposed to be an error inside class
-							 *  ranges, but supported here for backwards compatibility.
-							 *
-							 */
-							n = (c - '0');
+							n = (n << 4) | digit;
+						}
+						thisCh = (char) (n);
+						break;
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+						/*
+						 *  This is a non-ECMA extension - decimal escapes (in this
+						 *  case, octal!) are supposed to be an error inside class
+						 *  ranges, but supported here for backwards compatibility.
+						 *
+						 */
+						n = (c - '0');
+						c = gData.regexp.source[src];
+						if ('0' <= c && c <= '7') {
+							src++;
+							n = 8 * n + (c - '0');
 							c = gData.regexp.source[src];
 							if ('0' <= c && c <= '7') {
 								src++;
-								n = 8 * n + (c - '0');
-								c = gData.regexp.source[src];
-								if ('0' <= c && c <= '7') {
-									src++;
-									i = 8 * n + (c - '0');
-									if (i <= 0377) {
-										n = i;
-									} else {
-										src--;
-									}
+								i = 8 * n + (c - '0');
+								if (i <= 0377) {
+									n = i;
+								} else {
+									src--;
 								}
 							}
-							thisCh = (char) (n);
-							break;
+						}
+						thisCh = (char) (n);
+						break;
 
-						case 'd':
-							if (inRange) {
-								addCharacterToCharSet(charSet, '-');
-								inRange = false;
+					case 'd':
+						if (inRange) {
+							addCharacterToCharSet(charSet, '-');
+							inRange = false;
+						}
+						addCharacterRangeToCharSet(charSet, '0', '9');
+						continue;   /* don't need range processing */
+					case 'D':
+						if (inRange) {
+							addCharacterToCharSet(charSet, '-');
+							inRange = false;
+						}
+						addCharacterRangeToCharSet(charSet, (char) 0, (char) ('0' - 1));
+						addCharacterRangeToCharSet(charSet, (char) ('9' + 1), (char) (charSet.length - 1));
+						continue;
+					case 's':
+						if (inRange) {
+							addCharacterToCharSet(charSet, '-');
+							inRange = false;
+						}
+						for (i = (charSet.length - 1); i >= 0; i--) {
+							if (isREWhiteSpace(i)) {
+								addCharacterToCharSet(charSet, (char) (i));
 							}
-							addCharacterRangeToCharSet(charSet, '0', '9');
-							continue;   /* don't need range processing */
-						case 'D':
-							if (inRange) {
-								addCharacterToCharSet(charSet, '-');
-								inRange = false;
+						}
+						continue;
+					case 'S':
+						if (inRange) {
+							addCharacterToCharSet(charSet, '-');
+							inRange = false;
+						}
+						for (i = (charSet.length - 1); i >= 0; i--) {
+							if (!isREWhiteSpace(i)) {
+								addCharacterToCharSet(charSet, (char) (i));
 							}
-							addCharacterRangeToCharSet(charSet, (char) 0, (char) ('0' - 1));
-							addCharacterRangeToCharSet(charSet, (char) ('9' + 1), (char) (charSet.length - 1));
-							continue;
-						case 's':
-							if (inRange) {
-								addCharacterToCharSet(charSet, '-');
-								inRange = false;
+						}
+						continue;
+					case 'w':
+						if (inRange) {
+							addCharacterToCharSet(charSet, '-');
+							inRange = false;
+						}
+						for (i = (charSet.length - 1); i >= 0; i--) {
+							if (isWord((char) i)) {
+								addCharacterToCharSet(charSet, (char) (i));
 							}
-							for (i = (charSet.length - 1); i >= 0; i--) {
-								if (isREWhiteSpace(i)) {
-									addCharacterToCharSet(charSet, (char) (i));
-								}
+						}
+						continue;
+					case 'W':
+						if (inRange) {
+							addCharacterToCharSet(charSet, '-');
+							inRange = false;
+						}
+						for (i = (charSet.length - 1); i >= 0; i--) {
+							if (!isWord((char) i)) {
+								addCharacterToCharSet(charSet, (char) (i));
 							}
-							continue;
-						case 'S':
-							if (inRange) {
-								addCharacterToCharSet(charSet, '-');
-								inRange = false;
-							}
-							for (i = (charSet.length - 1); i >= 0; i--) {
-								if (!isREWhiteSpace(i)) {
-									addCharacterToCharSet(charSet, (char) (i));
-								}
-							}
-							continue;
-						case 'w':
-							if (inRange) {
-								addCharacterToCharSet(charSet, '-');
-								inRange = false;
-							}
-							for (i = (charSet.length - 1); i >= 0; i--) {
-								if (isWord((char) i)) {
-									addCharacterToCharSet(charSet, (char) (i));
-								}
-							}
-							continue;
-						case 'W':
-							if (inRange) {
-								addCharacterToCharSet(charSet, '-');
-								inRange = false;
-							}
-							for (i = (charSet.length - 1); i >= 0; i--) {
-								if (!isWord((char) i)) {
-									addCharacterToCharSet(charSet, (char) (i));
-								}
-							}
-							continue;
-						default:
-							thisCh = c;
-							break;
-					}
+						}
+						continue;
+					default:
+						thisCh = c;
+						break;
 				}
-				default -> thisCh = gData.regexp.source[src++];
+			} else {
+				thisCh = gData.regexp.source[src++];
 			}
 			if (inRange) {
 				if ((gData.regexp.flags & JSREG_FOLD) != 0) {
@@ -1684,7 +1577,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		}
 	}
 
-
 	/*
 	 *   Initialize the character set if it this is the first call.
 	 *   Test the bit - if the ^ flag was specified, non-inclusion is a success
@@ -1701,6 +1593,8 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	private static boolean reopIsSimple(int op) {
 		return op >= REOP_SIMPLE_START && op <= REOP_SIMPLE_END;
 	}
+
+	// #string_id_map#
 
 	/*
 	 *   Apply the current op against the given input to see if
@@ -1872,7 +1766,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		gData.cp = startcp;
 		return -1;
 	}
-
 
 	private static boolean executeREBytecode(REGlobalData gData, String input, int end) {
 		int pc = 0;
@@ -2339,6 +2232,131 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		return false;
 	}
 
+	private static void reportError(String messageId, String arg) {
+		String msg = ScriptRuntime.getMessage1(messageId, arg);
+		throw ScriptRuntime.constructError("SyntaxError", msg);
+	}
+
+	private static NativeRegExp realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (!(thisObj instanceof NativeRegExp)) {
+			throw incompatibleCallError(f);
+		}
+		return (NativeRegExp) thisObj;
+	}
+
+	Object lastIndex = ScriptRuntime.zeroObj;     /* index after last match, for //g iterator */
+	private RECompiled re;
+	private int lastIndexAttr = DONTENUM | PERMANENT;
+
+	NativeRegExp(Scriptable scope, RECompiled regexpCompiled) {
+		this.re = regexpCompiled;
+		setLastIndex(ScriptRuntime.zeroObj);
+		ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.RegExp);
+	}
+
+	NativeRegExp() {
+	}
+
+	@Override
+	public String getClassName() {
+		return "RegExp";
+	}
+
+	/**
+	 * Gets the value to be returned by the typeof operator called on this object.
+	 *
+	 * @return "object"
+	 * @see ScriptableObject#getTypeOf()
+	 */
+	@Override
+	public MemberType getTypeOf() {
+		return MemberType.OBJECT;
+	}
+
+	@Override
+	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		throw ScriptRuntime.notFunctionError(thisObj);
+	}
+
+	@Override
+	public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+		throw ScriptRuntime.notFunctionError(this);
+	}
+
+	Scriptable compile(Context cx, Scriptable scope, Object[] args) {
+		if (args.length > 0 && args[0] instanceof NativeRegExp thatObj) {
+			if (args.length > 1 && args[1] != Undefined.instance) {
+				// report error
+				throw ScriptRuntime.typeError0("msg.bad.regexp.compile");
+			}
+			this.re = thatObj.re;
+			setLastIndex(thatObj.lastIndex);
+			return this;
+		}
+		String s = args.length == 0 || args[0] instanceof Undefined ? "" : escapeRegExp(args[0]);
+		String global = args.length > 1 && args[1] != Undefined.instance ? ScriptRuntime.toString(args[1]) : null;
+		this.re = compileRE(cx, s, global, false);
+		setLastIndex(ScriptRuntime.zeroObj);
+		return this;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		buf.append('/');
+		if (re.source.length != 0) {
+			buf.append(re.source);
+		} else {
+			// See bugzilla 226045
+			buf.append("(?:)");
+		}
+		buf.append('/');
+		if ((re.flags & JSREG_GLOB) != 0) {
+			buf.append('g');
+		}
+		if ((re.flags & JSREG_FOLD) != 0) {
+			buf.append('i');
+		}
+		if ((re.flags & JSREG_MULTILINE) != 0) {
+			buf.append('m');
+		}
+		return buf.toString();
+	}
+
+	private Object execSub(Context cx, Scriptable scopeObj, Object[] args, int matchType) {
+		RegExp reImpl = getImpl(cx);
+		String str;
+		if (args.length == 0) {
+			str = reImpl.input;
+			if (str == null) {
+				str = ScriptRuntime.toString(Undefined.instance);
+			}
+		} else {
+			str = ScriptRuntime.toString(args[0]);
+		}
+		double d = 0;
+		if ((re.flags & JSREG_GLOB) != 0) {
+			d = ScriptRuntime.toInteger(lastIndex);
+		}
+
+		Object rval;
+		if (d < 0 || str.length() < d) {
+			setLastIndex(ScriptRuntime.zeroObj);
+			rval = null;
+		} else {
+			int[] indexp = {(int) d};
+			rval = executeRegExp(cx, scopeObj, reImpl, str, indexp, matchType);
+			if ((re.flags & JSREG_GLOB) != 0) {
+				if (rval == null || rval == Undefined.instance) {
+					setLastIndex(ScriptRuntime.zeroObj);
+				} else {
+					setLastIndex((double) indexp[0]);
+				}
+			}
+		}
+		return rval;
+	}
+
 	/*
 	 * indexp is assumed to be an array of length 1
 	 */
@@ -2446,21 +2464,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		return re.flags;
 	}
 
-	private static void reportError(String messageId, String arg) {
-		String msg = ScriptRuntime.getMessage1(messageId, arg);
-		throw ScriptRuntime.constructError("SyntaxError", msg);
-	}
-
-	// #string_id_map#
-
-	private static final int Id_lastIndex = 1;
-	private static final int Id_source = 2;
-	private static final int Id_global = 3;
-	private static final int Id_ignoreCase = 4;
-	private static final int Id_multiline = 5;
-
-	private static final int MAX_INSTANCE_ID = 5;
-
 	@Override
 	protected int getMaxInstanceId() {
 		return MAX_INSTANCE_ID;
@@ -2520,7 +2523,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		lastIndex = value;
 	}
 
-
 	@Override
 	protected void setInstanceIdValue(int id, Object value) {
 		switch (id) {
@@ -2538,11 +2540,9 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 	@Override
 	protected void setInstanceIdAttributes(int id, int attr) {
-		switch (id) {
-			case Id_lastIndex -> {
-				lastIndexAttr = attr;
-				return;
-			}
+		if (id == Id_lastIndex) {
+			lastIndexAttr = attr;
+			return;
 		}
 		super.setInstanceIdAttributes(id, attr);
 	}
@@ -2590,6 +2590,8 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		initPrototypeMethod(REGEXP_TAG, id, s, arity);
 	}
 
+	// #/string_id_map#
+
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(REGEXP_TAG)) {
@@ -2625,13 +2627,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		throw new IllegalArgumentException(String.valueOf(id));
 	}
 
-	private static NativeRegExp realThis(Scriptable thisObj, IdFunctionObject f) {
-		if (!(thisObj instanceof NativeRegExp)) {
-			throw incompatibleCallError(f);
-		}
-		return (NativeRegExp) thisObj;
-	}
-
 	@Override
 	protected int findPrototypeId(Symbol k) {
 		if (SymbolKey.MATCH.equals(k)) {
@@ -2657,29 +2652,9 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		};
 	}
 
-	private static final int Id_compile = 1;
-	private static final int Id_toString = 2;
-	private static final int Id_toSource = 3;
-	private static final int Id_exec = 4;
-	private static final int Id_test = 5;
-	private static final int Id_prefix = 6;
-	private static final int SymbolId_match = 7;
-	private static final int SymbolId_search = 8;
-
-	private static final int MAX_PROTOTYPE_ID = SymbolId_search;
-
-	// #/string_id_map#
-
-	private RECompiled re;
-	Object lastIndex = ScriptRuntime.zeroObj;     /* index after last match, for //g iterator */
-	private int lastIndexAttr = DONTENUM | PERMANENT;
-
 }       // class NativeRegExp
 
-class RECompiled implements Serializable {
-	@Serial
-	private static final long serialVersionUID = -6144956577595844213L;
-
+class RECompiled {
 	final char[] source;    /* locked source string, sans // */
 	int parenCount;         /* number of parenthesized submatches */
 	int flags;              /* flags  */
@@ -2695,48 +2670,31 @@ class RECompiled implements Serializable {
 
 class RENode {
 
-	RENode(byte op) {
-		this.op = op;
-	}
-
 	byte op;         /* r.e. op bytecode */
 	RENode next;       /* next in concatenation order */
 	RENode kid;        /* first operand */
-
 	RENode kid2;       /* second operand */
 	int parenIndex; /* or a parenthesis index */
-
 	/* or a range */ int min;
 	int max;
 	int parenCount;
 	boolean greedy;
-
 	/* or a character class */ int startIndex;
 	int kidlen;     /* length of string at kid, in chars */
 	int bmsize;     /* bitmap size, based on max char code */
 	int index;      /* index into class list */
 	boolean sense;
-
 	/* or a literal sequence */ char chr;        /* of one character */
 	int length;     /* or many (via the index) */
 	int flatIndex;  /* which is -1 if not sourced */
 
+	RENode(byte op) {
+		this.op = op;
+	}
+
 }
 
 class CompilerState {
-
-	CompilerState(Context cx, char[] source, int length, int flags) {
-		this.cx = cx;
-		this.cpbegin = source;
-		this.cp = 0;
-		this.cpend = length;
-		this.flags = flags;
-		this.backReferenceLimit = Integer.MAX_VALUE;
-		this.maxBackReference = 0;
-		this.parenCount = 0;
-		this.classCount = 0;
-		this.progLength = 0;
-	}
 
 	Context cx;
 	char[] cpbegin;
@@ -2750,9 +2708,30 @@ class CompilerState {
 	int classCount;   /* number of [] encountered */
 	int progLength;   /* estimated bytecode length */
 	RENode result;
+
+	CompilerState(Context cx, char[] source, int length, int flags) {
+		this.cx = cx;
+		this.cpbegin = source;
+		this.cp = 0;
+		this.cpend = length;
+		this.flags = flags;
+		this.backReferenceLimit = Integer.MAX_VALUE;
+		this.maxBackReference = 0;
+		this.parenCount = 0;
+		this.classCount = 0;
+		this.progLength = 0;
+	}
 }
 
 class REProgState {
+	final REProgState previous; // previous state in stack
+	final int min;                      /* current quantifier min */
+	final int max;                      /* current quantifier max */
+	final int index;                    /* progress in text */
+	final int continuationOp;
+	final int continuationPc;
+	final REBackTrackData backTrack; // used by ASSERT_  to recover state
+
 	REProgState(REProgState previous, int min, int max, int index, REBackTrackData backTrack, int continuationOp, int continuationPc) {
 		this.previous = previous;
 		this.min = min;
@@ -2762,18 +2741,18 @@ class REProgState {
 		this.continuationPc = continuationPc;
 		this.backTrack = backTrack;
 	}
-
-	final REProgState previous; // previous state in stack
-
-	final int min;                      /* current quantifier min */
-	final int max;                      /* current quantifier max */
-	final int index;                    /* progress in text */
-	final int continuationOp;
-	final int continuationPc;
-	final REBackTrackData backTrack; // used by ASSERT_  to recover state
 }
 
 class REBackTrackData {
+
+	final REBackTrackData previous;
+	final int op;                             /* operator */
+	final int pc;                             /* bytecode pointer */
+	final int cp;                             /* char buffer index */
+	final int continuationOp;                 /* continuation op */
+	final int continuationPc;                 /* continuation pc */
+	final long[] parens;                      /* parenthesis captures */
+	final REProgState stateStackTop;          /* state of op that backtracked */
 
 	REBackTrackData(REGlobalData gData, int op, int pc, int cp, int continuationOp, int continuationPc) {
 		previous = gData.backTrackStackTop;
@@ -2785,16 +2764,6 @@ class REBackTrackData {
 		parens = gData.parens;
 		stateStackTop = gData.stateStackTop;
 	}
-
-	final REBackTrackData previous;
-
-	final int op;                             /* operator */
-	final int pc;                             /* bytecode pointer */
-	final int cp;                             /* char buffer index */
-	final int continuationOp;                 /* continuation op */
-	final int continuationPc;                 /* continuation pc */
-	final long[] parens;                      /* parenthesis captures */
-	final REProgState stateStackTop;          /* state of op that backtracked */
 }
 
 class REGlobalData {
@@ -2842,9 +2811,13 @@ class REGlobalData {
  * use of the class converts the source representation into a bitmap.
  *
  */
-final class RECharSet implements Serializable {
-	@Serial
-	private static final long serialVersionUID = 7931787979395898394L;
+final class RECharSet {
+	final int length;
+	final int startIndex;
+	final int strlength;
+	final boolean sense;
+	volatile transient boolean converted;
+	volatile transient byte[] bits;
 
 	RECharSet(int length, int startIndex, int strlength, boolean sense) {
 		this.length = length;
@@ -2852,14 +2825,6 @@ final class RECharSet implements Serializable {
 		this.strlength = strlength;
 		this.sense = sense;
 	}
-
-	final int length;
-	final int startIndex;
-	final int strlength;
-	final boolean sense;
-
-	volatile transient boolean converted;
-	volatile transient byte[] bits;
 }
 
 

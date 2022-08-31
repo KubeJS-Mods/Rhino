@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serializable;
-
 /**
  * This class implements the global native object (function and value
  * properties only).
@@ -17,7 +15,7 @@ import java.io.Serializable;
  * @author Mike Shaver
  */
 
-public class NativeGlobal implements Serializable, IdFunctionCall {
+public class NativeGlobal implements IdFunctionCall {
 	static final long serialVersionUID = 6080442165748707530L;
 
 	public static void init(Context cx, Scriptable scope, boolean sealed) {

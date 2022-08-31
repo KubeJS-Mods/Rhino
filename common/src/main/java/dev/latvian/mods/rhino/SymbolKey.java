@@ -1,8 +1,5 @@
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 /**
  * A SymbolKey is one of the implementations of Symbol. It is really there
  * so that we can easily use pre-defined symbols as keys in native code.
@@ -10,10 +7,7 @@ import java.io.Serializable;
  * with the same key are equal.
  */
 
-public class SymbolKey implements Symbol, Serializable {
-	@Serial
-	private static final long serialVersionUID = -6019782713330994754L;
-
+public class SymbolKey implements Symbol {
 	// These are common SymbolKeys that are equivalent to well-known symbols
 	// defined in ECMAScript.
 	public static final SymbolKey ITERATOR = new SymbolKey("Symbol.iterator");

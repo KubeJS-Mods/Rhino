@@ -6,18 +6,11 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 /**
  * Generic notion of reference object that know how to query/modify the
  * target objects based on some property/index.
  */
-public abstract class Ref implements Serializable {
-
-	@Serial
-	private static final long serialVersionUID = 4044540354730911424L;
-
+public abstract class Ref {
 	public boolean has(Context cx) {
 		return true;
 	}

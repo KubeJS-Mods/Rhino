@@ -6,19 +6,13 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 /**
  * This class implements the object lookup required for the
  * <code>with</code> statement.
  * It simply delegates every action to its prototype except
  * for operations on its parent.
  */
-public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall, Serializable {
-	@Serial
-	private static final long serialVersionUID = 1L;
-
+public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall {
 	static void init(Scriptable scope, boolean sealed) {
 		NativeWith obj = new NativeWith();
 

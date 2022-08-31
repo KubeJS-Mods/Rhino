@@ -6,20 +6,13 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serial;
-import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Implementation of resizable array with focus on minimizing memory usage by storing few initial array elements in object fields. Can also be used as a stack.
  */
 
-public class ObjArray implements Serializable {
-	@Serial
-	private static final long serialVersionUID = 4174889037736658296L;
-
+public class ObjArray {
 	public ObjArray() {
 	}
 
@@ -103,7 +96,7 @@ public class ObjArray implements Serializable {
 		int N = size;
 		for (int i = 0; i != N; ++i) {
 			Object current = getImpl(i);
-			if (current == obj || (current != null && current.equals(obj))) {
+			if (Objects.equals(current, obj)) {
 				return i;
 			}
 		}
@@ -114,7 +107,7 @@ public class ObjArray implements Serializable {
 		for (int i = size; i != 0; ) {
 			--i;
 			Object current = getImpl(i);
-			if (current == obj || (current != null && current.equals(obj))) {
+			if (Objects.equals(current, obj)) {
 				return i;
 			}
 		}
@@ -346,7 +339,7 @@ public class ObjArray implements Serializable {
 				array[offset + 1] = f1;
 				/* fall through */
 			case 1:
-				array[offset + 0] = f0;
+				array[offset] = f0;
 				/* fall through */
 			case 0:
 				break;
@@ -396,29 +389,6 @@ public class ObjArray implements Serializable {
 
 	private static RuntimeException onSeledMutation() {
 		throw new IllegalStateException("Attempt to modify sealed array");
-	}
-
-	@Serial
-	private void writeObject(ObjectOutputStream os) throws IOException {
-		os.defaultWriteObject();
-		int N = size;
-		for (int i = 0; i != N; ++i) {
-			Object obj = getImpl(i);
-			os.writeObject(obj);
-		}
-	}
-
-	@Serial
-	private void readObject(ObjectInputStream is) throws IOException, ClassNotFoundException {
-		is.defaultReadObject(); // It reads size
-		int N = size;
-		if (N > FIELDS_STORE_SIZE) {
-			data = new Object[N - FIELDS_STORE_SIZE];
-		}
-		for (int i = 0; i != N; ++i) {
-			Object obj = is.readObject();
-			setImpl(i, obj);
-		}
 	}
 
 	// Number of data elements

@@ -6,12 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serial;
-import java.io.Serializable;
-
 /**
  * Map to associate objects to integers.
  * The map does not synchronize any of its operation, so either use
@@ -21,10 +15,7 @@ import java.io.Serializable;
  * @author Igor Bukanov
  */
 @SuppressWarnings("unused")
-public class ObjToIntMap implements Serializable {
-	@Serial
-	private static final long serialVersionUID = -1542220580748809402L;
-
+public class ObjToIntMap {
 	// Map implementation via hashtable,
 	// follows "The Art of Computer Programming" by Donald E. Knuth
 
@@ -419,40 +410,6 @@ public class ObjToIntMap implements Serializable {
 		values[(1 << power) + index] = hash;
 		++keyCount;
 		return index;
-	}
-
-	@Serial
-	private void writeObject(ObjectOutputStream out) throws IOException {
-		out.defaultWriteObject();
-
-		int count = keyCount;
-		for (int i = 0; count != 0; ++i) {
-			Object key = keys[i];
-			if (key != null && key != DELETED) {
-				--count;
-				out.writeObject(key);
-				out.writeInt(values[i]);
-			}
-		}
-	}
-
-	@Serial
-	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		in.defaultReadObject();
-
-		int writtenKeyCount = keyCount;
-		if (writtenKeyCount != 0) {
-			keyCount = 0;
-			int N = 1 << power;
-			keys = new Object[N];
-			values = new int[2 * N];
-			for (int i = 0; i != writtenKeyCount; ++i) {
-				Object key = in.readObject();
-				int hash = key.hashCode();
-				int index = insertNewKey(key, hash);
-				values[index] = in.readInt();
-			}
-		}
 	}
 
 	// A == golden_ratio * (1 << 32) = ((sqrt(5) - 1) / 2) * (1 << 32)
