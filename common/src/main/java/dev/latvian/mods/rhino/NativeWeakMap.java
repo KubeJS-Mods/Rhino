@@ -18,17 +18,38 @@ import java.util.WeakHashMap;
  */
 public class NativeWeakMap extends IdScriptableObject {
 	private static final Object MAP_TAG = "WeakMap";
-
-	private boolean instanceOfWeakMap = false;
-
-	private final transient WeakHashMap<Scriptable, Object> map = new WeakHashMap<>();
-
 	private static final Object NULL_VALUE = new Object();
+	private static final int Id_constructor = 1;
+	private static final int Id_delete = 2;
+	private static final int Id_get = 3;
+	private static final int Id_has = 4;
+	private static final int Id_set = 5;
+	private static final int SymbolId_toStringTag = 6;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	static void init(Scriptable scope, boolean sealed) {
 		NativeWeakMap m = new NativeWeakMap();
 		m.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
+
+	private static NativeWeakMap realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (thisObj == null) {
+			throw incompatibleCallError(f);
+		}
+		try {
+			final NativeWeakMap nm = (NativeWeakMap) thisObj;
+			if (!nm.instanceOfWeakMap) {
+				// Check for "Map internal data tag"
+				throw incompatibleCallError(f);
+			}
+			return nm;
+		} catch (ClassCastException cce) {
+			throw incompatibleCallError(f);
+		}
+	}
+
+	private final transient WeakHashMap<Scriptable, Object> map = new WeakHashMap<>();
+	private boolean instanceOfWeakMap = false;
 
 	@Override
 	public String getClassName() {
@@ -107,22 +128,6 @@ public class NativeWeakMap extends IdScriptableObject {
 		return this;
 	}
 
-	private static NativeWeakMap realThis(Scriptable thisObj, IdFunctionObject f) {
-		if (thisObj == null) {
-			throw incompatibleCallError(f);
-		}
-		try {
-			final NativeWeakMap nm = (NativeWeakMap) thisObj;
-			if (!nm.instanceOfWeakMap) {
-				// Check for "Map internal data tag"
-				throw incompatibleCallError(f);
-			}
-			return nm;
-		} catch (ClassCastException cce) {
-			throw incompatibleCallError(f);
-		}
-	}
-
 	@Override
 	protected void initPrototypeId(int id) {
 		if (id == SymbolId_toStringTag) {
@@ -177,12 +182,4 @@ public class NativeWeakMap extends IdScriptableObject {
 			default -> super.findPrototypeId(s);
 		};
 	}
-
-	private static final int Id_constructor = 1;
-	private static final int Id_delete = 2;
-	private static final int Id_get = 3;
-	private static final int Id_has = 4;
-	private static final int Id_set = 5;
-	private static final int SymbolId_toStringTag = 6;
-	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 }

@@ -9,14 +9,24 @@ package dev.latvian.mods.rhino;
 import java.util.Iterator;
 
 public class NativeMap extends IdScriptableObject {
-	private static final Object MAP_TAG = "Map";
 	static final String ITERATOR_TAG = "Map Iterator";
-
+	private static final Object MAP_TAG = "Map";
 	private static final Object NULL_VALUE = new Object();
-
-	private final Hashtable entries = new Hashtable();
-
-	private boolean instanceOfMap = false;
+	// Note that "SymbolId_iterator" is not present here. That's because the spec
+	// requires that it be the same value as the "entries" prototype property.
+	private static final int Id_constructor = 1;
+	private static final int Id_set = 2;
+	private static final int Id_get = 3;
+	private static final int Id_delete = 4;
+	private static final int Id_has = 5;
+	private static final int Id_clear = 6;
+	private static final int Id_keys = 7;
+	private static final int Id_values = 8;
+	private static final int Id_entries = 9;
+	private static final int Id_forEach = 10;
+	private static final int SymbolId_getSize = 11;
+	private static final int SymbolId_toStringTag = 12;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	static void init(Context cx, Scriptable scope, boolean sealed) {
 		NativeMap obj = new NativeMap();
@@ -32,6 +42,68 @@ public class NativeMap extends IdScriptableObject {
 			obj.sealObject();
 		}
 	}
+
+	/**
+	 * If an "iterable" object was passed to the constructor, there are many many things
+	 * to do... Make this static because NativeWeakMap has the exact same requirement.
+	 */
+	static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject map, Object arg1) {
+		if ((arg1 == null) || Undefined.instance.equals(arg1)) {
+			return;
+		}
+
+		// Call the "[Symbol.iterator]" property as a function.
+		final Object ito = ScriptRuntime.callIterator(arg1, cx, scope);
+		if (Undefined.instance.equals(ito)) {
+			// Per spec, ignore if the iterator is undefined
+			return;
+		}
+
+		// Find the "add" function of our own prototype, since it might have
+		// been replaced. Since we're not fully constructed yet, create a dummy instance
+		// so that we can get our own prototype.
+		ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, map.getClassName()));
+		final Callable set = ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "set", cx, scope);
+		ScriptRuntime.lastStoredScriptable(cx);
+
+		// Finally, run through all the iterated values and add them!
+		try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
+			for (Object val : it) {
+				Scriptable sVal = ensureScriptable(val);
+				if (sVal instanceof Symbol) {
+					throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(sVal));
+				}
+				Object finalKey = sVal.get(0, sVal);
+				if (finalKey == NOT_FOUND) {
+					finalKey = Undefined.instance;
+				}
+				Object finalVal = sVal.get(1, sVal);
+				if (finalVal == NOT_FOUND) {
+					finalVal = Undefined.instance;
+				}
+				set.call(cx, scope, map, new Object[]{finalKey, finalVal});
+			}
+		}
+	}
+
+	private static NativeMap realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (thisObj == null) {
+			throw incompatibleCallError(f);
+		}
+		try {
+			final NativeMap nm = (NativeMap) thisObj;
+			if (!nm.instanceOfMap) {
+				// Check for "Map internal data tag"
+				throw incompatibleCallError(f);
+			}
+			return nm;
+		} catch (ClassCastException cce) {
+			throw incompatibleCallError(f);
+		}
+	}
+
+	private final Hashtable entries = new Hashtable();
+	private boolean instanceOfMap = false;
 
 	@Override
 	public String getClassName() {
@@ -154,65 +226,6 @@ public class NativeMap extends IdScriptableObject {
 		return Undefined.instance;
 	}
 
-	/**
-	 * If an "iterable" object was passed to the constructor, there are many many things
-	 * to do... Make this static because NativeWeakMap has the exact same requirement.
-	 */
-	static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject map, Object arg1) {
-		if ((arg1 == null) || Undefined.instance.equals(arg1)) {
-			return;
-		}
-
-		// Call the "[Symbol.iterator]" property as a function.
-		final Object ito = ScriptRuntime.callIterator(arg1, cx, scope);
-		if (Undefined.instance.equals(ito)) {
-			// Per spec, ignore if the iterator is undefined
-			return;
-		}
-
-		// Find the "add" function of our own prototype, since it might have
-		// been replaced. Since we're not fully constructed yet, create a dummy instance
-		// so that we can get our own prototype.
-		ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, map.getClassName()));
-		final Callable set = ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "set", cx, scope);
-		ScriptRuntime.lastStoredScriptable(cx);
-
-		// Finally, run through all the iterated values and add them!
-		try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
-			for (Object val : it) {
-				Scriptable sVal = ensureScriptable(val);
-				if (sVal instanceof Symbol) {
-					throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(sVal));
-				}
-				Object finalKey = sVal.get(0, sVal);
-				if (finalKey == NOT_FOUND) {
-					finalKey = Undefined.instance;
-				}
-				Object finalVal = sVal.get(1, sVal);
-				if (finalVal == NOT_FOUND) {
-					finalVal = Undefined.instance;
-				}
-				set.call(cx, scope, map, new Object[]{finalKey, finalVal});
-			}
-		}
-	}
-
-	private static NativeMap realThis(Scriptable thisObj, IdFunctionObject f) {
-		if (thisObj == null) {
-			throw incompatibleCallError(f);
-		}
-		try {
-			final NativeMap nm = (NativeMap) thisObj;
-			if (!nm.instanceOfMap) {
-				// Check for "Map internal data tag"
-				throw incompatibleCallError(f);
-			}
-			return nm;
-		} catch (ClassCastException cce) {
-			throw incompatibleCallError(f);
-		}
-	}
-
 	@Override
 	protected void initPrototypeId(int id) {
 		switch (id) {
@@ -308,20 +321,4 @@ public class NativeMap extends IdScriptableObject {
 			default -> 0;
 		};
 	}
-
-	// Note that "SymbolId_iterator" is not present here. That's because the spec
-	// requires that it be the same value as the "entries" prototype property.
-	private static final int Id_constructor = 1;
-	private static final int Id_set = 2;
-	private static final int Id_get = 3;
-	private static final int Id_delete = 4;
-	private static final int Id_has = 5;
-	private static final int Id_clear = 6;
-	private static final int Id_keys = 7;
-	private static final int Id_values = 8;
-	private static final int Id_entries = 9;
-	private static final int Id_forEach = 10;
-	private static final int SymbolId_getSize = 11;
-	private static final int SymbolId_toStringTag = 12;
-	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 }

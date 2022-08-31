@@ -26,34 +26,36 @@ class CodeGenerator extends Icode {
 
 	private static final int MIN_LABEL_TABLE_SIZE = 32;
 	private static final int MIN_FIXUP_TABLE_SIZE = 40;
+	// ECF_ or Expression Context Flags constants: for now only TAIL
+	private static final int ECF_TAIL = 1 << 0;
 
+	private static RuntimeException badTree(Node node) {
+		throw new RuntimeException(node.toString());
+	}
+
+	private static int getLocalBlockRef(Node node) {
+		Node localBlock = (Node) node.getProp(Node.LOCAL_BLOCK_PROP);
+		return localBlock.getExistingIntProp(Node.LOCAL_PROP);
+	}
+
+	private final ObjToIntMap strings = new ObjToIntMap(20);
+	private final ObjArray literalIds = new ObjArray();
 	private CompilerEnvirons compilerEnv;
-
 	private boolean itsInFunctionFlag;
 	private boolean itsInTryFlag;
-
 	private InterpreterData itsData;
-
 	private ScriptNode scriptOrFn;
 	private int iCodeTop;
 	private int stackDepth;
 	private int lineNumber;
 	private int doubleTableTop;
-
-	private final ObjToIntMap strings = new ObjToIntMap(20);
 	private int localTop;
 	private int[] labelTable;
 	private int labelTableTop;
-
 	// fixupTable[i] = (label_index << 32) | fixup_site
 	private long[] fixupTable;
 	private int fixupTableTop;
-	private final ObjArray literalIds = new ObjArray();
-
 	private int exceptionTableTop;
-
-	// ECF_ or Expression Context Flags constants: for now only TAIL
-	private static final int ECF_TAIL = 1 << 0;
 
 	public InterpreterData compile(CompilerEnvirons compilerEnv, ScriptNode tree, boolean returnFunction) {
 		this.compilerEnv = compilerEnv;
@@ -236,10 +238,6 @@ class CodeGenerator extends Icode {
 			addIcode(Icode_LINE);
 			addUint16(lineno & 0xFFFF);
 		}
-	}
-
-	private static RuntimeException badTree(Node node) {
-		throw new RuntimeException(node.toString());
 	}
 
 	private void visitStatement(Node node, int initialStackDepth) {
@@ -864,7 +862,6 @@ class CodeGenerator extends Icode {
 		}
 	}
 
-
 	private void visitIncDec(Node node, Node child) {
 		int incrDecrMask = node.getExistingIntProp(Node.INCRDECR_PROP);
 		int childType = child.getType();
@@ -976,11 +973,6 @@ class CodeGenerator extends Icode {
 		// by statements.
 		visitStatement(initStmt, stackDepth);
 		visitExpression(expr, 0);
-	}
-
-	private static int getLocalBlockRef(Node node) {
-		Node localBlock = (Node) node.getProp(Node.LOCAL_BLOCK_PROP);
-		return localBlock.getExistingIntProp(Node.LOCAL_PROP);
 	}
 
 	private int getTargetLabel(Node target) {

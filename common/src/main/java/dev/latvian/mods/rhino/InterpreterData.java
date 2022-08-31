@@ -12,6 +12,43 @@ final class InterpreterData {
 	static final int INITIAL_MAX_ICODE_LENGTH = 1024;
 	static final int INITIAL_STRINGTABLE_SIZE = 64;
 	static final int INITIAL_NUMBERTABLE_SIZE = 64;
+	String itsName;
+	String itsSourceFile;
+	boolean itsNeedsActivation;
+	int itsFunctionType;
+	String[] itsStringTable;
+	double[] itsDoubleTable;
+	InterpreterData[] itsNestedFunctions;
+	Object[] itsRegExpLiterals;
+	Object[] itsTemplateLiterals;
+	byte[] itsICode;
+	int[] itsExceptionTable;
+	int itsMaxVars;
+	int itsMaxLocals;
+	int itsMaxStack;
+	int itsMaxFrameArray;
+	// see comments in NativeFunction for definition of argNames and argCount
+	String[] argNames;
+	boolean[] argIsConst;
+	int argCount;
+	int itsMaxCalleeArgs;
+	boolean isStrict;
+	boolean topLevel;
+	boolean isES6Generator;
+	Object[] literalIds;
+	UintMap longJumps;
+	int firstLinePC = -1; // PC for the first LINE icode
+	InterpreterData parentData;
+	boolean evalScriptFlag; // true if script corresponds to eval() code
+	/**
+	 * true if the function has been declared like "var foo = function() {...}"
+	 */
+	boolean declaredAsVar;
+	/**
+	 * true if the function has been declared like "!function() {}".
+	 */
+	boolean declaredAsFunctionExpression;
+	private int icodeHashCode = 0;
 
 	InterpreterData(String sourceFile, boolean isStrict) {
 		this.itsSourceFile = sourceFile;
@@ -30,59 +67,6 @@ final class InterpreterData {
 		itsICode = new byte[INITIAL_MAX_ICODE_LENGTH];
 		itsStringTable = new String[INITIAL_STRINGTABLE_SIZE];
 	}
-
-	String itsName;
-	String itsSourceFile;
-	boolean itsNeedsActivation;
-	int itsFunctionType;
-
-	String[] itsStringTable;
-	double[] itsDoubleTable;
-	InterpreterData[] itsNestedFunctions;
-	Object[] itsRegExpLiterals;
-	Object[] itsTemplateLiterals;
-
-	byte[] itsICode;
-
-	int[] itsExceptionTable;
-
-	int itsMaxVars;
-	int itsMaxLocals;
-	int itsMaxStack;
-	int itsMaxFrameArray;
-
-	// see comments in NativeFunction for definition of argNames and argCount
-	String[] argNames;
-	boolean[] argIsConst;
-	int argCount;
-
-	int itsMaxCalleeArgs;
-
-	boolean isStrict;
-	boolean topLevel;
-	boolean isES6Generator;
-
-	Object[] literalIds;
-
-	UintMap longJumps;
-
-	int firstLinePC = -1; // PC for the first LINE icode
-
-	InterpreterData parentData;
-
-	boolean evalScriptFlag; // true if script corresponds to eval() code
-
-	private int icodeHashCode = 0;
-
-	/**
-	 * true if the function has been declared like "var foo = function() {...}"
-	 */
-	boolean declaredAsVar;
-
-	/**
-	 * true if the function has been declared like "!function() {}".
-	 */
-	boolean declaredAsFunctionExpression;
 
 	public String getFunctionName() {
 		return itsName;

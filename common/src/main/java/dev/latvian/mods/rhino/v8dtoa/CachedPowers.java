@@ -34,39 +34,8 @@ public class CachedPowers {
 
 
 	static final double kD_1_LOG2_10 = 0.30102999566398114;  //  1 / lg(10)
-
-	static class CachedPower {
-		long significand;
-		short binaryExponent;
-		short decimalExponent;
-
-		CachedPower(long significand, short binaryExponent, short decimalExponent) {
-			this.significand = significand;
-			this.binaryExponent = binaryExponent;
-			this.decimalExponent = decimalExponent;
-		}
-	}
-
-
-	static int getCachedPower(int e, int alpha, int gamma, DiyFp c_mk) {
-		int kQ = DiyFp.kSignificandSize;
-		double k = Math.ceil((alpha - e + kQ - 1) * kD_1_LOG2_10);
-		int index = (GRISU_CACHE_OFFSET + (int) k - 1) / CACHED_POWERS_SPACING + 1;
-		CachedPower cachedPower = CACHED_POWERS[index];
-
-		c_mk.setF(cachedPower.significand);
-		c_mk.setE(cachedPower.binaryExponent);
-		assert ((alpha <= c_mk.e() + e) && (c_mk.e() + e <= gamma));
-		return cachedPower.decimalExponent;
-	}
-
-	// Code below is converted from GRISU_CACHE_NAME(8) in file "powers-ten.h"
-	// Regexp to convert this from original C++ source:
-	// \{GRISU_UINT64_C\((\w+), (\w+)\), (\-?\d+), (\-?\d+)\}
-
 	// interval between entries  of the powers cache below
 	static final int CACHED_POWERS_SPACING = 8;
-
 	static final CachedPower[] CACHED_POWERS = {
 			new CachedPower(0xe61acf033d1a45dfL, (short) -1087, (short) -308),
 			new CachedPower(0xab70fe17c79ac6caL, (short) -1060, (short) -300),
@@ -152,10 +121,36 @@ public class CachedPowers {
 			new CachedPower(0xaf87023b9bf0ee6bL, (short) 1066, (short) 340)
 	};
 
+	// Code below is converted from GRISU_CACHE_NAME(8) in file "powers-ten.h"
+	// Regexp to convert this from original C++ source:
+	// \{GRISU_UINT64_C\((\w+), (\w+)\), (\-?\d+), (\-?\d+)\}
 	static final int GRISU_CACHE_MAX_DISTANCE = 27;
+	static final int GRISU_CACHE_OFFSET = 308;
+
+	static class CachedPower {
+		long significand;
+		short binaryExponent;
+		short decimalExponent;
+
+		CachedPower(long significand, short binaryExponent, short decimalExponent) {
+			this.significand = significand;
+			this.binaryExponent = binaryExponent;
+			this.decimalExponent = decimalExponent;
+		}
+	}
 	// nb elements (8): 82
 
-	static final int GRISU_CACHE_OFFSET = 308;
+	static int getCachedPower(int e, int alpha, int gamma, DiyFp c_mk) {
+		int kQ = DiyFp.kSignificandSize;
+		double k = Math.ceil((alpha - e + kQ - 1) * kD_1_LOG2_10);
+		int index = (GRISU_CACHE_OFFSET + (int) k - 1) / CACHED_POWERS_SPACING + 1;
+		CachedPower cachedPower = CACHED_POWERS[index];
+
+		c_mk.setF(cachedPower.significand);
+		c_mk.setE(cachedPower.binaryExponent);
+		assert ((alpha <= c_mk.e() + e) && (c_mk.e() + e <= gamma));
+		return cachedPower.decimalExponent;
+	}
 
 
 }

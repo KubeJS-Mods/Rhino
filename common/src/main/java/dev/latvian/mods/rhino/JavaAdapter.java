@@ -19,6 +19,9 @@ import java.util.HashSet;
 import java.util.Map;
 
 public final class JavaAdapter implements IdFunctionCall {
+	private static final Object FTAG = "JavaAdapter";
+	private static final int Id_JavaAdapter = 1;
+
 	/**
 	 * Provides a key with which to distinguish previously generated
 	 * adapter classes stored in a hash table.
@@ -80,16 +83,6 @@ public final class JavaAdapter implements IdFunctionCall {
 			ctor.sealObject();
 		}
 		ctor.exportAsScopeProperty();
-	}
-
-	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		if (f.hasTag(FTAG)) {
-			if (f.methodId() == Id_JavaAdapter) {
-				return js_createAdapter(cx, scope, args);
-			}
-		}
-		throw f.unknown();
 	}
 
 	public static Object convertResult(Object result, Class<?> c) {
@@ -698,7 +691,7 @@ public final class JavaAdapter implements IdFunctionCall {
 		long convertionMask = 0;
 		for (int i = 0; i != parms.length; ++i) {
 			if (!parms[i].isPrimitive()) {
-				convertionMask |= (1 << i);
+				convertionMask |= (1L << i);
 			}
 		}
 		cfw.addPush(convertionMask);
@@ -863,6 +856,13 @@ public final class JavaAdapter implements IdFunctionCall {
 		return array;
 	}
 
-	private static final Object FTAG = "JavaAdapter";
-	private static final int Id_JavaAdapter = 1;
+	@Override
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		if (f.hasTag(FTAG)) {
+			if (f.methodId() == Id_JavaAdapter) {
+				return js_createAdapter(cx, scope, args);
+			}
+		}
+		throw f.unknown();
+	}
 }

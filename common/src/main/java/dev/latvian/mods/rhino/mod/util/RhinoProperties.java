@@ -13,16 +13,15 @@ public enum RhinoProperties {
 
 	INSTANCE;
 
-	private final Properties properties;
-	private boolean writeProperties;
-
-	public boolean forceLocalMappings;
-	public String srgRemoteUrl;
-
 	@ExpectPlatform
 	public static Path getGameDir() {
 		throw new AssertionError();
 	}
+
+	private final Properties properties;
+	public boolean forceLocalMappings;
+	public String srgRemoteUrl;
+	private boolean writeProperties;
 
 	RhinoProperties() {
 		properties = new Properties();

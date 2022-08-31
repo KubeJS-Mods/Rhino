@@ -12,12 +12,12 @@ public class GeneratorState {
 		private static final long serialVersionUID = 2561315658662379681L;
 	}
 
+	int operation;
+	Object value;
+	RuntimeException returnedException;
+
 	GeneratorState(int operation, Object value) {
 		this.operation = operation;
 		this.value = value;
 	}
-
-	int operation;
-	Object value;
-	RuntimeException returnedException;
 }

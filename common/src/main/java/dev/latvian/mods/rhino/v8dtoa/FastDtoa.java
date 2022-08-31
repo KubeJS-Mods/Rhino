@@ -44,7 +44,12 @@ public class FastDtoa {
 	// generation, but a smaller range requires more powers of ten to be cached.
 	static final int minimal_target_exponent = -60;
 	static final int maximal_target_exponent = -32;
-
+	static final int kTen4 = 10000;
+	static final int kTen5 = 100000;
+	static final int kTen6 = 1000000;
+	static final int kTen7 = 10000000;
+	static final int kTen8 = 100000000;
+	static final int kTen9 = 1000000000;
 
 	// Adjusts the last digit of the generated number, and screens out generated
 	// solutions that may be inaccurate. A solution may be inaccurate if it is
@@ -154,14 +159,6 @@ public class FastDtoa {
 		//   Conceptually we have: rest ~= too_high - buffer
 		return (2 * unit <= rest) && (rest <= unsafe_interval - 4 * unit);
 	}
-
-
-	static final int kTen4 = 10000;
-	static final int kTen5 = 100000;
-	static final int kTen6 = 1000000;
-	static final int kTen7 = 10000000;
-	static final int kTen8 = 100000000;
-	static final int kTen9 = 1000000000;
 
 	// Returns the biggest power of ten that is less than or equal than the given
 	// number. We furthermore receive the maximum number of bits 'number' has.

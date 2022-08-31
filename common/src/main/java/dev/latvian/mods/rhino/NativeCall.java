@@ -16,11 +16,19 @@ package dev.latvian.mods.rhino;
  */
 public final class NativeCall extends IdScriptableObject {
 	private static final Object CALL_TAG = "Call";
+	private static final int Id_constructor = 1;
+	private static final int MAX_PROTOTYPE_ID = 1;
 
 	static void init(Scriptable scope, boolean sealed) {
 		NativeCall obj = new NativeCall();
 		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
+
+	NativeFunction function;
+	Object[] originalArgs;
+	boolean isStrict;
+	transient NativeCall parentActivationCall;
+	private Arguments arguments;
 
 	NativeCall() {
 	}
@@ -112,15 +120,5 @@ public final class NativeCall extends IdScriptableObject {
 			arguments.defineAttributesForStrictMode();
 		}
 	}
-
-	private static final int Id_constructor = 1;
-	private static final int MAX_PROTOTYPE_ID = 1;
-
-	NativeFunction function;
-	Object[] originalArgs;
-	boolean isStrict;
-	private Arguments arguments;
-
-	transient NativeCall parentActivationCall;
 }
 

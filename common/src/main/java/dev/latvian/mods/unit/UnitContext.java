@@ -80,8 +80,8 @@ public class UnitContext {
 		DEFAULT.addConstant("E", FixedNumberUnit.E);
 	}
 
-	private final Map<String, FunctionFactory> functions = new HashMap<>();
 	public final Map<String, Unit> constants = new HashMap<>();
+	private final Map<String, FunctionFactory> functions = new HashMap<>();
 	private final Map<String, Unit> cache = new HashMap<>();
 	private int debug = -1;
 

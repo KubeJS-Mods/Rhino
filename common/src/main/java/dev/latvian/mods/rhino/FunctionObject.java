@@ -14,6 +14,142 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public class FunctionObject extends BaseFunction {
+	public static final int JAVA_UNSUPPORTED_TYPE = 0;
+	public static final int JAVA_STRING_TYPE = 1;
+	public static final int JAVA_INT_TYPE = 2;
+	public static final int JAVA_BOOLEAN_TYPE = 3;
+	public static final int JAVA_DOUBLE_TYPE = 4;
+	public static final int JAVA_SCRIPTABLE_TYPE = 5;
+	public static final int JAVA_OBJECT_TYPE = 6;
+	private static final short VARARGS_METHOD = -1;
+	private static final short VARARGS_CTOR = -2;
+	private static boolean sawSecurityException;
+
+	/**
+	 * @return One of <code>JAVA_*_TYPE</code> constants to indicate desired type
+	 * or {@link #JAVA_UNSUPPORTED_TYPE} if the convertion is not
+	 * possible
+	 */
+	public static int getTypeTag(Class<?> type) {
+		if (type == ScriptRuntime.StringClass) {
+			return JAVA_STRING_TYPE;
+		}
+		if (type == ScriptRuntime.IntegerClass || type == Integer.TYPE) {
+			return JAVA_INT_TYPE;
+		}
+		if (type == ScriptRuntime.BooleanClass || type == Boolean.TYPE) {
+			return JAVA_BOOLEAN_TYPE;
+		}
+		if (type == ScriptRuntime.DoubleClass || type == Double.TYPE) {
+			return JAVA_DOUBLE_TYPE;
+		}
+		if (ScriptRuntime.ScriptableClass.isAssignableFrom(type)) {
+			return JAVA_SCRIPTABLE_TYPE;
+		}
+		if (type == ScriptRuntime.ObjectClass) {
+			return JAVA_OBJECT_TYPE;
+		}
+
+		// Note that the long type is not supported; see the javadoc for
+		// the constructor for this class
+
+		return JAVA_UNSUPPORTED_TYPE;
+	}
+
+	public static Object convertArg(Context cx, Scriptable scope, Object arg, int typeTag) {
+		switch (typeTag) {
+			case JAVA_STRING_TYPE:
+				if (arg instanceof String) {
+					return arg;
+				}
+				return ScriptRuntime.toString(arg);
+			case JAVA_INT_TYPE:
+				if (arg instanceof Integer) {
+					return arg;
+				}
+				return ScriptRuntime.toInt32(arg);
+			case JAVA_BOOLEAN_TYPE:
+				if (arg instanceof Boolean) {
+					return arg;
+				}
+				return ScriptRuntime.toBoolean(arg) ? Boolean.TRUE : Boolean.FALSE;
+			case JAVA_DOUBLE_TYPE:
+				if (arg instanceof Double) {
+					return arg;
+				}
+				return ScriptRuntime.toNumber(arg);
+			case JAVA_SCRIPTABLE_TYPE:
+				return ScriptRuntime.toObjectOrNull(cx, arg, scope);
+			case JAVA_OBJECT_TYPE:
+				return arg;
+			default:
+				throw new IllegalArgumentException();
+		}
+	}
+
+	static Method findSingleMethod(Method[] methods, String name) {
+		Method found = null;
+		for (int i = 0, N = methods.length; i != N; ++i) {
+			Method method = methods[i];
+			if (method != null && name.equals(method.getName())) {
+				if (found != null) {
+					throw Context.reportRuntimeError2("msg.no.overload", name, method.getDeclaringClass().getName());
+				}
+				found = method;
+			}
+		}
+		return found;
+	}
+
+	/**
+	 * Returns all public methods declared by the specified class. This excludes
+	 * inherited methods.
+	 *
+	 * @param clazz the class from which to pull public declared methods
+	 * @return the public methods declared in the specified class
+	 * @see Class#getDeclaredMethods()
+	 */
+	static Method[] getMethodList(Class<?> clazz) {
+		Method[] methods = null;
+		try {
+			// getDeclaredMethods may be rejected by the security manager
+			// but getMethods is more expensive
+			if (!sawSecurityException) {
+				methods = clazz.getDeclaredMethods();
+			}
+		} catch (SecurityException e) {
+			// If we get an exception once, give up on getDeclaredMethods
+			sawSecurityException = true;
+		}
+		if (methods == null) {
+			methods = clazz.getMethods();
+		}
+		int count = 0;
+		for (int i = 0; i < methods.length; i++) {
+			if (sawSecurityException ? methods[i].getDeclaringClass() != clazz : !Modifier.isPublic(methods[i].getModifiers())) {
+				methods[i] = null;
+			} else {
+				count++;
+			}
+		}
+		Method[] result = new Method[count];
+		int j = 0;
+		for (int i = 0; i < methods.length; i++) {
+			if (methods[i] != null) {
+				result[j++] = methods[i];
+			}
+		}
+		return result;
+	}
+
+	private final String functionName;
+	private final int parmsLength;
+	private final boolean isStatic;
+	MemberBox member;
+	private transient byte[] typeTags;
+	private transient boolean hasVoidReturn;
+	private transient int returnTypeTag;
+
 	/**
 	 * Create a JavaScript function object from a Java method.
 	 *
@@ -136,68 +272,6 @@ public class FunctionObject extends BaseFunction {
 	}
 
 	/**
-	 * @return One of <code>JAVA_*_TYPE</code> constants to indicate desired type
-	 * or {@link #JAVA_UNSUPPORTED_TYPE} if the convertion is not
-	 * possible
-	 */
-	public static int getTypeTag(Class<?> type) {
-		if (type == ScriptRuntime.StringClass) {
-			return JAVA_STRING_TYPE;
-		}
-		if (type == ScriptRuntime.IntegerClass || type == Integer.TYPE) {
-			return JAVA_INT_TYPE;
-		}
-		if (type == ScriptRuntime.BooleanClass || type == Boolean.TYPE) {
-			return JAVA_BOOLEAN_TYPE;
-		}
-		if (type == ScriptRuntime.DoubleClass || type == Double.TYPE) {
-			return JAVA_DOUBLE_TYPE;
-		}
-		if (ScriptRuntime.ScriptableClass.isAssignableFrom(type)) {
-			return JAVA_SCRIPTABLE_TYPE;
-		}
-		if (type == ScriptRuntime.ObjectClass) {
-			return JAVA_OBJECT_TYPE;
-		}
-
-		// Note that the long type is not supported; see the javadoc for
-		// the constructor for this class
-
-		return JAVA_UNSUPPORTED_TYPE;
-	}
-
-	public static Object convertArg(Context cx, Scriptable scope, Object arg, int typeTag) {
-		switch (typeTag) {
-			case JAVA_STRING_TYPE:
-				if (arg instanceof String) {
-					return arg;
-				}
-				return ScriptRuntime.toString(arg);
-			case JAVA_INT_TYPE:
-				if (arg instanceof Integer) {
-					return arg;
-				}
-				return ScriptRuntime.toInt32(arg);
-			case JAVA_BOOLEAN_TYPE:
-				if (arg instanceof Boolean) {
-					return arg;
-				}
-				return ScriptRuntime.toBoolean(arg) ? Boolean.TRUE : Boolean.FALSE;
-			case JAVA_DOUBLE_TYPE:
-				if (arg instanceof Double) {
-					return arg;
-				}
-				return ScriptRuntime.toNumber(arg);
-			case JAVA_SCRIPTABLE_TYPE:
-				return ScriptRuntime.toObjectOrNull(cx, arg, scope);
-			case JAVA_OBJECT_TYPE:
-				return arg;
-			default:
-				throw new IllegalArgumentException();
-		}
-	}
-
-	/**
 	 * Return the value defined by  the method used to construct the object
 	 * (number of parameters of the method, or 1 if the method is a "varargs"
 	 * form).
@@ -229,61 +303,6 @@ public class FunctionObject extends BaseFunction {
 		} else {
 			return member.ctor();
 		}
-	}
-
-	static Method findSingleMethod(Method[] methods, String name) {
-		Method found = null;
-		for (int i = 0, N = methods.length; i != N; ++i) {
-			Method method = methods[i];
-			if (method != null && name.equals(method.getName())) {
-				if (found != null) {
-					throw Context.reportRuntimeError2("msg.no.overload", name, method.getDeclaringClass().getName());
-				}
-				found = method;
-			}
-		}
-		return found;
-	}
-
-	/**
-	 * Returns all public methods declared by the specified class. This excludes
-	 * inherited methods.
-	 *
-	 * @param clazz the class from which to pull public declared methods
-	 * @return the public methods declared in the specified class
-	 * @see Class#getDeclaredMethods()
-	 */
-	static Method[] getMethodList(Class<?> clazz) {
-		Method[] methods = null;
-		try {
-			// getDeclaredMethods may be rejected by the security manager
-			// but getMethods is more expensive
-			if (!sawSecurityException) {
-				methods = clazz.getDeclaredMethods();
-			}
-		} catch (SecurityException e) {
-			// If we get an exception once, give up on getDeclaredMethods
-			sawSecurityException = true;
-		}
-		if (methods == null) {
-			methods = clazz.getMethods();
-		}
-		int count = 0;
-		for (int i = 0; i < methods.length; i++) {
-			if (sawSecurityException ? methods[i].getDeclaringClass() != clazz : !Modifier.isPublic(methods[i].getModifiers())) {
-				methods[i] = null;
-			} else {
-				count++;
-			}
-		}
-		Method[] result = new Method[count];
-		int j = 0;
-		for (int i = 0; i < methods.length; i++) {
-			if (methods[i] != null) {
-				result[j++] = methods[i];
-			}
-		}
-		return result;
 	}
 
 	/**
@@ -454,25 +473,4 @@ public class FunctionObject extends BaseFunction {
 	boolean isVarArgsConstructor() {
 		return parmsLength == VARARGS_CTOR;
 	}
-
-	private static final short VARARGS_METHOD = -1;
-	private static final short VARARGS_CTOR = -2;
-
-	private static boolean sawSecurityException;
-
-	public static final int JAVA_UNSUPPORTED_TYPE = 0;
-	public static final int JAVA_STRING_TYPE = 1;
-	public static final int JAVA_INT_TYPE = 2;
-	public static final int JAVA_BOOLEAN_TYPE = 3;
-	public static final int JAVA_DOUBLE_TYPE = 4;
-	public static final int JAVA_SCRIPTABLE_TYPE = 5;
-	public static final int JAVA_OBJECT_TYPE = 6;
-
-	MemberBox member;
-	private final String functionName;
-	private transient byte[] typeTags;
-	private final int parmsLength;
-	private transient boolean hasVoidReturn;
-	private transient int returnTypeTag;
-	private final boolean isStatic;
 }

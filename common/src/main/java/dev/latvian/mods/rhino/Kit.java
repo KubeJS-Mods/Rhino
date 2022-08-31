@@ -17,6 +17,33 @@ import java.util.Map;
  */
 
 public class Kit {
+	private final static class ComplexKey {
+		private final Object key1;
+		private final Object key2;
+		private int hash;
+
+		ComplexKey(Object key1, Object key2) {
+			this.key1 = key1;
+			this.key2 = key2;
+		}
+
+		@Override
+		public boolean equals(Object anotherObj) {
+			if (!(anotherObj instanceof ComplexKey another)) {
+				return false;
+			}
+			return key1.equals(another.key1) && key2.equals(another.key2);
+		}
+
+		@Override
+		public int hashCode() {
+			if (hash == 0) {
+				hash = key1.hashCode() ^ key2.hashCode();
+			}
+			return hash;
+		}
+	}
+
 	public static Class<?> classOrNull(String className) {
 		try {
 			return Class.forName(className);
@@ -290,33 +317,6 @@ public class Kit {
 			}
 		}
 		return initialValue;
-	}
-
-	private final static class ComplexKey {
-		private final Object key1;
-		private final Object key2;
-		private int hash;
-
-		ComplexKey(Object key1, Object key2) {
-			this.key1 = key1;
-			this.key2 = key2;
-		}
-
-		@Override
-		public boolean equals(Object anotherObj) {
-			if (!(anotherObj instanceof ComplexKey another)) {
-				return false;
-			}
-			return key1.equals(another.key1) && key2.equals(another.key2);
-		}
-
-		@Override
-		public int hashCode() {
-			if (hash == 0) {
-				hash = key1.hashCode() ^ key2.hashCode();
-			}
-			return hash;
-		}
 	}
 
 	public static Object makeHashKeyFromPair(Object key1, Object key2) {

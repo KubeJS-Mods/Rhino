@@ -17,20 +17,43 @@ import java.util.WeakHashMap;
  */
 public class NativeWeakSet extends IdScriptableObject {
 	private static final Object MAP_TAG = "WeakSet";
-
-	private boolean instanceOfWeakSet = false;
-
-	private final transient WeakHashMap<Scriptable, Boolean> map = new WeakHashMap<>();
+	private static final int Id_constructor = 1;
+	private static final int Id_add = 2;
+	private static final int Id_delete = 3;
+	private static final int Id_has = 4;
+	private static final int SymbolId_toStringTag = 5;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	static void init(Scriptable scope, boolean sealed) {
 		NativeWeakSet m = new NativeWeakSet();
 		m.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
 
+	private static NativeWeakSet realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (thisObj == null) {
+			throw incompatibleCallError(f);
+		}
+		try {
+			final NativeWeakSet ns = (NativeWeakSet) thisObj;
+			if (!ns.instanceOfWeakSet) {
+				// Check for "Set internal data tag"
+				throw incompatibleCallError(f);
+			}
+			return ns;
+		} catch (ClassCastException cce) {
+			throw incompatibleCallError(f);
+		}
+	}
+
+	private final transient WeakHashMap<Scriptable, Boolean> map = new WeakHashMap<>();
+	private boolean instanceOfWeakSet = false;
+
 	@Override
 	public String getClassName() {
 		return "WeakSet";
 	}
+
+	// #string_id_map#
 
 	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
@@ -88,22 +111,6 @@ public class NativeWeakSet extends IdScriptableObject {
 		return map.containsKey(key);
 	}
 
-	private static NativeWeakSet realThis(Scriptable thisObj, IdFunctionObject f) {
-		if (thisObj == null) {
-			throw incompatibleCallError(f);
-		}
-		try {
-			final NativeWeakSet ns = (NativeWeakSet) thisObj;
-			if (!ns.instanceOfWeakSet) {
-				// Check for "Set internal data tag"
-				throw incompatibleCallError(f);
-			}
-			return ns;
-		} catch (ClassCastException cce) {
-			throw incompatibleCallError(f);
-		}
-	}
-
 	@Override
 	protected void initPrototypeId(int id) {
 		if (id == SymbolId_toStringTag) {
@@ -143,8 +150,6 @@ public class NativeWeakSet extends IdScriptableObject {
 		return 0;
 	}
 
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
 		return switch (s) {
@@ -155,13 +160,6 @@ public class NativeWeakSet extends IdScriptableObject {
 			default -> super.findPrototypeId(s);
 		};
 	}
-
-	private static final int Id_constructor = 1;
-	private static final int Id_add = 2;
-	private static final int Id_delete = 3;
-	private static final int Id_has = 4;
-	private static final int SymbolId_toStringTag = 5;
-	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	// #/string_id_map#
 }

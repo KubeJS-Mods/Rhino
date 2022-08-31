@@ -17,18 +17,16 @@ import java.util.function.Consumer;
  * to see if a given property has already been enumerated.
  */
 public class IdEnumeration implements Consumer<Object> {
+	public Object tempResult;
 	Scriptable obj;
 	Object[] ids;
 	ObjToIntMap used;
 	Object currentId;
 	int index;
 	int enumType; /* one of ENUM_INIT_KEYS, ENUM_INIT_VALUES, ENUM_INIT_ARRAY, ENUMERATE_VALUES_IN_ORDER */
-
 	// if true, integer ids will be returned as numbers rather than strings
 	boolean enumNumbers;
-
 	IdEnumerationIterator iterator;
-	public Object tempResult;
 
 	public Boolean next(Context cx) {
 		if (iterator != null) {

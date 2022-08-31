@@ -28,11 +28,419 @@ import java.util.Locale;
  */
 final class NativeString extends IdScriptableObject implements Wrapper {
 	private static final Object STRING_TAG = "String";
+	private static final int Id_length = 1;
+	private static final int Id_namespace = 2;
+	private static final int Id_path = 3;
+	private static final int MAX_INSTANCE_ID = Id_path;
+	private static final int ConstructorId_fromCharCode = -1;
+	private static final int ConstructorId_fromCodePoint = -2;
+	private static final int ConstructorId_raw = -3;
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toSource = 3;
+	private static final int Id_valueOf = 4;
+	private static final int Id_charAt = 5;
+	private static final int Id_charCodeAt = 6;
+	private static final int Id_indexOf = 7;
+	private static final int Id_lastIndexOf = 8;
+	private static final int Id_split = 9;
+	private static final int Id_substring = 10;
+	private static final int Id_toLowerCase = 11;
+	private static final int Id_toUpperCase = 12;
+	private static final int Id_substr = 13;
+	private static final int Id_concat = 14;
+	private static final int Id_slice = 15;
+	private static final int Id_bold = 16;
+	private static final int Id_italics = 17;
+	private static final int Id_fixed = 18;
+	private static final int Id_strike = 19;
+	private static final int Id_small = 20;
+	private static final int Id_big = 21;
+	private static final int Id_blink = 22;
+	private static final int Id_sup = 23;
+	private static final int Id_sub = 24;
+	private static final int Id_fontsize = 25;
+	private static final int Id_fontcolor = 26;
+	private static final int Id_link = 27;
+	private static final int Id_anchor = 28;
+	private static final int Id_equals = 29;
+	private static final int Id_equalsIgnoreCase = 30;
+	private static final int Id_match = 31;
+
+	// #string_id_map#
+	private static final int Id_search = 32;
+	private static final int Id_replace = 33;
+	private static final int Id_localeCompare = 34;
+	private static final int Id_toLocaleLowerCase = 35;
+	private static final int Id_toLocaleUpperCase = 36;
+	private static final int Id_trim = 37;
+	private static final int Id_trimLeft = 38;
+	private static final int Id_trimRight = 39;
+	private static final int Id_includes = 40;
+	private static final int Id_startsWith = 41;
+	private static final int Id_endsWith = 42;
+	private static final int Id_normalize = 43;
+	private static final int Id_repeat = 44;
+	private static final int Id_codePointAt = 45;
+	private static final int Id_padStart = 46;
+	private static final int Id_padEnd = 47;
+	private static final int Id_trimStart = 48;
+	private static final int Id_trimEnd = 49;
+	private static final int SymbolId_iterator = 50;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
+	private static final int ConstructorId_charAt = -Id_charAt;
+	private static final int ConstructorId_charCodeAt = -Id_charCodeAt;
+	private static final int ConstructorId_indexOf = -Id_indexOf;
+	private static final int ConstructorId_lastIndexOf = -Id_lastIndexOf;
+	private static final int ConstructorId_split = -Id_split;
+	private static final int ConstructorId_substring = -Id_substring;
+	private static final int ConstructorId_toLowerCase = -Id_toLowerCase;
+	private static final int ConstructorId_toUpperCase = -Id_toUpperCase;
+	private static final int ConstructorId_substr = -Id_substr;
+	private static final int ConstructorId_concat = -Id_concat;
+	private static final int ConstructorId_slice = -Id_slice;
+	private static final int ConstructorId_equalsIgnoreCase = -Id_equalsIgnoreCase;
+	private static final int ConstructorId_match = -Id_match;
+	private static final int ConstructorId_search = -Id_search;
+	private static final int ConstructorId_replace = -Id_replace;
+	private static final int ConstructorId_localeCompare = -Id_localeCompare;
+	private static final int ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
 
 	static void init(Scriptable scope, boolean sealed) {
 		NativeString obj = new NativeString("");
 		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
+
+	private static NativeString realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (!(thisObj instanceof NativeString)) {
+			throw incompatibleCallError(f);
+		}
+		return (NativeString) thisObj;
+	}
+
+	/*
+	 * HTML composition aids.
+	 */
+	private static String tagify(Scriptable thisObj, String tag, String attribute, Object[] args) {
+		String str = ScriptRuntime.toString(thisObj);
+		StringBuilder result = new StringBuilder();
+		result.append('<').append(tag);
+		if (attribute != null) {
+			result.append(' ').append(attribute).append("=\"").append(ScriptRuntime.toString(args, 0)).append('"');
+		}
+		result.append('>').append(str).append("</").append(tag).append('>');
+		return result.toString();
+	}
+
+	/*
+	 *
+	 * See ECMA 15.5.4.6.  Uses Java String.indexOf()
+	 * OPT to add - BMH searching from jsstr.c.
+	 */
+	private static int js_indexOf(int methodId, String target, Object[] args) {
+		String searchStr = ScriptRuntime.toString(args, 0);
+		double position = ScriptRuntime.toInteger(args, 1);
+
+		if (methodId != Id_startsWith && methodId != Id_endsWith && searchStr.length() == 0) {
+			return position > target.length() ? target.length() : (int) position;
+		}
+
+		if (methodId != Id_startsWith && methodId != Id_endsWith && position > target.length()) {
+			return -1;
+		}
+
+		if (position < 0) {
+			position = 0;
+		} else if (position > target.length()) {
+			position = target.length();
+		} else if (methodId == Id_endsWith && (Double.isNaN(position) || position > target.length())) {
+			position = target.length();
+		}
+
+		if (Id_endsWith == methodId) {
+			if (args.length == 0 || args.length == 1 || (args.length == 2 && args[1] == Undefined.instance)) {
+				position = target.length();
+			}
+			return target.substring(0, (int) position).endsWith(searchStr) ? 0 : -1;
+		}
+		return methodId == Id_startsWith ? target.startsWith(searchStr, (int) position) ? 0 : -1 : target.indexOf(searchStr, (int) position);
+	}
+
+	/*
+	 *
+	 * See ECMA 15.5.4.7
+	 *
+	 */
+	private static int js_lastIndexOf(String target, Object[] args) {
+		String search = ScriptRuntime.toString(args, 0);
+		double end = ScriptRuntime.toNumber(args, 1);
+
+		if (Double.isNaN(end) || end > target.length()) {
+			end = target.length();
+		} else if (end < 0) {
+			end = 0;
+		}
+
+		return target.lastIndexOf(search, (int) end);
+	}
+
+	/*
+	 * See ECMA 15.5.4.15
+	 */
+	private static CharSequence js_substring(Context cx, CharSequence target, Object[] args) {
+		int length = target.length();
+		double start = ScriptRuntime.toInteger(args, 0);
+		double end;
+
+		if (start < 0) {
+			start = 0;
+		} else if (start > length) {
+			start = length;
+		}
+
+		if (args.length <= 1 || args[1] == Undefined.instance) {
+			end = length;
+		} else {
+			end = ScriptRuntime.toInteger(args[1]);
+			if (end < 0) {
+				end = 0;
+			} else if (end > length) {
+				end = length;
+			}
+
+			// swap if end < start
+			if (end < start) {
+				double temp = start;
+				start = end;
+				end = temp;
+			}
+		}
+		return target.subSequence((int) start, (int) end);
+	}
+
+	/*
+	 * Non-ECMA methods.
+	 */
+	private static CharSequence js_substr(CharSequence target, Object[] args) {
+		if (args.length < 1) {
+			return target;
+		}
+
+		double begin = ScriptRuntime.toInteger(args[0]);
+		double end;
+		int length = target.length();
+
+		if (begin < 0) {
+			begin += length;
+			if (begin < 0) {
+				begin = 0;
+			}
+		} else if (begin > length) {
+			begin = length;
+		}
+
+		end = length;
+		if (args.length > 1) {
+			Object lengthArg = args[1];
+
+			if (!Undefined.isUndefined(lengthArg)) {
+				end = ScriptRuntime.toInteger(lengthArg);
+				if (end < 0) {
+					end = 0;
+				}
+				end += begin;
+				if (end > length) {
+					end = length;
+				}
+			}
+		}
+
+		return target.subSequence((int) begin, (int) end);
+	}
+
+	/*
+	 * Python-esque sequence operations.
+	 */
+	private static String js_concat(String target, Object[] args) {
+		int N = args.length;
+		if (N == 0) {
+			return target;
+		} else if (N == 1) {
+			String arg = ScriptRuntime.toString(args[0]);
+			return target.concat(arg);
+		}
+
+		// Find total capacity for the final string to avoid unnecessary
+		// re-allocations in StringBuilder
+		int size = target.length();
+		String[] argsAsStrings = new String[N];
+		for (int i = 0; i != N; ++i) {
+			String s = ScriptRuntime.toString(args[i]);
+			argsAsStrings[i] = s;
+			size += s.length();
+		}
+
+		StringBuilder result = new StringBuilder(size);
+		result.append(target);
+		for (int i = 0; i != N; ++i) {
+			result.append(argsAsStrings[i]);
+		}
+		return result.toString();
+	}
+
+	private static CharSequence js_slice(CharSequence target, Object[] args) {
+		double begin = args.length < 1 ? 0 : ScriptRuntime.toInteger(args[0]);
+		double end;
+		int length = target.length();
+		if (begin < 0) {
+			begin += length;
+			if (begin < 0) {
+				begin = 0;
+			}
+		} else if (begin > length) {
+			begin = length;
+		}
+
+		if (args.length < 2 || args[1] == Undefined.instance) {
+			end = length;
+		} else {
+			end = ScriptRuntime.toInteger(args[1]);
+			if (end < 0) {
+				end += length;
+				if (end < 0) {
+					end = 0;
+				}
+			} else if (end > length) {
+				end = length;
+			}
+			if (end < begin) {
+				end = begin;
+			}
+		}
+		return target.subSequence((int) begin, (int) end);
+	}
+
+	private static String js_repeat(Context cx, Scriptable thisObj, IdFunctionObject f, Object[] args) {
+		String str = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
+		double cnt = ScriptRuntime.toInteger(args, 0);
+
+		if ((cnt < 0.0) || (cnt == Double.POSITIVE_INFINITY)) {
+			throw ScriptRuntime.rangeError("Invalid count value");
+		}
+
+		if (cnt == 0.0 || str.length() == 0) {
+			return "";
+		}
+
+		long size = str.length() * (long) cnt;
+		// Check for overflow
+		if ((cnt > Integer.MAX_VALUE) || (size > Integer.MAX_VALUE)) {
+			throw ScriptRuntime.rangeError("Invalid size or count value");
+		}
+
+		StringBuilder retval = new StringBuilder((int) size);
+		retval.append(str);
+
+		int i = 1;
+		int icnt = (int) cnt;
+		while (i <= (icnt / 2)) {
+			retval.append(retval);
+			i *= 2;
+		}
+		if (i < icnt) {
+			retval.append(retval.substring(0, str.length() * (icnt - i)));
+		}
+
+		return retval.toString();
+	}
+
+	/**
+	 * @see <a href='https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padstart'>padstart</a>
+	 * @see <a href='https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padend'>padend</a>
+	 */
+	private static String js_pad(Context cx, Scriptable thisObj, IdFunctionObject f, Object[] args, boolean atStart) {
+		String pad = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
+		long intMaxLength = ScriptRuntime.toLength(args, 0);
+		if (intMaxLength <= pad.length()) {
+			return pad;
+		}
+
+		String filler = " ";
+		if (args.length >= 2 && !Undefined.isUndefined(args[1])) {
+			filler = ScriptRuntime.toString(args[1]);
+			if (filler.length() < 1) {
+				return pad;
+			}
+		}
+
+		// cast is not really correct here
+		int fillLen = (int) (intMaxLength - pad.length());
+		StringBuilder concat = new StringBuilder();
+		do {
+			concat.append(filler);
+		} while (concat.length() < fillLen);
+		concat.setLength(fillLen);
+
+		if (atStart) {
+			return concat.append(pad).toString();
+		}
+
+		return concat.insert(0, pad).toString();
+	}
+
+	/**
+	 * <h1>String.raw (callSite, ...substitutions)</h1>
+	 * <p>15.5.3.4 String.raw [ECMA 6 - draft]</p>
+	 */
+	private static CharSequence js_raw(Context cx, Scriptable scope, Object[] args) {
+		final Object undefined = Undefined.instance;
+		/* step 1-3 */
+		Object arg0 = args.length > 0 ? args[0] : undefined;
+		Scriptable cooked = ScriptRuntime.toObject(cx, scope, arg0);
+		/* step 4-6 */
+		Object rawValue = cooked.get("raw", cooked);
+		if (rawValue == NOT_FOUND) {
+			rawValue = undefined;
+		}
+		Scriptable raw = ScriptRuntime.toObject(cx, scope, rawValue);
+		/* step 7-9 */
+		Object len = raw.get("length", raw);
+		if (len == NOT_FOUND) {
+			len = undefined;
+		}
+		long literalSegments = ScriptRuntime.toUint32(len);
+		/* step 10 */
+		if (literalSegments == 0) {
+			return "";
+		}
+		/* step 11-13 */
+		StringBuilder elements = new StringBuilder();
+		long nextIndex = 0;
+		for (; ; ) {
+			/* step 13 a-e */
+			Object next;
+			if (nextIndex > Integer.MAX_VALUE) {
+				next = raw.get(Long.toString(nextIndex), raw);
+			} else {
+				next = raw.get((int) nextIndex, raw);
+			}
+			if (next == NOT_FOUND) {
+				next = undefined;
+			}
+			String nextSeg = ScriptRuntime.toString(next);
+			elements.append(nextSeg);
+			nextIndex += 1;
+			if (nextIndex == literalSegments) {
+				break;
+			}
+			next = args.length > nextIndex ? args[(int) nextIndex] : undefined;
+			String nextSub = ScriptRuntime.toString(next);
+			elements.append(nextSub);
+		}
+		return elements.toString();
+	}
+
+	private final CharSequence string;
 
 	NativeString(CharSequence s) {
 		string = s;
@@ -53,15 +461,12 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 		return MemberType.STRING;
 	}
 
-	private static final int Id_length = 1;
-	private static final int Id_namespace = 2;
-	private static final int Id_path = 3;
-	private static final int MAX_INSTANCE_ID = Id_path;
-
 	@Override
 	protected int getMaxInstanceId() {
 		return MAX_INSTANCE_ID;
 	}
+
+	// #/string_id_map#
 
 	@Override
 	protected int findInstanceIdInfo(String s) {
@@ -690,27 +1095,6 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 		}
 	}
 
-	private static NativeString realThis(Scriptable thisObj, IdFunctionObject f) {
-		if (!(thisObj instanceof NativeString)) {
-			throw incompatibleCallError(f);
-		}
-		return (NativeString) thisObj;
-	}
-
-	/*
-	 * HTML composition aids.
-	 */
-	private static String tagify(Scriptable thisObj, String tag, String attribute, Object[] args) {
-		String str = ScriptRuntime.toString(thisObj);
-		StringBuilder result = new StringBuilder();
-		result.append('<').append(tag);
-		if (attribute != null) {
-			result.append(' ').append(attribute).append("=\"").append(ScriptRuntime.toString(args, 0)).append('"');
-		}
-		result.append('>').append(str).append("</").append(tag).append('>');
-		return result.toString();
-	}
-
 	public CharSequence toCharSequence() {
 		return string;
 	}
@@ -798,265 +1182,8 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 		return desc;
 	}
 
-	/*
-	 *
-	 * See ECMA 15.5.4.6.  Uses Java String.indexOf()
-	 * OPT to add - BMH searching from jsstr.c.
-	 */
-	private static int js_indexOf(int methodId, String target, Object[] args) {
-		String searchStr = ScriptRuntime.toString(args, 0);
-		double position = ScriptRuntime.toInteger(args, 1);
-
-		if (methodId != Id_startsWith && methodId != Id_endsWith && searchStr.length() == 0) {
-			return position > target.length() ? target.length() : (int) position;
-		}
-
-		if (methodId != Id_startsWith && methodId != Id_endsWith && position > target.length()) {
-			return -1;
-		}
-
-		if (position < 0) {
-			position = 0;
-		} else if (position > target.length()) {
-			position = target.length();
-		} else if (methodId == Id_endsWith && (Double.isNaN(position) || position > target.length())) {
-			position = target.length();
-		}
-
-		if (Id_endsWith == methodId) {
-			if (args.length == 0 || args.length == 1 || (args.length == 2 && args[1] == Undefined.instance)) {
-				position = target.length();
-			}
-			return target.substring(0, (int) position).endsWith(searchStr) ? 0 : -1;
-		}
-		return methodId == Id_startsWith ? target.startsWith(searchStr, (int) position) ? 0 : -1 : target.indexOf(searchStr, (int) position);
-	}
-
-	/*
-	 *
-	 * See ECMA 15.5.4.7
-	 *
-	 */
-	private static int js_lastIndexOf(String target, Object[] args) {
-		String search = ScriptRuntime.toString(args, 0);
-		double end = ScriptRuntime.toNumber(args, 1);
-
-		if (Double.isNaN(end) || end > target.length()) {
-			end = target.length();
-		} else if (end < 0) {
-			end = 0;
-		}
-
-		return target.lastIndexOf(search, (int) end);
-	}
-
-
-	/*
-	 * See ECMA 15.5.4.15
-	 */
-	private static CharSequence js_substring(Context cx, CharSequence target, Object[] args) {
-		int length = target.length();
-		double start = ScriptRuntime.toInteger(args, 0);
-		double end;
-
-		if (start < 0) {
-			start = 0;
-		} else if (start > length) {
-			start = length;
-		}
-
-		if (args.length <= 1 || args[1] == Undefined.instance) {
-			end = length;
-		} else {
-			end = ScriptRuntime.toInteger(args[1]);
-			if (end < 0) {
-				end = 0;
-			} else if (end > length) {
-				end = length;
-			}
-
-			// swap if end < start
-			if (end < start) {
-				double temp = start;
-				start = end;
-				end = temp;
-			}
-		}
-		return target.subSequence((int) start, (int) end);
-	}
-
 	int getLength() {
 		return string.length();
-	}
-
-	/*
-	 * Non-ECMA methods.
-	 */
-	private static CharSequence js_substr(CharSequence target, Object[] args) {
-		if (args.length < 1) {
-			return target;
-		}
-
-		double begin = ScriptRuntime.toInteger(args[0]);
-		double end;
-		int length = target.length();
-
-		if (begin < 0) {
-			begin += length;
-			if (begin < 0) {
-				begin = 0;
-			}
-		} else if (begin > length) {
-			begin = length;
-		}
-
-		end = length;
-		if (args.length > 1) {
-			Object lengthArg = args[1];
-
-			if (!Undefined.isUndefined(lengthArg)) {
-				end = ScriptRuntime.toInteger(lengthArg);
-				if (end < 0) {
-					end = 0;
-				}
-				end += begin;
-				if (end > length) {
-					end = length;
-				}
-			}
-		}
-
-		return target.subSequence((int) begin, (int) end);
-	}
-
-	/*
-	 * Python-esque sequence operations.
-	 */
-	private static String js_concat(String target, Object[] args) {
-		int N = args.length;
-		if (N == 0) {
-			return target;
-		} else if (N == 1) {
-			String arg = ScriptRuntime.toString(args[0]);
-			return target.concat(arg);
-		}
-
-		// Find total capacity for the final string to avoid unnecessary
-		// re-allocations in StringBuilder
-		int size = target.length();
-		String[] argsAsStrings = new String[N];
-		for (int i = 0; i != N; ++i) {
-			String s = ScriptRuntime.toString(args[i]);
-			argsAsStrings[i] = s;
-			size += s.length();
-		}
-
-		StringBuilder result = new StringBuilder(size);
-		result.append(target);
-		for (int i = 0; i != N; ++i) {
-			result.append(argsAsStrings[i]);
-		}
-		return result.toString();
-	}
-
-	private static CharSequence js_slice(CharSequence target, Object[] args) {
-		double begin = args.length < 1 ? 0 : ScriptRuntime.toInteger(args[0]);
-		double end;
-		int length = target.length();
-		if (begin < 0) {
-			begin += length;
-			if (begin < 0) {
-				begin = 0;
-			}
-		} else if (begin > length) {
-			begin = length;
-		}
-
-		if (args.length < 2 || args[1] == Undefined.instance) {
-			end = length;
-		} else {
-			end = ScriptRuntime.toInteger(args[1]);
-			if (end < 0) {
-				end += length;
-				if (end < 0) {
-					end = 0;
-				}
-			} else if (end > length) {
-				end = length;
-			}
-			if (end < begin) {
-				end = begin;
-			}
-		}
-		return target.subSequence((int) begin, (int) end);
-	}
-
-	private static String js_repeat(Context cx, Scriptable thisObj, IdFunctionObject f, Object[] args) {
-		String str = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
-		double cnt = ScriptRuntime.toInteger(args, 0);
-
-		if ((cnt < 0.0) || (cnt == Double.POSITIVE_INFINITY)) {
-			throw ScriptRuntime.rangeError("Invalid count value");
-		}
-
-		if (cnt == 0.0 || str.length() == 0) {
-			return "";
-		}
-
-		long size = str.length() * (long) cnt;
-		// Check for overflow
-		if ((cnt > Integer.MAX_VALUE) || (size > Integer.MAX_VALUE)) {
-			throw ScriptRuntime.rangeError("Invalid size or count value");
-		}
-
-		StringBuilder retval = new StringBuilder((int) size);
-		retval.append(str);
-
-		int i = 1;
-		int icnt = (int) cnt;
-		while (i <= (icnt / 2)) {
-			retval.append(retval);
-			i *= 2;
-		}
-		if (i < icnt) {
-			retval.append(retval.substring(0, str.length() * (icnt - i)));
-		}
-
-		return retval.toString();
-	}
-
-	/**
-	 * @see <a href='https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padstart'>padstart</a>
-	 * @see <a href='https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padend'>padend</a>
-	 */
-	private static String js_pad(Context cx, Scriptable thisObj, IdFunctionObject f, Object[] args, boolean atStart) {
-		String pad = ScriptRuntime.toString(ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
-		long intMaxLength = ScriptRuntime.toLength(args, 0);
-		if (intMaxLength <= pad.length()) {
-			return pad;
-		}
-
-		String filler = " ";
-		if (args.length >= 2 && !Undefined.isUndefined(args[1])) {
-			filler = ScriptRuntime.toString(args[1]);
-			if (filler.length() < 1) {
-				return pad;
-			}
-		}
-
-		// cast is not really correct here
-		int fillLen = (int) (intMaxLength - pad.length());
-		StringBuilder concat = new StringBuilder();
-		do {
-			concat.append(filler);
-		} while (concat.length() < fillLen);
-		concat.setLength(fillLen);
-
-		if (atStart) {
-			return concat.append(pad).toString();
-		}
-
-		return concat.insert(0, pad).toString();
 	}
 
 	@Override
@@ -1066,60 +1193,6 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 		}
 		return 0;
 	}
-
-	/**
-	 * <h1>String.raw (callSite, ...substitutions)</h1>
-	 * <p>15.5.3.4 String.raw [ECMA 6 - draft]</p>
-	 */
-	private static CharSequence js_raw(Context cx, Scriptable scope, Object[] args) {
-		final Object undefined = Undefined.instance;
-		/* step 1-3 */
-		Object arg0 = args.length > 0 ? args[0] : undefined;
-		Scriptable cooked = ScriptRuntime.toObject(cx, scope, arg0);
-		/* step 4-6 */
-		Object rawValue = cooked.get("raw", cooked);
-		if (rawValue == NOT_FOUND) {
-			rawValue = undefined;
-		}
-		Scriptable raw = ScriptRuntime.toObject(cx, scope, rawValue);
-		/* step 7-9 */
-		Object len = raw.get("length", raw);
-		if (len == NOT_FOUND) {
-			len = undefined;
-		}
-		long literalSegments = ScriptRuntime.toUint32(len);
-		/* step 10 */
-		if (literalSegments == 0) {
-			return "";
-		}
-		/* step 11-13 */
-		StringBuilder elements = new StringBuilder();
-		long nextIndex = 0;
-		for (; ; ) {
-			/* step 13 a-e */
-			Object next;
-			if (nextIndex > Integer.MAX_VALUE) {
-				next = raw.get(Long.toString(nextIndex), raw);
-			} else {
-				next = raw.get((int) nextIndex, raw);
-			}
-			if (next == NOT_FOUND) {
-				next = undefined;
-			}
-			String nextSeg = ScriptRuntime.toString(next);
-			elements.append(nextSeg);
-			nextIndex += 1;
-			if (nextIndex == literalSegments) {
-				break;
-			}
-			next = args.length > nextIndex ? args[(int) nextIndex] : undefined;
-			String nextSub = ScriptRuntime.toString(next);
-			elements.append(nextSub);
-		}
-		return elements.toString();
-	}
-
-	// #string_id_map#
 
 	@Override
 	protected int findPrototypeId(String s) {
@@ -1176,83 +1249,5 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 			default -> super.findPrototypeId(s);
 		};
 	}
-
-	private static final int ConstructorId_fromCharCode = -1;
-	private static final int ConstructorId_fromCodePoint = -2;
-	private static final int ConstructorId_raw = -3;
-
-	private static final int Id_constructor = 1;
-	private static final int Id_toString = 2;
-	private static final int Id_toSource = 3;
-	private static final int Id_valueOf = 4;
-	private static final int Id_charAt = 5;
-	private static final int Id_charCodeAt = 6;
-	private static final int Id_indexOf = 7;
-	private static final int Id_lastIndexOf = 8;
-	private static final int Id_split = 9;
-	private static final int Id_substring = 10;
-	private static final int Id_toLowerCase = 11;
-	private static final int Id_toUpperCase = 12;
-	private static final int Id_substr = 13;
-	private static final int Id_concat = 14;
-	private static final int Id_slice = 15;
-	private static final int Id_bold = 16;
-	private static final int Id_italics = 17;
-	private static final int Id_fixed = 18;
-	private static final int Id_strike = 19;
-	private static final int Id_small = 20;
-	private static final int Id_big = 21;
-	private static final int Id_blink = 22;
-	private static final int Id_sup = 23;
-	private static final int Id_sub = 24;
-	private static final int Id_fontsize = 25;
-	private static final int Id_fontcolor = 26;
-	private static final int Id_link = 27;
-	private static final int Id_anchor = 28;
-	private static final int Id_equals = 29;
-	private static final int Id_equalsIgnoreCase = 30;
-	private static final int Id_match = 31;
-	private static final int Id_search = 32;
-	private static final int Id_replace = 33;
-	private static final int Id_localeCompare = 34;
-	private static final int Id_toLocaleLowerCase = 35;
-	private static final int Id_toLocaleUpperCase = 36;
-	private static final int Id_trim = 37;
-	private static final int Id_trimLeft = 38;
-	private static final int Id_trimRight = 39;
-	private static final int Id_includes = 40;
-	private static final int Id_startsWith = 41;
-	private static final int Id_endsWith = 42;
-	private static final int Id_normalize = 43;
-	private static final int Id_repeat = 44;
-	private static final int Id_codePointAt = 45;
-	private static final int Id_padStart = 46;
-	private static final int Id_padEnd = 47;
-	private static final int Id_trimStart = 48;
-	private static final int Id_trimEnd = 49;
-	private static final int SymbolId_iterator = 50;
-	private static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
-
-	// #/string_id_map#
-
-	private static final int ConstructorId_charAt = -Id_charAt;
-	private static final int ConstructorId_charCodeAt = -Id_charCodeAt;
-	private static final int ConstructorId_indexOf = -Id_indexOf;
-	private static final int ConstructorId_lastIndexOf = -Id_lastIndexOf;
-	private static final int ConstructorId_split = -Id_split;
-	private static final int ConstructorId_substring = -Id_substring;
-	private static final int ConstructorId_toLowerCase = -Id_toLowerCase;
-	private static final int ConstructorId_toUpperCase = -Id_toUpperCase;
-	private static final int ConstructorId_substr = -Id_substr;
-	private static final int ConstructorId_concat = -Id_concat;
-	private static final int ConstructorId_slice = -Id_slice;
-	private static final int ConstructorId_equalsIgnoreCase = -Id_equalsIgnoreCase;
-	private static final int ConstructorId_match = -Id_match;
-	private static final int ConstructorId_search = -Id_search;
-	private static final int ConstructorId_replace = -Id_replace;
-	private static final int ConstructorId_localeCompare = -Id_localeCompare;
-	private static final int ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
-
-	private final CharSequence string;
 }
 

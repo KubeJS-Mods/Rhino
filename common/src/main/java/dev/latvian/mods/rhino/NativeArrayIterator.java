@@ -7,17 +7,15 @@
 package dev.latvian.mods.rhino;
 
 public final class NativeArrayIterator extends ES6Iterator {
-	public enum ArrayIteratorType {
-		ENTRIES, KEYS, VALUES
-	}
-
 	private static final String ITERATOR_TAG = "ArrayIterator";
-
-	private ArrayIteratorType type;
 
 	static void init(ScriptableObject scope, boolean sealed) {
 		init(scope, sealed, new NativeArrayIterator(), ITERATOR_TAG);
 	}
+
+	private ArrayIteratorType type;
+	private Scriptable arrayLike;
+	private int index;
 
 	/**
 	 * Only for constructing the prototype object.
@@ -67,7 +65,8 @@ public final class NativeArrayIterator extends ES6Iterator {
 		return ITERATOR_TAG;
 	}
 
-	private Scriptable arrayLike;
-	private int index;
+	public enum ArrayIteratorType {
+		ENTRIES, KEYS, VALUES
+	}
 }
 

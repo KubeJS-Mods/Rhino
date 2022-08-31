@@ -29,6 +29,77 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 	// Special property for getting the underlying Java class object.
 	static final String javaClassPropertyName = "__javaObject__";
 
+	static Scriptable constructSpecific(SharedContextData contextData, Scriptable scope, Object[] args, MemberBox ctor) {
+		Object instance = constructInternal(SharedContextData.get(scope), args, ctor);
+		// we need to force this to be wrapped, because construct _has_
+		// to return a scriptable
+		Scriptable topLevel = ScriptableObject.getTopLevelScope(scope);
+		return contextData.getWrapFactory().wrapNewObject(contextData, topLevel, instance);
+	}
+
+	static Object constructInternal(SharedContextData data, Object[] args, MemberBox ctor) {
+		Class<?>[] argTypes = ctor.argTypes;
+
+		if (ctor.vararg) {
+			// marshall the explicit parameter
+			Object[] newArgs = new Object[argTypes.length];
+			for (int i = 0; i < argTypes.length - 1; i++) {
+				newArgs[i] = Context.jsToJava(data, args[i], argTypes[i]);
+			}
+
+			Object varArgs;
+
+			// Handle special situation where a single variable parameter
+			// is given and it is a Java or ECMA array.
+			if (args.length == argTypes.length && (args[args.length - 1] == null || args[args.length - 1] instanceof NativeArray || args[args.length - 1] instanceof NativeJavaArray)) {
+				// convert the ECMA array into a native array
+				varArgs = Context.jsToJava(data, args[args.length - 1], argTypes[argTypes.length - 1]);
+			} else {
+				// marshall the variable parameter
+				Class<?> componentType = argTypes[argTypes.length - 1].getComponentType();
+				varArgs = Array.newInstance(componentType, args.length - argTypes.length + 1);
+				for (int i = 0; i < Array.getLength(varArgs); i++) {
+					Object value = Context.jsToJava(data, args[argTypes.length - 1 + i], componentType);
+					Array.set(varArgs, i, value);
+				}
+			}
+
+			// add varargs
+			newArgs[argTypes.length - 1] = varArgs;
+			// replace the original args with the new one
+			args = newArgs;
+		} else {
+			Object[] origArgs = args;
+			for (int i = 0; i < args.length; i++) {
+				Object arg = args[i];
+				Object x = Context.jsToJava(data, arg, argTypes[i]);
+				if (x != arg) {
+					if (args == origArgs) {
+						args = origArgs.clone();
+					}
+					args[i] = x;
+				}
+			}
+		}
+
+		return ctor.newInstance(args);
+	}
+
+	private static Class<?> findNestedClass(Class<?> parentClass, String name) {
+		String nestedClassName = parentClass.getName() + '$' + name;
+		ClassLoader loader = parentClass.getClassLoader();
+		if (loader == null) {
+			// ALERT: if loader is null, nested class should be loaded
+			// via system class loader which can be different from the
+			// loader that brought Rhino classes that Class.forName() would
+			// use, but ClassLoader.getSystemClassLoader() is Java 2 only
+			return Kit.classOrNull(nestedClassName);
+		}
+		return Kit.classOrNull(loader, nestedClassName);
+	}
+
+	private Map<String, FieldAndMethods> staticFieldAndMethods;
+
 	public NativeJavaClass() {
 	}
 
@@ -193,62 +264,6 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 		throw Context.reportRuntimeError2("msg.cant.instantiate", msg, classObject.getName());
 	}
 
-	static Scriptable constructSpecific(SharedContextData contextData, Scriptable scope, Object[] args, MemberBox ctor) {
-		Object instance = constructInternal(SharedContextData.get(scope), args, ctor);
-		// we need to force this to be wrapped, because construct _has_
-		// to return a scriptable
-		Scriptable topLevel = ScriptableObject.getTopLevelScope(scope);
-		return contextData.getWrapFactory().wrapNewObject(contextData, topLevel, instance);
-	}
-
-	static Object constructInternal(SharedContextData data, Object[] args, MemberBox ctor) {
-		Class<?>[] argTypes = ctor.argTypes;
-
-		if (ctor.vararg) {
-			// marshall the explicit parameter
-			Object[] newArgs = new Object[argTypes.length];
-			for (int i = 0; i < argTypes.length - 1; i++) {
-				newArgs[i] = Context.jsToJava(data, args[i], argTypes[i]);
-			}
-
-			Object varArgs;
-
-			// Handle special situation where a single variable parameter
-			// is given and it is a Java or ECMA array.
-			if (args.length == argTypes.length && (args[args.length - 1] == null || args[args.length - 1] instanceof NativeArray || args[args.length - 1] instanceof NativeJavaArray)) {
-				// convert the ECMA array into a native array
-				varArgs = Context.jsToJava(data, args[args.length - 1], argTypes[argTypes.length - 1]);
-			} else {
-				// marshall the variable parameter
-				Class<?> componentType = argTypes[argTypes.length - 1].getComponentType();
-				varArgs = Array.newInstance(componentType, args.length - argTypes.length + 1);
-				for (int i = 0; i < Array.getLength(varArgs); i++) {
-					Object value = Context.jsToJava(data, args[argTypes.length - 1 + i], componentType);
-					Array.set(varArgs, i, value);
-				}
-			}
-
-			// add varargs
-			newArgs[argTypes.length - 1] = varArgs;
-			// replace the original args with the new one
-			args = newArgs;
-		} else {
-			Object[] origArgs = args;
-			for (int i = 0; i < args.length; i++) {
-				Object arg = args[i];
-				Object x = Context.jsToJava(data, arg, argTypes[i]);
-				if (x != arg) {
-					if (args == origArgs) {
-						args = origArgs.clone();
-					}
-					args[i] = x;
-				}
-			}
-		}
-
-		return ctor.newInstance(args);
-	}
-
 	@Override
 	public String toString() {
 		return "[JavaClass " + getClassObject().getName() + "]";
@@ -274,19 +289,4 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 		// value wasn't something we understand
 		return false;
 	}
-
-	private static Class<?> findNestedClass(Class<?> parentClass, String name) {
-		String nestedClassName = parentClass.getName() + '$' + name;
-		ClassLoader loader = parentClass.getClassLoader();
-		if (loader == null) {
-			// ALERT: if loader is null, nested class should be loaded
-			// via system class loader which can be different from the
-			// loader that brought Rhino classes that Class.forName() would
-			// use, but ClassLoader.getSystemClassLoader() is Java 2 only
-			return Kit.classOrNull(nestedClassName);
-		}
-		return Kit.classOrNull(loader, nestedClassName);
-	}
-
-	private Map<String, FieldAndMethods> staticFieldAndMethods;
 }

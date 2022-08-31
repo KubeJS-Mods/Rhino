@@ -80,6 +80,17 @@ public class LabeledStatement extends AstNode {
 	}
 
 	/**
+	 * Sets the labeled statement, and sets its parent to this node.
+	 *
+	 * @throws IllegalArgumentException if {@code statement} is {@code null}
+	 */
+	public void setStatement(AstNode statement) {
+		assertNotNull(statement);
+		this.statement = statement;
+		statement.setParent(this);
+	}
+
+	/**
 	 * Returns label with specified name from the label list for
 	 * this labeled statement.  Returns {@code null} if there is no
 	 * label with that name in the list.
@@ -91,17 +102,6 @@ public class LabeledStatement extends AstNode {
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Sets the labeled statement, and sets its parent to this node.
-	 *
-	 * @throws IllegalArgumentException if {@code statement} is {@code null}
-	 */
-	public void setStatement(AstNode statement) {
-		assertNotNull(statement);
-		this.statement = statement;
-		statement.setParent(this);
 	}
 
 	public Label getFirstLabel() {

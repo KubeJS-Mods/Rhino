@@ -4,17 +4,13 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public class NativeCollectionIterator extends ES6Iterator {
-	private final String className;
-	private final Type type;
-	private transient Iterator<Hashtable.Entry> iterator = Collections.emptyIterator();
-
-	enum Type {
-		KEYS, VALUES, BOTH
-	}
-
 	static void init(ScriptableObject scope, String tag, boolean sealed) {
 		init(scope, sealed, new NativeCollectionIterator(tag), tag);
 	}
+
+	private final String className;
+	private final Type type;
+	private transient Iterator<Hashtable.Entry> iterator = Collections.emptyIterator();
 
 	public NativeCollectionIterator(String tag) {
 		this.className = tag;
@@ -47,5 +43,9 @@ public class NativeCollectionIterator extends ES6Iterator {
 			case VALUES -> e.value;
 			case BOTH -> cx.newArray(scope, new Object[]{e.key, e.value});
 		};
+	}
+
+	enum Type {
+		KEYS, VALUES, BOTH
 	}
 }

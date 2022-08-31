@@ -3,6 +3,9 @@ package dev.latvian.mods.rhino;
 import java.lang.reflect.Field;
 
 public class FieldAndMethods extends NativeJavaMethod {
+	Field field;
+	Object javaObject;
+
 	FieldAndMethods(Scriptable scope, MemberBox[] methods, Field field) {
 		super(methods);
 		this.field = field;
@@ -30,7 +33,4 @@ public class FieldAndMethods extends NativeJavaMethod {
 		}
 		return rval;
 	}
-
-	Field field;
-	Object javaObject;
 }

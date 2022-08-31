@@ -19,6 +19,7 @@ import java.io.Serial;
 public class WrappedException extends EvaluatorException {
 	@Serial
 	private static final long serialVersionUID = -1551979216966520648L;
+	private final Throwable exception;
 
 	/**
 	 * @see Context#throwAsScriptRuntimeEx(Throwable e)
@@ -48,6 +49,4 @@ public class WrappedException extends EvaluatorException {
 	public Throwable getWrappedException() {
 		return exception;
 	}
-
-	private final Throwable exception;
 }

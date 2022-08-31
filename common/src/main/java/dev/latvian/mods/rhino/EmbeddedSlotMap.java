@@ -15,16 +15,9 @@ package dev.latvian.mods.rhino;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 public class EmbeddedSlotMap implements SlotMap {
-
-	private ScriptableObject.Slot[] slots;
-
-	// gateways into the definition-order linked list of slots
-	private ScriptableObject.Slot firstAdded;
-	private ScriptableObject.Slot lastAdded;
-
-	private int count;
 
 	// initial slot array size, must be a power of 2
 	private static final int INITIAL_SLOT_SIZE = 4;
@@ -51,6 +44,42 @@ public class EmbeddedSlotMap implements SlotMap {
 			return ret;
 		}
 	}
+
+	private static void copyTable(ScriptableObject.Slot[] oldSlots, ScriptableObject.Slot[] newSlots) {
+		for (ScriptableObject.Slot slot : oldSlots) {
+			while (slot != null) {
+				ScriptableObject.Slot nextSlot = slot.next;
+				slot.next = null;
+				addKnownAbsentSlot(newSlots, slot);
+				slot = nextSlot;
+			}
+		}
+	}
+
+	/**
+	 * Add slot with keys that are known to absent from the table.
+	 * This is an optimization to use when inserting into empty table,
+	 * after table growth or during deserialization.
+	 */
+	private static void addKnownAbsentSlot(ScriptableObject.Slot[] addSlots, ScriptableObject.Slot slot) {
+		final int insertPos = getSlotIndex(addSlots.length, slot.indexOrHash);
+		ScriptableObject.Slot old = addSlots[insertPos];
+		addSlots[insertPos] = slot;
+		slot.next = old;
+	}
+
+	private static int getSlotIndex(int tableSize, int indexOrHash) {
+		// This is a Java trick to efficiently "mod" the hash code by the table size.
+		// It only works if the table size is a power of 2.
+		// The performance improvement is measurable.
+		return indexOrHash & (tableSize - 1);
+	}
+
+	private ScriptableObject.Slot[] slots;
+	// gateways into the definition-order linked list of slots
+	private ScriptableObject.Slot firstAdded;
+	private ScriptableObject.Slot lastAdded;
+	private int count;
 
 	public EmbeddedSlotMap() {
 	}
@@ -83,7 +112,7 @@ public class EmbeddedSlotMap implements SlotMap {
 		final int slotIndex = getSlotIndex(slots.length, indexOrHash);
 		for (ScriptableObject.Slot slot = slots[slotIndex]; slot != null; slot = slot.next) {
 			Object skey = slot.name;
-			if (indexOrHash == slot.indexOrHash && (skey == key || (key != null && key.equals(skey)))) {
+			if (indexOrHash == slot.indexOrHash && (Objects.equals(key, skey))) {
 				return slot;
 			}
 		}
@@ -110,7 +139,7 @@ public class EmbeddedSlotMap implements SlotMap {
 			final int slotIndex = getSlotIndex(slots.length, indexOrHash);
 			for (slot = slots[slotIndex]; slot != null; slot = slot.next) {
 				Object skey = slot.name;
-				if (indexOrHash == slot.indexOrHash && (skey == key || (key != null && key.equals(skey)))) {
+				if (indexOrHash == slot.indexOrHash && (Objects.equals(key, skey))) {
 					break;
 				}
 			}
@@ -152,7 +181,7 @@ public class EmbeddedSlotMap implements SlotMap {
 			ScriptableObject.Slot prev = slots[insertPos];
 			ScriptableObject.Slot slot = prev;
 			while (slot != null) {
-				if (slot.indexOrHash == indexOrHash && (slot.name == key || (key != null && key.equals(slot.name)))) {
+				if (slot.indexOrHash == indexOrHash && (Objects.equals(key, slot.name))) {
 					break;
 				}
 				prev = slot;
@@ -255,7 +284,7 @@ public class EmbeddedSlotMap implements SlotMap {
 			ScriptableObject.Slot prev = slots[slotIndex];
 			ScriptableObject.Slot slot = prev;
 			while (slot != null) {
-				if (slot.indexOrHash == indexOrHash && (slot.name == key || (key != null && key.equals(slot.name)))) {
+				if (slot.indexOrHash == indexOrHash && (Objects.equals(key, slot.name))) {
 					break;
 				}
 				prev = slot;
@@ -298,35 +327,5 @@ public class EmbeddedSlotMap implements SlotMap {
 				}
 			}
 		}
-	}
-
-	private static void copyTable(ScriptableObject.Slot[] oldSlots, ScriptableObject.Slot[] newSlots) {
-		for (ScriptableObject.Slot slot : oldSlots) {
-			while (slot != null) {
-				ScriptableObject.Slot nextSlot = slot.next;
-				slot.next = null;
-				addKnownAbsentSlot(newSlots, slot);
-				slot = nextSlot;
-			}
-		}
-	}
-
-	/**
-	 * Add slot with keys that are known to absent from the table.
-	 * This is an optimization to use when inserting into empty table,
-	 * after table growth or during deserialization.
-	 */
-	private static void addKnownAbsentSlot(ScriptableObject.Slot[] addSlots, ScriptableObject.Slot slot) {
-		final int insertPos = getSlotIndex(addSlots.length, slot.indexOrHash);
-		ScriptableObject.Slot old = addSlots[insertPos];
-		addSlots[insertPos] = slot;
-		slot.next = old;
-	}
-
-	private static int getSlotIndex(int tableSize, int indexOrHash) {
-		// This is a Java trick to efficiently "mod" the hash code by the table size.
-		// It only works if the table size is a power of 2.
-		// The performance improvement is measurable.
-		return indexOrHash & (tableSize - 1);
 	}
 }

@@ -27,6 +27,42 @@ import dev.latvian.mods.rhino.Undefined;
  * @author Norris Boyd
  */
 class NativeRegExpCtor extends BaseFunction {
+	private static final int Id_multiline = 1;
+	private static final int Id_STAR = 2;  // #string=$*#
+	private static final int Id_input = 3;
+	private static final int Id_UNDERSCORE = 4;  // #string=$_#
+	private static final int Id_lastMatch = 5;
+	private static final int Id_AMPERSAND = 6;  // #string=$&#
+	private static final int Id_lastParen = 7;
+
+	// #string_id_map#
+	private static final int Id_PLUS = 8;  // #string=$+#
+	private static final int Id_leftContext = 9;
+	private static final int Id_BACK_QUOTE = 10; // #string=$`#
+	private static final int Id_rightContext = 11;
+	private static final int Id_QUOTE = 12; // #string=$'#
+	private static final int DOLLAR_ID_BASE = 12;
+	private static final int Id_DOLLAR_1 = DOLLAR_ID_BASE + 1; // #string=$1#
+	private static final int Id_DOLLAR_2 = DOLLAR_ID_BASE + 2; // #string=$2#
+	private static final int Id_DOLLAR_3 = DOLLAR_ID_BASE + 3; // #string=$3#
+	private static final int Id_DOLLAR_4 = DOLLAR_ID_BASE + 4; // #string=$4#
+	private static final int Id_DOLLAR_5 = DOLLAR_ID_BASE + 5; // #string=$5#
+	private static final int Id_DOLLAR_6 = DOLLAR_ID_BASE + 6; // #string=$6#
+	private static final int Id_DOLLAR_7 = DOLLAR_ID_BASE + 7; // #string=$7#
+	private static final int Id_DOLLAR_8 = DOLLAR_ID_BASE + 8; // #string=$8#
+	private static final int Id_DOLLAR_9 = DOLLAR_ID_BASE + 9; // #string=$9#
+	private static final int MAX_INSTANCE_ID = DOLLAR_ID_BASE + 9;
+
+	private static RegExp getImpl() {
+		Context cx = Context.getCurrentContext();
+		return ScriptRuntime.getRegExpProxy(cx);
+	}
+
+	private int multilineAttr = PERMANENT;
+	private int starAttr = PERMANENT;
+	private int inputAttr = PERMANENT;
+	private int underscoreAttr = PERMANENT;
+
 	NativeRegExpCtor() {
 	}
 
@@ -45,6 +81,8 @@ class NativeRegExpCtor extends BaseFunction {
 		return 2;
 	}
 
+	// #/string_id_map#
+
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (args.length > 0 && args[0] instanceof NativeRegExp && (args.length == 1 || args[1] == Undefined.instance)) {
@@ -60,45 +98,6 @@ class NativeRegExpCtor extends BaseFunction {
 		ScriptRuntime.setBuiltinProtoAndParent(re, scope, TopLevel.Builtins.RegExp);
 		return re;
 	}
-
-	private static RegExp getImpl() {
-		Context cx = Context.getCurrentContext();
-		return ScriptRuntime.getRegExpProxy(cx);
-	}
-
-	// #string_id_map#
-
-	private static final int Id_multiline = 1;
-	private static final int Id_STAR = 2;  // #string=$*#
-
-	private static final int Id_input = 3;
-	private static final int Id_UNDERSCORE = 4;  // #string=$_#
-
-	private static final int Id_lastMatch = 5;
-	private static final int Id_AMPERSAND = 6;  // #string=$&#
-
-	private static final int Id_lastParen = 7;
-	private static final int Id_PLUS = 8;  // #string=$+#
-
-	private static final int Id_leftContext = 9;
-	private static final int Id_BACK_QUOTE = 10; // #string=$`#
-
-	private static final int Id_rightContext = 11;
-	private static final int Id_QUOTE = 12; // #string=$'#
-
-	private static final int DOLLAR_ID_BASE = 12;
-
-	private static final int Id_DOLLAR_1 = DOLLAR_ID_BASE + 1; // #string=$1#
-	private static final int Id_DOLLAR_2 = DOLLAR_ID_BASE + 2; // #string=$2#
-	private static final int Id_DOLLAR_3 = DOLLAR_ID_BASE + 3; // #string=$3#
-	private static final int Id_DOLLAR_4 = DOLLAR_ID_BASE + 4; // #string=$4#
-	private static final int Id_DOLLAR_5 = DOLLAR_ID_BASE + 5; // #string=$5#
-	private static final int Id_DOLLAR_6 = DOLLAR_ID_BASE + 6; // #string=$6#
-	private static final int Id_DOLLAR_7 = DOLLAR_ID_BASE + 7; // #string=$7#
-	private static final int Id_DOLLAR_8 = DOLLAR_ID_BASE + 8; // #string=$8#
-	private static final int Id_DOLLAR_9 = DOLLAR_ID_BASE + 9; // #string=$9#
-
-	private static final int MAX_INSTANCE_ID = DOLLAR_ID_BASE + 9;
 
 	@Override
 	protected int getMaxInstanceId() {
@@ -146,8 +145,6 @@ class NativeRegExpCtor extends BaseFunction {
 
 		return instanceIdInfo(attr, super.getMaxInstanceId() + id);
 	}
-
-	// #/string_id_map#
 
 	@Override
 	protected String getInstanceIdName(int id) {
@@ -299,9 +296,4 @@ class NativeRegExpCtor extends BaseFunction {
 		}
 		super.setInstanceIdAttributes(id, attr);
 	}
-
-	private int multilineAttr = PERMANENT;
-	private int starAttr = PERMANENT;
-	private int inputAttr = PERMANENT;
-	private int underscoreAttr = PERMANENT;
 }

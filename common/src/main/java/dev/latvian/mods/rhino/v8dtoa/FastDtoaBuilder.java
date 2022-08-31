@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 public class FastDtoaBuilder {
 
+	final static char[] digits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 	// allocate buffer for generated digits + extra notation + padding zeroes
 	final char[] chars = new char[FastDtoa.kFastDtoaMaximalLength + 8];
 	int end = 0;
@@ -106,6 +107,4 @@ public class FastDtoaBuilder {
 			}
 		}
 	}
-
-	final static char[] digits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 }

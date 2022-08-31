@@ -40,9 +40,6 @@ public final class DoubleConversion {
 	private static final int kExponentBias = 0x3FF + kPhysicalSignificandSize;
 	private static final int kDenormalExponent = -kExponentBias + 1;
 
-	private DoubleConversion() {
-	}
-
 	private static int exponent(long d64) {
 		if (isDenormal(d64)) {
 			return kDenormalExponent;
@@ -81,5 +78,8 @@ public final class DoubleConversion {
 		}
 		long s = significand(d64);
 		return sign(d64) * (int) (exponent < 0 ? s >> -exponent : s << exponent);
+	}
+
+	private DoubleConversion() {
 	}
 }

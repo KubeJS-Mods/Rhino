@@ -22,96 +22,6 @@ public class RegExp {
 	public static final int RA_REPLACE = 2;
 	public static final int RA_SEARCH = 3;
 
-	public boolean isRegExp(Scriptable obj) {
-		return obj instanceof NativeRegExp;
-	}
-
-	public Object compileRegExp(Context cx, String source, String flags) {
-		return NativeRegExp.compileRE(cx, source, flags, false);
-	}
-
-	public Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled) {
-		return new NativeRegExp(scope, (RECompiled) compiled);
-	}
-
-	public Object action(Context cx, Scriptable scope, Scriptable thisObj, Object[] args, int actionType) {
-		GlobData data = new GlobData();
-		data.mode = actionType;
-		data.str = ScriptRuntime.toString(thisObj);
-
-		switch (actionType) {
-			case RA_MATCH -> {
-				int optarg = Integer.MAX_VALUE;
-				NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
-				Object rval = matchOrReplace(cx, scope, thisObj, args, this, data, re);
-				return data.arrayobj == null ? rval : data.arrayobj;
-			}
-			case RA_SEARCH -> {
-				int optarg = Integer.MAX_VALUE;
-				NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
-				return matchOrReplace(cx, scope, thisObj, args, this, data, re);
-			}
-			case RA_REPLACE -> {
-				boolean useRE = args.length > 0 && args[0] instanceof NativeRegExp;
-				NativeRegExp re = null;
-				String search = null;
-				if (useRE) {
-					re = createRegExp(cx, scope, args, 2, true);
-				} else {
-					Object arg0 = args.length < 1 ? Undefined.instance : args[0];
-					search = ScriptRuntime.toString(arg0);
-				}
-
-				Object arg1 = args.length < 2 ? Undefined.instance : args[1];
-				String repstr = null;
-				Function lambda = null;
-				if (arg1 instanceof Function && (!(arg1 instanceof NativeRegExp))) {
-					lambda = (Function) arg1;
-				} else {
-					repstr = ScriptRuntime.toString(arg1);
-				}
-
-				data.lambda = lambda;
-				data.repstr = repstr;
-				data.dollar = repstr == null ? -1 : repstr.indexOf('$');
-				data.charBuf = null;
-				data.leftIndex = 0;
-
-				Object val;
-				if (useRE) {
-					val = matchOrReplace(cx, scope, thisObj, args, this, data, re);
-				} else {
-					String str = data.str;
-					int index = str.indexOf(search);
-					if (index >= 0) {
-						int slen = search.length();
-						this.parens = null;
-						this.lastParen = null;
-						this.leftContext = new SubString(str, 0, index);
-						this.lastMatch = new SubString(str, index, slen);
-						this.rightContext = new SubString(str, index + slen, str.length() - index - slen);
-						val = Boolean.TRUE;
-					} else {
-						val = Boolean.FALSE;
-					}
-				}
-
-				if (data.charBuf == null) {
-					if (data.global || val == null || !val.equals(Boolean.TRUE)) {
-						/* Didn't match even once. */
-						return data.str;
-					}
-					SubString lc = this.leftContext;
-					replace_glob(data, cx, scope, this, lc.index, lc.length);
-				}
-				SubString rc = this.rightContext;
-				data.charBuf.append(rc.str, rc.index, rc.index + rc.length);
-				return data.charBuf.toString();
-			}
-			default -> throw Kit.codeBug();
-		}
-	}
-
 	private static NativeRegExp createRegExp(Context cx, Scriptable scope, Object[] args, int optarg, boolean forceFlat) {
 		NativeRegExp re;
 		Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
@@ -181,81 +91,6 @@ public class RegExp {
 		}
 
 		return result;
-	}
-
-
-	public int find_split(Context cx, Scriptable scope, String target, String separator, Scriptable reObj, int[] ip, int[] matchlen, boolean[] matched, String[][] parensp) {
-		int i = ip[0];
-		int length = target.length();
-		int result;
-
-		NativeRegExp re = (NativeRegExp) reObj;
-		again:
-		while (true) {  // imitating C label
-			/* JS1.2 deviated from Perl by never matching at end of string. */
-			int ipsave = ip[0]; // reuse ip to save object creation
-			ip[0] = i;
-			Object ret = re.executeRegExp(cx, scope, this, target, ip, NativeRegExp.TEST);
-			if (!Boolean.TRUE.equals(ret)) {
-				// Mismatch: ensure our caller advances i past end of string.
-				ip[0] = ipsave;
-				matchlen[0] = 1;
-				matched[0] = false;
-				return length;
-			}
-			i = ip[0];
-			ip[0] = ipsave;
-			matched[0] = true;
-
-			SubString sep = this.lastMatch;
-			matchlen[0] = sep.length;
-			if (matchlen[0] == 0) {
-				/*
-				 * Empty string match: never split on an empty
-				 * match at the start of a find_split cycle.  Same
-				 * rule as for an empty global match in
-				 * match_or_replace.
-				 */
-				if (i == ip[0]) {
-					/*
-					 * "Bump-along" to avoid sticking at an empty
-					 * match, but don't bump past end of string --
-					 * our caller must do that by adding
-					 * sep->length to our return value.
-					 */
-					if (i == length) {
-						result = -1;
-						break;
-					}
-					i++;
-					continue again; // imitating C goto
-				}
-			}
-			// PR_ASSERT((size_t)i >= sep->length);
-			result = i - matchlen[0];
-			break;
-		}
-		int size = (parens == null) ? 0 : parens.length;
-		parensp[0] = new String[size];
-		for (int num = 0; num < size; num++) {
-			SubString parsub = getParenSubString(num);
-			parensp[0][num] = parsub.toString();
-		}
-		return result;
-	}
-
-	/**
-	 * Analog of REGEXP_PAREN_SUBSTRING in C jsregexp.h.
-	 * Assumes zero-based; i.e., for $3, i==2
-	 */
-	SubString getParenSubString(int i) {
-		if (parens != null && i < parens.length) {
-			SubString parsub = parens[i];
-			if (parsub != null) {
-				return parsub;
-			}
-		}
-		return new SubString();
 	}
 
 	/*
@@ -436,6 +271,243 @@ public class RegExp {
 	}
 
 	/*
+	 * Used by js_split to find the next split point in target,
+	 * starting at offset ip and looking either for the given
+	 * separator substring, or for the next re match.  ip and
+	 * matchlen must be reference variables (assumed to be arrays of
+	 * length 1) so they can be updated in the leading whitespace or
+	 * re case.
+	 *
+	 * Return -1 on end of string, >= 0 for a valid index of the next
+	 * separator occurrence if found, or the string length if no
+	 * separator is found.
+	 */
+	private static int find_split(Context cx, Scriptable scope, String target, String separator, RegExp reProxy, Scriptable re, int[] ip, int[] matchlen, boolean[] matched, String[][] parensp) {
+		int i = ip[0];
+		int length = target.length();
+
+		/*
+		 * Stop if past end of string.  If at end of string, we will
+		 * return target length, so that
+		 *
+		 *  "ab,".split(',') => new Array("ab", "")
+		 *
+		 * and the resulting array converts back to the string "ab,"
+		 * for symmetry.  NB: This differs from perl, which drops the
+		 * trailing empty substring if the LIMIT argument is omitted.
+		 */
+		if (i > length) {
+			return -1;
+		}
+
+		/*
+		 * Match a regular expression against the separator at or
+		 * above index i.  Return -1 at end of string instead of
+		 * trying for a match, so we don't get stuck in a loop.
+		 */
+		if (re != null) {
+			return reProxy.find_split(cx, scope, target, separator, re, ip, matchlen, matched, parensp);
+		}
+
+		/*
+		 * Special case: if sep is the empty string, split str into
+		 * one character substrings.  Let our caller worry about
+		 * whether to split once at end of string into an empty
+		 * substring.
+		 *
+		 * For 1.2 compatibility, at the end of the string, we return the length as
+		 * the result, and set the separator length to 1 -- this allows the caller
+		 * to include an additional null string at the end of the substring list.
+		 */
+		if (separator.length() == 0) {
+			return (i == length) ? -1 : i + 1;
+		}
+
+		/* Punt to j.l.s.indexOf; return target length if separator is
+		 * not found.
+		 */
+		if (ip[0] >= length) {
+			return length;
+		}
+
+		i = target.indexOf(separator, ip[0]);
+
+		return (i != -1) ? i : length;
+	}
+
+	protected String input;         /* input string to match (perl $_, GC root) */
+	protected boolean multiline;     /* whether input contains newlines (perl $*) */
+	protected SubString[] parens;        /* Vector of SubString; last set of parens matched (perl $1, $2) */
+	protected SubString lastMatch;     /* last string matched (perl $&) */
+	protected SubString lastParen;     /* last paren matched (perl $+) */
+	protected SubString leftContext;   /* input to left of last match (perl $`) */
+	protected SubString rightContext;  /* input to right of last match (perl $') */
+
+	public boolean isRegExp(Scriptable obj) {
+		return obj instanceof NativeRegExp;
+	}
+
+	public Object compileRegExp(Context cx, String source, String flags) {
+		return NativeRegExp.compileRE(cx, source, flags, false);
+	}
+
+	public Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled) {
+		return new NativeRegExp(scope, (RECompiled) compiled);
+	}
+
+	public Object action(Context cx, Scriptable scope, Scriptable thisObj, Object[] args, int actionType) {
+		GlobData data = new GlobData();
+		data.mode = actionType;
+		data.str = ScriptRuntime.toString(thisObj);
+
+		switch (actionType) {
+			case RA_MATCH -> {
+				int optarg = Integer.MAX_VALUE;
+				NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
+				Object rval = matchOrReplace(cx, scope, thisObj, args, this, data, re);
+				return data.arrayobj == null ? rval : data.arrayobj;
+			}
+			case RA_SEARCH -> {
+				int optarg = Integer.MAX_VALUE;
+				NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
+				return matchOrReplace(cx, scope, thisObj, args, this, data, re);
+			}
+			case RA_REPLACE -> {
+				boolean useRE = args.length > 0 && args[0] instanceof NativeRegExp;
+				NativeRegExp re = null;
+				String search = null;
+				if (useRE) {
+					re = createRegExp(cx, scope, args, 2, true);
+				} else {
+					Object arg0 = args.length < 1 ? Undefined.instance : args[0];
+					search = ScriptRuntime.toString(arg0);
+				}
+
+				Object arg1 = args.length < 2 ? Undefined.instance : args[1];
+				String repstr = null;
+				Function lambda = null;
+				if (arg1 instanceof Function && (!(arg1 instanceof NativeRegExp))) {
+					lambda = (Function) arg1;
+				} else {
+					repstr = ScriptRuntime.toString(arg1);
+				}
+
+				data.lambda = lambda;
+				data.repstr = repstr;
+				data.dollar = repstr == null ? -1 : repstr.indexOf('$');
+				data.charBuf = null;
+				data.leftIndex = 0;
+
+				Object val;
+				if (useRE) {
+					val = matchOrReplace(cx, scope, thisObj, args, this, data, re);
+				} else {
+					String str = data.str;
+					int index = str.indexOf(search);
+					if (index >= 0) {
+						int slen = search.length();
+						this.parens = null;
+						this.lastParen = null;
+						this.leftContext = new SubString(str, 0, index);
+						this.lastMatch = new SubString(str, index, slen);
+						this.rightContext = new SubString(str, index + slen, str.length() - index - slen);
+						val = Boolean.TRUE;
+					} else {
+						val = Boolean.FALSE;
+					}
+				}
+
+				if (data.charBuf == null) {
+					if (data.global || val == null || !val.equals(Boolean.TRUE)) {
+						/* Didn't match even once. */
+						return data.str;
+					}
+					SubString lc = this.leftContext;
+					replace_glob(data, cx, scope, this, lc.index, lc.length);
+				}
+				SubString rc = this.rightContext;
+				data.charBuf.append(rc.str, rc.index, rc.index + rc.length);
+				return data.charBuf.toString();
+			}
+			default -> throw Kit.codeBug();
+		}
+	}
+
+	public int find_split(Context cx, Scriptable scope, String target, String separator, Scriptable reObj, int[] ip, int[] matchlen, boolean[] matched, String[][] parensp) {
+		int i = ip[0];
+		int length = target.length();
+		int result;
+
+		NativeRegExp re = (NativeRegExp) reObj;
+		again:
+		while (true) {  // imitating C label
+			/* JS1.2 deviated from Perl by never matching at end of string. */
+			int ipsave = ip[0]; // reuse ip to save object creation
+			ip[0] = i;
+			Object ret = re.executeRegExp(cx, scope, this, target, ip, NativeRegExp.TEST);
+			if (!Boolean.TRUE.equals(ret)) {
+				// Mismatch: ensure our caller advances i past end of string.
+				ip[0] = ipsave;
+				matchlen[0] = 1;
+				matched[0] = false;
+				return length;
+			}
+			i = ip[0];
+			ip[0] = ipsave;
+			matched[0] = true;
+
+			SubString sep = this.lastMatch;
+			matchlen[0] = sep.length;
+			if (matchlen[0] == 0) {
+				/*
+				 * Empty string match: never split on an empty
+				 * match at the start of a find_split cycle.  Same
+				 * rule as for an empty global match in
+				 * match_or_replace.
+				 */
+				if (i == ip[0]) {
+					/*
+					 * "Bump-along" to avoid sticking at an empty
+					 * match, but don't bump past end of string --
+					 * our caller must do that by adding
+					 * sep->length to our return value.
+					 */
+					if (i == length) {
+						result = -1;
+						break;
+					}
+					i++;
+					continue again; // imitating C goto
+				}
+			}
+			// PR_ASSERT((size_t)i >= sep->length);
+			result = i - matchlen[0];
+			break;
+		}
+		int size = (parens == null) ? 0 : parens.length;
+		parensp[0] = new String[size];
+		for (int num = 0; num < size; num++) {
+			SubString parsub = getParenSubString(num);
+			parensp[0][num] = parsub.toString();
+		}
+		return result;
+	}
+
+	/**
+	 * Analog of REGEXP_PAREN_SUBSTRING in C jsregexp.h.
+	 * Assumes zero-based; i.e., for $3, i==2
+	 */
+	SubString getParenSubString(int i) {
+		if (parens != null && i < parens.length) {
+			SubString parsub = parens[i];
+			if (parsub != null) {
+				return parsub;
+			}
+		}
+		return new SubString();
+	}
+
+	/*
 	 * See ECMA 15.5.4.8.  Modified to match JS 1.2 - optionally takes
 	 * a limit argument and accepts a regular expression as the split
 	 * argument.
@@ -522,79 +594,6 @@ public class RegExp {
 		}
 		return result;
 	}
-
-	/*
-	 * Used by js_split to find the next split point in target,
-	 * starting at offset ip and looking either for the given
-	 * separator substring, or for the next re match.  ip and
-	 * matchlen must be reference variables (assumed to be arrays of
-	 * length 1) so they can be updated in the leading whitespace or
-	 * re case.
-	 *
-	 * Return -1 on end of string, >= 0 for a valid index of the next
-	 * separator occurrence if found, or the string length if no
-	 * separator is found.
-	 */
-	private static int find_split(Context cx, Scriptable scope, String target, String separator, RegExp reProxy, Scriptable re, int[] ip, int[] matchlen, boolean[] matched, String[][] parensp) {
-		int i = ip[0];
-		int length = target.length();
-
-		/*
-		 * Stop if past end of string.  If at end of string, we will
-		 * return target length, so that
-		 *
-		 *  "ab,".split(',') => new Array("ab", "")
-		 *
-		 * and the resulting array converts back to the string "ab,"
-		 * for symmetry.  NB: This differs from perl, which drops the
-		 * trailing empty substring if the LIMIT argument is omitted.
-		 */
-		if (i > length) {
-			return -1;
-		}
-
-		/*
-		 * Match a regular expression against the separator at or
-		 * above index i.  Return -1 at end of string instead of
-		 * trying for a match, so we don't get stuck in a loop.
-		 */
-		if (re != null) {
-			return reProxy.find_split(cx, scope, target, separator, re, ip, matchlen, matched, parensp);
-		}
-
-		/*
-		 * Special case: if sep is the empty string, split str into
-		 * one character substrings.  Let our caller worry about
-		 * whether to split once at end of string into an empty
-		 * substring.
-		 *
-		 * For 1.2 compatibility, at the end of the string, we return the length as
-		 * the result, and set the separator length to 1 -- this allows the caller
-		 * to include an additional null string at the end of the substring list.
-		 */
-		if (separator.length() == 0) {
-			return (i == length) ? -1 : i + 1;
-		}
-
-		/* Punt to j.l.s.indexOf; return target length if separator is
-		 * not found.
-		 */
-		if (ip[0] >= length) {
-			return length;
-		}
-
-		i = target.indexOf(separator, ip[0]);
-
-		return (i != -1) ? i : length;
-	}
-
-	protected String input;         /* input string to match (perl $_, GC root) */
-	protected boolean multiline;     /* whether input contains newlines (perl $*) */
-	protected SubString[] parens;        /* Vector of SubString; last set of parens matched (perl $1, $2) */
-	protected SubString lastMatch;     /* last string matched (perl $&) */
-	protected SubString lastParen;     /* last paren matched (perl $+) */
-	protected SubString leftContext;   /* input to left of last match (perl $`) */
-	protected SubString rightContext;  /* input to right of last match (perl $') */
 }
 
 

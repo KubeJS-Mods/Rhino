@@ -24,9 +24,26 @@ import java.util.List;
  */
 public class JsonParser {
 
+	public static class ParseException extends Exception {
+
+		@Serial
+		private static final long serialVersionUID = 4804542791749920772L;
+
+		ParseException(String message) {
+			super(message);
+		}
+
+		ParseException(Exception cause) {
+			super(cause);
+		}
+	}
+
+	private static int fromHex(char c) {
+		return c >= '0' && c <= '9' ? c - '0' : c >= 'A' && c <= 'F' ? c - 'A' + 10 : c >= 'a' && c <= 'f' ? c - 'a' + 10 : -1;
+	}
+
 	private final Context cx;
 	private final Scriptable scope;
-
 	private int pos;
 	private int length;
 	private String src;
@@ -199,7 +216,7 @@ public class JsonParser {
 					if (length - pos < 5) {
 						throw new ParseException("Invalid character code: \\u" + src.substring(pos));
 					}
-					int code = fromHex(src.charAt(pos + 0)) << 12 | fromHex(src.charAt(pos + 1)) << 8 | fromHex(src.charAt(pos + 2)) << 4 | fromHex(src.charAt(pos + 3));
+					int code = fromHex(src.charAt(pos)) << 12 | fromHex(src.charAt(pos + 1)) << 8 | fromHex(src.charAt(pos + 2)) << 4 | fromHex(src.charAt(pos + 3));
 					if (code < 0) {
 						throw new ParseException("Invalid character code: " + src.substring(pos, pos + 4));
 					}
@@ -222,10 +239,6 @@ public class JsonParser {
 			}
 		}
 		throw new ParseException("Unterminated string literal");
-	}
-
-	private static int fromHex(char c) {
-		return c >= '0' && c <= '9' ? c - '0' : c >= 'A' && c <= 'F' ? c - 'A' + 10 : c >= 'a' && c <= 'f' ? c - 'a' + 10 : -1;
 	}
 
 	private Number readNumber(char c) throws ParseException {
@@ -343,20 +356,6 @@ public class JsonParser {
 			return;
 		}
 		throw new ParseException("Expected " + token + " found " + c);
-	}
-
-	public static class ParseException extends Exception {
-
-		@Serial
-		private static final long serialVersionUID = 4804542791749920772L;
-
-		ParseException(String message) {
-			super(message);
-		}
-
-		ParseException(Exception cause) {
-			super(cause);
-		}
 	}
 
 }

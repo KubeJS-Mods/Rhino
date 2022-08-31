@@ -19,6 +19,7 @@ import java.io.Serial;
 public class JavaScriptException extends RhinoException {
 	@Serial
 	private static final long serialVersionUID = -7666130513694669293L;
+	private final Object value;
 
 	/**
 	 * Create a JavaScript exception wrapping the given JavaScript value
@@ -54,6 +55,4 @@ public class JavaScriptException extends RhinoException {
 	public Object getValue() {
 		return value;
 	}
-
-	private final Object value;
 }

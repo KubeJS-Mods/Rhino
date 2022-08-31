@@ -9,10 +9,10 @@ package dev.latvian.mods.rhino.classfile;
 final class ConstantEntry {
 	private final int type;
 	private final int intval;
-	private long longval;
 	private final String str1;
 	private final String str2;
 	private final int hashcode;
+	private long longval;
 
 	ConstantEntry(int type, int intval, String str1, String str2) {
 		this.type = type;

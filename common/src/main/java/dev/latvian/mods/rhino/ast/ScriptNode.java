@@ -19,14 +19,12 @@ import java.util.List;
  */
 public class ScriptNode extends Scope {
 
+	private final List<FunctionNode> EMPTY_LIST = Collections.emptyList();
 	private String sourceName;
 	private int endLineno = -1;
-
 	private List<FunctionNode> functions;
 	private List<RegExpLiteral> regexps;
 	private List<TemplateLiteral> templateLiterals;
-	private final List<FunctionNode> EMPTY_LIST = Collections.emptyList();
-
 	private List<AstSymbol> symbols = new ArrayList<>(4);
 	private int paramCount = 0;
 	private String[] variableNames;
@@ -269,12 +267,12 @@ public class ScriptNode extends Scope {
 		return "$" + tempNumber++;
 	}
 
-	public void setInStrictMode(boolean inStrictMode) {
-		this.inStrictMode = inStrictMode;
-	}
-
 	public boolean isInStrictMode() {
 		return inStrictMode;
+	}
+
+	public void setInStrictMode(boolean inStrictMode) {
+		this.inStrictMode = inStrictMode;
 	}
 
 	@Override

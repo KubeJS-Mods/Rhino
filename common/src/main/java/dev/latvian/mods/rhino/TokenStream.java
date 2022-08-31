@@ -29,17 +29,6 @@ class TokenStream {
 
 	private final static char BYTE_ORDER_MARK = '\uFEFF';
 
-	TokenStream(Parser parser, String sourceString, int lineno) {
-		this.parser = parser;
-		this.lineno = lineno;
-		if (sourceString == null) {
-			Kit.codeBug();
-		}
-		this.sourceString = sourceString;
-		this.sourceEnd = sourceString.length();
-		this.sourceCursor = this.cursor = 0;
-	}
-
 	static boolean isKeyword(String s, boolean isStrict) {
 		return Token.EOF != stringToKeyword(s, isStrict);
 	}
@@ -89,6 +78,98 @@ class TokenStream {
 		}; // & 0xFF;
 	}
 
+	private static boolean isAlpha(int c) {
+		// Use 'Z' < 'a'
+		if (c <= 'Z') {
+			return 'A' <= c;
+		}
+		return 'a' <= c && c <= 'z';
+	}
+
+	static boolean isDigit(int c) {
+		return '0' <= c && c <= '9';
+	}
+
+	/* As defined in ECMA.  jsscan.c uses C isspace() (which allows
+	 * \v, I think.)  note that code in getChar() implicitly accepts
+	 * '\r' == \u000D as well.
+	 */
+	static boolean isJSSpace(int c) {
+		if (c <= 127) {
+			return c == 0x20 || c == 0x9 || c == 0xC || c == 0xB;
+		}
+		return c == 0xA0 || c == BYTE_ORDER_MARK || Character.getType((char) c) == Character.SPACE_SEPARATOR;
+	}
+
+	private static boolean isJSFormatChar(int c) {
+		return c > 127 && Character.getType((char) c) == Character.FORMAT;
+	}
+
+	private static String convertLastCharToHex(String str) {
+		int lastIndex = str.length() - 1;
+		StringBuilder buf = new StringBuilder(str.substring(0, lastIndex));
+		buf.append("\\u");
+		String hexCode = Integer.toHexString(str.charAt(lastIndex));
+		for (int i = 0; i < 4 - hexCode.length(); ++i) {
+			buf.append('0');
+		}
+		buf.append(hexCode);
+		return buf.toString();
+	}
+
+	private final StringBuilder rawString = new StringBuilder();
+	private final ObjToIntMap allStrings = new ObjToIntMap(50);
+	// Room to backtrace from to < on failed match of the last - in <!--
+	private final int[] ungetBuffer = new int[3];
+	private final String sourceString;
+	private final int sourceEnd;
+	private final Parser parser;
+	String regExpFlags;
+	int lineno;
+	// sourceCursor is an index into a small buffer that keeps a
+	// sliding window of the source stream.
+	int sourceCursor;
+	// cursor is a monotonically increasing index into the original
+	// source stream, tracking exactly how far scanning has progressed.
+	// Its value is the index of the next character to be scanned.
+	int cursor;
+	// Record start and end positions of last scanned token.
+	int tokenBeg;
+	int tokenEnd;
+	// Type of last comment scanned.
+	Token.CommentType commentType;
+	// stuff other than whitespace since start of line
+	private boolean dirtyLine;
+	// Set this to an initial non-null value so that the Parser has
+	// something to retrieve even if an error has occurred and no
+	// string is found.  Fosters one class of error, but saves lots of
+	// code.
+	private String string = "";
+	private double number;
+	private boolean isBinary;
+	private boolean isOldOctal;
+	private boolean isOctal;
+	private boolean isHex;
+	// delimiter for last string literal scanned
+	private int quoteChar;
+	private char[] stringBuffer = new char[128];
+	private int stringBufferTop;
+	private int ungetCursor;
+	private boolean hitEOF = false;
+	private int lineStart = 0;
+	private int lineEndChar = -1;
+
+	TokenStream(Parser parser, String sourceString, int lineno) {
+		this.parser = parser;
+		this.lineno = lineno;
+		if (sourceString == null) {
+			Kit.codeBug();
+		}
+		this.sourceString = sourceString;
+		this.sourceEnd = sourceString.length();
+		this.sourceCursor = this.cursor = 0;
+	}
+
 	final String getSourceString() {
 		return sourceString;
 	}
@@ -132,7 +213,6 @@ class TokenStream {
 	final int getToken() throws IOException {
 		int c;
 
-		retry:
 		for (; ; ) {
 			// Eat whitespace, possibly sensitive to newlines.
 			for (; ; ) {
@@ -709,33 +789,6 @@ class TokenStream {
 		}
 	}
 
-	private static boolean isAlpha(int c) {
-		// Use 'Z' < 'a'
-		if (c <= 'Z') {
-			return 'A' <= c;
-		}
-		return 'a' <= c && c <= 'z';
-	}
-
-	static boolean isDigit(int c) {
-		return '0' <= c && c <= '9';
-	}
-
-	/* As defined in ECMA.  jsscan.c uses C isspace() (which allows
-	 * \v, I think.)  note that code in getChar() implicitly accepts
-	 * '\r' == \u000D as well.
-	 */
-	static boolean isJSSpace(int c) {
-		if (c <= 127) {
-			return c == 0x20 || c == 0x9 || c == 0xC || c == 0xB;
-		}
-		return c == 0xA0 || c == BYTE_ORDER_MARK || Character.getType((char) c) == Character.SPACE_SEPARATOR;
-	}
-
-	private static boolean isJSFormatChar(int c) {
-		return c > 127 && Character.getType((char) c) == Character.FORMAT;
-	}
-
 	/**
 	 * Parser calls the method when it gets / or /= in literal context.
 	 */
@@ -815,8 +868,6 @@ class TokenStream {
 		this.regExpFlags = null;
 		return flags;
 	}
-
-	private final StringBuilder rawString = new StringBuilder();
 
 	String getRawString() {
 		if (rawString.length() == 0) {
@@ -1293,70 +1344,4 @@ class TokenStream {
 
 	private void markCommentStart(String prefix) {
 	}
-
-	private static String convertLastCharToHex(String str) {
-		int lastIndex = str.length() - 1;
-		StringBuilder buf = new StringBuilder(str.substring(0, lastIndex));
-		buf.append("\\u");
-		String hexCode = Integer.toHexString(str.charAt(lastIndex));
-		for (int i = 0; i < 4 - hexCode.length(); ++i) {
-			buf.append('0');
-		}
-		buf.append(hexCode);
-		return buf.toString();
-	}
-
-	// stuff other than whitespace since start of line
-	private boolean dirtyLine;
-
-	String regExpFlags;
-
-	// Set this to an initial non-null value so that the Parser has
-	// something to retrieve even if an error has occurred and no
-	// string is found.  Fosters one class of error, but saves lots of
-	// code.
-	private String string = "";
-	private double number;
-	private boolean isBinary;
-	private boolean isOldOctal;
-	private boolean isOctal;
-	private boolean isHex;
-
-	// delimiter for last string literal scanned
-	private int quoteChar;
-
-	private char[] stringBuffer = new char[128];
-	private int stringBufferTop;
-	private final ObjToIntMap allStrings = new ObjToIntMap(50);
-
-	// Room to backtrace from to < on failed match of the last - in <!--
-	private final int[] ungetBuffer = new int[3];
-	private int ungetCursor;
-
-	private boolean hitEOF = false;
-
-	private int lineStart = 0;
-	private int lineEndChar = -1;
-	int lineno;
-
-	private final String sourceString;
-	private final int sourceEnd;
-
-	// sourceCursor is an index into a small buffer that keeps a
-	// sliding window of the source stream.
-	int sourceCursor;
-
-	// cursor is a monotonically increasing index into the original
-	// source stream, tracking exactly how far scanning has progressed.
-	// Its value is the index of the next character to be scanned.
-	int cursor;
-
-	// Record start and end positions of last scanned token.
-	int tokenBeg;
-	int tokenEnd;
-
-	// Type of last comment scanned.
-	Token.CommentType commentType;
-
-	private final Parser parser;
 }

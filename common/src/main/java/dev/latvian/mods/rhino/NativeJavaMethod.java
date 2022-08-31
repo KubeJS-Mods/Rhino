@@ -20,29 +20,17 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 
 public class NativeJavaMethod extends BaseFunction {
-	NativeJavaMethod(MemberBox[] methods) {
-		this.functionName = methods[0].getName();
-		this.methods = methods;
-	}
-
-	NativeJavaMethod(MemberBox[] methods, String name) {
-		this.functionName = name;
-		this.methods = methods;
-	}
-
-	NativeJavaMethod(MemberBox method, String name) {
-		this.functionName = name;
-		this.methods = new MemberBox[]{method};
-	}
-
-	public NativeJavaMethod(Method method, String name) {
-		this(new MemberBox(method), name);
-	}
-
-	@Override
-	public String getFunctionName() {
-		return functionName;
-	}
+	/**
+	 * Types are equal
+	 */
+	private static final int PREFERENCE_EQUAL = 0;
+	private static final int PREFERENCE_FIRST_ARG = 1;
+	private static final int PREFERENCE_SECOND_ARG = 2;
+	/**
+	 * No clear "easy" conversion
+	 */
+	private static final int PREFERENCE_AMBIGUOUS = 3;
+	private static final boolean debug = false;
 
 	static String scriptSignature(Object[] values) {
 		StringBuilder sig = new StringBuilder();
@@ -79,165 +67,6 @@ public class NativeJavaMethod extends BaseFunction {
 			sig.append(s);
 		}
 		return sig.toString();
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0, N = methods.length; i != N; ++i) {
-			if (i > 0) {
-				sb.append('\n');
-			}
-
-			// Check member type, we also use this for overloaded constructors
-			if (methods[i].isMethod()) {
-				Method method = methods[i].method();
-				sb.append(JavaMembers.javaSignature(method.getReturnType()));
-				sb.append(' ');
-				sb.append(method.getName());
-			} else {
-				sb.append(methods[i].getName());
-			}
-			sb.append(JavaMembers.liveConnectSignature(methods[i].argTypes));
-		}
-		return sb.toString();
-	}
-
-	@Override
-	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		// Find a method that matches the types given.
-		if (methods.length == 0) {
-			throw new RuntimeException("No methods defined for call");
-		}
-
-		SharedContextData data = SharedContextData.get(scope);
-
-		int index = findCachedFunction(data, args);
-		if (index < 0) {
-			Class<?> c = methods[0].method().getDeclaringClass();
-			String sig = c.getName() + '.' + getFunctionName() + '(' + scriptSignature(args) + ')';
-			throw Context.reportRuntimeError1("msg.java.no_such_method", sig);
-		}
-
-		MemberBox meth = methods[index];
-		Class<?>[] argTypes = meth.argTypes;
-
-		if (meth.vararg) {
-			// marshall the explicit parameters
-			Object[] newArgs = new Object[argTypes.length];
-			for (int i = 0; i < argTypes.length - 1; i++) {
-				newArgs[i] = Context.jsToJava(data, args[i], argTypes[i]);
-			}
-
-			Object varArgs;
-
-			// Handle special situation where a single variable parameter
-			// is given and it is a Java or ECMA array or is null.
-			if (args.length == argTypes.length && (args[args.length - 1] == null || args[args.length - 1] instanceof NativeArray || args[args.length - 1] instanceof NativeJavaArray)) {
-				// convert the ECMA array into a native array
-				varArgs = Context.jsToJava(data, args[args.length - 1], argTypes[argTypes.length - 1]);
-			} else {
-				// marshall the variable parameters
-				Class<?> componentType = argTypes[argTypes.length - 1].getComponentType();
-				varArgs = Array.newInstance(componentType, args.length - argTypes.length + 1);
-				for (int i = 0; i < Array.getLength(varArgs); i++) {
-					Object value = Context.jsToJava(data, args[argTypes.length - 1 + i], componentType);
-					Array.set(varArgs, i, value);
-				}
-			}
-
-			// add varargs
-			newArgs[argTypes.length - 1] = varArgs;
-			// replace the original args with the new one
-			args = newArgs;
-		} else {
-			// First, we marshall the args.
-			Object[] origArgs = args;
-			for (int i = 0; i < args.length; i++) {
-				Object arg = args[i];
-				Object coerced = arg;
-
-				/*
-				if (arg != null) {
-					TypeWrapperFactory<?> factory = argTypes[i] != null && cx.hasTypeWrappers() ? cx.getTypeWrappers().getWrapperFactory(argTypes[i], arg) : null;
-
-					if (factory != null) {
-						coerced = factory.wrap(arg);
-					}
-				}
-				 */
-
-				coerced = Context.jsToJava(data, coerced, argTypes[i]);
-
-				if (coerced != arg) {
-					if (origArgs == args) {
-						args = args.clone();
-					}
-					args[i] = coerced;
-				}
-			}
-		}
-		Object javaObject;
-		if (meth.isStatic()) {
-			javaObject = null;  // don't need an object
-		} else {
-			Scriptable o = thisObj;
-			Class<?> c = meth.getDeclaringClass();
-			for (; ; ) {
-				if (o == null) {
-					throw Context.reportRuntimeError3("msg.nonjava.method", getFunctionName(), ScriptRuntime.toString(thisObj), c.getName());
-				}
-				if (o instanceof Wrapper) {
-					javaObject = ((Wrapper) o).unwrap();
-					if (c.isInstance(javaObject)) {
-						break;
-					}
-				}
-				o = o.getPrototype();
-			}
-		}
-		if (debug) {
-			printDebug("Calling ", meth, args);
-		}
-
-		Object retval = meth.invoke(javaObject, args);
-		Class<?> staticType = meth.method().getReturnType();
-
-		if (debug) {
-			Class<?> actualType = (retval == null) ? null : retval.getClass();
-			System.err.println(" ----- Returned " + retval + " actual = " + actualType + " expect = " + staticType);
-		}
-
-		SharedContextData contextData = SharedContextData.get(cx, scope);
-		Object wrapped = contextData.getWrapFactory().wrap(contextData, scope, retval, staticType);
-		if (debug) {
-			Class<?> actualType = (wrapped == null) ? null : wrapped.getClass();
-			System.err.println(" ----- Wrapped as " + wrapped + " class = " + actualType);
-		}
-
-		if (wrapped == null && staticType == Void.TYPE) {
-			wrapped = Undefined.instance;
-		}
-		return wrapped;
-	}
-
-	int findCachedFunction(SharedContextData data, Object[] args) {
-		if (methods.length > 1) {
-			for (ResolvedOverload ovl : overloadCache) {
-				if (ovl.matches(args)) {
-					return ovl.index;
-				}
-			}
-			int index = findFunction(data, methods, args);
-			// As a sanity measure, don't let the lookup cache grow longer
-			// than twice the number of overloaded methods
-			if (overloadCache.size() < methods.length * 2) {
-				ResolvedOverload ovl = new ResolvedOverload(args, index);
-				overloadCache.addIfAbsent(ovl);
-			}
-			return index;
-		}
-		return findFunction(data, methods, args);
 	}
 
 	/**
@@ -420,17 +249,6 @@ public class NativeJavaMethod extends BaseFunction {
 	}
 
 	/**
-	 * Types are equal
-	 */
-	private static final int PREFERENCE_EQUAL = 0;
-	private static final int PREFERENCE_FIRST_ARG = 1;
-	private static final int PREFERENCE_SECOND_ARG = 2;
-	/**
-	 * No clear "easy" conversion
-	 */
-	private static final int PREFERENCE_AMBIGUOUS = 3;
-
-	/**
 	 * Determine which of two signatures is the closer fit.
 	 * Returns one of PREFERENCE_EQUAL, PREFERENCE_FIRST_ARG,
 	 * PREFERENCE_SECOND_ARG, or PREFERENCE_AMBIGUOUS.
@@ -479,9 +297,6 @@ public class NativeJavaMethod extends BaseFunction {
 		return totalPreference;
 	}
 
-
-	private static final boolean debug = false;
-
 	private static void printDebug(String msg, MemberBox member, Object[] args) {
 		if (debug) {
 			StringBuilder sb = new StringBuilder();
@@ -500,8 +315,192 @@ public class NativeJavaMethod extends BaseFunction {
 		}
 	}
 
-	MemberBox[] methods;
 	private final String functionName;
 	private transient final CopyOnWriteArrayList<ResolvedOverload> overloadCache = new CopyOnWriteArrayList<>();
+	MemberBox[] methods;
+
+	NativeJavaMethod(MemberBox[] methods) {
+		this.functionName = methods[0].getName();
+		this.methods = methods;
+	}
+
+	NativeJavaMethod(MemberBox[] methods, String name) {
+		this.functionName = name;
+		this.methods = methods;
+	}
+
+	NativeJavaMethod(MemberBox method, String name) {
+		this.functionName = name;
+		this.methods = new MemberBox[]{method};
+	}
+
+
+	public NativeJavaMethod(Method method, String name) {
+		this(new MemberBox(method), name);
+	}
+
+	@Override
+	public String getFunctionName() {
+		return functionName;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0, N = methods.length; i != N; ++i) {
+			if (i > 0) {
+				sb.append('\n');
+			}
+
+			// Check member type, we also use this for overloaded constructors
+			if (methods[i].isMethod()) {
+				Method method = methods[i].method();
+				sb.append(JavaMembers.javaSignature(method.getReturnType()));
+				sb.append(' ');
+				sb.append(method.getName());
+			} else {
+				sb.append(methods[i].getName());
+			}
+			sb.append(JavaMembers.liveConnectSignature(methods[i].argTypes));
+		}
+		return sb.toString();
+	}
+
+	@Override
+	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		// Find a method that matches the types given.
+		if (methods.length == 0) {
+			throw new RuntimeException("No methods defined for call");
+		}
+
+		SharedContextData data = SharedContextData.get(scope);
+
+		int index = findCachedFunction(data, args);
+		if (index < 0) {
+			Class<?> c = methods[0].method().getDeclaringClass();
+			String sig = c.getName() + '.' + getFunctionName() + '(' + scriptSignature(args) + ')';
+			throw Context.reportRuntimeError1("msg.java.no_such_method", sig);
+		}
+
+		MemberBox meth = methods[index];
+		Class<?>[] argTypes = meth.argTypes;
+
+		if (meth.vararg) {
+			// marshall the explicit parameters
+			Object[] newArgs = new Object[argTypes.length];
+			for (int i = 0; i < argTypes.length - 1; i++) {
+				newArgs[i] = Context.jsToJava(data, args[i], argTypes[i]);
+			}
+
+			Object varArgs;
+
+			// Handle special situation where a single variable parameter
+			// is given and it is a Java or ECMA array or is null.
+			if (args.length == argTypes.length && (args[args.length - 1] == null || args[args.length - 1] instanceof NativeArray || args[args.length - 1] instanceof NativeJavaArray)) {
+				// convert the ECMA array into a native array
+				varArgs = Context.jsToJava(data, args[args.length - 1], argTypes[argTypes.length - 1]);
+			} else {
+				// marshall the variable parameters
+				Class<?> componentType = argTypes[argTypes.length - 1].getComponentType();
+				varArgs = Array.newInstance(componentType, args.length - argTypes.length + 1);
+				for (int i = 0; i < Array.getLength(varArgs); i++) {
+					Object value = Context.jsToJava(data, args[argTypes.length - 1 + i], componentType);
+					Array.set(varArgs, i, value);
+				}
+			}
+
+			// add varargs
+			newArgs[argTypes.length - 1] = varArgs;
+			// replace the original args with the new one
+			args = newArgs;
+		} else {
+			// First, we marshall the args.
+			Object[] origArgs = args;
+			for (int i = 0; i < args.length; i++) {
+				Object arg = args[i];
+				Object coerced = arg;
+
+				/*
+				if (arg != null) {
+					TypeWrapperFactory<?> factory = argTypes[i] != null && cx.hasTypeWrappers() ? cx.getTypeWrappers().getWrapperFactory(argTypes[i], arg) : null;
+
+					if (factory != null) {
+						coerced = factory.wrap(arg);
+					}
+				}
+				 */
+
+				coerced = Context.jsToJava(data, coerced, argTypes[i]);
+
+				if (coerced != arg) {
+					if (origArgs == args) {
+						args = args.clone();
+					}
+					args[i] = coerced;
+				}
+			}
+		}
+		Object javaObject;
+		if (meth.isStatic()) {
+			javaObject = null;  // don't need an object
+		} else {
+			Scriptable o = thisObj;
+			Class<?> c = meth.getDeclaringClass();
+			for (; ; ) {
+				if (o == null) {
+					throw Context.reportRuntimeError3("msg.nonjava.method", getFunctionName(), ScriptRuntime.toString(thisObj), c.getName());
+				}
+				if (o instanceof Wrapper) {
+					javaObject = ((Wrapper) o).unwrap();
+					if (c.isInstance(javaObject)) {
+						break;
+					}
+				}
+				o = o.getPrototype();
+			}
+		}
+		if (debug) {
+			printDebug("Calling ", meth, args);
+		}
+
+		Object retval = meth.invoke(javaObject, args);
+		Class<?> staticType = meth.method().getReturnType();
+
+		if (debug) {
+			Class<?> actualType = (retval == null) ? null : retval.getClass();
+			System.err.println(" ----- Returned " + retval + " actual = " + actualType + " expect = " + staticType);
+		}
+
+		SharedContextData contextData = SharedContextData.get(cx, scope);
+		Object wrapped = contextData.getWrapFactory().wrap(contextData, scope, retval, staticType);
+		if (debug) {
+			Class<?> actualType = (wrapped == null) ? null : wrapped.getClass();
+			System.err.println(" ----- Wrapped as " + wrapped + " class = " + actualType);
+		}
+
+		if (wrapped == null && staticType == Void.TYPE) {
+			wrapped = Undefined.instance;
+		}
+		return wrapped;
+	}
+
+	int findCachedFunction(SharedContextData data, Object[] args) {
+		if (methods.length > 1) {
+			for (ResolvedOverload ovl : overloadCache) {
+				if (ovl.matches(args)) {
+					return ovl.index;
+				}
+			}
+			int index = findFunction(data, methods, args);
+			// As a sanity measure, don't let the lookup cache grow longer
+			// than twice the number of overloaded methods
+			if (overloadCache.size() < methods.length * 2) {
+				ResolvedOverload ovl = new ResolvedOverload(args, index);
+				overloadCache.addIfAbsent(ovl);
+			}
+			return index;
+		}
+		return findFunction(data, methods, args);
+	}
 }
 

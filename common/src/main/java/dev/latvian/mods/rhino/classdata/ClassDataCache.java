@@ -7,9 +7,9 @@ import java.util.Map;
 
 public class ClassDataCache {
 	public final SharedContextData data;
+	final ClassData objectClassData;
 	private final Object lock;
 	private final Map<Class<?>, ClassData> cache;
-	final ClassData objectClassData;
 	private final ClassData arrayClassData;
 	private final ClassData classClassData;
 

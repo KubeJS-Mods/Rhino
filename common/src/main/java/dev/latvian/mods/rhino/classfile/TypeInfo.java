@@ -14,9 +14,6 @@ package dev.latvian.mods.rhino.classfile;
  * always in bits 0-7.
  */
 final class TypeInfo {
-	private TypeInfo() {
-	}
-
 	static final int TOP = 0;
 	static final int INTEGER = 1;
 	static final int FLOAT = 2;
@@ -228,5 +225,8 @@ final class TypeInfo {
 		System.out.print("stack: ");
 		System.out.println(toString(stack, stackTop, pool));
 		System.out.println();
+	}
+
+	private TypeInfo() {
 	}
 }

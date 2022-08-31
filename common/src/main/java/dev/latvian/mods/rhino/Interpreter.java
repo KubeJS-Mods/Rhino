@@ -14,9 +14,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class Interpreter extends Icode implements Evaluator {
-	// data for parsing
-	InterpreterData itsData;
-
 	static final int EXCEPTION_TRY_START_SLOT = 0;
 	static final int EXCEPTION_TRY_END_SLOT = 1;
 	static final int EXCEPTION_HANDLER_SLOT = 2;
@@ -27,49 +24,74 @@ public final class Interpreter extends Icode implements Evaluator {
 	//            exception local and scope local
 	static final int EXCEPTION_SLOT_SIZE = 6;
 
+	static {
+		// Checks for byte code consistencies, good compiler can eliminate them
+
+		if (Token.LAST_BYTECODE_TOKEN > 127) {
+			String str = "Violation of Token.LAST_BYTECODE_TOKEN <= 127";
+			System.err.println(str);
+			throw new IllegalStateException(str);
+		}
+		if (MIN_ICODE < -128) {
+			String str = "Violation of Interpreter.MIN_ICODE >= -128";
+			System.err.println(str);
+			throw new IllegalStateException(str);
+		}
+	}
+
 	/**
 	 * Class to hold data corresponding to one interpreted call stack frame.
 	 */
 	private static class CallFrame implements Cloneable {
 		// fields marked "final" in a comment are effectively final except when they're modified immediately after cloning.
 
-		/*final*/ CallFrame parentFrame;
-		// amount of stack frames before this one on the interpretation stack
-		/*final*/ int frameIndex;
-		// If true indicates read-only frame that is a part of continuation
-		boolean frozen;
+		private static Boolean equals(CallFrame f1, CallFrame f2, EqualObjectGraphs equal) {
+			// Iterative instead of recursive, as interpreter stack depth can
+			// be larger than JVM stack depth.
+			for (; ; ) {
+				if (f1 == f2) {
+					return Boolean.TRUE;
+				} else if (f1 == null || f2 == null) {
+					return Boolean.FALSE;
+				} else if (!f1.fieldsEqual(f2, equal)) {
+					return Boolean.FALSE;
+				} else {
+					f1 = f1.parentFrame;
+					f2 = f2.parentFrame;
+				}
+			}
+		}
 
 		final InterpretedFunction fnOrScript;
 		final InterpreterData idata;
+		final CallFrame varSource; // defaults to this unless continuation frame
+		final int localShift;
 
 		// Stack structure
 		// stack[0 <= i < localShift]: arguments and local variables
 		// stack[localShift <= i <= emptyStackTop]: used for local temporaries
 		// stack[emptyStackTop < i < stack.length]: stack data
 		// sDbl[i]: if stack[i] is UniqueTag.DOUBLE_MARK, sDbl[i] holds the number value
-
+		final int emptyStackTop;
+		final boolean useActivation;
+		final Scriptable thisObj;
+		/*final*/ CallFrame parentFrame;
+		// amount of stack frames before this one on the interpretation stack
+		/*final*/ int frameIndex;
+		// If true indicates read-only frame that is a part of continuation
+		boolean frozen;
 		/*final*/ Object[] stack;
 		/*final*/ int[] stackAttributes;
 		/*final*/ double[] sDbl;
 
-		final CallFrame varSource; // defaults to this unless continuation frame
-		final int localShift;
-		final int emptyStackTop;
-
-		final boolean useActivation;
-		boolean isContinuationsTopFrame;
-
-		final Scriptable thisObj;
-
 		// The values that change during interpretation
-
+		boolean isContinuationsTopFrame;
 		Object result;
 		double resultDbl;
 		int pc;
 		int pcPrevBranch;
 		int pcSourceLineStart;
 		Scriptable scope;
-
 		int savedStackTop;
 		int savedCallOp;
 		Object throwable;
@@ -250,30 +272,9 @@ public final class Interpreter extends Icode implements Evaluator {
 			}
 		}
 
-		private static Boolean equals(CallFrame f1, CallFrame f2, EqualObjectGraphs equal) {
-			// Iterative instead of recursive, as interpreter stack depth can
-			// be larger than JVM stack depth.
-			for (; ; ) {
-				if (f1 == f2) {
-					return Boolean.TRUE;
-				} else if (f1 == null || f2 == null) {
-					return Boolean.FALSE;
-				} else if (!f1.fieldsEqual(f2, equal)) {
-					return Boolean.FALSE;
-				} else {
-					f1 = f1.parentFrame;
-					f2 = f2.parentFrame;
-				}
-			}
-		}
-
 		private boolean fieldsEqual(CallFrame other, EqualObjectGraphs equal) {
 			return frameIndex == other.frameIndex && pc == other.pc && compareIdata(idata, other.idata) && equal.equalGraphs(varSource.stack, other.varSource.stack) && Arrays.equals(varSource.sDbl, other.varSource.sDbl) && equal.equalGraphs(thisObj, other.thisObj) && equal.equalGraphs(fnOrScript, other.fnOrScript) && equal.equalGraphs(scope, other.scope);
 		}
-	}
-
-	private static boolean compareIdata(InterpreterData i1, InterpreterData i2) {
-		return i1 == i2;
 	}
 
 	private static final class ContinuationJump {
@@ -329,6 +330,10 @@ public final class Interpreter extends Icode implements Evaluator {
 		}
 	}
 
+	private static boolean compareIdata(InterpreterData i1, InterpreterData i2) {
+		return i1 == i2;
+	}
+
 	private static CallFrame captureFrameForGenerator(CallFrame frame) {
 		frame.frozen = true;
 		CallFrame result = frame.cloneFrozen();
@@ -339,49 +344,6 @@ public final class Interpreter extends Icode implements Evaluator {
 		result.frameIndex = 0;
 
 		return result;
-	}
-
-	static {
-		// Checks for byte code consistencies, good compiler can eliminate them
-
-		if (Token.LAST_BYTECODE_TOKEN > 127) {
-			String str = "Violation of Token.LAST_BYTECODE_TOKEN <= 127";
-			System.err.println(str);
-			throw new IllegalStateException(str);
-		}
-		if (MIN_ICODE < -128) {
-			String str = "Violation of Interpreter.MIN_ICODE >= -128";
-			System.err.println(str);
-			throw new IllegalStateException(str);
-		}
-	}
-
-	@Override
-	public Object compile(CompilerEnvirons compilerEnv, ScriptNode tree, boolean returnFunction) {
-		CodeGenerator cgen = new CodeGenerator();
-		itsData = cgen.compile(compilerEnv, tree, returnFunction);
-		return itsData;
-	}
-
-	@Override
-	public Script createScriptObject(Object bytecode, Object staticSecurityDomain) {
-		if (bytecode != itsData) {
-			Kit.codeBug();
-		}
-		return InterpretedFunction.createScript(itsData, staticSecurityDomain);
-	}
-
-	@Override
-	public void setEvalScriptFlag(Script script) {
-		((InterpretedFunction) script).idata.evalScriptFlag = true;
-	}
-
-	@Override
-	public Function createFunctionObject(Context cx, Scriptable scope, Object bytecode, Object staticSecurityDomain) {
-		if (bytecode != itsData) {
-			Kit.codeBug();
-		}
-		return InterpretedFunction.createFunction(cx, scope, itsData, staticSecurityDomain);
 	}
 
 	private static int getShort(byte[] iCode, int pc) {
@@ -439,186 +401,6 @@ public final class Interpreter extends Icode implements Evaluator {
 			bestEnd = end;
 		}
 		return best;
-	}
-
-	@Override
-	public void captureStackInfo(RhinoException ex) {
-		Context cx = Context.getCurrentContext();
-		if (cx == null || cx.lastInterpreterFrame == null) {
-			// No interpreter invocations
-			ex.interpreterStackInfo = null;
-			ex.interpreterLineData = null;
-			return;
-		}
-		// has interpreter frame on the stack
-		CallFrame[] array;
-		if (cx.previousInterpreterInvocations == null || cx.previousInterpreterInvocations.size() == 0) {
-			array = new CallFrame[1];
-		} else {
-			int previousCount = cx.previousInterpreterInvocations.size();
-			if (cx.previousInterpreterInvocations.peek() == cx.lastInterpreterFrame) {
-				// It can happen if exception was generated after
-				// frame was pushed to cx.previousInterpreterInvocations
-				// but before assignment to cx.lastInterpreterFrame.
-				// In this case frames has to be ignored.
-				--previousCount;
-			}
-			array = new CallFrame[previousCount + 1];
-			cx.previousInterpreterInvocations.toArray(array);
-		}
-		array[array.length - 1] = (CallFrame) cx.lastInterpreterFrame;
-
-		int interpreterFrameCount = 0;
-		for (int i = 0; i != array.length; ++i) {
-			interpreterFrameCount += 1 + array[i].frameIndex;
-		}
-
-		int[] linePC = new int[interpreterFrameCount];
-		// Fill linePC with pc positions from all interpreter frames.
-		// Start from the most nested frame
-		int linePCIndex = interpreterFrameCount;
-		for (int i = array.length; i != 0; ) {
-			--i;
-			CallFrame frame = array[i];
-			while (frame != null) {
-				--linePCIndex;
-				linePC[linePCIndex] = frame.pcSourceLineStart;
-				frame = frame.parentFrame;
-			}
-		}
-		if (linePCIndex != 0) {
-			Kit.codeBug();
-		}
-
-		ex.interpreterStackInfo = array;
-		ex.interpreterLineData = linePC;
-	}
-
-	@Override
-	public String getSourcePositionFromStack(Context cx, int[] linep) {
-		CallFrame frame = (CallFrame) cx.lastInterpreterFrame;
-		InterpreterData idata = frame.idata;
-		if (frame.pcSourceLineStart >= 0) {
-			linep[0] = getIndex(idata.itsICode, frame.pcSourceLineStart);
-		} else {
-			linep[0] = 0;
-		}
-		return idata.itsSourceFile;
-	}
-
-	@Override
-	public String getPatchedStack(RhinoException ex, String nativeStackTrace) {
-		String tag = "dev.latvian.mods.rhino.Interpreter.interpretLoop";
-		StringBuilder sb = new StringBuilder(nativeStackTrace.length() + 1000);
-		String lineSeparator = System.lineSeparator();
-
-		CallFrame[] array = (CallFrame[]) ex.interpreterStackInfo;
-		int[] linePC = ex.interpreterLineData;
-		int arrayIndex = array.length;
-		int linePCIndex = linePC.length;
-		int offset = 0;
-		while (arrayIndex != 0) {
-			--arrayIndex;
-			int pos = nativeStackTrace.indexOf(tag, offset);
-			if (pos < 0) {
-				break;
-			}
-
-			// Skip tag length
-			pos += tag.length();
-			// Skip until the end of line
-			for (; pos != nativeStackTrace.length(); ++pos) {
-				char c = nativeStackTrace.charAt(pos);
-				if (c == '\n' || c == '\r') {
-					break;
-				}
-			}
-			sb.append(nativeStackTrace, offset, pos);
-			offset = pos;
-
-			CallFrame frame = array[arrayIndex];
-			while (frame != null) {
-				if (linePCIndex == 0) {
-					Kit.codeBug();
-				}
-				--linePCIndex;
-				InterpreterData idata = frame.idata;
-				sb.append(lineSeparator);
-				sb.append("\tat script");
-				if (idata.itsName != null && idata.itsName.length() != 0) {
-					sb.append('.');
-					sb.append(idata.itsName);
-				}
-				sb.append('(');
-				sb.append(idata.itsSourceFile);
-				int pc = linePC[linePCIndex];
-				if (pc >= 0) {
-					// Include line info only if available
-					sb.append(':');
-					sb.append(getIndex(idata.itsICode, pc));
-				}
-				sb.append(')');
-				frame = frame.parentFrame;
-			}
-		}
-		sb.append(nativeStackTrace.substring(offset));
-
-		return sb.toString();
-	}
-
-	@Override
-	public List<String> getScriptStack(RhinoException ex) {
-		ScriptStackElement[][] stack = getScriptStackElements(ex);
-		List<String> list = new ArrayList<>(stack.length);
-		String lineSeparator = System.lineSeparator();
-		for (ScriptStackElement[] group : stack) {
-			StringBuilder sb = new StringBuilder();
-			for (ScriptStackElement elem : group) {
-				elem.renderJavaStyle(sb);
-				sb.append(lineSeparator);
-			}
-			list.add(sb.toString());
-		}
-		return list;
-	}
-
-	public ScriptStackElement[][] getScriptStackElements(RhinoException ex) {
-		if (ex.interpreterStackInfo == null) {
-			return null;
-		}
-
-		List<ScriptStackElement[]> list = new ArrayList<>();
-
-		CallFrame[] array = (CallFrame[]) ex.interpreterStackInfo;
-		int[] linePC = ex.interpreterLineData;
-		int arrayIndex = array.length;
-		int linePCIndex = linePC.length;
-		while (arrayIndex != 0) {
-			--arrayIndex;
-			CallFrame frame = array[arrayIndex];
-			List<ScriptStackElement> group = new ArrayList<>();
-			while (frame != null) {
-				if (linePCIndex == 0) {
-					Kit.codeBug();
-				}
-				--linePCIndex;
-				InterpreterData idata = frame.idata;
-				String fileName = idata.itsSourceFile;
-				String functionName = null;
-				int lineNumber = -1;
-				int pc = linePC[linePCIndex];
-				if (pc >= 0) {
-					lineNumber = getIndex(idata.itsICode, pc);
-				}
-				if (idata.itsName != null && idata.itsName.length() != 0) {
-					functionName = idata.itsName;
-				}
-				frame = frame.parentFrame;
-				group.add(new ScriptStackElement(fileName, functionName, lineNumber));
-			}
-			list.add(group.toArray(new ScriptStackElement[0]));
-		}
-		return list.toArray(new ScriptStackElement[list.size()][]);
 	}
 
 	private static void initFunction(Context cx, Scriptable scope, InterpretedFunction parent, int index) {
@@ -2619,5 +2401,216 @@ public final class Interpreter extends Icode implements Evaluator {
 			cx.observeInstructionCount(cx.instructionCount);
 			cx.instructionCount = 0;
 		}
+	}
+
+	// data for parsing
+	InterpreterData itsData;
+
+	@Override
+	public Object compile(CompilerEnvirons compilerEnv, ScriptNode tree, boolean returnFunction) {
+		CodeGenerator cgen = new CodeGenerator();
+		itsData = cgen.compile(compilerEnv, tree, returnFunction);
+		return itsData;
+	}
+
+	@Override
+	public Script createScriptObject(Object bytecode, Object staticSecurityDomain) {
+		if (bytecode != itsData) {
+			Kit.codeBug();
+		}
+		return InterpretedFunction.createScript(itsData, staticSecurityDomain);
+	}
+
+	@Override
+	public void setEvalScriptFlag(Script script) {
+		((InterpretedFunction) script).idata.evalScriptFlag = true;
+	}
+
+	@Override
+	public Function createFunctionObject(Context cx, Scriptable scope, Object bytecode, Object staticSecurityDomain) {
+		if (bytecode != itsData) {
+			Kit.codeBug();
+		}
+		return InterpretedFunction.createFunction(cx, scope, itsData, staticSecurityDomain);
+	}
+
+	@Override
+	public void captureStackInfo(RhinoException ex) {
+		Context cx = Context.getCurrentContext();
+		if (cx == null || cx.lastInterpreterFrame == null) {
+			// No interpreter invocations
+			ex.interpreterStackInfo = null;
+			ex.interpreterLineData = null;
+			return;
+		}
+		// has interpreter frame on the stack
+		CallFrame[] array;
+		if (cx.previousInterpreterInvocations == null || cx.previousInterpreterInvocations.size() == 0) {
+			array = new CallFrame[1];
+		} else {
+			int previousCount = cx.previousInterpreterInvocations.size();
+			if (cx.previousInterpreterInvocations.peek() == cx.lastInterpreterFrame) {
+				// It can happen if exception was generated after
+				// frame was pushed to cx.previousInterpreterInvocations
+				// but before assignment to cx.lastInterpreterFrame.
+				// In this case frames has to be ignored.
+				--previousCount;
+			}
+			array = new CallFrame[previousCount + 1];
+			cx.previousInterpreterInvocations.toArray(array);
+		}
+		array[array.length - 1] = (CallFrame) cx.lastInterpreterFrame;
+
+		int interpreterFrameCount = 0;
+		for (int i = 0; i != array.length; ++i) {
+			interpreterFrameCount += 1 + array[i].frameIndex;
+		}
+
+		int[] linePC = new int[interpreterFrameCount];
+		// Fill linePC with pc positions from all interpreter frames.
+		// Start from the most nested frame
+		int linePCIndex = interpreterFrameCount;
+		for (int i = array.length; i != 0; ) {
+			--i;
+			CallFrame frame = array[i];
+			while (frame != null) {
+				--linePCIndex;
+				linePC[linePCIndex] = frame.pcSourceLineStart;
+				frame = frame.parentFrame;
+			}
+		}
+		if (linePCIndex != 0) {
+			Kit.codeBug();
+		}
+
+		ex.interpreterStackInfo = array;
+		ex.interpreterLineData = linePC;
+	}
+
+	@Override
+	public String getSourcePositionFromStack(Context cx, int[] linep) {
+		CallFrame frame = (CallFrame) cx.lastInterpreterFrame;
+		InterpreterData idata = frame.idata;
+		if (frame.pcSourceLineStart >= 0) {
+			linep[0] = getIndex(idata.itsICode, frame.pcSourceLineStart);
+		} else {
+			linep[0] = 0;
+		}
+		return idata.itsSourceFile;
+	}
+
+	@Override
+	public String getPatchedStack(RhinoException ex, String nativeStackTrace) {
+		String tag = "dev.latvian.mods.rhino.Interpreter.interpretLoop";
+		StringBuilder sb = new StringBuilder(nativeStackTrace.length() + 1000);
+		String lineSeparator = System.lineSeparator();
+
+		CallFrame[] array = (CallFrame[]) ex.interpreterStackInfo;
+		int[] linePC = ex.interpreterLineData;
+		int arrayIndex = array.length;
+		int linePCIndex = linePC.length;
+		int offset = 0;
+		while (arrayIndex != 0) {
+			--arrayIndex;
+			int pos = nativeStackTrace.indexOf(tag, offset);
+			if (pos < 0) {
+				break;
+			}
+
+			// Skip tag length
+			pos += tag.length();
+			// Skip until the end of line
+			for (; pos != nativeStackTrace.length(); ++pos) {
+				char c = nativeStackTrace.charAt(pos);
+				if (c == '\n' || c == '\r') {
+					break;
+				}
+			}
+			sb.append(nativeStackTrace, offset, pos);
+			offset = pos;
+
+			CallFrame frame = array[arrayIndex];
+			while (frame != null) {
+				if (linePCIndex == 0) {
+					Kit.codeBug();
+				}
+				--linePCIndex;
+				InterpreterData idata = frame.idata;
+				sb.append(lineSeparator);
+				sb.append("\tat script");
+				if (idata.itsName != null && idata.itsName.length() != 0) {
+					sb.append('.');
+					sb.append(idata.itsName);
+				}
+				sb.append('(');
+				sb.append(idata.itsSourceFile);
+				int pc = linePC[linePCIndex];
+				if (pc >= 0) {
+					// Include line info only if available
+					sb.append(':');
+					sb.append(getIndex(idata.itsICode, pc));
+				}
+				sb.append(')');
+				frame = frame.parentFrame;
+			}
+		}
+		sb.append(nativeStackTrace.substring(offset));
+
+		return sb.toString();
+	}
+
+	@Override
+	public List<String> getScriptStack(RhinoException ex) {
+		ScriptStackElement[][] stack = getScriptStackElements(ex);
+		List<String> list = new ArrayList<>(stack.length);
+		String lineSeparator = System.lineSeparator();
+		for (ScriptStackElement[] group : stack) {
+			StringBuilder sb = new StringBuilder();
+			for (ScriptStackElement elem : group) {
+				elem.renderJavaStyle(sb);
+				sb.append(lineSeparator);
+			}
+			list.add(sb.toString());
+		}
+		return list;
+	}
+
+	public ScriptStackElement[][] getScriptStackElements(RhinoException ex) {
+		if (ex.interpreterStackInfo == null) {
+			return null;
+		}
+
+		List<ScriptStackElement[]> list = new ArrayList<>();
+
+		CallFrame[] array = (CallFrame[]) ex.interpreterStackInfo;
+		int[] linePC = ex.interpreterLineData;
+		int arrayIndex = array.length;
+		int linePCIndex = linePC.length;
+		while (arrayIndex != 0) {
+			--arrayIndex;
+			CallFrame frame = array[arrayIndex];
+			List<ScriptStackElement> group = new ArrayList<>();
+			while (frame != null) {
+				if (linePCIndex == 0) {
+					Kit.codeBug();
+				}
+				--linePCIndex;
+				InterpreterData idata = frame.idata;
+				String fileName = idata.itsSourceFile;
+				String functionName = null;
+				int lineNumber = -1;
+				int pc = linePC[linePCIndex];
+				if (pc >= 0) {
+					lineNumber = getIndex(idata.itsICode, pc);
+				}
+				if (idata.itsName != null && idata.itsName.length() != 0) {
+					functionName = idata.itsName;
+				}
+				frame = frame.parentFrame;
+				group.add(new ScriptStackElement(fileName, functionName, lineNumber));
+			}
+			list.add(group.toArray(new ScriptStackElement[0]));
+		}
+		return list.toArray(new ScriptStackElement[list.size()][]);
 	}
 }

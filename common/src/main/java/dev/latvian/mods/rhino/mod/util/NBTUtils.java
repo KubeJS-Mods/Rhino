@@ -399,6 +399,37 @@ public interface NBTUtils {
 		return tagType == CompoundTag.TYPE ? COMPOUND_TYPE : tagType == ListTag.TYPE ? LIST_TYPE : tagType;
 	}
 
+	@Nullable
+	static OrderedCompoundTag read(FriendlyByteBuf buf) {
+		int i = buf.readerIndex();
+		byte b = buf.readByte();
+		if (b == 0) {
+			return null;
+		} else {
+			buf.readerIndex(i);
+
+			try {
+				DataInputStream stream = new DataInputStream(new ByteBufInputStream(buf));
+
+				byte b1 = stream.readByte();
+				if (b1 == 0) {
+					return null;
+				} else {
+					stream.readUTF();
+					TagType<?> tagType = convertType(TagTypes.getType(b1));
+
+					if (tagType != COMPOUND_TYPE) {
+						return null;
+					}
+
+					return COMPOUND_TYPE.load(stream, 0, NbtAccounter.UNLIMITED);
+				}
+			} catch (IOException var5) {
+				throw new EncoderException(var5);
+			}
+		}
+	}
+
 	TagType<OrderedCompoundTag> COMPOUND_TYPE = new TagType.VariableSize<>() {
 		@Override
 		public OrderedCompoundTag load(DataInput dataInput, int i, NbtAccounter nbtAccounter) throws IOException {
@@ -495,6 +526,10 @@ public interface NBTUtils {
 		}
 	};
 
+	static Map<String, Tag> accessTagMap(CompoundTag tag) {
+		return tag.tags;
+	}
+
 	TagType<ListTag> LIST_TYPE = new TagType.VariableSize<>() {
 		@Override
 		public ListTag load(DataInput dataInput, int i, NbtAccounter nbtAccounter) throws IOException {
@@ -581,38 +616,7 @@ public interface NBTUtils {
 		}
 	};
 
-	@Nullable
-	static OrderedCompoundTag read(FriendlyByteBuf buf) {
-		int i = buf.readerIndex();
-		byte b = buf.readByte();
-		if (b == 0) {
-			return null;
-		} else {
-			buf.readerIndex(i);
 
-			try {
-				DataInputStream stream = new DataInputStream(new ByteBufInputStream(buf));
 
-				byte b1 = stream.readByte();
-				if (b1 == 0) {
-					return null;
-				} else {
-					stream.readUTF();
-					TagType<?> tagType = convertType(TagTypes.getType(b1));
 
-					if (tagType != COMPOUND_TYPE) {
-						return null;
-					}
-
-					return COMPOUND_TYPE.load(stream, 0, NbtAccounter.UNLIMITED);
-				}
-			} catch (IOException var5) {
-				throw new EncoderException(var5);
-			}
-		}
-	}
-
-	static Map<String, Tag> accessTagMap(CompoundTag tag) {
-		return tag.tags;
-	}
 }

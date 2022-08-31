@@ -40,6 +40,127 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 	private static final Object ARRAY_TAG = "Array";
 	private static final Long NEGATIVE_ONE = (long) -1;
+	private static final int Id_length = 1;
+	private static final int MAX_INSTANCE_ID = 1;
+	private static final Comparator<Object> STRING_COMPARATOR = new StringLikeComparator();
+	private static final Comparator<Object> DEFAULT_COMPARATOR = new ElementComparator();
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toLocaleString = 3;
+	private static final int Id_toSource = 4;
+	private static final int Id_join = 5;
+	private static final int Id_reverse = 6;
+	private static final int Id_sort = 7;
+	private static final int Id_push = 8;
+	private static final int Id_pop = 9;
+	private static final int Id_shift = 10;
+	private static final int Id_unshift = 11;
+	private static final int Id_splice = 12;
+	private static final int Id_concat = 13;
+	private static final int Id_slice = 14;
+	private static final int Id_indexOf = 15;
+	private static final int Id_lastIndexOf = 16;
+	private static final int Id_every = 17;
+	private static final int Id_filter = 18;
+	private static final int Id_forEach = 19;
+	private static final int Id_map = 20;
+	private static final int Id_some = 21;
+	private static final int Id_find = 22;
+	private static final int Id_findIndex = 23;
+	private static final int Id_reduce = 24;
+	private static final int Id_reduceRight = 25;
+	private static final int Id_fill = 26;
+	private static final int Id_keys = 27;
+	private static final int Id_values = 28;
+	private static final int Id_entries = 29;
+	private static final int Id_includes = 30;
+	private static final int Id_copyWithin = 31;
+	private static final int SymbolId_iterator = 32;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
+	private static final int ConstructorId_join = -Id_join;
+	private static final int ConstructorId_reverse = -Id_reverse;
+	private static final int ConstructorId_sort = -Id_sort;
+	private static final int ConstructorId_push = -Id_push;
+	private static final int ConstructorId_pop = -Id_pop;
+	private static final int ConstructorId_shift = -Id_shift;
+	private static final int ConstructorId_unshift = -Id_unshift;
+	private static final int ConstructorId_splice = -Id_splice;
+	private static final int ConstructorId_concat = -Id_concat;
+	private static final int ConstructorId_slice = -Id_slice;
+	private static final int ConstructorId_indexOf = -Id_indexOf;
+	private static final int ConstructorId_lastIndexOf = -Id_lastIndexOf;
+	private static final int ConstructorId_every = -Id_every;
+	private static final int ConstructorId_filter = -Id_filter;
+	private static final int ConstructorId_forEach = -Id_forEach;
+	private static final int ConstructorId_map = -Id_map;
+	private static final int ConstructorId_some = -Id_some;
+	private static final int ConstructorId_find = -Id_find;
+	private static final int ConstructorId_findIndex = -Id_findIndex;
+	private static final int ConstructorId_reduce = -Id_reduce;
+	private static final int ConstructorId_reduceRight = -Id_reduceRight;
+	private static final int ConstructorId_isArray = -26;
+	private static final int ConstructorId_of = -27;
+	private static final int ConstructorId_from = -28;
+	/**
+	 * The default capacity for <code>dense</code>.
+	 */
+	private static final int DEFAULT_INITIAL_CAPACITY = 10;
+	/**
+	 * The factor to grow <code>dense</code> by.
+	 */
+	private static final double GROW_FACTOR = 1.5;
+	private static final int MAX_PRE_GROW_SIZE = (int) (Integer.MAX_VALUE / GROW_FACTOR);
+	/**
+	 * The maximum size of <code>dense</code> that will be allocated initially.
+	 */
+	private static int maximumInitialCapacity = 10000;
+
+	public static final class StringLikeComparator implements Comparator<Object> {
+		@Override
+		public int compare(final Object x, final Object y) {
+			final String a = ScriptRuntime.toString(x);
+			final String b = ScriptRuntime.toString(y);
+			return a.compareTo(b);
+		}
+	}
+
+	public static final class ElementComparator implements Comparator<Object> {
+		private final Comparator<Object> child;
+
+		public ElementComparator() {
+			child = STRING_COMPARATOR;
+		}
+
+		public ElementComparator(Comparator<Object> c) {
+			child = c;
+		}
+
+		@Override
+		public int compare(final Object x, final Object y) {
+			// Sort NOT_FOUND to very end, Undefined before that, exclusively, as per
+			// ECMA 22.1.3.25.1.
+			if (x == Undefined.instance) {
+				if (y == Undefined.instance) {
+					return 0;
+				}
+				if (y == NOT_FOUND) {
+					return -1;
+				}
+				return 1;
+			} else if (x == NOT_FOUND) {
+				return y == NOT_FOUND ? 0 : 1;
+			}
+
+			if (y == NOT_FOUND) {
+				return -1;
+			}
+			if (y == Undefined.instance) {
+				return -1;
+			}
+
+			return child.compare(x, y);
+		}
+	}
 
 	static void init(Scriptable scope, boolean sealed) {
 		NativeArray obj = new NativeArray(0);
@@ -52,432 +173,6 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 	static void setMaximumInitialCapacity(int maximumInitialCapacity) {
 		NativeArray.maximumInitialCapacity = maximumInitialCapacity;
-	}
-
-	public NativeArray(long lengthArg) {
-		denseOnly = lengthArg <= maximumInitialCapacity;
-		if (denseOnly) {
-			int intLength = (int) lengthArg;
-			if (intLength < DEFAULT_INITIAL_CAPACITY) {
-				intLength = DEFAULT_INITIAL_CAPACITY;
-			}
-			dense = new Object[intLength];
-			Arrays.fill(dense, NOT_FOUND);
-		}
-		length = lengthArg;
-	}
-
-	public NativeArray(Object[] array) {
-		denseOnly = true;
-		dense = array;
-		length = array.length;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder("[");
-
-		for (int i = 0; i < size(); i++) {
-			if (i > 0) {
-				sb.append(", ");
-			}
-
-			sb.append(get(i));
-		}
-
-		return sb.append(']').toString();
-	}
-
-	@Override
-	public String getClassName() {
-		return "Array";
-	}
-
-	private static final int Id_length = 1;
-	private static final int MAX_INSTANCE_ID = 1;
-
-	@Override
-	protected int getMaxInstanceId() {
-		return MAX_INSTANCE_ID;
-	}
-
-	@Override
-	protected void setInstanceIdAttributes(int id, int attr) {
-		if (id == Id_length) {
-			lengthAttr = attr;
-		}
-	}
-
-	@Override
-	protected int findInstanceIdInfo(String s) {
-		if (s.equals("length")) {
-			return instanceIdInfo(lengthAttr, Id_length);
-		}
-		return super.findInstanceIdInfo(s);
-	}
-
-	@Override
-	protected String getInstanceIdName(int id) {
-		if (id == Id_length) {
-			return "length";
-		}
-		return super.getInstanceIdName(id);
-	}
-
-	@Override
-	protected Object getInstanceIdValue(int id) {
-		if (id == Id_length) {
-			return ScriptRuntime.wrapNumber(length);
-		}
-		return super.getInstanceIdValue(id);
-	}
-
-	@Override
-	protected void setInstanceIdValue(int id, Object value) {
-		if (id == Id_length) {
-			setLength(value);
-			return;
-		}
-		super.setInstanceIdValue(id, value);
-	}
-
-	@Override
-	protected void fillConstructorProperties(IdFunctionObject ctor) {
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_join, "join", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reverse, "reverse", 0);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_sort, "sort", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_push, "push", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_pop, "pop", 0);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_shift, "shift", 0);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_unshift, "unshift", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_splice, "splice", 2);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_concat, "concat", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_slice, "slice", 2);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_indexOf, "indexOf", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_lastIndexOf, "lastIndexOf", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_every, "every", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_filter, "filter", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_forEach, "forEach", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_map, "map", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_some, "some", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_find, "find", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_findIndex, "findIndex", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduce, "reduce", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduceRight, "reduceRight", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_isArray, "isArray", 1);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_of, "of", 0);
-		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_from, "from", 1);
-		super.fillConstructorProperties(ctor);
-	}
-
-	@Override
-	protected void initPrototypeId(int id) {
-		if (id == SymbolId_iterator) {
-			initPrototypeMethod(ARRAY_TAG, id, SymbolKey.ITERATOR, "[Symbol.iterator]", 0);
-			return;
-		}
-
-		String s, fnName = null;
-		int arity;
-		switch (id) {
-			case Id_constructor -> {
-				arity = 1;
-				s = "constructor";
-			}
-			case Id_toString -> {
-				arity = 0;
-				s = "toString";
-			}
-			case Id_toLocaleString -> {
-				arity = 0;
-				s = "toLocaleString";
-			}
-			case Id_toSource -> {
-				arity = 0;
-				s = "toSource";
-			}
-			case Id_join -> {
-				arity = 1;
-				s = "join";
-			}
-			case Id_reverse -> {
-				arity = 0;
-				s = "reverse";
-			}
-			case Id_sort -> {
-				arity = 1;
-				s = "sort";
-			}
-			case Id_push -> {
-				arity = 1;
-				s = "push";
-			}
-			case Id_pop -> {
-				arity = 0;
-				s = "pop";
-			}
-			case Id_shift -> {
-				arity = 0;
-				s = "shift";
-			}
-			case Id_unshift -> {
-				arity = 1;
-				s = "unshift";
-			}
-			case Id_splice -> {
-				arity = 2;
-				s = "splice";
-			}
-			case Id_concat -> {
-				arity = 1;
-				s = "concat";
-			}
-			case Id_slice -> {
-				arity = 2;
-				s = "slice";
-			}
-			case Id_indexOf -> {
-				arity = 1;
-				s = "indexOf";
-			}
-			case Id_lastIndexOf -> {
-				arity = 1;
-				s = "lastIndexOf";
-			}
-			case Id_every -> {
-				arity = 1;
-				s = "every";
-			}
-			case Id_filter -> {
-				arity = 1;
-				s = "filter";
-			}
-			case Id_forEach -> {
-				arity = 1;
-				s = "forEach";
-			}
-			case Id_map -> {
-				arity = 1;
-				s = "map";
-			}
-			case Id_some -> {
-				arity = 1;
-				s = "some";
-			}
-			case Id_find -> {
-				arity = 1;
-				s = "find";
-			}
-			case Id_findIndex -> {
-				arity = 1;
-				s = "findIndex";
-			}
-			case Id_reduce -> {
-				arity = 1;
-				s = "reduce";
-			}
-			case Id_reduceRight -> {
-				arity = 1;
-				s = "reduceRight";
-			}
-			case Id_fill -> {
-				arity = 1;
-				s = "fill";
-			}
-			case Id_keys -> {
-				arity = 0;
-				s = "keys";
-			}
-			case Id_values -> {
-				arity = 0;
-				s = "values";
-			}
-			case Id_entries -> {
-				arity = 0;
-				s = "entries";
-			}
-			case Id_includes -> {
-				arity = 1;
-				s = "includes";
-			}
-			case Id_copyWithin -> {
-				arity = 2;
-				s = "copyWithin";
-			}
-			default -> throw new IllegalArgumentException(String.valueOf(id));
-		}
-
-		initPrototypeMethod(ARRAY_TAG, id, s, fnName, arity);
-	}
-
-	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		if (!f.hasTag(ARRAY_TAG)) {
-			return super.execIdCall(f, cx, scope, thisObj, args);
-		}
-		int id = f.methodId();
-		again:
-		for (; ; ) {
-			switch (id) {
-				case ConstructorId_join:
-				case ConstructorId_reverse:
-				case ConstructorId_sort:
-				case ConstructorId_push:
-				case ConstructorId_pop:
-				case ConstructorId_shift:
-				case ConstructorId_unshift:
-				case ConstructorId_splice:
-				case ConstructorId_concat:
-				case ConstructorId_slice:
-				case ConstructorId_indexOf:
-				case ConstructorId_lastIndexOf:
-				case ConstructorId_every:
-				case ConstructorId_filter:
-				case ConstructorId_forEach:
-				case ConstructorId_map:
-				case ConstructorId_some:
-				case ConstructorId_find:
-				case ConstructorId_findIndex:
-				case ConstructorId_reduce:
-				case ConstructorId_reduceRight: {
-					// this is a small trick; we will handle all the ConstructorId_xxx calls
-					// the same way the object calls are processed
-					// so we adjust the args, inverting the id and
-					// restarting the method selection
-					// Attention: the implementations have to be aware of this
-					if (args.length > 0) {
-						thisObj = ScriptRuntime.toObject(cx, scope, args[0]);
-						Object[] newArgs = new Object[args.length - 1];
-						System.arraycopy(args, 1, newArgs, 0, newArgs.length);
-						args = newArgs;
-					}
-					id = -id;
-					continue again;
-				}
-
-				case ConstructorId_isArray:
-					return args.length > 0 && js_isArray(args[0]);
-
-				case ConstructorId_of: {
-					return js_of(cx, scope, thisObj, args);
-				}
-
-				case ConstructorId_from: {
-					return js_from(cx, scope, thisObj, args);
-				}
-
-				case Id_constructor: {
-					boolean inNewExpr = (thisObj == null);
-					if (!inNewExpr) {
-						// IdFunctionObject.construct will set up parent, proto
-						return f.construct(cx, scope, args);
-					}
-					return jsConstructor(cx, scope, args);
-				}
-
-				case Id_toString:
-					return toStringHelper(cx, scope, thisObj, false);
-
-				case Id_toLocaleString:
-					return toStringHelper(cx, scope, thisObj, true);
-
-				case Id_toSource:
-					return "not_supported";
-
-				case Id_join:
-					return js_join(cx, scope, thisObj, args);
-
-				case Id_reverse:
-					return js_reverse(cx, scope, thisObj, args);
-
-				case Id_sort:
-					return js_sort(cx, scope, thisObj, args);
-
-				case Id_push:
-					return js_push(cx, scope, thisObj, args);
-
-				case Id_pop:
-					return js_pop(cx, scope, thisObj, args);
-
-				case Id_shift:
-					return js_shift(cx, scope, thisObj, args);
-
-				case Id_unshift:
-					return js_unshift(cx, scope, thisObj, args);
-
-				case Id_splice:
-					return js_splice(cx, scope, thisObj, args);
-
-				case Id_concat:
-					return js_concat(cx, scope, thisObj, args);
-
-				case Id_slice:
-					return js_slice(cx, scope, thisObj, args);
-
-				case Id_indexOf:
-					return js_indexOf(cx, scope, thisObj, args);
-
-				case Id_lastIndexOf:
-					return js_lastIndexOf(cx, scope, thisObj, args);
-
-				case Id_includes:
-					return js_includes(cx, scope, thisObj, args);
-
-				case Id_fill:
-					return js_fill(cx, scope, thisObj, args);
-
-				case Id_copyWithin:
-					return js_copyWithin(cx, scope, thisObj, args);
-
-				case Id_every:
-				case Id_filter:
-				case Id_forEach:
-				case Id_map:
-				case Id_some:
-				case Id_find:
-				case Id_findIndex:
-					return iterativeMethod(cx, f, scope, thisObj, args);
-				case Id_reduce:
-				case Id_reduceRight:
-					return reduceMethod(cx, id, scope, thisObj, args);
-
-				case Id_keys:
-					thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-					return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ArrayIteratorType.KEYS);
-
-				case Id_entries:
-					thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-					return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ArrayIteratorType.ENTRIES);
-
-				case Id_values:
-				case SymbolId_iterator:
-					thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-					return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ArrayIteratorType.VALUES);
-			}
-			throw new IllegalArgumentException("Array.prototype has no method: " + f.getFunctionName());
-		}
-	}
-
-	@Override
-	public Object get(int index, Scriptable start) {
-		if (!denseOnly && isGetterOrSetter(null, index, false)) {
-			return super.get(index, start);
-		}
-		if (dense != null && 0 <= index && index < dense.length) {
-			return dense[index];
-		}
-		return super.get(index, start);
-	}
-
-	@Override
-	public boolean has(int index, Scriptable start) {
-		if (!denseOnly && isGetterOrSetter(null, index, false)) {
-			return super.has(index, start);
-		}
-		if (dense != null && 0 <= index && index < dense.length) {
-			return dense[index] != NOT_FOUND;
-		}
-		return super.has(index, start);
 	}
 
 	private static long toArrayIndex(Object id) {
@@ -501,6 +196,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		return -1;
 	}
 
+	// methods to implement java.util.List
+
 	private static long toArrayIndex(double d) {
 		if (!Double.isNaN(d)) {
 			long index = ScriptRuntime.toUint32(d);
@@ -514,172 +211,6 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static int toDenseIndex(Object id) {
 		long index = toArrayIndex(id);
 		return 0 <= index && index < Integer.MAX_VALUE ? (int) index : -1;
-	}
-
-	@Override
-	public void put(String id, Scriptable start, Object value) {
-		super.put(id, start, value);
-		if (start == this) {
-			// If the object is sealed, super will throw exception
-			long index = toArrayIndex(id);
-			if (index >= length) {
-				length = index + 1;
-				denseOnly = false;
-			}
-		}
-	}
-
-	private boolean ensureCapacity(int capacity) {
-		if (capacity > dense.length) {
-			if (capacity > MAX_PRE_GROW_SIZE) {
-				denseOnly = false;
-				return false;
-			}
-			capacity = Math.max(capacity, (int) (dense.length * GROW_FACTOR));
-			Object[] newDense = new Object[capacity];
-			System.arraycopy(dense, 0, newDense, 0, dense.length);
-			Arrays.fill(newDense, dense.length, newDense.length, NOT_FOUND);
-			dense = newDense;
-		}
-		return true;
-	}
-
-	@Override
-	public void put(int index, Scriptable start, Object value) {
-		if (start == this && !isSealed() && dense != null && 0 <= index && (denseOnly || !isGetterOrSetter(null, index, true))) {
-			if (!isExtensible() && this.length <= index) {
-				return;
-			} else if (index < dense.length) {
-				dense[index] = value;
-				if (this.length <= index) {
-					this.length = (long) index + 1;
-				}
-				return;
-			} else if (denseOnly && index < dense.length * GROW_FACTOR && ensureCapacity(index + 1)) {
-				dense[index] = value;
-				this.length = (long) index + 1;
-				return;
-			} else {
-				denseOnly = false;
-			}
-		}
-		super.put(index, start, value);
-		if (start == this && (lengthAttr & READONLY) == 0) {
-			// only set the array length if given an array index (ECMA 15.4.0)
-			if (this.length <= index) {
-				// avoid overflowing index!
-				this.length = (long) index + 1;
-			}
-		}
-	}
-
-	@Override
-	public void delete(int index) {
-		if (dense != null && 0 <= index && index < dense.length && !isSealed() && (denseOnly || !isGetterOrSetter(null, index, true))) {
-			dense[index] = NOT_FOUND;
-		} else {
-			super.delete(index);
-		}
-	}
-
-	@Override
-	public Object[] getIds(boolean nonEnumerable, boolean getSymbols) {
-		Object[] superIds = super.getIds(nonEnumerable, getSymbols);
-		if (dense == null) {
-			return superIds;
-		}
-		int N = dense.length;
-		long currentLength = length;
-		if (N > currentLength) {
-			N = (int) currentLength;
-		}
-		if (N == 0) {
-			return superIds;
-		}
-		int superLength = superIds.length;
-		Object[] ids = new Object[N + superLength];
-
-		int presentCount = 0;
-		for (int i = 0; i != N; ++i) {
-			// Replace existing elements by their indexes
-			if (dense[i] != NOT_FOUND) {
-				ids[presentCount] = i;
-				++presentCount;
-			}
-		}
-		if (presentCount != N) {
-			// dense contains deleted elems, need to shrink the result
-			Object[] tmp = new Object[presentCount + superLength];
-			System.arraycopy(ids, 0, tmp, 0, presentCount);
-			ids = tmp;
-		}
-		System.arraycopy(superIds, 0, ids, presentCount, superLength);
-		return ids;
-	}
-
-	public List<Integer> getIndexIds() {
-		Object[] ids = getIds();
-		List<Integer> indices = new ArrayList<>(ids.length);
-		for (Object id : ids) {
-			int int32Id = ScriptRuntime.toInt32(id);
-			if (int32Id >= 0 && ScriptRuntime.toString(int32Id).equals(ScriptRuntime.toString(id))) {
-				indices.add(int32Id);
-			}
-		}
-		return indices;
-	}
-
-	private ScriptableObject defaultIndexPropertyDescriptor(Object value) {
-		Scriptable scope = getParentScope();
-		if (scope == null) {
-			scope = this;
-		}
-		ScriptableObject desc = new NativeObject();
-		ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
-		desc.defineProperty("value", value, EMPTY);
-		desc.defineProperty("writable", Boolean.TRUE, EMPTY);
-		desc.defineProperty("enumerable", Boolean.TRUE, EMPTY);
-		desc.defineProperty("configurable", Boolean.TRUE, EMPTY);
-		return desc;
-	}
-
-	@Override
-	public int getAttributes(int index) {
-		if (dense != null && index >= 0 && index < dense.length && dense[index] != NOT_FOUND) {
-			return EMPTY;
-		}
-		return super.getAttributes(index);
-	}
-
-	@Override
-	protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
-		if (dense != null) {
-			int index = toDenseIndex(id);
-			if (0 <= index && index < dense.length && dense[index] != NOT_FOUND) {
-				Object value = dense[index];
-				return defaultIndexPropertyDescriptor(value);
-			}
-		}
-		return super.getOwnPropertyDescriptor(cx, id);
-	}
-
-	@Override
-	protected void defineOwnProperty(Context cx, Object id, ScriptableObject desc, boolean checkValid) {
-		if (dense != null) {
-			Object[] values = dense;
-			dense = null;
-			denseOnly = false;
-			for (int i = 0; i < values.length; i++) {
-				if (values[i] != NOT_FOUND) {
-					put(i, this, values[i]);
-				}
-			}
-		}
-		long index = toArrayIndex(id);
-		if (index >= length) {
-			length = index + 1;
-		}
-		super.defineOwnProperty(cx, id, desc, checkValid);
 	}
 
 	/**
@@ -788,87 +319,6 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		setLengthProperty(cx, result, args.length);
 
 		return result;
-	}
-
-	public long getLength() {
-		return length;
-	}
-
-	/**
-	 * Change the value of the internal flag that determines whether all
-	 * storage is handed by a dense backing array rather than an associative
-	 * store.
-	 *
-	 * @param denseOnly new value for denseOnly flag
-	 * @throws IllegalArgumentException if an attempt is made to enable
-	 *                                  denseOnly after it was disabled; NativeArray code is not written
-	 *                                  to handle switching back to a dense representation
-	 */
-	void setDenseOnly(boolean denseOnly) {
-		if (denseOnly && !this.denseOnly) {
-			throw new IllegalArgumentException();
-		}
-		this.denseOnly = denseOnly;
-	}
-
-	private void setLength(Object val) {
-		/* XXX do we satisfy this?
-		 * 15.4.5.1 [[Put]](P, V):
-		 * 1. Call the [[CanPut]] method of A with name P.
-		 * 2. If Result(1) is false, return.
-		 * ?
-		 */
-		if ((lengthAttr & READONLY) != 0) {
-			return;
-		}
-
-		double d = ScriptRuntime.toNumber(val);
-		long longVal = ScriptRuntime.toUint32(d);
-		if (longVal != d) {
-			String msg = ScriptRuntime.getMessage0("msg.arraylength.bad");
-			throw ScriptRuntime.rangeError(msg);
-		}
-
-		if (denseOnly) {
-			if (longVal < length) {
-				// downcast okay because denseOnly
-				Arrays.fill(dense, (int) longVal, dense.length, NOT_FOUND);
-				length = longVal;
-				return;
-			} else if (longVal < MAX_PRE_GROW_SIZE && longVal < (length * GROW_FACTOR) && ensureCapacity((int) longVal)) {
-				length = longVal;
-				return;
-			} else {
-				denseOnly = false;
-			}
-		}
-		if (longVal < length) {
-			// remove all properties between longVal and length
-			if (length - longVal > 0x1000) {
-				// assume that the representation is sparse
-				Object[] e = getIds(); // will only find in object itself
-				for (Object id : e) {
-					if (id instanceof String strId) {
-						// > MAXINT will appear as string
-						long index = toArrayIndex(strId);
-						if (index >= longVal) {
-							delete(strId);
-						}
-					} else {
-						int index = (Integer) id;
-						if (index >= longVal) {
-							delete(index);
-						}
-					}
-				}
-			} else {
-				// assume a dense representation
-				for (long i = longVal; i < length; i++) {
-					deleteElem(this, i);
-				}
-			}
-		}
-		length = longVal;
 	}
 
 	/* Support for generic Array-ish objects.  Most of the Array
@@ -1471,6 +921,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		return newlen;
 	}
 
+	// Comparators for the js_sort method. Putting them here lets us unit-test them better.
+
 	private static long doConcat(Context cx, Scriptable scope, Scriptable result, Object arg, long offset) {
 		if (isConcatSpreadable(cx, scope, arg)) {
 			return concatSpreadArg(cx, result, (Scriptable) arg, offset);
@@ -1954,7 +1406,695 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		return o instanceof NativeJavaList || o instanceof List || o instanceof Scriptable s && "Array".equals(s.getClassName());
 	}
 
-	// methods to implement java.util.List
+	/**
+	 * Internal representation of the JavaScript array's length property.
+	 */
+	private long length;
+	/**
+	 * Attributes of the array's length property
+	 */
+	private int lengthAttr = DONTENUM | PERMANENT;
+	/**
+	 * Fast storage for dense arrays. Sparse arrays will use the superclass's
+	 * hashtable storage scheme.
+	 */
+	private Object[] dense;
+	/**
+	 * True if all numeric properties are stored in <code>dense</code>.
+	 */
+	private boolean denseOnly;
+
+	public NativeArray(long lengthArg) {
+		denseOnly = lengthArg <= maximumInitialCapacity;
+		if (denseOnly) {
+			int intLength = (int) lengthArg;
+			if (intLength < DEFAULT_INITIAL_CAPACITY) {
+				intLength = DEFAULT_INITIAL_CAPACITY;
+			}
+			dense = new Object[intLength];
+			Arrays.fill(dense, NOT_FOUND);
+		}
+		length = lengthArg;
+	}
+
+	public NativeArray(Object[] array) {
+		denseOnly = true;
+		dense = array;
+		length = array.length;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder("[");
+
+		for (int i = 0; i < size(); i++) {
+			if (i > 0) {
+				sb.append(", ");
+			}
+
+			sb.append(get(i));
+		}
+
+		return sb.append(']').toString();
+	}
+
+	@Override
+	public String getClassName() {
+		return "Array";
+	}
+
+	@Override
+	protected int getMaxInstanceId() {
+		return MAX_INSTANCE_ID;
+	}
+
+	@Override
+	protected void setInstanceIdAttributes(int id, int attr) {
+		if (id == Id_length) {
+			lengthAttr = attr;
+		}
+	}
+
+	@Override
+	protected int findInstanceIdInfo(String s) {
+		if (s.equals("length")) {
+			return instanceIdInfo(lengthAttr, Id_length);
+		}
+		return super.findInstanceIdInfo(s);
+	}
+
+	@Override
+	protected String getInstanceIdName(int id) {
+		if (id == Id_length) {
+			return "length";
+		}
+		return super.getInstanceIdName(id);
+	}
+
+	@Override
+	protected Object getInstanceIdValue(int id) {
+		if (id == Id_length) {
+			return ScriptRuntime.wrapNumber(length);
+		}
+		return super.getInstanceIdValue(id);
+	}
+
+	@Override
+	protected void setInstanceIdValue(int id, Object value) {
+		if (id == Id_length) {
+			setLength(value);
+			return;
+		}
+		super.setInstanceIdValue(id, value);
+	}
+
+	@Override
+	protected void fillConstructorProperties(IdFunctionObject ctor) {
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_join, "join", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reverse, "reverse", 0);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_sort, "sort", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_push, "push", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_pop, "pop", 0);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_shift, "shift", 0);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_unshift, "unshift", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_splice, "splice", 2);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_concat, "concat", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_slice, "slice", 2);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_indexOf, "indexOf", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_lastIndexOf, "lastIndexOf", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_every, "every", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_filter, "filter", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_forEach, "forEach", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_map, "map", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_some, "some", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_find, "find", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_findIndex, "findIndex", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduce, "reduce", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduceRight, "reduceRight", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_isArray, "isArray", 1);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_of, "of", 0);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_from, "from", 1);
+		super.fillConstructorProperties(ctor);
+	}
+
+	@Override
+	protected void initPrototypeId(int id) {
+		if (id == SymbolId_iterator) {
+			initPrototypeMethod(ARRAY_TAG, id, SymbolKey.ITERATOR, "[Symbol.iterator]", 0);
+			return;
+		}
+
+		String s, fnName = null;
+		int arity;
+		switch (id) {
+			case Id_constructor -> {
+				arity = 1;
+				s = "constructor";
+			}
+			case Id_toString -> {
+				arity = 0;
+				s = "toString";
+			}
+			case Id_toLocaleString -> {
+				arity = 0;
+				s = "toLocaleString";
+			}
+			case Id_toSource -> {
+				arity = 0;
+				s = "toSource";
+			}
+			case Id_join -> {
+				arity = 1;
+				s = "join";
+			}
+			case Id_reverse -> {
+				arity = 0;
+				s = "reverse";
+			}
+			case Id_sort -> {
+				arity = 1;
+				s = "sort";
+			}
+			case Id_push -> {
+				arity = 1;
+				s = "push";
+			}
+			case Id_pop -> {
+				arity = 0;
+				s = "pop";
+			}
+			case Id_shift -> {
+				arity = 0;
+				s = "shift";
+			}
+			case Id_unshift -> {
+				arity = 1;
+				s = "unshift";
+			}
+			case Id_splice -> {
+				arity = 2;
+				s = "splice";
+			}
+			case Id_concat -> {
+				arity = 1;
+				s = "concat";
+			}
+			case Id_slice -> {
+				arity = 2;
+				s = "slice";
+			}
+			case Id_indexOf -> {
+				arity = 1;
+				s = "indexOf";
+			}
+			case Id_lastIndexOf -> {
+				arity = 1;
+				s = "lastIndexOf";
+			}
+			case Id_every -> {
+				arity = 1;
+				s = "every";
+			}
+			case Id_filter -> {
+				arity = 1;
+				s = "filter";
+			}
+			case Id_forEach -> {
+				arity = 1;
+				s = "forEach";
+			}
+			case Id_map -> {
+				arity = 1;
+				s = "map";
+			}
+			case Id_some -> {
+				arity = 1;
+				s = "some";
+			}
+			case Id_find -> {
+				arity = 1;
+				s = "find";
+			}
+			case Id_findIndex -> {
+				arity = 1;
+				s = "findIndex";
+			}
+			case Id_reduce -> {
+				arity = 1;
+				s = "reduce";
+			}
+			case Id_reduceRight -> {
+				arity = 1;
+				s = "reduceRight";
+			}
+			case Id_fill -> {
+				arity = 1;
+				s = "fill";
+			}
+			case Id_keys -> {
+				arity = 0;
+				s = "keys";
+			}
+			case Id_values -> {
+				arity = 0;
+				s = "values";
+			}
+			case Id_entries -> {
+				arity = 0;
+				s = "entries";
+			}
+			case Id_includes -> {
+				arity = 1;
+				s = "includes";
+			}
+			case Id_copyWithin -> {
+				arity = 2;
+				s = "copyWithin";
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
+		}
+
+		initPrototypeMethod(ARRAY_TAG, id, s, fnName, arity);
+	}
+
+	@Override
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(ARRAY_TAG)) {
+			return super.execIdCall(f, cx, scope, thisObj, args);
+		}
+		int id = f.methodId();
+		again:
+		for (; ; ) {
+			switch (id) {
+				case ConstructorId_join:
+				case ConstructorId_reverse:
+				case ConstructorId_sort:
+				case ConstructorId_push:
+				case ConstructorId_pop:
+				case ConstructorId_shift:
+				case ConstructorId_unshift:
+				case ConstructorId_splice:
+				case ConstructorId_concat:
+				case ConstructorId_slice:
+				case ConstructorId_indexOf:
+				case ConstructorId_lastIndexOf:
+				case ConstructorId_every:
+				case ConstructorId_filter:
+				case ConstructorId_forEach:
+				case ConstructorId_map:
+				case ConstructorId_some:
+				case ConstructorId_find:
+				case ConstructorId_findIndex:
+				case ConstructorId_reduce:
+				case ConstructorId_reduceRight: {
+					// this is a small trick; we will handle all the ConstructorId_xxx calls
+					// the same way the object calls are processed
+					// so we adjust the args, inverting the id and
+					// restarting the method selection
+					// Attention: the implementations have to be aware of this
+					if (args.length > 0) {
+						thisObj = ScriptRuntime.toObject(cx, scope, args[0]);
+						Object[] newArgs = new Object[args.length - 1];
+						System.arraycopy(args, 1, newArgs, 0, newArgs.length);
+						args = newArgs;
+					}
+					id = -id;
+					continue again;
+				}
+
+				case ConstructorId_isArray:
+					return args.length > 0 && js_isArray(args[0]);
+
+				case ConstructorId_of: {
+					return js_of(cx, scope, thisObj, args);
+				}
+
+				case ConstructorId_from: {
+					return js_from(cx, scope, thisObj, args);
+				}
+
+				case Id_constructor: {
+					boolean inNewExpr = (thisObj == null);
+					if (!inNewExpr) {
+						// IdFunctionObject.construct will set up parent, proto
+						return f.construct(cx, scope, args);
+					}
+					return jsConstructor(cx, scope, args);
+				}
+
+				case Id_toString:
+					return toStringHelper(cx, scope, thisObj, false);
+
+				case Id_toLocaleString:
+					return toStringHelper(cx, scope, thisObj, true);
+
+				case Id_toSource:
+					return "not_supported";
+
+				case Id_join:
+					return js_join(cx, scope, thisObj, args);
+
+				case Id_reverse:
+					return js_reverse(cx, scope, thisObj, args);
+
+				case Id_sort:
+					return js_sort(cx, scope, thisObj, args);
+
+				case Id_push:
+					return js_push(cx, scope, thisObj, args);
+
+				case Id_pop:
+					return js_pop(cx, scope, thisObj, args);
+
+				case Id_shift:
+					return js_shift(cx, scope, thisObj, args);
+
+				case Id_unshift:
+					return js_unshift(cx, scope, thisObj, args);
+
+				case Id_splice:
+					return js_splice(cx, scope, thisObj, args);
+
+				case Id_concat:
+					return js_concat(cx, scope, thisObj, args);
+
+				case Id_slice:
+					return js_slice(cx, scope, thisObj, args);
+
+				case Id_indexOf:
+					return js_indexOf(cx, scope, thisObj, args);
+
+				case Id_lastIndexOf:
+					return js_lastIndexOf(cx, scope, thisObj, args);
+
+				case Id_includes:
+					return js_includes(cx, scope, thisObj, args);
+
+				case Id_fill:
+					return js_fill(cx, scope, thisObj, args);
+
+				case Id_copyWithin:
+					return js_copyWithin(cx, scope, thisObj, args);
+
+				case Id_every:
+				case Id_filter:
+				case Id_forEach:
+				case Id_map:
+				case Id_some:
+				case Id_find:
+				case Id_findIndex:
+					return iterativeMethod(cx, f, scope, thisObj, args);
+				case Id_reduce:
+				case Id_reduceRight:
+					return reduceMethod(cx, id, scope, thisObj, args);
+
+				case Id_keys:
+					thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
+					return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ArrayIteratorType.KEYS);
+
+				case Id_entries:
+					thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
+					return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ArrayIteratorType.ENTRIES);
+
+				case Id_values:
+				case SymbolId_iterator:
+					thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
+					return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ArrayIteratorType.VALUES);
+			}
+			throw new IllegalArgumentException("Array.prototype has no method: " + f.getFunctionName());
+		}
+	}
+
+	@Override
+	public Object get(int index, Scriptable start) {
+		if (!denseOnly && isGetterOrSetter(null, index, false)) {
+			return super.get(index, start);
+		}
+		if (dense != null && 0 <= index && index < dense.length) {
+			return dense[index];
+		}
+		return super.get(index, start);
+	}
+
+	@Override
+	public boolean has(int index, Scriptable start) {
+		if (!denseOnly && isGetterOrSetter(null, index, false)) {
+			return super.has(index, start);
+		}
+		if (dense != null && 0 <= index && index < dense.length) {
+			return dense[index] != NOT_FOUND;
+		}
+		return super.has(index, start);
+	}
+
+	@Override
+	public void put(String id, Scriptable start, Object value) {
+		super.put(id, start, value);
+		if (start == this) {
+			// If the object is sealed, super will throw exception
+			long index = toArrayIndex(id);
+			if (index >= length) {
+				length = index + 1;
+				denseOnly = false;
+			}
+		}
+	}
+
+	private boolean ensureCapacity(int capacity) {
+		if (capacity > dense.length) {
+			if (capacity > MAX_PRE_GROW_SIZE) {
+				denseOnly = false;
+				return false;
+			}
+			capacity = Math.max(capacity, (int) (dense.length * GROW_FACTOR));
+			Object[] newDense = new Object[capacity];
+			System.arraycopy(dense, 0, newDense, 0, dense.length);
+			Arrays.fill(newDense, dense.length, newDense.length, NOT_FOUND);
+			dense = newDense;
+		}
+		return true;
+	}
+
+	@Override
+	public void put(int index, Scriptable start, Object value) {
+		if (start == this && !isSealed() && dense != null && 0 <= index && (denseOnly || !isGetterOrSetter(null, index, true))) {
+			if (!isExtensible() && this.length <= index) {
+				return;
+			} else if (index < dense.length) {
+				dense[index] = value;
+				if (this.length <= index) {
+					this.length = (long) index + 1;
+				}
+				return;
+			} else if (denseOnly && index < dense.length * GROW_FACTOR && ensureCapacity(index + 1)) {
+				dense[index] = value;
+				this.length = (long) index + 1;
+				return;
+			} else {
+				denseOnly = false;
+			}
+		}
+		super.put(index, start, value);
+		if (start == this && (lengthAttr & READONLY) == 0) {
+			// only set the array length if given an array index (ECMA 15.4.0)
+			if (this.length <= index) {
+				// avoid overflowing index!
+				this.length = (long) index + 1;
+			}
+		}
+	}
+
+	@Override
+	public void delete(int index) {
+		if (dense != null && 0 <= index && index < dense.length && !isSealed() && (denseOnly || !isGetterOrSetter(null, index, true))) {
+			dense[index] = NOT_FOUND;
+		} else {
+			super.delete(index);
+		}
+	}
+
+	@Override
+	public Object[] getIds(boolean nonEnumerable, boolean getSymbols) {
+		Object[] superIds = super.getIds(nonEnumerable, getSymbols);
+		if (dense == null) {
+			return superIds;
+		}
+		int N = dense.length;
+		long currentLength = length;
+		if (N > currentLength) {
+			N = (int) currentLength;
+		}
+		if (N == 0) {
+			return superIds;
+		}
+		int superLength = superIds.length;
+		Object[] ids = new Object[N + superLength];
+
+		int presentCount = 0;
+		for (int i = 0; i != N; ++i) {
+			// Replace existing elements by their indexes
+			if (dense[i] != NOT_FOUND) {
+				ids[presentCount] = i;
+				++presentCount;
+			}
+		}
+		if (presentCount != N) {
+			// dense contains deleted elems, need to shrink the result
+			Object[] tmp = new Object[presentCount + superLength];
+			System.arraycopy(ids, 0, tmp, 0, presentCount);
+			ids = tmp;
+		}
+		System.arraycopy(superIds, 0, ids, presentCount, superLength);
+		return ids;
+	}
+
+	public List<Integer> getIndexIds() {
+		Object[] ids = getIds();
+		List<Integer> indices = new ArrayList<>(ids.length);
+		for (Object id : ids) {
+			int int32Id = ScriptRuntime.toInt32(id);
+			if (int32Id >= 0 && ScriptRuntime.toString(int32Id).equals(ScriptRuntime.toString(id))) {
+				indices.add(int32Id);
+			}
+		}
+		return indices;
+	}
+
+	private ScriptableObject defaultIndexPropertyDescriptor(Object value) {
+		Scriptable scope = getParentScope();
+		if (scope == null) {
+			scope = this;
+		}
+		ScriptableObject desc = new NativeObject();
+		ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
+		desc.defineProperty("value", value, EMPTY);
+		desc.defineProperty("writable", Boolean.TRUE, EMPTY);
+		desc.defineProperty("enumerable", Boolean.TRUE, EMPTY);
+		desc.defineProperty("configurable", Boolean.TRUE, EMPTY);
+		return desc;
+	}
+
+	// #/string_id_map#
+
+	@Override
+	public int getAttributes(int index) {
+		if (dense != null && index >= 0 && index < dense.length && dense[index] != NOT_FOUND) {
+			return EMPTY;
+		}
+		return super.getAttributes(index);
+	}
+
+	@Override
+	protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+		if (dense != null) {
+			int index = toDenseIndex(id);
+			if (0 <= index && index < dense.length && dense[index] != NOT_FOUND) {
+				Object value = dense[index];
+				return defaultIndexPropertyDescriptor(value);
+			}
+		}
+		return super.getOwnPropertyDescriptor(cx, id);
+	}
+
+	@Override
+	protected void defineOwnProperty(Context cx, Object id, ScriptableObject desc, boolean checkValid) {
+		if (dense != null) {
+			Object[] values = dense;
+			dense = null;
+			denseOnly = false;
+			for (int i = 0; i < values.length; i++) {
+				if (values[i] != NOT_FOUND) {
+					put(i, this, values[i]);
+				}
+			}
+		}
+		long index = toArrayIndex(id);
+		if (index >= length) {
+			length = index + 1;
+		}
+		super.defineOwnProperty(cx, id, desc, checkValid);
+	}
+
+	public long getLength() {
+		return length;
+	}
+
+	private void setLength(Object val) {
+		/* XXX do we satisfy this?
+		 * 15.4.5.1 [[Put]](P, V):
+		 * 1. Call the [[CanPut]] method of A with name P.
+		 * 2. If Result(1) is false, return.
+		 * ?
+		 */
+		if ((lengthAttr & READONLY) != 0) {
+			return;
+		}
+
+		double d = ScriptRuntime.toNumber(val);
+		long longVal = ScriptRuntime.toUint32(d);
+		if (longVal != d) {
+			String msg = ScriptRuntime.getMessage0("msg.arraylength.bad");
+			throw ScriptRuntime.rangeError(msg);
+		}
+
+		if (denseOnly) {
+			if (longVal < length) {
+				// downcast okay because denseOnly
+				Arrays.fill(dense, (int) longVal, dense.length, NOT_FOUND);
+				length = longVal;
+				return;
+			} else if (longVal < MAX_PRE_GROW_SIZE && longVal < (length * GROW_FACTOR) && ensureCapacity((int) longVal)) {
+				length = longVal;
+				return;
+			} else {
+				denseOnly = false;
+			}
+		}
+		if (longVal < length) {
+			// remove all properties between longVal and length
+			if (length - longVal > 0x1000) {
+				// assume that the representation is sparse
+				Object[] e = getIds(); // will only find in object itself
+				for (Object id : e) {
+					if (id instanceof String strId) {
+						// > MAXINT will appear as string
+						long index = toArrayIndex(strId);
+						if (index >= longVal) {
+							delete(strId);
+						}
+					} else {
+						int index = (Integer) id;
+						if (index >= longVal) {
+							delete(index);
+						}
+					}
+				}
+			} else {
+				// assume a dense representation
+				for (long i = longVal; i < length; i++) {
+					deleteElem(this, i);
+				}
+			}
+		}
+		length = longVal;
+	}
+
+	/**
+	 * Change the value of the internal flag that determines whether all
+	 * storage is handed by a dense backing array rather than an associative
+	 * store.
+	 *
+	 * @param denseOnly new value for denseOnly flag
+	 * @throws IllegalArgumentException if an attempt is made to enable
+	 *                                  denseOnly after it was disabled; NativeArray code is not written
+	 *                                  to handle switching back to a dense representation
+	 */
+	void setDenseOnly(boolean denseOnly) {
+		if (denseOnly && !this.denseOnly) {
+			throw new IllegalArgumentException();
+		}
+		this.denseOnly = denseOnly;
+	}
 
 	@Override
 	public boolean contains(Object o) {
@@ -2211,58 +2351,6 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		return 0;
 	}
 
-	// Comparators for the js_sort method. Putting them here lets us unit-test them better.
-
-	private static final Comparator<Object> STRING_COMPARATOR = new StringLikeComparator();
-	private static final Comparator<Object> DEFAULT_COMPARATOR = new ElementComparator();
-
-	public static final class StringLikeComparator implements Comparator<Object> {
-		@Override
-		public int compare(final Object x, final Object y) {
-			final String a = ScriptRuntime.toString(x);
-			final String b = ScriptRuntime.toString(y);
-			return a.compareTo(b);
-		}
-	}
-
-	public static final class ElementComparator implements Comparator<Object> {
-		private final Comparator<Object> child;
-
-		public ElementComparator() {
-			child = STRING_COMPARATOR;
-		}
-
-		public ElementComparator(Comparator<Object> c) {
-			child = c;
-		}
-
-		@Override
-		public int compare(final Object x, final Object y) {
-			// Sort NOT_FOUND to very end, Undefined before that, exclusively, as per
-			// ECMA 22.1.3.25.1.
-			if (x == Undefined.instance) {
-				if (y == Undefined.instance) {
-					return 0;
-				}
-				if (y == NOT_FOUND) {
-					return -1;
-				}
-				return 1;
-			} else if (x == NOT_FOUND) {
-				return y == NOT_FOUND ? 0 : 1;
-			}
-
-			if (y == NOT_FOUND) {
-				return -1;
-			}
-			if (y == Undefined.instance) {
-				return -1;
-			}
-
-			return child.compare(x, y);
-		}
-	}
-
 	@Override
 	protected int findPrototypeId(String s) {
 		return switch (s) {
@@ -2300,105 +2388,6 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			default -> 0;
 		};
 	}
-
-	private static final int Id_constructor = 1;
-	private static final int Id_toString = 2;
-	private static final int Id_toLocaleString = 3;
-	private static final int Id_toSource = 4;
-	private static final int Id_join = 5;
-	private static final int Id_reverse = 6;
-	private static final int Id_sort = 7;
-	private static final int Id_push = 8;
-	private static final int Id_pop = 9;
-	private static final int Id_shift = 10;
-	private static final int Id_unshift = 11;
-	private static final int Id_splice = 12;
-	private static final int Id_concat = 13;
-	private static final int Id_slice = 14;
-	private static final int Id_indexOf = 15;
-	private static final int Id_lastIndexOf = 16;
-	private static final int Id_every = 17;
-	private static final int Id_filter = 18;
-	private static final int Id_forEach = 19;
-	private static final int Id_map = 20;
-	private static final int Id_some = 21;
-	private static final int Id_find = 22;
-	private static final int Id_findIndex = 23;
-	private static final int Id_reduce = 24;
-	private static final int Id_reduceRight = 25;
-	private static final int Id_fill = 26;
-	private static final int Id_keys = 27;
-	private static final int Id_values = 28;
-	private static final int Id_entries = 29;
-	private static final int Id_includes = 30;
-	private static final int Id_copyWithin = 31;
-	private static final int SymbolId_iterator = 32;
-
-	private static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
-
-	// #/string_id_map#
-
-	private static final int ConstructorId_join = -Id_join;
-	private static final int ConstructorId_reverse = -Id_reverse;
-	private static final int ConstructorId_sort = -Id_sort;
-	private static final int ConstructorId_push = -Id_push;
-	private static final int ConstructorId_pop = -Id_pop;
-	private static final int ConstructorId_shift = -Id_shift;
-	private static final int ConstructorId_unshift = -Id_unshift;
-	private static final int ConstructorId_splice = -Id_splice;
-	private static final int ConstructorId_concat = -Id_concat;
-	private static final int ConstructorId_slice = -Id_slice;
-	private static final int ConstructorId_indexOf = -Id_indexOf;
-	private static final int ConstructorId_lastIndexOf = -Id_lastIndexOf;
-	private static final int ConstructorId_every = -Id_every;
-	private static final int ConstructorId_filter = -Id_filter;
-	private static final int ConstructorId_forEach = -Id_forEach;
-	private static final int ConstructorId_map = -Id_map;
-	private static final int ConstructorId_some = -Id_some;
-	private static final int ConstructorId_find = -Id_find;
-	private static final int ConstructorId_findIndex = -Id_findIndex;
-	private static final int ConstructorId_reduce = -Id_reduce;
-	private static final int ConstructorId_reduceRight = -Id_reduceRight;
-	private static final int ConstructorId_isArray = -26;
-	private static final int ConstructorId_of = -27;
-	private static final int ConstructorId_from = -28;
-
-	/**
-	 * Internal representation of the JavaScript array's length property.
-	 */
-	private long length;
-
-	/**
-	 * Attributes of the array's length property
-	 */
-	private int lengthAttr = DONTENUM | PERMANENT;
-
-	/**
-	 * Fast storage for dense arrays. Sparse arrays will use the superclass's
-	 * hashtable storage scheme.
-	 */
-	private Object[] dense;
-
-	/**
-	 * True if all numeric properties are stored in <code>dense</code>.
-	 */
-	private boolean denseOnly;
-
-	/**
-	 * The maximum size of <code>dense</code> that will be allocated initially.
-	 */
-	private static int maximumInitialCapacity = 10000;
-
-	/**
-	 * The default capacity for <code>dense</code>.
-	 */
-	private static final int DEFAULT_INITIAL_CAPACITY = 10;
-
-	/**
-	 * The factor to grow <code>dense</code> by.
-	 */
-	private static final double GROW_FACTOR = 1.5;
-	private static final int MAX_PRE_GROW_SIZE = (int) (Integer.MAX_VALUE / GROW_FACTOR);
 
 	@Override
 	public <T> T createDataObject(Supplier<T> instanceFactory) {

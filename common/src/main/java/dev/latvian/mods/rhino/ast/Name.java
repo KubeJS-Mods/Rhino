@@ -74,6 +74,18 @@ public class Name extends AstNode {
 	}
 
 	/**
+	 * Return the {@link Scope} associated with this node.  This is
+	 * <em>only</em> used for (and set by) the code generator, so it will always
+	 * be null in frontend AST-processing code.  Use {@link #getDefiningScope}
+	 * to find the lexical {@code Scope} in which this {@code Name} is defined,
+	 * if any.
+	 */
+	@Override
+	public Scope getScope() {
+		return scope;
+	}
+
+	/**
 	 * Set the {@link Scope} associated with this node.  This method does not
 	 * set the scope's ast-node field to this node.  The field exists only
 	 * for temporary storage by the code generator.  Not every name has an
@@ -86,18 +98,6 @@ public class Name extends AstNode {
 	@Override
 	public void setScope(Scope s) {
 		scope = s;
-	}
-
-	/**
-	 * Return the {@link Scope} associated with this node.  This is
-	 * <em>only</em> used for (and set by) the code generator, so it will always
-	 * be null in frontend AST-processing code.  Use {@link #getDefiningScope}
-	 * to find the lexical {@code Scope} in which this {@code Name} is defined,
-	 * if any.
-	 */
-	@Override
-	public Scope getScope() {
-		return scope;
 	}
 
 	/**

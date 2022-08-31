@@ -37,131 +37,6 @@ import java.util.EnumMap;
  */
 public class TopLevel extends IdScriptableObject {
 	/**
-	 * An enumeration of built-in ECMAScript objects.
-	 */
-	public enum Builtins {
-		/**
-		 * The built-in Object type.
-		 */
-		Object,
-		/**
-		 * The built-in Array type.
-		 */
-		Array,
-		/**
-		 * The built-in Function type.
-		 */
-		Function,
-		/**
-		 * The built-in String type.
-		 */
-		String,
-		/**
-		 * The built-in Number type.
-		 */
-		Number,
-		/**
-		 * The built-in Boolean type.
-		 */
-		Boolean,
-		/**
-		 * The built-in RegExp type.
-		 */
-		RegExp,
-		/**
-		 * The built-in Error type.
-		 */
-		Error,
-		/**
-		 * The built-in Symbol type.
-		 */
-		Symbol,
-		/**
-		 * The built-in GeneratorFunction type.
-		 */
-		GeneratorFunction
-	}
-
-	/**
-	 * An enumeration of built-in native errors. [ECMAScript 5 - 15.11.6]
-	 */
-	enum NativeErrors {
-		/**
-		 * Basic Error
-		 */
-		Error,
-		/**
-		 * The native EvalError.
-		 */
-		EvalError,
-		/**
-		 * The native RangeError.
-		 */
-		RangeError,
-		/**
-		 * The native ReferenceError.
-		 */
-		ReferenceError,
-		/**
-		 * The native SyntaxError.
-		 */
-		SyntaxError,
-		/**
-		 * The native TypeError.
-		 */
-		TypeError,
-		/**
-		 * The native URIError.
-		 */
-		URIError,
-		/**
-		 * The native InternalError (non-standard).
-		 */
-		InternalError,
-		/**
-		 * The native JavaException (non-standard).
-		 */
-		JavaException
-	}
-
-	private EnumMap<Builtins, BaseFunction> ctors;
-	private EnumMap<NativeErrors, BaseFunction> errors;
-
-	@Override
-	public String getClassName() {
-		return "global";
-	}
-
-	/**
-	 * Cache the built-in ECMAScript objects to protect them against
-	 * modifications by the script. This method is called automatically by
-	 * {@link ScriptRuntime#initStandardObjects ScriptRuntime.initStandardObjects}
-	 * if the scope argument is an instance of this class. It only has to be
-	 * called by the embedding if a top-level scope is not initialized through
-	 * <code>initStandardObjects()</code>.
-	 */
-	public void cacheBuiltins(Scriptable scope, boolean sealed) {
-		ctors = new EnumMap<>(Builtins.class);
-		for (Builtins builtin : Builtins.values()) {
-			Object value = getProperty(this, builtin.name());
-			if (value instanceof BaseFunction) {
-				ctors.put(builtin, (BaseFunction) value);
-			} else if (builtin == Builtins.GeneratorFunction) {
-				// Handle weird situation of "GeneratorFunction" being a real constructor
-				// which is never registered in the top-level scope
-				ctors.put(builtin, (BaseFunction) BaseFunction.initAsGeneratorFunction(scope, sealed));
-			}
-		}
-		errors = new EnumMap<>(NativeErrors.class);
-		for (NativeErrors error : NativeErrors.values()) {
-			Object value = getProperty(this, error.name());
-			if (value instanceof BaseFunction) {
-				errors.put(error, (BaseFunction) value);
-			}
-		}
-	}
-
-	/**
 	 * Static helper method to get a built-in object constructor with the given
 	 * <code>type</code> from the given <code>scope</code>. If the scope is not
 	 * an instance of this class or does have a cache of built-ins,
@@ -250,6 +125,43 @@ public class TopLevel extends IdScriptableObject {
 		return getClassPrototype(scope, typeName);
 	}
 
+	private EnumMap<Builtins, BaseFunction> ctors;
+	private EnumMap<NativeErrors, BaseFunction> errors;
+
+	@Override
+	public String getClassName() {
+		return "global";
+	}
+
+	/**
+	 * Cache the built-in ECMAScript objects to protect them against
+	 * modifications by the script. This method is called automatically by
+	 * {@link ScriptRuntime#initStandardObjects ScriptRuntime.initStandardObjects}
+	 * if the scope argument is an instance of this class. It only has to be
+	 * called by the embedding if a top-level scope is not initialized through
+	 * <code>initStandardObjects()</code>.
+	 */
+	public void cacheBuiltins(Scriptable scope, boolean sealed) {
+		ctors = new EnumMap<>(Builtins.class);
+		for (Builtins builtin : Builtins.values()) {
+			Object value = getProperty(this, builtin.name());
+			if (value instanceof BaseFunction) {
+				ctors.put(builtin, (BaseFunction) value);
+			} else if (builtin == Builtins.GeneratorFunction) {
+				// Handle weird situation of "GeneratorFunction" being a real constructor
+				// which is never registered in the top-level scope
+				ctors.put(builtin, (BaseFunction) BaseFunction.initAsGeneratorFunction(scope, sealed));
+			}
+		}
+		errors = new EnumMap<>(NativeErrors.class);
+		for (NativeErrors error : NativeErrors.values()) {
+			Object value = getProperty(this, error.name());
+			if (value instanceof BaseFunction) {
+				errors.put(error, (BaseFunction) value);
+			}
+		}
+	}
+
 	/**
 	 * Get the cached built-in object constructor from this scope with the
 	 * given <code>type</code>. Returns null if {@link #cacheBuiltins()} has not
@@ -286,6 +198,94 @@ public class TopLevel extends IdScriptableObject {
 		BaseFunction func = getBuiltinCtor(type);
 		Object proto = func != null ? func.getPrototypeProperty() : null;
 		return proto instanceof Scriptable ? (Scriptable) proto : null;
+	}
+
+	/**
+	 * An enumeration of built-in ECMAScript objects.
+	 */
+	public enum Builtins {
+		/**
+		 * The built-in Object type.
+		 */
+		Object,
+		/**
+		 * The built-in Array type.
+		 */
+		Array,
+		/**
+		 * The built-in Function type.
+		 */
+		Function,
+		/**
+		 * The built-in String type.
+		 */
+		String,
+		/**
+		 * The built-in Number type.
+		 */
+		Number,
+		/**
+		 * The built-in Boolean type.
+		 */
+		Boolean,
+		/**
+		 * The built-in RegExp type.
+		 */
+		RegExp,
+		/**
+		 * The built-in Error type.
+		 */
+		Error,
+		/**
+		 * The built-in Symbol type.
+		 */
+		Symbol,
+		/**
+		 * The built-in GeneratorFunction type.
+		 */
+		GeneratorFunction
+	}
+
+	/**
+	 * An enumeration of built-in native errors. [ECMAScript 5 - 15.11.6]
+	 */
+	enum NativeErrors {
+		/**
+		 * Basic Error
+		 */
+		Error,
+		/**
+		 * The native EvalError.
+		 */
+		EvalError,
+		/**
+		 * The native RangeError.
+		 */
+		RangeError,
+		/**
+		 * The native ReferenceError.
+		 */
+		ReferenceError,
+		/**
+		 * The native SyntaxError.
+		 */
+		SyntaxError,
+		/**
+		 * The native TypeError.
+		 */
+		TypeError,
+		/**
+		 * The native URIError.
+		 */
+		URIError,
+		/**
+		 * The native InternalError (non-standard).
+		 */
+		InternalError,
+		/**
+		 * The native JavaException (non-standard).
+		 */
+		JavaException
 	}
 
 }

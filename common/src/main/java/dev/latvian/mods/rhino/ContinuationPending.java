@@ -66,6 +66,13 @@ public class ContinuationPending extends RuntimeException {
 	}
 
 	/**
+	 * @return arbitrary application state
+	 */
+	public Object getApplicationState() {
+		return applicationState;
+	}
+
+	/**
 	 * Store an arbitrary object that applications can use to associate
 	 * their state with the continuation.
 	 *
@@ -73,12 +80,5 @@ public class ContinuationPending extends RuntimeException {
 	 */
 	public void setApplicationState(Object applicationState) {
 		this.applicationState = applicationState;
-	}
-
-	/**
-	 * @return arbitrary application state
-	 */
-	public Object getApplicationState() {
-		return applicationState;
 	}
 }

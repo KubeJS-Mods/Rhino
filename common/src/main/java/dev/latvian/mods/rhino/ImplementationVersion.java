@@ -13,13 +13,12 @@ import java.util.jar.Manifest;
  */
 public class ImplementationVersion {
 
-	private String versionString;
-
 	private static final ImplementationVersion version = new ImplementationVersion();
 
 	public static String get() {
 		return version.versionString;
 	}
+	private String versionString;
 
 	private ImplementationVersion() {
 		Enumeration<URL> urls;

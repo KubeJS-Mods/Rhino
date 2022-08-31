@@ -33,9 +33,8 @@ import java.util.List;
 public class ObjectLiteral extends AstNode implements DestructuringForm {
 
 	private static final List<ObjectProperty> NO_ELEMS = Collections.unmodifiableList(new ArrayList<>());
-
-	private List<ObjectProperty> elements;
 	boolean isDestructuring;
+	private List<ObjectProperty> elements;
 
 	{
 		type = Token.OBJECTLIT;

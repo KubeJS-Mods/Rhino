@@ -7,20 +7,6 @@
 package dev.latvian.mods.rhino;
 
 final class InterpretedFunction extends NativeFunction implements Script {
-	InterpreterData idata;
-
-	private InterpretedFunction(InterpreterData idata, Object staticSecurityDomain) {
-		this.idata = idata;
-
-		if (staticSecurityDomain != null) {
-			throw new IllegalArgumentException();
-		}
-	}
-
-	private InterpretedFunction(InterpretedFunction parent, int index) {
-		this.idata = parent.idata.itsNestedFunctions[index];
-	}
-
 	/**
 	 * Create script from compiled bytecode.
 	 */
@@ -49,6 +35,19 @@ final class InterpretedFunction extends NativeFunction implements Script {
 		return f;
 	}
 
+	InterpreterData idata;
+
+	private InterpretedFunction(InterpreterData idata, Object staticSecurityDomain) {
+		this.idata = idata;
+
+		if (staticSecurityDomain != null) {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	private InterpretedFunction(InterpretedFunction parent, int index) {
+		this.idata = parent.idata.itsNestedFunctions[index];
+	}
 
 	@Override
 	public String getFunctionName() {

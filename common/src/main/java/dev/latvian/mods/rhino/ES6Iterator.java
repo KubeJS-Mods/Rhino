@@ -7,6 +7,16 @@
 package dev.latvian.mods.rhino;
 
 public abstract class ES6Iterator extends IdScriptableObject {
+	public static final String NEXT_METHOD = "next";
+	public static final String DONE_PROPERTY = "done";
+	public static final String RETURN_PROPERTY = "return";
+	public static final String VALUE_PROPERTY = "value";
+	public static final String RETURN_METHOD = "return";
+	private static final int Id_next = 1;
+	private static final int SymbolId_iterator = 2;
+	private static final int SymbolId_toStringTag = 3;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
+
 	protected static void init(ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag) {
 		if (scope != null) {
 			prototype.setParentScope(scope);
@@ -24,6 +34,18 @@ public abstract class ES6Iterator extends IdScriptableObject {
 		if (scope != null) {
 			scope.associateValue(tag, prototype);
 		}
+	}
+
+	// 25.1.1.3 The IteratorResult Interface
+	static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done) {
+		return makeIteratorResult(cx, scope, done, Undefined.instance);
+	}
+
+	static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done, Object value) {
+		final Scriptable iteratorResult = cx.newObject(scope);
+		ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value);
+		ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);
+		return iteratorResult;
 	}
 
 	protected boolean exhausted = false;
@@ -48,15 +70,12 @@ public abstract class ES6Iterator extends IdScriptableObject {
 		switch (id) {
 			case Id_next -> {
 				initPrototypeMethod(getTag(), id, NEXT_METHOD, 0);
-				return;
 			}
 			case SymbolId_iterator -> {
 				initPrototypeMethod(getTag(), id, SymbolKey.ITERATOR, "[Symbol.iterator]", DONTENUM | READONLY);
-				return;
 			}
 			case SymbolId_toStringTag -> {
 				initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG, getClassName(), DONTENUM | READONLY);
-				return;
 			}
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
@@ -116,27 +135,4 @@ public abstract class ES6Iterator extends IdScriptableObject {
 	protected String getTag() {
 		return tag;
 	}
-
-	// 25.1.1.3 The IteratorResult Interface
-	static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done) {
-		return makeIteratorResult(cx, scope, done, Undefined.instance);
-	}
-
-	static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done, Object value) {
-		final Scriptable iteratorResult = cx.newObject(scope);
-		ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value);
-		ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);
-		return iteratorResult;
-	}
-
-	private static final int Id_next = 1;
-	private static final int SymbolId_iterator = 2;
-	private static final int SymbolId_toStringTag = 3;
-	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
-
-	public static final String NEXT_METHOD = "next";
-	public static final String DONE_PROPERTY = "done";
-	public static final String RETURN_PROPERTY = "return";
-	public static final String VALUE_PROPERTY = "value";
-	public static final String RETURN_METHOD = "return";
 }

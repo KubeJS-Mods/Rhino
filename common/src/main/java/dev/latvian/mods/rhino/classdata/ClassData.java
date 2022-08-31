@@ -12,6 +12,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ClassData {
+	private static boolean isVoid(Class<?> c) {
+		return c == void.class || c == Void.class;
+	}
+
+	private static boolean isBoolean(Class<?> c) {
+		return c == boolean.class || c == Boolean.class;
+	}
+
 	public final ClassDataCache cache;
 	public final Class<?> type;
 	private ClassData parent;
@@ -109,14 +117,6 @@ public class ClassData {
 		}
 
 		return ownMembers;
-	}
-
-	private static boolean isVoid(Class<?> c) {
-		return c == void.class || c == Void.class;
-	}
-
-	private static boolean isBoolean(Class<?> c) {
-		return c == boolean.class || c == Boolean.class;
 	}
 
 	private Map<String, ClassMember> getActualMembers() {

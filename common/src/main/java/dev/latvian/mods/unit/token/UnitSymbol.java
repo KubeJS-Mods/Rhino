@@ -52,6 +52,33 @@ public enum UnitSymbol implements UnitToken {
 
 	;
 
+	@Nullable
+	public static UnitSymbol read(char first, CharStream stream) {
+		return switch (first) {
+			case ',' -> COMMA;
+			case '(' -> LP;
+			case ')' -> RP;
+			case '#' -> HASH;
+			case '?' -> HOOK;
+			case ':' -> COLON;
+			case ';' -> SEMICOLON;
+			case '+' -> stream.nextIf('=') ? ADD_SET : ADD;
+			case '-' -> stream.nextIf('=') ? SUB_SET : SUB;
+			case '*' -> stream.nextIf('*') ? POW : stream.nextIf('=') ? MUL_SET : MUL;
+			case '/' -> stream.nextIf('=') ? DIV_SET : DIV;
+			case '%' -> stream.nextIf('=') ? MOD_SET : MOD;
+			case '^' -> XOR;
+			case '~' -> BIT_NOT;
+			case '&' -> stream.nextIf('&') ? AND : BIT_AND;
+			case '|' -> stream.nextIf('|') ? OR : BIT_OR;
+			case '!' -> stream.nextIf('=') ? NEQ : BOOL_NOT;
+			case '<' -> stream.nextIf('=') ? LTE : stream.nextIf('<') ? LSH : LT;
+			case '>' -> stream.nextIf('=') ? GTE : stream.nextIf('>') ? RSH : GT;
+			case '=' -> stream.nextIf('=') ? EQ : SET;
+			default -> null;
+		};
+	}
+
 	public final String symbol;
 	public final int precedence;
 	public final OperatorFactory op;
@@ -93,33 +120,6 @@ public enum UnitSymbol implements UnitToken {
 		return switch (this) {
 			case ADD -> POSITIVE;
 			case SUB -> NEGATE;
-			default -> null;
-		};
-	}
-
-	@Nullable
-	public static UnitSymbol read(char first, CharStream stream) {
-		return switch (first) {
-			case ',' -> COMMA;
-			case '(' -> LP;
-			case ')' -> RP;
-			case '#' -> HASH;
-			case '?' -> HOOK;
-			case ':' -> COLON;
-			case ';' -> SEMICOLON;
-			case '+' -> stream.nextIf('=') ? ADD_SET : ADD;
-			case '-' -> stream.nextIf('=') ? SUB_SET : SUB;
-			case '*' -> stream.nextIf('*') ? POW : stream.nextIf('=') ? MUL_SET : MUL;
-			case '/' -> stream.nextIf('=') ? DIV_SET : DIV;
-			case '%' -> stream.nextIf('=') ? MOD_SET : MOD;
-			case '^' -> XOR;
-			case '~' -> BIT_NOT;
-			case '&' -> stream.nextIf('&') ? AND : BIT_AND;
-			case '|' -> stream.nextIf('|') ? OR : BIT_OR;
-			case '!' -> stream.nextIf('=') ? NEQ : BOOL_NOT;
-			case '<' -> stream.nextIf('=') ? LTE : stream.nextIf('<') ? LSH : LT;
-			case '>' -> stream.nextIf('=') ? GTE : stream.nextIf('>') ? RSH : GT;
-			case '=' -> stream.nextIf('=') ? EQ : SET;
 			default -> null;
 		};
 	}

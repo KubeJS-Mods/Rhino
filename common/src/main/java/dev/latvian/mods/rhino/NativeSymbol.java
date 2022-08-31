@@ -20,9 +20,14 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 
 	private static final Object GLOBAL_TABLE_KEY = new Object();
 	private static final Object CONSTRUCTOR_SLOT = new Object();
-
-	private final SymbolKey key;
-	private final NativeSymbol symbolData;
+	private static final int ConstructorId_keyFor = -2;
+	private static final int ConstructorId_for = -1;
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_valueOf = 4;
+	private static final int SymbolId_toStringTag = 3;
+	private static final int SymbolId_toPrimitive = 5;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_toPrimitive;
 
 	public static void init(Context cx, Scriptable scope, boolean sealed) {
 		NativeSymbol obj = new NativeSymbol("");
@@ -54,27 +59,6 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 	}
 
 	/**
-	 * This has to be used only for constructing the prototype instance.
-	 * This sets symbolData to null (see isSymbol() for more).
-	 *
-	 * @param desc the description
-	 */
-	private NativeSymbol(String desc) {
-		this.key = new SymbolKey(desc);
-		this.symbolData = null;
-	}
-
-	private NativeSymbol(SymbolKey key) {
-		this.key = key;
-		this.symbolData = this;
-	}
-
-	public NativeSymbol(NativeSymbol s) {
-		this.key = s.key;
-		this.symbolData = s.symbolData;
-	}
-
-	/**
 	 * Use this when we need to create symbols internally because of the convoluted way we have to
 	 * construct them.
 	 */
@@ -87,10 +71,74 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 		}
 	}
 
+	// #string_id_map#
+
+	private static void createStandardSymbol(Context cx, Scriptable scope, ScriptableObject ctor, String name, SymbolKey key) {
+		Scriptable sym = cx.newObject(scope, CLASS_NAME, new Object[]{name, key});
+		ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT);
+	}
+
+	private static NativeSymbol getSelf(Object thisObj) {
+		try {
+			return (NativeSymbol) thisObj;
+		} catch (ClassCastException cce) {
+			throw ScriptRuntime.typeError1("msg.invalid.type", thisObj.getClass().getName());
+		}
+	}
+
+	private static NativeSymbol js_constructor(Object[] args) {
+		String desc;
+		if (args.length > 0) {
+			if (Undefined.instance.equals(args[0])) {
+				desc = "";
+			} else {
+				desc = ScriptRuntime.toString(args[0]);
+			}
+		} else {
+			desc = "";
+		}
+
+		if (args.length > 1) {
+			return new NativeSymbol((SymbolKey) args[1]);
+		}
+
+		return new NativeSymbol(new SymbolKey(desc));
+	}
+
+	private static boolean isStrictMode() {
+		final Context cx = Context.getCurrentContext();
+		return (cx != null) && cx.isStrictMode();
+	}
+
+	private final SymbolKey key;
+	private final NativeSymbol symbolData;
+
+	/**
+	 * This has to be used only for constructing the prototype instance.
+	 * This sets symbolData to null (see isSymbol() for more).
+	 *
+	 * @param desc the description
+	 */
+	private NativeSymbol(String desc) {
+		this.key = new SymbolKey(desc);
+		this.symbolData = null;
+	}
+	private NativeSymbol(SymbolKey key) {
+		this.key = key;
+		this.symbolData = this;
+	}
+
+	public NativeSymbol(NativeSymbol s) {
+		this.key = s.key;
+		this.symbolData = s.symbolData;
+	}
+
 	@Override
 	public String getClassName() {
 		return CLASS_NAME;
 	}
+
+	// #/string_id_map#
 
 	@Override
 	protected void fillConstructorProperties(IdFunctionObject ctor) {
@@ -98,13 +146,6 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 		addIdFunctionProperty(ctor, CLASS_NAME, ConstructorId_for, "for", 1);
 		addIdFunctionProperty(ctor, CLASS_NAME, ConstructorId_keyFor, "keyFor", 1);
 	}
-
-	private static void createStandardSymbol(Context cx, Scriptable scope, ScriptableObject ctor, String name, SymbolKey key) {
-		Scriptable sym = cx.newObject(scope, CLASS_NAME, new Object[]{name, key});
-		ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT);
-	}
-
-	// #string_id_map#
 
 	@Override
 	protected int findPrototypeId(String s) {
@@ -143,18 +184,6 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 		}
 		return 0;
 	}
-
-	private static final int ConstructorId_keyFor = -2;
-	private static final int ConstructorId_for = -1;
-	private static final int Id_constructor = 1;
-	private static final int Id_toString = 2;
-	private static final int Id_valueOf = 4;
-	private static final int SymbolId_toStringTag = 3;
-	private static final int SymbolId_toPrimitive = 5;
-	private static final int MAX_PROTOTYPE_ID = SymbolId_toPrimitive;
-
-	// #/string_id_map#
-
 
 	@Override
 	protected void initPrototypeId(int id) {
@@ -201,33 +230,6 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 		}
 	}
 
-	private static NativeSymbol getSelf(Object thisObj) {
-		try {
-			return (NativeSymbol) thisObj;
-		} catch (ClassCastException cce) {
-			throw ScriptRuntime.typeError1("msg.invalid.type", thisObj.getClass().getName());
-		}
-	}
-
-	private static NativeSymbol js_constructor(Object[] args) {
-		String desc;
-		if (args.length > 0) {
-			if (Undefined.instance.equals(args[0])) {
-				desc = "";
-			} else {
-				desc = ScriptRuntime.toString(args[0]);
-			}
-		} else {
-			desc = "";
-		}
-
-		if (args.length > 1) {
-			return new NativeSymbol((SymbolKey) args[1]);
-		}
-
-		return new NativeSymbol(new SymbolKey(desc));
-	}
-
 	private Object js_valueOf() {
 		// In the case that "Object()" was called we actually have a different "internal slot"
 		return symbolData;
@@ -261,16 +263,11 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 		return Undefined.instance;
 	}
 
+	// Symbol objects have a special property that one cannot add properties.
+
 	@Override
 	public String toString() {
 		return key.toString();
-	}
-
-	// Symbol objects have a special property that one cannot add properties.
-
-	private static boolean isStrictMode() {
-		final Context cx = Context.getCurrentContext();
-		return (cx != null) && cx.isStrictMode();
 	}
 
 	@Override

@@ -7,15 +7,15 @@
 package dev.latvian.mods.rhino.classfile;
 
 final class ExceptionTableEntry {
+	int itsStartLabel;
+	int itsEndLabel;
+	int itsHandlerLabel;
+	short itsCatchType;
+
 	ExceptionTableEntry(int startLabel, int endLabel, int handlerLabel, short catchType) {
 		itsStartLabel = startLabel;
 		itsEndLabel = endLabel;
 		itsHandlerLabel = handlerLabel;
 		itsCatchType = catchType;
 	}
-
-	int itsStartLabel;
-	int itsEndLabel;
-	int itsHandlerLabel;
-	short itsCatchType;
 }

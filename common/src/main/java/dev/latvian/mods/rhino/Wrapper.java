@@ -17,14 +17,14 @@ package dev.latvian.mods.rhino;
 
 public interface Wrapper {
 
+	static Object unwrapped(Object o) {
+		return o instanceof Wrapper ? unwrapped(((Wrapper) o).unwrap()) : o;
+	}
+
 	/**
 	 * Unwrap the object by returning the wrapped value.
 	 *
 	 * @return a wrapped value
 	 */
 	Object unwrap();
-
-	static Object unwrapped(Object o) {
-		return o instanceof Wrapper ? unwrapped(((Wrapper) o).unwrap()) : o;
-	}
 }

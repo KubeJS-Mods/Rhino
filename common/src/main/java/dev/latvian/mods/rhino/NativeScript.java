@@ -22,11 +22,37 @@ package dev.latvian.mods.rhino;
 
 class NativeScript extends BaseFunction {
 	private static final Object SCRIPT_TAG = "Script";
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_compile = 3;
+	private static final int Id_exec = 4;
+	private static final int MAX_PROTOTYPE_ID = 4;
 
 	static void init(Scriptable scope, boolean sealed) {
 		NativeScript obj = new NativeScript(null);
 		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
+
+	private static NativeScript realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (!(thisObj instanceof NativeScript)) {
+			throw incompatibleCallError(f);
+		}
+		return (NativeScript) thisObj;
+	}
+
+	private static Script compile(Context cx, String source) {
+		int[] linep = {0};
+		String filename = Context.getSourcePositionFromStack(linep);
+		if (filename == null) {
+			filename = "<Script object>";
+			linep[0] = 1;
+		}
+		ErrorReporter reporter;
+		reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
+		return cx.compileString(source, null, reporter, filename, linep[0], null);
+	}
+
+	private Script script;
 
 	private NativeScript(Script script) {
 		this.script = script;
@@ -39,6 +65,8 @@ class NativeScript extends BaseFunction {
 	public String getClassName() {
 		return "Script";
 	}
+
+	// #string_id_map#
 
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
@@ -119,26 +147,7 @@ class NativeScript extends BaseFunction {
 		throw new IllegalArgumentException(String.valueOf(id));
 	}
 
-	private static NativeScript realThis(Scriptable thisObj, IdFunctionObject f) {
-		if (!(thisObj instanceof NativeScript)) {
-			throw incompatibleCallError(f);
-		}
-		return (NativeScript) thisObj;
-	}
-
-	private static Script compile(Context cx, String source) {
-		int[] linep = {0};
-		String filename = Context.getSourcePositionFromStack(linep);
-		if (filename == null) {
-			filename = "<Script object>";
-			linep[0] = 1;
-		}
-		ErrorReporter reporter;
-		reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
-		return cx.compileString(source, null, reporter, filename, linep[0], null);
-	}
-
-	// #string_id_map#
+	// #/string_id_map#
 
 	@Override
 	protected int findPrototypeId(String s) {
@@ -150,15 +159,5 @@ class NativeScript extends BaseFunction {
 			default -> 0;
 		};
 	}
-
-	private static final int Id_constructor = 1;
-	private static final int Id_toString = 2;
-	private static final int Id_compile = 3;
-	private static final int Id_exec = 4;
-	private static final int MAX_PROTOTYPE_ID = 4;
-
-	// #/string_id_map#
-
-	private Script script;
 }
 

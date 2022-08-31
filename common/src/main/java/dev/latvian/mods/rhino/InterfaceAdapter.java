@@ -14,8 +14,6 @@ import java.lang.reflect.Modifier;
  * single method or multiple methods with the same signature.
  */
 public class InterfaceAdapter {
-	private final Object proxyHelper;
-
 	/**
 	 * Make glue object implementing interface cl that will
 	 * call the supplied JS function when called.
@@ -81,6 +79,7 @@ public class InterfaceAdapter {
 			return Modifier.isAbstract(method.getModifiers());
 		}
 	}
+	private final Object proxyHelper;
 
 	private InterfaceAdapter(ContextFactory cf, Class<?> cl) {
 		this.proxyHelper = VMBridge.getInterfaceProxyHelper(cf, new Class[]{cl});

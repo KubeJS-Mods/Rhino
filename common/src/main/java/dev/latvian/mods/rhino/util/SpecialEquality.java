@@ -4,10 +4,6 @@ package dev.latvian.mods.rhino.util;
  * Implement this on a class to override == != === and !== checks in JavaScript
  */
 public interface SpecialEquality {
-	default boolean specialEquals(Object o, boolean shallow) {
-		return equals(o);
-	}
-
 	static boolean checkSpecialEquality(Object o, Object o1, boolean shallow) {
 		if (o == o1) {
 			return true;
@@ -22,5 +18,9 @@ public interface SpecialEquality {
 		}
 
 		return false;
+	}
+
+	default boolean specialEquals(Object o, boolean shallow) {
+		return equals(o);
 	}
 }

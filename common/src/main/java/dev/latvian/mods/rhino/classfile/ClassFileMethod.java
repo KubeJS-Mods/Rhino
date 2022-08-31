@@ -7,6 +7,13 @@
 package dev.latvian.mods.rhino.classfile;
 
 final class ClassFileMethod {
+	private final String itsName;
+	private final String itsType;
+	private final short itsNameIndex;
+	private final short itsTypeIndex;
+	private final short itsFlags;
+	private byte[] itsCodeAttribute;
+
 	ClassFileMethod(String name, short nameIndex, String type, short typeIndex, short flags) {
 		itsName = name;
 		itsNameIndex = nameIndex;
@@ -45,12 +52,5 @@ final class ClassFileMethod {
 	short getFlags() {
 		return itsFlags;
 	}
-
-	private final String itsName;
-	private final String itsType;
-	private final short itsNameIndex;
-	private final short itsTypeIndex;
-	private final short itsFlags;
-	private byte[] itsCodeAttribute;
 
 }

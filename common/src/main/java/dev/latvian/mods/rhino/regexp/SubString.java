@@ -11,6 +11,10 @@ package dev.latvian.mods.rhino.regexp;
  */
 public class SubString {
 
+	String str;
+	int index;
+	int length;
+
 	public SubString() {
 	}
 
@@ -30,9 +34,5 @@ public class SubString {
 	public String toString() {
 		return str == null ? "" : str.substring(index, index + length);
 	}
-
-	String str;
-	int index;
-	int length;
 }
 

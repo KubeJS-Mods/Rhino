@@ -1,14 +1,14 @@
 package dev.latvian.mods.rhino;
 
 public class IdFunctionObjectES6 extends IdFunctionObject {
-	public IdFunctionObjectES6(IdFunctionCall idcall, Object tag, int id, String name, int arity, Scriptable scope) {
-		super(idcall, tag, id, name, arity, scope);
-	}
-
 	private static final int Id_length = 1;
 	private static final int Id_name = 3;
 	private boolean myLength = true;
 	private boolean myName = true;
+
+	public IdFunctionObjectES6(IdFunctionCall idcall, Object tag, int id, String name, int arity, Scriptable scope) {
+		super(idcall, tag, id, name, arity, scope);
+	}
 
 	@Override
 	protected int findInstanceIdInfo(String s) {

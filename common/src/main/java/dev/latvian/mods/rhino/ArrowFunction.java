@@ -11,6 +11,10 @@ package dev.latvian.mods.rhino;
  * EcmaScript 6 Rev 14, March 8, 2013 Draft spec , 13.2
  */
 public class ArrowFunction extends BaseFunction {
+	static boolean equalObjectGraphs(ArrowFunction f1, ArrowFunction f2, EqualObjectGraphs eq) {
+		return eq.equalGraphs(f1.boundThis, f2.boundThis) && eq.equalGraphs(f1.targetFunction, f2.targetFunction);
+	}
+
 	private final Callable targetFunction;
 	private final Scriptable boundThis;
 
@@ -62,10 +66,6 @@ public class ArrowFunction extends BaseFunction {
 	@Override
 	public int getArity() {
 		return getLength();
-	}
-
-	static boolean equalObjectGraphs(ArrowFunction f1, ArrowFunction f2, EqualObjectGraphs eq) {
-		return eq.equalGraphs(f1.boundThis, f2.boundThis) && eq.equalGraphs(f1.targetFunction, f2.targetFunction);
 	}
 
 	@Override

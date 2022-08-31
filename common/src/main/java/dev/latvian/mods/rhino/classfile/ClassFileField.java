@@ -7,6 +7,15 @@
 package dev.latvian.mods.rhino.classfile;
 
 final class ClassFileField {
+	private final short itsNameIndex;
+	private final short itsTypeIndex;
+	private final short itsFlags;
+	private boolean itsHasAttributes;
+	private short itsAttr1;
+	private short itsAttr2;
+	private short itsAttr3;
+	private int itsIndex;
+
 	ClassFileField(short nameIndex, short typeIndex, short flags) {
 		itsNameIndex = nameIndex;
 		itsTypeIndex = typeIndex;
@@ -48,13 +57,4 @@ final class ClassFileField {
 		}
 		return size;
 	}
-
-	private final short itsNameIndex;
-	private final short itsTypeIndex;
-	private final short itsFlags;
-	private boolean itsHasAttributes;
-	private short itsAttr1;
-	private short itsAttr2;
-	private short itsAttr3;
-	private int itsIndex;
 }

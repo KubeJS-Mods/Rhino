@@ -36,6 +36,17 @@ public class ObjectProperty extends InfixExpression {
 		type = Token.COLON;
 	}
 
+	public ObjectProperty() {
+	}
+
+	public ObjectProperty(int pos) {
+		super(pos);
+	}
+
+	public ObjectProperty(int pos, int len) {
+		super(pos, len);
+	}
+
 	/**
 	 * Sets the node type.  Must be one of
 	 * {@link Token#COLON}, {@link Token#GET}, or {@link Token#SET}.
@@ -47,17 +58,6 @@ public class ObjectProperty extends InfixExpression {
 			throw new IllegalArgumentException("invalid node type: " + nodeType);
 		}
 		setType(nodeType);
-	}
-
-	public ObjectProperty() {
-	}
-
-	public ObjectProperty(int pos) {
-		super(pos);
-	}
-
-	public ObjectProperty(int pos, int len) {
-		super(pos, len);
 	}
 
 	/**

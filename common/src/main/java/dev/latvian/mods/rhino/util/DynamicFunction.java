@@ -9,12 +9,6 @@ import org.jetbrains.annotations.Nullable;
  * @author LatvianModder
  */
 public class DynamicFunction extends BaseFunction {
-	@FunctionalInterface
-	public interface Callback {
-		@Nullable
-		Object call(Object[] args);
-	}
-
 	private final Callback function;
 
 	public DynamicFunction(Callback f) {
@@ -24,5 +18,11 @@ public class DynamicFunction extends BaseFunction {
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		return function.call(args);
+	}
+
+	@FunctionalInterface
+	public interface Callback {
+		@Nullable
+		Object call(Object[] args);
 	}
 }

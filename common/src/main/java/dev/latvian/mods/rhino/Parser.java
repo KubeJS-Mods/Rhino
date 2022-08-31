@@ -106,53 +106,91 @@ public class Parser {
 	public final static int CLEAR_TI_MASK = 0xFFFF;  // mask to clear token information bits
 	public final static int TI_AFTER_EOL = 1 << 16; // first token of the source line
 	public final static int TI_CHECK_LABEL = 1 << 17; // indicates to check for label
-
-	CompilerEnvirons compilerEnv;
-	private final ErrorReporter errorReporter;
-	private IdeErrorReporter errorCollector;
-	private String sourceURI;
-
-	boolean calledByCompileFunction;  // ugly - set directly by Context
-	private boolean parseFinished;  // set when finished to prevent reuse
-
-	private TokenStream ts;
-	private int currentFlaggedToken = Token.EOF;
-	private int currentToken;
-	private int syntaxErrorCount;
-
-	private List<Comment> scannedComments;
-	private Comment currentJsDocComment;
-
-	protected int nestingOfFunction;
-	private LabeledStatement currentLabel;
-	private boolean inDestructuringAssignment;
-	protected boolean inUseStrictDirective;
-
-	// The following are per function variables and should be saved/restored
-	// during function parsing.  See PerFunctionVariables class below.
-	ScriptNode currentScriptOrFn;
-	Scope currentScope;
-	private int endFlags;
-	private boolean inForInit;  // bound temporarily during forStatement()
-	private Map<String, LabeledStatement> labelSet;
-	private List<Loop> loopSet;
-	private List<Jump> loopAndSwitchSet;
-	// end of per function variables
-
-	// Lacking 2-token lookahead, labels become a problem.
-	// These vars store the token info of the last matched name,
-	// iff it wasn't the last matched token.
-	private int prevNameTokenStart;
-	private String prevNameTokenString = "";
-	private int prevNameTokenLineno;
-
-	private boolean defaultUseStrictDirective;
+	private static final int PROP_ENTRY = 1;
+	private static final int GET_ENTRY = 2;
+	private static final int SET_ENTRY = 4;
+	private static final int METHOD_ENTRY = 8;
 
 	// Exception to unwind
 	private static class ParserException extends RuntimeException {
 		@Serial
 		private static final long serialVersionUID = 5882582646773765630L;
 	}
+
+	private static class ConditionData {
+		AstNode condition;
+		int lp = -1;
+		int rp = -1;
+	}
+
+	// Computes the absolute end offset of node N.
+	// Use with caution!  Assumes n.getPosition() is -absolute-, which
+	// is only true before the node is added to its parent.
+	private static int getNodeEnd(AstNode n) {
+		return n.getPosition() + n.getLength();
+	}
+
+	private static String getDirective(AstNode n) {
+		if (n instanceof ExpressionStatement) {
+			AstNode e = ((ExpressionStatement) n).getExpression();
+			if (e instanceof StringLiteral) {
+				return ((StringLiteral) e).getValue();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Returns whether or not the bits in the mask have changed to all set.
+	 *
+	 * @param before bits before change
+	 * @param after  bits after change
+	 * @param mask   mask for bits
+	 * @return {@code true} if all the bits in the mask are set in "after"
+	 * but not in "before"
+	 */
+	private static boolean nowAllSet(int before, int after, int mask) {
+		return ((before & mask) != mask) && ((after & mask) == mask);
+	}
+
+	// Return end of node.  Assumes node does NOT have a parent yet.
+	private static int nodeEnd(AstNode node) {
+		return node.getPosition() + node.getLength();
+	}
+
+	private final ErrorReporter errorReporter;
+	protected int nestingOfFunction;
+	protected boolean inUseStrictDirective;
+	CompilerEnvirons compilerEnv;
+	boolean calledByCompileFunction;  // ugly - set directly by Context
+	// The following are per function variables and should be saved/restored
+	// during function parsing.  See PerFunctionVariables class below.
+	ScriptNode currentScriptOrFn;
+	Scope currentScope;
+	private IdeErrorReporter errorCollector;
+	private String sourceURI;
+	private boolean parseFinished;  // set when finished to prevent reuse
+	private TokenStream ts;
+	private int currentFlaggedToken = Token.EOF;
+	private int currentToken;
+	// end of per function variables
+	private int syntaxErrorCount;
+	private List<Comment> scannedComments;
+	private Comment currentJsDocComment;
+	private LabeledStatement currentLabel;
+	private boolean inDestructuringAssignment;
+	private int endFlags;
+	private boolean inForInit;  // bound temporarily during forStatement()
+	private Map<String, LabeledStatement> labelSet;
+	private List<Loop> loopSet;
+	private List<Jump> loopAndSwitchSet;
+	// Lacking 2-token lookahead, labels become a problem.
+	// These vars store the token info of the last matched name,
+	// iff it wasn't the last matched token.
+	private int prevNameTokenStart;
+	private String prevNameTokenString = "";
+	private int prevNameTokenLineno;
+	private boolean defaultUseStrictDirective;
 
 	public Parser() {
 		this(new CompilerEnvirons());
@@ -296,13 +334,6 @@ public class Parser {
 		throw new ParserException();
 	}
 
-	// Computes the absolute end offset of node N.
-	// Use with caution!  Assumes n.getPosition() is -absolute-, which
-	// is only true before the node is added to its parent.
-	private static int getNodeEnd(AstNode n) {
-		return n.getPosition() + n.getLength();
-	}
-
 	private void recordComment(int lineno, String comment) {
 		if (scannedComments == null) {
 			scannedComments = new ArrayList<>();
@@ -317,7 +348,6 @@ public class Parser {
 		currentJsDocComment = null;
 		return saved;
 	}
-
 
 	// Returns the next token without consuming it.
 	// If previous token was consumed, calls scanner to get new token.
@@ -506,6 +536,14 @@ public class Parser {
 		}
 	}
 
+	// This function does not match the closing RC: the caller matches
+	// the RC so it can provide a suitable error message if not matched.
+	// This means it's up to the caller to set the length of the node to
+	// include the closing RC.  The node start pos is set to the
+	// absolute buffer start position, and the caller should fix it up
+	// to be relative to the parent node.  All children of this block
+	// node are given relative start positions and correct lengths.
+
 	private AstRoot parse() throws IOException {
 		int pos = 0;
 		AstRoot root = new AstRoot(pos);
@@ -665,16 +703,6 @@ public class Parser {
 		}
 		pn.setLength(end - pos);
 		return pn;
-	}
-
-	private static String getDirective(AstNode n) {
-		if (n instanceof ExpressionStatement) {
-			AstNode e = ((ExpressionStatement) n).getExpression();
-			if (e instanceof StringLiteral) {
-				return ((StringLiteral) e).getValue();
-			}
-		}
-		return null;
 	}
 
 	private void parseFunctionParams(FunctionNode fnNode) throws IOException {
@@ -914,14 +942,6 @@ public class Parser {
 		}
 	}
 
-	// This function does not match the closing RC: the caller matches
-	// the RC so it can provide a suitable error message if not matched.
-	// This means it's up to the caller to set the length of the node to
-	// include the closing RC.  The node start pos is set to the
-	// absolute buffer start position, and the caller should fix it up
-	// to be relative to the parent node.  All children of this block
-	// node are given relative start positions and correct lengths.
-
 	private AstNode statements(AstNode parent) throws IOException {
 		// assertion can be invalid in bad code
 		if (currentToken != Token.LC) {
@@ -941,12 +961,6 @@ public class Parser {
 
 	private AstNode statements() throws IOException {
 		return statements(null);
-	}
-
-	private static class ConditionData {
-		AstNode condition;
-		int lp = -1;
-		int rp = -1;
 	}
 
 	// parse and return a parenthesized expression
@@ -1319,6 +1333,12 @@ public class Parser {
 		return tt;
 	}
 
+	// If we match a NAME, consume the token and return the statement
+	// with that label.  If the name does not match an existing label,
+	// reports an error.  Returns the labeled statement node, or null if
+	// the peeked token was not a name.  Side effect:  sets scanner token
+	// information for the label identifier (tokenBeg, tokenEnd, etc.)
+
 	private AstNode getNextStatementAfterInlineComments(AstNode pn) throws IOException {
 		AstNode body = statement();
 		if (Token.COMMENT == body.getType()) {
@@ -1630,12 +1650,6 @@ public class Parser {
 		return pn;
 	}
 
-	// If we match a NAME, consume the token and return the statement
-	// with that label.  If the name does not match an existing label,
-	// reports an error.  Returns the labeled statement node, or null if
-	// the peeked token was not a name.  Side effect:  sets scanner token
-	// information for the label identifier (tokenBeg, tokenEnd, etc.)
-
 	private LabeledStatement matchJumpLabelName() throws IOException {
 		LabeledStatement label = null;
 
@@ -1769,19 +1783,6 @@ public class Parser {
 		}
 		pn.setLineno(lineno);
 		return pn;
-	}
-
-	/**
-	 * Returns whether or not the bits in the mask have changed to all set.
-	 *
-	 * @param before bits before change
-	 * @param after  bits after change
-	 * @param mask   mask for bits
-	 * @return {@code true} if all the bits in the mask are set in "after"
-	 * but not in "before"
-	 */
-	private static boolean nowAllSet(int before, int after, int mask) {
-		return ((before & mask) != mask) && ((after & mask) == mask);
 	}
 
 	private AstNode returnOrYield(int tt, boolean exprContext) throws IOException {
@@ -3088,11 +3089,6 @@ public class Parser {
 		}
 	}
 
-	private static final int PROP_ENTRY = 1;
-	private static final int GET_ENTRY = 2;
-	private static final int SET_ENTRY = 4;
-	private static final int METHOD_ENTRY = 8;
-
 	private ObjectLiteral objectLiteral() throws IOException {
 		int pos = ts.tokenBeg, lineno = ts.lineno;
 		int afterComma = -1;
@@ -3405,11 +3401,6 @@ public class Parser {
 		return pn;
 	}
 
-	// Return end of node.  Assumes node does NOT have a parent yet.
-	private static int nodeEnd(AstNode node) {
-		return node.getPosition() + node.getLength();
-	}
-
 	private void saveNameTokenData(int pos, String name, int lineno) {
 		prevNameTokenStart = pos;
 		prevNameTokenString = name;
@@ -3433,50 +3424,6 @@ public class Parser {
 	}
 
 	private void warnTrailingComma(int pos, List<?> elems, int commaPos) {
-	}
-
-	// helps reduce clutter in the already-large function() method
-	protected class PerFunctionVariables {
-		private final ScriptNode savedCurrentScriptOrFn;
-		private final Scope savedCurrentScope;
-		private final int savedEndFlags;
-		private final boolean savedInForInit;
-		private final Map<String, LabeledStatement> savedLabelSet;
-		private final List<Loop> savedLoopSet;
-		private final List<Jump> savedLoopAndSwitchSet;
-
-		PerFunctionVariables(FunctionNode fnNode) {
-			savedCurrentScriptOrFn = Parser.this.currentScriptOrFn;
-			Parser.this.currentScriptOrFn = fnNode;
-
-			savedCurrentScope = Parser.this.currentScope;
-			Parser.this.currentScope = fnNode;
-
-			savedLabelSet = Parser.this.labelSet;
-			Parser.this.labelSet = null;
-
-			savedLoopSet = Parser.this.loopSet;
-			Parser.this.loopSet = null;
-
-			savedLoopAndSwitchSet = Parser.this.loopAndSwitchSet;
-			Parser.this.loopAndSwitchSet = null;
-
-			savedEndFlags = Parser.this.endFlags;
-			Parser.this.endFlags = 0;
-
-			savedInForInit = Parser.this.inForInit;
-			Parser.this.inForInit = false;
-		}
-
-		void restore() {
-			Parser.this.currentScriptOrFn = savedCurrentScriptOrFn;
-			Parser.this.currentScope = savedCurrentScope;
-			Parser.this.labelSet = savedLabelSet;
-			Parser.this.loopSet = savedLoopSet;
-			Parser.this.loopAndSwitchSet = savedLoopAndSwitchSet;
-			Parser.this.endFlags = savedEndFlags;
-			Parser.this.inForInit = savedInForInit;
-		}
 	}
 
 	/**
@@ -3634,28 +3581,6 @@ public class Parser {
 		return scope;
 	}
 
-	// Quickie tutorial for some of the interpreter bytecodes.
-	//
-	// GETPROP - for normal foo.bar prop access; right side is a name
-	// GETELEM - for normal foo[bar] element access; rhs is an expr
-	// SETPROP - for assignment when left side is a GETPROP
-	// SETELEM - for assignment when left side is a GETELEM
-	// DELPROP - used for delete foo.bar or foo[bar]
-	//
-	// GET_REF, SET_REF, DEL_REF - in general, these mean you're using
-	// get/set/delete on a right-hand side expression (possibly with no
-	// explicit left-hand side) that doesn't use the normal JavaScript
-	// Object (i.e. ScriptableObject) get/set/delete functions, but wants
-	// to provide its own versions instead.  It will ultimately implement
-	// Ref, and currently SpecialRef (for __proto__ etc.) and XmlName
-	// (for E4X XML objects) are the only implementations.  The runtime
-	// notices these bytecodes and delegates get/set/delete to the object.
-	//
-	// BINDNAME:  used in assignments.  LHS is evaluated first to get a
-	// specific object containing the property ("binding" the property
-	// to the object) so that it's always the same object, regardless of
-	// side effects in the RHS.
-
 	protected Node simpleAssignment(Node left, Node right) {
 		int nodeType = left.getType();
 		switch (nodeType) {
@@ -3708,6 +3633,28 @@ public class Parser {
 		throw codeBug();
 	}
 
+	// Quickie tutorial for some of the interpreter bytecodes.
+	//
+	// GETPROP - for normal foo.bar prop access; right side is a name
+	// GETELEM - for normal foo[bar] element access; rhs is an expr
+	// SETPROP - for assignment when left side is a GETPROP
+	// SETELEM - for assignment when left side is a GETELEM
+	// DELPROP - used for delete foo.bar or foo[bar]
+	//
+	// GET_REF, SET_REF, DEL_REF - in general, these mean you're using
+	// get/set/delete on a right-hand side expression (possibly with no
+	// explicit left-hand side) that doesn't use the normal JavaScript
+	// Object (i.e. ScriptableObject) get/set/delete functions, but wants
+	// to provide its own versions instead.  It will ultimately implement
+	// Ref, and currently SpecialRef (for __proto__ etc.) and XmlName
+	// (for E4X XML objects) are the only implementations.  The runtime
+	// notices these bytecodes and delegates get/set/delete to the object.
+	//
+	// BINDNAME:  used in assignments.  LHS is evaluated first to get a
+	// specific object containing the property ("binding" the property
+	// to the object) so that it's always the same object, regardless of
+	// side effects in the RHS.
+
 	protected void checkMutableReference(Node n) {
 		int memberTypeFlags = n.getIntProp(Node.MEMBER_TYPE_PROP, 0);
 		if ((memberTypeFlags & Node.DESCENDANTS_FLAG) != 0) {
@@ -3742,5 +3689,49 @@ public class Parser {
 
 	public boolean inUseStrictDirective() {
 		return inUseStrictDirective;
+	}
+
+	// helps reduce clutter in the already-large function() method
+	protected class PerFunctionVariables {
+		private final ScriptNode savedCurrentScriptOrFn;
+		private final Scope savedCurrentScope;
+		private final int savedEndFlags;
+		private final boolean savedInForInit;
+		private final Map<String, LabeledStatement> savedLabelSet;
+		private final List<Loop> savedLoopSet;
+		private final List<Jump> savedLoopAndSwitchSet;
+
+		PerFunctionVariables(FunctionNode fnNode) {
+			savedCurrentScriptOrFn = Parser.this.currentScriptOrFn;
+			Parser.this.currentScriptOrFn = fnNode;
+
+			savedCurrentScope = Parser.this.currentScope;
+			Parser.this.currentScope = fnNode;
+
+			savedLabelSet = Parser.this.labelSet;
+			Parser.this.labelSet = null;
+
+			savedLoopSet = Parser.this.loopSet;
+			Parser.this.loopSet = null;
+
+			savedLoopAndSwitchSet = Parser.this.loopAndSwitchSet;
+			Parser.this.loopAndSwitchSet = null;
+
+			savedEndFlags = Parser.this.endFlags;
+			Parser.this.endFlags = 0;
+
+			savedInForInit = Parser.this.inForInit;
+			Parser.this.inForInit = false;
+		}
+
+		void restore() {
+			Parser.this.currentScriptOrFn = savedCurrentScriptOrFn;
+			Parser.this.currentScope = savedCurrentScope;
+			Parser.this.labelSet = savedLabelSet;
+			Parser.this.loopSet = savedLoopSet;
+			Parser.this.loopAndSwitchSet = savedLoopAndSwitchSet;
+			Parser.this.endFlags = savedEndFlags;
+			Parser.this.inForInit = savedInForInit;
+		}
 	}
 }

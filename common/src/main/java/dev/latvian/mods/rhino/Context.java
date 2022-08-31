@@ -51,69 +51,6 @@ public class Context {
 	public static final String languageVersionProperty = "language version";
 	public static final String errorReporterProperty = "error reporter";
 
-	private final ContextFactory factory;
-	private boolean sealed;
-	private Object sealKey;
-
-	Scriptable topCallScope;
-	boolean isContinuationsTopCall;
-	NativeCall currentActivationCall;
-	BaseFunction typeErrorThrower;
-
-	// for Objects, Arrays to tag themselves as being printed out,
-	// so they don't print themselves out recursively.
-	// Use ObjToIntMap instead of java.util.HashSet for JDK 1.1 compatibility
-	ObjToIntMap iterating;
-
-	private ErrorReporter errorReporter;
-	RegExp regExp;
-	private int maximumInterpreterStackDepth;
-	private int enterCount;
-	private Object propertyListeners;
-	private Map<Object, Object> threadLocalMap;
-	private ClassLoader applicationClassLoader;
-
-	// For the interpreter to store the last frame for error reports etc.
-	Object lastInterpreterFrame;
-
-	// For the interpreter to store information about previous invocations
-	// interpreter invocations
-	ObjArray previousInterpreterInvocations;
-
-	// For instruction counting (interpreter only)
-	int instructionCount;
-	int instructionThreshold;
-
-	// It can be used to return the second uint32 result from function
-	long scratchUint32;
-
-	// It can be used to return the second Scriptable result from function
-	Scriptable scratchScriptable;
-
-	// Generate an observer count on compiled code
-	public boolean generateObserverCount = false;
-
-	boolean isTopLevelStrict;
-	public SharedContextData sharedContextData;
-
-	/**
-	 * Creates a new context. Provided as a preferred super constructor for
-	 * subclasses in place of the deprecated default public constructor.
-	 *
-	 * @param factory the context factory associated with this context (most
-	 *                likely, the one that created the context). Can not be null. The context
-	 *                features are inherited from the factory, and the context will also
-	 *                otherwise use its factory's services.
-	 * @throws IllegalArgumentException if factory parameter is null.
-	 */
-	protected Context(ContextFactory factory) {
-		if (factory == null) {
-			throw new IllegalArgumentException("factory == null");
-		}
-		this.factory = factory;
-		maximumInterpreterStackDepth = Integer.MAX_VALUE;
-	}
-
 	/**
 	 * Get the current Context.
 	 * <p>
@@ -235,195 +172,8 @@ public class Context {
 		}
 	}
 
-	/**
-	 * Return {@link ContextFactory} instance used to create this Context.
-	 */
-	public final ContextFactory getFactory() {
-		return factory;
-	}
-
-	/**
-	 * Checks if this is a sealed Context. A sealed Context instance does not
-	 * allow to modify any of its properties and will throw an exception
-	 * on any such attempt.
-	 *
-	 * @see #seal(Object sealKey)
-	 */
-	public final boolean isSealed() {
-		return sealed;
-	}
-
-	/**
-	 * Seal this Context object so any attempt to modify any of its properties
-	 * including calling {@link #enter()} and {@link #exit()} methods will
-	 * throw an exception.
-	 * <p>
-	 * If <code>sealKey</code> is not null, calling
-	 * {@link #unseal(Object sealKey)} with the same key unseals
-	 * the object. If <code>sealKey</code> is null, unsealing is no longer possible.
-	 *
-	 * @see #isSealed()
-	 * @see #unseal(Object)
-	 */
-	public final void seal(Object sealKey) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		sealed = true;
-		this.sealKey = sealKey;
-	}
-
-	/**
-	 * Unseal previously sealed Context object.
-	 * The <code>sealKey</code> argument should not be null and should match
-	 * <code>sealKey</code> suplied with the last call to
-	 * {@link #seal(Object)} or an exception will be thrown.
-	 *
-	 * @see #isSealed()
-	 * @see #seal(Object sealKey)
-	 */
-	public final void unseal(Object sealKey) {
-		if (sealKey == null) {
-			throw new IllegalArgumentException();
-		}
-		if (this.sealKey != sealKey) {
-			throw new IllegalArgumentException();
-		}
-		if (!sealed) {
-			throw new IllegalStateException();
-		}
-		sealed = false;
-		this.sealKey = null;
-	}
-
 	static void onSealedMutation() {
 		throw new IllegalStateException();
-	}
-
-	@Deprecated
-	public void setLanguageVersion(int version) {
-		if (sealed) {
-			onSealedMutation();
-		}
-
-		System.out.println("Context#setLanguageVersion(v) is deprecated!");
-	}
-
-	/**
-	 * Get the implementation version.
-	 *
-	 * <p>
-	 * The implementation version is of the form
-	 * <pre>
-	 *    "<i>name langVer</i> <code>release</code> <i>relNum date</i>"
-	 * </pre>
-	 * where <i>name</i> is the name of the product, <i>langVer</i> is
-	 * the language version, <i>relNum</i> is the release number, and
-	 * <i>date</i> is the release date for that specific
-	 * release in the form "yyyy mm dd".
-	 *
-	 * @return a string that encodes the product, language version, release
-	 * number, and date.
-	 */
-	public final String getImplementationVersion() {
-		return ImplementationVersion.get();
-	}
-
-	/**
-	 * Get the current error reporter.
-	 *
-	 * @see ErrorReporter
-	 */
-	public final ErrorReporter getErrorReporter() {
-		if (errorReporter == null) {
-			return DefaultErrorReporter.instance;
-		}
-		return errorReporter;
-	}
-
-	/**
-	 * Change the current error reporter.
-	 *
-	 * @return the previous error reporter
-	 * @see ErrorReporter
-	 */
-	public final ErrorReporter setErrorReporter(ErrorReporter reporter) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		if (reporter == null) {
-			throw new IllegalArgumentException();
-		}
-		ErrorReporter old = getErrorReporter();
-		if (reporter == old) {
-			return old;
-		}
-		Object listeners = propertyListeners;
-		if (listeners != null) {
-			firePropertyChangeImpl(listeners, errorReporterProperty, old, reporter);
-		}
-		this.errorReporter = reporter;
-		return old;
-	}
-
-	/**
-	 * Register an object to receive notifications when a bound property
-	 * has changed
-	 *
-	 * @param l the listener
-	 * @see java.beans.PropertyChangeEvent
-	 * @see #removePropertyChangeListener(java.beans.PropertyChangeListener)
-	 */
-	public final void addPropertyChangeListener(PropertyChangeListener l) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		propertyListeners = Kit.addListener(propertyListeners, l);
-	}
-
-	/**
-	 * Remove an object from the list of objects registered to receive
-	 * notification of changes to a bounded property
-	 *
-	 * @param l the listener
-	 * @see java.beans.PropertyChangeEvent
-	 * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
-	 */
-	public final void removePropertyChangeListener(PropertyChangeListener l) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		propertyListeners = Kit.removeListener(propertyListeners, l);
-	}
-
-	/**
-	 * Notify any registered listeners that a bounded property has changed
-	 *
-	 * @param property the bound property
-	 * @param oldValue the old value
-	 * @param newValue the new value
-	 * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
-	 * @see #removePropertyChangeListener(java.beans.PropertyChangeListener)
-	 * @see java.beans.PropertyChangeListener
-	 * @see java.beans.PropertyChangeEvent
-	 */
-	final void firePropertyChange(String property, Object oldValue, Object newValue) {
-		Object listeners = propertyListeners;
-		if (listeners != null) {
-			firePropertyChangeImpl(listeners, property, oldValue, newValue);
-		}
-	}
-
-	private void firePropertyChangeImpl(Object listeners, String property, Object oldValue, Object newValue) {
-		for (int i = 0; ; ++i) {
-			Object l = Kit.getListener(listeners, i);
-			if (l == null) {
-				break;
-			}
-			if (l instanceof PropertyChangeListener pcl) {
-				pcl.propertyChange(new PropertyChangeEvent(this, property, oldValue, newValue));
-			}
-		}
 	}
 
 	/**
@@ -550,6 +300,452 @@ public class Context {
 		int[] linep = {0};
 		String filename = getSourcePositionFromStack(linep);
 		return Context.reportRuntimeError(message, filename, linep[0], null, 0);
+	}
+
+	/**
+	 * Get the singleton object that represents the JavaScript Undefined value.
+	 */
+	public static Object getUndefinedValue() {
+		return Undefined.instance;
+	}
+
+	/**
+	 * Convert the value to a JavaScript boolean value.
+	 * <p>
+	 * See ECMA 9.2.
+	 *
+	 * @param value a JavaScript value
+	 * @return the corresponding boolean value converted using
+	 * the ECMA rules
+	 */
+	public static boolean toBoolean(Object value) {
+		return ScriptRuntime.toBoolean(value);
+	}
+
+	/**
+	 * Convert the value to a JavaScript Number value.
+	 * <p>
+	 * Returns a Java double for the JavaScript Number.
+	 * <p>
+	 * See ECMA 9.3.
+	 *
+	 * @param value a JavaScript value
+	 * @return the corresponding double value converted using
+	 * the ECMA rules
+	 */
+	public static double toNumber(Object value) {
+		return ScriptRuntime.toNumber(value);
+	}
+
+	/**
+	 * Convert the value to a JavaScript String value.
+	 * <p>
+	 * See ECMA 9.8.
+	 * <p>
+	 *
+	 * @param value a JavaScript value
+	 * @return the corresponding String value converted using
+	 * the ECMA rules
+	 */
+	public static String toString(Object value) {
+		return ScriptRuntime.toString(value);
+	}
+
+	/**
+	 * Convert the value to an JavaScript object value.
+	 * <p>
+	 * Note that a scope must be provided to look up the constructors
+	 * for Number, Boolean, and String.
+	 * <p>
+	 * See ECMA 9.9.
+	 * <p>
+	 * Additionally, arbitrary Java objects and classes will be
+	 * wrapped in a Scriptable object with its Java fields and methods
+	 * reflected as JavaScript properties of the object.
+	 *
+	 * @param value any Java object
+	 * @param scope global scope containing constructors for Number,
+	 *              Boolean, and String
+	 * @return new JavaScript object
+	 */
+	public static Scriptable toObject(Object value, Scriptable scope) {
+		return ScriptRuntime.toObject(scope, value);
+	}
+
+	/**
+	 * Convenient method to convert java value to its closest representation
+	 * in JavaScript.
+	 * <p>
+	 * If value is an instance of String, Number, Boolean, Function or
+	 * Scriptable, it is returned as it and will be treated as the corresponding
+	 * JavaScript type of string, number, boolean, function and object.
+	 * <p>
+	 * Note that for Number instances during any arithmetic operation in
+	 * JavaScript the engine will always use the result of
+	 * <code>Number.doubleValue()</code> resulting in a precision loss if
+	 * the number can not fit into double.
+	 * <p>
+	 * If value is an instance of Character, it will be converted to string of
+	 * length 1 and its JavaScript type will be string.
+	 * <p>
+	 * The rest of values will be wrapped as LiveConnect objects
+	 * by calling {@link WrapFactory#wrap(Context cx, Scriptable scope,
+	 * Object obj, Class staticType)} as in:
+	 * <pre>
+	 *    Context cx = Context.getCurrentContext();
+	 *    return cx.getWrapFactory().wrap(cx, scope, value, null);
+	 * </pre>
+	 *
+	 * @param value any Java object
+	 * @param scope top scope object
+	 * @return value suitable to pass to any API that takes JavaScript values.
+	 */
+	public static Object javaToJS(SharedContextData contextData, Object value, Scriptable scope) {
+		if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Scriptable) {
+			return value;
+		} else if (value instanceof Character) {
+			return String.valueOf(((Character) value).charValue());
+		} else {
+			return contextData.getWrapFactory().wrap(contextData, scope, value, null);
+		}
+	}
+
+	/**
+	 * Convert a JavaScript value into the desired type.
+	 * Uses the semantics defined with LiveConnect3 and throws an
+	 * Illegal argument exception if the conversion cannot be performed.
+	 *
+	 * @param value       the JavaScript value to convert
+	 * @param desiredType the Java type to convert to. Primitive Java
+	 *                    types are represented using the TYPE fields in the corresponding
+	 *                    wrapper class in java.lang.
+	 * @return the converted value
+	 * @throws EvaluatorException if the conversion cannot be performed
+	 */
+	public static Object jsToJava(SharedContextData data, Object value, Class<?> desiredType) throws EvaluatorException {
+		if (desiredType == null) {
+			return value;
+		}
+
+		return NativeJavaObject.coerceTypeImpl(data.hasTypeWrappers() ? data.getTypeWrappers() : null, desiredType, value);
+	}
+
+	/**
+	 * Rethrow the exception wrapping it as the script runtime exception.
+	 * Unless the exception is instance of {@link EcmaError} or
+	 * {@link EvaluatorException} it will be wrapped as
+	 * {@link WrappedException}, a subclass of {@link EvaluatorException}.
+	 * The resulting exception object always contains
+	 * source name and line number of script that triggered exception.
+	 * <p>
+	 * This method always throws an exception, its return value is provided
+	 * only for convenience to allow a usage like:
+	 * <pre>
+	 * throw Context.throwAsScriptRuntimeEx(ex);
+	 * </pre>
+	 * to indicate that code after the method is unreachable.
+	 *
+	 * @throws EvaluatorException
+	 * @throws EcmaError
+	 */
+	public static RuntimeException throwAsScriptRuntimeEx(Throwable e) {
+		while ((e instanceof InvocationTargetException)) {
+			e = ((InvocationTargetException) e).getTargetException();
+		}
+		// special handling of Error so scripts would not catch them
+		if (e instanceof Error) {
+			throw (Error) e;
+		}
+		if (e instanceof RhinoException) {
+			throw (RhinoException) e;
+		}
+		throw new WrappedException(e);
+	}
+
+	/**
+	 * Internal method that reports an error for missing calls to
+	 * enter().
+	 */
+	public static Context getContext() {
+		Context cx = getCurrentContext();
+		if (cx == null) {
+			throw new RuntimeException("No Context associated with current Thread");
+		}
+		return cx;
+	}
+
+	static Evaluator createInterpreter() {
+		return new Interpreter();
+	}
+
+	public static String getSourcePositionFromStack(int[] linep) {
+		Context cx = getCurrentContext();
+		if (cx == null) {
+			return null;
+		}
+		if (cx.lastInterpreterFrame != null) {
+			Evaluator evaluator = createInterpreter();
+			if (evaluator != null) {
+				return evaluator.getSourcePositionFromStack(cx, linep);
+			}
+		}
+		/**
+		 * A bit of a hack, but the only way to get filename and line
+		 * number from an enclosing frame.
+		 */
+		StackTraceElement[] stackTrace = new Throwable().getStackTrace();
+		for (StackTraceElement st : stackTrace) {
+			String file = st.getFileName();
+			if (!(file == null || file.endsWith(".java"))) {
+				int line = st.getLineNumber();
+				if (line >= 0) {
+					linep[0] = line;
+					return file;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private final ContextFactory factory;
+	// Generate an observer count on compiled code
+	public boolean generateObserverCount = false;
+	public SharedContextData sharedContextData;
+	Scriptable topCallScope;
+	boolean isContinuationsTopCall;
+	NativeCall currentActivationCall;
+	BaseFunction typeErrorThrower;
+	// for Objects, Arrays to tag themselves as being printed out,
+	// so they don't print themselves out recursively.
+	// Use ObjToIntMap instead of java.util.HashSet for JDK 1.1 compatibility
+	ObjToIntMap iterating;
+	RegExp regExp;
+	// For the interpreter to store the last frame for error reports etc.
+	Object lastInterpreterFrame;
+	// For the interpreter to store information about previous invocations
+	// interpreter invocations
+	ObjArray previousInterpreterInvocations;
+	// For instruction counting (interpreter only)
+	int instructionCount;
+	int instructionThreshold;
+	// It can be used to return the second uint32 result from function
+	long scratchUint32;
+	// It can be used to return the second Scriptable result from function
+	Scriptable scratchScriptable;
+	boolean isTopLevelStrict;
+	private boolean sealed;
+	private Object sealKey;
+	private ErrorReporter errorReporter;
+	private int maximumInterpreterStackDepth;
+	private int enterCount;
+	private Object propertyListeners;
+	private Map<Object, Object> threadLocalMap;
+	private ClassLoader applicationClassLoader;
+
+	/**
+	 * Creates a new context. Provided as a preferred super constructor for
+	 * subclasses in place of the deprecated default public constructor.
+	 *
+	 * @param factory the context factory associated with this context (most
+	 *                likely, the one that created the context). Can not be null. The context
+	 *                features are inherited from the factory, and the context will also
+	 *                otherwise use its factory's services.
+	 * @throws IllegalArgumentException if factory parameter is null.
+	 */
+	protected Context(ContextFactory factory) {
+		if (factory == null) {
+			throw new IllegalArgumentException("factory == null");
+		}
+		this.factory = factory;
+		maximumInterpreterStackDepth = Integer.MAX_VALUE;
+	}
+
+	/**
+	 * Return {@link ContextFactory} instance used to create this Context.
+	 */
+	public final ContextFactory getFactory() {
+		return factory;
+	}
+
+	/**
+	 * Checks if this is a sealed Context. A sealed Context instance does not
+	 * allow to modify any of its properties and will throw an exception
+	 * on any such attempt.
+	 *
+	 * @see #seal(Object sealKey)
+	 */
+	public final boolean isSealed() {
+		return sealed;
+	}
+
+	/**
+	 * Seal this Context object so any attempt to modify any of its properties
+	 * including calling {@link #enter()} and {@link #exit()} methods will
+	 * throw an exception.
+	 * <p>
+	 * If <code>sealKey</code> is not null, calling
+	 * {@link #unseal(Object sealKey)} with the same key unseals
+	 * the object. If <code>sealKey</code> is null, unsealing is no longer possible.
+	 *
+	 * @see #isSealed()
+	 * @see #unseal(Object)
+	 */
+	public final void seal(Object sealKey) {
+		if (sealed) {
+			onSealedMutation();
+		}
+		sealed = true;
+		this.sealKey = sealKey;
+	}
+
+	/**
+	 * Unseal previously sealed Context object.
+	 * The <code>sealKey</code> argument should not be null and should match
+	 * <code>sealKey</code> suplied with the last call to
+	 * {@link #seal(Object)} or an exception will be thrown.
+	 *
+	 * @see #isSealed()
+	 * @see #seal(Object sealKey)
+	 */
+	public final void unseal(Object sealKey) {
+		if (sealKey == null) {
+			throw new IllegalArgumentException();
+		}
+		if (this.sealKey != sealKey) {
+			throw new IllegalArgumentException();
+		}
+		if (!sealed) {
+			throw new IllegalStateException();
+		}
+		sealed = false;
+		this.sealKey = null;
+	}
+
+	@Deprecated
+	public void setLanguageVersion(int version) {
+		if (sealed) {
+			onSealedMutation();
+		}
+
+		System.out.println("Context#setLanguageVersion(v) is deprecated!");
+	}
+
+	/**
+	 * Get the implementation version.
+	 *
+	 * <p>
+	 * The implementation version is of the form
+	 * <pre>
+	 *    "<i>name langVer</i> <code>release</code> <i>relNum date</i>"
+	 * </pre>
+	 * where <i>name</i> is the name of the product, <i>langVer</i> is
+	 * the language version, <i>relNum</i> is the release number, and
+	 * <i>date</i> is the release date for that specific
+	 * release in the form "yyyy mm dd".
+	 *
+	 * @return a string that encodes the product, language version, release
+	 * number, and date.
+	 */
+	public final String getImplementationVersion() {
+		return ImplementationVersion.get();
+	}
+
+	/**
+	 * Get the current error reporter.
+	 *
+	 * @see ErrorReporter
+	 */
+	public final ErrorReporter getErrorReporter() {
+		if (errorReporter == null) {
+			return DefaultErrorReporter.instance;
+		}
+		return errorReporter;
+	}
+
+	/**
+	 * Change the current error reporter.
+	 *
+	 * @return the previous error reporter
+	 * @see ErrorReporter
+	 */
+	public final ErrorReporter setErrorReporter(ErrorReporter reporter) {
+		if (sealed) {
+			onSealedMutation();
+		}
+		if (reporter == null) {
+			throw new IllegalArgumentException();
+		}
+		ErrorReporter old = getErrorReporter();
+		if (reporter == old) {
+			return old;
+		}
+		Object listeners = propertyListeners;
+		if (listeners != null) {
+			firePropertyChangeImpl(listeners, errorReporterProperty, old, reporter);
+		}
+		this.errorReporter = reporter;
+		return old;
+	}
+
+	/**
+	 * Register an object to receive notifications when a bound property
+	 * has changed
+	 *
+	 * @param l the listener
+	 * @see java.beans.PropertyChangeEvent
+	 * @see #removePropertyChangeListener(java.beans.PropertyChangeListener)
+	 */
+	public final void addPropertyChangeListener(PropertyChangeListener l) {
+		if (sealed) {
+			onSealedMutation();
+		}
+		propertyListeners = Kit.addListener(propertyListeners, l);
+	}
+
+	/**
+	 * Remove an object from the list of objects registered to receive
+	 * notification of changes to a bounded property
+	 *
+	 * @param l the listener
+	 * @see java.beans.PropertyChangeEvent
+	 * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
+	 */
+	public final void removePropertyChangeListener(PropertyChangeListener l) {
+		if (sealed) {
+			onSealedMutation();
+		}
+		propertyListeners = Kit.removeListener(propertyListeners, l);
+	}
+
+	/**
+	 * Notify any registered listeners that a bounded property has changed
+	 *
+	 * @param property the bound property
+	 * @param oldValue the old value
+	 * @param newValue the new value
+	 * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
+	 * @see #removePropertyChangeListener(java.beans.PropertyChangeListener)
+	 * @see java.beans.PropertyChangeListener
+	 * @see java.beans.PropertyChangeEvent
+	 */
+	final void firePropertyChange(String property, Object oldValue, Object newValue) {
+		Object listeners = propertyListeners;
+		if (listeners != null) {
+			firePropertyChangeImpl(listeners, property, oldValue, newValue);
+		}
+	}
+
+	private void firePropertyChangeImpl(Object listeners, String property, Object oldValue, Object newValue) {
+		for (int i = 0; ; ++i) {
+			Object l = Kit.getListener(listeners, i);
+			if (l == null) {
+				break;
+			}
+			if (l instanceof PropertyChangeListener pcl) {
+				pcl.propertyChange(new PropertyChangeEvent(this, property, oldValue, newValue));
+			}
+		}
 	}
 
 	/**
@@ -716,13 +912,6 @@ public class Context {
 	 */
 	public ScriptableObject initSafeStandardObjects(ScriptableObject scope, boolean sealed) {
 		return ScriptRuntime.initSafeStandardObjects(this, scope, sealed);
-	}
-
-	/**
-	 * Get the singleton object that represents the JavaScript Undefined value.
-	 */
-	public static Object getUndefinedValue() {
-		return Undefined.instance;
 	}
 
 	/**
@@ -1093,159 +1282,6 @@ public class Context {
 	}
 
 	/**
-	 * Convert the value to a JavaScript boolean value.
-	 * <p>
-	 * See ECMA 9.2.
-	 *
-	 * @param value a JavaScript value
-	 * @return the corresponding boolean value converted using
-	 * the ECMA rules
-	 */
-	public static boolean toBoolean(Object value) {
-		return ScriptRuntime.toBoolean(value);
-	}
-
-	/**
-	 * Convert the value to a JavaScript Number value.
-	 * <p>
-	 * Returns a Java double for the JavaScript Number.
-	 * <p>
-	 * See ECMA 9.3.
-	 *
-	 * @param value a JavaScript value
-	 * @return the corresponding double value converted using
-	 * the ECMA rules
-	 */
-	public static double toNumber(Object value) {
-		return ScriptRuntime.toNumber(value);
-	}
-
-	/**
-	 * Convert the value to a JavaScript String value.
-	 * <p>
-	 * See ECMA 9.8.
-	 * <p>
-	 *
-	 * @param value a JavaScript value
-	 * @return the corresponding String value converted using
-	 * the ECMA rules
-	 */
-	public static String toString(Object value) {
-		return ScriptRuntime.toString(value);
-	}
-
-	/**
-	 * Convert the value to an JavaScript object value.
-	 * <p>
-	 * Note that a scope must be provided to look up the constructors
-	 * for Number, Boolean, and String.
-	 * <p>
-	 * See ECMA 9.9.
-	 * <p>
-	 * Additionally, arbitrary Java objects and classes will be
-	 * wrapped in a Scriptable object with its Java fields and methods
-	 * reflected as JavaScript properties of the object.
-	 *
-	 * @param value any Java object
-	 * @param scope global scope containing constructors for Number,
-	 *              Boolean, and String
-	 * @return new JavaScript object
-	 */
-	public static Scriptable toObject(Object value, Scriptable scope) {
-		return ScriptRuntime.toObject(scope, value);
-	}
-
-	/**
-	 * Convenient method to convert java value to its closest representation
-	 * in JavaScript.
-	 * <p>
-	 * If value is an instance of String, Number, Boolean, Function or
-	 * Scriptable, it is returned as it and will be treated as the corresponding
-	 * JavaScript type of string, number, boolean, function and object.
-	 * <p>
-	 * Note that for Number instances during any arithmetic operation in
-	 * JavaScript the engine will always use the result of
-	 * <code>Number.doubleValue()</code> resulting in a precision loss if
-	 * the number can not fit into double.
-	 * <p>
-	 * If value is an instance of Character, it will be converted to string of
-	 * length 1 and its JavaScript type will be string.
-	 * <p>
-	 * The rest of values will be wrapped as LiveConnect objects
-	 * by calling {@link WrapFactory#wrap(Context cx, Scriptable scope,
-	 * Object obj, Class staticType)} as in:
-	 * <pre>
-	 *    Context cx = Context.getCurrentContext();
-	 *    return cx.getWrapFactory().wrap(cx, scope, value, null);
-	 * </pre>
-	 *
-	 * @param value any Java object
-	 * @param scope top scope object
-	 * @return value suitable to pass to any API that takes JavaScript values.
-	 */
-	public static Object javaToJS(SharedContextData contextData, Object value, Scriptable scope) {
-		if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Scriptable) {
-			return value;
-		} else if (value instanceof Character) {
-			return String.valueOf(((Character) value).charValue());
-		} else {
-			return contextData.getWrapFactory().wrap(contextData, scope, value, null);
-		}
-	}
-
-	/**
-	 * Convert a JavaScript value into the desired type.
-	 * Uses the semantics defined with LiveConnect3 and throws an
-	 * Illegal argument exception if the conversion cannot be performed.
-	 *
-	 * @param value       the JavaScript value to convert
-	 * @param desiredType the Java type to convert to. Primitive Java
-	 *                    types are represented using the TYPE fields in the corresponding
-	 *                    wrapper class in java.lang.
-	 * @return the converted value
-	 * @throws EvaluatorException if the conversion cannot be performed
-	 */
-	public static Object jsToJava(SharedContextData data, Object value, Class<?> desiredType) throws EvaluatorException {
-		if (desiredType == null) {
-			return value;
-		}
-
-		return NativeJavaObject.coerceTypeImpl(data.hasTypeWrappers() ? data.getTypeWrappers() : null, desiredType, value);
-	}
-
-	/**
-	 * Rethrow the exception wrapping it as the script runtime exception.
-	 * Unless the exception is instance of {@link EcmaError} or
-	 * {@link EvaluatorException} it will be wrapped as
-	 * {@link WrappedException}, a subclass of {@link EvaluatorException}.
-	 * The resulting exception object always contains
-	 * source name and line number of script that triggered exception.
-	 * <p>
-	 * This method always throws an exception, its return value is provided
-	 * only for convenience to allow a usage like:
-	 * <pre>
-	 * throw Context.throwAsScriptRuntimeEx(ex);
-	 * </pre>
-	 * to indicate that code after the method is unreachable.
-	 *
-	 * @throws EvaluatorException
-	 * @throws EcmaError
-	 */
-	public static RuntimeException throwAsScriptRuntimeEx(Throwable e) {
-		while ((e instanceof InvocationTargetException)) {
-			e = ((InvocationTargetException) e).getTargetException();
-		}
-		// special handling of Error so scripts would not catch them
-		if (e instanceof Error) {
-			throw (Error) e;
-		}
-		if (e instanceof RhinoException) {
-			throw (RhinoException) e;
-		}
-		throw new WrappedException(e);
-	}
-
-	/**
 	 * Returns the maximum stack depth (in terms of number of call frames)
 	 * allowed in a single invocation of interpreter. If the set depth would be
 	 * exceeded, the interpreter will throw an EvaluatorException in the script.
@@ -1424,6 +1460,8 @@ public class Context {
 		f.observeInstructionCount(this, instructionCount);
 	}
 
+	/********** end of API **********/
+
 	/**
 	 * Create class loader for generated classes.
 	 * The method calls {@link ContextFactory#createClassLoader(ClassLoader)}
@@ -1475,20 +1513,6 @@ public class Context {
 			throw new IllegalArgumentException("Loader can not resolve Rhino classes");
 		}
 		applicationClassLoader = loader;
-	}
-
-	/********** end of API **********/
-
-	/**
-	 * Internal method that reports an error for missing calls to
-	 * enter().
-	 */
-	public static Context getContext() {
-		Context cx = getCurrentContext();
-		if (cx == null) {
-			throw new RuntimeException("No Context associated with current Thread");
-		}
-		return cx;
 	}
 
 	private Object compileImpl(Scriptable scope, String sourceString, String sourceName, int lineno, Object securityDomain, boolean returnFunction, Evaluator compiler, ErrorReporter compilationErrorReporter) throws IOException {
@@ -1564,40 +1588,6 @@ public class Context {
 
 	private Evaluator createCompiler() {
 		return createInterpreter();
-	}
-
-	static Evaluator createInterpreter() {
-		return new Interpreter();
-	}
-
-	public static String getSourcePositionFromStack(int[] linep) {
-		Context cx = getCurrentContext();
-		if (cx == null) {
-			return null;
-		}
-		if (cx.lastInterpreterFrame != null) {
-			Evaluator evaluator = createInterpreter();
-			if (evaluator != null) {
-				return evaluator.getSourcePositionFromStack(cx, linep);
-			}
-		}
-		/**
-		 * A bit of a hack, but the only way to get filename and line
-		 * number from an enclosing frame.
-		 */
-		StackTraceElement[] stackTrace = new Throwable().getStackTrace();
-		for (StackTraceElement st : stackTrace) {
-			String file = st.getFileName();
-			if (!(file == null || file.endsWith(".java"))) {
-				int line = st.getLineNumber();
-				if (line >= 0) {
-					linep[0] = line;
-					return file;
-				}
-			}
-		}
-
-		return null;
 	}
 
 	RegExp getRegExp() {

@@ -65,13 +65,7 @@ public class FunctionNode extends ScriptNode {
 	public static final int FUNCTION_EXPRESSION = 2;
 	public static final int FUNCTION_EXPRESSION_STATEMENT = 3;
 	public static final int ARROW_FUNCTION = 4;
-
-	public enum Form {
-		FUNCTION, GETTER, SETTER, METHOD
-	}
-
 	private static final List<AstNode> NO_PARAMS = Collections.unmodifiableList(new ArrayList<>());
-
 	private Name functionName;
 	private List<AstNode> params;
 	private AstNode body;
@@ -79,7 +73,6 @@ public class FunctionNode extends ScriptNode {
 	private Form functionForm = Form.FUNCTION;
 	private int lp = -1;
 	private int rp = -1;
-
 	// codegen variables
 	private int functionType;
 	private boolean needsActivation;
@@ -375,6 +368,10 @@ public class FunctionNode extends ScriptNode {
 		functionForm = Form.METHOD;
 	}
 
+	public AstNode getMemberExprNode() {
+		return memberExprNode;
+	}
+
 	/**
 	 * Rhino supports a nonstandard Ecma extension that allows you to
 	 * say, for instance, function a.b.c(arg1, arg) {...}, and it will
@@ -390,10 +387,6 @@ public class FunctionNode extends ScriptNode {
 		if (node != null) {
 			node.setParent(this);
 		}
-	}
-
-	public AstNode getMemberExprNode() {
-		return memberExprNode;
 	}
 
 	/**
@@ -417,5 +410,9 @@ public class FunctionNode extends ScriptNode {
 				}
 			}
 		}
+	}
+
+	public enum Form {
+		FUNCTION, GETTER, SETTER, METHOD
 	}
 }

@@ -16,9 +16,24 @@ package dev.latvian.mods.rhino;
  * @author Norris Boyd
  */
 public class BaseFunction extends IdScriptableObject implements Function {
+	static final String GENERATOR_FUNCTION_CLASS = "__GeneratorFunction";
 	private static final Object FUNCTION_TAG = "Function";
 	private static final String FUNCTION_CLASS = "Function";
-	static final String GENERATOR_FUNCTION_CLASS = "__GeneratorFunction";
+	private static final int Id_length = 1;
+	private static final int Id_arity = 2;
+	private static final int Id_name = 3;
+	private static final int Id_prototype = 4;
+	private static final int Id_arguments = 5;
+	private static final int MAX_INSTANCE_ID = 5;
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toSource = 3;
+
+	// #string_id_map#
+	private static final int Id_apply = 4;
+	private static final int Id_call = 5;
+	private static final int Id_bind = 6;
+	private static final int MAX_PROTOTYPE_ID = Id_bind;
 
 	static void init(Scriptable scope, boolean sealed) {
 		BaseFunction obj = new BaseFunction();
@@ -36,6 +51,30 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		// Return it here so it can be cached as a "builtin"
 		return getProperty(scope, GENERATOR_FUNCTION_CLASS);
 	}
+
+	static boolean isApply(IdFunctionObject f) {
+		return f.hasTag(FUNCTION_TAG) && f.methodId() == Id_apply;
+	}
+
+	static boolean isApplyOrCall(IdFunctionObject f) {
+		if (f.hasTag(FUNCTION_TAG)) {
+			switch (f.methodId()) {
+				case Id_apply:
+				case Id_call:
+					return true;
+			}
+		}
+		return false;
+	}
+
+	private Object prototypeProperty;
+	private Object argumentsObj = NOT_FOUND;
+	private boolean isGeneratorFunction = false;
+	// For function object instances, attributes are
+	//  {configurable:false, enumerable:false};
+	// see ECMA 15.3.5.2
+	private int prototypePropertyAttributes = PERMANENT | DONTENUM;
+	private int argumentsAttributes = PERMANENT | DONTENUM;
 
 	public BaseFunction() {
 	}
@@ -90,16 +129,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		}
 		throw ScriptRuntime.typeError1("msg.instanceof.bad.prototype", getFunctionName());
 	}
-
-	// #string_id_map#
-
-	private static final int Id_length = 1;
-	private static final int Id_arity = 2;
-	private static final int Id_name = 3;
-	private static final int Id_prototype = 4;
-	private static final int Id_arguments = 5;
-
-	private static final int MAX_INSTANCE_ID = 5;
 
 	@Override
 	protected int getMaxInstanceId() {
@@ -244,21 +273,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 		initPrototypeMethod(FUNCTION_TAG, id, s, arity);
-	}
-
-	static boolean isApply(IdFunctionObject f) {
-		return f.hasTag(FUNCTION_TAG) && f.methodId() == Id_apply;
-	}
-
-	static boolean isApplyOrCall(IdFunctionObject f) {
-		if (f.hasTag(FUNCTION_TAG)) {
-			switch (f.methodId()) {
-				case Id_apply:
-				case Id_call:
-					return true;
-			}
-		}
-		return false;
 	}
 
 	@Override
@@ -408,6 +422,8 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		return prototypeProperty != null || this instanceof NativeFunction;
 	}
 
+	// #/string_id_map#
+
 	protected Object getPrototypeProperty() {
 		Object result = prototypeProperty;
 		if (result == null) {
@@ -524,26 +540,5 @@ public class BaseFunction extends IdScriptableObject implements Function {
 			default -> super.findPrototypeId(s);
 		};
 	}
-
-	private static final int Id_constructor = 1;
-	private static final int Id_toString = 2;
-	private static final int Id_toSource = 3;
-	private static final int Id_apply = 4;
-	private static final int Id_call = 5;
-	private static final int Id_bind = 6;
-
-	private static final int MAX_PROTOTYPE_ID = Id_bind;
-
-	// #/string_id_map#
-
-	private Object prototypeProperty;
-	private Object argumentsObj = NOT_FOUND;
-	private boolean isGeneratorFunction = false;
-
-	// For function object instances, attributes are
-	//  {configurable:false, enumerable:false};
-	// see ECMA 15.3.5.2
-	private int prototypePropertyAttributes = PERMANENT | DONTENUM;
-	private int argumentsAttributes = PERMANENT | DONTENUM;
 }
 

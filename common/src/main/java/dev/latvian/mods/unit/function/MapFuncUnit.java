@@ -4,12 +4,11 @@ import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
 
 public class MapFuncUnit extends FuncUnit {
-	public static final FunctionFactory FACTORY = FunctionFactory.of("map", 5, MapFuncUnit::new);
-
 	public static double map(double value, double min1, double max1, double min2, double max2) {
 		return LerpFuncUnit.lerp(min2, max2, (value - min1) / (max1 - min1));
 	}
 
+	public static final FunctionFactory FACTORY = FunctionFactory.of("map", 5, MapFuncUnit::new);
 	public final Unit value;
 	public final Unit min1;
 	public final Unit max1;
@@ -29,4 +28,6 @@ public class MapFuncUnit extends FuncUnit {
 	public double get(UnitVariables variables) {
 		return map(value.get(variables), min1.get(variables), max1.get(variables), min2.get(variables), max2.get(variables));
 	}
+
+
 }

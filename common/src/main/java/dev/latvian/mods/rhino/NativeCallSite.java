@@ -14,7 +14,24 @@ package dev.latvian.mods.rhino;
 
 public class NativeCallSite extends IdScriptableObject {
 	private static final String CALLSITE_TAG = "CallSite";
-	private ScriptStackElement element;
+	private static final int Id_constructor = 1;
+	private static final int Id_getThis = 2;
+	private static final int Id_getTypeName = 3;
+	private static final int Id_getFunction = 4;
+	private static final int Id_getFunctionName = 5;
+	private static final int Id_getMethodName = 6;
+	private static final int Id_getFileName = 7;
+	private static final int Id_getLineNumber = 8;
+	private static final int Id_getColumnNumber = 9;
+	private static final int Id_getEvalOrigin = 10;
+	private static final int Id_isToplevel = 11;
+	private static final int Id_isEval = 12;
+	private static final int Id_isNative = 13;
+
+	// #string_id_map#
+	private static final int Id_isConstructor = 14;
+	private static final int Id_toString = 15;
+	private static final int MAX_PROTOTYPE_ID = 15;
 
 	static void init(Scriptable scope, boolean sealed) {
 		NativeCallSite cs = new NativeCallSite();
@@ -28,6 +45,57 @@ public class NativeCallSite extends IdScriptableObject {
 		cs.setPrototype(proto);
 		return cs;
 	}
+
+	private static Object js_toString(Scriptable obj) {
+		while (obj != null && !(obj instanceof NativeCallSite)) {
+			obj = obj.getPrototype();
+		}
+		if (obj == null) {
+			return NOT_FOUND;
+		}
+		NativeCallSite cs = (NativeCallSite) obj;
+		StringBuilder sb = new StringBuilder();
+		cs.element.renderJavaStyle(sb);
+		return sb.toString();
+	}
+
+	private static Object getFunctionName(Scriptable obj) {
+		while (obj != null && !(obj instanceof NativeCallSite)) {
+			obj = obj.getPrototype();
+		}
+		if (obj == null) {
+			return NOT_FOUND;
+		}
+		NativeCallSite cs = (NativeCallSite) obj;
+		return (cs.element == null ? null : cs.element.functionName);
+	}
+
+	private static Object getFileName(Scriptable obj) {
+		while (obj != null && !(obj instanceof NativeCallSite)) {
+			obj = obj.getPrototype();
+		}
+		if (obj == null) {
+			return NOT_FOUND;
+		}
+		NativeCallSite cs = (NativeCallSite) obj;
+		return (cs.element == null ? null : cs.element.fileName);
+	}
+
+	private static Object getLineNumber(Scriptable obj) {
+		while (obj != null && !(obj instanceof NativeCallSite)) {
+			obj = obj.getPrototype();
+		}
+		if (obj == null) {
+			return NOT_FOUND;
+		}
+		NativeCallSite cs = (NativeCallSite) obj;
+		if ((cs.element == null) || (cs.element.lineNumber < 0)) {
+			return Undefined.instance;
+		}
+		return cs.element.lineNumber;
+	}
+
+	private ScriptStackElement element;
 
 	private NativeCallSite() {
 	}
@@ -138,57 +206,6 @@ public class NativeCallSite extends IdScriptableObject {
 		return element.toString();
 	}
 
-	private static Object js_toString(Scriptable obj) {
-		while (obj != null && !(obj instanceof NativeCallSite)) {
-			obj = obj.getPrototype();
-		}
-		if (obj == null) {
-			return NOT_FOUND;
-		}
-		NativeCallSite cs = (NativeCallSite) obj;
-		StringBuilder sb = new StringBuilder();
-		cs.element.renderJavaStyle(sb);
-		return sb.toString();
-	}
-
-	private static Object getFunctionName(Scriptable obj) {
-		while (obj != null && !(obj instanceof NativeCallSite)) {
-			obj = obj.getPrototype();
-		}
-		if (obj == null) {
-			return NOT_FOUND;
-		}
-		NativeCallSite cs = (NativeCallSite) obj;
-		return (cs.element == null ? null : cs.element.functionName);
-	}
-
-	private static Object getFileName(Scriptable obj) {
-		while (obj != null && !(obj instanceof NativeCallSite)) {
-			obj = obj.getPrototype();
-		}
-		if (obj == null) {
-			return NOT_FOUND;
-		}
-		NativeCallSite cs = (NativeCallSite) obj;
-		return (cs.element == null ? null : cs.element.fileName);
-	}
-
-	private static Object getLineNumber(Scriptable obj) {
-		while (obj != null && !(obj instanceof NativeCallSite)) {
-			obj = obj.getPrototype();
-		}
-		if (obj == null) {
-			return NOT_FOUND;
-		}
-		NativeCallSite cs = (NativeCallSite) obj;
-		if ((cs.element == null) || (cs.element.lineNumber < 0)) {
-			return Undefined.instance;
-		}
-		return cs.element.lineNumber;
-	}
-
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
 		return switch (s) {
@@ -210,22 +227,5 @@ public class NativeCallSite extends IdScriptableObject {
 			default -> 0;
 		};
 	}
-
-	private static final int Id_constructor = 1;
-	private static final int Id_getThis = 2;
-	private static final int Id_getTypeName = 3;
-	private static final int Id_getFunction = 4;
-	private static final int Id_getFunctionName = 5;
-	private static final int Id_getMethodName = 6;
-	private static final int Id_getFileName = 7;
-	private static final int Id_getLineNumber = 8;
-	private static final int Id_getColumnNumber = 9;
-	private static final int Id_getEvalOrigin = 10;
-	private static final int Id_isToplevel = 11;
-	private static final int Id_isEval = 12;
-	private static final int Id_isNative = 13;
-	private static final int Id_isConstructor = 14;
-	private static final int Id_toString = 15;
-	private static final int MAX_PROTOTYPE_ID = 15;
 	// #/string_id_map#
 }

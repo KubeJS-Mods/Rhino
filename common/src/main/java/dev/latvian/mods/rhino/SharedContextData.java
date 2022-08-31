@@ -32,20 +32,6 @@ import java.util.function.Predicate;
 public class SharedContextData {
 	public static final Object AKEY = "ClassCache";
 
-	public final Scriptable topLevelScope;
-	private transient Map<Class<?>, JavaMembers> classTable;
-	private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
-	private transient Map<Class<?>, Object> interfaceAdapterCache;
-	private int generatedClassSerial;
-	TypeWrappers typeWrappers;
-	Remapper remapper = DefaultRemapper.INSTANCE;
-	final List<CustomJavaToJsWrapperProviderHolder<?>> customScriptableWrappers = new ArrayList<>();
-	final Map<Class<?>, CustomJavaToJsWrapperProvider> customScriptableWrapperCache = new HashMap<>();
-	private ClassDataCache classDataCache;
-	private final Map<String, Object> extraProperties = new HashMap<>();
-	private ClassShutter classShutter;
-	private WrapFactory wrapFactory;
-
 	/**
 	 * Search for ClassCache object in the given scope.
 	 * The method first calls
@@ -68,6 +54,20 @@ public class SharedContextData {
 	public static SharedContextData get(Context cx, Scriptable scope) {
 		return cx.sharedContextData != null ? cx.sharedContextData : get(scope);
 	}
+
+	public final Scriptable topLevelScope;
+	final List<CustomJavaToJsWrapperProviderHolder<?>> customScriptableWrappers = new ArrayList<>();
+	final Map<Class<?>, CustomJavaToJsWrapperProvider> customScriptableWrapperCache = new HashMap<>();
+	private final Map<String, Object> extraProperties = new HashMap<>();
+	TypeWrappers typeWrappers;
+	Remapper remapper = DefaultRemapper.INSTANCE;
+	private transient Map<Class<?>, JavaMembers> classTable;
+	private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
+	private transient Map<Class<?>, Object> interfaceAdapterCache;
+	private int generatedClassSerial;
+	private ClassDataCache classDataCache;
+	private ClassShutter classShutter;
+	private WrapFactory wrapFactory;
 
 	public SharedContextData(Scriptable scope) {
 		topLevelScope = scope;
@@ -124,12 +124,12 @@ public class SharedContextData {
 		return typeWrappers != null;
 	}
 
-	public void setRemapper(Remapper remapper) {
-		this.remapper = remapper;
-	}
-
 	public Remapper getRemapper() {
 		return remapper;
+	}
+
+	public void setRemapper(Remapper remapper) {
+		this.remapper = remapper;
 	}
 
 	public ClassDataCache getClassDataCache() {
@@ -189,6 +189,11 @@ public class SharedContextData {
 		return extraProperties.get(key);
 	}
 
+	@Nullable
+	public final synchronized ClassShutter getClassShutter() {
+		return classShutter;
+	}
+
 	/**
 	 * Set the LiveConnect access filter for this context.
 	 * <p> {@link ClassShutter} may only be set if it is currently null.
@@ -210,11 +215,6 @@ public class SharedContextData {
 		classShutter = shutter;
 	}
 
-	@Nullable
-	public final synchronized ClassShutter getClassShutter() {
-		return classShutter;
-	}
-
 	public void addToTopLevelScope(String name, Object value) {
 		if (value instanceof Class<?> c) {
 			ScriptableObject.putProperty(topLevelScope, name, new NativeJavaClass(topLevelScope, c));
@@ -223,6 +223,18 @@ public class SharedContextData {
 		}
 	}
 
+	/**
+	 * Return the current WrapFactory, or null if none is defined.
+	 *
+	 * @see WrapFactory
+	 * @since 1.5 Release 4
+	 */
+	public final WrapFactory getWrapFactory() {
+		if (wrapFactory == null) {
+			wrapFactory = new WrapFactory();
+		}
+		return wrapFactory;
+	}
 
 	/**
 	 * Set a WrapFactory for this Context.
@@ -238,18 +250,5 @@ public class SharedContextData {
 			throw new IllegalArgumentException();
 		}
 		this.wrapFactory = wrapFactory;
-	}
-
-	/**
-	 * Return the current WrapFactory, or null if none is defined.
-	 *
-	 * @see WrapFactory
-	 * @since 1.5 Release 4
-	 */
-	public final WrapFactory getWrapFactory() {
-		if (wrapFactory == null) {
-			wrapFactory = new WrapFactory();
-		}
-		return wrapFactory;
 	}
 }

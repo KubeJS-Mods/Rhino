@@ -5,9 +5,8 @@ import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
 
 public class HsvFuncUnit extends FuncUnit {
-	public static final FunctionFactory FACTORY = FunctionFactory.of("hsv", 3, 4, HsvFuncUnit::new);
-
 	public final Unit h, s, v, a;
+	public static final FunctionFactory FACTORY = FunctionFactory.of("hsv", 3, 4, HsvFuncUnit::new);
 
 	public HsvFuncUnit(Unit[] args) {
 		super(FACTORY);
@@ -103,4 +102,6 @@ public class HsvFuncUnit extends FuncUnit {
 
 		return new HsvFuncUnit(new Unit[]{h, s, v, a});
 	}
+
+
 }

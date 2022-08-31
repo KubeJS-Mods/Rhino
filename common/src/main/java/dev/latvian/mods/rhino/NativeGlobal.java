@@ -17,6 +17,24 @@ package dev.latvian.mods.rhino;
 
 public class NativeGlobal implements IdFunctionCall {
 	static final long serialVersionUID = 6080442165748707530L;
+	private static final String URI_DECODE_RESERVED = ";/?:@&=+$,#";
+	private static final int INVALID_UTF8 = Integer.MAX_VALUE;
+	private static final Object FTAG = "Global";
+	private static final int Id_decodeURI = 1;
+	private static final int Id_decodeURIComponent = 2;
+	private static final int Id_encodeURI = 3;
+	private static final int Id_encodeURIComponent = 4;
+	private static final int Id_escape = 5;
+	private static final int Id_eval = 6;
+	private static final int Id_isFinite = 7;
+	private static final int Id_isNaN = 8;
+	private static final int Id_isXMLName = 9;
+	private static final int Id_parseFloat = 10;
+	private static final int Id_parseInt = 11;
+	private static final int Id_unescape = 12;
+	private static final int Id_uneval = 13;
+	private static final int LAST_SCOPE_FUNCTION_ID = 13;
+	private static final int Id_new_CommonError = 14;
 
 	public static void init(Context cx, Scriptable scope, boolean sealed) {
 		NativeGlobal obj = new NativeGlobal();
@@ -77,83 +95,6 @@ public class NativeGlobal implements IdFunctionCall {
 			}
 			ctor.exportAsScopeProperty();
 		}
-	}
-
-	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		if (f.hasTag(FTAG)) {
-			int methodId = f.methodId();
-			switch (methodId) {
-				case Id_decodeURI:
-				case Id_decodeURIComponent: {
-					String str = ScriptRuntime.toString(args, 0);
-					return decode(str, methodId == Id_decodeURI);
-				}
-
-				case Id_encodeURI:
-				case Id_encodeURIComponent: {
-					String str = ScriptRuntime.toString(args, 0);
-					return encode(str, methodId == Id_encodeURI);
-				}
-
-				case Id_escape:
-					return js_escape(args);
-
-				case Id_eval:
-					return js_eval(cx, scope, args);
-
-				case Id_isFinite: {
-					if (args.length < 1) {
-						return Boolean.FALSE;
-					}
-					return NativeNumber.isFinite(args[0]);
-				}
-
-				case Id_isNaN: {
-					// The global method isNaN, as per ECMA-262 15.1.2.6.
-					boolean result;
-					if (args.length < 1) {
-						result = true;
-					} else {
-						double d = ScriptRuntime.toNumber(args[0]);
-						result = Double.isNaN(d);
-					}
-					return ScriptRuntime.wrapBoolean(result);
-				}
-
-				case Id_isXMLName: {
-					/*
-					Object name = (args.length == 0)
-							? Undefined.instance : args[0];
-					XMLLib xmlLib = XMLLib.extractFromScope(scope);
-					return ScriptRuntime.wrapBoolean(
-							xmlLib.isXMLName(cx, name));
-					 */
-
-					return ScriptRuntime.wrapBoolean(false);
-				}
-
-				case Id_parseFloat:
-					return js_parseFloat(args);
-
-				case Id_parseInt:
-					return js_parseInt(args);
-
-				case Id_unescape:
-					return js_unescape(args);
-
-				case Id_uneval: {
-					Object value = (args.length != 0) ? args[0] : Undefined.instance;
-					return ScriptRuntime.uneval(cx, scope, value);
-				}
-
-				case Id_new_CommonError:
-					// The implementation of all the ECMA error constructors
-					// (SyntaxError, TypeError, etc.)
-					return NativeError.make(cx, scope, f, args);
-			}
-		}
-		throw f.unknown();
 	}
 
 	/**
@@ -643,9 +584,6 @@ public class NativeGlobal implements IdFunctionCall {
 		return ScriptRuntime.constructError("URIError", ScriptRuntime.getMessage0("msg.bad.uri"));
 	}
 
-	private static final String URI_DECODE_RESERVED = ";/?:@&=+$,#";
-	private static final int INVALID_UTF8 = Integer.MAX_VALUE;
-
 	/* Convert one UCS-4 char and write it into a UTF-8 buffer, which must be
 	 * at least 6 bytes long.  Return the number of UTF-8 bytes of data written.
 	 */
@@ -673,23 +611,80 @@ public class NativeGlobal implements IdFunctionCall {
 		return utf8Length;
 	}
 
-	private static final Object FTAG = "Global";
+	@Override
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		if (f.hasTag(FTAG)) {
+			int methodId = f.methodId();
+			switch (methodId) {
+				case Id_decodeURI:
+				case Id_decodeURIComponent: {
+					String str = ScriptRuntime.toString(args, 0);
+					return decode(str, methodId == Id_decodeURI);
+				}
 
-	private static final int Id_decodeURI = 1;
-	private static final int Id_decodeURIComponent = 2;
-	private static final int Id_encodeURI = 3;
-	private static final int Id_encodeURIComponent = 4;
-	private static final int Id_escape = 5;
-	private static final int Id_eval = 6;
-	private static final int Id_isFinite = 7;
-	private static final int Id_isNaN = 8;
-	private static final int Id_isXMLName = 9;
-	private static final int Id_parseFloat = 10;
-	private static final int Id_parseInt = 11;
-	private static final int Id_unescape = 12;
-	private static final int Id_uneval = 13;
+				case Id_encodeURI:
+				case Id_encodeURIComponent: {
+					String str = ScriptRuntime.toString(args, 0);
+					return encode(str, methodId == Id_encodeURI);
+				}
 
-	private static final int LAST_SCOPE_FUNCTION_ID = 13;
+				case Id_escape:
+					return js_escape(args);
 
-	private static final int Id_new_CommonError = 14;
+				case Id_eval:
+					return js_eval(cx, scope, args);
+
+				case Id_isFinite: {
+					if (args.length < 1) {
+						return Boolean.FALSE;
+					}
+					return NativeNumber.isFinite(args[0]);
+				}
+
+				case Id_isNaN: {
+					// The global method isNaN, as per ECMA-262 15.1.2.6.
+					boolean result;
+					if (args.length < 1) {
+						result = true;
+					} else {
+						double d = ScriptRuntime.toNumber(args[0]);
+						result = Double.isNaN(d);
+					}
+					return ScriptRuntime.wrapBoolean(result);
+				}
+
+				case Id_isXMLName: {
+					/*
+					Object name = (args.length == 0)
+							? Undefined.instance : args[0];
+					XMLLib xmlLib = XMLLib.extractFromScope(scope);
+					return ScriptRuntime.wrapBoolean(
+							xmlLib.isXMLName(cx, name));
+					 */
+
+					return ScriptRuntime.wrapBoolean(false);
+				}
+
+				case Id_parseFloat:
+					return js_parseFloat(args);
+
+				case Id_parseInt:
+					return js_parseInt(args);
+
+				case Id_unescape:
+					return js_unescape(args);
+
+				case Id_uneval: {
+					Object value = (args.length != 0) ? args[0] : Undefined.instance;
+					return ScriptRuntime.uneval(cx, scope, value);
+				}
+
+				case Id_new_CommonError:
+					// The implementation of all the ECMA error constructors
+					// (SyntaxError, TypeError, etc.)
+					return NativeError.make(cx, scope, f, args);
+			}
+		}
+		throw f.unknown();
+	}
 }

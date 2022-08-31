@@ -14,11 +14,18 @@ package dev.latvian.mods.rhino;
  */
 final class NativeBoolean extends IdScriptableObject {
 	private static final Object BOOLEAN_TAG = "Boolean";
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toSource = 3;
+	private static final int Id_valueOf = 4;
+	private static final int MAX_PROTOTYPE_ID = 4;
 
 	static void init(Scriptable scope, boolean sealed) {
 		NativeBoolean obj = new NativeBoolean(false);
 		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 	}
+
+	private final boolean booleanValue;
 
 	NativeBoolean(boolean b) {
 		booleanValue = b;
@@ -107,12 +114,4 @@ final class NativeBoolean extends IdScriptableObject {
 			default -> 0;
 		};
 	}
-
-	private static final int Id_constructor = 1;
-	private static final int Id_toString = 2;
-	private static final int Id_toSource = 3;
-	private static final int Id_valueOf = 4;
-	private static final int MAX_PROTOTYPE_ID = 4;
-
-	private final boolean booleanValue;
 }

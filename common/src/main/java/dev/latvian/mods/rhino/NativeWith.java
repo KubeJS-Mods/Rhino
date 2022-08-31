@@ -13,6 +13,9 @@ package dev.latvian.mods.rhino;
  * for operations on its parent.
  */
 public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall {
+	private static final Object FTAG = "With";
+	private static final int Id_constructor = 1;
+
 	static void init(Scriptable scope, boolean sealed) {
 		NativeWith obj = new NativeWith();
 
@@ -26,6 +29,25 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 		}
 		ctor.exportAsScopeProperty();
 	}
+
+	static boolean isWithFunction(Object functionObj) {
+		if (functionObj instanceof IdFunctionObject f) {
+			return f.hasTag(FTAG) && f.methodId() == Id_constructor;
+		}
+		return false;
+	}
+
+	static Object newWithSpecial(Context cx, Scriptable scope, Object[] args) {
+		ScriptRuntime.checkDeprecated(cx, "With");
+		scope = ScriptableObject.getTopLevelScope(scope);
+		NativeWith thisObj = new NativeWith();
+		thisObj.setPrototype(args.length == 0 ? ScriptableObject.getObjectPrototype(scope) : ScriptRuntime.toObject(cx, scope, args[0]));
+		thisObj.setParentScope(scope);
+		return thisObj;
+	}
+
+	protected Scriptable prototype;
+	protected Scriptable parent;
 
 	private NativeWith() {
 	}
@@ -123,7 +145,6 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 		}
 	}
 
-
 	@Override
 	public void delete(int index) {
 		prototype.delete(index);
@@ -181,27 +202,4 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 		}
 		throw f.unknown();
 	}
-
-	static boolean isWithFunction(Object functionObj) {
-		if (functionObj instanceof IdFunctionObject f) {
-			return f.hasTag(FTAG) && f.methodId() == Id_constructor;
-		}
-		return false;
-	}
-
-	static Object newWithSpecial(Context cx, Scriptable scope, Object[] args) {
-		ScriptRuntime.checkDeprecated(cx, "With");
-		scope = ScriptableObject.getTopLevelScope(scope);
-		NativeWith thisObj = new NativeWith();
-		thisObj.setPrototype(args.length == 0 ? ScriptableObject.getObjectPrototype(scope) : ScriptRuntime.toObject(cx, scope, args[0]));
-		thisObj.setParentScope(scope);
-		return thisObj;
-	}
-
-	private static final Object FTAG = "With";
-
-	private static final int Id_constructor = 1;
-
-	protected Scriptable prototype;
-	protected Scriptable parent;
 }

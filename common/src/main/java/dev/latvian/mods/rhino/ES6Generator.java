@@ -8,6 +8,23 @@ package dev.latvian.mods.rhino;
 
 public final class ES6Generator extends IdScriptableObject {
 	private static final Object GENERATOR_TAG = "Generator";
+	private static final int Id_next = 1;
+	private static final int Id_return = 2;
+	private static final int Id_throw = 3;
+	private static final int SymbolId_iterator = 4;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
+
+	public static final class YieldStarResult {
+		private final Object result;
+
+		public YieldStarResult(Object result) {
+			this.result = result;
+		}
+
+		Object getResult() {
+			return result;
+		}
+	}
 
 	static ES6Generator init(ScriptableObject scope, boolean sealed) {
 
@@ -31,6 +48,15 @@ public final class ES6Generator extends IdScriptableObject {
 
 		return prototype;
 	}
+
+	private NativeFunction function;
+	private Object savedState;
+	private String lineSource;
+	private int lineNumber;
+	private State state = State.SUSPENDED_START;
+	private Object delegee;
+
+	// #string_id_map#
 
 	/**
 	 * Only for constructing the prototype object.
@@ -144,6 +170,8 @@ public final class ES6Generator extends IdScriptableObject {
 			return resumeAbruptLocal(cx, scope, GeneratorState.GENERATOR_THROW, re);
 		}
 	}
+
+	// #/string_id_map#
 
 	private Scriptable resumeDelegeeThrow(Context cx, Scriptable scope, Object value) {
 		boolean returnCalled = false;
@@ -370,8 +398,6 @@ public final class ES6Generator extends IdScriptableObject {
 		return 0;
 	}
 
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
 		return switch (s) {
@@ -382,34 +408,7 @@ public final class ES6Generator extends IdScriptableObject {
 		};
 	}
 
-	private static final int Id_next = 1;
-	private static final int Id_return = 2;
-	private static final int Id_throw = 3;
-	private static final int SymbolId_iterator = 4;
-	private static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
-
-	// #/string_id_map#
-
-	private NativeFunction function;
-	private Object savedState;
-	private String lineSource;
-	private int lineNumber;
-	private State state = State.SUSPENDED_START;
-	private Object delegee;
-
 	enum State {
 		SUSPENDED_START, SUSPENDED_YIELD, EXECUTING, COMPLETED
-	}
-
-	public static final class YieldStarResult {
-		private final Object result;
-
-		public YieldStarResult(Object result) {
-			this.result = result;
-		}
-
-		Object getResult() {
-			return result;
-		}
 	}
 }

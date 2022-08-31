@@ -7,6 +7,11 @@
 package dev.latvian.mods.rhino.classfile;
 
 final class FieldOrMethodRef {
+	private final String className;
+	private final String name;
+	private final String type;
+	private int hashCode = -1;
+
 	FieldOrMethodRef(String className, String name, String type) {
 		this.className = className;
 		this.name = name;
@@ -43,9 +48,4 @@ final class FieldOrMethodRef {
 		}
 		return hashCode;
 	}
-
-	private final String className;
-	private final String name;
-	private final String type;
-	private int hashCode = -1;
 }

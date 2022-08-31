@@ -1,27 +1,10 @@
 package dev.latvian.mods.rhino;
 
 public class CustomFunction extends BaseFunction {
-	@FunctionalInterface
-	public interface Func {
-		Object call(Object[] args);
-	}
-
-	@FunctionalInterface
-	public interface NoArgFunc extends Func {
-		Object call();
-
-		@Override
-		default Object call(Object[] args) {
-			return call();
-		}
-	}
-
 	public static final Class<?>[] NO_ARGS = new Class<?>[0];
-
 	private final String functionName;
 	private final Func func;
 	private final Class<?>[] argTypes;
-
 	public CustomFunction(String functionName, Func func, Class<?>[] argTypes) {
 		this.functionName = functionName;
 		this.func = func;
@@ -63,5 +46,20 @@ public class CustomFunction extends BaseFunction {
 			wrapped = Undefined.instance;
 		}
 		return wrapped;
+	}
+
+	@FunctionalInterface
+	public interface Func {
+		Object call(Object[] args);
+	}
+
+	@FunctionalInterface
+	public interface NoArgFunc extends Func {
+		Object call();
+
+		@Override
+		default Object call(Object[] args) {
+			return call();
+		}
 	}
 }

@@ -22,20 +22,17 @@ package dev.latvian.mods.rhino;
  * may override scopeInit or fillConstructorProperties methods.
  */
 public abstract class IdScriptableObject extends ScriptableObject implements IdFunctionCall {
-	private transient PrototypeValues prototypeValues;
-
 	private static final class PrototypeValues {
 		private static final int NAME_SLOT = 1;
 		private static final int SLOT_SPAN = 2;
 
 		private final IdScriptableObject obj;
 		private final int maxId;
-		private Object[] valueArray;
-		private short[] attributeArray;
-
 		// The following helps to avoid creation of valueArray during runtime
 		// initialization for common case of "constructor" property
 		int constructorId;
+		private Object[] valueArray;
+		private short[] attributeArray;
 		private IdFunctionObject constructor;
 		private short constructorAttrs;
 
@@ -313,6 +310,38 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 		}
 	}
 
+	protected static int instanceIdInfo(int attributes, int id) {
+		return (attributes << 16) | id;
+	}
+
+	/**
+	 * Utility method to construct type error to indicate incompatible call
+	 * when converting script thisObj to a particular type is not possible.
+	 * Possible usage would be to have a private function like realThis:
+	 * <pre>
+	 *  private static NativeSomething realThis(Scriptable thisObj,
+	 *                                          IdFunctionObject f)
+	 *  {
+	 *      if (!(thisObj instanceof NativeSomething))
+	 *          throw incompatibleCallError(f);
+	 *      return (NativeSomething)thisObj;
+	 * }
+	 * </pre>
+	 * Note that although such function can be implemented universally via
+	 * java.lang.Class.isInstance(), it would be much more slower.
+	 *
+	 * @param f function that is attempting to convert 'this'
+	 *          object.
+	 * @return Scriptable object suitable for a check by the instanceof
+	 * operator.
+	 * @throws RuntimeException if no more instanceof target can be found
+	 */
+	protected static EcmaError incompatibleCallError(IdFunctionObject f) {
+		throw ScriptRuntime.typeError1("msg.incompat.call", f.getFunctionName());
+	}
+
+	private transient PrototypeValues prototypeValues;
+
 	public IdScriptableObject() {
 	}
 
@@ -351,7 +380,6 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 		}
 		return super.has(name, start);
 	}
-
 
 	@Override
 	public boolean has(Symbol key, Scriptable start) {
@@ -656,10 +684,6 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 		return 0;
 	}
 
-	protected static int instanceIdInfo(int attributes, int id) {
-		return (attributes << 16) | id;
-	}
-
 	/**
 	 * Map name to id of instance property.
 	 * Should return 0 if not found or the result of
@@ -819,32 +843,6 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 		Scriptable scope = ScriptableObject.getTopLevelScope(obj);
 		IdFunctionObject f = newIdFunction(tag, id, name, arity, scope);
 		f.addAsProperty(obj);
-	}
-
-	/**
-	 * Utility method to construct type error to indicate incompatible call
-	 * when converting script thisObj to a particular type is not possible.
-	 * Possible usage would be to have a private function like realThis:
-	 * <pre>
-	 *  private static NativeSomething realThis(Scriptable thisObj,
-	 *                                          IdFunctionObject f)
-	 *  {
-	 *      if (!(thisObj instanceof NativeSomething))
-	 *          throw incompatibleCallError(f);
-	 *      return (NativeSomething)thisObj;
-	 * }
-	 * </pre>
-	 * Note that although such function can be implemented universally via
-	 * java.lang.Class.isInstance(), it would be much more slower.
-	 *
-	 * @param f function that is attempting to convert 'this'
-	 *          object.
-	 * @return Scriptable object suitable for a check by the instanceof
-	 * operator.
-	 * @throws RuntimeException if no more instanceof target can be found
-	 */
-	protected static EcmaError incompatibleCallError(IdFunctionObject f) {
-		throw ScriptRuntime.typeError1("msg.incompat.call", f.getFunctionName());
 	}
 
 	private IdFunctionObject newIdFunction(Object tag, int id, String name, int arity, Scriptable scope) {

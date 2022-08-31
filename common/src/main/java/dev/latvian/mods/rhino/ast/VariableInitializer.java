@@ -25,6 +25,17 @@ public class VariableInitializer extends AstNode {
 		type = Token.VAR;
 	}
 
+	public VariableInitializer() {
+	}
+
+	public VariableInitializer(int pos) {
+		super(pos);
+	}
+
+	public VariableInitializer(int pos, int len) {
+		super(pos, len);
+	}
+
 	/**
 	 * Sets the node type.
 	 *
@@ -37,18 +48,6 @@ public class VariableInitializer extends AstNode {
 		}
 		setType(nodeType);
 	}
-
-	public VariableInitializer() {
-	}
-
-	public VariableInitializer(int pos) {
-		super(pos);
-	}
-
-	public VariableInitializer(int pos, int len) {
-		super(pos, len);
-	}
-
 
 	/**
 	 * Returns true if this is a destructuring assignment.  If so, the

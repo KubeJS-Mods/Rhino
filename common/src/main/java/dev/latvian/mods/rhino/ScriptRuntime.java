@@ -27,36 +27,39 @@ import java.util.ResourceBundle;
 public class ScriptRuntime {
 	public static final Object[] EMPTY_OBJECTS = new Object[0];
 	public static final String[] EMPTY_STRINGS = new String[0];
-
-	/**
-	 * No instances should be created.
-	 */
-	protected ScriptRuntime() {
-	}
-
-	/**
-	 * Returns representation of the [[ThrowTypeError]] object.
-	 * See ECMA 5 spec, 13.2.3
-	 */
-	public static BaseFunction typeErrorThrower(Context cx) {
-		if (cx.typeErrorThrower == null) {
-			BaseFunction thrower = new BaseFunction() {
-				@Override
-				public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-					throw typeError0("msg.op.not.allowed");
-				}
-
-				@Override
-				public int getLength() {
-					return 0;
-				}
-			};
-			ScriptRuntime.setFunctionProtoAndParent(thrower, cx.topCallScope);
-			thrower.preventExtensions();
-			cx.typeErrorThrower = thrower;
-		}
-		return cx.typeErrorThrower;
-	}
+	public final static Class<Boolean> BooleanClass = Boolean.class;
+	public final static Class<Byte> ByteClass = Byte.class;
+	public final static Class<Character> CharacterClass = Character.class;
+	public final static Class<Class> ClassClass = Class.class;
+	public final static Class<Double> DoubleClass = Double.class;
+	public final static Class<Float> FloatClass = Float.class;
+	public final static Class<Integer> IntegerClass = Integer.class;
+	public final static Class<Long> LongClass = Long.class;
+	public final static Class<Number> NumberClass = Number.class;
+	public final static Class<Object> ObjectClass = Object.class;
+	public final static Class<Short> ShortClass = Short.class;
+	public final static Class<String> StringClass = String.class;
+	public final static Class<Date> DateClass = Date.class;
+	public final static Class<?> ContextClass = Context.class;
+	public final static Class<ContextFactory> ContextFactoryClass = ContextFactory.class;
+	public final static Class<Function> FunctionClass = Function.class;
+	public final static Class<ScriptableObject> ScriptableObjectClass = ScriptableObject.class;
+	public static final Class<Scriptable> ScriptableClass = Scriptable.class;
+	public static final double NaN = Double.NaN;
+	public static final Double NaNobj = NaN;
+	// Preserve backward-compatibility with historical value of this.
+	public static final double negativeZero = Double.longBitsToDouble(0x8000000000000000L);
+	public static final Double zeroObj = 0.0;
+	public static final Double negativeZeroObj = -0.0;
+	public static final int ENUMERATE_KEYS = 0;
+	public static final int ENUMERATE_VALUES = 1;
+	public static final int ENUMERATE_ARRAY = 2;
+	public static final int ENUMERATE_KEYS_NO_ITERATOR = 3;
+	public static final int ENUMERATE_VALUES_NO_ITERATOR = 4;
+	public static final int ENUMERATE_ARRAY_NO_ITERATOR = 5;
+	public static final int ENUMERATE_VALUES_IN_ORDER = 6;
+	public static final MessageProvider messageProvider = new DefaultMessageProvider();
+	private static final Object LIBRARY_SCOPE_KEY = "LIBRARY_SCOPE";
 
 	static class NoSuchMethodShim implements Callable {
 		String methodName;
@@ -87,27 +90,82 @@ public class ScriptRuntime {
 
 	}
 
-	public final static Class<Boolean> BooleanClass = Boolean.class;
-	public final static Class<Byte> ByteClass = Byte.class;
-	public final static Class<Character> CharacterClass = Character.class;
-	public final static Class<Class> ClassClass = Class.class;
-	public final static Class<Double> DoubleClass = Double.class;
-	public final static Class<Float> FloatClass = Float.class;
-	public final static Class<Integer> IntegerClass = Integer.class;
-	public final static Class<Long> LongClass = Long.class;
-	public final static Class<Number> NumberClass = Number.class;
-	public final static Class<Object> ObjectClass = Object.class;
-	public final static Class<Short> ShortClass = Short.class;
-	public final static Class<String> StringClass = String.class;
-	public final static Class<Date> DateClass = Date.class;
+	/**
+	 * Helper to return a string or an integer.
+	 * Always use a null check on s.stringId to determine
+	 * if the result is string or integer.
+	 *
+	 * @see ScriptRuntime#toStringIdOrIndex(Context, Object)
+	 */
+	static final class StringIdOrIndex {
+		final String stringId;
+		final int index;
 
-	public final static Class<?> ContextClass = Context.class;
-	public final static Class<ContextFactory> ContextFactoryClass = ContextFactory.class;
-	public final static Class<Function> FunctionClass = Function.class;
-	public final static Class<ScriptableObject> ScriptableObjectClass = ScriptableObject.class;
-	public static final Class<Scriptable> ScriptableClass = Scriptable.class;
+		StringIdOrIndex(String stringId) {
+			this.stringId = stringId;
+			this.index = -1;
+		}
 
-	private static final Object LIBRARY_SCOPE_KEY = "LIBRARY_SCOPE";
+		StringIdOrIndex(int index) {
+			this.stringId = null;
+			this.index = index;
+		}
+	}
+
+	/* OPT there's a noticable delay for the first error!  Maybe it'd
+	 * make sense to use a ListResourceBundle instead of a properties
+	 * file to avoid (synchronized) text parsing.
+	 */
+	private static class DefaultMessageProvider implements MessageProvider {
+		@Override
+		public String getMessage(String messageId, Object[] arguments) {
+			final String defaultResource = "dev.latvian.mods.rhino.resources.Messages";
+
+			Locale locale = Locale.getDefault();
+
+			// ResourceBundle does caching.
+			ResourceBundle rb = ResourceBundle.getBundle(defaultResource, locale);
+
+			String formatString;
+			try {
+				formatString = rb.getString(messageId);
+			} catch (java.util.MissingResourceException mre) {
+				throw new RuntimeException("no message resource found for message property " + messageId);
+			}
+
+			/*
+			 * It's OK to format the string, even if 'arguments' is null;
+			 * we need to format it anyway, to make double ''s collapse to
+			 * single 's.
+			 */
+			MessageFormat formatter = new MessageFormat(formatString);
+			return formatter.format(arguments);
+		}
+	}
+
+	/**
+	 * Returns representation of the [[ThrowTypeError]] object.
+	 * See ECMA 5 spec, 13.2.3
+	 */
+	public static BaseFunction typeErrorThrower(Context cx) {
+		if (cx.typeErrorThrower == null) {
+			BaseFunction thrower = new BaseFunction() {
+				@Override
+				public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+					throw typeError0("msg.op.not.allowed");
+				}
+
+				@Override
+				public int getLength() {
+					return 0;
+				}
+			};
+			ScriptRuntime.setFunctionProtoAndParent(thrower, cx.topCallScope);
+			thrower.preventExtensions();
+			cx.typeErrorThrower = thrower;
+		}
+		return cx.typeErrorThrower;
+	}
 
 	public static boolean isRhinoRuntimeType(Class<?> cl) {
 		if (cl.isPrimitive()) {
@@ -318,15 +376,6 @@ public class ScriptRuntime {
 	public static double toNumber(Object[] args, int index) {
 		return (index < args.length) ? toNumber(args[index]) : NaN;
 	}
-
-	public static final double NaN = Double.NaN;
-	public static final Double NaNobj = NaN;
-
-	// Preserve backward-compatibility with historical value of this.
-	public static final double negativeZero = Double.longBitsToDouble(0x8000000000000000L);
-
-	public static final Double zeroObj = 0.0;
-	public static final Double negativeZeroObj = -0.0;
 
 	static double stringPrefixToNumber(String s, int start, int radix) {
 		return stringToNumber(s, start, s.length() - 1, radix, true);
@@ -1153,28 +1202,6 @@ public class ScriptRuntime {
 	}
 
 	/**
-	 * Helper to return a string or an integer.
-	 * Always use a null check on s.stringId to determine
-	 * if the result is string or integer.
-	 *
-	 * @see ScriptRuntime#toStringIdOrIndex(Context, Object)
-	 */
-	static final class StringIdOrIndex {
-		final String stringId;
-		final int index;
-
-		StringIdOrIndex(String stringId) {
-			this.stringId = stringId;
-			this.index = -1;
-		}
-
-		StringIdOrIndex(int index) {
-			this.stringId = null;
-			this.index = index;
-		}
-	}
-
-	/**
 	 * If toString(id) is a decimal presentation of int32 value, then id
 	 * is index. In this case return null and make the index available
 	 * as ScriptRuntime.lastIndexResult(cx). Otherwise return toString(id).
@@ -1531,7 +1558,6 @@ public class ScriptRuntime {
 		return ScriptableObject.getProperty(scope, name);
 	}
 
-
 	/**
 	 * Returns the object in the scope chain that has a given property.
 	 * <p>
@@ -1638,14 +1664,6 @@ public class ScriptRuntime {
 		}
 		return null;
 	}
-
-	public static final int ENUMERATE_KEYS = 0;
-	public static final int ENUMERATE_VALUES = 1;
-	public static final int ENUMERATE_ARRAY = 2;
-	public static final int ENUMERATE_KEYS_NO_ITERATOR = 3;
-	public static final int ENUMERATE_VALUES_NO_ITERATOR = 4;
-	public static final int ENUMERATE_ARRAY_NO_ITERATOR = 5;
-	public static final int ENUMERATE_VALUES_IN_ORDER = 6;
 
 	public static IdEnumeration enumInit(Object value, Context cx, Scriptable scope, int enumType) {
 		IdEnumeration x = new IdEnumeration();
@@ -2053,6 +2071,18 @@ public class ScriptRuntime {
 		return typeof(getObjectProp(val, id, cx));
 	}
 
+	// neg:
+	// implement the '-' operator inline in the caller
+	// as "-toNumber(val)"
+
+	// not:
+	// implement the '!' operator inline in the caller
+	// as "!toBoolean(val)"
+
+	// bitnot:
+	// implement the '~' operator inline in the caller
+	// as "~toInt32(val)"
+
 	public static boolean isObject(Object value) {
 		if (value == null) {
 			return false;
@@ -2069,18 +2099,6 @@ public class ScriptRuntime {
 		}
 		return false;
 	}
-
-	// neg:
-	// implement the '-' operator inline in the caller
-	// as "-toNumber(val)"
-
-	// not:
-	// implement the '!' operator inline in the caller
-	// as "!toBoolean(val)"
-
-	// bitnot:
-	// implement the '~' operator inline in the caller
-	// as "~toInt32(val)"
 
 	public static Object add(Object val1, Object val2, Context cx) {
 		if (val1 instanceof Number && val2 instanceof Number) {
@@ -2567,6 +2585,10 @@ public class ScriptRuntime {
 		return d1 < d2;
 	}
 
+	// ------------------
+	// Statements
+	// ------------------
+
 	public static boolean cmp_LE(Object val1, Object val2) {
 		double d1, d2;
 		if (val1 instanceof Number && val2 instanceof Number) {
@@ -2590,10 +2612,6 @@ public class ScriptRuntime {
 		}
 		return d1 <= d2;
 	}
-
-	// ------------------
-	// Statements
-	// ------------------
 
 	public static boolean hasTopCall(Context cx) {
 		return (cx.topCallScope != null);
@@ -2923,7 +2941,6 @@ public class ScriptRuntime {
 		object.setPrototype(TopLevel.getBuiltinPrototype(scope, type));
 	}
 
-
 	public static void initFunction(Context cx, Scriptable scope, NativeFunction function, int type, boolean fromEvalCode) {
 		if (type == FunctionNode.FUNCTION_STATEMENT) {
 			String name = function.getFunctionName();
@@ -3074,59 +3091,8 @@ public class ScriptRuntime {
 		return getMessage(messageId, arguments);
 	}
 
-	/**
-	 * This is an interface defining a message provider. Create your
-	 * own implementation to override the default error message provider.
-	 *
-	 * @author Mike Harm
-	 */
-	public interface MessageProvider {
-
-		/**
-		 * Returns a textual message identified by the given messageId,
-		 * parameterized by the given arguments.
-		 *
-		 * @param messageId the identifier of the message
-		 * @param arguments the arguments to fill into the message
-		 */
-		String getMessage(String messageId, Object[] arguments);
-	}
-
-	public static final MessageProvider messageProvider = new DefaultMessageProvider();
-
 	public static String getMessage(String messageId, Object[] arguments) {
 		return messageProvider.getMessage(messageId, arguments);
-	}
-
-	/* OPT there's a noticable delay for the first error!  Maybe it'd
-	 * make sense to use a ListResourceBundle instead of a properties
-	 * file to avoid (synchronized) text parsing.
-	 */
-	private static class DefaultMessageProvider implements MessageProvider {
-		@Override
-		public String getMessage(String messageId, Object[] arguments) {
-			final String defaultResource = "dev.latvian.mods.rhino.resources.Messages";
-
-			Locale locale = Locale.getDefault();
-
-			// ResourceBundle does caching.
-			ResourceBundle rb = ResourceBundle.getBundle(defaultResource, locale);
-
-			String formatString;
-			try {
-				formatString = rb.getString(messageId);
-			} catch (java.util.MissingResourceException mre) {
-				throw new RuntimeException("no message resource found for message property " + messageId);
-			}
-
-			/*
-			 * It's OK to format the string, even if 'arguments' is null;
-			 * we need to format it anyway, to make double ''s collapse to
-			 * single 's.
-			 */
-			MessageFormat formatter = new MessageFormat(formatString);
-			return formatter.format(arguments);
-		}
 	}
 
 	public static EcmaError constructError(String error, String message) {
@@ -3357,7 +3323,6 @@ public class ScriptRuntime {
 		return new JavaScriptException(error, filename, linep[0]);
 	}
 
-
 	/**
 	 * Equivalent to executing "new $constructorName(message, sourceFileName, sourceLineNo)" from JavaScript.
 	 *
@@ -3371,5 +3336,30 @@ public class ScriptRuntime {
 		String filename = Context.getSourcePositionFromStack(linep);
 		final Scriptable error = cx.newObject(scope, constructorName, new Object[]{message, filename, linep[0]});
 		return new JavaScriptException(error, filename, linep[0]);
+	}
+
+	/**
+	 * No instances should be created.
+	 */
+	protected ScriptRuntime() {
+	}
+
+
+	/**
+	 * This is an interface defining a message provider. Create your
+	 * own implementation to override the default error message provider.
+	 *
+	 * @author Mike Harm
+	 */
+	public interface MessageProvider {
+
+		/**
+		 * Returns a textual message identified by the given messageId,
+		 * parameterized by the given arguments.
+		 *
+		 * @param messageId the identifier of the message
+		 * @param arguments the arguments to fill into the message
+		 */
+		String getMessage(String messageId, Object[] arguments);
 	}
 }

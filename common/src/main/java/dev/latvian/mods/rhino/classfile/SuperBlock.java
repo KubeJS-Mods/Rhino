@@ -14,6 +14,35 @@ package dev.latvian.mods.rhino.classfile;
  * start.
  */
 final class SuperBlock {
+	/**
+	 * Merge an operand stack or local variable array with incoming state.
+	 * <p>
+	 * They are treated the same way; by this point, it should already be
+	 * ensured that the array sizes are the same, which is the only additional
+	 * constraint that is imposed on merging operand stacks (the local variable
+	 * array is always the same size).
+	 */
+	private static boolean mergeState(int[] current, int[] incoming, int size, ConstantPool pool) {
+		boolean changed = false;
+		for (int i = 0; i < size; i++) {
+			int currentType = current[i];
+
+			current[i] = TypeInfo.merge(current[i], incoming[i], pool);
+			if (currentType != current[i]) {
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	private final int index;
+	private final int start;
+	private final int end;
+	private final int[] locals;
+	private int[] stack;
+	private boolean isInitialized;
+	private boolean isInQueue;
+
 	SuperBlock(int index, int start, int end, int[] initialLocals) {
 		this.index = index;
 		this.start = start;
@@ -97,27 +126,6 @@ final class SuperBlock {
 		}
 	}
 
-	/**
-	 * Merge an operand stack or local variable array with incoming state.
-	 * <p>
-	 * They are treated the same way; by this point, it should already be
-	 * ensured that the array sizes are the same, which is the only additional
-	 * constraint that is imposed on merging operand stacks (the local variable
-	 * array is always the same size).
-	 */
-	private static boolean mergeState(int[] current, int[] incoming, int size, ConstantPool pool) {
-		boolean changed = false;
-		for (int i = 0; i < size; i++) {
-			int currentType = current[i];
-
-			current[i] = TypeInfo.merge(current[i], incoming[i], pool);
-			if (currentType != current[i]) {
-				changed = true;
-			}
-		}
-		return changed;
-	}
-
 	int getStart() {
 		return start;
 	}
@@ -146,12 +154,4 @@ final class SuperBlock {
 	void setInQueue(boolean b) {
 		isInQueue = b;
 	}
-
-	private final int index;
-	private final int start;
-	private final int end;
-	private final int[] locals;
-	private int[] stack;
-	private boolean isInitialized;
-	private boolean isInQueue;
 }

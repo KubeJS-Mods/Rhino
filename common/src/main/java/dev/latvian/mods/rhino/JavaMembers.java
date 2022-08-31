@@ -31,13 +31,221 @@ import java.util.Set;
  * @see NativeJavaClass
  */
 class JavaMembers {
-	private final Class<?> cl;
+	public record MethodSignature(String name, Class<?>[] args) {
+		private static final Class<?>[] NO_ARGS = new Class<?>[0];
+
+		public MethodSignature(Method method) {
+			this(method.getName(), method.getParameterCount() == 0 ? NO_ARGS : method.getParameterTypes());
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (o instanceof MethodSignature ms) {
+				return ms.name.equals(name) && Arrays.equals(args, ms.args);
+			}
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return name.hashCode() ^ args.length;
+		}
+	}
+
+	public static class FieldInfo {
+		public final Field field;
+		public String name = "";
+
+		public FieldInfo(Field f) {
+			field = f;
+		}
+	}
+
+	public static class MethodInfo {
+		public final Method method;
+		public String name = "";
+		public boolean hidden = false;
+
+		public MethodInfo(Method m) {
+			method = m;
+		}
+	}
+
+	public static String javaSignature(Class<?> type) {
+		if (!type.isArray()) {
+			return type.getName();
+		}
+		int arrayDimension = 0;
+		do {
+			++arrayDimension;
+			type = type.getComponentType();
+		} while (type.isArray());
+		String name = type.getName();
+		String suffix = "[]";
+		if (arrayDimension == 1) {
+			return name.concat(suffix);
+		}
+		int length = name.length() + arrayDimension * suffix.length();
+		StringBuilder sb = new StringBuilder(length);
+		sb.append(name);
+		while (arrayDimension != 0) {
+			--arrayDimension;
+			sb.append(suffix);
+		}
+		return sb.toString();
+	}
+
+	public static String liveConnectSignature(Class<?>[] argTypes) {
+		int N = argTypes.length;
+		if (N == 0) {
+			return "()";
+		}
+		StringBuilder sb = new StringBuilder();
+		sb.append('(');
+		for (int i = 0; i != N; ++i) {
+			if (i != 0) {
+				sb.append(',');
+			}
+			sb.append(javaSignature(argTypes[i]));
+		}
+		sb.append(')');
+		return sb.toString();
+	}
+
+	private static MemberBox findGetter(boolean isStatic, Map<String, Object> ht, String prefix, String propertyName) {
+		String getterName = prefix.concat(propertyName);
+		if (ht.containsKey(getterName)) {
+			// Check that the getter is a method.
+			Object member = ht.get(getterName);
+			if (member instanceof NativeJavaMethod njmGet) {
+				return extractGetMethod(njmGet.methods, isStatic);
+			}
+		}
+		return null;
+	}
+
+	private static MemberBox extractGetMethod(MemberBox[] methods, boolean isStatic) {
+		// Inspect the list of all MemberBox for the only one having no
+		// parameters
+		for (MemberBox method : methods) {
+			// Does getter method have an empty parameter list with a return
+			// value (eg. a getSomething() or isSomething())?
+			if (method.argTypes.length == 0 && (!isStatic || method.isStatic())) {
+				Class<?> type = method.method().getReturnType();
+				if (type != Void.TYPE) {
+					return method;
+				}
+				break;
+			}
+		}
+		return null;
+	}
+
+	private static MemberBox extractSetMethod(Class<?> type, MemberBox[] methods, boolean isStatic) {
+		//
+		// Note: it may be preferable to allow NativeJavaMethod.findFunction()
+		//       to find the appropriate setter; unfortunately, it requires an
+		//       instance of the target arg to determine that.
+		//
+
+		// Make two passes: one to find a method with direct type assignment,
+		// and one to find a widening conversion.
+		for (int pass = 1; pass <= 2; ++pass) {
+			for (MemberBox method : methods) {
+				if (!isStatic || method.isStatic()) {
+					Class<?>[] params = method.argTypes;
+					if (params.length == 1) {
+						if (pass == 1) {
+							if (params[0] == type) {
+								return method;
+							}
+						} else {
+							if (pass != 2) {
+								Kit.codeBug();
+							}
+							if (params[0].isAssignableFrom(type)) {
+								return method;
+							}
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	private static MemberBox extractSetMethod(MemberBox[] methods, boolean isStatic) {
+
+		for (MemberBox method : methods) {
+			if (!isStatic || method.isStatic()) {
+				if (method.method().getReturnType() == Void.TYPE) {
+					if (method.argTypes.length == 1) {
+						return method;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	public static JavaMembers lookupClass(SharedContextData cache, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
+		JavaMembers members;
+		Map<Class<?>, JavaMembers> ct = cache.getClassCacheMap();
+
+		Class<?> cl = dynamicType;
+		for (; ; ) {
+			members = ct.get(cl);
+			if (members != null) {
+				if (cl != dynamicType) {
+					// member lookup for the original class failed because of
+					// missing privileges, cache the result so we don't try again
+					ct.put(dynamicType, members);
+				}
+				return members;
+			}
+			try {
+				members = new JavaMembers(cache, cl, includeProtected);
+				break;
+			} catch (SecurityException e) {
+				// Reflection may fail for objects that are in a restricted
+				// access package (e.g. sun.*).  If we get a security
+				// exception, try again with the static type if it is interface.
+				// Otherwise, try superclass
+				if (staticType != null && staticType.isInterface()) {
+					cl = staticType;
+					staticType = null; // try staticType only once
+				} else {
+					Class<?> parent = cl.getSuperclass();
+					if (parent == null) {
+						if (cl.isInterface()) {
+							// last resort after failed staticType interface
+							parent = ScriptRuntime.ObjectClass;
+						} else {
+							throw e;
+						}
+					}
+					cl = parent;
+				}
+			}
+		}
+
+		ct.put(cl, members);
+		if (cl != dynamicType) {
+			// member lookup for the original class failed because of
+			// missing privileges, cache the result so we don't try again
+			ct.put(dynamicType, members);
+		}
+
+		return members;
+	}
+
 	public final SharedContextData contextData;
+	private final Class<?> cl;
 	private final Map<String, Object> members;
-	private Map<String, FieldAndMethods> fieldAndMethods;
 	private final Map<String, Object> staticMembers;
-	private Map<String, FieldAndMethods> staticFieldAndMethods;
 	NativeJavaMethod ctors; // we use NativeJavaMethod for ctor overload resolution
+	private Map<String, FieldAndMethods> fieldAndMethods;
+	private Map<String, FieldAndMethods> staticFieldAndMethods;
 
 	JavaMembers(SharedContextData contextData, Class<?> cl, boolean includeProtected) {
 		this.contextData = contextData;
@@ -164,47 +372,6 @@ class JavaMembers {
 		return map.keySet().toArray(ScriptRuntime.EMPTY_OBJECTS);
 	}
 
-	public static String javaSignature(Class<?> type) {
-		if (!type.isArray()) {
-			return type.getName();
-		}
-		int arrayDimension = 0;
-		do {
-			++arrayDimension;
-			type = type.getComponentType();
-		} while (type.isArray());
-		String name = type.getName();
-		String suffix = "[]";
-		if (arrayDimension == 1) {
-			return name.concat(suffix);
-		}
-		int length = name.length() + arrayDimension * suffix.length();
-		StringBuilder sb = new StringBuilder(length);
-		sb.append(name);
-		while (arrayDimension != 0) {
-			--arrayDimension;
-			sb.append(suffix);
-		}
-		return sb.toString();
-	}
-
-	public static String liveConnectSignature(Class<?>[] argTypes) {
-		int N = argTypes.length;
-		if (N == 0) {
-			return "()";
-		}
-		StringBuilder sb = new StringBuilder();
-		sb.append('(');
-		for (int i = 0; i != N; ++i) {
-			if (i != 0) {
-				sb.append(',');
-			}
-			sb.append(javaSignature(argTypes[i]));
-		}
-		sb.append(')');
-		return sb.toString();
-	}
-
 	private MemberBox findExplicitFunction(String name, boolean isStatic) {
 		int sigStart = name.indexOf('(');
 		if (sigStart < 0) {
@@ -271,27 +438,6 @@ class JavaMembers {
 		}
 
 		return member;
-	}
-
-	public record MethodSignature(String name, Class<?>[] args) {
-		private static final Class<?>[] NO_ARGS = new Class<?>[0];
-
-		public MethodSignature(Method method) {
-			this(method.getName(), method.getParameterCount() == 0 ? NO_ARGS : method.getParameterTypes());
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (o instanceof MethodSignature ms) {
-				return ms.name.equals(name) && Arrays.equals(args, ms.args);
-			}
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			return name.hashCode() ^ args.length;
-		}
 	}
 
 	private void reflect(Scriptable scope, boolean includeProtected) {
@@ -675,82 +821,6 @@ class JavaMembers {
 		return list;
 	}
 
-	private static MemberBox findGetter(boolean isStatic, Map<String, Object> ht, String prefix, String propertyName) {
-		String getterName = prefix.concat(propertyName);
-		if (ht.containsKey(getterName)) {
-			// Check that the getter is a method.
-			Object member = ht.get(getterName);
-			if (member instanceof NativeJavaMethod njmGet) {
-				return extractGetMethod(njmGet.methods, isStatic);
-			}
-		}
-		return null;
-	}
-
-	private static MemberBox extractGetMethod(MemberBox[] methods, boolean isStatic) {
-		// Inspect the list of all MemberBox for the only one having no
-		// parameters
-		for (MemberBox method : methods) {
-			// Does getter method have an empty parameter list with a return
-			// value (eg. a getSomething() or isSomething())?
-			if (method.argTypes.length == 0 && (!isStatic || method.isStatic())) {
-				Class<?> type = method.method().getReturnType();
-				if (type != Void.TYPE) {
-					return method;
-				}
-				break;
-			}
-		}
-		return null;
-	}
-
-	private static MemberBox extractSetMethod(Class<?> type, MemberBox[] methods, boolean isStatic) {
-		//
-		// Note: it may be preferable to allow NativeJavaMethod.findFunction()
-		//       to find the appropriate setter; unfortunately, it requires an
-		//       instance of the target arg to determine that.
-		//
-
-		// Make two passes: one to find a method with direct type assignment,
-		// and one to find a widening conversion.
-		for (int pass = 1; pass <= 2; ++pass) {
-			for (MemberBox method : methods) {
-				if (!isStatic || method.isStatic()) {
-					Class<?>[] params = method.argTypes;
-					if (params.length == 1) {
-						if (pass == 1) {
-							if (params[0] == type) {
-								return method;
-							}
-						} else {
-							if (pass != 2) {
-								Kit.codeBug();
-							}
-							if (params[0].isAssignableFrom(type)) {
-								return method;
-							}
-						}
-					}
-				}
-			}
-		}
-		return null;
-	}
-
-	private static MemberBox extractSetMethod(MemberBox[] methods, boolean isStatic) {
-
-		for (MemberBox method : methods) {
-			if (!isStatic || method.isStatic()) {
-				if (method.method().getReturnType() == Void.TYPE) {
-					if (method.argTypes.length == 1) {
-						return method;
-					}
-				}
-			}
-		}
-		return null;
-	}
-
 	public Map<String, FieldAndMethods> getFieldAndMethodsObjects(Scriptable scope, Object javaObject, boolean isStatic) {
 		Map<String, FieldAndMethods> ht = isStatic ? staticFieldAndMethods : fieldAndMethods;
 		if (ht == null) {
@@ -766,78 +836,8 @@ class JavaMembers {
 		return result;
 	}
 
-	public static JavaMembers lookupClass(SharedContextData cache, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
-		JavaMembers members;
-		Map<Class<?>, JavaMembers> ct = cache.getClassCacheMap();
-
-		Class<?> cl = dynamicType;
-		for (; ; ) {
-			members = ct.get(cl);
-			if (members != null) {
-				if (cl != dynamicType) {
-					// member lookup for the original class failed because of
-					// missing privileges, cache the result so we don't try again
-					ct.put(dynamicType, members);
-				}
-				return members;
-			}
-			try {
-				members = new JavaMembers(cache, cl, includeProtected);
-				break;
-			} catch (SecurityException e) {
-				// Reflection may fail for objects that are in a restricted
-				// access package (e.g. sun.*).  If we get a security
-				// exception, try again with the static type if it is interface.
-				// Otherwise, try superclass
-				if (staticType != null && staticType.isInterface()) {
-					cl = staticType;
-					staticType = null; // try staticType only once
-				} else {
-					Class<?> parent = cl.getSuperclass();
-					if (parent == null) {
-						if (cl.isInterface()) {
-							// last resort after failed staticType interface
-							parent = ScriptRuntime.ObjectClass;
-						} else {
-							throw e;
-						}
-					}
-					cl = parent;
-				}
-			}
-		}
-
-		ct.put(cl, members);
-		if (cl != dynamicType) {
-			// member lookup for the original class failed because of
-			// missing privileges, cache the result so we don't try again
-			ct.put(dynamicType, members);
-		}
-
-		return members;
-	}
-
 	RuntimeException reportMemberNotFound(String memberName) {
 		return Context.reportRuntimeError2("msg.java.member.not.found", cl.getName(), memberName);
-	}
-
-	public static class FieldInfo {
-		public final Field field;
-		public String name = "";
-
-		public FieldInfo(Field f) {
-			field = f;
-		}
-	}
-
-	public static class MethodInfo {
-		public final Method method;
-		public String name = "";
-		public boolean hidden = false;
-
-		public MethodInfo(Method m) {
-			method = m;
-		}
 	}
 }
 

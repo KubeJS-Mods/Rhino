@@ -9,14 +9,25 @@ package dev.latvian.mods.rhino;
 import java.util.Iterator;
 
 public class NativeSet extends IdScriptableObject {
-	private static final Object SET_TAG = "Set";
 	static final String ITERATOR_TAG = "Set Iterator";
-
 	static final SymbolKey GETSIZE = new SymbolKey("[Symbol.getSize]");
-
-	private final Hashtable entries = new Hashtable();
-
-	private boolean instanceOfSet = false;
+	private static final Object SET_TAG = "Set";
+	// Note that SymbolId_iterator is not present because it is required to have the
+	// same value as the "values" entry.
+	// Similarly, "keys" is supposed to have the same value as "values," which is why
+	// both have the same ID.
+	private static final int Id_constructor = 1;
+	private static final int Id_add = 2;
+	private static final int Id_delete = 3;
+	private static final int Id_has = 4;
+	private static final int Id_clear = 5;
+	private static final int Id_keys = 6;
+	private static final int Id_values = 6;  // These are deliberately the same to match the spec
+	private static final int Id_entries = 7;
+	private static final int Id_forEach = 8;
+	private static final int SymbolId_getSize = 9;
+	private static final int SymbolId_toStringTag = 10;
+	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	static void init(Context cx, Scriptable scope, boolean sealed) {
 		NativeSet obj = new NativeSet();
@@ -32,6 +43,58 @@ public class NativeSet extends IdScriptableObject {
 			obj.sealObject();
 		}
 	}
+
+	/**
+	 * If an "iterable" object was passed to the constructor, there are many many things
+	 * to do. This is common code with NativeWeakSet.
+	 */
+	static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject set, Object arg1) {
+		if ((arg1 == null) || Undefined.instance.equals(arg1)) {
+			return;
+		}
+
+		// Call the "[Symbol.iterator]" property as a function.
+		Object ito = ScriptRuntime.callIterator(arg1, cx, scope);
+		if (Undefined.instance.equals(ito)) {
+			// Per spec, ignore if the iterator returns undefined
+			return;
+		}
+
+		// Find the "add" function of our own prototype, since it might have
+		// been replaced. Since we're not fully constructed yet, create a dummy instance
+		// so that we can get our own prototype.
+		ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, set.getClassName()));
+		final Callable add = ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "add", cx, scope);
+		// Clean up the value left around by the previous function
+		ScriptRuntime.lastStoredScriptable(cx);
+
+		// Finally, run through all the iterated values and add them!
+		try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
+			for (Object val : it) {
+				final Object finalVal = val == NOT_FOUND ? Undefined.instance : val;
+				add.call(cx, scope, set, new Object[]{finalVal});
+			}
+		}
+	}
+
+	private static NativeSet realThis(Scriptable thisObj, IdFunctionObject f) {
+		if (thisObj == null) {
+			throw incompatibleCallError(f);
+		}
+		try {
+			final NativeSet ns = (NativeSet) thisObj;
+			if (!ns.instanceOfSet) {
+				// If we get here, then this object doesn't have the "Set internal data slot."
+				throw incompatibleCallError(f);
+			}
+			return ns;
+		} catch (ClassCastException cce) {
+			throw incompatibleCallError(f);
+		}
+	}
+
+	private final Hashtable entries = new Hashtable();
+	private boolean instanceOfSet = false;
 
 	@Override
 	public String getClassName() {
@@ -132,55 +195,6 @@ public class NativeSet extends IdScriptableObject {
 		return Undefined.instance;
 	}
 
-	/**
-	 * If an "iterable" object was passed to the constructor, there are many many things
-	 * to do. This is common code with NativeWeakSet.
-	 */
-	static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject set, Object arg1) {
-		if ((arg1 == null) || Undefined.instance.equals(arg1)) {
-			return;
-		}
-
-		// Call the "[Symbol.iterator]" property as a function.
-		Object ito = ScriptRuntime.callIterator(arg1, cx, scope);
-		if (Undefined.instance.equals(ito)) {
-			// Per spec, ignore if the iterator returns undefined
-			return;
-		}
-
-		// Find the "add" function of our own prototype, since it might have
-		// been replaced. Since we're not fully constructed yet, create a dummy instance
-		// so that we can get our own prototype.
-		ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, set.getClassName()));
-		final Callable add = ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "add", cx, scope);
-		// Clean up the value left around by the previous function
-		ScriptRuntime.lastStoredScriptable(cx);
-
-		// Finally, run through all the iterated values and add them!
-		try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
-			for (Object val : it) {
-				final Object finalVal = val == NOT_FOUND ? Undefined.instance : val;
-				add.call(cx, scope, set, new Object[]{finalVal});
-			}
-		}
-	}
-
-	private static NativeSet realThis(Scriptable thisObj, IdFunctionObject f) {
-		if (thisObj == null) {
-			throw incompatibleCallError(f);
-		}
-		try {
-			final NativeSet ns = (NativeSet) thisObj;
-			if (!ns.instanceOfSet) {
-				// If we get here, then this object doesn't have the "Set internal data slot."
-				throw incompatibleCallError(f);
-			}
-			return ns;
-		} catch (ClassCastException cce) {
-			throw incompatibleCallError(f);
-		}
-	}
-
 	@Override
 	protected void initPrototypeId(int id) {
 		switch (id) {
@@ -264,22 +278,5 @@ public class NativeSet extends IdScriptableObject {
 			default -> 0;
 		};
 	}
-
-	// Note that SymbolId_iterator is not present because it is required to have the
-	// same value as the "values" entry.
-	// Similarly, "keys" is supposed to have the same value as "values," which is why
-	// both have the same ID.
-	private static final int Id_constructor = 1;
-	private static final int Id_add = 2;
-	private static final int Id_delete = 3;
-	private static final int Id_has = 4;
-	private static final int Id_clear = 5;
-	private static final int Id_keys = 6;
-	private static final int Id_values = 6;  // These are deliberately the same to match the spec
-	private static final int Id_entries = 7;
-	private static final int Id_forEach = 8;
-	private static final int SymbolId_getSize = 9;
-	private static final int SymbolId_toStringTag = 10;
-	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 }
 

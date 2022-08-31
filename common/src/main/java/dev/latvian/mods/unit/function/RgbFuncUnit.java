@@ -7,10 +7,6 @@ import dev.latvian.mods.unit.Unit;
 import dev.latvian.mods.unit.UnitVariables;
 
 public class RgbFuncUnit extends FuncUnit {
-	private static int c(UnitVariables variables, Unit u) {
-		return (int) (Math.min(Math.max(0D, u.get(variables) * 255D), 255D));
-	}
-
 	public static final FunctionFactory FACTORY = FunctionFactory.of("rgb", 1, 4, args -> {
 		if (args.length == 1 && args[0] instanceof FixedColorUnit) {
 			return args[0];
@@ -51,6 +47,10 @@ public class RgbFuncUnit extends FuncUnit {
 
 		return c;
 	});
+
+	private static int c(UnitVariables variables, Unit u) {
+		return (int) (Math.min(Math.max(0D, u.get(variables) * 255D), 255D));
+	}
 
 	public Unit r, g, b, a;
 

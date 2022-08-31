@@ -15,56 +15,13 @@ import java.util.Iterator;
  * @author Norris Boyd
  */
 public final class NativeIterator extends IdScriptableObject {
-	private static final Object ITERATOR_TAG = "Iterator";
-
-	static void init(Context cx, ScriptableObject scope, boolean sealed) {
-		// Iterator
-		NativeIterator iterator = new NativeIterator();
-		iterator.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
-
-		// Generator
-		ES6Generator.init(scope, sealed);
-
-		// StopIteration
-		NativeObject obj = new StopIteration();
-		obj.setPrototype(getObjectPrototype(scope));
-		obj.setParentScope(scope);
-		if (sealed) {
-			obj.sealObject();
-		}
-		defineProperty(scope, STOP_ITERATION, obj, DONTENUM);
-		// Use "associateValue" so that generators can continue to
-		// throw StopIteration even if the property of the global
-		// scope is replaced or deleted.
-		scope.associateValue(ITERATOR_TAG, obj);
-	}
-
-	/**
-	 * Only for constructing the prototype object.
-	 */
-	private NativeIterator() {
-	}
-
-	private NativeIterator(IdEnumeration objectIterator) {
-		this.objectIterator = objectIterator;
-	}
-
-	/**
-	 * Get the value of the "StopIteration" object. Note that this value
-	 * is stored in the top-level scope using "associateValue" so the
-	 * value can still be found even if a script overwrites or deletes
-	 * the global "StopIteration" property.
-	 *
-	 * @param scope a scope whose parent chain reaches a top-level scope
-	 * @return the StopIteration object
-	 */
-	public static Object getStopIterationObject(Scriptable scope) {
-		Scriptable top = getTopLevelScope(scope);
-		return getTopScopeValue(top, ITERATOR_TAG);
-	}
-
-	private static final String STOP_ITERATION = "StopIteration";
 	public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
+	private static final Object ITERATOR_TAG = "Iterator";
+	private static final String STOP_ITERATION = "StopIteration";
+	private static final int Id_constructor = 1;
+	private static final int Id_next = 2;
+	private static final int Id___iterator__ = 3;
+	private static final int MAX_PROTOTYPE_ID = 3;
 
 	public static class StopIteration extends NativeObject {
 		private Object value = Undefined.instance;
@@ -94,55 +51,62 @@ public final class NativeIterator extends IdScriptableObject {
 		}
 	}
 
-	@Override
-	public String getClassName() {
-		return "Iterator";
+	static public class WrappedJavaIterator {
+		private final Iterator<?> iterator;
+		private final Scriptable scope;
+
+		WrappedJavaIterator(Iterator<?> iterator, Scriptable scope) {
+			this.iterator = iterator;
+			this.scope = scope;
+		}
+
+		public Object next() {
+			if (!iterator.hasNext()) {
+				// Out of values. Throw StopIteration.
+				throw new JavaScriptException(NativeIterator.getStopIterationObject(scope), null, 0);
+			}
+			return iterator.next();
+		}
+
+		public Object __iterator__(boolean b) {
+			return this;
+		}
 	}
 
-	@Override
-	protected void initPrototypeId(int id) {
-		String s;
-		int arity;
-		switch (id) {
-			case Id_constructor -> {
-				arity = 2;
-				s = "constructor";
-			}
-			case Id_next -> {
-				arity = 0;
-				s = "next";
-			}
-			case Id___iterator__ -> {
-				arity = 1;
-				s = ITERATOR_PROPERTY_NAME;
-			}
-			default -> throw new IllegalArgumentException(String.valueOf(id));
+	static void init(Context cx, ScriptableObject scope, boolean sealed) {
+		// Iterator
+		NativeIterator iterator = new NativeIterator();
+		iterator.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+
+		// Generator
+		ES6Generator.init(scope, sealed);
+
+		// StopIteration
+		NativeObject obj = new StopIteration();
+		obj.setPrototype(getObjectPrototype(scope));
+		obj.setParentScope(scope);
+		if (sealed) {
+			obj.sealObject();
 		}
-		initPrototypeMethod(ITERATOR_TAG, id, s, arity);
+		defineProperty(scope, STOP_ITERATION, obj, DONTENUM);
+		// Use "associateValue" so that generators can continue to
+		// throw StopIteration even if the property of the global
+		// scope is replaced or deleted.
+		scope.associateValue(ITERATOR_TAG, obj);
 	}
 
-	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		if (!f.hasTag(ITERATOR_TAG)) {
-			return super.execIdCall(f, cx, scope, thisObj, args);
-		}
-		int id = f.methodId();
-
-		if (id == Id_constructor) {
-			return jsConstructor(cx, scope, thisObj, args);
-		}
-
-		if (!(thisObj instanceof NativeIterator iterator)) {
-			throw incompatibleCallError(f);
-		}
-
-		return switch (id) {
-			case Id_next -> iterator.objectIterator.nextExec(cx, scope);
-			case Id___iterator__ ->
-				/// XXX: what about argument? SpiderMonkey apparently ignores it
-					thisObj;
-			default -> throw new IllegalArgumentException(String.valueOf(id));
-		};
+	/**
+	 * Get the value of the "StopIteration" object. Note that this value
+	 * is stored in the top-level scope using "associateValue" so the
+	 * value can still be found even if a script overwrites or deletes
+	 * the global "StopIteration" property.
+	 *
+	 * @param scope a scope whose parent chain reaches a top-level scope
+	 * @return the StopIteration object
+	 */
+	public static Object getStopIterationObject(Scriptable scope) {
+		Scriptable top = getTopLevelScope(scope);
+		return getTopScopeValue(top, ITERATOR_TAG);
 	}
 
 	/* The JavaScript constructor */
@@ -203,29 +167,70 @@ public final class NativeIterator extends IdScriptableObject {
 		return null;
 	}
 
-	static public class WrappedJavaIterator {
-		WrappedJavaIterator(Iterator<?> iterator, Scriptable scope) {
-			this.iterator = iterator;
-			this.scope = scope;
-		}
-
-		public Object next() {
-			if (!iterator.hasNext()) {
-				// Out of values. Throw StopIteration.
-				throw new JavaScriptException(NativeIterator.getStopIterationObject(scope), null, 0);
-			}
-			return iterator.next();
-		}
-
-		public Object __iterator__(boolean b) {
-			return this;
-		}
-
-		private final Iterator<?> iterator;
-		private final Scriptable scope;
-	}
+	private IdEnumeration objectIterator;
 
 	// #string_id_map#
+
+	/**
+	 * Only for constructing the prototype object.
+	 */
+	private NativeIterator() {
+	}
+
+	private NativeIterator(IdEnumeration objectIterator) {
+		this.objectIterator = objectIterator;
+	}
+
+	@Override
+	public String getClassName() {
+		return "Iterator";
+	}
+
+	@Override
+	protected void initPrototypeId(int id) {
+		String s;
+		int arity;
+		switch (id) {
+			case Id_constructor -> {
+				arity = 2;
+				s = "constructor";
+			}
+			case Id_next -> {
+				arity = 0;
+				s = "next";
+			}
+			case Id___iterator__ -> {
+				arity = 1;
+				s = ITERATOR_PROPERTY_NAME;
+			}
+			default -> throw new IllegalArgumentException(String.valueOf(id));
+		}
+		initPrototypeMethod(ITERATOR_TAG, id, s, arity);
+	}
+
+	@Override
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(ITERATOR_TAG)) {
+			return super.execIdCall(f, cx, scope, thisObj, args);
+		}
+		int id = f.methodId();
+
+		if (id == Id_constructor) {
+			return jsConstructor(cx, scope, thisObj, args);
+		}
+
+		if (!(thisObj instanceof NativeIterator iterator)) {
+			throw incompatibleCallError(f);
+		}
+
+		return switch (id) {
+			case Id_next -> iterator.objectIterator.nextExec(cx, scope);
+			case Id___iterator__ ->
+				/// XXX: what about argument? SpiderMonkey apparently ignores it
+					thisObj;
+			default -> throw new IllegalArgumentException(String.valueOf(id));
+		};
+	}
 
 	@Override
 	protected int findPrototypeId(String s) {
@@ -236,12 +241,5 @@ public final class NativeIterator extends IdScriptableObject {
 			default -> 0;
 		};
 	}
-
-	private static final int Id_constructor = 1;
-	private static final int Id_next = 2;
-	private static final int Id___iterator__ = 3;
-	private static final int MAX_PROTOTYPE_ID = 3;
-
-	private IdEnumeration objectIterator;
 }
 

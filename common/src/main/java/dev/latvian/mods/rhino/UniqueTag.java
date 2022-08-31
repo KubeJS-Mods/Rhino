@@ -18,19 +18,16 @@ package dev.latvian.mods.rhino;
 public final class UniqueTag {
 
 	private static final int ID_NOT_FOUND = 1;
-	private static final int ID_NULL_VALUE = 2;
-	private static final int ID_DOUBLE_MARK = 3;
-
 	/**
 	 * Tag to mark non-existing values.
 	 */
 	public static final UniqueTag NOT_FOUND = new UniqueTag(ID_NOT_FOUND);
-
+	private static final int ID_NULL_VALUE = 2;
 	/**
 	 * Tag to distinguish between uninitialized and null values.
 	 */
 	public static final UniqueTag NULL_VALUE = new UniqueTag(ID_NULL_VALUE);
-
+	private static final int ID_DOUBLE_MARK = 3;
 	/**
 	 * Tag to indicate that a object represents "double" with the real value
 	 * stored somewhere else.

@@ -13,6 +13,28 @@ import java.util.Objects;
  */
 
 public class ObjArray {
+	private static final int FIELDS_STORE_SIZE = 5;
+
+	private static RuntimeException onInvalidIndex(int index, int upperBound) {
+		// \u2209 is "NOT ELEMENT OF"
+		String msg = index + " \u2209 [0, " + upperBound + ')';
+		throw new IndexOutOfBoundsException(msg);
+	}
+
+	private static RuntimeException onEmptyStackTopRead() {
+		throw new RuntimeException("Empty stack");
+	}
+
+	private static RuntimeException onSeledMutation() {
+		throw new IllegalStateException("Attempt to modify sealed array");
+	}
+
+	// Number of data elements
+	private int size;
+	private boolean sealed;
+	private transient Object f0, f1, f2, f3, f4;
+	private transient Object[] data;
+
 	public ObjArray() {
 	}
 
@@ -376,27 +398,4 @@ public class ObjArray {
 			}
 		}
 	}
-
-	private static RuntimeException onInvalidIndex(int index, int upperBound) {
-		// \u2209 is "NOT ELEMENT OF"
-		String msg = index + " \u2209 [0, " + upperBound + ')';
-		throw new IndexOutOfBoundsException(msg);
-	}
-
-	private static RuntimeException onEmptyStackTopRead() {
-		throw new RuntimeException("Empty stack");
-	}
-
-	private static RuntimeException onSeledMutation() {
-		throw new IllegalStateException("Attempt to modify sealed array");
-	}
-
-	// Number of data elements
-	private int size;
-
-	private boolean sealed;
-
-	private static final int FIELDS_STORE_SIZE = 5;
-	private transient Object f0, f1, f2, f3, f4;
-	private transient Object[] data;
 }

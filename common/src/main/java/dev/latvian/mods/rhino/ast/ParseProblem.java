@@ -11,16 +11,11 @@ package dev.latvian.mods.rhino.ast;
  */
 public class ParseProblem {
 
-	public enum Type {
-		Error, Warning
-	}
-
 	private Type type;
 	private String message;
 	private String sourceName;
 	private int offset;
 	private int length;
-
 	/**
 	 * Constructs a new ParseProblem.
 	 */
@@ -74,12 +69,15 @@ public class ParseProblem {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder(200);
-		sb.append(sourceName).append(":");
-		sb.append("offset=").append(offset).append(",");
-		sb.append("length=").append(length).append(",");
-		sb.append(type == Type.Error ? "error: " : "warning: ");
-		sb.append(message);
-		return sb.toString();
+		String sb = sourceName + ":" +
+				"offset=" + offset + "," +
+				"length=" + length + "," +
+				(type == Type.Error ? "error: " : "warning: ") +
+				message;
+		return sb;
+	}
+
+	public enum Type {
+		Error, Warning
 	}
 }

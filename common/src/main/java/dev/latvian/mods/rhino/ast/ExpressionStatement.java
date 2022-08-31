@@ -21,14 +21,6 @@ public class ExpressionStatement extends AstNode {
 		type = Token.EXPR_VOID;
 	}
 
-	/**
-	 * Called by the parser to set node type to EXPR_RESULT
-	 * if this node is not within a Function.
-	 */
-	public void setHasResult() {
-		type = Token.EXPR_RESULT;
-	}
-
 	public ExpressionStatement() {
 	}
 
@@ -78,6 +70,14 @@ public class ExpressionStatement extends AstNode {
 	public ExpressionStatement(int pos, int len, AstNode expr) {
 		super(pos, len);
 		setExpression(expr);
+	}
+
+	/**
+	 * Called by the parser to set node type to EXPR_RESULT
+	 * if this node is not within a Function.
+	 */
+	public void setHasResult() {
+		type = Token.EXPR_RESULT;
 	}
 
 	/**

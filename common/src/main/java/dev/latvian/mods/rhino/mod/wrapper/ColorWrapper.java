@@ -13,6 +13,16 @@ import java.util.Map;
 
 public interface ColorWrapper {
 	Map<String, Color> MAP = new HashMap<>();
+	Map<String, ChatFormatting> TEXT = Util.make(new HashMap<>(), map -> {
+		for (ChatFormatting c : ChatFormatting.values()) {
+			map.put(c.getName(), c);
+		}
+	});
+	Map<String, DyeColor> DYE = Util.make(new HashMap<>(), map -> {
+		for (DyeColor c : DyeColor.values()) {
+			map.put(c.getName(), c);
+		}
+	});
 
 	static Color of(Object o) {
 		if (o instanceof Color) {
@@ -54,11 +64,11 @@ public interface ColorWrapper {
 		return c;
 	}
 
+	Color NONE = createMapped(new NoColor(), "NONE", "none", "", "-", "transparent");
+
 	static Color rgba(int r, int g, int b, int a) {
 		return new SimpleColor((r << 16) | (g << 8) | b | (a << 24));
 	}
-
-	Color NONE = createMapped(new NoColor(), "NONE", "none", "", "-", "transparent");
 
 	Color BLACK = createMapped(ChatFormatting.BLACK, "BLACK", "black");
 	Color DARK_BLUE = createMapped(ChatFormatting.DARK_BLUE, "DARK_BLUE", "dark_blue", "darkBlue");
@@ -77,11 +87,6 @@ public interface ColorWrapper {
 	Color YELLOW = createMapped(ChatFormatting.YELLOW, "YELLOW", "yellow");
 	Color WHITE = createMapped(ChatFormatting.WHITE, "WHITE", "white");
 
-	Map<String, ChatFormatting> TEXT = Util.make(new HashMap<>(), map -> {
-		for (ChatFormatting c : ChatFormatting.values()) {
-			map.put(c.getName(), c);
-		}
-	});
 
 	Color WHITE_DYE = createMapped(DyeColor.WHITE, "WHITE_DYE", "white_dye", "whiteDye");
 	Color ORANGE_DYE = createMapped(DyeColor.ORANGE, "ORANGE_DYE", "orange_dye", "orangeDye");
@@ -100,9 +105,5 @@ public interface ColorWrapper {
 	Color RED_DYE = createMapped(DyeColor.RED, "RED_DYE", "red_dye", "redDye");
 	Color BLACK_DYE = createMapped(DyeColor.BLACK, "BLACK_DYE", "black_dye", "blackDye");
 
-	Map<String, DyeColor> DYE = Util.make(new HashMap<>(), map -> {
-		for (DyeColor c : DyeColor.values()) {
-			map.put(c.getName(), c);
-		}
-	});
+
 }

@@ -23,6 +23,41 @@ import java.util.List;
 
 public class NodeTransformer {
 
+	private static Node addBeforeCurrent(Node parent, Node previous, Node current, Node toAdd) {
+		if (previous == null) {
+			if (!(current == parent.getFirstChild())) {
+				Kit.codeBug();
+			}
+			parent.addChildToFront(toAdd);
+		} else {
+			if (!(current == previous.getNext())) {
+				Kit.codeBug();
+			}
+			parent.addChildAfter(toAdd, previous);
+		}
+		return toAdd;
+	}
+
+	private static Node replaceCurrent(Node parent, Node previous, Node current, Node replacement) {
+		if (previous == null) {
+			if (!(current == parent.getFirstChild())) {
+				Kit.codeBug();
+			}
+			parent.replaceChild(current, replacement);
+		} else if (previous.next == current) {
+			// Check cachedPrev.next == current is necessary due to possible
+			// tree mutations
+			parent.replaceChildAfter(previous, replacement);
+		} else {
+			parent.replaceChild(current, replacement);
+		}
+		return replacement;
+	}
+
+	private ObjArray loops;
+	private ObjArray loopEnds;
+	private boolean hasFinally;
+
 	public NodeTransformer() {
 	}
 
@@ -491,39 +526,4 @@ public class NodeTransformer {
 		}
 		return result;
 	}
-
-	private static Node addBeforeCurrent(Node parent, Node previous, Node current, Node toAdd) {
-		if (previous == null) {
-			if (!(current == parent.getFirstChild())) {
-				Kit.codeBug();
-			}
-			parent.addChildToFront(toAdd);
-		} else {
-			if (!(current == previous.getNext())) {
-				Kit.codeBug();
-			}
-			parent.addChildAfter(toAdd, previous);
-		}
-		return toAdd;
-	}
-
-	private static Node replaceCurrent(Node parent, Node previous, Node current, Node replacement) {
-		if (previous == null) {
-			if (!(current == parent.getFirstChild())) {
-				Kit.codeBug();
-			}
-			parent.replaceChild(current, replacement);
-		} else if (previous.next == current) {
-			// Check cachedPrev.next == current is necessary due to possible
-			// tree mutations
-			parent.replaceChildAfter(previous, replacement);
-		} else {
-			parent.replaceChild(current, replacement);
-		}
-		return replacement;
-	}
-
-	private ObjArray loops;
-	private ObjArray loopEnds;
-	private boolean hasFinally;
 }

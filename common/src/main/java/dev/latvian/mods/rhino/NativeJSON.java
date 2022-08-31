@@ -38,6 +38,11 @@ public final class NativeJSON extends IdScriptableObject {
 	private static final int MAX_STRINGIFY_GAP_LENGTH = 10;
 
 	private static final HashSet<String> IGNORED_METHODS = new HashSet<>();
+	private static final int Id_toSource = 1;
+	private static final int Id_parse = 2;
+	private static final int Id_stringify = 3;
+	private static final int LAST_METHOD_ID = 3;
+	private static final int MAX_ID = 3;
 
 	static {
 		IGNORED_METHODS.add("void wait()");
@@ -60,86 +65,6 @@ public final class NativeJSON extends IdScriptableObject {
 			obj.sealObject();
 		}
 		defineProperty(scope, "JSON", obj, DONTENUM);
-	}
-
-	private NativeJSON() {
-	}
-
-	@Override
-	public String getClassName() {
-		return "JSON";
-	}
-
-	@Override
-	protected void initPrototypeId(int id) {
-		if (id <= LAST_METHOD_ID) {
-			String name;
-			int arity;
-			switch (id) {
-				case Id_toSource -> {
-					arity = 0;
-					name = "toSource";
-				}
-				case Id_parse -> {
-					arity = 2;
-					name = "parse";
-				}
-				case Id_stringify -> {
-					arity = 3;
-					name = "stringify";
-				}
-				default -> throw new IllegalStateException(String.valueOf(id));
-			}
-			initPrototypeMethod(JSON_TAG, id, name, arity);
-		} else {
-			throw new IllegalStateException(String.valueOf(id));
-		}
-	}
-
-	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		if (!f.hasTag(JSON_TAG)) {
-			return super.execIdCall(f, cx, scope, thisObj, args);
-		}
-		int methodId = f.methodId();
-		switch (methodId) {
-			case Id_toSource:
-				return "JSON";
-
-			case Id_parse: {
-				String jtext = ScriptRuntime.toString(args, 0);
-				Object reviver = null;
-				if (args.length > 1) {
-					reviver = args[1];
-				}
-				if (reviver instanceof Callable) {
-					return parse(cx, scope, jtext, (Callable) reviver);
-				}
-				return parse(cx, scope, jtext);
-			}
-
-			case Id_stringify: {
-				Object value = null, replacer = null, space = null;
-				switch (args.length) {
-					case 3:
-						space = args[2];
-						/* fall through */
-					case 2:
-						replacer = args[1];
-						/* fall through */
-					case 1:
-						value = args[0];
-						/* fall through */
-					case 0:
-						/* fall through */
-					default:
-				}
-				return stringify(SharedContextData.get(cx, scope), value, replacer, space);
-			}
-
-			default:
-				throw new IllegalStateException(String.valueOf(methodId));
-		}
 	}
 
 	private static Object parse(Context cx, Scriptable scope, String jtext) {
@@ -284,6 +209,8 @@ public final class NativeJSON extends IdScriptableObject {
 		builder.append(')');
 	}
 
+	// #string_id_map#
+
 	public static JsonElement stringify0(Remapper remapper, Object v) {
 		if (v == null) {
 			return JsonNull.INSTANCE;
@@ -419,7 +346,85 @@ public final class NativeJSON extends IdScriptableObject {
 		return list;
 	}
 
-	// #string_id_map#
+	private NativeJSON() {
+	}
+
+	@Override
+	public String getClassName() {
+		return "JSON";
+	}
+
+	@Override
+	protected void initPrototypeId(int id) {
+		if (id <= LAST_METHOD_ID) {
+			String name;
+			int arity;
+			switch (id) {
+				case Id_toSource -> {
+					arity = 0;
+					name = "toSource";
+				}
+				case Id_parse -> {
+					arity = 2;
+					name = "parse";
+				}
+				case Id_stringify -> {
+					arity = 3;
+					name = "stringify";
+				}
+				default -> throw new IllegalStateException(String.valueOf(id));
+			}
+			initPrototypeMethod(JSON_TAG, id, name, arity);
+		} else {
+			throw new IllegalStateException(String.valueOf(id));
+		}
+	}
+
+	@Override
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		if (!f.hasTag(JSON_TAG)) {
+			return super.execIdCall(f, cx, scope, thisObj, args);
+		}
+		int methodId = f.methodId();
+		switch (methodId) {
+			case Id_toSource:
+				return "JSON";
+
+			case Id_parse: {
+				String jtext = ScriptRuntime.toString(args, 0);
+				Object reviver = null;
+				if (args.length > 1) {
+					reviver = args[1];
+				}
+				if (reviver instanceof Callable) {
+					return parse(cx, scope, jtext, (Callable) reviver);
+				}
+				return parse(cx, scope, jtext);
+			}
+
+			case Id_stringify: {
+				Object value = null, replacer = null, space = null;
+				switch (args.length) {
+					case 3:
+						space = args[2];
+						/* fall through */
+					case 2:
+						replacer = args[1];
+						/* fall through */
+					case 1:
+						value = args[0];
+						/* fall through */
+					case 0:
+						/* fall through */
+					default:
+				}
+				return stringify(SharedContextData.get(cx, scope), value, replacer, space);
+			}
+
+			default:
+				throw new IllegalStateException(String.valueOf(methodId));
+		}
+	}
 
 	@Override
 	protected int findPrototypeId(String s) {
@@ -430,10 +435,4 @@ public final class NativeJSON extends IdScriptableObject {
 			default -> super.findPrototypeId(s);
 		};
 	}
-
-	private static final int Id_toSource = 1;
-	private static final int Id_parse = 2;
-	private static final int Id_stringify = 3;
-	private static final int LAST_METHOD_ID = 3;
-	private static final int MAX_ID = 3;
 }

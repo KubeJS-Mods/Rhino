@@ -8,7 +8,20 @@
 
 package dev.latvian.mods.rhino;
 
+import java.util.Objects;
+
 public class IdFunctionObject extends BaseFunction {
+	static boolean equalObjectGraphs(IdFunctionObject f1, IdFunctionObject f2, EqualObjectGraphs eq) {
+		return f1.methodId == f2.methodId && f1.hasTag(f2.tag) && eq.equalGraphs(f1.idcall, f2.idcall);
+	}
+
+	private final IdFunctionCall idcall;
+	private final Object tag;
+	private final int methodId;
+	private final int arity;
+	private boolean useCallAsConstructor;
+	private String functionName;
+
 	public IdFunctionObject(IdFunctionCall idcall, Object tag, int id, int arity) {
 		if (arity < 0) {
 			throw new IllegalArgumentException();
@@ -49,7 +62,7 @@ public class IdFunctionObject extends BaseFunction {
 	}
 
 	public final boolean hasTag(Object tag) {
-		return tag == null ? this.tag == null : tag.equals(this.tag);
+		return Objects.equals(tag, this.tag);
 	}
 
 	public Object getTag() {
@@ -121,15 +134,4 @@ public class IdFunctionObject extends BaseFunction {
 		// It is program error to call id-like methods for unknown function
 		return new IllegalArgumentException("BAD FUNCTION ID=" + methodId + " MASTER=" + idcall);
 	}
-
-	static boolean equalObjectGraphs(IdFunctionObject f1, IdFunctionObject f2, EqualObjectGraphs eq) {
-		return f1.methodId == f2.methodId && f1.hasTag(f2.tag) && eq.equalGraphs(f1.idcall, f2.idcall);
-	}
-
-	private final IdFunctionCall idcall;
-	private final Object tag;
-	private final int methodId;
-	private final int arity;
-	private boolean useCallAsConstructor;
-	private String functionName;
 }

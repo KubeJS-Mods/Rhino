@@ -78,6 +78,472 @@ public final class IRFactory extends Parser {
 	private static final int ALWAYS_TRUE_BOOLEAN = 1;
 	private static final int ALWAYS_FALSE_BOOLEAN = -1;
 
+	/**
+	 * If caseExpression argument is null it indicates a default label.
+	 */
+	private static void addSwitchCase(Node switchBlock, Node caseExpression, Node statements) {
+		if (switchBlock.getType() != Token.BLOCK) {
+			throw Kit.codeBug();
+		}
+		Jump switchNode = (Jump) switchBlock.getFirstChild();
+		if (switchNode.getType() != Token.SWITCH) {
+			throw Kit.codeBug();
+		}
+
+		Node gotoTarget = Node.newTarget();
+		if (caseExpression != null) {
+			Jump caseNode = new Jump(Token.CASE, caseExpression);
+			caseNode.target = gotoTarget;
+			switchNode.addChildToBack(caseNode);
+		} else {
+			switchNode.setDefault(gotoTarget);
+		}
+		switchBlock.addChildToBack(gotoTarget);
+		switchBlock.addChildToBack(statements);
+	}
+
+	private static void closeSwitch(Node switchBlock) {
+		if (switchBlock.getType() != Token.BLOCK) {
+			throw Kit.codeBug();
+		}
+		Jump switchNode = (Jump) switchBlock.getFirstChild();
+		if (switchNode.getType() != Token.SWITCH) {
+			throw Kit.codeBug();
+		}
+
+		Node switchBreakTarget = Node.newTarget();
+		// switchNode.target is only used by NodeTransformer
+		// to detect switch end
+		switchNode.target = switchBreakTarget;
+
+		Node defaultTarget = switchNode.getDefault();
+		if (defaultTarget == null) {
+			defaultTarget = switchBreakTarget;
+		}
+
+		switchBlock.addChildAfter(makeJump(Token.GOTO, defaultTarget), switchNode);
+		switchBlock.addChildToBack(switchBreakTarget);
+	}
+
+	private static Node createExprStatementNoReturn(Node expr, int lineno) {
+		return new Node(Token.EXPR_VOID, expr, lineno);
+	}
+
+	private static Node createString(String string) {
+		return Node.newString(string);
+	}
+
+	private static Node initFunction(FunctionNode fnNode, int functionIndex, Node statements, int functionType) {
+		fnNode.setFunctionType(functionType);
+		fnNode.addChildToBack(statements);
+
+		int functionCount = fnNode.getFunctionCount();
+		if (functionCount != 0) {
+			// Functions containing other functions require activation objects
+			fnNode.setRequiresActivation();
+		}
+
+		if (functionType == FunctionNode.FUNCTION_EXPRESSION) {
+			Name name = fnNode.getFunctionName();
+			if (name != null && name.length() != 0 && fnNode.getSymbol(name.getIdentifier()) == null) {
+				// A function expression needs to have its name as a
+				// variable (if it isn't already allocated as a variable).
+				// See ECMA Ch. 13.  We add code to the beginning of the
+				// function to initialize a local variable of the
+				// function's name to the function value, but only if the
+				// function doesn't already define a formal parameter, var,
+				// or nested function with the same name.
+				fnNode.putSymbol(new AstSymbol(Token.FUNCTION, name.getIdentifier()));
+				Node setFn = new Node(Token.EXPR_VOID, new Node(Token.SETNAME, Node.newString(Token.BINDNAME, name.getIdentifier()), new Node(Token.THISFN)));
+				statements.addChildrenToFront(setFn);
+			}
+		}
+
+		// Add return to end if needed.
+		Node lastStmt = statements.getLastChild();
+		if (lastStmt == null || lastStmt.getType() != Token.RETURN) {
+			statements.addChildToBack(new Node(Token.RETURN));
+		}
+
+		Node result = Node.newString(Token.FUNCTION, fnNode.getName());
+		result.putIntProp(Node.FUNCTION_PROP, functionIndex);
+		return result;
+	}
+
+	private static Node createFor(Scope loop, Node init, Node test, Node incr, Node body) {
+		if (init.getType() == Token.LET) {
+			// rewrite "for (let i=s; i < N; i++)..." as
+			// "let (i=s) { for (; i < N; i++)..." so that "s" is evaluated
+			// outside the scope of the for.
+			Scope let = Scope.splitScope(loop);
+			let.setType(Token.LET);
+			let.addChildrenToBack(init);
+			let.addChildToBack(createLoop(loop, LOOP_FOR, body, test, new Node(Token.EMPTY), incr));
+			return let;
+		}
+		return createLoop(loop, LOOP_FOR, body, test, init, incr);
+	}
+
+	private static Node createLoop(Jump loop, int loopType, Node body, Node cond, Node init, Node incr) {
+		Node bodyTarget = Node.newTarget();
+		Node condTarget = Node.newTarget();
+		if (loopType == LOOP_FOR && cond.getType() == Token.EMPTY) {
+			cond = new Node(Token.TRUE);
+		}
+		Jump IFEQ = new Jump(Token.IFEQ, cond);
+		IFEQ.target = bodyTarget;
+		Node breakTarget = Node.newTarget();
+
+		loop.addChildToBack(bodyTarget);
+		loop.addChildrenToBack(body);
+		if (loopType == LOOP_WHILE || loopType == LOOP_FOR) {
+			// propagate lineno to condition
+			loop.addChildrenToBack(new Node(Token.EMPTY, loop.getLineno()));
+		}
+		loop.addChildToBack(condTarget);
+		loop.addChildToBack(IFEQ);
+		loop.addChildToBack(breakTarget);
+
+		loop.target = breakTarget;
+		Node continueTarget = condTarget;
+
+		if (loopType == LOOP_WHILE || loopType == LOOP_FOR) {
+			// Just add a GOTO to the condition in the do..while
+			loop.addChildToFront(makeJump(Token.GOTO, condTarget));
+
+			if (loopType == LOOP_FOR) {
+				int initType = init.getType();
+				if (initType != Token.EMPTY) {
+					if (initType != Token.VAR && initType != Token.LET) {
+						init = new Node(Token.EXPR_VOID, init);
+					}
+					loop.addChildToFront(init);
+				}
+				Node incrTarget = Node.newTarget();
+				loop.addChildAfter(incrTarget, body);
+				if (incr.getType() != Token.EMPTY) {
+					incr = new Node(Token.EXPR_VOID, incr);
+					loop.addChildAfter(incr, incrTarget);
+				}
+				continueTarget = incrTarget;
+			}
+		}
+
+		loop.setContinue(continueTarget);
+		return loop;
+	}
+
+	private static Node createIf(Node cond, Node ifTrue, Node ifFalse, int lineno) {
+		int condStatus = isAlwaysDefinedBoolean(cond);
+		if (condStatus == ALWAYS_TRUE_BOOLEAN) {
+			return ifTrue;
+		} else if (condStatus == ALWAYS_FALSE_BOOLEAN) {
+			if (ifFalse != null) {
+				return ifFalse;
+			}
+			// Replace if (false) xxx by empty block
+			return new Node(Token.BLOCK, lineno);
+		}
+
+		Node result = new Node(Token.BLOCK, lineno);
+		Node ifNotTarget = Node.newTarget();
+		Jump IFNE = new Jump(Token.IFNE, cond);
+		IFNE.target = ifNotTarget;
+
+		result.addChildToBack(IFNE);
+		result.addChildrenToBack(ifTrue);
+
+		if (ifFalse != null) {
+			Node endTarget = Node.newTarget();
+			result.addChildToBack(makeJump(Token.GOTO, endTarget));
+			result.addChildToBack(ifNotTarget);
+			result.addChildrenToBack(ifFalse);
+			result.addChildToBack(endTarget);
+		} else {
+			result.addChildToBack(ifNotTarget);
+		}
+
+		return result;
+	}
+
+	private static Node createCondExpr(Node cond, Node ifTrue, Node ifFalse) {
+		int condStatus = isAlwaysDefinedBoolean(cond);
+		if (condStatus == ALWAYS_TRUE_BOOLEAN) {
+			return ifTrue;
+		} else if (condStatus == ALWAYS_FALSE_BOOLEAN) {
+			return ifFalse;
+		}
+		return new Node(Token.HOOK, cond, ifTrue, ifFalse);
+	}
+
+	private static Node createUnary(int nodeType, Node child) {
+		int childType = child.getType();
+		switch (nodeType) {
+			case Token.DELPROP: {
+				Node n;
+				if (childType == Token.NAME) {
+					// Transform Delete(Name "a")
+					//  to Delete(Bind("a"), String("a"))
+					child.setType(Token.BINDNAME);
+					Node left = child;
+					Node right = Node.newString(child.getString());
+					n = new Node(nodeType, left, right);
+				} else if (childType == Token.GETPROP || childType == Token.GETELEM) {
+					Node left = child.getFirstChild();
+					Node right = child.getLastChild();
+					child.removeChild(left);
+					child.removeChild(right);
+					n = new Node(nodeType, left, right);
+				} else if (childType == Token.GET_REF) {
+					Node ref = child.getFirstChild();
+					child.removeChild(ref);
+					n = new Node(Token.DEL_REF, ref);
+				} else {
+					// Always evaluate delete operand, see ES5 11.4.1 & bug #726121
+					n = new Node(nodeType, new Node(Token.TRUE), child);
+				}
+				return n;
+			}
+			case Token.TYPEOF:
+				if (childType == Token.NAME) {
+					child.setType(Token.TYPEOFNAME);
+					return child;
+				}
+				break;
+			case Token.BITNOT:
+				if (childType == Token.NUMBER) {
+					int value = ScriptRuntime.toInt32(child.getDouble());
+					child.setDouble(~value);
+					return child;
+				}
+				break;
+			case Token.NEG:
+				if (childType == Token.NUMBER) {
+					child.setDouble(-child.getDouble());
+					return child;
+				}
+				break;
+			case Token.NOT: {
+				int status = isAlwaysDefinedBoolean(child);
+				if (status != 0) {
+					int type;
+					if (status == ALWAYS_TRUE_BOOLEAN) {
+						type = Token.FALSE;
+					} else {
+						type = Token.TRUE;
+					}
+					if (childType == Token.TRUE || childType == Token.FALSE) {
+						child.setType(type);
+						return child;
+					}
+					return new Node(type);
+				}
+				break;
+			}
+		}
+		return new Node(nodeType, child);
+	}
+
+	private static Node createIncDec(int nodeType, boolean post, Node child) {
+		child = makeReference(child);
+		int childType = child.getType();
+
+		switch (childType) {
+			case Token.NAME, Token.GETPROP, Token.GETELEM, Token.GET_REF -> {
+				Node n = new Node(nodeType, child);
+				int incrDecrMask = 0;
+				if (nodeType == Token.DEC) {
+					incrDecrMask |= Node.DECR_FLAG;
+				}
+				if (post) {
+					incrDecrMask |= Node.POST_FLAG;
+				}
+				n.putIntProp(Node.INCRDECR_PROP, incrDecrMask);
+				return n;
+			}
+		}
+		throw Kit.codeBug();
+	}
+
+	private static Node createBinary(int nodeType, Node left, Node right) {
+		switch (nodeType) {
+
+			case Token.ADD:
+				// numerical addition and string concatenation
+				if (left.type == Token.STRING) {
+					String s2;
+					if (right.type == Token.STRING) {
+						s2 = right.getString();
+					} else if (right.type == Token.NUMBER) {
+						s2 = ScriptRuntime.numberToString(right.getDouble(), 10);
+					} else {
+						break;
+					}
+					String s1 = left.getString();
+					left.setString(s1.concat(s2));
+					return left;
+				} else if (left.type == Token.NUMBER) {
+					if (right.type == Token.NUMBER) {
+						left.setDouble(left.getDouble() + right.getDouble());
+						return left;
+					} else if (right.type == Token.STRING) {
+						String s1, s2;
+						s1 = ScriptRuntime.numberToString(left.getDouble(), 10);
+						s2 = right.getString();
+						right.setString(s1.concat(s2));
+						return right;
+					}
+				}
+				// can't do anything if we don't know  both types - since
+				// 0 + object is supposed to call toString on the object and do
+				// string concantenation rather than addition
+				break;
+
+			case Token.SUB:
+				// numerical subtraction
+				if (left.type == Token.NUMBER) {
+					double ld = left.getDouble();
+					if (right.type == Token.NUMBER) {
+						//both numbers
+						left.setDouble(ld - right.getDouble());
+						return left;
+					} else if (ld == 0.0) {
+						// first 0: 0-x -> -x
+						return new Node(Token.NEG, right);
+					}
+				} else if (right.type == Token.NUMBER) {
+					if (right.getDouble() == 0.0) {
+						//second 0: x - 0 -> +x
+						// can not make simply x because x - 0 must be number
+						return new Node(Token.POS, left);
+					}
+				}
+				break;
+
+			case Token.MUL:
+				// numerical multiplication
+				if (left.type == Token.NUMBER) {
+					double ld = left.getDouble();
+					if (right.type == Token.NUMBER) {
+						//both numbers
+						left.setDouble(ld * right.getDouble());
+						return left;
+					} else if (ld == 1.0) {
+						// first 1: 1 *  x -> +x
+						return new Node(Token.POS, right);
+					}
+				} else if (right.type == Token.NUMBER) {
+					if (right.getDouble() == 1.0) {
+						//second 1: x * 1 -> +x
+						// can not make simply x because x - 0 must be number
+						return new Node(Token.POS, left);
+					}
+				}
+				// can't do x*0: Infinity * 0 gives NaN, not 0
+				break;
+
+			case Token.DIV:
+				// number division
+				if (right.type == Token.NUMBER) {
+					double rd = right.getDouble();
+					if (left.type == Token.NUMBER) {
+						// both constants -- just divide, trust Java to handle x/0
+						left.setDouble(left.getDouble() / rd);
+						return left;
+					} else if (rd == 1.0) {
+						// second 1: x/1 -> +x
+						// not simply x to force number convertion
+						return new Node(Token.POS, left);
+					}
+				}
+				break;
+
+			case Token.AND: {
+				// Since x && y gives x, not false, when Boolean(x) is false,
+				// and y, not Boolean(y), when Boolean(x) is true, x && y
+				// can only be simplified if x is defined. See bug 309957.
+
+				int leftStatus = isAlwaysDefinedBoolean(left);
+				if (leftStatus == ALWAYS_FALSE_BOOLEAN) {
+					// if the first one is false, just return it
+					return left;
+				} else if (leftStatus == ALWAYS_TRUE_BOOLEAN) {
+					// if first is true, set to second
+					return right;
+				}
+				break;
+			}
+
+			case Token.OR: {
+				// Since x || y gives x, not true, when Boolean(x) is true,
+				// and y, not Boolean(y), when Boolean(x) is false, x || y
+				// can only be simplified if x is defined. See bug 309957.
+
+				int leftStatus = isAlwaysDefinedBoolean(left);
+				if (leftStatus == ALWAYS_TRUE_BOOLEAN) {
+					// if the first one is true, just return it
+					return left;
+				} else if (leftStatus == ALWAYS_FALSE_BOOLEAN) {
+					// if first is false, set to second
+					return right;
+				}
+				break;
+			}
+		}
+
+		return new Node(nodeType, left, right);
+	}
+
+	private static Node createUseLocal(Node localBlock) {
+		if (Token.LOCAL_BLOCK != localBlock.getType()) {
+			throw Kit.codeBug();
+		}
+		Node result = new Node(Token.LOCAL_LOAD);
+		result.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
+		return result;
+	}
+
+	private static Jump makeJump(int type, Node target) {
+		Jump n = new Jump(type);
+		n.target = target;
+		return n;
+	}
+
+	private static Node makeReference(Node node) {
+		int type = node.getType();
+		switch (type) {
+			case Token.NAME:
+			case Token.GETPROP:
+			case Token.GETELEM:
+			case Token.GET_REF:
+				return node;
+			case Token.CALL:
+				node.setType(Token.REF_CALL);
+				return new Node(Token.GET_REF, node);
+		}
+		// Signal caller to report error
+		return null;
+	}
+
+	// Check if Node always mean true or false in boolean context
+	private static int isAlwaysDefinedBoolean(Node node) {
+		switch (node.getType()) {
+			case Token.FALSE:
+			case Token.NULL:
+				return ALWAYS_FALSE_BOOLEAN;
+			case Token.TRUE:
+				return ALWAYS_TRUE_BOOLEAN;
+			case Token.NUMBER: {
+				double num = node.getDouble();
+				if (!Double.isNaN(num) && num != 0.0) {
+					return ALWAYS_TRUE_BOOLEAN;
+				}
+				return ALWAYS_FALSE_BOOLEAN;
+			}
+		}
+		return 0;
+	}
+
 	public IRFactory() {
 		super();
 	}
@@ -898,61 +1364,6 @@ public final class IRFactory extends Parser {
 	}
 
 	/**
-	 * If caseExpression argument is null it indicates a default label.
-	 */
-	private static void addSwitchCase(Node switchBlock, Node caseExpression, Node statements) {
-		if (switchBlock.getType() != Token.BLOCK) {
-			throw Kit.codeBug();
-		}
-		Jump switchNode = (Jump) switchBlock.getFirstChild();
-		if (switchNode.getType() != Token.SWITCH) {
-			throw Kit.codeBug();
-		}
-
-		Node gotoTarget = Node.newTarget();
-		if (caseExpression != null) {
-			Jump caseNode = new Jump(Token.CASE, caseExpression);
-			caseNode.target = gotoTarget;
-			switchNode.addChildToBack(caseNode);
-		} else {
-			switchNode.setDefault(gotoTarget);
-		}
-		switchBlock.addChildToBack(gotoTarget);
-		switchBlock.addChildToBack(statements);
-	}
-
-	private static void closeSwitch(Node switchBlock) {
-		if (switchBlock.getType() != Token.BLOCK) {
-			throw Kit.codeBug();
-		}
-		Jump switchNode = (Jump) switchBlock.getFirstChild();
-		if (switchNode.getType() != Token.SWITCH) {
-			throw Kit.codeBug();
-		}
-
-		Node switchBreakTarget = Node.newTarget();
-		// switchNode.target is only used by NodeTransformer
-		// to detect switch end
-		switchNode.target = switchBreakTarget;
-
-		Node defaultTarget = switchNode.getDefault();
-		if (defaultTarget == null) {
-			defaultTarget = switchBreakTarget;
-		}
-
-		switchBlock.addChildAfter(makeJump(Token.GOTO, defaultTarget), switchNode);
-		switchBlock.addChildToBack(switchBreakTarget);
-	}
-
-	private static Node createExprStatementNoReturn(Node expr, int lineno) {
-		return new Node(Token.EXPR_VOID, expr, lineno);
-	}
-
-	private static Node createString(String string) {
-		return Node.newString(string);
-	}
-
-	/**
 	 * Catch clause of try/catch/finally
 	 *
 	 * @param varName   the name of the variable to bind to the exception
@@ -968,43 +1379,6 @@ public final class IRFactory extends Parser {
 		return new Node(Token.CATCH, createName(varName), catchCond, stmts, lineno);
 	}
 
-	private static Node initFunction(FunctionNode fnNode, int functionIndex, Node statements, int functionType) {
-		fnNode.setFunctionType(functionType);
-		fnNode.addChildToBack(statements);
-
-		int functionCount = fnNode.getFunctionCount();
-		if (functionCount != 0) {
-			// Functions containing other functions require activation objects
-			fnNode.setRequiresActivation();
-		}
-
-		if (functionType == FunctionNode.FUNCTION_EXPRESSION) {
-			Name name = fnNode.getFunctionName();
-			if (name != null && name.length() != 0 && fnNode.getSymbol(name.getIdentifier()) == null) {
-				// A function expression needs to have its name as a
-				// variable (if it isn't already allocated as a variable).
-				// See ECMA Ch. 13.  We add code to the beginning of the
-				// function to initialize a local variable of the
-				// function's name to the function value, but only if the
-				// function doesn't already define a formal parameter, var,
-				// or nested function with the same name.
-				fnNode.putSymbol(new AstSymbol(Token.FUNCTION, name.getIdentifier()));
-				Node setFn = new Node(Token.EXPR_VOID, new Node(Token.SETNAME, Node.newString(Token.BINDNAME, name.getIdentifier()), new Node(Token.THISFN)));
-				statements.addChildrenToFront(setFn);
-			}
-		}
-
-		// Add return to end if needed.
-		Node lastStmt = statements.getLastChild();
-		if (lastStmt == null || lastStmt.getType() != Token.RETURN) {
-			statements.addChildToBack(new Node(Token.RETURN));
-		}
-
-		Node result = Node.newString(Token.FUNCTION, fnNode.getName());
-		result.putIntProp(Node.FUNCTION_PROP, functionIndex);
-		return result;
-	}
-
 	/**
 	 * Create loop node. The code generator will later call
 	 * createWhile|createDoWhile|createFor|createForIn
@@ -1016,69 +1390,6 @@ public final class IRFactory extends Parser {
 			((Jump) loopLabel).setLoop(result);
 		}
 		return result;
-	}
-
-	private static Node createFor(Scope loop, Node init, Node test, Node incr, Node body) {
-		if (init.getType() == Token.LET) {
-			// rewrite "for (let i=s; i < N; i++)..." as
-			// "let (i=s) { for (; i < N; i++)..." so that "s" is evaluated
-			// outside the scope of the for.
-			Scope let = Scope.splitScope(loop);
-			let.setType(Token.LET);
-			let.addChildrenToBack(init);
-			let.addChildToBack(createLoop(loop, LOOP_FOR, body, test, new Node(Token.EMPTY), incr));
-			return let;
-		}
-		return createLoop(loop, LOOP_FOR, body, test, init, incr);
-	}
-
-	private static Node createLoop(Jump loop, int loopType, Node body, Node cond, Node init, Node incr) {
-		Node bodyTarget = Node.newTarget();
-		Node condTarget = Node.newTarget();
-		if (loopType == LOOP_FOR && cond.getType() == Token.EMPTY) {
-			cond = new Node(Token.TRUE);
-		}
-		Jump IFEQ = new Jump(Token.IFEQ, cond);
-		IFEQ.target = bodyTarget;
-		Node breakTarget = Node.newTarget();
-
-		loop.addChildToBack(bodyTarget);
-		loop.addChildrenToBack(body);
-		if (loopType == LOOP_WHILE || loopType == LOOP_FOR) {
-			// propagate lineno to condition
-			loop.addChildrenToBack(new Node(Token.EMPTY, loop.getLineno()));
-		}
-		loop.addChildToBack(condTarget);
-		loop.addChildToBack(IFEQ);
-		loop.addChildToBack(breakTarget);
-
-		loop.target = breakTarget;
-		Node continueTarget = condTarget;
-
-		if (loopType == LOOP_WHILE || loopType == LOOP_FOR) {
-			// Just add a GOTO to the condition in the do..while
-			loop.addChildToFront(makeJump(Token.GOTO, condTarget));
-
-			if (loopType == LOOP_FOR) {
-				int initType = init.getType();
-				if (initType != Token.EMPTY) {
-					if (initType != Token.VAR && initType != Token.LET) {
-						init = new Node(Token.EXPR_VOID, init);
-					}
-					loop.addChildToFront(init);
-				}
-				Node incrTarget = Node.newTarget();
-				loop.addChildAfter(incrTarget, body);
-				if (incr.getType() != Token.EMPTY) {
-					incr = new Node(Token.EXPR_VOID, incr);
-					loop.addChildAfter(incr, incrTarget);
-				}
-				continueTarget = incrTarget;
-			}
-		}
-
-		loop.setContinue(continueTarget);
-		return loop;
 	}
 
 	/**
@@ -1335,117 +1646,6 @@ public final class IRFactory extends Parser {
 		return result;
 	}
 
-	private static Node createIf(Node cond, Node ifTrue, Node ifFalse, int lineno) {
-		int condStatus = isAlwaysDefinedBoolean(cond);
-		if (condStatus == ALWAYS_TRUE_BOOLEAN) {
-			return ifTrue;
-		} else if (condStatus == ALWAYS_FALSE_BOOLEAN) {
-			if (ifFalse != null) {
-				return ifFalse;
-			}
-			// Replace if (false) xxx by empty block
-			return new Node(Token.BLOCK, lineno);
-		}
-
-		Node result = new Node(Token.BLOCK, lineno);
-		Node ifNotTarget = Node.newTarget();
-		Jump IFNE = new Jump(Token.IFNE, cond);
-		IFNE.target = ifNotTarget;
-
-		result.addChildToBack(IFNE);
-		result.addChildrenToBack(ifTrue);
-
-		if (ifFalse != null) {
-			Node endTarget = Node.newTarget();
-			result.addChildToBack(makeJump(Token.GOTO, endTarget));
-			result.addChildToBack(ifNotTarget);
-			result.addChildrenToBack(ifFalse);
-			result.addChildToBack(endTarget);
-		} else {
-			result.addChildToBack(ifNotTarget);
-		}
-
-		return result;
-	}
-
-	private static Node createCondExpr(Node cond, Node ifTrue, Node ifFalse) {
-		int condStatus = isAlwaysDefinedBoolean(cond);
-		if (condStatus == ALWAYS_TRUE_BOOLEAN) {
-			return ifTrue;
-		} else if (condStatus == ALWAYS_FALSE_BOOLEAN) {
-			return ifFalse;
-		}
-		return new Node(Token.HOOK, cond, ifTrue, ifFalse);
-	}
-
-	private static Node createUnary(int nodeType, Node child) {
-		int childType = child.getType();
-		switch (nodeType) {
-			case Token.DELPROP: {
-				Node n;
-				if (childType == Token.NAME) {
-					// Transform Delete(Name "a")
-					//  to Delete(Bind("a"), String("a"))
-					child.setType(Token.BINDNAME);
-					Node left = child;
-					Node right = Node.newString(child.getString());
-					n = new Node(nodeType, left, right);
-				} else if (childType == Token.GETPROP || childType == Token.GETELEM) {
-					Node left = child.getFirstChild();
-					Node right = child.getLastChild();
-					child.removeChild(left);
-					child.removeChild(right);
-					n = new Node(nodeType, left, right);
-				} else if (childType == Token.GET_REF) {
-					Node ref = child.getFirstChild();
-					child.removeChild(ref);
-					n = new Node(Token.DEL_REF, ref);
-				} else {
-					// Always evaluate delete operand, see ES5 11.4.1 & bug #726121
-					n = new Node(nodeType, new Node(Token.TRUE), child);
-				}
-				return n;
-			}
-			case Token.TYPEOF:
-				if (childType == Token.NAME) {
-					child.setType(Token.TYPEOFNAME);
-					return child;
-				}
-				break;
-			case Token.BITNOT:
-				if (childType == Token.NUMBER) {
-					int value = ScriptRuntime.toInt32(child.getDouble());
-					child.setDouble(~value);
-					return child;
-				}
-				break;
-			case Token.NEG:
-				if (childType == Token.NUMBER) {
-					child.setDouble(-child.getDouble());
-					return child;
-				}
-				break;
-			case Token.NOT: {
-				int status = isAlwaysDefinedBoolean(child);
-				if (status != 0) {
-					int type;
-					if (status == ALWAYS_TRUE_BOOLEAN) {
-						type = Token.FALSE;
-					} else {
-						type = Token.TRUE;
-					}
-					if (childType == Token.TRUE || childType == Token.FALSE) {
-						child.setType(type);
-						return child;
-					}
-					return new Node(type);
-				}
-				break;
-			}
-		}
-		return new Node(nodeType, child);
-	}
-
 	private Node createCallOrNew(int nodeType, Node child) {
 		int type = Node.NON_SPECIALCALL;
 		if (child.getType() == Token.NAME) {
@@ -1468,27 +1668,6 @@ public final class IRFactory extends Parser {
 			node.putIntProp(Node.SPECIALCALL_PROP, type);
 		}
 		return node;
-	}
-
-	private static Node createIncDec(int nodeType, boolean post, Node child) {
-		child = makeReference(child);
-		int childType = child.getType();
-
-		switch (childType) {
-			case Token.NAME, Token.GETPROP, Token.GETELEM, Token.GET_REF -> {
-				Node n = new Node(nodeType, child);
-				int incrDecrMask = 0;
-				if (nodeType == Token.DEC) {
-					incrDecrMask |= Node.DECR_FLAG;
-				}
-				if (post) {
-					incrDecrMask |= Node.POST_FLAG;
-				}
-				n.putIntProp(Node.INCRDECR_PROP, incrDecrMask);
-				return n;
-			}
-		}
-		throw Kit.codeBug();
 	}
 
 	private Node createPropertyGet(Node target, String namespace, String name, int memberTypeFlags) {
@@ -1540,135 +1719,6 @@ public final class IRFactory extends Parser {
 		}
 		*/
 		return new Node(Token.GET_REF, elem); // ref
-	}
-
-	private static Node createBinary(int nodeType, Node left, Node right) {
-		switch (nodeType) {
-
-			case Token.ADD:
-				// numerical addition and string concatenation
-				if (left.type == Token.STRING) {
-					String s2;
-					if (right.type == Token.STRING) {
-						s2 = right.getString();
-					} else if (right.type == Token.NUMBER) {
-						s2 = ScriptRuntime.numberToString(right.getDouble(), 10);
-					} else {
-						break;
-					}
-					String s1 = left.getString();
-					left.setString(s1.concat(s2));
-					return left;
-				} else if (left.type == Token.NUMBER) {
-					if (right.type == Token.NUMBER) {
-						left.setDouble(left.getDouble() + right.getDouble());
-						return left;
-					} else if (right.type == Token.STRING) {
-						String s1, s2;
-						s1 = ScriptRuntime.numberToString(left.getDouble(), 10);
-						s2 = right.getString();
-						right.setString(s1.concat(s2));
-						return right;
-					}
-				}
-				// can't do anything if we don't know  both types - since
-				// 0 + object is supposed to call toString on the object and do
-				// string concantenation rather than addition
-				break;
-
-			case Token.SUB:
-				// numerical subtraction
-				if (left.type == Token.NUMBER) {
-					double ld = left.getDouble();
-					if (right.type == Token.NUMBER) {
-						//both numbers
-						left.setDouble(ld - right.getDouble());
-						return left;
-					} else if (ld == 0.0) {
-						// first 0: 0-x -> -x
-						return new Node(Token.NEG, right);
-					}
-				} else if (right.type == Token.NUMBER) {
-					if (right.getDouble() == 0.0) {
-						//second 0: x - 0 -> +x
-						// can not make simply x because x - 0 must be number
-						return new Node(Token.POS, left);
-					}
-				}
-				break;
-
-			case Token.MUL:
-				// numerical multiplication
-				if (left.type == Token.NUMBER) {
-					double ld = left.getDouble();
-					if (right.type == Token.NUMBER) {
-						//both numbers
-						left.setDouble(ld * right.getDouble());
-						return left;
-					} else if (ld == 1.0) {
-						// first 1: 1 *  x -> +x
-						return new Node(Token.POS, right);
-					}
-				} else if (right.type == Token.NUMBER) {
-					if (right.getDouble() == 1.0) {
-						//second 1: x * 1 -> +x
-						// can not make simply x because x - 0 must be number
-						return new Node(Token.POS, left);
-					}
-				}
-				// can't do x*0: Infinity * 0 gives NaN, not 0
-				break;
-
-			case Token.DIV:
-				// number division
-				if (right.type == Token.NUMBER) {
-					double rd = right.getDouble();
-					if (left.type == Token.NUMBER) {
-						// both constants -- just divide, trust Java to handle x/0
-						left.setDouble(left.getDouble() / rd);
-						return left;
-					} else if (rd == 1.0) {
-						// second 1: x/1 -> +x
-						// not simply x to force number convertion
-						return new Node(Token.POS, left);
-					}
-				}
-				break;
-
-			case Token.AND: {
-				// Since x && y gives x, not false, when Boolean(x) is false,
-				// and y, not Boolean(y), when Boolean(x) is true, x && y
-				// can only be simplified if x is defined. See bug 309957.
-
-				int leftStatus = isAlwaysDefinedBoolean(left);
-				if (leftStatus == ALWAYS_FALSE_BOOLEAN) {
-					// if the first one is false, just return it
-					return left;
-				} else if (leftStatus == ALWAYS_TRUE_BOOLEAN) {
-					// if first is true, set to second
-					return right;
-				}
-				break;
-			}
-
-			case Token.OR: {
-				// Since x || y gives x, not true, when Boolean(x) is true,
-				// and y, not Boolean(y), when Boolean(x) is false, x || y
-				// can only be simplified if x is defined. See bug 309957.
-
-				int leftStatus = isAlwaysDefinedBoolean(left);
-				if (leftStatus == ALWAYS_TRUE_BOOLEAN) {
-					// if the first one is true, just return it
-					return left;
-				} else if (leftStatus == ALWAYS_FALSE_BOOLEAN) {
-					// if first is false, set to second
-					return right;
-				}
-				break;
-			}
-		}
-
-		return new Node(nodeType, left, right);
 	}
 
 	private Node createAssignment(int assignType, Node left, Node right) {
@@ -1754,56 +1804,6 @@ public final class IRFactory extends Parser {
 		}
 
 		throw Kit.codeBug();
-	}
-
-	private static Node createUseLocal(Node localBlock) {
-		if (Token.LOCAL_BLOCK != localBlock.getType()) {
-			throw Kit.codeBug();
-		}
-		Node result = new Node(Token.LOCAL_LOAD);
-		result.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
-		return result;
-	}
-
-	private static Jump makeJump(int type, Node target) {
-		Jump n = new Jump(type);
-		n.target = target;
-		return n;
-	}
-
-	private static Node makeReference(Node node) {
-		int type = node.getType();
-		switch (type) {
-			case Token.NAME:
-			case Token.GETPROP:
-			case Token.GETELEM:
-			case Token.GET_REF:
-				return node;
-			case Token.CALL:
-				node.setType(Token.REF_CALL);
-				return new Node(Token.GET_REF, node);
-		}
-		// Signal caller to report error
-		return null;
-	}
-
-	// Check if Node always mean true or false in boolean context
-	private static int isAlwaysDefinedBoolean(Node node) {
-		switch (node.getType()) {
-			case Token.FALSE:
-			case Token.NULL:
-				return ALWAYS_FALSE_BOOLEAN;
-			case Token.TRUE:
-				return ALWAYS_TRUE_BOOLEAN;
-			case Token.NUMBER: {
-				double num = node.getDouble();
-				if (!Double.isNaN(num) && num != 0.0) {
-					return ALWAYS_TRUE_BOOLEAN;
-				}
-				return ALWAYS_FALSE_BOOLEAN;
-			}
-		}
-		return 0;
 	}
 
 	// Check if node is the target of a destructuring bind.

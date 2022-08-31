@@ -37,36 +37,12 @@ package dev.latvian.mods.rhino.v8dtoa;
 // DiyFp are not designed to contain special doubles (NaN and Infinity).
 class DiyFp {
 
-	private long f;
-	private int e;
-
 	static final int kSignificandSize = 64;
 	static final long kUint64MSB = 0x8000000000000000L;
-
-
-	DiyFp() {
-		this.f = 0;
-		this.e = 0;
-	}
-
-	DiyFp(long f, int e) {
-		this.f = f;
-		this.e = e;
-	}
 
 	private static boolean uint64_gte(long a, long b) {
 		// greater-or-equal for unsigned int64 in java-style...
 		return (a == b) || ((a > b) ^ (a < 0) ^ (b < 0));
-	}
-
-	// this = this - other.
-	// The exponents of both numbers must be the same and the significand of this
-	// must be bigger than the significand of other.
-	// The result will not be normalized.
-	void subtract(DiyFp other) {
-		assert (e == other.e);
-		assert uint64_gte(f, other.f);
-		f -= other.f;
 	}
 
 	// Returns a - b.
@@ -78,6 +54,42 @@ class DiyFp {
 		return result;
 	}
 
+	// returns a * b;
+	static DiyFp times(DiyFp a, DiyFp b) {
+		DiyFp result = new DiyFp(a.f, a.e);
+		result.multiply(b);
+		return result;
+	}
+
+	static DiyFp normalize(DiyFp a) {
+		DiyFp result = new DiyFp(a.f, a.e);
+		result.normalize();
+		return result;
+	}
+
+	private long f;
+	private int e;
+
+	DiyFp() {
+		this.f = 0;
+		this.e = 0;
+	}
+
+
+	DiyFp(long f, int e) {
+		this.f = f;
+		this.e = e;
+	}
+
+	// this = this - other.
+	// The exponents of both numbers must be the same and the significand of this
+	// must be bigger than the significand of other.
+	// The result will not be normalized.
+	void subtract(DiyFp other) {
+		assert (e == other.e);
+		assert uint64_gte(f, other.f);
+		f -= other.f;
+	}
 
 	// this = this * other.
 	void multiply(DiyFp other) {
@@ -103,13 +115,6 @@ class DiyFp {
 		f = result_f;
 	}
 
-	// returns a * b;
-	static DiyFp times(DiyFp a, DiyFp b) {
-		DiyFp result = new DiyFp(a.f, a.e);
-		result.multiply(b);
-		return result;
-	}
-
 	void normalize() {
 		assert (f != 0);
 		long f = this.f;
@@ -128,12 +133,6 @@ class DiyFp {
 		}
 		this.f = f;
 		this.e = e;
-	}
-
-	static DiyFp normalize(DiyFp a) {
-		DiyFp result = new DiyFp(a.f, a.e);
-		result.normalize();
-		return result;
 	}
 
 	long f() {

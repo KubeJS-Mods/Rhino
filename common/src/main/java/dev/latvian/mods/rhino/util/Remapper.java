@@ -5,6 +5,34 @@ import java.lang.reflect.Method;
 import java.util.function.Function;
 
 public interface Remapper {
+	static String getTypeName(String type, Function<String, String> remap) {
+		int array = 0;
+
+		while (type.endsWith("[]")) {
+			array++;
+			type = type.substring(0, type.length() - 2);
+		}
+
+		String t = switch (type) {
+			case "boolean" -> "Z";
+			case "byte" -> "B";
+			case "short" -> "S";
+			case "int" -> "I";
+			case "long" -> "J";
+			case "float" -> "F";
+			case "double" -> "D";
+			case "char" -> "C";
+			case "void" -> "V";
+			default -> "L" + remap.apply(type.replace('/', '.')).replace('.', '/') + ";";
+		};
+
+		return array == 0 ? t : ("[".repeat(array) + t);
+	}
+
+	static String getTypeName(String type) {
+		return getTypeName(type, Function.identity());
+	}
+
 	String remapClass(Class<?> from, String className);
 
 	String unmapClass(String from);
@@ -48,33 +76,5 @@ public interface Remapper {
 
 		sb.append(')');
 		return remapMethod(from, method, sb.toString());
-	}
-
-	static String getTypeName(String type, Function<String, String> remap) {
-		int array = 0;
-
-		while (type.endsWith("[]")) {
-			array++;
-			type = type.substring(0, type.length() - 2);
-		}
-
-		String t = switch (type) {
-			case "boolean" -> "Z";
-			case "byte" -> "B";
-			case "short" -> "S";
-			case "int" -> "I";
-			case "long" -> "J";
-			case "float" -> "F";
-			case "double" -> "D";
-			case "char" -> "C";
-			case "void" -> "V";
-			default -> "L" + remap.apply(type.replace('/', '.')).replace('.', '/') + ";";
-		};
-
-		return array == 0 ? t : ("[".repeat(array) + t);
-	}
-
-	static String getTypeName(String type) {
-		return getTypeName(type, Function.identity());
 	}
 }

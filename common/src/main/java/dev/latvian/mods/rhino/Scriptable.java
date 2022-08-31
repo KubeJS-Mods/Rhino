@@ -32,18 +32,18 @@ import java.util.function.Consumer;
 public interface Scriptable extends IdEnumerationIterator {
 
 	/**
+	 * Value returned from <code>get</code> if the property is not
+	 * found.
+	 */
+	Object NOT_FOUND = UniqueTag.NOT_FOUND;
+
+	/**
 	 * Get the name of the set of objects implemented by this Java class.
 	 * This corresponds to the [[Class]] operation in ECMA and is used
 	 * by Object.prototype.toString() in ECMA.<p>
 	 * See ECMA 8.6.2 and 15.2.4.2.
 	 */
 	String getClassName();
-
-	/**
-	 * Value returned from <code>get</code> if the property is not
-	 * found.
-	 */
-	Object NOT_FOUND = UniqueTag.NOT_FOUND;
 
 	/**
 	 * Get a named property from the object.

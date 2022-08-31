@@ -17,6 +17,54 @@ final class NativeMath extends IdScriptableObject {
 	private static final Object MATH_TAG = "Math";
 	private static final double LOG2E = 1.4426950408889634;
 	private static final Double Double32 = 32d;
+	private static final int Id_toSource = 1;
+	private static final int Id_abs = 2;
+	private static final int Id_acos = 3;
+	private static final int Id_asin = 4;
+	private static final int Id_atan = 5;
+	private static final int Id_atan2 = 6;
+	private static final int Id_ceil = 7;
+	private static final int Id_cos = 8;
+	private static final int Id_exp = 9;
+
+	// #string_id_map#
+	private static final int Id_floor = 10;
+	private static final int Id_log = 11;
+	private static final int Id_max = 12;
+	private static final int Id_min = 13;
+	private static final int Id_pow = 14;
+	private static final int Id_random = 15;
+	private static final int Id_round = 16;
+	private static final int Id_sin = 17;
+	private static final int Id_sqrt = 18;
+	private static final int Id_tan = 19;
+	private static final int Id_cbrt = 20;
+	private static final int Id_cosh = 21;
+	private static final int Id_expm1 = 22;
+	private static final int Id_hypot = 23;
+	private static final int Id_log1p = 24;
+	private static final int Id_log10 = 25;
+	private static final int Id_sinh = 26;
+	private static final int Id_tanh = 27;
+	private static final int Id_imul = 28;
+	private static final int Id_trunc = 29;
+	private static final int Id_acosh = 30;
+	private static final int Id_asinh = 31;
+	private static final int Id_atanh = 32;
+	private static final int Id_sign = 33;
+	private static final int Id_log2 = 34;
+	private static final int Id_fround = 35;
+	private static final int Id_clz32 = 36;
+	private static final int LAST_METHOD_ID = Id_clz32;
+	private static final int Id_E = LAST_METHOD_ID + 1;
+	private static final int Id_PI = LAST_METHOD_ID + 2;
+	private static final int Id_LN10 = LAST_METHOD_ID + 3;
+	private static final int Id_LN2 = LAST_METHOD_ID + 4;
+	private static final int Id_LOG2E = LAST_METHOD_ID + 5;
+	private static final int Id_LOG10E = LAST_METHOD_ID + 6;
+	private static final int Id_SQRT1_2 = LAST_METHOD_ID + 7;
+	private static final int Id_SQRT2 = LAST_METHOD_ID + 8;
+	private static final int MAX_ID = LAST_METHOD_ID + 8;
 
 	static void init(Scriptable scope, boolean sealed) {
 		NativeMath obj = new NativeMath();
@@ -27,6 +75,113 @@ final class NativeMath extends IdScriptableObject {
 			obj.sealObject();
 		}
 		defineProperty(scope, "Math", obj, DONTENUM);
+	}
+
+/* Missing from ES6:
+    clz32
+    fround
+    log2
+ */
+
+	// See Ecma 15.8.2.13
+	private static double js_pow(double x, double y) {
+		double result;
+		if (Double.isNaN(y)) {
+			// y is NaN, result is always NaN
+			result = y;
+		} else if (y == 0) {
+			// Java's pow(NaN, 0) = NaN; we need 1
+			result = 1.0;
+		} else if (x == 0) {
+			// Many differences from Java's Math.pow
+			if (1 / x > 0) {
+				result = (y > 0) ? 0 : Double.POSITIVE_INFINITY;
+			} else {
+				// x is -0, need to check if y is an odd integer
+				long y_long = (long) y;
+				if (y_long == y && (y_long & 0x1) != 0) {
+					result = (y > 0) ? -0.0 : Double.NEGATIVE_INFINITY;
+				} else {
+					result = (y > 0) ? 0.0 : Double.POSITIVE_INFINITY;
+				}
+			}
+		} else {
+			result = Math.pow(x, y);
+			if (Double.isNaN(result)) {
+				// Check for broken Java implementations that gives NaN
+				// when they should return something else
+				if (y == Double.POSITIVE_INFINITY) {
+					if (x < -1.0 || 1.0 < x) {
+						result = Double.POSITIVE_INFINITY;
+					} else if (-1.0 < x && x < 1.0) {
+						result = 0;
+					}
+				} else if (y == Double.NEGATIVE_INFINITY) {
+					if (x < -1.0 || 1.0 < x) {
+						result = 0;
+					} else if (-1.0 < x && x < 1.0) {
+						result = Double.POSITIVE_INFINITY;
+					}
+				} else if (x == Double.POSITIVE_INFINITY) {
+					result = (y > 0) ? Double.POSITIVE_INFINITY : 0.0;
+				} else if (x == Double.NEGATIVE_INFINITY) {
+					long y_long = (long) y;
+					if (y_long == y && (y_long & 0x1) != 0) {
+						// y is odd integer
+						result = (y > 0) ? Double.NEGATIVE_INFINITY : -0.0;
+					} else {
+						result = (y > 0) ? Double.POSITIVE_INFINITY : 0.0;
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+	// Based on code from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/hypot
+	private static double js_hypot(Object[] args) {
+		if (args == null) {
+			return 0.0;
+		}
+		double y = 0.0;
+
+		// Spec and tests say that any "Infinity" result takes precedence.
+		boolean hasNaN = false;
+		boolean hasInfinity = false;
+
+		for (Object o : args) {
+			double d = ScriptRuntime.toNumber(o);
+			if (Double.isNaN(d)) {
+				hasNaN = true;
+			} else if (Double.isInfinite(d)) {
+				hasInfinity = true;
+			} else {
+				y += d * d;
+			}
+		}
+
+		if (hasInfinity) {
+			return Double.POSITIVE_INFINITY;
+		}
+		if (hasNaN) {
+			return Double.NaN;
+		}
+		return Math.sqrt(y);
+	}
+
+	private static double js_trunc(double d) {
+		return ((d < 0.0) ? Math.ceil(d) : Math.floor(d));
+	}
+
+	// From EcmaScript 6 section 20.2.2.19
+	private static int js_imul(Object[] args) {
+		if (args == null) {
+			return 0;
+		}
+
+		int x = ScriptRuntime.toInt32(args, 0);
+		int y = ScriptRuntime.toInt32(args, 1);
+		return x * y;
 	}
 
 	private NativeMath() {
@@ -481,109 +636,6 @@ final class NativeMath extends IdScriptableObject {
 		return ScriptRuntime.wrapNumber(x);
 	}
 
-	// See Ecma 15.8.2.13
-	private static double js_pow(double x, double y) {
-		double result;
-		if (Double.isNaN(y)) {
-			// y is NaN, result is always NaN
-			result = y;
-		} else if (y == 0) {
-			// Java's pow(NaN, 0) = NaN; we need 1
-			result = 1.0;
-		} else if (x == 0) {
-			// Many differences from Java's Math.pow
-			if (1 / x > 0) {
-				result = (y > 0) ? 0 : Double.POSITIVE_INFINITY;
-			} else {
-				// x is -0, need to check if y is an odd integer
-				long y_long = (long) y;
-				if (y_long == y && (y_long & 0x1) != 0) {
-					result = (y > 0) ? -0.0 : Double.NEGATIVE_INFINITY;
-				} else {
-					result = (y > 0) ? 0.0 : Double.POSITIVE_INFINITY;
-				}
-			}
-		} else {
-			result = Math.pow(x, y);
-			if (Double.isNaN(result)) {
-				// Check for broken Java implementations that gives NaN
-				// when they should return something else
-				if (y == Double.POSITIVE_INFINITY) {
-					if (x < -1.0 || 1.0 < x) {
-						result = Double.POSITIVE_INFINITY;
-					} else if (-1.0 < x && x < 1.0) {
-						result = 0;
-					}
-				} else if (y == Double.NEGATIVE_INFINITY) {
-					if (x < -1.0 || 1.0 < x) {
-						result = 0;
-					} else if (-1.0 < x && x < 1.0) {
-						result = Double.POSITIVE_INFINITY;
-					}
-				} else if (x == Double.POSITIVE_INFINITY) {
-					result = (y > 0) ? Double.POSITIVE_INFINITY : 0.0;
-				} else if (x == Double.NEGATIVE_INFINITY) {
-					long y_long = (long) y;
-					if (y_long == y && (y_long & 0x1) != 0) {
-						// y is odd integer
-						result = (y > 0) ? Double.NEGATIVE_INFINITY : -0.0;
-					} else {
-						result = (y > 0) ? Double.POSITIVE_INFINITY : 0.0;
-					}
-				}
-			}
-		}
-		return result;
-	}
-
-	// Based on code from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/hypot
-	private static double js_hypot(Object[] args) {
-		if (args == null) {
-			return 0.0;
-		}
-		double y = 0.0;
-
-		// Spec and tests say that any "Infinity" result takes precedence.
-		boolean hasNaN = false;
-		boolean hasInfinity = false;
-
-		for (Object o : args) {
-			double d = ScriptRuntime.toNumber(o);
-			if (Double.isNaN(d)) {
-				hasNaN = true;
-			} else if (Double.isInfinite(d)) {
-				hasInfinity = true;
-			} else {
-				y += d * d;
-			}
-		}
-
-		if (hasInfinity) {
-			return Double.POSITIVE_INFINITY;
-		}
-		if (hasNaN) {
-			return Double.NaN;
-		}
-		return Math.sqrt(y);
-	}
-
-	private static double js_trunc(double d) {
-		return ((d < 0.0) ? Math.ceil(d) : Math.floor(d));
-	}
-
-	// From EcmaScript 6 section 20.2.2.19
-	private static int js_imul(Object[] args) {
-		if (args == null) {
-			return 0;
-		}
-
-		int x = ScriptRuntime.toInt32(args, 0);
-		int y = ScriptRuntime.toInt32(args, 1);
-		return x * y;
-	}
-
-	// #string_id_map#
-
 	@Override
 	protected int findPrototypeId(String s) {
 		return switch (s) {
@@ -626,62 +678,6 @@ final class NativeMath extends IdScriptableObject {
 			default -> 0;
 		};
 	}
-
-	private static final int Id_toSource = 1;
-	private static final int Id_abs = 2;
-	private static final int Id_acos = 3;
-	private static final int Id_asin = 4;
-	private static final int Id_atan = 5;
-	private static final int Id_atan2 = 6;
-	private static final int Id_ceil = 7;
-	private static final int Id_cos = 8;
-	private static final int Id_exp = 9;
-	private static final int Id_floor = 10;
-	private static final int Id_log = 11;
-	private static final int Id_max = 12;
-	private static final int Id_min = 13;
-	private static final int Id_pow = 14;
-	private static final int Id_random = 15;
-	private static final int Id_round = 16;
-	private static final int Id_sin = 17;
-	private static final int Id_sqrt = 18;
-	private static final int Id_tan = 19;
-	private static final int Id_cbrt = 20;
-	private static final int Id_cosh = 21;
-	private static final int Id_expm1 = 22;
-	private static final int Id_hypot = 23;
-	private static final int Id_log1p = 24;
-	private static final int Id_log10 = 25;
-	private static final int Id_sinh = 26;
-	private static final int Id_tanh = 27;
-	private static final int Id_imul = 28;
-	private static final int Id_trunc = 29;
-	private static final int Id_acosh = 30;
-	private static final int Id_asinh = 31;
-	private static final int Id_atanh = 32;
-	private static final int Id_sign = 33;
-	private static final int Id_log2 = 34;
-	private static final int Id_fround = 35;
-	private static final int Id_clz32 = 36;
-
-	private static final int LAST_METHOD_ID = Id_clz32;
-
-/* Missing from ES6:
-    clz32
-    fround
-    log2
- */
-
-	private static final int Id_E = LAST_METHOD_ID + 1;
-	private static final int Id_PI = LAST_METHOD_ID + 2;
-	private static final int Id_LN10 = LAST_METHOD_ID + 3;
-	private static final int Id_LN2 = LAST_METHOD_ID + 4;
-	private static final int Id_LOG2E = LAST_METHOD_ID + 5;
-	private static final int Id_LOG10E = LAST_METHOD_ID + 6;
-	private static final int Id_SQRT1_2 = LAST_METHOD_ID + 7;
-	private static final int Id_SQRT2 = LAST_METHOD_ID + 8;
-
-	private static final int MAX_ID = LAST_METHOD_ID + 8;
 
 	// #/string_id_map#
 }

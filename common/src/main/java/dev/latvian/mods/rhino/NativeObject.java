@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -30,16 +31,8 @@ import java.util.function.Supplier;
  */
 public class NativeObject extends IdScriptableObject implements Map, DataObject {
 	private static final Object OBJECT_TAG = "Object";
-
-	static void init(Scriptable scope, boolean sealed) {
-		NativeObject obj = new NativeObject();
-		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
-	}
-
-	@Override
-	public String getClassName() {
-		return "Object";
-	}
+	private static final int ConstructorId_getPrototypeOf = -1;
+	private static final int ConstructorId_keys = -2;
 
 	/*
 	@Override
@@ -48,6 +41,53 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		return ScriptRuntime.defaultObjectToString(this);
 	}
 	*/
+	private static final int ConstructorId_getOwnPropertyNames = -3;
+	private static final int ConstructorId_getOwnPropertyDescriptor = -4;
+	private static final int ConstructorId_defineProperty = -5;
+	private static final int ConstructorId_isExtensible = -6;
+	private static final int ConstructorId_preventExtensions = -7;
+
+	// methods implementing java.util.Map
+	private static final int ConstructorId_defineProperties = -8;
+	private static final int ConstructorId_create = -9;
+	private static final int ConstructorId_isSealed = -10;
+	private static final int ConstructorId_isFrozen = -11;
+	private static final int ConstructorId_seal = -12;
+	private static final int ConstructorId_freeze = -13;
+	private static final int ConstructorId_getOwnPropertySymbols = -14;
+	private static final int ConstructorId_assign = -15;
+	private static final int ConstructorId_is = -16;
+	private static final int ConstructorId_setPrototypeOf = -17;
+	private static final int ConstructorId_entries = -18;
+	private static final int ConstructorId_values = -19;
+	private static final int Id_constructor = 1;
+	private static final int Id_toString = 2;
+	private static final int Id_toLocaleString = 3;
+	private static final int Id_valueOf = 4;
+	private static final int Id_hasOwnProperty = 5;
+	private static final int Id_propertyIsEnumerable = 6;
+	private static final int Id_isPrototypeOf = 7;
+	private static final int Id_toSource = 8;
+	private static final int Id___defineGetter__ = 9;
+	private static final int Id___defineSetter__ = 10;
+	private static final int Id___lookupGetter__ = 11;
+	private static final int Id___lookupSetter__ = 12;
+	private static final int MAX_PROTOTYPE_ID = 12;
+
+	static void init(Scriptable scope, boolean sealed) {
+		NativeObject obj = new NativeObject();
+		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+	}
+
+	private static Scriptable getCompatibleObject(Context cx, Scriptable scope, Object arg) {
+		Scriptable s = ScriptRuntime.toObject(cx, scope, arg);
+		return ensureScriptable(s);
+	}
+
+	@Override
+	public String getClassName() {
+		return "Object";
+	}
 
 	@Override
 	public String toString() {
@@ -600,13 +640,6 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		}
 	}
 
-	private static Scriptable getCompatibleObject(Context cx, Scriptable scope, Object arg) {
-		Scriptable s = ScriptRuntime.toObject(cx, scope, arg);
-		return ensureScriptable(s);
-	}
-
-	// methods implementing java.util.Map
-
 	@Override
 	public boolean containsKey(Object key) {
 		if (key instanceof String) {
@@ -620,7 +653,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 	@Override
 	public boolean containsValue(Object value) {
 		for (Object obj : values()) {
-			if (value == obj || value != null && value.equals(obj)) {
+			if (Objects.equals(value, obj)) {
 				return true;
 			}
 		}
@@ -668,6 +701,52 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	protected int findPrototypeId(String s) {
+		return switch (s) {
+			case "constructor" -> Id_constructor;
+			case "toString" -> Id_toString;
+			case "toLocaleString" -> Id_toLocaleString;
+			case "valueOf" -> Id_valueOf;
+			case "hasOwnProperty" -> Id_hasOwnProperty;
+			case "propertyIsEnumerable" -> Id_propertyIsEnumerable;
+			case "isPrototypeOf" -> Id_isPrototypeOf;
+			case "toSource" -> Id_toSource;
+			case "__defineGetter__" -> Id___defineGetter__;
+			case "__defineSetter__" -> Id___defineSetter__;
+			case "__lookupGetter__" -> Id___lookupGetter__;
+			case "__lookupSetter__" -> Id___lookupSetter__;
+			default -> 0;
+		};
+	}
+
+	@Override
+	public <T> T createDataObject(Supplier<T> instanceFactory) {
+		T inst = instanceFactory.get();
+
+		try {
+			for (Field field : inst.getClass().getFields()) {
+				if (Modifier.isPublic(field.getModifiers()) && !Modifier.isTransient(field.getModifiers()) && has(field.getName(), this)) {
+					field.setAccessible(true);
+					field.set(inst, get(field.getName(), this));
+				}
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+
+		return inst;
+	}
+
+	@Override
+	public <T> List<T> createDataObjectList(Supplier<T> instanceFactory) {
+		return Collections.singletonList(createDataObject(instanceFactory));
+	}
+
+	@Override
+	public boolean isDataObjectList() {
+		return false;
+	}
 
 	class EntrySet extends AbstractSet<Entry<Object, Object>> {
 		@Override
@@ -819,87 +898,6 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		public int size() {
 			return NativeObject.this.size();
 		}
-	}
-
-	@Override
-	protected int findPrototypeId(String s) {
-		return switch (s) {
-			case "constructor" -> Id_constructor;
-			case "toString" -> Id_toString;
-			case "toLocaleString" -> Id_toLocaleString;
-			case "valueOf" -> Id_valueOf;
-			case "hasOwnProperty" -> Id_hasOwnProperty;
-			case "propertyIsEnumerable" -> Id_propertyIsEnumerable;
-			case "isPrototypeOf" -> Id_isPrototypeOf;
-			case "toSource" -> Id_toSource;
-			case "__defineGetter__" -> Id___defineGetter__;
-			case "__defineSetter__" -> Id___defineSetter__;
-			case "__lookupGetter__" -> Id___lookupGetter__;
-			case "__lookupSetter__" -> Id___lookupSetter__;
-			default -> 0;
-		};
-	}
-
-	private static final int ConstructorId_getPrototypeOf = -1;
-	private static final int ConstructorId_keys = -2;
-	private static final int ConstructorId_getOwnPropertyNames = -3;
-	private static final int ConstructorId_getOwnPropertyDescriptor = -4;
-	private static final int ConstructorId_defineProperty = -5;
-	private static final int ConstructorId_isExtensible = -6;
-	private static final int ConstructorId_preventExtensions = -7;
-	private static final int ConstructorId_defineProperties = -8;
-	private static final int ConstructorId_create = -9;
-	private static final int ConstructorId_isSealed = -10;
-	private static final int ConstructorId_isFrozen = -11;
-	private static final int ConstructorId_seal = -12;
-	private static final int ConstructorId_freeze = -13;
-	private static final int ConstructorId_getOwnPropertySymbols = -14;
-	private static final int ConstructorId_assign = -15;
-	private static final int ConstructorId_is = -16;
-	private static final int ConstructorId_setPrototypeOf = -17;
-	private static final int ConstructorId_entries = -18;
-	private static final int ConstructorId_values = -19;
-
-	private static final int Id_constructor = 1;
-	private static final int Id_toString = 2;
-	private static final int Id_toLocaleString = 3;
-	private static final int Id_valueOf = 4;
-	private static final int Id_hasOwnProperty = 5;
-	private static final int Id_propertyIsEnumerable = 6;
-	private static final int Id_isPrototypeOf = 7;
-	private static final int Id_toSource = 8;
-	private static final int Id___defineGetter__ = 9;
-	private static final int Id___defineSetter__ = 10;
-	private static final int Id___lookupGetter__ = 11;
-	private static final int Id___lookupSetter__ = 12;
-	private static final int MAX_PROTOTYPE_ID = 12;
-
-	@Override
-	public <T> T createDataObject(Supplier<T> instanceFactory) {
-		T inst = instanceFactory.get();
-
-		try {
-			for (Field field : inst.getClass().getFields()) {
-				if (Modifier.isPublic(field.getModifiers()) && !Modifier.isTransient(field.getModifiers()) && has(field.getName(), this)) {
-					field.setAccessible(true);
-					field.set(inst, get(field.getName(), this));
-				}
-			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-
-		return inst;
-	}
-
-	@Override
-	public <T> List<T> createDataObjectList(Supplier<T> instanceFactory) {
-		return Collections.singletonList(createDataObject(instanceFactory));
-	}
-
-	@Override
-	public boolean isDataObjectList() {
-		return false;
 	}
 
 	// #/string_id_map#

@@ -17,24 +17,14 @@ import java.lang.reflect.Array;
  */
 
 public class NativeJavaArray extends NativeJavaObject implements SymbolScriptable {
-	SharedContextData contextData;
-	Object array;
-	int length;
-	Class<?> cls;
-
-	@Override
-	public String getClassName() {
-		return "JavaArray";
-	}
-
 	public static NativeJavaArray wrap(SharedContextData data, Scriptable scope, Object array) {
 		return new NativeJavaArray(data, scope, array);
 	}
 
-	@Override
-	public Object unwrap() {
-		return array;
-	}
+	SharedContextData contextData;
+	Object array;
+	int length;
+	Class<?> cls;
 
 	public NativeJavaArray(SharedContextData contextData, Scriptable scope, Object array) {
 		super(scope, null, ScriptRuntime.ObjectClass);
@@ -46,6 +36,16 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 		this.array = array;
 		this.length = Array.getLength(array);
 		this.cls = cl.getComponentType();
+	}
+
+	@Override
+	public String getClassName() {
+		return "JavaArray";
+	}
+
+	@Override
+	public Object unwrap() {
+		return array;
 	}
 
 	@Override

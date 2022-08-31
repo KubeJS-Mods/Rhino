@@ -48,16 +48,6 @@ public class StringLiteral extends AstNode {
 	}
 
 	/**
-	 * Returns the string value, optionally including the enclosing quotes.
-	 */
-	public String getValue(boolean includeQuotes) {
-		if (!includeQuotes) {
-			return value;
-		}
-		return quoteChar + value + quoteChar;
-	}
-
-	/**
 	 * Sets the node's value.  Do not include the enclosing quotes.
 	 *
 	 * @param value the node's value
@@ -66,6 +56,16 @@ public class StringLiteral extends AstNode {
 	public void setValue(String value) {
 		assertNotNull(value);
 		this.value = value;
+	}
+
+	/**
+	 * Returns the string value, optionally including the enclosing quotes.
+	 */
+	public String getValue(boolean includeQuotes) {
+		if (!includeQuotes) {
+			return value;
+		}
+		return quoteChar + value + quoteChar;
 	}
 
 	/**

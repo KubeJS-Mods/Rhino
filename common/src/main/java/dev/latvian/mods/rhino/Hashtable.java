@@ -20,10 +20,6 @@ import java.util.NoSuchElementException;
  * empty when it was created..
  */
 public class Hashtable implements Iterable<Hashtable.Entry> {
-	private final HashMap<Object, Entry> map = new HashMap<>();
-	private Entry first = null;
-	private Entry last = null;
-
 	/**
 	 * One entry in the hash table. Override equals and hashcode because this is
 	 * another area in which JavaScript and Java differ. This entry also becomes a
@@ -31,12 +27,12 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 	 */
 
 	public static final class Entry {
+		private final int hashCode;
 		Object key;
 		Object value;
 		private boolean deleted;
 		private Entry next;
 		private Entry prev;
-		private final int hashCode;
 
 		Entry() {
 			hashCode = 0;
@@ -100,11 +96,54 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 		}
 	}
 
+	// The iterator for this class works directly on the linked list so that it implements
+	// the specified iteration behavior, which is very different from Java.
+	private final static class Iter implements Iterator<Entry> {
+		private Entry pos;
+
+		Iter(Entry start) {
+			// Keep the logic simpler by having a dummy at the start
+			Entry dummy = makeDummy();
+			dummy.next = start;
+			this.pos = dummy;
+		}
+
+		private void skipDeleted() {
+			// Skip forward past deleted elements, which could appear due to
+			// "delete" or a "clear" operation after this iterator was created.
+			// End up just before the next non-deleted node.
+			while ((pos.next != null) && pos.next.deleted) {
+				pos = pos.next;
+			}
+		}
+
+		@Override
+		public boolean hasNext() {
+			skipDeleted();
+			return ((pos != null) && (pos.next != null));
+		}
+
+		@Override
+		public Entry next() {
+			skipDeleted();
+			if ((pos == null) || (pos.next == null)) {
+				throw new NoSuchElementException();
+			}
+			final Entry e = pos.next;
+			pos = pos.next;
+			return e;
+		}
+	}
+
 	private static Entry makeDummy() {
 		final Entry d = new Entry();
 		d.clear();
 		return d;
 	}
+
+	private final HashMap<Object, Entry> map = new HashMap<>();
+	private Entry first = null;
+	private Entry last = null;
 
 	public int size() {
 		return map.size();
@@ -207,44 +246,5 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 	@Override
 	public Iterator<Entry> iterator() {
 		return new Iter(first);
-	}
-
-	// The iterator for this class works directly on the linked list so that it implements
-	// the specified iteration behavior, which is very different from Java.
-	private final static class Iter implements Iterator<Entry> {
-		private Entry pos;
-
-		Iter(Entry start) {
-			// Keep the logic simpler by having a dummy at the start
-			Entry dummy = makeDummy();
-			dummy.next = start;
-			this.pos = dummy;
-		}
-
-		private void skipDeleted() {
-			// Skip forward past deleted elements, which could appear due to
-			// "delete" or a "clear" operation after this iterator was created.
-			// End up just before the next non-deleted node.
-			while ((pos.next != null) && pos.next.deleted) {
-				pos = pos.next;
-			}
-		}
-
-		@Override
-		public boolean hasNext() {
-			skipDeleted();
-			return ((pos != null) && (pos.next != null));
-		}
-
-		@Override
-		public Entry next() {
-			skipDeleted();
-			if ((pos == null) || (pos.next == null)) {
-				throw new NoSuchElementException();
-			}
-			final Entry e = pos.next;
-			pos = pos.next;
-			return e;
-		}
 	}
 }

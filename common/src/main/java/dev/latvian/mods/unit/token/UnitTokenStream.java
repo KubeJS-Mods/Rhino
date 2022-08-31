@@ -18,8 +18,8 @@ public final class UnitTokenStream {
 	public final CharStream charStream;
 	public final ArrayList<UnitToken> infix;
 	public final ArrayList<Integer> inputStringPos;
-	private int infixPos;
 	public final Unit unit;
+	private int infixPos;
 
 	public UnitTokenStream(UnitContext context, String input) {
 		this.context = context;

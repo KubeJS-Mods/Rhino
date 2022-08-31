@@ -16,6 +16,56 @@ package dev.latvian.mods.rhino;
  */
 final class Arguments extends IdScriptableObject {
 	private static final String FTAG = "Arguments";
+	private static final int Id_callee = 1;
+	private static final int Id_length = 2;
+	private static final int Id_caller = 3;
+
+	// the following helper methods assume that 0 < index < args.length
+	private static final int MAX_INSTANCE_ID = Id_caller;
+	private static final BaseFunction iteratorMethod = new BaseFunction() {
+		@Override
+		public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+			// TODO : call %ArrayProto_values%
+			// 9.4.4.6 CreateUnmappedArgumentsObject(argumentsList)
+			//  1. Perform DefinePropertyOrThrow(obj, @@iterator, PropertyDescriptor {[[Value]]:%ArrayProto_values%,
+			//     [[Writable]]: true, [[Enumerable]]: false, [[Configurable]]: true}).
+			return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ArrayIteratorType.VALUES);
+		}
+	};
+
+	private static class ThrowTypeError extends BaseFunction {
+		private final String propertyName;
+
+		ThrowTypeError(String propertyName) {
+			this.propertyName = propertyName;
+		}
+
+		@Override
+		public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+			throw ScriptRuntime.typeError1("msg.arguments.not.access.strict", propertyName);
+		}
+	}
+
+	private final NativeCall activation;
+
+	// end helpers
+	// Fields to hold caller, callee and length properties,
+	// where NOT_FOUND value tags deleted properties.
+	// In addition if callerObj == NULL_VALUE, it tags null for scripts, as
+	// initial callerObj == null means access to caller arguments available
+	// only in JS <= 1.3 scripts
+	private Object callerObj;
+	private Object calleeObj;
+	private Object lengthObj;
+	private int callerAttr = DONTENUM;
+	private int calleeAttr = DONTENUM;
+	private int lengthAttr = DONTENUM;
+
+	// #string_id_map#
+	// Initially args holds activation.getOriginalArgs(), but any modification
+	// of its elements triggers creation of a copy. If its element holds NOT_FOUND,
+	// it indicates deleted index, in which case super class is queried.
+	private Object[] args;
 
 	public Arguments(NativeCall activation) {
 		this.activation = activation;
@@ -45,8 +95,6 @@ final class Arguments extends IdScriptableObject {
 		return args[index];
 	}
 
-	// the following helper methods assume that 0 < index < args.length
-
 	private void putIntoActivation(int index, Object value) {
 		String argName = activation.function.getParamOrVarName(index);
 		activation.put(argName, activation, value);
@@ -56,6 +104,8 @@ final class Arguments extends IdScriptableObject {
 		String argName = activation.function.getParamOrVarName(index);
 		return activation.get(argName, activation);
 	}
+
+	// #/string_id_map#
 
 	private void replaceArg(int index, Object value) {
 		if (sharedWithActivation(index)) {
@@ -79,8 +129,6 @@ final class Arguments extends IdScriptableObject {
 			}
 		}
 	}
-
-	// end helpers
 
 	@Override
 	public boolean has(int index, Scriptable start) {
@@ -147,14 +195,6 @@ final class Arguments extends IdScriptableObject {
 		super.delete(index);
 	}
 
-	// #string_id_map#
-
-	private static final int Id_callee = 1;
-	private static final int Id_length = 2;
-	private static final int Id_caller = 3;
-
-	private static final int MAX_INSTANCE_ID = Id_caller;
-
 	@Override
 	protected int getMaxInstanceId() {
 		return MAX_INSTANCE_ID;
@@ -189,8 +229,6 @@ final class Arguments extends IdScriptableObject {
 		};
 		return instanceIdInfo(attr, id);
 	}
-
-	// #/string_id_map#
 
 	@Override
 	protected String getInstanceIdName(int id) {
@@ -376,48 +414,4 @@ final class Arguments extends IdScriptableObject {
 		callerObj = null;
 		calleeObj = null;
 	}
-
-	private static final BaseFunction iteratorMethod = new BaseFunction() {
-		@Override
-		public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-			// TODO : call %ArrayProto_values%
-			// 9.4.4.6 CreateUnmappedArgumentsObject(argumentsList)
-			//  1. Perform DefinePropertyOrThrow(obj, @@iterator, PropertyDescriptor {[[Value]]:%ArrayProto_values%,
-			//     [[Writable]]: true, [[Enumerable]]: false, [[Configurable]]: true}).
-			return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ArrayIteratorType.VALUES);
-		}
-	};
-
-	private static class ThrowTypeError extends BaseFunction {
-		private final String propertyName;
-
-		ThrowTypeError(String propertyName) {
-			this.propertyName = propertyName;
-		}
-
-		@Override
-		public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-			throw ScriptRuntime.typeError1("msg.arguments.not.access.strict", propertyName);
-		}
-	}
-
-	// Fields to hold caller, callee and length properties,
-	// where NOT_FOUND value tags deleted properties.
-	// In addition if callerObj == NULL_VALUE, it tags null for scripts, as
-	// initial callerObj == null means access to caller arguments available
-	// only in JS <= 1.3 scripts
-	private Object callerObj;
-	private Object calleeObj;
-	private Object lengthObj;
-
-	private int callerAttr = DONTENUM;
-	private int calleeAttr = DONTENUM;
-	private int lengthAttr = DONTENUM;
-
-	private final NativeCall activation;
-
-	// Initially args holds activation.getOriginalArgs(), but any modification
-	// of its elements triggers creation of a copy. If its element holds NOT_FOUND,
-	// it indicates deleted index, in which case super class is queried.
-	private Object[] args;
 }

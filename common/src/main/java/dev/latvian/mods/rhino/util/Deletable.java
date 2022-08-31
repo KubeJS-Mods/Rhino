@@ -3,8 +3,6 @@ package dev.latvian.mods.rhino.util;
 import dev.latvian.mods.rhino.Wrapper;
 
 public interface Deletable {
-	void onDeletedByJS();
-
 	static void deleteObject(Object o) {
 		Object o1 = Wrapper.unwrapped(o);
 
@@ -12,4 +10,6 @@ public interface Deletable {
 			((Deletable) o1).onDeletedByJS();
 		}
 	}
+
+	void onDeletedByJS();
 }

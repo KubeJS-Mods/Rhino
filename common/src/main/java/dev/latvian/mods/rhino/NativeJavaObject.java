@@ -31,309 +31,10 @@ import java.util.Map;
  */
 
 public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
+	static final byte CONVERSION_TRIVIAL = 1;
+	static final byte CONVERSION_NONTRIVIAL = 0;
+	static final byte CONVERSION_NONE = 99;
 	private static final Object COERCED_INTERFACE_KEY = "Coerced Interface";
-
-	/**
-	 * The prototype of this object.
-	 */
-	protected Scriptable prototype;
-
-	/**
-	 * The parent scope of this object.
-	 */
-	protected Scriptable parent;
-
-	protected transient Object javaObject;
-
-	protected transient Class<?> staticType;
-	protected transient JavaMembers members;
-	protected transient Map<String, FieldAndMethods> fieldAndMethods;
-	protected transient Map<String, Object> customMembers;
-	protected transient boolean isAdapter;
-
-	public NativeJavaObject() {
-	}
-
-	public NativeJavaObject(Scriptable scope, Object javaObject, Class<?> staticType) {
-		this(scope, javaObject, staticType, false);
-	}
-
-	public NativeJavaObject(Scriptable scope, Object javaObject, Class<?> staticType, boolean isAdapter) {
-		this.parent = scope;
-		this.javaObject = javaObject;
-		this.staticType = staticType;
-		this.isAdapter = isAdapter;
-		initMembers();
-	}
-
-	protected void initMembers() {
-		Class<?> dynamicType;
-		if (javaObject != null) {
-			dynamicType = javaObject.getClass();
-		} else {
-			dynamicType = staticType;
-		}
-		members = JavaMembers.lookupClass(SharedContextData.get(parent), dynamicType, staticType, isAdapter);
-		fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false);
-		customMembers = null;
-	}
-
-	protected void addCustomMember(String name, Object fm) {
-		if (customMembers == null) {
-			customMembers = new HashMap<>();
-		}
-
-		customMembers.put(name, fm);
-	}
-
-	protected void addCustomFunction(String name, CustomFunction.Func func, Class<?>... argTypes) {
-		addCustomMember(name, new CustomFunction(name, func, argTypes));
-	}
-
-	protected void addCustomFunction(String name, CustomFunction.NoArgFunc func) {
-		addCustomFunction(name, func, CustomFunction.NO_ARGS);
-	}
-
-	public void addCustomProperty(String name, CustomProperty getter) {
-		addCustomMember(name, getter);
-	}
-
-	@Override
-	public boolean has(String name, Scriptable start) {
-		return members.has(name, false) || customMembers != null && customMembers.containsKey(name);
-	}
-
-	@Override
-	public boolean has(int index, Scriptable start) {
-		return false;
-	}
-
-	@Override
-	public boolean has(Symbol key, Scriptable start) {
-		return javaObject instanceof Iterable<?> && SymbolKey.ITERATOR.equals(key);
-	}
-
-	@Override
-	public Object get(String name, Scriptable start) {
-		if (fieldAndMethods != null) {
-			Object result = fieldAndMethods.get(name);
-			if (result != null) {
-				return result;
-			}
-		}
-
-		if (customMembers != null) {
-			Object result = customMembers.get(name);
-
-			if (result != null) {
-				if (result instanceof CustomProperty) {
-					Object r = ((CustomProperty) result).get();
-
-					if (r == null) {
-						return Undefined.instance;
-					}
-
-					var contextData = SharedContextData.get(start);
-					Object r1 = contextData.getWrapFactory().wrap(contextData, this, r, r.getClass());
-
-					if (r1 instanceof Scriptable) {
-						return ((Scriptable) r1).getDefaultValue(null);
-					}
-
-					return r1;
-				}
-
-				return result;
-			}
-		}
-
-		// TODO: passing 'this' as the scope is bogus since it has
-		//  no parent scope
-		return members.get(this, name, javaObject, false);
-	}
-
-	@Override
-	public Object get(Symbol key, Scriptable start) {
-		if (javaObject instanceof Iterable<?> itr && SymbolKey.ITERATOR.equals(key)) {
-			return new JavaIteratorWrapper(itr.iterator());
-		}
-
-		// Native Java objects have no Symbol members
-		return Scriptable.NOT_FOUND;
-	}
-
-	@Override
-	public Object get(int index, Scriptable start) {
-		throw members.reportMemberNotFound(Integer.toString(index));
-	}
-
-	@Override
-	public void put(String name, Scriptable start, Object value) {
-		// We could be asked to modify the value of a property in the
-		// prototype. Since we can't add a property to a Java object,
-		// we modify it in the prototype rather than copy it down.
-		if (prototype == null || members.has(name, false)) {
-			members.put(this, name, javaObject, value, false);
-		} else {
-			prototype.put(name, prototype, value);
-		}
-	}
-
-	@Override
-	public void put(Symbol symbol, Scriptable start, Object value) {
-		// We could be asked to modify the value of a property in the
-		// prototype. Since we can't add a property to a Java object,
-		// we modify it in the prototype rather than copy it down.
-		String name = symbol.toString();
-		if (prototype == null || members.has(name, false)) {
-			members.put(this, name, javaObject, value, false);
-		} else if (prototype instanceof SymbolScriptable) {
-			((SymbolScriptable) prototype).put(symbol, prototype, value);
-		}
-	}
-
-	@Override
-	public void put(int index, Scriptable start, Object value) {
-		throw members.reportMemberNotFound(Integer.toString(index));
-	}
-
-	@Override
-	public boolean hasInstance(Scriptable value) {
-		// This is an instance of a Java class, so always return false
-		return false;
-	}
-
-	@Override
-	public void delete(String name) {
-		if (fieldAndMethods != null) {
-			Object result = fieldAndMethods.get(name);
-			if (result != null) {
-				Deletable.deleteObject(result);
-				return;
-			}
-		}
-
-		if (customMembers != null) {
-			Object result = customMembers.get(name);
-			if (result != null) {
-				Deletable.deleteObject(result);
-				return;
-			}
-		}
-
-		Deletable.deleteObject(members.get(this, name, javaObject, false));
-	}
-
-	@Override
-	public void delete(Symbol key) {
-	}
-
-	@Override
-	public void delete(int index) {
-	}
-
-	@Override
-	public Scriptable getPrototype() {
-		if (prototype == null && javaObject instanceof String) {
-			return TopLevel.getBuiltinPrototype(ScriptableObject.getTopLevelScope(parent), TopLevel.Builtins.String);
-		}
-		return prototype;
-	}
-
-	/**
-	 * Sets the prototype of the object.
-	 */
-	@Override
-	public void setPrototype(Scriptable m) {
-		prototype = m;
-	}
-
-	/**
-	 * Returns the parent (enclosing) scope of the object.
-	 */
-	@Override
-	public Scriptable getParentScope() {
-		return parent;
-	}
-
-	/**
-	 * Sets the parent (enclosing) scope of the object.
-	 */
-	@Override
-	public void setParentScope(Scriptable m) {
-		parent = m;
-	}
-
-	@Override
-	public Object[] getIds() {
-		if (customMembers != null) {
-			Object[] c = customMembers.keySet().toArray(ScriptRuntime.EMPTY_OBJECTS);
-			Object[] m = members.getIds(false);
-			Object[] result = new Object[c.length + m.length];
-			System.arraycopy(c, 0, result, 0, c.length);
-			System.arraycopy(m, 0, result, c.length, m.length);
-			return result;
-		}
-
-		return members.getIds(false);
-	}
-
-	@Override
-	public Object unwrap() {
-		return javaObject;
-	}
-
-	@Override
-	public String getClassName() {
-		return "JavaObject";
-	}
-
-	@Override
-	public Object getDefaultValue(Class<?> hint) {
-		Object value;
-		if (hint == null) {
-			if (javaObject instanceof Boolean) {
-				hint = ScriptRuntime.BooleanClass;
-			}
-			if (javaObject instanceof Number) {
-				hint = ScriptRuntime.NumberClass;
-			}
-		}
-		if (hint == null || hint == ScriptRuntime.StringClass) {
-			value = javaObject.toString();
-		} else {
-			String converterName;
-			if (hint == ScriptRuntime.BooleanClass) {
-				converterName = "booleanValue";
-			} else if (hint == ScriptRuntime.NumberClass) {
-				converterName = "doubleValue";
-			} else {
-				throw Context.reportRuntimeError0("msg.default.value");
-			}
-			Object converterObject = get(converterName, this);
-			if (converterObject instanceof Function f) {
-				value = f.call(Context.getContext(), f.getParentScope(), this, ScriptRuntime.EMPTY_OBJECTS);
-			} else {
-				if (hint == ScriptRuntime.NumberClass && javaObject instanceof Boolean) {
-					boolean b = (Boolean) javaObject;
-					value = b ? ScriptRuntime.wrapNumber(1.0) : ScriptRuntime.zeroObj;
-				} else {
-					value = javaObject.toString();
-				}
-			}
-		}
-		return value;
-	}
-
-	/**
-	 * Determine whether we can/should convert between the given type and the
-	 * desired one.  This should be superceded by a conversion-cost calculation
-	 * function, but for now I'll hide behind precedent.
-	 */
-	public static boolean canConvert(SharedContextData data, Object fromObj, Class<?> to) {
-		return getConversionWeight(data, fromObj, to) < CONVERSION_NONE;
-	}
-
 	private static final int JSTYPE_UNDEFINED = 0; // undefined type
 	private static final int JSTYPE_NULL = 1; // null
 	private static final int JSTYPE_BOOLEAN = 2; // boolean
@@ -344,9 +45,14 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	private static final int JSTYPE_JAVA_ARRAY = 7; // JavaArray
 	private static final int JSTYPE_OBJECT = 8; // Scriptable
 
-	static final byte CONVERSION_TRIVIAL = 1;
-	static final byte CONVERSION_NONTRIVIAL = 0;
-	static final byte CONVERSION_NONE = 99;
+	/**
+	 * Determine whether we can/should convert between the given type and the
+	 * desired one.  This should be superceded by a conversion-cost calculation
+	 * function, but for now I'll hide behind precedent.
+	 */
+	public static boolean canConvert(SharedContextData data, Object fromObj, Class<?> to) {
+		return getConversionWeight(data, fromObj, to) < CONVERSION_NONE;
+	}
 
 	/**
 	 * Derive a ranking based on how "natural" the conversion is.
@@ -790,7 +496,6 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 		return toDouble(value);
 	}
 
-
 	private static double toDouble(Object value) {
 		if (value instanceof Number) {
 			return ((Number) value).doubleValue();
@@ -855,5 +560,294 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 		// It uses String.valueOf(value), not value.toString() since
 		// value can be null, bug 282447.
 		throw Context.reportRuntimeError2("msg.conversion.not.allowed", String.valueOf(stringValue), JavaMembers.javaSignature(type));
+	}
+
+	/**
+	 * The prototype of this object.
+	 */
+	protected Scriptable prototype;
+	/**
+	 * The parent scope of this object.
+	 */
+	protected Scriptable parent;
+	protected transient Object javaObject;
+	protected transient Class<?> staticType;
+	protected transient JavaMembers members;
+	protected transient Map<String, FieldAndMethods> fieldAndMethods;
+	protected transient Map<String, Object> customMembers;
+	protected transient boolean isAdapter;
+
+	public NativeJavaObject() {
+	}
+
+	public NativeJavaObject(Scriptable scope, Object javaObject, Class<?> staticType) {
+		this(scope, javaObject, staticType, false);
+	}
+
+	public NativeJavaObject(Scriptable scope, Object javaObject, Class<?> staticType, boolean isAdapter) {
+		this.parent = scope;
+		this.javaObject = javaObject;
+		this.staticType = staticType;
+		this.isAdapter = isAdapter;
+		initMembers();
+	}
+
+	protected void initMembers() {
+		Class<?> dynamicType;
+		if (javaObject != null) {
+			dynamicType = javaObject.getClass();
+		} else {
+			dynamicType = staticType;
+		}
+		members = JavaMembers.lookupClass(SharedContextData.get(parent), dynamicType, staticType, isAdapter);
+		fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false);
+		customMembers = null;
+	}
+
+	protected void addCustomMember(String name, Object fm) {
+		if (customMembers == null) {
+			customMembers = new HashMap<>();
+		}
+
+		customMembers.put(name, fm);
+	}
+
+	protected void addCustomFunction(String name, CustomFunction.Func func, Class<?>... argTypes) {
+		addCustomMember(name, new CustomFunction(name, func, argTypes));
+	}
+
+	protected void addCustomFunction(String name, CustomFunction.NoArgFunc func) {
+		addCustomFunction(name, func, CustomFunction.NO_ARGS);
+	}
+
+	public void addCustomProperty(String name, CustomProperty getter) {
+		addCustomMember(name, getter);
+	}
+
+	@Override
+	public boolean has(String name, Scriptable start) {
+		return members.has(name, false) || customMembers != null && customMembers.containsKey(name);
+	}
+
+	@Override
+	public boolean has(int index, Scriptable start) {
+		return false;
+	}
+
+	@Override
+	public boolean has(Symbol key, Scriptable start) {
+		return javaObject instanceof Iterable<?> && SymbolKey.ITERATOR.equals(key);
+	}
+
+	@Override
+	public Object get(String name, Scriptable start) {
+		if (fieldAndMethods != null) {
+			Object result = fieldAndMethods.get(name);
+			if (result != null) {
+				return result;
+			}
+		}
+
+		if (customMembers != null) {
+			Object result = customMembers.get(name);
+
+			if (result != null) {
+				if (result instanceof CustomProperty) {
+					Object r = ((CustomProperty) result).get();
+
+					if (r == null) {
+						return Undefined.instance;
+					}
+
+					var contextData = SharedContextData.get(start);
+					Object r1 = contextData.getWrapFactory().wrap(contextData, this, r, r.getClass());
+
+					if (r1 instanceof Scriptable) {
+						return ((Scriptable) r1).getDefaultValue(null);
+					}
+
+					return r1;
+				}
+
+				return result;
+			}
+		}
+
+		// TODO: passing 'this' as the scope is bogus since it has
+		//  no parent scope
+		return members.get(this, name, javaObject, false);
+	}
+
+	@Override
+	public Object get(Symbol key, Scriptable start) {
+		if (javaObject instanceof Iterable<?> itr && SymbolKey.ITERATOR.equals(key)) {
+			return new JavaIteratorWrapper(itr.iterator());
+		}
+
+		// Native Java objects have no Symbol members
+		return Scriptable.NOT_FOUND;
+	}
+
+	@Override
+	public Object get(int index, Scriptable start) {
+		throw members.reportMemberNotFound(Integer.toString(index));
+	}
+
+	@Override
+	public void put(String name, Scriptable start, Object value) {
+		// We could be asked to modify the value of a property in the
+		// prototype. Since we can't add a property to a Java object,
+		// we modify it in the prototype rather than copy it down.
+		if (prototype == null || members.has(name, false)) {
+			members.put(this, name, javaObject, value, false);
+		} else {
+			prototype.put(name, prototype, value);
+		}
+	}
+
+	@Override
+	public void put(Symbol symbol, Scriptable start, Object value) {
+		// We could be asked to modify the value of a property in the
+		// prototype. Since we can't add a property to a Java object,
+		// we modify it in the prototype rather than copy it down.
+		String name = symbol.toString();
+		if (prototype == null || members.has(name, false)) {
+			members.put(this, name, javaObject, value, false);
+		} else if (prototype instanceof SymbolScriptable) {
+			((SymbolScriptable) prototype).put(symbol, prototype, value);
+		}
+	}
+
+	@Override
+	public void put(int index, Scriptable start, Object value) {
+		throw members.reportMemberNotFound(Integer.toString(index));
+	}
+
+	@Override
+	public boolean hasInstance(Scriptable value) {
+		// This is an instance of a Java class, so always return false
+		return false;
+	}
+
+	@Override
+	public void delete(String name) {
+		if (fieldAndMethods != null) {
+			Object result = fieldAndMethods.get(name);
+			if (result != null) {
+				Deletable.deleteObject(result);
+				return;
+			}
+		}
+
+		if (customMembers != null) {
+			Object result = customMembers.get(name);
+			if (result != null) {
+				Deletable.deleteObject(result);
+				return;
+			}
+		}
+
+		Deletable.deleteObject(members.get(this, name, javaObject, false));
+	}
+
+	@Override
+	public void delete(Symbol key) {
+	}
+
+	@Override
+	public void delete(int index) {
+	}
+
+	@Override
+	public Scriptable getPrototype() {
+		if (prototype == null && javaObject instanceof String) {
+			return TopLevel.getBuiltinPrototype(ScriptableObject.getTopLevelScope(parent), TopLevel.Builtins.String);
+		}
+		return prototype;
+	}
+
+	/**
+	 * Sets the prototype of the object.
+	 */
+	@Override
+	public void setPrototype(Scriptable m) {
+		prototype = m;
+	}
+
+	/**
+	 * Returns the parent (enclosing) scope of the object.
+	 */
+	@Override
+	public Scriptable getParentScope() {
+		return parent;
+	}
+
+	/**
+	 * Sets the parent (enclosing) scope of the object.
+	 */
+	@Override
+	public void setParentScope(Scriptable m) {
+		parent = m;
+	}
+
+	@Override
+	public Object[] getIds() {
+		if (customMembers != null) {
+			Object[] c = customMembers.keySet().toArray(ScriptRuntime.EMPTY_OBJECTS);
+			Object[] m = members.getIds(false);
+			Object[] result = new Object[c.length + m.length];
+			System.arraycopy(c, 0, result, 0, c.length);
+			System.arraycopy(m, 0, result, c.length, m.length);
+			return result;
+		}
+
+		return members.getIds(false);
+	}
+
+	@Override
+	public Object unwrap() {
+		return javaObject;
+	}
+
+	@Override
+	public String getClassName() {
+		return "JavaObject";
+	}
+
+	@Override
+	public Object getDefaultValue(Class<?> hint) {
+		Object value;
+		if (hint == null) {
+			if (javaObject instanceof Boolean) {
+				hint = ScriptRuntime.BooleanClass;
+			}
+			if (javaObject instanceof Number) {
+				hint = ScriptRuntime.NumberClass;
+			}
+		}
+		if (hint == null || hint == ScriptRuntime.StringClass) {
+			value = javaObject.toString();
+		} else {
+			String converterName;
+			if (hint == ScriptRuntime.BooleanClass) {
+				converterName = "booleanValue";
+			} else if (hint == ScriptRuntime.NumberClass) {
+				converterName = "doubleValue";
+			} else {
+				throw Context.reportRuntimeError0("msg.default.value");
+			}
+			Object converterObject = get(converterName, this);
+			if (converterObject instanceof Function f) {
+				value = f.call(Context.getContext(), f.getParentScope(), this, ScriptRuntime.EMPTY_OBJECTS);
+			} else {
+				if (hint == ScriptRuntime.NumberClass && javaObject instanceof Boolean) {
+					boolean b = (Boolean) javaObject;
+					value = b ? ScriptRuntime.wrapNumber(1.0) : ScriptRuntime.zeroObj;
+				} else {
+					value = javaObject.toString();
+				}
+			}
+		}
+		return value;
 	}
 }

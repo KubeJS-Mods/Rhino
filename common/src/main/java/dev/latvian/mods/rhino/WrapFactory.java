@@ -28,6 +28,8 @@ import java.util.Set;
  * @since 1.5 Release 4
  */
 public class WrapFactory {
+	private boolean javaPrimitiveWrap = true;
+
 	/**
 	 * Wrap the object.
 	 * <p>
@@ -180,7 +182,5 @@ public class WrapFactory {
 		}
 		javaPrimitiveWrap = value;
 	}
-
-	private boolean javaPrimitiveWrap = true;
 
 }

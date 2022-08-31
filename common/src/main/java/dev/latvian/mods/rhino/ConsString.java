@@ -25,9 +25,9 @@ import java.util.ArrayDeque;
  * <p>Both the name and the concept are borrowed from V8.</p>
  */
 public class ConsString implements CharSequence {
+	private final int length;
 	private CharSequence left;
 	private CharSequence right;
-	private final int length;
 	private boolean isFlat;
 
 	public ConsString(CharSequence str1, CharSequence str2) {

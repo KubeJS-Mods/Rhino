@@ -18,10 +18,6 @@ package dev.latvian.mods.rhino;
  */
 
 public interface Token {
-	enum CommentType {
-		LINE, BLOCK_COMMENT, JSDOC, HTML
-	}
-
 	/**
 	 * Token types.  These values correspond to JSTokenType values in
 	 * jsscan.c.
@@ -31,10 +27,8 @@ public interface Token {
 	int ERROR = -1; // well-known as the only code < EOF
 	int EOF = 0;  // end of file token - (not EOF_CHAR)
 	int EOL = 1;  // end of line
-
 	// Interpreter reuses the following as bytecodes
 	int FIRST_BYTECODE_TOKEN = 2;
-
 	int ENTERWITH = 2;
 	int LEAVEWITH = 3;
 	int RETURN = 4;
@@ -112,10 +106,8 @@ public interface Token {
 	int POW = 76; // power (**)
 	int OPTIONAL_CHAINING = 77; // optional chaining operator (?.)
 	int GETOPTIONAL = 78;
-
 	// End of interpreter bytecodes
 	int LAST_BYTECODE_TOKEN = 81;
-
 	int TRY = 82;
 	int SEMI = 83;  // semicolon
 	int LB = 84;  // left and right brackets
@@ -125,7 +117,6 @@ public interface Token {
 	int LP = 88;  // left and right parentheses
 	int RP = 89;
 	int COMMA = 90;  // comma operator
-
 	int ASSIGN = 91;  // simple assignment  (=)
 	int ASSIGN_BITOR = 92;  // |=
 	int ASSIGN_BITXOR = 93;  // ^=
@@ -138,10 +129,8 @@ public interface Token {
 	int ASSIGN_MUL = 100;  // *=
 	int ASSIGN_DIV = 101;  // /=
 	int ASSIGN_MOD = 102;  // %=
-
 	int FIRST_ASSIGN = ASSIGN;
 	int LAST_ASSIGN = ASSIGN_MOD;
-
 	int HOOK = 103; // conditional (?:)
 	int COLON = 104;
 	int OR = 105; // logical or (||)
@@ -168,9 +157,7 @@ public interface Token {
 	int FINALLY = 126; // finally keyword
 	int VOID = 127; // void keyword
 	int RESERVED = 128; // reserved keywords
-
 	int EMPTY = 129;
-
 	// types used for the parse tree - these never get returned  by the scanner.
 	int BLOCK = 130; // statement block
 	int LABEL = 131; // label
@@ -186,11 +173,9 @@ public interface Token {
 	int SETELEM_OP = 141; // x[y] op= something
 	int LOCAL_BLOCK = 142;
 	int SET_REF_OP = 143; // *reference op= something
-
 	// Optimizer-only-tokens
 	int TO_OBJECT = 150;
 	int TO_DOUBLE = 151;
-
 	int GET = 152;  // JS 1.5 get pseudo keyword
 	int SET = 153;  // JS 1.5 set pseudo keyword
 	int LET = 154;  // JS 1.7 let pseudo keyword
@@ -210,9 +195,7 @@ public interface Token {
 	int TEMPLATE_CHARS = 168;  // template literal - literal section
 	int TEMPLATE_LITERAL_SUBST = 169;  // template literal - substitution
 	int TAGGED_TEMPLATE_LITERAL = 170;  // template literal - tagged/handler
-
 	int LAST_TOKEN = TAGGED_TEMPLATE_LITERAL;
-
 
 	/**
 	 * Returns a name for the token.  If Rhino is compiled with certain
@@ -404,5 +387,9 @@ public interface Token {
 	 */
 	static boolean isValidToken(int code) {
 		return code >= ERROR && code <= LAST_TOKEN;
+	}
+
+	enum CommentType {
+		LINE, BLOCK_COMMENT, JSDOC, HTML
 	}
 }

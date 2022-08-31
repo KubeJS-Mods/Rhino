@@ -21,7 +21,20 @@ public class ObjToIntMap {
 
 	// ObjToIntMap is a copy cat of ObjToIntMap with API adjusted to object keys
 
+	// A == golden_ratio * (1 << 32) = ((sqrt(5) - 1) / 2) * (1 << 32)
+	// See Knuth etc.
+	private static final int A = 0x9e3779b9;
+	private static final Object DELETED = new Object();
+	// If true, enables consitency checks
+	private static final boolean check = false;
+
 	public static class Iterator {
+
+		ObjToIntMap master;
+		private int cursor;
+		private int remaining;
+		private Object[] keys;
+		private int[] values;
 
 		Iterator(ObjToIntMap master) {
 			this.master = master;
@@ -76,13 +89,21 @@ public class ObjToIntMap {
 		public void setValue(int value) {
 			values[cursor] = value;
 		}
-
-		ObjToIntMap master;
-		private int cursor;
-		private int remaining;
-		private Object[] keys;
-		private int[] values;
 	}
+
+	private static int tableLookupStep(int fraction, int mask, int power) {
+		int shift = 32 - 2 * power;
+		if (shift >= 0) {
+			return ((fraction >>> shift) & mask) | 1;
+		}
+		return (fraction & (mask >>> -shift)) | 1;
+	}
+
+	private transient Object[] keys;
+	private transient int[] values;
+	private int power;
+	private int keyCount;
+	private transient int occupiedCount; // == keyCount + deleted_count
 
 	public ObjToIntMap() {
 		this(4);
@@ -208,6 +229,11 @@ public class ObjToIntMap {
 		i.init(keys, values, keyCount);
 	}
 
+	// Structure of kyes and values arrays (N == 1 << power):
+	// keys[0 <= i < N]: key value or null or DELETED mark
+	// values[0 <= i < N]: value of key at keys[i]
+	// values[N <= i < 2*N]: hash code of key at keys[i-N]
+
 	/**
 	 * Return array of present keys
 	 */
@@ -230,14 +256,6 @@ public class ObjToIntMap {
 				--count;
 			}
 		}
-	}
-
-	private static int tableLookupStep(int fraction, int mask, int power) {
-		int shift = 32 - 2 * power;
-		if (shift >= 0) {
-			return ((fraction >>> shift) & mask) | 1;
-		}
-		return (fraction & (mask >>> -shift)) | 1;
 	}
 
 	private int findIndex(Object key) {
@@ -411,27 +429,6 @@ public class ObjToIntMap {
 		++keyCount;
 		return index;
 	}
-
-	// A == golden_ratio * (1 << 32) = ((sqrt(5) - 1) / 2) * (1 << 32)
-	// See Knuth etc.
-	private static final int A = 0x9e3779b9;
-
-	private static final Object DELETED = new Object();
-
-	// Structure of kyes and values arrays (N == 1 << power):
-	// keys[0 <= i < N]: key value or null or DELETED mark
-	// values[0 <= i < N]: value of key at keys[i]
-	// values[N <= i < 2*N]: hash code of key at keys[i-N]
-
-	private transient Object[] keys;
-	private transient int[] values;
-
-	private int power;
-	private int keyCount;
-	private transient int occupiedCount; // == keyCount + deleted_count
-
-	// If true, enables consitency checks
-	private static final boolean check = false;
 
 /* TEST START
 

@@ -10,6 +10,8 @@ package dev.latvian.mods.rhino;
  * @author Norris Boyd
  */
 public class DefiningClassLoader extends ClassLoader implements GeneratedClassLoader {
+	private final ClassLoader parentLoader;
+
 	public DefiningClassLoader() {
 		this.parentLoader = getClass().getClassLoader();
 	}
@@ -46,6 +48,4 @@ public class DefiningClassLoader extends ClassLoader implements GeneratedClassLo
 		}
 		return cl;
 	}
-
-	private final ClassLoader parentLoader;
 }

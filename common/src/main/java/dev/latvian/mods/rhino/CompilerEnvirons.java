@@ -7,6 +7,8 @@
 package dev.latvian.mods.rhino;
 
 public class CompilerEnvirons {
+	private ErrorReporter errorReporter;
+
 	public CompilerEnvirons() {
 		errorReporter = DefaultErrorReporter.instance;
 	}
@@ -29,7 +31,4 @@ public class CompilerEnvirons {
 	public final boolean isStrictMode() {
 		return false;
 	}
-
-
-	private ErrorReporter errorReporter;
 }

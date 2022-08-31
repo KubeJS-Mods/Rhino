@@ -11,15 +11,8 @@ public final class Sorting {
 
 	private static final Sorting sorting = new Sorting();
 
-	private Sorting() {
-	}
-
 	public static Sorting get() {
 		return sorting;
-	}
-
-	public void insertionSort(Object[] a, Comparator<Object> cmp) {
-		insertionSort(a, 0, a.length - 1, cmp);
 	}
 
 	private static void insertionSort(Object[] a, int start, int end, Comparator<Object> cmp) {
@@ -34,6 +27,23 @@ public final class Sorting {
 			a[j + 1] = x;
 			i++;
 		}
+	}
+
+	private static void swap(Object[] a, int l, int h) {
+		final Object tmp = a[l];
+		a[l] = a[h];
+		a[h] = tmp;
+	}
+
+	private static int log2(int n) {
+		return (int) (Math.log10(n) / Math.log10(2.0));
+	}
+
+	private Sorting() {
+	}
+
+	public void insertionSort(Object[] a, Comparator<Object> cmp) {
+		insertionSort(a, 0, a.length - 1, cmp);
 	}
 
 	/*
@@ -92,16 +102,6 @@ public final class Sorting {
 
 		swap(a, start, j);
 		return j;
-	}
-
-	private static void swap(Object[] a, int l, int h) {
-		final Object tmp = a[l];
-		a[l] = a[h];
-		a[h] = tmp;
-	}
-
-	private static int log2(int n) {
-		return (int) (Math.log10(n) / Math.log10(2.0));
 	}
 
 	/*

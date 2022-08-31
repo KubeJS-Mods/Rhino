@@ -21,6 +21,26 @@ import java.util.regex.Pattern;
  */
 public abstract class RhinoException extends RuntimeException {
 	private static final Pattern JAVA_STACK_PATTERN = Pattern.compile("_c_(.*)_\\d+");
+	@Serial
+	private static final long serialVersionUID = 1883500631321581169L;
+
+	static String formatStackTrace(ScriptStackElement[] stack, String message) {
+		StringBuilder buffer = new StringBuilder();
+		String lineSeparator = System.lineSeparator();
+
+		for (ScriptStackElement elem : stack) {
+			elem.renderJavaStyle(buffer);
+			buffer.append(lineSeparator);
+		}
+		return buffer.toString();
+	}
+
+	Object interpreterStackInfo;
+	int[] interpreterLineData;
+	private String sourceName;
+	private int lineNumber;
+	private String lineSource;
+	private int columnNumber;
 
 	RhinoException() {
 		Evaluator e = Context.createInterpreter();
@@ -220,17 +240,6 @@ public abstract class RhinoException extends RuntimeException {
 		return formatStackTrace(stack, details());
 	}
 
-	static String formatStackTrace(ScriptStackElement[] stack, String message) {
-		StringBuilder buffer = new StringBuilder();
-		String lineSeparator = System.lineSeparator();
-
-		for (ScriptStackElement elem : stack) {
-			elem.renderJavaStyle(buffer);
-			buffer.append(lineSeparator);
-		}
-		return buffer.toString();
-	}
-
 	/**
 	 * Get the script stack of this exception as an array of
 	 * {@link ScriptStackElement}s.
@@ -306,7 +315,6 @@ public abstract class RhinoException extends RuntimeException {
 		return list.toArray(new ScriptStackElement[list.size()]);
 	}
 
-
 	@Override
 	public void printStackTrace(PrintWriter s) {
 		if (interpreterStackInfo == null) {
@@ -324,15 +332,4 @@ public abstract class RhinoException extends RuntimeException {
 			s.print(generateStackTrace());
 		}
 	}
-
-	@Serial
-	private static final long serialVersionUID = 1883500631321581169L;
-
-	private String sourceName;
-	private int lineNumber;
-	private String lineSource;
-	private int columnNumber;
-
-	Object interpreterStackInfo;
-	int[] interpreterLineData;
 }

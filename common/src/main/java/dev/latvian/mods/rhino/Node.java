@@ -82,6 +82,33 @@ public class Node implements Iterable<Node> {
 			PROPERTY_FLAG = 0x1; // property access: element is valid name
 	public static final int ATTRIBUTE_FLAG = 0x2; // x.@y or x..@y
 	public static final int DESCENDANTS_FLAG = 0x4; // x..y or x..@i
+	/**
+	 * These flags enumerate the possible ways a statement/function can
+	 * terminate. These flags are used by endCheck() and by the Parser to
+	 * detect inconsistent return usage.
+	 * <p>
+	 * END_UNREACHED is reserved for code paths that are assumed to always be
+	 * able to execute (example: throw, continue)
+	 * <p>
+	 * END_DROPS_OFF indicates if the statement can transfer control to the
+	 * next one. Statement such as return dont. A compound statement may have
+	 * some branch that drops off control to the next statement.
+	 * <p>
+	 * END_RETURNS indicates that the statement can return (without arguments)
+	 * END_RETURNS_VALUE indicates that the statement can return a value.
+	 * <p>
+	 * A compound statement such as
+	 * if (condition) {
+	 * return value;
+	 * }
+	 * Will be detected as (END_DROPS_OFF | END_RETURN_VALUE) by endCheck()
+	 */
+	public static final int END_UNREACHED = 0;
+	public static final int END_DROPS_OFF = 1;
+	public static final int END_RETURNS = 2;
+	public static final int END_RETURNS_VALUE = 4;
+	public static final int END_YIELDS = 8;
+	private static final Node NOT_SET = new Node(Token.ERROR);
 
 	private static class PropListItem {
 		PropListItem next;
@@ -89,6 +116,40 @@ public class Node implements Iterable<Node> {
 		int intValue;
 		Object objectValue;
 	}
+
+	public static Node newNumber(double number) {
+		NumberLiteral n = new NumberLiteral();
+		n.setNumber(number);
+		return n;
+	}
+
+	public static Node newString(String str) {
+		return newString(Token.STRING, str);
+	}
+
+	public static Node newString(int type, String str) {
+		Name name = new Name();
+		name.setIdentifier(str);
+		name.setType(type);
+		return name;
+	}
+
+	public static Node newTarget() {
+		return new Node(Token.TARGET);
+	}
+
+	protected int type = Token.ERROR; // type of the node, e.g. Token.NAME
+	protected Node next;             // next sibling
+	protected Node first;    // first element of a linked list of children
+	protected Node last;     // last element of a linked list of children
+	protected int lineno = -1;
+	/**
+	 * Linked list of properties. Since vast majority of nodes would have
+	 * no more then 2 properties, linked list saves memory and provides
+	 * fast lookup. If this does not holds, propListHead can be replaced
+	 * by UintMap.
+	 */
+	protected PropListItem propListHead;
 
 	public Node(int nodeType) {
 		type = nodeType;
@@ -135,23 +196,6 @@ public class Node implements Iterable<Node> {
 	public Node(int nodeType, Node left, Node mid, Node right, int line) {
 		this(nodeType, left, mid, right);
 		lineno = line;
-	}
-
-	public static Node newNumber(double number) {
-		NumberLiteral n = new NumberLiteral();
-		n.setNumber(number);
-		return n;
-	}
-
-	public static Node newString(String str) {
-		return newString(Token.STRING, str);
-	}
-
-	public static Node newString(int type, String str) {
-		Name name = new Name();
-		name.setIdentifier(str);
-		name.setType(type);
-		return name;
 	}
 
 	public int getType() {
@@ -343,59 +387,6 @@ public class Node implements Iterable<Node> {
 		first = last = null;
 	}
 
-	private static final Node NOT_SET = new Node(Token.ERROR);
-
-	/**
-	 * Iterates over the children of this Node.  Supports child removal.  Not
-	 * thread-safe.  If anyone changes the child list before the iterator
-	 * finishes, the results are undefined and probably bad.
-	 */
-	public class NodeIterator implements Iterator<Node> {
-		private Node cursor;  // points to node to be returned next
-		private Node prev = NOT_SET;
-		private Node prev2;
-		private boolean removed = false;
-
-		public NodeIterator() {
-			cursor = Node.this.first;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return cursor != null;
-		}
-
-		@Override
-		public Node next() {
-			if (cursor == null) {
-				throw new NoSuchElementException();
-			}
-			removed = false;
-			prev2 = prev;
-			prev = cursor;
-			cursor = cursor.next;
-			return prev;
-		}
-
-		@Override
-		public void remove() {
-			if (prev == NOT_SET) {
-				throw new IllegalStateException("next() has not been called");
-			}
-			if (removed) {
-				throw new IllegalStateException("remove() already called for current element");
-			}
-			if (prev == first) {
-				first = prev.next;
-			} else if (prev == last) {
-				prev2.next = null;
-				last = prev2;
-			} else {
-				prev2.next = cursor;
-			}
-		}
-	}
-
 	/**
 	 * Returns an {@link java.util.Iterator} over the node's children.
 	 */
@@ -480,6 +471,39 @@ public class Node implements Iterable<Node> {
 		item.intValue = prop;
 	}
 
+
+	/**
+	 * Does consistent-return analysis on the function body when strict mode is
+	 * enabled.
+	 *
+	 *   function (x) { return (x+1) }
+	 * is ok, but
+	 *   function (x) { if (x &lt; 0) return (x+1); }
+	 * is not becuase the function can potentially return a value when the
+	 * condition is satisfied and if not, the function does not explicitly
+	 * return value.
+	 *
+	 * This extends to checking mismatches such as "return" and "return <value>"
+	 * used in the same function. Warnings are not emitted if inconsistent
+	 * returns exist in code that can be statically shown to be unreachable.
+	 * Ex.
+	 * <pre>function (x) { while (true) { ... if (..) { return value } ... } }
+	 * </pre>
+	 * emits no warning. However if the loop had a break statement, then a
+	 * warning would be emitted.
+	 *
+	 * The consistency analysis looks at control structures such as loops, ifs,
+	 * switch, try-catch-finally blocks, examines the reachable code paths and
+	 * warns the user about an inconsistent set of termination possibilities.
+	 *
+	 * Caveat: Since the parser flattens many control structures into almost
+	 * straight-line code with gotos, it makes such analysis hard. Hence this
+	 * analyser is written to taken advantage of patterns of code generated by
+	 * the parser (for loops, try blocks and such) and does not do a full
+	 * control flow analysis of the gotos and break/continue statements.
+	 * Future changes to the parser will affect this analysis.
+	 */
+
 	/**
 	 * Return the line number recorded for this node.
 	 *
@@ -535,10 +559,6 @@ public class Node implements Iterable<Node> {
 		throw Kit.codeBug();
 	}
 
-	public static Node newTarget() {
-		return new Node(Token.TARGET);
-	}
-
 	public final int labelId() {
 		if ((type != Token.TARGET) && (type != Token.YIELD) && (type != Token.YIELD_STAR)) {
 			Kit.codeBug();
@@ -552,66 +572,6 @@ public class Node implements Iterable<Node> {
 		}
 		putIntProp(LABEL_ID_PROP, labelId);
 	}
-
-
-	/**
-	 * Does consistent-return analysis on the function body when strict mode is
-	 * enabled.
-	 *
-	 *   function (x) { return (x+1) }
-	 * is ok, but
-	 *   function (x) { if (x &lt; 0) return (x+1); }
-	 * is not becuase the function can potentially return a value when the
-	 * condition is satisfied and if not, the function does not explicitly
-	 * return value.
-	 *
-	 * This extends to checking mismatches such as "return" and "return <value>"
-	 * used in the same function. Warnings are not emitted if inconsistent
-	 * returns exist in code that can be statically shown to be unreachable.
-	 * Ex.
-	 * <pre>function (x) { while (true) { ... if (..) { return value } ... } }
-	 * </pre>
-	 * emits no warning. However if the loop had a break statement, then a
-	 * warning would be emitted.
-	 *
-	 * The consistency analysis looks at control structures such as loops, ifs,
-	 * switch, try-catch-finally blocks, examines the reachable code paths and
-	 * warns the user about an inconsistent set of termination possibilities.
-	 *
-	 * Caveat: Since the parser flattens many control structures into almost
-	 * straight-line code with gotos, it makes such analysis hard. Hence this
-	 * analyser is written to taken advantage of patterns of code generated by
-	 * the parser (for loops, try blocks and such) and does not do a full
-	 * control flow analysis of the gotos and break/continue statements.
-	 * Future changes to the parser will affect this analysis.
-	 */
-
-	/**
-	 * These flags enumerate the possible ways a statement/function can
-	 * terminate. These flags are used by endCheck() and by the Parser to
-	 * detect inconsistent return usage.
-	 * <p>
-	 * END_UNREACHED is reserved for code paths that are assumed to always be
-	 * able to execute (example: throw, continue)
-	 * <p>
-	 * END_DROPS_OFF indicates if the statement can transfer control to the
-	 * next one. Statement such as return dont. A compound statement may have
-	 * some branch that drops off control to the next statement.
-	 * <p>
-	 * END_RETURNS indicates that the statement can return (without arguments)
-	 * END_RETURNS_VALUE indicates that the statement can return a value.
-	 * <p>
-	 * A compound statement such as
-	 * if (condition) {
-	 * return value;
-	 * }
-	 * Will be detected as (END_DROPS_OFF | END_RETURN_VALUE) by endCheck()
-	 */
-	public static final int END_UNREACHED = 0;
-	public static final int END_DROPS_OFF = 1;
-	public static final int END_RETURNS = 2;
-	public static final int END_RETURNS_VALUE = 4;
-	public static final int END_YIELDS = 8;
 
 	/**
 	 * Checks that every return usage in a function body is consistent with the
@@ -1018,17 +978,54 @@ public class Node implements Iterable<Node> {
 		return String.valueOf(type);
 	}
 
-	protected int type = Token.ERROR; // type of the node, e.g. Token.NAME
-	protected Node next;             // next sibling
-	protected Node first;    // first element of a linked list of children
-	protected Node last;     // last element of a linked list of children
-	protected int lineno = -1;
-
 	/**
-	 * Linked list of properties. Since vast majority of nodes would have
-	 * no more then 2 properties, linked list saves memory and provides
-	 * fast lookup. If this does not holds, propListHead can be replaced
-	 * by UintMap.
+	 * Iterates over the children of this Node.  Supports child removal.  Not
+	 * thread-safe.  If anyone changes the child list before the iterator
+	 * finishes, the results are undefined and probably bad.
 	 */
-	protected PropListItem propListHead;
+	public class NodeIterator implements Iterator<Node> {
+		private Node cursor;  // points to node to be returned next
+		private Node prev = NOT_SET;
+		private Node prev2;
+		private boolean removed = false;
+
+		public NodeIterator() {
+			cursor = Node.this.first;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return cursor != null;
+		}
+
+		@Override
+		public Node next() {
+			if (cursor == null) {
+				throw new NoSuchElementException();
+			}
+			removed = false;
+			prev2 = prev;
+			prev = cursor;
+			cursor = cursor.next;
+			return prev;
+		}
+
+		@Override
+		public void remove() {
+			if (prev == NOT_SET) {
+				throw new IllegalStateException("next() has not been called");
+			}
+			if (removed) {
+				throw new IllegalStateException("remove() already called for current element");
+			}
+			if (prev == first) {
+				first = prev.next;
+			} else if (prev == last) {
+				prev2.next = null;
+				last = prev2;
+			} else {
+				prev2.next = cursor;
+			}
+		}
+	}
 }

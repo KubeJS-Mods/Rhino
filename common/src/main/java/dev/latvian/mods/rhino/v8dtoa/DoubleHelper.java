@@ -37,6 +37,9 @@ public class DoubleHelper {
 	static final long kExponentMask = 0x7FF0000000000000L;
 	static final long kSignificandMask = 0x000FFFFFFFFFFFFFL;
 	static final long kHiddenBit = 0x0010000000000000L;
+	private static final int kSignificandSize = 52;  // Excludes the hidden bit.
+	private static final int kExponentBias = 0x3FF + kSignificandSize;
+	private static final int kDenormalExponent = -kExponentBias + 1;
 
 	static DiyFp asDiyFp(long d64) {
 		assert (!isSpecial(d64));
@@ -93,16 +96,13 @@ public class DoubleHelper {
 		return ((d64 & kExponentMask) == kExponentMask) && ((d64 & kSignificandMask) != 0L);
 	}
 
-
 	static boolean isInfinite(long d64) {
 		return ((d64 & kExponentMask) == kExponentMask) && ((d64 & kSignificandMask) == 0L);
 	}
 
-
 	static int sign(long d64) {
 		return (d64 & kSignMask) == 0L ? 1 : -1;
 	}
-
 
 	// Returns the two boundaries of first argument.
 	// The bigger boundary (m_plus) is normalized. The lower boundary has the same
@@ -129,9 +129,5 @@ public class DoubleHelper {
 		m_minus.setF(m_minus.f() << (m_minus.e() - m_plus.e()));
 		m_minus.setE(m_plus.e());
 	}
-
-	private static final int kSignificandSize = 52;  // Excludes the hidden bit.
-	private static final int kExponentBias = 0x3FF + kSignificandSize;
-	private static final int kDenormalExponent = -kExponentBias + 1;
 
 }

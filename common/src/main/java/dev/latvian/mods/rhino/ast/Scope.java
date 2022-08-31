@@ -21,11 +21,44 @@ import java.util.Map;
  */
 public class Scope extends Jump {
 
+	/**
+	 * Creates a new scope node, moving symbol table information
+	 * from "scope" to the new node, and making "scope" a nested
+	 * scope contained by the new node.
+	 * Useful for injecting a new scope in a scope chain.
+	 */
+	public static Scope splitScope(Scope scope) {
+		Scope result = new Scope(scope.getType());
+		result.symbolTable = scope.symbolTable;
+		scope.symbolTable = null;
+		result.parent = scope.parent;
+		result.setParentScope(scope.getParentScope());
+		result.setParentScope(result);
+		scope.parent = result;
+		result.top = scope.top;
+		return result;
+	}
+
+	/**
+	 * Copies all symbols from source scope to dest scope.
+	 */
+	public static void joinScopes(Scope source, Scope dest) {
+		Map<String, AstSymbol> src = source.ensureSymbolTable();
+		Map<String, AstSymbol> dst = dest.ensureSymbolTable();
+		if (!Collections.disjoint(src.keySet(), dst.keySet())) {
+			codeBug();
+		}
+		for (Map.Entry<String, AstSymbol> entry : src.entrySet()) {
+			AstSymbol sym = entry.getValue();
+			sym.setContainingTable(dest);
+			dst.put(entry.getKey(), sym);
+		}
+	}
+
 	// Use LinkedHashMap so that the iteration order is the insertion order
 	protected Map<String, AstSymbol> symbolTable;
 	protected Scope parentScope;
 	protected ScriptNode top;     // current script or function scope
-
 	private List<Scope> childScopes;
 
 	{
@@ -121,40 +154,6 @@ public class Scope extends Jump {
 	 */
 	public void setTop(ScriptNode top) {
 		this.top = top;
-	}
-
-	/**
-	 * Creates a new scope node, moving symbol table information
-	 * from "scope" to the new node, and making "scope" a nested
-	 * scope contained by the new node.
-	 * Useful for injecting a new scope in a scope chain.
-	 */
-	public static Scope splitScope(Scope scope) {
-		Scope result = new Scope(scope.getType());
-		result.symbolTable = scope.symbolTable;
-		scope.symbolTable = null;
-		result.parent = scope.parent;
-		result.setParentScope(scope.getParentScope());
-		result.setParentScope(result);
-		scope.parent = result;
-		result.top = scope.top;
-		return result;
-	}
-
-	/**
-	 * Copies all symbols from source scope to dest scope.
-	 */
-	public static void joinScopes(Scope source, Scope dest) {
-		Map<String, AstSymbol> src = source.ensureSymbolTable();
-		Map<String, AstSymbol> dst = dest.ensureSymbolTable();
-		if (!Collections.disjoint(src.keySet(), dst.keySet())) {
-			codeBug();
-		}
-		for (Map.Entry<String, AstSymbol> entry : src.entrySet()) {
-			AstSymbol sym = entry.getValue();
-			sym.setContainingTable(dest);
-			dst.put(entry.getKey(), sym);
-		}
 	}
 
 	/**

@@ -103,28 +103,6 @@ package dev.latvian.mods.rhino;
 public class ContextFactory {
 	private static final ContextFactory global = new ContextFactory();
 
-	private volatile boolean sealed;
-
-	private final Object listenersLock = new Object();
-	private volatile Object listeners;
-	private boolean disabledListening;
-
-	/**
-	 * Listener of {@link Context} creation and release events.
-	 */
-	public interface Listener {
-		/**
-		 * Notify about newly created {@link Context} object.
-		 */
-		void contextCreated(Context cx);
-
-		/**
-		 * Notify that the specified {@link Context} instance is no longer
-		 * associated with the current thread.
-		 */
-		void contextReleased(Context cx);
-	}
-
 	/**
 	 * Get global ContextFactory.
 	 *
@@ -134,6 +112,11 @@ public class ContextFactory {
 	public static ContextFactory getGlobal() {
 		return global;
 	}
+
+	private final Object listenersLock = new Object();
+	private volatile boolean sealed;
+	private volatile Object listeners;
+	private boolean disabledListening;
 
 	/**
 	 * Create new {@link Context} instance to be associated with the current
@@ -359,5 +342,21 @@ public class ContextFactory {
 	 */
 	public final Context enterContext(Context cx) {
 		return Context.enter(cx, this);
+	}
+
+	/**
+	 * Listener of {@link Context} creation and release events.
+	 */
+	public interface Listener {
+		/**
+		 * Notify about newly created {@link Context} object.
+		 */
+		void contextCreated(Context cx);
+
+		/**
+		 * Notify that the specified {@link Context} instance is no longer
+		 * associated with the current thread.
+		 */
+		void contextReleased(Context cx);
 	}
 }

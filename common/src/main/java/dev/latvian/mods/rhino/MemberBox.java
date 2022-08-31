@@ -21,11 +21,49 @@ import java.lang.reflect.Modifier;
  */
 
 final class MemberBox {
-	private transient Member memberObject;
+	private static Method searchAccessibleMethod(Method method, Class<?>[] params) {
+		int modifiers = method.getModifiers();
+		if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers)) {
+			Class<?> c = method.getDeclaringClass();
+			if (!Modifier.isPublic(c.getModifiers())) {
+				String name = method.getName();
+				Class<?>[] intfs = c.getInterfaces();
+				for (int i = 0, N = intfs.length; i != N; ++i) {
+					Class<?> intf = intfs[i];
+					if (Modifier.isPublic(intf.getModifiers())) {
+						try {
+							return intf.getMethod(name, params);
+						} catch (NoSuchMethodException ex) {
+						} catch (SecurityException ex) {
+						}
+					}
+				}
+				for (; ; ) {
+					c = c.getSuperclass();
+					if (c == null) {
+						break;
+					}
+					if (Modifier.isPublic(c.getModifiers())) {
+						try {
+							Method m = c.getMethod(name, params);
+							int mModifiers = m.getModifiers();
+							if (Modifier.isPublic(mModifiers) && !Modifier.isStatic(mModifiers)) {
+								return m;
+							}
+						} catch (NoSuchMethodException ex) {
+						} catch (SecurityException ex) {
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+
 	transient Class<?>[] argTypes;
 	transient Object delegateTo;
 	transient boolean vararg;
-
+	private transient Member memberObject;
 
 	MemberBox(Method method) {
 		init(method);
@@ -155,45 +193,6 @@ final class MemberBox {
 		} catch (Exception ex) {
 			throw Context.throwAsScriptRuntimeEx(ex);
 		}
-	}
-
-	private static Method searchAccessibleMethod(Method method, Class<?>[] params) {
-		int modifiers = method.getModifiers();
-		if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers)) {
-			Class<?> c = method.getDeclaringClass();
-			if (!Modifier.isPublic(c.getModifiers())) {
-				String name = method.getName();
-				Class<?>[] intfs = c.getInterfaces();
-				for (int i = 0, N = intfs.length; i != N; ++i) {
-					Class<?> intf = intfs[i];
-					if (Modifier.isPublic(intf.getModifiers())) {
-						try {
-							return intf.getMethod(name, params);
-						} catch (NoSuchMethodException ex) {
-						} catch (SecurityException ex) {
-						}
-					}
-				}
-				for (; ; ) {
-					c = c.getSuperclass();
-					if (c == null) {
-						break;
-					}
-					if (Modifier.isPublic(c.getModifiers())) {
-						try {
-							Method m = c.getMethod(name, params);
-							int mModifiers = m.getModifiers();
-							if (Modifier.isPublic(mModifiers) && !Modifier.isStatic(mModifiers)) {
-								return m;
-							}
-						} catch (NoSuchMethodException ex) {
-						} catch (SecurityException ex) {
-						}
-					}
-				}
-			}
-		}
-		return null;
 	}
 }
 

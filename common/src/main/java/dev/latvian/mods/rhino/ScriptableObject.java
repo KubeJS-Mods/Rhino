@@ -93,35 +93,8 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	public static final int UNINITIALIZED_CONST = 0x08;
 
 	public static final int CONST = PERMANENT | READONLY | UNINITIALIZED_CONST;
-	/**
-	 * The prototype of this object.
-	 */
-	private Scriptable prototypeObject;
-
-	/**
-	 * The parent scope of this object.
-	 */
-	private Scriptable parentScopeObject;
-
-	/**
-	 * This holds all the slots. It may or may not be thread-safe, and may expand itself to
-	 * a different data structure depending on the size of the object.
-	 */
-	private final transient SlotMapContainer slotMap;
-
-	// Where external array data is stored.
-	private transient ExternalArrayData externalData;
-
-	private volatile Map<Object, Object> associatedValues;
-
-	enum SlotAccess {
-		QUERY, MODIFY, MODIFY_CONST, MODIFY_GETTER_SETTER, CONVERT_ACCESSOR_TO_DATA
-	}
-
-	private boolean isExtensible = true;
-	private boolean isSealed = false;
-
 	private static final Method GET_ARRAY_LENGTH;
+	private static final Comparator<Object> KEY_COMPARATOR = new KeyComparator();
 
 	static {
 		try {
@@ -138,10 +111,10 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	static class Slot {
 		Object name; // This can change due to caching
 		int indexOrHash;
-		private short attributes;
 		Object value;
 		transient Slot next; // next in hash table bucket
 		transient Slot orderedNext; // next in linked list
+		private short attributes;
 
 		Slot(Object name, int indexOrHash, int attributes) {
 			this.name = name;
@@ -180,16 +153,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			return buildDataDescriptor(scope, value, attributes);
 		}
 
-	}
-
-	protected static ScriptableObject buildDataDescriptor(Scriptable scope, Object value, int attributes) {
-		ScriptableObject desc = new NativeObject();
-		ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
-		desc.defineProperty("value", value, EMPTY);
-		desc.defineProperty("writable", (attributes & READONLY) == 0, EMPTY);
-		desc.defineProperty("enumerable", (attributes & DONTENUM) == 0, EMPTY);
-		desc.defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY);
-		return desc;
 	}
 
 	/**
@@ -313,6 +276,50 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		}
 	}
 
+	/**
+	 * This comparator sorts property fields in spec-compliant order. Numeric ids first, in numeric
+	 * order, followed by string ids, in insertion order. Since this class already keeps string keys
+	 * in insertion-time order, we treat all as equal. The "Arrays.sort" method will then not
+	 * change their order, but simply move all the numeric properties to the front, since this
+	 * method is defined to be stable.
+	 */
+	public static final class KeyComparator implements Comparator<Object>, Serializable {
+		@Serial
+		private static final long serialVersionUID = 6411335891523988149L;
+
+		@Override
+		public int compare(Object o1, Object o2) {
+			if (o1 instanceof Integer) {
+				if (o2 instanceof Integer) {
+					int i1 = (Integer) o1;
+					int i2 = (Integer) o2;
+					if (i1 < i2) {
+						return -1;
+					}
+					if (i1 > i2) {
+						return 1;
+					}
+					return 0;
+				}
+				return -1;
+			}
+			if (o2 instanceof Integer) {
+				return 1;
+			}
+			return 0;
+		}
+	}
+
+	protected static ScriptableObject buildDataDescriptor(Scriptable scope, Object value, int attributes) {
+		ScriptableObject desc = new NativeObject();
+		ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
+		desc.defineProperty("value", value, EMPTY);
+		desc.defineProperty("writable", (attributes & READONLY) == 0, EMPTY);
+		desc.defineProperty("enumerable", (attributes & DONTENUM) == 0, EMPTY);
+		desc.defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY);
+		return desc;
+	}
+
 	static void checkValidAttributes(int attributes) {
 		final int mask = READONLY | DONTENUM | PERMANENT | UNINITIALIZED_CONST;
 		if ((attributes & ~mask) != 0) {
@@ -322,616 +329,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 
 	private static SlotMapContainer createSlotMap(int initialSize) {
 		return new SlotMapContainer(initialSize);
-	}
-
-	public ScriptableObject() {
-		slotMap = createSlotMap(0);
-	}
-
-	public ScriptableObject(Scriptable scope, Scriptable prototype) {
-		if (scope == null) {
-			throw new IllegalArgumentException();
-		}
-
-		parentScopeObject = scope;
-		prototypeObject = prototype;
-		slotMap = createSlotMap(0);
-	}
-
-	/**
-	 * Gets the value that will be returned by calling the typeof operator on this object.
-	 *
-	 * @return default is "object" unless {@link #avoidObjectDetection()} is <code>true</code> in which
-	 * case it returns "undefined"
-	 */
-	@Override
-	public MemberType getTypeOf() {
-		return avoidObjectDetection() ? MemberType.UNDEFINED : MemberType.OBJECT;
-	}
-
-	/**
-	 * Return the name of the class.
-	 * <p>
-	 * This is typically the same name as the constructor.
-	 * Classes extending ScriptableObject must implement this abstract
-	 * method.
-	 */
-	@Override
-	public abstract String getClassName();
-
-	/**
-	 * Returns true if the named property is defined.
-	 *
-	 * @param name  the name of the property
-	 * @param start the object in which the lookup began
-	 * @return true if and only if the property was found in the object
-	 */
-	@Override
-	public boolean has(String name, Scriptable start) {
-		return null != slotMap.query(name, 0);
-	}
-
-	/**
-	 * Returns true if the property index is defined.
-	 *
-	 * @param index the numeric index for the property
-	 * @param start the object in which the lookup began
-	 * @return true if and only if the property was found in the object
-	 */
-	@Override
-	public boolean has(int index, Scriptable start) {
-		if (externalData != null) {
-			return (index < externalData.getArrayLength());
-		}
-		return null != slotMap.query(null, index);
-	}
-
-	/**
-	 * A version of "has" that supports symbols.
-	 */
-	@Override
-	public boolean has(Symbol key, Scriptable start) {
-		return null != slotMap.query(key, 0);
-	}
-
-	/**
-	 * Returns the value of the named property or NOT_FOUND.
-	 * <p>
-	 * If the property was created using defineProperty, the
-	 * appropriate getter method is called.
-	 *
-	 * @param name  the name of the property
-	 * @param start the object in which the lookup began
-	 * @return the value of the property (may be null), or NOT_FOUND
-	 */
-	@Override
-	public Object get(String name, Scriptable start) {
-		Slot slot = slotMap.query(name, 0);
-		if (slot == null) {
-			return NOT_FOUND;
-		}
-		return slot.getValue(start);
-	}
-
-	/**
-	 * Returns the value of the indexed property or NOT_FOUND.
-	 *
-	 * @param index the numeric index for the property
-	 * @param start the object in which the lookup began
-	 * @return the value of the property (may be null), or NOT_FOUND
-	 */
-	@Override
-	public Object get(int index, Scriptable start) {
-		if (externalData != null) {
-			if (index < externalData.getArrayLength()) {
-				return externalData.getArrayElement(index);
-			}
-			return NOT_FOUND;
-		}
-
-		Slot slot = slotMap.query(null, index);
-		if (slot == null) {
-			return NOT_FOUND;
-		}
-		return slot.getValue(start);
-	}
-
-	/**
-	 * Another version of Get that supports Symbol keyed properties.
-	 */
-	@Override
-	public Object get(Symbol key, Scriptable start) {
-		Slot slot = slotMap.query(key, 0);
-		if (slot == null) {
-			return NOT_FOUND;
-		}
-		return slot.getValue(start);
-	}
-
-	/**
-	 * Sets the value of the named property, creating it if need be.
-	 * <p>
-	 * If the property was created using defineProperty, the
-	 * appropriate setter method is called. <p>
-	 * <p>
-	 * If the property's attributes include READONLY, no action is
-	 * taken.
-	 * This method will actually set the property in the start
-	 * object.
-	 *
-	 * @param name  the name of the property
-	 * @param start the object whose property is being set
-	 * @param value value to set the property to
-	 */
-	@Override
-	public void put(String name, Scriptable start, Object value) {
-		if (putImpl(name, 0, start, value)) {
-			return;
-		}
-
-		if (start == this) {
-			throw Kit.codeBug();
-		}
-		start.put(name, start, value);
-	}
-
-	/**
-	 * Sets the value of the indexed property, creating it if need be.
-	 *
-	 * @param index the numeric index for the property
-	 * @param start the object whose property is being set
-	 * @param value value to set the property to
-	 */
-	@Override
-	public void put(int index, Scriptable start, Object value) {
-		if (externalData != null) {
-			if (index < externalData.getArrayLength()) {
-				externalData.setArrayElement(index, value);
-			} else {
-				throw new JavaScriptException(ScriptRuntime.newNativeError(Context.getCurrentContext(), this, TopLevel.NativeErrors.RangeError, new Object[]{"External array index out of bounds "}), null, 0);
-			}
-			return;
-		}
-
-		if (putImpl(null, index, start, value)) {
-			return;
-		}
-
-		if (start == this) {
-			throw Kit.codeBug();
-		}
-		start.put(index, start, value);
-	}
-
-	/**
-	 * Implementation of put required by SymbolScriptable objects.
-	 */
-	@Override
-	public void put(Symbol key, Scriptable start, Object value) {
-		if (putImpl(key, 0, start, value)) {
-			return;
-		}
-
-		if (start == this) {
-			throw Kit.codeBug();
-		}
-		ensureSymbolScriptable(start).put(key, start, value);
-	}
-
-	/**
-	 * Removes a named property from the object.
-	 * <p>
-	 * If the property is not found, or it has the PERMANENT attribute,
-	 * no action is taken.
-	 *
-	 * @param name the name of the property
-	 */
-	@Override
-	public void delete(String name) {
-		checkNotSealed(name, 0);
-		Slot s = slotMap.query(name, 0);
-		slotMap.remove(name, 0);
-		Deletable.deleteObject(s == null ? null : s.value);
-	}
-
-	/**
-	 * Removes the indexed property from the object.
-	 * <p>
-	 * If the property is not found, or it has the PERMANENT attribute,
-	 * no action is taken.
-	 *
-	 * @param index the numeric index for the property
-	 */
-	@Override
-	public void delete(int index) {
-		checkNotSealed(null, index);
-		Slot s = slotMap.query(null, index);
-		slotMap.remove(null, index);
-		Deletable.deleteObject(s == null ? null : s.value);
-	}
-
-	/**
-	 * Removes an object like the others, but using a Symbol as the key.
-	 */
-	@Override
-	public void delete(Symbol key) {
-		checkNotSealed(key, 0);
-		slotMap.remove(key, 0);
-	}
-
-	/**
-	 * Sets the value of the named const property, creating it if need be.
-	 * <p>
-	 * If the property was created using defineProperty, the
-	 * appropriate setter method is called. <p>
-	 * <p>
-	 * If the property's attributes include READONLY, no action is
-	 * taken.
-	 * This method will actually set the property in the start
-	 * object.
-	 *
-	 * @param name  the name of the property
-	 * @param start the object whose property is being set
-	 * @param value value to set the property to
-	 */
-	@Override
-	public void putConst(String name, Scriptable start, Object value) {
-		if (putConstImpl(name, 0, start, value, READONLY)) {
-			return;
-		}
-
-		if (start == this) {
-			throw Kit.codeBug();
-		}
-		if (start instanceof ConstProperties) {
-			((ConstProperties) start).putConst(name, start, value);
-		} else {
-			start.put(name, start, value);
-		}
-	}
-
-	@Override
-	public void defineConst(String name, Scriptable start) {
-		if (putConstImpl(name, 0, start, Undefined.instance, UNINITIALIZED_CONST)) {
-			return;
-		}
-
-		if (start == this) {
-			throw Kit.codeBug();
-		}
-		if (start instanceof ConstProperties) {
-			((ConstProperties) start).defineConst(name, start);
-		}
-	}
-
-	/**
-	 * Returns true if the named property is defined as a const on this object.
-	 *
-	 * @param name
-	 * @return true if the named property is defined as a const, false
-	 * otherwise.
-	 */
-	@Override
-	public boolean isConst(String name) {
-		Slot slot = slotMap.query(name, 0);
-		if (slot == null) {
-			return false;
-		}
-		return (slot.getAttributes() & (PERMANENT | READONLY)) == (PERMANENT | READONLY);
-
-	}
-
-	/**
-	 * Get the attributes of a named property.
-	 * <p>
-	 * The property is specified by <code>name</code>
-	 * as defined for <code>has</code>.<p>
-	 *
-	 * @param name the identifier for the property
-	 * @return the bitset of attributes
-	 * @throws EvaluatorException if the named property is not found
-	 * @see ScriptableObject#has(String, Scriptable)
-	 * @see ScriptableObject#READONLY
-	 * @see ScriptableObject#DONTENUM
-	 * @see ScriptableObject#PERMANENT
-	 * @see ScriptableObject#EMPTY
-	 */
-	public int getAttributes(String name) {
-		return findAttributeSlot(name, 0, SlotAccess.QUERY).getAttributes();
-	}
-
-	/**
-	 * Get the attributes of an indexed property.
-	 *
-	 * @param index the numeric index for the property
-	 * @return the bitset of attributes
-	 * @throws EvaluatorException if the named property is not found
-	 *                            is not found
-	 * @see ScriptableObject#has(String, Scriptable)
-	 * @see ScriptableObject#READONLY
-	 * @see ScriptableObject#DONTENUM
-	 * @see ScriptableObject#PERMANENT
-	 * @see ScriptableObject#EMPTY
-	 */
-	public int getAttributes(int index) {
-		return findAttributeSlot(null, index, SlotAccess.QUERY).getAttributes();
-	}
-
-	public int getAttributes(Symbol sym) {
-		return findAttributeSlot(sym, SlotAccess.QUERY).getAttributes();
-	}
-
-
-	/**
-	 * Set the attributes of a named property.
-	 * <p>
-	 * The property is specified by <code>name</code>
-	 * as defined for <code>has</code>.<p>
-	 * <p>
-	 * The possible attributes are READONLY, DONTENUM,
-	 * and PERMANENT. Combinations of attributes
-	 * are expressed by the bitwise OR of attributes.
-	 * EMPTY is the state of no attributes set. Any unused
-	 * bits are reserved for future use.
-	 *
-	 * @param name       the name of the property
-	 * @param attributes the bitset of attributes
-	 * @throws EvaluatorException if the named property is not found
-	 * @see Scriptable#has(String, Scriptable)
-	 * @see ScriptableObject#READONLY
-	 * @see ScriptableObject#DONTENUM
-	 * @see ScriptableObject#PERMANENT
-	 * @see ScriptableObject#EMPTY
-	 */
-	public void setAttributes(String name, int attributes) {
-		checkNotSealed(name, 0);
-		findAttributeSlot(name, 0, SlotAccess.MODIFY).setAttributes(attributes);
-	}
-
-	/**
-	 * Set the attributes of an indexed property.
-	 *
-	 * @param index      the numeric index for the property
-	 * @param attributes the bitset of attributes
-	 * @throws EvaluatorException if the named property is not found
-	 * @see Scriptable#has(String, Scriptable)
-	 * @see ScriptableObject#READONLY
-	 * @see ScriptableObject#DONTENUM
-	 * @see ScriptableObject#PERMANENT
-	 * @see ScriptableObject#EMPTY
-	 */
-	public void setAttributes(int index, int attributes) {
-		checkNotSealed(null, index);
-		findAttributeSlot(null, index, SlotAccess.MODIFY).setAttributes(attributes);
-	}
-
-	/**
-	 * Set attributes of a Symbol-keyed property.
-	 */
-	public void setAttributes(Symbol key, int attributes) {
-		checkNotSealed(key, 0);
-		findAttributeSlot(key, SlotAccess.MODIFY).setAttributes(attributes);
-	}
-
-	/**
-	 * XXX: write docs.
-	 */
-	public void setGetterOrSetter(String name, int index, Callable getterOrSetter, boolean isSetter) {
-		setGetterOrSetter(name, index, getterOrSetter, isSetter, false);
-	}
-
-	private void setGetterOrSetter(String name, int index, Callable getterOrSetter, boolean isSetter, boolean force) {
-		if (name != null && index != 0) {
-			throw new IllegalArgumentException(name);
-		}
-
-		if (!force) {
-			checkNotSealed(name, index);
-		}
-
-		final GetterSlot gslot;
-		if (isExtensible()) {
-			gslot = (GetterSlot) slotMap.get(name, index, SlotAccess.MODIFY_GETTER_SETTER);
-		} else {
-			Slot slot = slotMap.query(name, index);
-			if (!(slot instanceof GetterSlot)) {
-				return;
-			}
-			gslot = (GetterSlot) slot;
-		}
-
-		if (!force) {
-			int attributes = gslot.getAttributes();
-			if ((attributes & READONLY) != 0) {
-				throw Context.reportRuntimeError1("msg.modify.readonly", name);
-			}
-		}
-		if (isSetter) {
-			gslot.setter = getterOrSetter;
-		} else {
-			gslot.getter = getterOrSetter;
-		}
-		gslot.value = Undefined.instance;
-	}
-
-	/**
-	 * Get the getter or setter for a given property. Used by __lookupGetter__
-	 * and __lookupSetter__.
-	 *
-	 * @param name     Name of the object. If nonnull, index must be 0.
-	 * @param index    Index of the object. If nonzero, name must be null.
-	 * @param isSetter If true, return the setter, otherwise return the getter.
-	 * @return Null if the property does not exist. Otherwise returns either
-	 * the getter or the setter for the property, depending on
-	 * the value of isSetter (may be undefined if unset).
-	 * @throws IllegalArgumentException if both name and index are nonnull
-	 *                                  and nonzero respectively.
-	 */
-	public Object getGetterOrSetter(String name, int index, boolean isSetter) {
-		if (name != null && index != 0) {
-			throw new IllegalArgumentException(name);
-		}
-		Slot slot = slotMap.query(name, index);
-		if (slot == null) {
-			return null;
-		}
-		if (slot instanceof GetterSlot gslot) {
-			Object result = isSetter ? gslot.setter : gslot.getter;
-			return result != null ? result : Undefined.instance;
-		}
-		return Undefined.instance;
-	}
-
-	/**
-	 * Returns whether a property is a getter or a setter
-	 *
-	 * @param name   property name
-	 * @param index  property index
-	 * @param setter true to check for a setter, false for a getter
-	 * @return whether the property is a getter or a setter
-	 */
-	protected boolean isGetterOrSetter(String name, int index, boolean setter) {
-		Slot slot = slotMap.query(name, index);
-		if (slot instanceof GetterSlot) {
-			if (setter && ((GetterSlot) slot).setter != null) {
-				return true;
-			}
-			return !setter && ((GetterSlot) slot).getter != null;
-		}
-		return false;
-	}
-
-	void addLazilyInitializedValue(String name, int index, LazilyLoadedCtor init, int attributes) {
-		if (name != null && index != 0) {
-			throw new IllegalArgumentException(name);
-		}
-		checkNotSealed(name, index);
-		GetterSlot gslot = (GetterSlot) slotMap.get(name, index, SlotAccess.MODIFY_GETTER_SETTER);
-		gslot.setAttributes(attributes);
-		gslot.getter = null;
-		gslot.setter = null;
-		gslot.value = init;
-	}
-
-	/**
-	 * Attach the specified object to this object, and delegate all indexed property lookups to it. In other words,
-	 * if the object has 3 elements, then an attempt to look up or modify "[0]", "[1]", or "[2]" will be delegated
-	 * to this object. Additional indexed properties outside the range specified, and additional non-indexed
-	 * properties, may still be added. The object specified must implement the ExternalArrayData interface.
-	 *
-	 * @param array the List to use for delegated property access. Set this to null to revert back to regular
-	 *              property access.
-	 * @since 1.7.6
-	 */
-	public void setExternalArrayData(ExternalArrayData array) {
-		externalData = array;
-
-		if (array == null) {
-			delete("length");
-		} else {
-			// Define "length" to return whatever length the List gives us.
-			defineProperty("length", null, GET_ARRAY_LENGTH, null, READONLY | DONTENUM);
-		}
-	}
-
-	/**
-	 * Return the array that was previously set by the call to "setExternalArrayData".
-	 *
-	 * @return the array, or null if it was never set
-	 * @since 1.7.6
-	 */
-	public ExternalArrayData getExternalArrayData() {
-		return externalData;
-	}
-
-	/**
-	 * This is a function used by setExternalArrayData to dynamically get the "length" property value.
-	 */
-	public Object getExternalArrayLength() {
-		return externalData == null ? 0 : externalData.getArrayLength();
-	}
-
-	/**
-	 * Returns the prototype of the object.
-	 */
-	@Override
-	public Scriptable getPrototype() {
-		return prototypeObject;
-	}
-
-	/**
-	 * Sets the prototype of the object.
-	 */
-	@Override
-	public void setPrototype(Scriptable m) {
-		prototypeObject = m;
-	}
-
-	/**
-	 * Returns the parent (enclosing) scope of the object.
-	 */
-	@Override
-	public Scriptable getParentScope() {
-		return parentScopeObject;
-	}
-
-	/**
-	 * Sets the parent (enclosing) scope of the object.
-	 */
-	@Override
-	public void setParentScope(Scriptable m) {
-		parentScopeObject = m;
-	}
-
-	/**
-	 * Returns an array of ids for the properties of the object.
-	 *
-	 * <p>Any properties with the attribute DONTENUM are not listed. <p>
-	 *
-	 * @return an array of java.lang.Objects with an entry for every
-	 * listed property. Properties accessed via an integer index will
-	 * have a corresponding
-	 * Integer entry in the returned array. Properties accessed by
-	 * a String will have a String entry in the returned array.
-	 */
-	@Override
-	public Object[] getIds() {
-		return getIds(false, false);
-	}
-
-	/**
-	 * Returns an array of ids for the properties of the object.
-	 *
-	 * <p>All properties, even those with attribute DONTENUM, are listed. <p>
-	 *
-	 * @return an array of java.lang.Objects with an entry for every
-	 * listed property. Properties accessed via an integer index will
-	 * have a corresponding
-	 * Integer entry in the returned array. Properties accessed by
-	 * a String will have a String entry in the returned array.
-	 */
-	@Override
-	public Object[] getAllIds() {
-		return getIds(true, false);
-	}
-
-	/**
-	 * Implements the [[DefaultValue]] internal method.
-	 *
-	 * <p>Note that the toPrimitive conversion is a no-op for
-	 * every type other than Object, for which [[DefaultValue]]
-	 * is called. See ECMA 9.1.<p>
-	 * <p>
-	 * A <code>hint</code> of null means "no hint".
-	 *
-	 * @param typeHint the type hint
-	 * @return the default value for the object
-	 * <p>
-	 * See ECMA 8.6.2.6.
-	 */
-	@Override
-	public Object getDefaultValue(Class<?> typeHint) {
-		return getDefaultValue(this, typeHint);
 	}
 
 	public static Object getDefaultValue(Scriptable object, Class<?> typeHint) {
@@ -978,57 +375,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		// fall through to error
 		String arg = (typeHint == null) ? "undefined" : typeHint.getName();
 		throw ScriptRuntime.typeError1("msg.default.value", arg);
-	}
-
-	/**
-	 * Implements the instanceof operator.
-	 *
-	 * <p>This operator has been proposed to ECMA.
-	 *
-	 * @param instance The value that appeared on the LHS of the instanceof
-	 *                 operator
-	 * @return true if "this" appears in value's prototype chain
-	 */
-	@Override
-	public boolean hasInstance(Scriptable instance) {
-		// Default for JS objects (other than Function) is to do prototype
-		// chasing.  This will be overridden in NativeFunction and non-JS
-		// objects.
-
-		return ScriptRuntime.jsDelegatesTo(instance, this);
-	}
-
-	/**
-	 * Emulate the SpiderMonkey (and Firefox) feature of allowing
-	 * custom objects to avoid detection by normal "object detection"
-	 * code patterns. This is used to implement document.all.
-	 * See https://bugzilla.mozilla.org/show_bug.cgi?id=412247.
-	 * This is an analog to JOF_DETECTING from SpiderMonkey; see
-	 * https://bugzilla.mozilla.org/show_bug.cgi?id=248549.
-	 * Other than this special case, embeddings should return false.
-	 *
-	 * @return true if this object should avoid object detection
-	 * @since 1.7R1
-	 */
-	public boolean avoidObjectDetection() {
-		return false;
-	}
-
-	/**
-	 * Custom <code>==</code> operator.
-	 * Must return {@link Scriptable#NOT_FOUND} if this object does not
-	 * have custom equality operator for the given value,
-	 * <code>Boolean.TRUE</code> if this object is equivalent to <code>value</code>,
-	 * <code>Boolean.FALSE</code> if this object is not equivalent to
-	 * <code>value</code>.
-	 * <p>
-	 * The default implementation returns Boolean.TRUE
-	 * if <code>this == value</code> or {@link Scriptable#NOT_FOUND} otherwise.
-	 * It indicates that by default custom equality is available only if
-	 * <code>value</code> is <code>this</code> in which case true is returned.
-	 */
-	protected Object equivalentValues(Object value) {
-		return (this == value) ? Boolean.TRUE : NOT_FOUND;
 	}
 
 	/**
@@ -1460,35 +806,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	}
 
 	/**
-	 * Define a JavaScript property.
-	 * <p>
-	 * Creates the property with an initial value and sets its attributes.
-	 *
-	 * @param propertyName the name of the property to define.
-	 * @param value        the initial value of the property
-	 * @param attributes   the attributes of the JavaScript property
-	 * @see Scriptable#put(String, Scriptable, Object)
-	 */
-	public void defineProperty(String propertyName, Object value, int attributes) {
-		checkNotSealed(propertyName, 0);
-		put(propertyName, this, value);
-		setAttributes(propertyName, attributes);
-	}
-
-	/**
-	 * A version of defineProperty that uses a Symbol key.
-	 *
-	 * @param key        symbol of the property to define.
-	 * @param value      the initial value of the property
-	 * @param attributes the attributes of the JavaScript property
-	 */
-	public void defineProperty(Symbol key, Object value, int attributes) {
-		checkNotSealed(key, 0);
-		put(key, this, value);
-		setAttributes(key, attributes);
-	}
-
-	/**
 	 * Utility method to add properties to arbitrary Scriptable object.
 	 * If destination is instance of ScriptableObject, calls
 	 * defineProperty there, otherwise calls put in destination
@@ -1524,413 +841,12 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		}
 	}
 
-	/**
-	 * Define a JavaScript property with getter and setter side effects.
-	 * <p>
-	 * If the setter is not found, the attribute READONLY is added to
-	 * the given attributes. <p>
-	 * <p>
-	 * The getter must be a method with zero parameters, and the setter, if
-	 * found, must be a method with one parameter.<p>
-	 *
-	 * @param propertyName the name of the property to define. This name
-	 *                     also affects the name of the setter and getter
-	 *                     to search for. If the propertyId is "foo", then
-	 *                     <code>clazz</code> will be searched for "getFoo"
-	 *                     and "setFoo" methods.
-	 * @param clazz        the Java class to search for the getter and setter
-	 * @param attributes   the attributes of the JavaScript property
-	 * @see Scriptable#put(String, Scriptable, Object)
-	 */
-	public void defineProperty(String propertyName, Class<?> clazz, int attributes) {
-		int length = propertyName.length();
-		if (length == 0) {
-			throw new IllegalArgumentException();
-		}
-		char[] buf = new char[3 + length];
-		propertyName.getChars(0, length, buf, 3);
-		buf[3] = Character.toUpperCase(buf[3]);
-		buf[0] = 'g';
-		buf[1] = 'e';
-		buf[2] = 't';
-		String getterName = new String(buf);
-		buf[0] = 's';
-		String setterName = new String(buf);
-
-		Method[] methods = FunctionObject.getMethodList(clazz);
-		Method getter = FunctionObject.findSingleMethod(methods, getterName);
-		Method setter = FunctionObject.findSingleMethod(methods, setterName);
-		if (setter == null) {
-			attributes |= ScriptableObject.READONLY;
-		}
-		defineProperty(propertyName, null, getter, setter, attributes);
-	}
-
-	/**
-	 * Define a JavaScript property.
-	 * <p>
-	 * Use this method only if you wish to define getters and setters for
-	 * a given property in a ScriptableObject. To create a property without
-	 * special getter or setter side effects, use
-	 * <code>defineProperty(String,int)</code>.
-	 * <p>
-	 * If <code>setter</code> is null, the attribute READONLY is added to
-	 * the given attributes.<p>
-	 * <p>
-	 * Several forms of getters or setters are allowed. In all cases the
-	 * type of the value parameter can be any one of the following types:
-	 * Object, String, boolean, Scriptable, byte, short, int, long, float,
-	 * or double. The runtime will perform appropriate conversions based
-	 * upon the type of the parameter (see description in FunctionObject).
-	 * The first forms are nonstatic methods of the class referred to
-	 * by 'this':
-	 * <pre>
-	 * Object getFoo();
-	 * void setFoo(SomeType value);</pre>
-	 * Next are static methods that may be of any class; the object whose
-	 * property is being accessed is passed in as an extra argument:
-	 * <pre>
-	 * static Object getFoo(Scriptable obj);
-	 * static void setFoo(Scriptable obj, SomeType value);</pre>
-	 * Finally, it is possible to delegate to another object entirely using
-	 * the <code>delegateTo</code> parameter. In this case the methods are
-	 * nonstatic methods of the class delegated to, and the object whose
-	 * property is being accessed is passed in as an extra argument:
-	 * <pre>
-	 * Object getFoo(Scriptable obj);
-	 * void setFoo(Scriptable obj, SomeType value);</pre>
-	 *
-	 * @param propertyName the name of the property to define.
-	 * @param delegateTo   an object to call the getter and setter methods on,
-	 *                     or null, depending on the form used above.
-	 * @param getter       the method to invoke to get the value of the property
-	 * @param setter       the method to invoke to set the value of the property
-	 * @param attributes   the attributes of the JavaScript property
-	 */
-	public void defineProperty(String propertyName, Object delegateTo, Method getter, Method setter, int attributes) {
-		MemberBox getterBox = null;
-		if (getter != null) {
-			getterBox = new MemberBox(getter);
-
-			boolean delegatedForm;
-			if (!Modifier.isStatic(getter.getModifiers())) {
-				delegatedForm = (delegateTo != null);
-				getterBox.delegateTo = delegateTo;
-			} else {
-				delegatedForm = true;
-				// Ignore delegateTo for static getter but store
-				// non-null delegateTo indicator.
-				getterBox.delegateTo = Void.TYPE;
-			}
-
-			String errorId = null;
-			Class<?>[] parmTypes = getter.getParameterTypes();
-			if (parmTypes.length == 0) {
-				if (delegatedForm) {
-					errorId = "msg.obj.getter.parms";
-				}
-			} else if (parmTypes.length == 1) {
-				Object argType = parmTypes[0];
-				// Allow ScriptableObject for compatibility
-				if (!(argType == ScriptRuntime.ScriptableClass || argType == ScriptRuntime.ScriptableObjectClass)) {
-					errorId = "msg.bad.getter.parms";
-				} else if (!delegatedForm) {
-					errorId = "msg.bad.getter.parms";
-				}
-			} else {
-				errorId = "msg.bad.getter.parms";
-			}
-			if (errorId != null) {
-				throw Context.reportRuntimeError1(errorId, getter.toString());
-			}
-		}
-
-		MemberBox setterBox = null;
-		if (setter != null) {
-			if (setter.getReturnType() != Void.TYPE) {
-				throw Context.reportRuntimeError1("msg.setter.return", setter.toString());
-			}
-
-			setterBox = new MemberBox(setter);
-
-			boolean delegatedForm;
-			if (!Modifier.isStatic(setter.getModifiers())) {
-				delegatedForm = (delegateTo != null);
-				setterBox.delegateTo = delegateTo;
-			} else {
-				delegatedForm = true;
-				// Ignore delegateTo for static setter but store
-				// non-null delegateTo indicator.
-				setterBox.delegateTo = Void.TYPE;
-			}
-
-			String errorId = null;
-			Class<?>[] parmTypes = setter.getParameterTypes();
-			if (parmTypes.length == 1) {
-				if (delegatedForm) {
-					errorId = "msg.setter2.expected";
-				}
-			} else if (parmTypes.length == 2) {
-				Object argType = parmTypes[0];
-				// Allow ScriptableObject for compatibility
-				if (!(argType == ScriptRuntime.ScriptableClass || argType == ScriptRuntime.ScriptableObjectClass)) {
-					errorId = "msg.setter2.parms";
-				} else if (!delegatedForm) {
-					errorId = "msg.setter1.parms";
-				}
-			} else {
-				errorId = "msg.setter.parms";
-			}
-			if (errorId != null) {
-				throw Context.reportRuntimeError1(errorId, setter.toString());
-			}
-		}
-
-		GetterSlot gslot = (GetterSlot) slotMap.get(propertyName, 0, SlotAccess.MODIFY_GETTER_SETTER);
-		gslot.setAttributes(attributes);
-		gslot.getter = getterBox;
-		gslot.setter = setterBox;
-	}
-
-	/**
-	 * Defines one or more properties on this object.
-	 *
-	 * @param cx    the current Context
-	 * @param props a map of property ids to property descriptors
-	 */
-	public void defineOwnProperties(Context cx, ScriptableObject props) {
-		Object[] ids = props.getIds(false, true);
-		ScriptableObject[] descs = new ScriptableObject[ids.length];
-		for (int i = 0, len = ids.length; i < len; ++i) {
-			Object descObj = ScriptRuntime.getObjectElem(props, ids[i], cx);
-			ScriptableObject desc = ensureScriptableObject(descObj);
-			checkPropertyDefinition(desc);
-			descs[i] = desc;
-		}
-		for (int i = 0, len = ids.length; i < len; ++i) {
-			defineOwnProperty(cx, ids[i], descs[i]);
-		}
-	}
-
-	/**
-	 * Defines a property on an object.
-	 *
-	 * @param cx   the current Context
-	 * @param id   the name/index of the property
-	 * @param desc the new property descriptor, as described in 8.6.1
-	 */
-	public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
-		checkPropertyDefinition(desc);
-		defineOwnProperty(cx, id, desc, true);
-	}
-
-	/**
-	 * Defines a property on an object.
-	 * <p>
-	 * Based on [[DefineOwnProperty]] from 8.12.10 of the spec.
-	 *
-	 * @param cx         the current Context
-	 * @param id         the name/index of the property
-	 * @param desc       the new property descriptor, as described in 8.6.1
-	 * @param checkValid whether to perform validity checks
-	 */
-	protected void defineOwnProperty(Context cx, Object id, ScriptableObject desc, boolean checkValid) {
-
-		Slot slot = getSlot(cx, id, SlotAccess.QUERY);
-		boolean isNew = slot == null;
-
-		if (checkValid) {
-			ScriptableObject current = slot == null ? null : slot.getPropertyDescriptor(cx, this);
-			checkPropertyChange(id, current, desc);
-		}
-
-		boolean isAccessor = isAccessorDescriptor(desc);
-		final int attributes;
-
-		if (slot == null) { // new slot
-			slot = getSlot(cx, id, isAccessor ? SlotAccess.MODIFY_GETTER_SETTER : SlotAccess.MODIFY);
-			attributes = applyDescriptorToAttributeBitset(DONTENUM | READONLY | PERMANENT, desc);
-		} else {
-			attributes = applyDescriptorToAttributeBitset(slot.getAttributes(), desc);
-		}
-
-		if (isAccessor) {
-			if (!(slot instanceof GetterSlot)) {
-				slot = getSlot(cx, id, SlotAccess.MODIFY_GETTER_SETTER);
-			}
-
-			GetterSlot gslot = (GetterSlot) slot;
-
-			Object getter = getProperty(desc, "get");
-			if (getter != NOT_FOUND) {
-				gslot.getter = getter;
-			}
-			Object setter = getProperty(desc, "set");
-			if (setter != NOT_FOUND) {
-				gslot.setter = setter;
-			}
-
-			gslot.value = Undefined.instance;
-			gslot.setAttributes(attributes);
-		} else {
-			if (slot instanceof GetterSlot && isDataDescriptor(desc)) {
-				slot = getSlot(cx, id, SlotAccess.CONVERT_ACCESSOR_TO_DATA);
-			}
-
-			Object value = getProperty(desc, "value");
-			if (value != NOT_FOUND) {
-				slot.value = value;
-			} else if (isNew) {
-				slot.value = Undefined.instance;
-			}
-			slot.setAttributes(attributes);
-		}
-	}
-
-	protected void checkPropertyDefinition(ScriptableObject desc) {
-		Object getter = getProperty(desc, "get");
-		if (getter != NOT_FOUND && getter != Undefined.instance && !(getter instanceof Callable)) {
-			throw ScriptRuntime.notFunctionError(getter);
-		}
-		Object setter = getProperty(desc, "set");
-		if (setter != NOT_FOUND && setter != Undefined.instance && !(setter instanceof Callable)) {
-			throw ScriptRuntime.notFunctionError(setter);
-		}
-		if (isDataDescriptor(desc) && isAccessorDescriptor(desc)) {
-			throw ScriptRuntime.typeError0("msg.both.data.and.accessor.desc");
-		}
-	}
-
-	protected void checkPropertyChange(Object id, ScriptableObject current, ScriptableObject desc) {
-		if (current == null) { // new property
-			if (!isExtensible()) {
-				throw ScriptRuntime.typeError0("msg.not.extensible");
-			}
-		} else {
-			if (isFalse(current.get("configurable", current))) {
-				if (isTrue(getProperty(desc, "configurable"))) {
-					throw ScriptRuntime.typeError1("msg.change.configurable.false.to.true", id);
-				}
-				if (isTrue(current.get("enumerable", current)) != isTrue(getProperty(desc, "enumerable"))) {
-					throw ScriptRuntime.typeError1("msg.change.enumerable.with.configurable.false", id);
-				}
-				boolean isData = isDataDescriptor(desc);
-				boolean isAccessor = isAccessorDescriptor(desc);
-				if (!isData && !isAccessor) {
-					// no further validation required for generic descriptor
-				} else if (isData && isDataDescriptor(current)) {
-					if (isFalse(current.get("writable", current))) {
-						if (isTrue(getProperty(desc, "writable"))) {
-							throw ScriptRuntime.typeError1("msg.change.writable.false.to.true.with.configurable.false", id);
-						}
-
-						if (!sameValue(getProperty(desc, "value"), current.get("value", current))) {
-							throw ScriptRuntime.typeError1("msg.change.value.with.writable.false", id);
-						}
-					}
-				} else if (isAccessor && isAccessorDescriptor(current)) {
-					if (!sameValue(getProperty(desc, "set"), current.get("set", current))) {
-						throw ScriptRuntime.typeError1("msg.change.setter.with.configurable.false", id);
-					}
-
-					if (!sameValue(getProperty(desc, "get"), current.get("get", current))) {
-						throw ScriptRuntime.typeError1("msg.change.getter.with.configurable.false", id);
-					}
-				} else {
-					if (isDataDescriptor(current)) {
-						throw ScriptRuntime.typeError1("msg.change.property.data.to.accessor.with.configurable.false", id);
-					}
-					throw ScriptRuntime.typeError1("msg.change.property.accessor.to.data.with.configurable.false", id);
-				}
-			}
-		}
-	}
-
 	protected static boolean isTrue(Object value) {
 		return (value != NOT_FOUND) && ScriptRuntime.toBoolean(value);
 	}
 
 	protected static boolean isFalse(Object value) {
 		return !isTrue(value);
-	}
-
-	/**
-	 * Implements SameValue as described in ES5 9.12, additionally checking
-	 * if new value is defined.
-	 *
-	 * @param newValue     the new value
-	 * @param currentValue the current value
-	 * @return true if values are the same as defined by ES5 9.12
-	 */
-	protected boolean sameValue(Object newValue, Object currentValue) {
-		if (newValue == NOT_FOUND) {
-			return true;
-		}
-		if (currentValue == NOT_FOUND) {
-			currentValue = Undefined.instance;
-		}
-		// Special rules for numbers: NaN is considered the same value,
-		// while zeroes with different signs are considered different.
-		if (currentValue instanceof Number && newValue instanceof Number) {
-			double d1 = ((Number) currentValue).doubleValue();
-			double d2 = ((Number) newValue).doubleValue();
-			if (Double.isNaN(d1) && Double.isNaN(d2)) {
-				return true;
-			}
-			if (d1 == 0.0 && Double.doubleToLongBits(d1) != Double.doubleToLongBits(d2)) {
-				return false;
-			}
-		}
-		return ScriptRuntime.shallowEq(currentValue, newValue);
-	}
-
-	protected int applyDescriptorToAttributeBitset(int attributes, ScriptableObject desc) {
-		Object enumerable = getProperty(desc, "enumerable");
-		if (enumerable != NOT_FOUND) {
-			attributes = ScriptRuntime.toBoolean(enumerable) ? attributes & ~DONTENUM : attributes | DONTENUM;
-		}
-
-		Object writable = getProperty(desc, "writable");
-		if (writable != NOT_FOUND) {
-			attributes = ScriptRuntime.toBoolean(writable) ? attributes & ~READONLY : attributes | READONLY;
-		}
-
-		Object configurable = getProperty(desc, "configurable");
-		if (configurable != NOT_FOUND) {
-			attributes = ScriptRuntime.toBoolean(configurable) ? attributes & ~PERMANENT : attributes | PERMANENT;
-		}
-
-		return attributes;
-	}
-
-	/**
-	 * Implements IsDataDescriptor as described in ES5 8.10.2
-	 *
-	 * @param desc a property descriptor
-	 * @return true if this is a data descriptor.
-	 */
-	protected boolean isDataDescriptor(ScriptableObject desc) {
-		return hasProperty(desc, "value") || hasProperty(desc, "writable");
-	}
-
-	/**
-	 * Implements IsAccessorDescriptor as described in ES5 8.10.1
-	 *
-	 * @param desc a property descriptor
-	 * @return true if this is an accessor descriptor.
-	 */
-	protected boolean isAccessorDescriptor(ScriptableObject desc) {
-		return hasProperty(desc, "get") || hasProperty(desc, "set");
-	}
-
-	/**
-	 * Implements IsGenericDescriptor as described in ES5 8.10.3
-	 *
-	 * @param desc a property descriptor
-	 * @return true if this is a generic descriptor.
-	 */
-	protected boolean isGenericDescriptor(ScriptableObject desc) {
-		return !isDataDescriptor(desc) && !isAccessorDescriptor(desc);
 	}
 
 	protected static Scriptable ensureScriptable(Object arg) {
@@ -1952,32 +868,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(arg));
 		}
 		return (ScriptableObject) arg;
-	}
-
-	/**
-	 * Search for names in a class, adding the resulting methods
-	 * as properties.
-	 *
-	 * <p> Uses reflection to find the methods of the given names. Then
-	 * FunctionObjects are constructed from the methods found, and
-	 * are added to this object as properties with the given names.
-	 *
-	 * @param names      the names of the Methods to add as function properties
-	 * @param clazz      the class to search for the Methods
-	 * @param attributes the attributes of the new properties
-	 * @see FunctionObject
-	 */
-	public void defineFunctionProperties(String[] names, Class<?> clazz, int attributes) {
-		Method[] methods = FunctionObject.getMethodList(clazz);
-		for (int i = 0; i < names.length; i++) {
-			String name = names[i];
-			Method m = FunctionObject.findSingleMethod(methods, name);
-			if (m == null) {
-				throw Context.reportRuntimeError2("msg.method.not.found", name, clazz.getName());
-			}
-			FunctionObject f = new FunctionObject(name, m, this);
-			defineProperty(name, f, attributes);
-		}
 	}
 
 	/**
@@ -2057,64 +947,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			}
 			obj = parent;
 		}
-	}
-
-	public boolean isExtensible() {
-		return isExtensible;
-	}
-
-	public void preventExtensions() {
-		isExtensible = false;
-	}
-
-	/**
-	 * Seal this object.
-	 * <p>
-	 * It is an error to add properties to or delete properties from
-	 * a sealed object. It is possible to change the value of an
-	 * existing property. Once an object is sealed it may not be unsealed.
-	 *
-	 * @since 1.4R3
-	 */
-	public void sealObject() {
-		if (!isSealed) {
-			final long stamp = slotMap.readLock();
-			try {
-				for (Slot slot : slotMap) {
-					Object value = slot.value;
-					if (value instanceof LazilyLoadedCtor initializer) {
-						try {
-							initializer.init();
-						} finally {
-							slot.value = initializer.getValue();
-						}
-					}
-				}
-				isSealed = true;
-			} finally {
-				slotMap.unlockRead(stamp);
-			}
-		}
-	}
-
-	/**
-	 * Return true if this object is sealed.
-	 *
-	 * @return true if sealed, false otherwise.
-	 * @see #sealObject()
-	 * @since 1.4R3
-	 */
-	public final boolean isSealed() {
-		return isSealed;
-	}
-
-	private void checkNotSealed(Object key, int index) {
-		if (!isSealed()) {
-			return;
-		}
-
-		String str = (key != null) ? key.toString() : Integer.toString(index);
-		throw Context.reportRuntimeError1("msg.modify.sealed", str);
 	}
 
 	/**
@@ -2495,20 +1327,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	}
 
 	/**
-	 * Get arbitrary application-specific value associated with this object.
-	 *
-	 * @param key key object to select particular value.
-	 * @see #associateValue(Object key, Object value)
-	 */
-	public final Object getAssociatedValue(Object key) {
-		Map<Object, Object> h = associatedValues;
-		if (h == null) {
-			return null;
-		}
-		return h.get(key);
-	}
-
-	/**
 	 * Get arbitrary application-specific value associated with the top scope
 	 * of the given scope.
 	 * The method first calls {@link #getTopLevelScope(Scriptable scope)}
@@ -2533,6 +1351,1213 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 				return null;
 			}
 		}
+	}
+
+	/**
+	 * This holds all the slots. It may or may not be thread-safe, and may expand itself to
+	 * a different data structure depending on the size of the object.
+	 */
+	private final transient SlotMapContainer slotMap;
+	/**
+	 * The prototype of this object.
+	 */
+	private Scriptable prototypeObject;
+	/**
+	 * The parent scope of this object.
+	 */
+	private Scriptable parentScopeObject;
+	// Where external array data is stored.
+	private transient ExternalArrayData externalData;
+	private volatile Map<Object, Object> associatedValues;
+	private boolean isExtensible = true;
+	private boolean isSealed = false;
+
+	public ScriptableObject() {
+		slotMap = createSlotMap(0);
+	}
+
+	public ScriptableObject(Scriptable scope, Scriptable prototype) {
+		if (scope == null) {
+			throw new IllegalArgumentException();
+		}
+
+		parentScopeObject = scope;
+		prototypeObject = prototype;
+		slotMap = createSlotMap(0);
+	}
+
+	/**
+	 * Gets the value that will be returned by calling the typeof operator on this object.
+	 *
+	 * @return default is "object" unless {@link #avoidObjectDetection()} is <code>true</code> in which
+	 * case it returns "undefined"
+	 */
+	@Override
+	public MemberType getTypeOf() {
+		return avoidObjectDetection() ? MemberType.UNDEFINED : MemberType.OBJECT;
+	}
+
+	/**
+	 * Return the name of the class.
+	 * <p>
+	 * This is typically the same name as the constructor.
+	 * Classes extending ScriptableObject must implement this abstract
+	 * method.
+	 */
+	@Override
+	public abstract String getClassName();
+
+	/**
+	 * Returns true if the named property is defined.
+	 *
+	 * @param name  the name of the property
+	 * @param start the object in which the lookup began
+	 * @return true if and only if the property was found in the object
+	 */
+	@Override
+	public boolean has(String name, Scriptable start) {
+		return null != slotMap.query(name, 0);
+	}
+
+	/**
+	 * Returns true if the property index is defined.
+	 *
+	 * @param index the numeric index for the property
+	 * @param start the object in which the lookup began
+	 * @return true if and only if the property was found in the object
+	 */
+	@Override
+	public boolean has(int index, Scriptable start) {
+		if (externalData != null) {
+			return (index < externalData.getArrayLength());
+		}
+		return null != slotMap.query(null, index);
+	}
+
+	/**
+	 * A version of "has" that supports symbols.
+	 */
+	@Override
+	public boolean has(Symbol key, Scriptable start) {
+		return null != slotMap.query(key, 0);
+	}
+
+	/**
+	 * Returns the value of the named property or NOT_FOUND.
+	 * <p>
+	 * If the property was created using defineProperty, the
+	 * appropriate getter method is called.
+	 *
+	 * @param name  the name of the property
+	 * @param start the object in which the lookup began
+	 * @return the value of the property (may be null), or NOT_FOUND
+	 */
+	@Override
+	public Object get(String name, Scriptable start) {
+		Slot slot = slotMap.query(name, 0);
+		if (slot == null) {
+			return NOT_FOUND;
+		}
+		return slot.getValue(start);
+	}
+
+	/**
+	 * Returns the value of the indexed property or NOT_FOUND.
+	 *
+	 * @param index the numeric index for the property
+	 * @param start the object in which the lookup began
+	 * @return the value of the property (may be null), or NOT_FOUND
+	 */
+	@Override
+	public Object get(int index, Scriptable start) {
+		if (externalData != null) {
+			if (index < externalData.getArrayLength()) {
+				return externalData.getArrayElement(index);
+			}
+			return NOT_FOUND;
+		}
+
+		Slot slot = slotMap.query(null, index);
+		if (slot == null) {
+			return NOT_FOUND;
+		}
+		return slot.getValue(start);
+	}
+
+	/**
+	 * Another version of Get that supports Symbol keyed properties.
+	 */
+	@Override
+	public Object get(Symbol key, Scriptable start) {
+		Slot slot = slotMap.query(key, 0);
+		if (slot == null) {
+			return NOT_FOUND;
+		}
+		return slot.getValue(start);
+	}
+
+	/**
+	 * Sets the value of the named property, creating it if need be.
+	 * <p>
+	 * If the property was created using defineProperty, the
+	 * appropriate setter method is called. <p>
+	 * <p>
+	 * If the property's attributes include READONLY, no action is
+	 * taken.
+	 * This method will actually set the property in the start
+	 * object.
+	 *
+	 * @param name  the name of the property
+	 * @param start the object whose property is being set
+	 * @param value value to set the property to
+	 */
+	@Override
+	public void put(String name, Scriptable start, Object value) {
+		if (putImpl(name, 0, start, value)) {
+			return;
+		}
+
+		if (start == this) {
+			throw Kit.codeBug();
+		}
+		start.put(name, start, value);
+	}
+
+	/**
+	 * Sets the value of the indexed property, creating it if need be.
+	 *
+	 * @param index the numeric index for the property
+	 * @param start the object whose property is being set
+	 * @param value value to set the property to
+	 */
+	@Override
+	public void put(int index, Scriptable start, Object value) {
+		if (externalData != null) {
+			if (index < externalData.getArrayLength()) {
+				externalData.setArrayElement(index, value);
+			} else {
+				throw new JavaScriptException(ScriptRuntime.newNativeError(Context.getCurrentContext(), this, TopLevel.NativeErrors.RangeError, new Object[]{"External array index out of bounds "}), null, 0);
+			}
+			return;
+		}
+
+		if (putImpl(null, index, start, value)) {
+			return;
+		}
+
+		if (start == this) {
+			throw Kit.codeBug();
+		}
+		start.put(index, start, value);
+	}
+
+	/**
+	 * Implementation of put required by SymbolScriptable objects.
+	 */
+	@Override
+	public void put(Symbol key, Scriptable start, Object value) {
+		if (putImpl(key, 0, start, value)) {
+			return;
+		}
+
+		if (start == this) {
+			throw Kit.codeBug();
+		}
+		ensureSymbolScriptable(start).put(key, start, value);
+	}
+
+	/**
+	 * Removes a named property from the object.
+	 * <p>
+	 * If the property is not found, or it has the PERMANENT attribute,
+	 * no action is taken.
+	 *
+	 * @param name the name of the property
+	 */
+	@Override
+	public void delete(String name) {
+		checkNotSealed(name, 0);
+		Slot s = slotMap.query(name, 0);
+		slotMap.remove(name, 0);
+		Deletable.deleteObject(s == null ? null : s.value);
+	}
+
+	/**
+	 * Removes the indexed property from the object.
+	 * <p>
+	 * If the property is not found, or it has the PERMANENT attribute,
+	 * no action is taken.
+	 *
+	 * @param index the numeric index for the property
+	 */
+	@Override
+	public void delete(int index) {
+		checkNotSealed(null, index);
+		Slot s = slotMap.query(null, index);
+		slotMap.remove(null, index);
+		Deletable.deleteObject(s == null ? null : s.value);
+	}
+
+	/**
+	 * Removes an object like the others, but using a Symbol as the key.
+	 */
+	@Override
+	public void delete(Symbol key) {
+		checkNotSealed(key, 0);
+		slotMap.remove(key, 0);
+	}
+
+	/**
+	 * Sets the value of the named const property, creating it if need be.
+	 * <p>
+	 * If the property was created using defineProperty, the
+	 * appropriate setter method is called. <p>
+	 * <p>
+	 * If the property's attributes include READONLY, no action is
+	 * taken.
+	 * This method will actually set the property in the start
+	 * object.
+	 *
+	 * @param name  the name of the property
+	 * @param start the object whose property is being set
+	 * @param value value to set the property to
+	 */
+	@Override
+	public void putConst(String name, Scriptable start, Object value) {
+		if (putConstImpl(name, 0, start, value, READONLY)) {
+			return;
+		}
+
+		if (start == this) {
+			throw Kit.codeBug();
+		}
+		if (start instanceof ConstProperties) {
+			((ConstProperties) start).putConst(name, start, value);
+		} else {
+			start.put(name, start, value);
+		}
+	}
+
+	@Override
+	public void defineConst(String name, Scriptable start) {
+		if (putConstImpl(name, 0, start, Undefined.instance, UNINITIALIZED_CONST)) {
+			return;
+		}
+
+		if (start == this) {
+			throw Kit.codeBug();
+		}
+		if (start instanceof ConstProperties) {
+			((ConstProperties) start).defineConst(name, start);
+		}
+	}
+
+	/**
+	 * Returns true if the named property is defined as a const on this object.
+	 *
+	 * @param name
+	 * @return true if the named property is defined as a const, false
+	 * otherwise.
+	 */
+	@Override
+	public boolean isConst(String name) {
+		Slot slot = slotMap.query(name, 0);
+		if (slot == null) {
+			return false;
+		}
+		return (slot.getAttributes() & (PERMANENT | READONLY)) == (PERMANENT | READONLY);
+
+	}
+
+	/**
+	 * Get the attributes of a named property.
+	 * <p>
+	 * The property is specified by <code>name</code>
+	 * as defined for <code>has</code>.<p>
+	 *
+	 * @param name the identifier for the property
+	 * @return the bitset of attributes
+	 * @throws EvaluatorException if the named property is not found
+	 * @see ScriptableObject#has(String, Scriptable)
+	 * @see ScriptableObject#READONLY
+	 * @see ScriptableObject#DONTENUM
+	 * @see ScriptableObject#PERMANENT
+	 * @see ScriptableObject#EMPTY
+	 */
+	public int getAttributes(String name) {
+		return findAttributeSlot(name, 0, SlotAccess.QUERY).getAttributes();
+	}
+
+	/**
+	 * Get the attributes of an indexed property.
+	 *
+	 * @param index the numeric index for the property
+	 * @return the bitset of attributes
+	 * @throws EvaluatorException if the named property is not found
+	 *                            is not found
+	 * @see ScriptableObject#has(String, Scriptable)
+	 * @see ScriptableObject#READONLY
+	 * @see ScriptableObject#DONTENUM
+	 * @see ScriptableObject#PERMANENT
+	 * @see ScriptableObject#EMPTY
+	 */
+	public int getAttributes(int index) {
+		return findAttributeSlot(null, index, SlotAccess.QUERY).getAttributes();
+	}
+
+	public int getAttributes(Symbol sym) {
+		return findAttributeSlot(sym, SlotAccess.QUERY).getAttributes();
+	}
+
+	/**
+	 * Set the attributes of a named property.
+	 * <p>
+	 * The property is specified by <code>name</code>
+	 * as defined for <code>has</code>.<p>
+	 * <p>
+	 * The possible attributes are READONLY, DONTENUM,
+	 * and PERMANENT. Combinations of attributes
+	 * are expressed by the bitwise OR of attributes.
+	 * EMPTY is the state of no attributes set. Any unused
+	 * bits are reserved for future use.
+	 *
+	 * @param name       the name of the property
+	 * @param attributes the bitset of attributes
+	 * @throws EvaluatorException if the named property is not found
+	 * @see Scriptable#has(String, Scriptable)
+	 * @see ScriptableObject#READONLY
+	 * @see ScriptableObject#DONTENUM
+	 * @see ScriptableObject#PERMANENT
+	 * @see ScriptableObject#EMPTY
+	 */
+	public void setAttributes(String name, int attributes) {
+		checkNotSealed(name, 0);
+		findAttributeSlot(name, 0, SlotAccess.MODIFY).setAttributes(attributes);
+	}
+
+	/**
+	 * Set the attributes of an indexed property.
+	 *
+	 * @param index      the numeric index for the property
+	 * @param attributes the bitset of attributes
+	 * @throws EvaluatorException if the named property is not found
+	 * @see Scriptable#has(String, Scriptable)
+	 * @see ScriptableObject#READONLY
+	 * @see ScriptableObject#DONTENUM
+	 * @see ScriptableObject#PERMANENT
+	 * @see ScriptableObject#EMPTY
+	 */
+	public void setAttributes(int index, int attributes) {
+		checkNotSealed(null, index);
+		findAttributeSlot(null, index, SlotAccess.MODIFY).setAttributes(attributes);
+	}
+
+	/**
+	 * Set attributes of a Symbol-keyed property.
+	 */
+	public void setAttributes(Symbol key, int attributes) {
+		checkNotSealed(key, 0);
+		findAttributeSlot(key, SlotAccess.MODIFY).setAttributes(attributes);
+	}
+
+	/**
+	 * XXX: write docs.
+	 */
+	public void setGetterOrSetter(String name, int index, Callable getterOrSetter, boolean isSetter) {
+		setGetterOrSetter(name, index, getterOrSetter, isSetter, false);
+	}
+
+	private void setGetterOrSetter(String name, int index, Callable getterOrSetter, boolean isSetter, boolean force) {
+		if (name != null && index != 0) {
+			throw new IllegalArgumentException(name);
+		}
+
+		if (!force) {
+			checkNotSealed(name, index);
+		}
+
+		final GetterSlot gslot;
+		if (isExtensible()) {
+			gslot = (GetterSlot) slotMap.get(name, index, SlotAccess.MODIFY_GETTER_SETTER);
+		} else {
+			Slot slot = slotMap.query(name, index);
+			if (!(slot instanceof GetterSlot)) {
+				return;
+			}
+			gslot = (GetterSlot) slot;
+		}
+
+		if (!force) {
+			int attributes = gslot.getAttributes();
+			if ((attributes & READONLY) != 0) {
+				throw Context.reportRuntimeError1("msg.modify.readonly", name);
+			}
+		}
+		if (isSetter) {
+			gslot.setter = getterOrSetter;
+		} else {
+			gslot.getter = getterOrSetter;
+		}
+		gslot.value = Undefined.instance;
+	}
+
+	/**
+	 * Get the getter or setter for a given property. Used by __lookupGetter__
+	 * and __lookupSetter__.
+	 *
+	 * @param name     Name of the object. If nonnull, index must be 0.
+	 * @param index    Index of the object. If nonzero, name must be null.
+	 * @param isSetter If true, return the setter, otherwise return the getter.
+	 * @return Null if the property does not exist. Otherwise returns either
+	 * the getter or the setter for the property, depending on
+	 * the value of isSetter (may be undefined if unset).
+	 * @throws IllegalArgumentException if both name and index are nonnull
+	 *                                  and nonzero respectively.
+	 */
+	public Object getGetterOrSetter(String name, int index, boolean isSetter) {
+		if (name != null && index != 0) {
+			throw new IllegalArgumentException(name);
+		}
+		Slot slot = slotMap.query(name, index);
+		if (slot == null) {
+			return null;
+		}
+		if (slot instanceof GetterSlot gslot) {
+			Object result = isSetter ? gslot.setter : gslot.getter;
+			return result != null ? result : Undefined.instance;
+		}
+		return Undefined.instance;
+	}
+
+	/**
+	 * Returns whether a property is a getter or a setter
+	 *
+	 * @param name   property name
+	 * @param index  property index
+	 * @param setter true to check for a setter, false for a getter
+	 * @return whether the property is a getter or a setter
+	 */
+	protected boolean isGetterOrSetter(String name, int index, boolean setter) {
+		Slot slot = slotMap.query(name, index);
+		if (slot instanceof GetterSlot) {
+			if (setter && ((GetterSlot) slot).setter != null) {
+				return true;
+			}
+			return !setter && ((GetterSlot) slot).getter != null;
+		}
+		return false;
+	}
+
+	void addLazilyInitializedValue(String name, int index, LazilyLoadedCtor init, int attributes) {
+		if (name != null && index != 0) {
+			throw new IllegalArgumentException(name);
+		}
+		checkNotSealed(name, index);
+		GetterSlot gslot = (GetterSlot) slotMap.get(name, index, SlotAccess.MODIFY_GETTER_SETTER);
+		gslot.setAttributes(attributes);
+		gslot.getter = null;
+		gslot.setter = null;
+		gslot.value = init;
+	}
+
+	/**
+	 * Return the array that was previously set by the call to "setExternalArrayData".
+	 *
+	 * @return the array, or null if it was never set
+	 * @since 1.7.6
+	 */
+	public ExternalArrayData getExternalArrayData() {
+		return externalData;
+	}
+
+	/**
+	 * Attach the specified object to this object, and delegate all indexed property lookups to it. In other words,
+	 * if the object has 3 elements, then an attempt to look up or modify "[0]", "[1]", or "[2]" will be delegated
+	 * to this object. Additional indexed properties outside the range specified, and additional non-indexed
+	 * properties, may still be added. The object specified must implement the ExternalArrayData interface.
+	 *
+	 * @param array the List to use for delegated property access. Set this to null to revert back to regular
+	 *              property access.
+	 * @since 1.7.6
+	 */
+	public void setExternalArrayData(ExternalArrayData array) {
+		externalData = array;
+
+		if (array == null) {
+			delete("length");
+		} else {
+			// Define "length" to return whatever length the List gives us.
+			defineProperty("length", null, GET_ARRAY_LENGTH, null, READONLY | DONTENUM);
+		}
+	}
+
+	/**
+	 * This is a function used by setExternalArrayData to dynamically get the "length" property value.
+	 */
+	public Object getExternalArrayLength() {
+		return externalData == null ? 0 : externalData.getArrayLength();
+	}
+
+	/**
+	 * Returns the prototype of the object.
+	 */
+	@Override
+	public Scriptable getPrototype() {
+		return prototypeObject;
+	}
+
+	/**
+	 * Sets the prototype of the object.
+	 */
+	@Override
+	public void setPrototype(Scriptable m) {
+		prototypeObject = m;
+	}
+
+	/**
+	 * Returns the parent (enclosing) scope of the object.
+	 */
+	@Override
+	public Scriptable getParentScope() {
+		return parentScopeObject;
+	}
+
+	/**
+	 * Sets the parent (enclosing) scope of the object.
+	 */
+	@Override
+	public void setParentScope(Scriptable m) {
+		parentScopeObject = m;
+	}
+
+	/**
+	 * Returns an array of ids for the properties of the object.
+	 *
+	 * <p>Any properties with the attribute DONTENUM are not listed. <p>
+	 *
+	 * @return an array of java.lang.Objects with an entry for every
+	 * listed property. Properties accessed via an integer index will
+	 * have a corresponding
+	 * Integer entry in the returned array. Properties accessed by
+	 * a String will have a String entry in the returned array.
+	 */
+	@Override
+	public Object[] getIds() {
+		return getIds(false, false);
+	}
+
+	/**
+	 * Returns an array of ids for the properties of the object.
+	 *
+	 * <p>All properties, even those with attribute DONTENUM, are listed. <p>
+	 *
+	 * @return an array of java.lang.Objects with an entry for every
+	 * listed property. Properties accessed via an integer index will
+	 * have a corresponding
+	 * Integer entry in the returned array. Properties accessed by
+	 * a String will have a String entry in the returned array.
+	 */
+	@Override
+	public Object[] getAllIds() {
+		return getIds(true, false);
+	}
+
+	/**
+	 * Implements the [[DefaultValue]] internal method.
+	 *
+	 * <p>Note that the toPrimitive conversion is a no-op for
+	 * every type other than Object, for which [[DefaultValue]]
+	 * is called. See ECMA 9.1.<p>
+	 * <p>
+	 * A <code>hint</code> of null means "no hint".
+	 *
+	 * @param typeHint the type hint
+	 * @return the default value for the object
+	 * <p>
+	 * See ECMA 8.6.2.6.
+	 */
+	@Override
+	public Object getDefaultValue(Class<?> typeHint) {
+		return getDefaultValue(this, typeHint);
+	}
+
+	/**
+	 * Implements the instanceof operator.
+	 *
+	 * <p>This operator has been proposed to ECMA.
+	 *
+	 * @param instance The value that appeared on the LHS of the instanceof
+	 *                 operator
+	 * @return true if "this" appears in value's prototype chain
+	 */
+	@Override
+	public boolean hasInstance(Scriptable instance) {
+		// Default for JS objects (other than Function) is to do prototype
+		// chasing.  This will be overridden in NativeFunction and non-JS
+		// objects.
+
+		return ScriptRuntime.jsDelegatesTo(instance, this);
+	}
+
+	/**
+	 * Emulate the SpiderMonkey (and Firefox) feature of allowing
+	 * custom objects to avoid detection by normal "object detection"
+	 * code patterns. This is used to implement document.all.
+	 * See https://bugzilla.mozilla.org/show_bug.cgi?id=412247.
+	 * This is an analog to JOF_DETECTING from SpiderMonkey; see
+	 * https://bugzilla.mozilla.org/show_bug.cgi?id=248549.
+	 * Other than this special case, embeddings should return false.
+	 *
+	 * @return true if this object should avoid object detection
+	 * @since 1.7R1
+	 */
+	public boolean avoidObjectDetection() {
+		return false;
+	}
+
+	/**
+	 * Custom <code>==</code> operator.
+	 * Must return {@link Scriptable#NOT_FOUND} if this object does not
+	 * have custom equality operator for the given value,
+	 * <code>Boolean.TRUE</code> if this object is equivalent to <code>value</code>,
+	 * <code>Boolean.FALSE</code> if this object is not equivalent to
+	 * <code>value</code>.
+	 * <p>
+	 * The default implementation returns Boolean.TRUE
+	 * if <code>this == value</code> or {@link Scriptable#NOT_FOUND} otherwise.
+	 * It indicates that by default custom equality is available only if
+	 * <code>value</code> is <code>this</code> in which case true is returned.
+	 */
+	protected Object equivalentValues(Object value) {
+		return (this == value) ? Boolean.TRUE : NOT_FOUND;
+	}
+
+	/**
+	 * Define a JavaScript property.
+	 * <p>
+	 * Creates the property with an initial value and sets its attributes.
+	 *
+	 * @param propertyName the name of the property to define.
+	 * @param value        the initial value of the property
+	 * @param attributes   the attributes of the JavaScript property
+	 * @see Scriptable#put(String, Scriptable, Object)
+	 */
+	public void defineProperty(String propertyName, Object value, int attributes) {
+		checkNotSealed(propertyName, 0);
+		put(propertyName, this, value);
+		setAttributes(propertyName, attributes);
+	}
+
+	/**
+	 * A version of defineProperty that uses a Symbol key.
+	 *
+	 * @param key        symbol of the property to define.
+	 * @param value      the initial value of the property
+	 * @param attributes the attributes of the JavaScript property
+	 */
+	public void defineProperty(Symbol key, Object value, int attributes) {
+		checkNotSealed(key, 0);
+		put(key, this, value);
+		setAttributes(key, attributes);
+	}
+
+	/**
+	 * Define a JavaScript property with getter and setter side effects.
+	 * <p>
+	 * If the setter is not found, the attribute READONLY is added to
+	 * the given attributes. <p>
+	 * <p>
+	 * The getter must be a method with zero parameters, and the setter, if
+	 * found, must be a method with one parameter.<p>
+	 *
+	 * @param propertyName the name of the property to define. This name
+	 *                     also affects the name of the setter and getter
+	 *                     to search for. If the propertyId is "foo", then
+	 *                     <code>clazz</code> will be searched for "getFoo"
+	 *                     and "setFoo" methods.
+	 * @param clazz        the Java class to search for the getter and setter
+	 * @param attributes   the attributes of the JavaScript property
+	 * @see Scriptable#put(String, Scriptable, Object)
+	 */
+	public void defineProperty(String propertyName, Class<?> clazz, int attributes) {
+		int length = propertyName.length();
+		if (length == 0) {
+			throw new IllegalArgumentException();
+		}
+		char[] buf = new char[3 + length];
+		propertyName.getChars(0, length, buf, 3);
+		buf[3] = Character.toUpperCase(buf[3]);
+		buf[0] = 'g';
+		buf[1] = 'e';
+		buf[2] = 't';
+		String getterName = new String(buf);
+		buf[0] = 's';
+		String setterName = new String(buf);
+
+		Method[] methods = FunctionObject.getMethodList(clazz);
+		Method getter = FunctionObject.findSingleMethod(methods, getterName);
+		Method setter = FunctionObject.findSingleMethod(methods, setterName);
+		if (setter == null) {
+			attributes |= ScriptableObject.READONLY;
+		}
+		defineProperty(propertyName, null, getter, setter, attributes);
+	}
+
+	/**
+	 * Define a JavaScript property.
+	 * <p>
+	 * Use this method only if you wish to define getters and setters for
+	 * a given property in a ScriptableObject. To create a property without
+	 * special getter or setter side effects, use
+	 * <code>defineProperty(String,int)</code>.
+	 * <p>
+	 * If <code>setter</code> is null, the attribute READONLY is added to
+	 * the given attributes.<p>
+	 * <p>
+	 * Several forms of getters or setters are allowed. In all cases the
+	 * type of the value parameter can be any one of the following types:
+	 * Object, String, boolean, Scriptable, byte, short, int, long, float,
+	 * or double. The runtime will perform appropriate conversions based
+	 * upon the type of the parameter (see description in FunctionObject).
+	 * The first forms are nonstatic methods of the class referred to
+	 * by 'this':
+	 * <pre>
+	 * Object getFoo();
+	 * void setFoo(SomeType value);</pre>
+	 * Next are static methods that may be of any class; the object whose
+	 * property is being accessed is passed in as an extra argument:
+	 * <pre>
+	 * static Object getFoo(Scriptable obj);
+	 * static void setFoo(Scriptable obj, SomeType value);</pre>
+	 * Finally, it is possible to delegate to another object entirely using
+	 * the <code>delegateTo</code> parameter. In this case the methods are
+	 * nonstatic methods of the class delegated to, and the object whose
+	 * property is being accessed is passed in as an extra argument:
+	 * <pre>
+	 * Object getFoo(Scriptable obj);
+	 * void setFoo(Scriptable obj, SomeType value);</pre>
+	 *
+	 * @param propertyName the name of the property to define.
+	 * @param delegateTo   an object to call the getter and setter methods on,
+	 *                     or null, depending on the form used above.
+	 * @param getter       the method to invoke to get the value of the property
+	 * @param setter       the method to invoke to set the value of the property
+	 * @param attributes   the attributes of the JavaScript property
+	 */
+	public void defineProperty(String propertyName, Object delegateTo, Method getter, Method setter, int attributes) {
+		MemberBox getterBox = null;
+		if (getter != null) {
+			getterBox = new MemberBox(getter);
+
+			boolean delegatedForm;
+			if (!Modifier.isStatic(getter.getModifiers())) {
+				delegatedForm = (delegateTo != null);
+				getterBox.delegateTo = delegateTo;
+			} else {
+				delegatedForm = true;
+				// Ignore delegateTo for static getter but store
+				// non-null delegateTo indicator.
+				getterBox.delegateTo = Void.TYPE;
+			}
+
+			String errorId = null;
+			Class<?>[] parmTypes = getter.getParameterTypes();
+			if (parmTypes.length == 0) {
+				if (delegatedForm) {
+					errorId = "msg.obj.getter.parms";
+				}
+			} else if (parmTypes.length == 1) {
+				Object argType = parmTypes[0];
+				// Allow ScriptableObject for compatibility
+				if (!(argType == ScriptRuntime.ScriptableClass || argType == ScriptRuntime.ScriptableObjectClass)) {
+					errorId = "msg.bad.getter.parms";
+				} else if (!delegatedForm) {
+					errorId = "msg.bad.getter.parms";
+				}
+			} else {
+				errorId = "msg.bad.getter.parms";
+			}
+			if (errorId != null) {
+				throw Context.reportRuntimeError1(errorId, getter.toString());
+			}
+		}
+
+		MemberBox setterBox = null;
+		if (setter != null) {
+			if (setter.getReturnType() != Void.TYPE) {
+				throw Context.reportRuntimeError1("msg.setter.return", setter.toString());
+			}
+
+			setterBox = new MemberBox(setter);
+
+			boolean delegatedForm;
+			if (!Modifier.isStatic(setter.getModifiers())) {
+				delegatedForm = (delegateTo != null);
+				setterBox.delegateTo = delegateTo;
+			} else {
+				delegatedForm = true;
+				// Ignore delegateTo for static setter but store
+				// non-null delegateTo indicator.
+				setterBox.delegateTo = Void.TYPE;
+			}
+
+			String errorId = null;
+			Class<?>[] parmTypes = setter.getParameterTypes();
+			if (parmTypes.length == 1) {
+				if (delegatedForm) {
+					errorId = "msg.setter2.expected";
+				}
+			} else if (parmTypes.length == 2) {
+				Object argType = parmTypes[0];
+				// Allow ScriptableObject for compatibility
+				if (!(argType == ScriptRuntime.ScriptableClass || argType == ScriptRuntime.ScriptableObjectClass)) {
+					errorId = "msg.setter2.parms";
+				} else if (!delegatedForm) {
+					errorId = "msg.setter1.parms";
+				}
+			} else {
+				errorId = "msg.setter.parms";
+			}
+			if (errorId != null) {
+				throw Context.reportRuntimeError1(errorId, setter.toString());
+			}
+		}
+
+		GetterSlot gslot = (GetterSlot) slotMap.get(propertyName, 0, SlotAccess.MODIFY_GETTER_SETTER);
+		gslot.setAttributes(attributes);
+		gslot.getter = getterBox;
+		gslot.setter = setterBox;
+	}
+
+	/**
+	 * Defines one or more properties on this object.
+	 *
+	 * @param cx    the current Context
+	 * @param props a map of property ids to property descriptors
+	 */
+	public void defineOwnProperties(Context cx, ScriptableObject props) {
+		Object[] ids = props.getIds(false, true);
+		ScriptableObject[] descs = new ScriptableObject[ids.length];
+		for (int i = 0, len = ids.length; i < len; ++i) {
+			Object descObj = ScriptRuntime.getObjectElem(props, ids[i], cx);
+			ScriptableObject desc = ensureScriptableObject(descObj);
+			checkPropertyDefinition(desc);
+			descs[i] = desc;
+		}
+		for (int i = 0, len = ids.length; i < len; ++i) {
+			defineOwnProperty(cx, ids[i], descs[i]);
+		}
+	}
+
+	/**
+	 * Defines a property on an object.
+	 *
+	 * @param cx   the current Context
+	 * @param id   the name/index of the property
+	 * @param desc the new property descriptor, as described in 8.6.1
+	 */
+	public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+		checkPropertyDefinition(desc);
+		defineOwnProperty(cx, id, desc, true);
+	}
+
+	/**
+	 * Defines a property on an object.
+	 * <p>
+	 * Based on [[DefineOwnProperty]] from 8.12.10 of the spec.
+	 *
+	 * @param cx         the current Context
+	 * @param id         the name/index of the property
+	 * @param desc       the new property descriptor, as described in 8.6.1
+	 * @param checkValid whether to perform validity checks
+	 */
+	protected void defineOwnProperty(Context cx, Object id, ScriptableObject desc, boolean checkValid) {
+
+		Slot slot = getSlot(cx, id, SlotAccess.QUERY);
+		boolean isNew = slot == null;
+
+		if (checkValid) {
+			ScriptableObject current = slot == null ? null : slot.getPropertyDescriptor(cx, this);
+			checkPropertyChange(id, current, desc);
+		}
+
+		boolean isAccessor = isAccessorDescriptor(desc);
+		final int attributes;
+
+		if (slot == null) { // new slot
+			slot = getSlot(cx, id, isAccessor ? SlotAccess.MODIFY_GETTER_SETTER : SlotAccess.MODIFY);
+			attributes = applyDescriptorToAttributeBitset(DONTENUM | READONLY | PERMANENT, desc);
+		} else {
+			attributes = applyDescriptorToAttributeBitset(slot.getAttributes(), desc);
+		}
+
+		if (isAccessor) {
+			if (!(slot instanceof GetterSlot)) {
+				slot = getSlot(cx, id, SlotAccess.MODIFY_GETTER_SETTER);
+			}
+
+			GetterSlot gslot = (GetterSlot) slot;
+
+			Object getter = getProperty(desc, "get");
+			if (getter != NOT_FOUND) {
+				gslot.getter = getter;
+			}
+			Object setter = getProperty(desc, "set");
+			if (setter != NOT_FOUND) {
+				gslot.setter = setter;
+			}
+
+			gslot.value = Undefined.instance;
+			gslot.setAttributes(attributes);
+		} else {
+			if (slot instanceof GetterSlot && isDataDescriptor(desc)) {
+				slot = getSlot(cx, id, SlotAccess.CONVERT_ACCESSOR_TO_DATA);
+			}
+
+			Object value = getProperty(desc, "value");
+			if (value != NOT_FOUND) {
+				slot.value = value;
+			} else if (isNew) {
+				slot.value = Undefined.instance;
+			}
+			slot.setAttributes(attributes);
+		}
+	}
+
+	protected void checkPropertyDefinition(ScriptableObject desc) {
+		Object getter = getProperty(desc, "get");
+		if (getter != NOT_FOUND && getter != Undefined.instance && !(getter instanceof Callable)) {
+			throw ScriptRuntime.notFunctionError(getter);
+		}
+		Object setter = getProperty(desc, "set");
+		if (setter != NOT_FOUND && setter != Undefined.instance && !(setter instanceof Callable)) {
+			throw ScriptRuntime.notFunctionError(setter);
+		}
+		if (isDataDescriptor(desc) && isAccessorDescriptor(desc)) {
+			throw ScriptRuntime.typeError0("msg.both.data.and.accessor.desc");
+		}
+	}
+
+	protected void checkPropertyChange(Object id, ScriptableObject current, ScriptableObject desc) {
+		if (current == null) { // new property
+			if (!isExtensible()) {
+				throw ScriptRuntime.typeError0("msg.not.extensible");
+			}
+		} else {
+			if (isFalse(current.get("configurable", current))) {
+				if (isTrue(getProperty(desc, "configurable"))) {
+					throw ScriptRuntime.typeError1("msg.change.configurable.false.to.true", id);
+				}
+				if (isTrue(current.get("enumerable", current)) != isTrue(getProperty(desc, "enumerable"))) {
+					throw ScriptRuntime.typeError1("msg.change.enumerable.with.configurable.false", id);
+				}
+				boolean isData = isDataDescriptor(desc);
+				boolean isAccessor = isAccessorDescriptor(desc);
+				if (!isData && !isAccessor) {
+					// no further validation required for generic descriptor
+				} else if (isData && isDataDescriptor(current)) {
+					if (isFalse(current.get("writable", current))) {
+						if (isTrue(getProperty(desc, "writable"))) {
+							throw ScriptRuntime.typeError1("msg.change.writable.false.to.true.with.configurable.false", id);
+						}
+
+						if (!sameValue(getProperty(desc, "value"), current.get("value", current))) {
+							throw ScriptRuntime.typeError1("msg.change.value.with.writable.false", id);
+						}
+					}
+				} else if (isAccessor && isAccessorDescriptor(current)) {
+					if (!sameValue(getProperty(desc, "set"), current.get("set", current))) {
+						throw ScriptRuntime.typeError1("msg.change.setter.with.configurable.false", id);
+					}
+
+					if (!sameValue(getProperty(desc, "get"), current.get("get", current))) {
+						throw ScriptRuntime.typeError1("msg.change.getter.with.configurable.false", id);
+					}
+				} else {
+					if (isDataDescriptor(current)) {
+						throw ScriptRuntime.typeError1("msg.change.property.data.to.accessor.with.configurable.false", id);
+					}
+					throw ScriptRuntime.typeError1("msg.change.property.accessor.to.data.with.configurable.false", id);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Implements SameValue as described in ES5 9.12, additionally checking
+	 * if new value is defined.
+	 *
+	 * @param newValue     the new value
+	 * @param currentValue the current value
+	 * @return true if values are the same as defined by ES5 9.12
+	 */
+	protected boolean sameValue(Object newValue, Object currentValue) {
+		if (newValue == NOT_FOUND) {
+			return true;
+		}
+		if (currentValue == NOT_FOUND) {
+			currentValue = Undefined.instance;
+		}
+		// Special rules for numbers: NaN is considered the same value,
+		// while zeroes with different signs are considered different.
+		if (currentValue instanceof Number && newValue instanceof Number) {
+			double d1 = ((Number) currentValue).doubleValue();
+			double d2 = ((Number) newValue).doubleValue();
+			if (Double.isNaN(d1) && Double.isNaN(d2)) {
+				return true;
+			}
+			if (d1 == 0.0 && Double.doubleToLongBits(d1) != Double.doubleToLongBits(d2)) {
+				return false;
+			}
+		}
+		return ScriptRuntime.shallowEq(currentValue, newValue);
+	}
+
+	protected int applyDescriptorToAttributeBitset(int attributes, ScriptableObject desc) {
+		Object enumerable = getProperty(desc, "enumerable");
+		if (enumerable != NOT_FOUND) {
+			attributes = ScriptRuntime.toBoolean(enumerable) ? attributes & ~DONTENUM : attributes | DONTENUM;
+		}
+
+		Object writable = getProperty(desc, "writable");
+		if (writable != NOT_FOUND) {
+			attributes = ScriptRuntime.toBoolean(writable) ? attributes & ~READONLY : attributes | READONLY;
+		}
+
+		Object configurable = getProperty(desc, "configurable");
+		if (configurable != NOT_FOUND) {
+			attributes = ScriptRuntime.toBoolean(configurable) ? attributes & ~PERMANENT : attributes | PERMANENT;
+		}
+
+		return attributes;
+	}
+
+	/**
+	 * Implements IsDataDescriptor as described in ES5 8.10.2
+	 *
+	 * @param desc a property descriptor
+	 * @return true if this is a data descriptor.
+	 */
+	protected boolean isDataDescriptor(ScriptableObject desc) {
+		return hasProperty(desc, "value") || hasProperty(desc, "writable");
+	}
+
+	/**
+	 * Implements IsAccessorDescriptor as described in ES5 8.10.1
+	 *
+	 * @param desc a property descriptor
+	 * @return true if this is an accessor descriptor.
+	 */
+	protected boolean isAccessorDescriptor(ScriptableObject desc) {
+		return hasProperty(desc, "get") || hasProperty(desc, "set");
+	}
+
+	/**
+	 * Implements IsGenericDescriptor as described in ES5 8.10.3
+	 *
+	 * @param desc a property descriptor
+	 * @return true if this is a generic descriptor.
+	 */
+	protected boolean isGenericDescriptor(ScriptableObject desc) {
+		return !isDataDescriptor(desc) && !isAccessorDescriptor(desc);
+	}
+
+	/**
+	 * Search for names in a class, adding the resulting methods
+	 * as properties.
+	 *
+	 * <p> Uses reflection to find the methods of the given names. Then
+	 * FunctionObjects are constructed from the methods found, and
+	 * are added to this object as properties with the given names.
+	 *
+	 * @param names      the names of the Methods to add as function properties
+	 * @param clazz      the class to search for the Methods
+	 * @param attributes the attributes of the new properties
+	 * @see FunctionObject
+	 */
+	public void defineFunctionProperties(String[] names, Class<?> clazz, int attributes) {
+		Method[] methods = FunctionObject.getMethodList(clazz);
+		for (int i = 0; i < names.length; i++) {
+			String name = names[i];
+			Method m = FunctionObject.findSingleMethod(methods, name);
+			if (m == null) {
+				throw Context.reportRuntimeError2("msg.method.not.found", name, clazz.getName());
+			}
+			FunctionObject f = new FunctionObject(name, m, this);
+			defineProperty(name, f, attributes);
+		}
+	}
+
+	public boolean isExtensible() {
+		return isExtensible;
+	}
+
+	public void preventExtensions() {
+		isExtensible = false;
+	}
+
+	/**
+	 * Seal this object.
+	 * <p>
+	 * It is an error to add properties to or delete properties from
+	 * a sealed object. It is possible to change the value of an
+	 * existing property. Once an object is sealed it may not be unsealed.
+	 *
+	 * @since 1.4R3
+	 */
+	public void sealObject() {
+		if (!isSealed) {
+			final long stamp = slotMap.readLock();
+			try {
+				for (Slot slot : slotMap) {
+					Object value = slot.value;
+					if (value instanceof LazilyLoadedCtor initializer) {
+						try {
+							initializer.init();
+						} finally {
+							slot.value = initializer.getValue();
+						}
+					}
+				}
+				isSealed = true;
+			} finally {
+				slotMap.unlockRead(stamp);
+			}
+		}
+	}
+
+	/**
+	 * Return true if this object is sealed.
+	 *
+	 * @return true if sealed, false otherwise.
+	 * @see #sealObject()
+	 * @since 1.4R3
+	 */
+	public final boolean isSealed() {
+		return isSealed;
+	}
+
+	private void checkNotSealed(Object key, int index) {
+		if (!isSealed()) {
+			return;
+		}
+
+		String str = (key != null) ? key.toString() : Integer.toString(index);
+		throw Context.reportRuntimeError1("msg.modify.sealed", str);
+	}
+
+	/**
+	 * Get arbitrary application-specific value associated with this object.
+	 *
+	 * @param key key object to select particular value.
+	 * @see #associateValue(Object key, Object value)
+	 */
+	public final Object getAssociatedValue(Object key) {
+		Map<Object, Object> h = associatedValues;
+		if (h == null) {
+			return null;
+		}
+		return h.get(key);
 	}
 
 	/**
@@ -2596,7 +2621,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		}
 		return slot.setValue(value, this, start);
 	}
-
 
 	/**
 	 * @param name
@@ -2726,6 +2750,9 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		return slot.getPropertyDescriptor(cx, (scope == null ? this : scope));
 	}
 
+	// Partial implementation of java.util.Map. See NativeObject for
+	// a subclass that implements java.util.Map.
+
 	protected Slot getSlot(Context cx, Object id, SlotAccess accessType) {
 		if (id instanceof Symbol) {
 			return slotMap.get(id, 0, accessType);
@@ -2737,9 +2764,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		return slotMap.get(s.stringId, 0, accessType);
 	}
 
-	// Partial implementation of java.util.Map. See NativeObject for
-	// a subclass that implements java.util.Map.
-
 	public int size() {
 		return slotMap.size();
 	}
@@ -2747,7 +2771,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	public boolean isEmpty() {
 		return slotMap.isEmpty();
 	}
-
 
 	public Object get(Object key) {
 		Object value = null;
@@ -2767,39 +2790,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		}
 	}
 
-	private static final Comparator<Object> KEY_COMPARATOR = new KeyComparator();
-
-	/**
-	 * This comparator sorts property fields in spec-compliant order. Numeric ids first, in numeric
-	 * order, followed by string ids, in insertion order. Since this class already keeps string keys
-	 * in insertion-time order, we treat all as equal. The "Arrays.sort" method will then not
-	 * change their order, but simply move all the numeric properties to the front, since this
-	 * method is defined to be stable.
-	 */
-	public static final class KeyComparator implements Comparator<Object>, Serializable {
-		@Serial
-		private static final long serialVersionUID = 6411335891523988149L;
-
-		@Override
-		public int compare(Object o1, Object o2) {
-			if (o1 instanceof Integer) {
-				if (o2 instanceof Integer) {
-					int i1 = (Integer) o1;
-					int i2 = (Integer) o2;
-					if (i1 < i2) {
-						return -1;
-					}
-					if (i1 > i2) {
-						return 1;
-					}
-					return 0;
-				}
-				return -1;
-			}
-			if (o2 instanceof Integer) {
-				return 1;
-			}
-			return 0;
-		}
+	enum SlotAccess {
+		QUERY, MODIFY, MODIFY_CONST, MODIFY_GETTER_SETTER, CONVERT_ACCESSOR_TO_DATA
 	}
 }

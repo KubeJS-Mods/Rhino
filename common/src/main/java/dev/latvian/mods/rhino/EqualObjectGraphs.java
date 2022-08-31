@@ -39,12 +39,6 @@ import java.util.TreeMap;
 final class EqualObjectGraphs {
 	private static final ThreadLocal<EqualObjectGraphs> instance = new ThreadLocal<>();
 
-	// Object pairs already known to be equal. Used to short-circuit repeated traversals of objects reachable through
-	// different paths as well as to detect structural inequality.
-	private final Map<Object, Object> knownEquals = new IdentityHashMap<>();
-	// Currently compared objects; used to avoid infinite recursion over cyclic object graphs.
-	private final Map<Object, Object> currentlyCompared = new IdentityHashMap<>();
-
 	static <T> T withThreadLocal(java.util.function.Function<EqualObjectGraphs, T> action) {
 		final EqualObjectGraphs currEq = instance.get();
 		if (currEq == null) {
@@ -58,6 +52,92 @@ final class EqualObjectGraphs {
 		}
 		return action.apply(currEq);
 	}
+
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private static Iterator<Map.Entry> sortedEntries(final Map m) {
+		// Yes, this throws ClassCastException if the keys aren't comparable. That's okay. We only support maps with
+		// deterministic traversal order.
+		final Map sortedMap = (m instanceof SortedMap<?, ?> ? m : new TreeMap(m));
+		return sortedMap.entrySet().iterator();
+	}
+
+	private static Object[] sortedSet(final Set<?> s) {
+		final Object[] a = s.toArray();
+		Arrays.sort(a); // ClassCastException possible
+		return a;
+	}
+
+	// Sort IDs deterministically
+	private static Object[] getSortedIds(final Scriptable s) {
+		final Object[] ids = getIds(s);
+		Arrays.sort(ids, (a, b) -> {
+			if (a instanceof Integer) {
+				if (b instanceof Integer) {
+					return ((Integer) a).compareTo((Integer) b);
+				} else if (b instanceof String || b instanceof Symbol) {
+					return -1; // ints before strings or symbols
+				}
+			} else if (a instanceof String) {
+				if (b instanceof String) {
+					return ((String) a).compareTo((String) b);
+				} else if (b instanceof Integer) {
+					return 1; // strings after ints
+				} else if (b instanceof Symbol) {
+					return -1; // strings before symbols
+				}
+			} else if (a instanceof Symbol) {
+				if (b instanceof Symbol) {
+					// As long as people bother to reasonably name their symbols,
+					// this will work. If there's clashes in symbol names (e.g.
+					// lots of unnamed symbols) it can lead to false inequalities.
+					return getSymbolName((Symbol) a).compareTo(getSymbolName((Symbol) b));
+				} else if (b instanceof Integer || b instanceof String) {
+					return 1; // symbols after ints and strings
+				}
+			}
+			// We can only compare Rhino key types: Integer, String, Symbol
+			throw new ClassCastException();
+		});
+		return ids;
+	}
+
+	private static String getSymbolName(final Symbol s) {
+		if (s instanceof SymbolKey) {
+			return ((SymbolKey) s).getName();
+		} else if (s instanceof NativeSymbol) {
+			return ((NativeSymbol) s).getKey().getName();
+		} else {
+			// We can only handle native Rhino Symbol types
+			throw new ClassCastException();
+		}
+	}
+
+	private static Object[] getIds(final Scriptable s) {
+		if (s instanceof ScriptableObject) {
+			// Grabs symbols too
+			return ((ScriptableObject) s).getIds(true, true);
+		} else {
+			return s.getAllIds();
+		}
+	}
+
+	private static Object getValue(final Scriptable s, final Object id) {
+		if (id instanceof Symbol) {
+			return ScriptableObject.getProperty(s, (Symbol) id);
+		} else if (id instanceof Integer) {
+			return ScriptableObject.getProperty(s, (Integer) id);
+		} else if (id instanceof String) {
+			return ScriptableObject.getProperty(s, (String) id);
+		} else {
+			throw new ClassCastException();
+		}
+	}
+
+	// Object pairs already known to be equal. Used to short-circuit repeated traversals of objects reachable through
+	// different paths as well as to detect structural inequality.
+	private final Map<Object, Object> knownEquals = new IdentityHashMap<>();
+	// Currently compared objects; used to avoid infinite recursion over cyclic object graphs.
+	private final Map<Object, Object> currentlyCompared = new IdentityHashMap<>();
 
 	boolean equalGraphs(Object o1, Object o2) {
 		if (o1 == o2) {
@@ -221,87 +301,7 @@ final class EqualObjectGraphs {
 
 	}
 
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	private static Iterator<Map.Entry> sortedEntries(final Map m) {
-		// Yes, this throws ClassCastException if the keys aren't comparable. That's okay. We only support maps with
-		// deterministic traversal order.
-		final Map sortedMap = (m instanceof SortedMap<?, ?> ? m : new TreeMap(m));
-		return sortedMap.entrySet().iterator();
-	}
-
 	private boolean equalSets(final Set<?> s1, final Set<?> s2) {
 		return equalObjectArrays(sortedSet(s1), sortedSet(s2));
-	}
-
-	private static Object[] sortedSet(final Set<?> s) {
-		final Object[] a = s.toArray();
-		Arrays.sort(a); // ClassCastException possible
-		return a;
-	}
-
-	// Sort IDs deterministically
-	private static Object[] getSortedIds(final Scriptable s) {
-		final Object[] ids = getIds(s);
-		Arrays.sort(ids, (a, b) -> {
-			if (a instanceof Integer) {
-				if (b instanceof Integer) {
-					return ((Integer) a).compareTo((Integer) b);
-				} else if (b instanceof String || b instanceof Symbol) {
-					return -1; // ints before strings or symbols
-				}
-			} else if (a instanceof String) {
-				if (b instanceof String) {
-					return ((String) a).compareTo((String) b);
-				} else if (b instanceof Integer) {
-					return 1; // strings after ints
-				} else if (b instanceof Symbol) {
-					return -1; // strings before symbols
-				}
-			} else if (a instanceof Symbol) {
-				if (b instanceof Symbol) {
-					// As long as people bother to reasonably name their symbols,
-					// this will work. If there's clashes in symbol names (e.g.
-					// lots of unnamed symbols) it can lead to false inequalities.
-					return getSymbolName((Symbol) a).compareTo(getSymbolName((Symbol) b));
-				} else if (b instanceof Integer || b instanceof String) {
-					return 1; // symbols after ints and strings
-				}
-			}
-			// We can only compare Rhino key types: Integer, String, Symbol
-			throw new ClassCastException();
-		});
-		return ids;
-	}
-
-	private static String getSymbolName(final Symbol s) {
-		if (s instanceof SymbolKey) {
-			return ((SymbolKey) s).getName();
-		} else if (s instanceof NativeSymbol) {
-			return ((NativeSymbol) s).getKey().getName();
-		} else {
-			// We can only handle native Rhino Symbol types
-			throw new ClassCastException();
-		}
-	}
-
-	private static Object[] getIds(final Scriptable s) {
-		if (s instanceof ScriptableObject) {
-			// Grabs symbols too
-			return ((ScriptableObject) s).getIds(true, true);
-		} else {
-			return s.getAllIds();
-		}
-	}
-
-	private static Object getValue(final Scriptable s, final Object id) {
-		if (id instanceof Symbol) {
-			return ScriptableObject.getProperty(s, (Symbol) id);
-		} else if (id instanceof Integer) {
-			return ScriptableObject.getProperty(s, (Integer) id);
-		} else if (id instanceof String) {
-			return ScriptableObject.getProperty(s, (String) id);
-		} else {
-			throw new ClassCastException();
-		}
 	}
 }

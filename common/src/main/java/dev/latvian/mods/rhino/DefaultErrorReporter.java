@@ -14,17 +14,17 @@ package dev.latvian.mods.rhino;
 class DefaultErrorReporter implements ErrorReporter {
 	static final DefaultErrorReporter instance = new DefaultErrorReporter();
 
-	private boolean forEval;
-	private ErrorReporter chainedReporter;
-
-	private DefaultErrorReporter() {
-	}
-
 	static ErrorReporter forEval(ErrorReporter reporter) {
 		DefaultErrorReporter r = new DefaultErrorReporter();
 		r.forEval = true;
 		r.chainedReporter = reporter;
 		return r;
+	}
+
+	private boolean forEval;
+	private ErrorReporter chainedReporter;
+
+	private DefaultErrorReporter() {
 	}
 
 	@Override

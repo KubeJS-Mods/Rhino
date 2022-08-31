@@ -28,11 +28,8 @@ import java.util.regex.Pattern;
 
 public abstract class MinecraftRemapper implements Remapper {
 
-	protected static final Logger LOGGER = LoggerFactory.getLogger("Rhino Script Remapper");
-
 	public static final int MM_VERSION = 1;
 	public static final int VERSION = 1;
-
 	public static final String MAPPINGS_HEADER_AND_WARNING = """
 			# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 			# IMPORTANT NOTE: This file is NOT meant to be published within public modpacks or repositories.  #
@@ -45,8 +42,13 @@ public abstract class MinecraftRemapper implements Remapper {
 			#                                                                                                 #
 			# Mappings version: %s													                          #
 			# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #""".formatted(MM_VERSION);
+	protected static final Logger LOGGER = LoggerFactory.getLogger("Rhino Script Remapper");
 
 	public static class RemappedClass {
+		public static boolean isUseless(Map.Entry<String, RemappedClass> entry) {
+			return entry.getValue().isUseless();
+		}
+
 		public final String originalName;
 		public final String mappedName;
 		public Map<String, String> children;
@@ -67,10 +69,6 @@ public abstract class MinecraftRemapper implements Remapper {
 
 		public boolean isUseless() {
 			return (children == null || children.isEmpty()) && originalName.equals(mappedName);
-		}
-
-		public static boolean isUseless(Map.Entry<String, RemappedClass> entry) {
-			return entry.getValue().isUseless();
 		}
 	}
 

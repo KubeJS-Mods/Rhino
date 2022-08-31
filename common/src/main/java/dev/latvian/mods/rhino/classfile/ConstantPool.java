@@ -10,14 +10,6 @@ import dev.latvian.mods.rhino.ObjToIntMap;
 import dev.latvian.mods.rhino.UintMap;
 
 final class ConstantPool {
-	ConstantPool(ClassFileWriter cfw) {
-		this.cfw = cfw;
-		itsTopIndex = 1;       // the zero'th entry is reserved
-		itsPool = new byte[ConstantPoolSize];
-		itsTop = 0;
-	}
-
-	private static final int ConstantPoolSize = 256;
 	static final byte CONSTANT_Class = 7;
 	static final byte CONSTANT_Fieldref = 9;
 	static final byte CONSTANT_Methodref = 10;
@@ -32,6 +24,27 @@ final class ConstantPool {
 	static final byte CONSTANT_MethodType = 16;
 	static final byte CONSTANT_MethodHandle = 15;
 	static final byte CONSTANT_InvokeDynamic = 18;
+	private static final int ConstantPoolSize = 256;
+	private static final int MAX_UTF_ENCODING_SIZE = 65535;
+	private final ClassFileWriter cfw;
+	private final UintMap itsStringConstHash = new UintMap();
+	private final ObjToIntMap itsUtf8Hash = new ObjToIntMap();
+	private final ObjToIntMap itsFieldRefHash = new ObjToIntMap();
+	private final ObjToIntMap itsMethodRefHash = new ObjToIntMap();
+	private final ObjToIntMap itsClassHash = new ObjToIntMap();
+	private final ObjToIntMap itsConstantHash = new ObjToIntMap();
+	private final UintMap itsConstantData = new UintMap();
+	private final UintMap itsPoolTypes = new UintMap();
+	private int itsTop;
+	private int itsTopIndex;
+	private byte[] itsPool;
+
+	ConstantPool(ClassFileWriter cfw) {
+		this.cfw = cfw;
+		itsTopIndex = 1;       // the zero'th entry is reserved
+		itsPool = new byte[ConstantPoolSize];
+		itsTop = 0;
+	}
 
 	int write(byte[] data, int offset) {
 		offset = ClassFileWriter.putInt16((short) itsTopIndex, data, offset);
@@ -119,7 +132,6 @@ final class ConstantPool {
 			throw new IllegalArgumentException("value " + value);
 		}
 	}
-
 
 	boolean isUnderUtfEncodingLimit(String s) {
 		int strLen = s.length();
@@ -367,21 +379,4 @@ final class ConstantPool {
 			itsPool = tmp;
 		}
 	}
-
-	private final ClassFileWriter cfw;
-
-	private static final int MAX_UTF_ENCODING_SIZE = 65535;
-
-	private final UintMap itsStringConstHash = new UintMap();
-	private final ObjToIntMap itsUtf8Hash = new ObjToIntMap();
-	private final ObjToIntMap itsFieldRefHash = new ObjToIntMap();
-	private final ObjToIntMap itsMethodRefHash = new ObjToIntMap();
-	private final ObjToIntMap itsClassHash = new ObjToIntMap();
-	private final ObjToIntMap itsConstantHash = new ObjToIntMap();
-
-	private int itsTop;
-	private int itsTopIndex;
-	private final UintMap itsConstantData = new UintMap();
-	private final UintMap itsPoolTypes = new UintMap();
-	private byte[] itsPool;
 }

@@ -11,12 +11,6 @@ public enum MemberType {
 	NUMBER("number"),
 	BOOLEAN("boolean");
 
-	private final String name;
-
-	MemberType(String n) {
-		name = n;
-	}
-
 	public static MemberType get(@Nullable Object value) {
 		if (value == null) {
 			return OBJECT;
@@ -37,6 +31,12 @@ public enum MemberType {
 			return BOOLEAN;
 		}
 		throw ScriptRuntime.errorWithClassName("msg.invalid.type", value);
+	}
+
+	private final String name;
+
+	MemberType(String n) {
+		name = n;
 	}
 
 	@Override
