@@ -14,23 +14,27 @@
 		{
 			"suffix": "common",
 			"directory": "common/build/libs",
-			"pattern": "rhino-([\\d-.]+build\\.\\d+)\\.jar"
+			"pattern": "rhino-([\\d-.]+build\\.\\d+)\\.jar",
+			"version": "$1"
 		},
 		{
 			"suffix": "common",
 			"directory": "common/build/libs",
 			"pattern": "rhino-([\\d-.]+build\\.\\d+)-sources\\.jar",
+			"version": "$1",
 			"classifier": "sources"
 		},
 		{
 			"suffix": "forge",
 			"directory": "forge/build/libs",
-			"pattern": "rhino-forge-([\\d-.]+build\\.\\d+)\\.jar"
+			"pattern": "rhino-forge-([\\d-.]+build\\.\\d+)\\.jar",
+			"version": "$1"
 		},
 		{
 			"suffix": "fabric",
 			"directory": "fabric/build/libs",
-			"pattern": "rhino-fabric-([\\d-.]+build\\.\\d+)\\.jar"
+			"pattern": "rhino-fabric-([\\d-.]+build\\.\\d+)\\.jar",
+			"version": "$1"
 		}
 	]
 }
