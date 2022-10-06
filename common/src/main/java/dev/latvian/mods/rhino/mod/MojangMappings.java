@@ -2,6 +2,7 @@ package dev.latvian.mods.rhino.mod;
 
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
+import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -153,12 +154,13 @@ public class MojangMappings {
 					}
 
 					sig.occurrences++;
-					System.out.println("M " + type + " | " + name + "(" + sig + ") -> " + obfName);
 					var ns = new NamedSignature(obfName, sig);
-					currentClassDef.methods.put(ns, new MethodDef(name, ns, type));
+					var m = new MethodDef(name, ns, type, new MutableObject<>(""));
+					currentClassDef.methods.put(ns, m);
+					System.out.println("M " + type + " | " + name + "(" + sig + ") -> " + m.getObfDescriptor(true));
 				} else {
+					currentClassDef.fields.put(obfName, new FieldDef(line, obfName, type, new MutableObject<>("")));
 					System.out.println("F " + type + " | " + line + " -> " + obfName);
-					currentClassDef.fields.put(obfName, new FieldDef(line, obfName, type));
 				}
 
 				//200:204:void convertStereo(java.nio.FloatBuffer,java.nio.FloatBuffer,com.mojang.blaze3d.audio.OggAudioStream$OutputConcat) -> a
@@ -351,15 +353,15 @@ public class MojangMappings {
 	}
 
 	public static final class ClassDef {
-		public static final ClassDef VOID = new ClassDef("void");
-		public static final ClassDef BOOLEAN = new ClassDef("boolean");
-		public static final ClassDef CHAR = new ClassDef("char");
-		public static final ClassDef BYTE = new ClassDef("byte");
-		public static final ClassDef SHORT = new ClassDef("short");
-		public static final ClassDef INT = new ClassDef("int");
-		public static final ClassDef LONG = new ClassDef("long");
-		public static final ClassDef FLOAT = new ClassDef("float");
-		public static final ClassDef DOUBLE = new ClassDef("double");
+		public static final ClassDef VOID = new ClassDef("void").descriptor("V");
+		public static final ClassDef BOOLEAN = new ClassDef("boolean").descriptor("Z");
+		public static final ClassDef CHAR = new ClassDef("char").descriptor("C");
+		public static final ClassDef BYTE = new ClassDef("byte").descriptor("B");
+		public static final ClassDef SHORT = new ClassDef("short").descriptor("S");
+		public static final ClassDef INT = new ClassDef("int").descriptor("I");
+		public static final ClassDef LONG = new ClassDef("long").descriptor("J");
+		public static final ClassDef FLOAT = new ClassDef("float").descriptor("F");
+		public static final ClassDef DOUBLE = new ClassDef("double").descriptor("D");
 		public static final ClassDef STRING = new ClassDef("java.lang.String");
 		public static final ClassDef OBJECT = new ClassDef("java.lang.Object");
 
@@ -382,22 +384,30 @@ public class MojangMappings {
 		public final String obfName;
 		public final Map<String, FieldDef> fields;
 		public final Map<NamedSignature, MethodDef> methods;
+		public final MutableObject<String> unmappedName;
 		public boolean mapped;
 		public int occurrences;
 
 		public ClassDef type;
 		public int array;
+		public String obfDescriptor;
 
 		public ClassDef(String name, String obfName, Map<String, FieldDef> fields, Map<NamedSignature, MethodDef> methods) {
 			this.name = name;
 			this.obfName = obfName;
 			this.fields = fields;
 			this.methods = methods;
+			this.unmappedName = new MutableObject<>("");
 			this.mapped = false;
 			this.occurrences = 0;
 
 			this.type = this;
 			this.array = 0;
+		}
+
+		public ClassDef descriptor(String s) {
+			this.obfDescriptor = s;
+			return this;
 		}
 
 		private ClassDef array(int a) {
@@ -431,14 +441,43 @@ public class MojangMappings {
 			return name;
 		}
 
+		public String getObfDescriptor() {
+			if (obfDescriptor == null) {
+				if (array > 0) {
+					obfDescriptor = "[".repeat(array) + type.getObfDescriptor();
+				} else {
+					obfDescriptor = 'L' + obfName.replace('.', '/') + ';';
+				}
+			}
+
+			return obfDescriptor;
+		}
+
 		public int compareTo(ClassDef other) {
 			return Integer.compare(other.occurrences, occurrences);
 		}
 	}
 
-	public record FieldDef(String name, String obfName, ClassDef type) {
+	public record FieldDef(String name, String obfName, ClassDef type, MutableObject<String> unmappedName) {
 	}
 
-	public record MethodDef(String name, NamedSignature obfName, ClassDef returnType) {
+	public record MethodDef(String name, NamedSignature obfName, ClassDef returnType, MutableObject<String> unmappedName) {
+		public String getObfDescriptor(boolean includeReturnType) {
+			var sb = new StringBuilder();
+			sb.append(obfName.name);
+			sb.append('(');
+
+			for (var s : obfName.signature.classes) {
+				sb.append(s.getObfDescriptor());
+			}
+
+			sb.append(')');
+
+			if (includeReturnType) {
+				sb.append(returnType.getObfDescriptor());
+			}
+
+			return sb.toString();
+		}
 	}
 }
