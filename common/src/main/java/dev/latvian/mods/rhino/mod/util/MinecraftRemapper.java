@@ -1,394 +1,185 @@
 package dev.latvian.mods.rhino.mod.util;
 
 import dev.latvian.mods.rhino.util.Remapper;
-import net.minecraft.SharedConstants;
-import net.minecraft.Util;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.InterruptedIOException;
+import java.io.DataInput;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public abstract class MinecraftRemapper implements Remapper {
+public class MinecraftRemapper implements Remapper {
+	private static final class RemappedClass {
+		private final String unmappedName;
+		private final String mmName;
+		private Map<String, String> fields;
+		private Map<String, String> methods;
 
-	public static final int MM_VERSION = 1;
-	public static final int VERSION = 1;
-	public static final String MAPPINGS_HEADER_AND_WARNING = """
-			# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-			# IMPORTANT NOTE: This file is NOT meant to be published within public modpacks or repositories.  #
-			# Its purpose is solely to allow for the use of Minecraft's "official" mappings within scripts    #
-			# handled by Rhino, in order to enable script creators to interact with the game environment in   #
-			# a more direct way. The contents of this file are not meant to be used outside of the Rhino      #
-			# script environment, or for any other purpose than the one described here.                       #
-			# This use of Minecraft's obfuscation mappings is governed by the Minecraft EULA,                 #
-			# as well as the terms of the license provided within the original mappings file.                 #
-			#                                                                                                 #
-			# Mappings version: %s													                          #
-			# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #""".formatted(MM_VERSION);
-	protected static final Logger LOGGER = LoggerFactory.getLogger("Rhino Script Remapper");
-
-	public static class RemappedClass {
-		public static boolean isUseless(Map.Entry<String, RemappedClass> entry) {
-			return entry.getValue().isUseless();
-		}
-
-		public final String originalName;
-		public final String mappedName;
-		public Map<String, String> children;
-
-		public RemappedClass(String on, String mn) {
-			originalName = on;
-			mappedName = mn;
-		}
-
-		@Override
-		public String toString() {
-			return mappedName;
-		}
-
-		public String getChild(String s) {
-			return children == null || children.isEmpty() ? "" : children.getOrDefault(s, "");
-		}
-
-		public boolean isUseless() {
-			return (children == null || children.isEmpty()) && originalName.equals(mappedName);
+		private RemappedClass(String unmappedName, String mmName) {
+			this.unmappedName = unmappedName;
+			this.mmName = mmName;
+			this.fields = null;
+			this.methods = null;
 		}
 	}
 
-	public record MinecraftClasses(Map<String, RemappedClass> rawLookup, Map<String, RemappedClass> mappedLookup) implements Function<String, String> {
-		@Override
-		public String apply(String s) {
-			RemappedClass c = mappedLookup.get(s);
-			return c == null ? s : c.originalName;
-		}
+	private record RemappedType(RemappedClass parent, int array) {
 	}
 
-	public final Map<String, RemappedClass> classMap;
-	private Map<String, String> inverseClassMap;
-	private boolean empty;
+	private static int readVarInt(DataInput input) throws Exception {
+		int i = 0;
+		int j = 0;
 
-	public MinecraftRemapper() {
+		byte b;
+		do {
+			b = input.readByte();
+			i |= (b & 127) << j++ * 7;
+			if (j > 5) {
+				throw new RuntimeException("VarInt too big");
+			}
+		} while ((b & 128) == 128);
+
+		return i;
+	}
+
+	private static String readUtf(DataInput input) throws Exception {
+		byte[] bytes = new byte[readVarInt(input)];
+		input.readFully(bytes);
+		return new String(bytes, StandardCharsets.UTF_8);
+	}
+
+	public static MinecraftRemapper load(DataInput input) throws Exception {
+		return new MinecraftRemapper(input);
+	}
+
+	private final Map<String, RemappedClass> classMap;
+	private final Map<String, String> unmapClassMap;
+
+	private MinecraftRemapper(DataInput input) throws Exception {
 		classMap = new HashMap<>();
-		empty = true;
+		unmapClassMap = new HashMap<>();
 
-		if (!isValid()) {
-			return;
+		input.readByte();
+		input.readByte();
+		var types = new RemappedType[readVarInt(input)];
+
+		int unmappedTypes = readVarInt(input);
+
+		for (int i = 0; i < unmappedTypes; i++) {
+			int index = readVarInt(input);
+			var name = readUtf(input);
+			types[index] = new RemappedType(new RemappedClass(name, ""), 0);
 		}
 
-		try {
-			Path remappedPath = getPath("rhino_" + getModLoader() + "_" + getRuntimeMappings() + "_remapped_" + getMcVersion() + "_v" + VERSION + (isServer() ? "_server.txt" : "_client.txt"));
+		var mappedTypes = new RemappedType[readVarInt(input)];
 
-			if (Files.exists(remappedPath) && Files.size(remappedPath) > 0) {
-				RemappedClass current = null;
+		for (int i = 0; i < mappedTypes.length; i++) {
+			int index = readVarInt(input);
+			var unmappedName = readUtf(input);
+			var mmName = readUtf(input);
+			types[index] = new RemappedType(new RemappedClass(unmappedName, mmName), 0);
+			mappedTypes[i] = types[index];
+			classMap.put(unmappedName, types[index].parent);
+		}
 
-				for (String line : Files.readAllLines(remappedPath, StandardCharsets.UTF_8)) {
-					String[] l = line.split(" ");
+		int arrayTypes = readVarInt(input);
 
-					if (l[0].equals("*")) {
-						current = new RemappedClass(l[1], l[2]);
-						classMap.put(current.originalName, current);
+		for (int i = 0; i < arrayTypes; i++) {
+			int index = readVarInt(input);
+			int type = readVarInt(input);
+			int array = readVarInt(input);
+			types[index] = new RemappedType(types[type].parent, array);
+		}
 
-						int cc = Integer.parseInt(l[3]);
+		var sig = new String[readVarInt(input)];
 
-						if (cc > 0) {
-							current.children = new HashMap<>(cc);
-						}
-					} else if (current != null && !l[0].startsWith("#")) {
-						current.children.put(l[0], l[1]);
-					}
-				}
-			} else {
-				MinecraftClasses minecraftClasses = loadMojMapClasses();
-				init(minecraftClasses);
+		for (int i = 0; i < sig.length; i++) {
+			int sigTypes = readVarInt(input);
+			var sb = new StringBuilder("(");
 
-				List<String> list = new ArrayList<>();
-				list.add(MAPPINGS_HEADER_AND_WARNING);
-
-				for (var entry : classMap.entrySet()) {
-					RemappedClass rc = entry.getValue();
-					list.add("* " + rc.originalName + " " + rc.mappedName + " " + (rc.children == null ? 0 : rc.children.size()));
-
-					if (rc.children != null) {
-						for (var entry1 : rc.children.entrySet()) {
-							list.add(entry1.getKey() + " " + entry1.getValue());
-						}
-					}
-				}
-
-				Files.write(remappedPath, list);
+			for (int j = 0; j < sigTypes; j++) {
+				sb.append(Remapper.getTypeName(types[readVarInt(input)].parent.unmappedName));
 			}
 
-			empty = false;
-		} catch (Exception ex) {
-			LOGGER.error("Failed to remap Rhino to Mojang Mappings:");
-			ex.printStackTrace();
+			sb.append('(');
+			sig[i] = sb.toString();
+		}
+
+		for (var c : mappedTypes) {
+			int fields = readVarInt(input);
+
+			if (fields > 0) {
+				c.parent.fields = new HashMap<>();
+			}
+
+			for (int i = 0; i < fields; i++) {
+				var unmappedName = readUtf(input);
+				var mmName = readUtf(input);
+				c.parent.fields.put(unmappedName, mmName);
+			}
+
+			int arg0methods = readVarInt(input);
+
+			if (arg0methods > 0) {
+				c.parent.methods = new HashMap<>();
+			}
+
+			for (int i = 0; i < arg0methods; i++) {
+				var unmappedName = readUtf(input);
+				var mmName = readUtf(input);
+				c.parent.methods.put(unmappedName, mmName);
+			}
+
+			int argNmethods = readVarInt(input);
+
+			if (arg0methods == 0 && argNmethods > 0) {
+				c.parent.methods = new HashMap<>();
+			}
+
+			for (int i = 0; i < argNmethods; i++) {
+				var unmappedName = readUtf(input);
+				var mmName = readUtf(input);
+				int index = readVarInt(input);
+				c.parent.methods.put(unmappedName + sig[index], mmName);
+			}
 		}
 	}
-
-	private Path getPath(String file) throws Exception {
-		if (!RhinoProperties.INSTANCE.forceLocalMappings) {
-			try {
-				Path path = Paths.get(System.getProperty("java.io.tmpdir")).resolve(file);
-
-				if (Files.exists(path)) {
-					if (Files.isReadable(path) && Files.isWritable(path)) {
-						return path;
-					}
-				} else {
-					Files.createFile(path);
-					return path;
-				}
-			} catch (Exception ex) {
-				LOGGER.error("Error while trying to access system temp folder!", ex);
-			}
-
-			LOGGER.error("Failed to access mappings file in system temp, using local cache directory instead!");
-		} else {
-			LOGGER.info("forceLocalMappings is set, we will not attempt to use the system temp folder");
-		}
-
-		Path dir = getLocalRhinoDir();
-
-		if (Files.notExists(dir)) {
-			Files.createDirectories(dir);
-			if (Util.getPlatform() == Util.OS.WINDOWS) {
-				Files.setAttribute(dir, "dos:hidden", true, LinkOption.NOFOLLOW_LINKS);
-			}
-		}
-
-		// when using instance-specific temp folder, make sure modpack devs don't accidentally publish the mappings
-		var gitignore = dir.resolve(".gitignore");
-		if (Files.notExists(gitignore)) {
-			Files.writeString(gitignore, "*", StandardOpenOption.CREATE_NEW);
-		}
-
-		return dir.resolve(file);
-	}
-
-	public MinecraftClasses loadMojMapClasses() throws Exception {
-		Path mojmapPath = getPath("rhino_mojang_mappings_" + getMcVersion() + "_v" + MM_VERSION + (isServer() ? "_server.txt" : "_client.txt"));
-
-		if (Files.exists(mojmapPath) && Files.size(mojmapPath) > 0) {
-			return readMojMapClasses(mojmapPath);
-		} else {
-			MinecraftClasses minecraftClasses = fetchMojMapClasses();
-
-			List<String> list = new ArrayList<>();
-			list.add(MAPPINGS_HEADER_AND_WARNING);
-			for (var entry : minecraftClasses.rawLookup.entrySet()) {
-				RemappedClass rc = entry.getValue();
-				list.add("* " + rc.originalName + " " + rc.mappedName + " " + (rc.children == null ? 0 : rc.children.size()));
-
-				if (rc.children != null) {
-					for (var entry1 : rc.children.entrySet()) {
-						list.add(entry1.getKey() + " " + entry1.getValue());
-					}
-				}
-			}
-
-			Files.write(mojmapPath, list);
-			return minecraftClasses;
-		}
-	}
-
-	public MinecraftClasses readMojMapClasses(Path path) throws Exception {
-		MinecraftClasses minecraftClasses = new MinecraftClasses(new HashMap<>(), new HashMap<>());
-
-		RemappedClass current = null;
-
-		for (String line : Files.readAllLines(path, StandardCharsets.UTF_8)) {
-			String[] l = line.split(" ");
-
-			if (l[0].equals("*")) {
-				current = new RemappedClass(l[1], l[2]);
-				minecraftClasses.rawLookup.put(current.originalName, current);
-				minecraftClasses.mappedLookup.put(current.mappedName, current);
-
-				int cc = Integer.parseInt(l[3]);
-
-				if (cc > 0) {
-					current.children = new HashMap<>(cc);
-				}
-			} else if (current != null && !l[0].startsWith("#")) {
-				current.children.put(l[0], l[1]);
-			}
-		}
-
-		return minecraftClasses;
-	}
-
-	public MinecraftClasses fetchMojMapClasses() throws Exception {
-		MinecraftClasses minecraftClasses = new MinecraftClasses(new HashMap<>(), new HashMap<>());
-
-		URL kubejsMappings = new URL("https://kubejs.com/mappings/%s/%s".formatted(getMcVersion(), isServer() ? "server.txt" : "client.txt"));
-
-		URL mojmapUrl;
-
-		try {
-			mojmapUrl = new URL(IOUtils.toString(Util.make(kubejsMappings.openConnection(), conn -> {
-				conn.setConnectTimeout(5000);
-				conn.setReadTimeout(10000);
-			}).getInputStream(), StandardCharsets.UTF_8));
-		} catch (Exception e) {
-			LOGGER.error("Failed to fetch mojang mappings data from %s".formatted(kubejsMappings));
-			LOGGER.error("This likely either means that kubejs.com is down or blocked in your country.");
-			LOGGER.error("We will proceed without remapping here, so you will have to use obfuscated names for internal Minecraft classes!");
-			LOGGER.error("As a workaround, you can try out the fix outlined here: https://github.com/KubeJS-Mods/Rhino/issues/26#issuecomment-1187123192");
-			// rethrow e to ensure no incorrect mappings are stored
-			throw e;
-		}
-
-		String[] mojmaps;
-		try {
-			mojmaps = IOUtils.toString(Util.make(mojmapUrl.openConnection(), conn -> {
-				conn.setConnectTimeout(10000);
-				conn.setReadTimeout(60000);
-			}).getInputStream(), StandardCharsets.UTF_8).split("\n");
-		} catch (Exception e) {
-			if (e instanceof InterruptedIOException) {
-				MinecraftRemapper.LOGGER.error("Timeout while downloading mojang mappings from {}!", mojmapUrl);
-			} else {
-				MinecraftRemapper.LOGGER.error("Failed to download mojang mappings from {}!", mojmapUrl);
-			}
-			LOGGER.error("Your connection might be unstable or blocking Mojang's servers, please try again later.");
-			LOGGER.error("We will proceed without remapping here, so you will have to use obfuscated names for internal Minecraft classes!");
-			LOGGER.error("As a workaround, you can try out the fix outlined here: https://github.com/KubeJS-Mods/Rhino/issues/26#issuecomment-1187123192");
-			// rethrow e to ensure no incorrect mappings are stored
-			throw e;
-		}
-
-		for (String s : mojmaps) {
-			s = s.trim();
-
-			if (!s.startsWith("#") && s.endsWith(":")) {
-				String[] s1 = s.substring(0, s.length() - 1).split(" -> ", 2);
-
-				if (s1.length == 2 && !s1[0].endsWith(".package-info")) {
-					RemappedClass c = new RemappedClass(s1[1], s1[0]);
-					minecraftClasses.rawLookup.put(c.originalName, c);
-					minecraftClasses.mappedLookup.put(c.mappedName, c);
-				}
-			}
-		}
-
-		Pattern pattern = Pattern.compile("([\\w$<>]+)(\\(.*\\))? -> ([\\w$<>]+)");
-		RemappedClass current = null;
-
-		for (String s : mojmaps) {
-			s = s.trim();
-
-			if (!s.isEmpty() && !s.startsWith("#")) {
-				if (s.endsWith(":")) {
-					String raw = s.substring(s.lastIndexOf(' ') + 1, s.length() - 1);
-					current = minecraftClasses.rawLookup.get(raw);
-				} else if (current != null) {
-					Matcher matcher = pattern.matcher(s);
-
-					if (matcher.find()) {
-						String mappedName = matcher.group(1);
-						String args = matcher.group(2);
-						String rawName = matcher.group(3);
-
-						if (!rawName.equals(mappedName)) {
-							if (mappedName.startsWith("lambda$") || mappedName.startsWith("val$") || mappedName.startsWith("access$") || mappedName.startsWith("this$")) {
-								continue;
-							} else if (current.children == null) {
-								current.children = new LinkedHashMap<>();
-							}
-
-							if (args != null && args.length() >= 2) {
-								StringBuilder sb = new StringBuilder(rawName);
-								sb.append('(');
-
-								String a = args.substring(1, args.length() - 1);
-
-								if (a.length() > 0) {
-									String[] a1 = a.split(",");
-
-									for (String value : a1) {
-										sb.append(Remapper.getTypeName(value, minecraftClasses));
-									}
-								}
-
-								sb.append(')');
-								current.children.put(sb.toString(), mappedName);
-							} else {
-								current.children.put(rawName, mappedName);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		return minecraftClasses;
-	}
-
-	public boolean isValid() {
-		return true;
-	}
-
-	public abstract String getModLoader();
-
-	public abstract boolean isServer();
-
-	public abstract String getRuntimeMappings();
-
-	public String getMcVersion() {
-		return SharedConstants.getCurrentVersion().getName();
-	}
-
-	public abstract void init(MinecraftClasses minecraftClasses) throws Exception;
-
-	public abstract Path getLocalRhinoDir();
 
 	@Override
 	public String remapClass(Class<?> from, String className) {
-		RemappedClass c = empty ? null : classMap.get(className);
-		return c == null ? "" : c.mappedName;
+		var c = classMap.get(className);
+		return c == null ? "" : c.mmName;
 	}
 
 	@Override
-	public String unmapClass(String from) {
-		if (empty) {
-			return "";
-		} else if (inverseClassMap == null) {
-			inverseClassMap = new HashMap<>(classMap.size());
+	public String unmapClass(String mmName) {
+		var s = unmapClassMap.get(mmName);
 
-			for (var entry : classMap.entrySet()) {
-				inverseClassMap.put(entry.getValue().mappedName, entry.getKey());
+		if (s == null) {
+			s = "";
+
+			for (var c : classMap.values()) {
+				if (c.mmName.equals(mmName)) {
+					s = c.unmappedName;
+				}
 			}
+
+			unmapClassMap.put(mmName, s);
 		}
 
-		return inverseClassMap.getOrDefault(from, "");
+		return s;
 	}
 
 	@Override
 	public String remapField(Class<?> from, Field field, String fieldName) {
-		RemappedClass c = empty ? null : classMap.get(from.getName());
-		return c == null ? "" : c.getChild(fieldName);
+		var c = classMap.get(from.getName());
+		return c == null || c.fields == null ? "" : c.fields.getOrDefault(fieldName, "");
 	}
 
 	@Override
 	public String remapMethod(Class<?> from, Method method, String methodString) {
-		RemappedClass c = empty ? null : classMap.get(from.getName());
-		return c == null ? "" : c.getChild(methodString);
+		var c = classMap.get(from.getName());
+		return c == null || c.methods == null ? "" : c.methods.getOrDefault(method.getParameterCount() == 0 ? method.getName() : methodString, "");
 	}
 }

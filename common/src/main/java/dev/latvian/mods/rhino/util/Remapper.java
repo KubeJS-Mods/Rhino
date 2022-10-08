@@ -2,10 +2,9 @@ package dev.latvian.mods.rhino.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.function.Function;
 
 public interface Remapper {
-	static String getTypeName(String type, Function<String, String> remap) {
+	static String getTypeName(String type) {
 		int array = 0;
 
 		while (type.endsWith("[]")) {
@@ -23,23 +22,27 @@ public interface Remapper {
 			case "double" -> "D";
 			case "char" -> "C";
 			case "void" -> "V";
-			default -> "L" + remap.apply(type.replace('/', '.')).replace('.', '/') + ";";
+			default -> "L" + type.replace('.', '/') + ";";
 		};
 
 		return array == 0 ? t : ("[".repeat(array) + t);
 	}
 
-	static String getTypeName(String type) {
-		return getTypeName(type, Function.identity());
+	default String remapClass(Class<?> from, String className) {
+		return "";
 	}
 
-	String remapClass(Class<?> from, String className);
+	default String unmapClass(String from) {
+		return "";
+	}
 
-	String unmapClass(String from);
+	default String remapField(Class<?> from, Field field, String fieldName) {
+		return "";
+	}
 
-	String remapField(Class<?> from, Field field, String fieldName);
-
-	String remapMethod(Class<?> from, Method method, String methodString);
+	default String remapMethod(Class<?> from, Method method, String methodString) {
+		return "";
+	}
 
 	default String getMappedClass(Class<?> from) {
 		String n = from.getName();

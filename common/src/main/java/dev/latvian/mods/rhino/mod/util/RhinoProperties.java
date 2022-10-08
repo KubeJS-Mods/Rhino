@@ -19,8 +19,7 @@ public enum RhinoProperties {
 	}
 
 	private final Properties properties;
-	public boolean forceLocalMappings;
-	public String srgRemoteUrl;
+	// public boolean forceLocalMappings;
 	private boolean writeProperties;
 
 	RhinoProperties() {
@@ -38,8 +37,7 @@ public enum RhinoProperties {
 				writeProperties = true;
 			}
 
-			forceLocalMappings = get("forceLocalMappings", false);
-			srgRemoteUrl = get("srgRemoteUrl", "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/$version/joined.tsrg");
+			// forceLocalMappings = get("forceLocalMappings", false);
 
 			if (writeProperties) {
 				try (Writer writer = Files.newBufferedWriter(propertiesFile)) {
