@@ -3,17 +3,19 @@ package dev.latvian.mods.rhino.mod.util;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataOutput;
+import java.io.OutputStream;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class MojangMappings {
+	private final String mcVersion;
 	private final Map<String, ClassDef> classes;
 	private final Map<String, ClassDef> classesMM;
 	private final Map<TypeDef, TypeDef> allTypes;
@@ -31,7 +33,8 @@ public class MojangMappings {
 
 	private final MethodDefSignature SIG_EMPTY = new MethodDefSignature();
 
-	private MojangMappings() {
+	private MojangMappings(String mc) {
+		mcVersion = mc;
 		classes = new HashMap<>();
 		classesMM = new HashMap<>();
 		allTypes = new HashMap<>();
@@ -77,7 +80,7 @@ public class MojangMappings {
 		}
 
 		var reader = new StringReader(descriptor);
-		var types = new ArrayList<TypeDef>();
+		var types = new ArrayList<TypeDef>(2);
 
 		while (true) {
 			var c = reader.read();
@@ -104,14 +107,14 @@ public class MojangMappings {
 					c = reader.read();
 
 					if (c == -1) {
-						throw new IllegalArgumentException("Invalid descriptor: " + descriptor);
-					}
-
-					if (c == ';') {
+						throw new RemapperException("Invalid descriptor: " + descriptor);
+					} else if (c == ';') {
 						break;
+					} else if (c == '/') {
+						sb.append('.');
+					} else {
+						sb.append((char) c);
 					}
-
-					sb.append((char) c);
 				}
 
 				types.add(getType(sb.toString()).parent.array(array));
@@ -134,7 +137,7 @@ public class MojangMappings {
 			} else if (c == 'V') {
 				types.add(VOID.array(array));
 			} else {
-				throw new IllegalArgumentException("Invalid descriptor: " + descriptor);
+				throw new RemapperException("Invalid descriptor: " + descriptor);
 			}
 		}
 
@@ -144,7 +147,7 @@ public class MojangMappings {
 			return types.get(0).getSingleArgumentSignature();
 		}
 
-		return getSignature(types.toArray(TypeDef[]::new));
+		return getSignature(types.toArray(new TypeDef[0]));
 	}
 
 	@Nullable
@@ -188,7 +191,7 @@ public class MojangMappings {
 		for (var line : lines) {
 			if (line.charAt(line.length() - 1) == ':') {
 				var s = line.split(" -> ", 2); // replace with faster, last index of space check
-				var c = new ClassDef(this, s[1].substring(0, s[1].length() - 1), s[0], new HashMap<>(0));
+				var c = new ClassDef(this, s[1].substring(0, s[1].length() - 1), s[0], new HashMap<>(0), new HashSet<>(0));
 				c.mapped = true;
 				classes.put(c.rawName, c);
 				classesMM.put(c.mmName, c);
@@ -201,7 +204,7 @@ public class MojangMappings {
 		for (var line : lines) {
 			if (line.charAt(0) == ' ') {
 				if (currentClassDef == null) {
-					throw new RuntimeException("Field or method without class! " + line);
+					throw new RemapperException("Field or method without class! " + line);
 				}
 
 				line = line.substring(Math.max(4, line.lastIndexOf(':') + 1));
@@ -229,20 +232,18 @@ public class MojangMappings {
 
 						sig = getSignature(types);
 					}
-
-					if (name.startsWith("lambda$") || name.startsWith("access$")) {
-						continue;
-					}
 				} else {
-					if (line.startsWith("val$") || line.startsWith("this$")) {
-						continue;
-					}
-
 					name = line;
 					sig = null;
 				}
 
 				var rawNameSig = new NamedSignature(rawName, sig);
+
+				if (name.startsWith("lambda$") || name.startsWith("access$") || line.startsWith("val$") || line.startsWith("this$")) {
+					currentClassDef.ignoredMembers.add(rawNameSig);
+					continue;
+				}
+
 				var m = new MemberDef(currentClassDef, rawNameSig, name, type, new MutableObject<>(""));
 				currentClassDef.members.put(rawNameSig, m);
 			} else if (line.charAt(line.length() - 1) == ':') {
@@ -277,22 +278,15 @@ public class MojangMappings {
 		}
 	}
 
-	private static void writeVarInt(DataOutput out, int value) throws Exception {
-		while ((value & -128) != 0) {
-			out.writeByte(value & 127 | 128);
-			value >>>= 7;
-		}
-
-		out.writeByte(value);
+	private static void writeVarInt(OutputStream stream, int value) throws Exception {
+		RemappingHelper.writeVarInt(stream, value);
 	}
 
-	private static void writeUtf(DataOutput out, String value) throws Exception {
-		byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-		writeVarInt(out, bytes.length);
-		out.write(bytes);
+	private static void writeUtf(OutputStream stream, String value) throws Exception {
+		RemappingHelper.writeUtf(stream, value);
 	}
 
-	public void write(DataOutput output) throws Exception {
+	public void write(OutputStream stream) throws Exception {
 		cleanup();
 		updateOccurrences();
 
@@ -329,40 +323,38 @@ public class MojangMappings {
 		RemappingHelper.LOGGER.info("Mapped Types: " + mappedTypes.size());
 		RemappingHelper.LOGGER.info("Array Types: " + arrayTypes.size());
 
-		output.writeByte(0); // Binary indicator
-		output.writeByte(1); // Version
-		writeVarInt(output, typeDefList.size());
+		stream.write(0); // Binary indicator
+		stream.write(1); // Version
+		writeUtf(stream, mcVersion);
 
-		writeVarInt(output, unmappedTypes.size());
+		writeVarInt(stream, unmappedTypes.size());
+		writeVarInt(stream, mappedTypes.size());
+		writeVarInt(stream, arrayTypes.size());
 
 		for (var c : unmappedTypes) {
-			writeVarInt(output, c.index);
-			output.writeUTF(c.parent.rawName);
+			writeVarInt(stream, c.index);
+			writeUtf(stream, c.parent.rawName);
 		}
-
-		writeVarInt(output, mappedTypes.size());
 
 		for (var c : mappedTypes) {
-			writeVarInt(output, c.index);
-			writeUtf(output, c.parent.unmappedName.getValue());
-			writeUtf(output, c.parent.mmName);
+			writeVarInt(stream, c.index);
+			writeUtf(stream, c.parent.unmappedName.getValue());
+			writeUtf(stream, c.parent.mmName);
 		}
-
-		writeVarInt(output, arrayTypes.size());
 
 		for (var c : arrayTypes) {
-			writeVarInt(output, c.index);
-			writeVarInt(output, c.parent.noArrayType.index);
-			writeVarInt(output, c.array);
+			writeVarInt(stream, c.index);
+			writeVarInt(stream, c.parent.noArrayType.index);
+			writeVarInt(stream, c.array);
 		}
 
-		writeVarInt(output, sigList.size());
+		writeVarInt(stream, sigList.size());
 
 		for (var s : sigList) {
-			writeVarInt(output, s.types.length);
+			writeVarInt(stream, s.types.length);
 
 			for (var c : s.types) {
-				writeVarInt(output, c.index);
+				writeVarInt(stream, c.index);
 			}
 		}
 
@@ -381,32 +373,30 @@ public class MojangMappings {
 				}
 			}
 
-			writeVarInt(output, fields.size());
+			writeVarInt(stream, fields.size());
+			writeVarInt(stream, arg0methods.size());
+			writeVarInt(stream, argNmethods.size());
 
 			for (var m : fields) {
-				writeUtf(output, m.unmappedName.getValue());
-				writeUtf(output, m.mmName);
+				writeUtf(stream, m.unmappedName.getValue());
+				writeUtf(stream, m.mmName);
 			}
-
-			writeVarInt(output, arg0methods.size());
 
 			for (var m : arg0methods) {
-				writeUtf(output, m.unmappedName.getValue());
-				writeUtf(output, m.mmName);
+				writeUtf(stream, m.unmappedName.getValue());
+				writeUtf(stream, m.mmName);
 			}
 
-			writeVarInt(output, argNmethods.size());
-
 			for (var m : argNmethods) {
-				writeUtf(output, m.unmappedName.getValue());
-				writeUtf(output, m.mmName);
-				writeVarInt(output, m.rawName.signature.index);
+				writeUtf(stream, m.unmappedName.getValue());
+				writeUtf(stream, m.mmName);
+				writeVarInt(stream, m.rawName.signature.index);
 			}
 		}
 	}
 
-	public static MojangMappings parse(List<String> lines) throws Exception {
-		var mappings = new MojangMappings();
+	public static MojangMappings parse(String mcVersion, List<String> lines) throws Exception {
+		var mappings = new MojangMappings(mcVersion);
 		mappings.parse0(lines);
 		return mappings;
 	}
@@ -485,13 +475,14 @@ public class MojangMappings {
 		public final String mmName;
 		public final String displayName;
 		public final Map<NamedSignature, MemberDef> members;
+		public final Set<NamedSignature> ignoredMembers;
 		private final MutableObject<String> unmappedName;
 		public boolean mapped;
 
 		public TypeDef noArrayType;
 		public String rawDescriptor;
 
-		public ClassDef(MojangMappings mappings, String rawName, String mmName, Map<NamedSignature, MemberDef> members) {
+		public ClassDef(MojangMappings mappings, String rawName, String mmName, Map<NamedSignature, MemberDef> members, Set<NamedSignature> ignoredMembers) {
 			this.mappings = mappings;
 			this.rawName = rawName;
 			this.mmName = mmName;
@@ -499,13 +490,14 @@ public class MojangMappings {
 			var dni = dn.lastIndexOf('.');
 			this.displayName = dni == -1 ? dn : dn.substring(dni + 1);
 			this.members = members;
+			this.ignoredMembers = ignoredMembers;
 			this.unmappedName = new MutableObject<>("");
 			this.mapped = false;
 			this.noArrayType = new TypeDef(this, 0);
 		}
 
 		public ClassDef(MojangMappings mappings, String name) {
-			this(mappings, name, "", Map.of());
+			this(mappings, name, "", Map.of(), Set.of());
 		}
 
 		public ClassDef descriptor(String s) {

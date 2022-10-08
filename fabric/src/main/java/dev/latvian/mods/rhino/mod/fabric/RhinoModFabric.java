@@ -37,7 +37,8 @@ public class RhinoModFabric implements ModInitializer {
 
 				for (var fieldDef : classDef.getFields()) {
 					var rawFieldName = fieldDef.getName(rawNamespace);
-					var mmField = mmClass.members.get(new MojangMappings.NamedSignature(rawFieldName, null));
+					var sig = new MojangMappings.NamedSignature(rawFieldName, null);
+					var mmField = mmClass.members.get(sig);
 
 					if (mmField != null) {
 						var unmappedFieldName = fieldDef.getName(runtimeNamespace);
@@ -46,6 +47,8 @@ public class RhinoModFabric implements ModInitializer {
 							mmField.unmappedName().setValue(unmappedFieldName);
 							RemappingHelper.LOGGER.info("Remapped field " + unmappedFieldName + " [" + mmField.rawName() + "] to " + mmField.mmName());
 						}
+					} else if (!mmClass.ignoredMembers.contains(sig)) {
+						RemappingHelper.LOGGER.info("Field " + sig + " not found!");
 					}
 				}
 
@@ -62,7 +65,7 @@ public class RhinoModFabric implements ModInitializer {
 							mmMethod.unmappedName().setValue(unmappedMethodName);
 							RemappingHelper.LOGGER.info("Remapped method " + unmappedMethodName + rawMethodDesc + " to " + mmMethod.mmName());
 						}
-					} else {
+					} else if (!mmClass.ignoredMembers.contains(sig)) {
 						RemappingHelper.LOGGER.info("Method " + sig + " not found!");
 					}
 				}

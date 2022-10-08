@@ -48,6 +48,7 @@ public class RhinoModForge {
 			}
 
 			if (!s[0].isEmpty()) {
+				s[0] = s[0].replace('/', '.');
 				current = context.mappings().getClass(s[0]);
 
 				if (current != null) {
@@ -61,22 +62,27 @@ public class RhinoModForge {
 						continue;
 					}
 
-					var a = s[2].substring(0, s[2].lastIndexOf(')') + 1);
-					var sig = new MojangMappings.NamedSignature(s[1], context.mappings().readSignatureFromDescriptor(a));
+					var sigs = s[2].substring(0, s[2].lastIndexOf(')') + 1).replace('/', '.');
+					var sig = new MojangMappings.NamedSignature(s[1], context.mappings().readSignatureFromDescriptor(sigs));
 					var m = current.members.get(sig);
 
 					if (m != null && !m.mmName().equals(s[3])) {
 						m.unmappedName().setValue(s[3]);
-						RemappingHelper.LOGGER.info("Remapped method " + s[3] + a + " to " + m.mmName());
-					} else if (m == null) {
-						RemappingHelper.LOGGER.info("Method " + sig + " not found!");
+						RemappingHelper.LOGGER.info("Remapped method " + s[3] + sigs + " to " + m.mmName());
+					} else if (m == null && !current.ignoredMembers.contains(sig)) {
+						RemappingHelper.LOGGER.info("Method " + s[3] + " [" + sig + "] not found!");
 					}
 				} else if (s.length == 4) {
-					var m = current.members.get(new MojangMappings.NamedSignature(s[1], null));
+					var sig = new MojangMappings.NamedSignature(s[1], null);
+					var m = current.members.get(sig);
 
-					if (m != null && !m.mmName().equals(s[2])) {
-						m.unmappedName().setValue(s[2]);
-						RemappingHelper.LOGGER.info("Remapped field " + s[2] + " [" + m.rawName() + "] to " + m.mmName());
+					if (m != null) {
+						if (!m.mmName().equals(s[2])) {
+							m.unmappedName().setValue(s[2]);
+							RemappingHelper.LOGGER.info("Remapped field " + s[2] + " [" + m.rawName() + "] to " + m.mmName());
+						}
+					} else if (!current.ignoredMembers.contains(sig)) {
+						RemappingHelper.LOGGER.info("Field " + s[2] + " [" + s[1] + "] not found!");
 					}
 				}
 			}

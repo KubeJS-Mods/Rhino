@@ -3,6 +3,7 @@ package dev.latvian.mods.rhino.mod.util;
 import com.mojang.logging.LogUtils;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -15,6 +16,16 @@ public enum RhinoProperties {
 
 	@ExpectPlatform
 	public static Path getGameDir() {
+		throw new AssertionError();
+	}
+
+	@ExpectPlatform
+	public static boolean isDev() {
+		throw new AssertionError();
+	}
+
+	@ExpectPlatform
+	public static InputStream openResource(String path) throws Exception {
 		throw new AssertionError();
 	}
 
