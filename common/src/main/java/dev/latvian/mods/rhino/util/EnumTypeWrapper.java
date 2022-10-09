@@ -2,14 +2,12 @@ package dev.latvian.mods.rhino.util;
 
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 	private static final Map<Class<?>, EnumTypeWrapper<?>> WRAPPERS = new HashMap<>();
-	private static final Map<Enum<?>, String> CACHED_NAMES = new HashMap<>();
 
 	@SuppressWarnings("unchecked")
 	public static <T> EnumTypeWrapper<T> get(Class<T> enumType) {
@@ -33,17 +31,6 @@ public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 			if (!s.isEmpty()) {
 				return s;
 			}
-		}
-
-		try {
-			Field field = enumType.getDeclaredField(name);
-			field.setAccessible(true);
-			String s = DefaultRemapper.INSTANCE.remapField(enumType, field, name);
-
-			if (!s.isEmpty()) {
-				return s;
-			}
-		} catch (Exception ex) {
 		}
 
 		return name;

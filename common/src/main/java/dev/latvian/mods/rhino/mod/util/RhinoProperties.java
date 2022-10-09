@@ -3,6 +3,7 @@ package dev.latvian.mods.rhino.mod.util;
 import com.mojang.logging.LogUtils;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -18,9 +19,18 @@ public enum RhinoProperties {
 		throw new AssertionError();
 	}
 
+	@ExpectPlatform
+	public static boolean isDev() {
+		throw new AssertionError();
+	}
+
+	@ExpectPlatform
+	public static InputStream openResource(String path) throws Exception {
+		throw new AssertionError();
+	}
+
 	private final Properties properties;
-	public boolean forceLocalMappings;
-	public String srgRemoteUrl;
+	// public boolean forceLocalMappings;
 	private boolean writeProperties;
 
 	RhinoProperties() {
@@ -38,8 +48,7 @@ public enum RhinoProperties {
 				writeProperties = true;
 			}
 
-			forceLocalMappings = get("forceLocalMappings", false);
-			srgRemoteUrl = get("srgRemoteUrl", "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/$version/joined.tsrg");
+			// forceLocalMappings = get("forceLocalMappings", false);
 
 			if (writeProperties) {
 				try (Writer writer = Files.newBufferedWriter(propertiesFile)) {

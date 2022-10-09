@@ -191,7 +191,7 @@ public final class NativeJSON extends IdScriptableObject {
 		if (s.startsWith("java.lang.") || s.startsWith("java.util.")) {
 			builder.append(s.substring(10));
 		} else {
-			builder.append(s);
+			builder.append(s.isEmpty() ? type.getName() : s);
 		}
 	}
 
@@ -254,7 +254,8 @@ public final class NativeJSON extends IdScriptableObject {
 			array++;
 		}
 
-		StringBuilder clName = new StringBuilder(remapper.getMappedClass(cl));
+		var mcl = remapper.getMappedClass(cl);
+		StringBuilder clName = new StringBuilder(mcl.isEmpty() ? cl.getName() : mcl);
 
 		if (array > 0) {
 			clName.append("[]".repeat(array));
@@ -281,6 +282,11 @@ public final class NativeJSON extends IdScriptableObject {
 
 			StringBuilder builder = new StringBuilder("new ");
 			String s = remapper.getMappedClass(constructor.getDeclaringClass());
+
+			if (s.isEmpty()) {
+				s = constructor.getDeclaringClass().getName();
+			}
+
 			int si = s.lastIndexOf('.');
 			builder.append(si == -1 || si >= s.length() ? s : s.substring(si + 1));
 			params(remapper, builder, constructor.getParameterTypes());
