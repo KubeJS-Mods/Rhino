@@ -7,6 +7,7 @@
 package dev.latvian.mods.rhino;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
@@ -20,7 +21,7 @@ import java.lang.reflect.Modifier;
  * @author Igor Bukanov
  */
 
-final class MemberBox {
+public final class MemberBox {
 	private static Method searchAccessibleMethod(Method method, Class<?>[] params) {
 		int modifiers = method.getModifiers();
 		if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers)) {
@@ -63,7 +64,7 @@ final class MemberBox {
 	transient Class<?>[] argTypes;
 	transient Object delegateTo;
 	transient boolean vararg;
-	private transient Member memberObject;
+	public transient Executable memberObject;
 
 	MemberBox(Method method) {
 		init(method);

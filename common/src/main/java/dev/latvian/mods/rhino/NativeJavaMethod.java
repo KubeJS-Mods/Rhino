@@ -317,7 +317,7 @@ public class NativeJavaMethod extends BaseFunction {
 
 	private final String functionName;
 	private transient final CopyOnWriteArrayList<ResolvedOverload> overloadCache = new CopyOnWriteArrayList<>();
-	MemberBox[] methods;
+	public transient MemberBox[] methods;
 
 	NativeJavaMethod(MemberBox[] methods) {
 		this.functionName = methods[0].getName();

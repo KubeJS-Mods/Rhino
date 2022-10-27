@@ -30,7 +30,7 @@ import java.util.Set;
  * @see NativeJavaObject
  * @see NativeJavaClass
  */
-class JavaMembers {
+public class JavaMembers {
 	public record MethodSignature(String name, Class<?>[] args) {
 		private static final Class<?>[] NO_ARGS = new Class<?>[0];
 
