@@ -69,15 +69,6 @@ unifiedPublishing {
 		changelog = getGitChangelog()
 		mainPublication remapJar
 
-		relations {
-			depends {
-				curseforge = modrinth = "architectury-api"
-			}
-			depends {
-				curseforge = modrinth = "rhino"
-			}
-		}
-
 		if (ENV.CURSEFORGE_KEY) {
 			curseforge {
 				token = ENV.CURSEFORGE_KEY
