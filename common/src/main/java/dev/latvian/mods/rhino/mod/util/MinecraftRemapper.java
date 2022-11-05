@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -15,36 +14,63 @@ import java.util.Optional;
 
 public class MinecraftRemapper implements Remapper {
 	private static final class RemappedClass {
-		private final String unmappedName;
-		private final String mmName;
+		private final String realName;
+		private final String remappedName;
+		private final boolean remapped;
 		private Map<String, String> fields;
-		private Map<RemappedMethodSignature, String> methods;
+		private Map<String, String> emptyMethods;
+		private Map<String, String> methods;
+		private String descriptorString;
 
-		private RemappedClass(String unmappedName, String mmName) {
-			this.unmappedName = unmappedName;
-			this.mmName = mmName;
+		private RemappedClass(String realName, String remappedName, boolean remapped) {
+			this.realName = realName;
+			this.remappedName = remappedName;
+			this.remapped = remapped;
 			this.fields = null;
+			this.emptyMethods = null;
 			this.methods = null;
 		}
 
 		@Override
 		public String toString() {
-			if (!mmName.isEmpty()) {
-				return mmName + "[" + unmappedName + "]";
+			if (remapped) {
+				return remappedName + "[" + realName + "]";
 			}
 
-			return unmappedName;
+			return realName;
+		}
+
+		public String descriptorString() {
+			if (descriptorString == null) {
+				descriptorString = switch (realName) {
+					case "boolean" -> "Z";
+					case "byte" -> "B";
+					case "char" -> "C";
+					case "short" -> "S";
+					case "int" -> "I";
+					case "long" -> "J";
+					case "float" -> "F";
+					case "double" -> "D";
+					case "void" -> "V";
+					default -> "L" + realName.replace('.', '/') + ";";
+				};
+			}
+
+			return descriptorString;
 		}
 	}
 
+	@SuppressWarnings({"OptionalAssignedToNull", "OptionalUsedAsFieldOrParameterType"})
 	private static final class RemappedType {
 		private final RemappedClass parent;
 		private final int array;
 		private Optional<Class<?>> realClass;
+		private String descriptorString;
 
 		private RemappedType(RemappedClass parent, int array) {
 			this.parent = parent;
 			this.array = array;
+			this.realClass = null;
 		}
 
 		@Override
@@ -56,14 +82,14 @@ public class MinecraftRemapper implements Remapper {
 			return parent.toString() + "[]".repeat(array);
 		}
 
+		public boolean isRemapped() {
+			return array == 0 && parent.remapped;
+		}
+
 		@Nullable
 		private Class<?> getRealClass(boolean debug) {
 			if (realClass == null) {
-				var r = RemappingHelper.getClass(parent.unmappedName);
-
-				if (!r.isPresent() && !parent.mmName.isEmpty()) {
-					r = RemappingHelper.getClass(parent.mmName);
-				}
+				var r = RemappingHelper.getClass(parent.realName);
 
 				if (r.isPresent()) {
 					if (array > 0) {
@@ -75,7 +101,7 @@ public class MinecraftRemapper implements Remapper {
 					realClass = Optional.empty();
 
 					if (debug) {
-						RemappingHelper.LOGGER.error("Class " + parent.unmappedName + " / " + parent.mmName + " not found!");
+						RemappingHelper.LOGGER.error("Class " + parent.realName + " / " + parent.remappedName + " not found!");
 					}
 				}
 			}
@@ -93,40 +119,16 @@ public class MinecraftRemapper implements Remapper {
 			return Objects.hash(parent, array);
 		}
 
-	}
-
-	private record RemappedMethodSignature(String name, Class<?>[] types) {
-		public static final Class<?>[] EMPTY_CLASS_ARRAY = new Class[0];
-
-		public RemappedMethodSignature(Method m) {
-			this(m.getName(), m.getParameterCount() == 0 ? EMPTY_CLASS_ARRAY : m.getParameterTypes());
-		}
-
-		@Override
-		public int hashCode() {
-			return name.hashCode() * 31 + Arrays.hashCode(types);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return obj == this || obj instanceof RemappedMethodSignature s && s.name.equals(name) && Arrays.equals(s.types, types);
-		}
-
-		@Override
-		public String toString() {
-			var sb = new StringBuilder(name);
-			sb.append('(');
-
-			for (var t : types) {
-				if (t == null) {
-					sb.append('X');
+		public String descriptorString() {
+			if (descriptorString == null) {
+				if (array > 0) {
+					descriptorString = "[".repeat(array) + parent.descriptorString();
 				} else {
-					sb.append(t.descriptorString());
+					descriptorString = parent.descriptorString();
 				}
 			}
 
-			sb.append(')');
-			return sb.toString();
+			return descriptorString;
 		}
 	}
 
@@ -176,16 +178,16 @@ public class MinecraftRemapper implements Remapper {
 		for (int i = 0; i < unmappedTypes; i++) {
 			int index = readVarInt(stream);
 			var name = readUtf(stream);
-			types[index] = new RemappedType(new RemappedClass(name, ""), 0);
+			types[index] = new RemappedType(new RemappedClass(name, name, false), 0);
 		}
 
 		for (int i = 0; i < mappedTypes.length; i++) {
 			int index = readVarInt(stream);
-			var unmappedName = readUtf(stream);
-			var mmName = readUtf(stream);
-			types[index] = new RemappedType(new RemappedClass(unmappedName.isEmpty() ? mmName : unmappedName, mmName), 0);
+			var realName = readUtf(stream);
+			var remappedName = readUtf(stream);
+			types[index] = new RemappedType(new RemappedClass(realName.isEmpty() ? remappedName : realName, remappedName, true), 0);
 			mappedTypes[i] = types[index];
-			classMap.put(types[index].parent.unmappedName, types[index].parent);
+			classMap.put(types[index].parent.realName, types[index].parent);
 		}
 
 		for (int i = 0; i < arrayTypes; i++) {
@@ -200,19 +202,23 @@ public class MinecraftRemapper implements Remapper {
 			types[index] = new RemappedType(types[type].parent, array);
 		}
 
-		var sig = new Class<?>[readVarInt(stream)][];
+		var sig = new String[readVarInt(stream)];
 
 		for (int i = 0; i < sig.length; i++) {
-			sig[i] = new Class<?>[readVarInt(stream)];
+			int params = readVarInt(stream);
+			var sb = new StringBuilder();
+			sb.append('(');
 
-			for (int j = 0; j < sig[i].length; j++) {
-				sig[i][j] = types[readVarInt(stream)].getRealClass(debug);
+			for (int j = 0; j < params; j++) {
+				sb.append(types[readVarInt(stream)].descriptorString());
 			}
+
+			sig[i] = sb.toString();
 		}
 
 		for (var c : mappedTypes) {
 			if (debug) {
-				RemappingHelper.LOGGER.info(String.format("- %s -> %s", c.parent.unmappedName, c.parent.mmName));
+				RemappingHelper.LOGGER.info(String.format("- %s -> %s", c.parent.realName, c.parent.remappedName));
 			}
 
 			int fields = readVarInt(stream);
@@ -239,42 +245,42 @@ public class MinecraftRemapper implements Remapper {
 			}
 
 			for (int i = 0; i < arg0; i++) {
-				var unmappedName = readUtf(stream);
-				var mmName = readUtf(stream);
+				var realName = readUtf(stream);
+				var remappedName = readUtf(stream);
 
-				if (unmappedName.isEmpty() || mmName.isEmpty() || unmappedName.equals(mmName)) {
+				if (realName.isEmpty() || remappedName.isEmpty() || realName.equals(remappedName)) {
 					continue;
 				}
 
-				if (c.parent.methods == null) {
-					c.parent.methods = new HashMap<>(arg0 + argN);
+				if (c.parent.emptyMethods == null) {
+					c.parent.emptyMethods = new HashMap<>(arg0);
 				}
 
-				c.parent.methods.put(new RemappedMethodSignature(unmappedName, RemappedMethodSignature.EMPTY_CLASS_ARRAY), mmName);
+				c.parent.emptyMethods.put(realName, remappedName);
 
 				if (debug) {
-					RemappingHelper.LOGGER.info(String.format("  %s() -> %s", unmappedName, mmName));
+					RemappingHelper.LOGGER.info(String.format("  %s() -> %s", realName, remappedName));
 				}
 			}
 
 			for (int i = 0; i < argN; i++) {
-				var unmappedName = readUtf(stream);
-				var mmName = readUtf(stream);
+				var realName = readUtf(stream);
+				var remappedName = readUtf(stream);
 
-				if (unmappedName.isEmpty() || mmName.isEmpty() || unmappedName.equals(mmName)) {
+				if (realName.isEmpty() || remappedName.isEmpty() || realName.equals(remappedName)) {
 					continue;
 				}
 
 				if (c.parent.methods == null) {
-					c.parent.methods = new HashMap<>(arg0 + argN);
+					c.parent.methods = new HashMap<>(argN);
 				}
 
 				int index = readVarInt(stream);
-				var key = new RemappedMethodSignature(unmappedName, sig[index]);
-				c.parent.methods.put(key, mmName);
+				var key = realName + sig[index];
+				c.parent.methods.put(key, remappedName);
 
 				if (debug) {
-					RemappingHelper.LOGGER.info(String.format("  %s -> %s", key, mmName));
+					RemappingHelper.LOGGER.info(String.format("  %s -> %s", key, remappedName));
 				}
 			}
 		}
@@ -288,7 +294,7 @@ public class MinecraftRemapper implements Remapper {
 	@Override
 	public String getMappedClass(Class<?> from) {
 		var c = classMap.get(from.getName());
-		return c == null ? "" : c.mmName;
+		return c == null ? "" : c.remappedName;
 	}
 
 	@Override
@@ -303,8 +309,8 @@ public class MinecraftRemapper implements Remapper {
 			s = "";
 
 			for (var c : classMap.values()) {
-				if (c.mmName.equals(mmName)) {
-					s = c.unmappedName;
+				if (c.remappedName.equals(mmName)) {
+					s = c.realName;
 				}
 			}
 
@@ -331,6 +337,23 @@ public class MinecraftRemapper implements Remapper {
 		}
 
 		var c = classMap.get(from.getName());
-		return c == null || c.methods == null ? "" : c.methods.getOrDefault(new RemappedMethodSignature(method), "");
+
+		if (c == null) {
+			return "";
+		} else if (method.getParameterCount() == 0) {
+			return c.emptyMethods == null ? "" : c.emptyMethods.getOrDefault(method.getName(), "");
+		} else if (c.methods == null) {
+			return "";
+		}
+
+		var sb = new StringBuilder();
+		sb.append(method.getName());
+		sb.append('(');
+
+		for (var t : method.getParameterTypes()) {
+			sb.append(t.descriptorString());
+		}
+
+		return c.methods.getOrDefault(sb.toString(), "");
 	}
 }
