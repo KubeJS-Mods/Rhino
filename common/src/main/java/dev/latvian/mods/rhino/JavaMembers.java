@@ -674,7 +674,6 @@ public class JavaMembers {
 			while (currentClass != null) {
 				// get all declared fields in this class, make them
 				// accessible, and save
-				Field[] declared = currentClass.getDeclaredFields();
 				Set<String> remapPrefixes = new HashSet<>();
 
 				for (RemapPrefixForJS r : currentClass.getAnnotationsByType(RemapPrefixForJS.class)) {
@@ -685,7 +684,7 @@ public class JavaMembers {
 					}
 				}
 
-				for (Field field : declared) {
+				for (Field field : getDeclaredFieldsSafe(currentClass)) {
 					int mods = field.getModifiers();
 
 					if (!Modifier.isTransient(mods) && (Modifier.isPublic(mods) || includeProtected && Modifier.isProtected(mods)) && !field.isAnnotationPresent(HideFromJS.class)) {
@@ -751,7 +750,7 @@ public class JavaMembers {
 				}
 			}
 
-			for (var method : currentClass.getDeclaredMethods()) {
+			for (var method : getDeclaredMethodsSafe(currentClass)) {
 				int mods = method.getModifiers();
 
 				if ((Modifier.isPublic(mods) || includeProtected && Modifier.isProtected(mods))) {
@@ -819,6 +818,24 @@ public class JavaMembers {
 		}
 
 		return list;
+	}
+
+	private static Method[] getDeclaredMethodsSafe(Class<?> cl) {
+		try {
+			return cl.getDeclaredMethods();
+		} catch (Throwable t) {
+			System.err.println("[Rhino] Failed to get declared methods for " + cl.getName() + ": " + t);
+			return new Method[0];
+		}
+	}
+
+	private static Field[] getDeclaredFieldsSafe(Class<?> cl) {
+		try {
+			return cl.getDeclaredFields();
+		} catch (Throwable t) {
+			System.err.println("[Rhino] Failed to get declared fields for " + cl.getName() + ": " + t);
+			return new Field[0];
+		}
 	}
 
 	public Map<String, FieldAndMethods> getFieldAndMethodsObjects(Scriptable scope, Object javaObject, boolean isStatic) {
