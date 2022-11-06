@@ -824,7 +824,7 @@ public class JavaMembers {
 		try {
 			return cl.getDeclaredMethods();
 		} catch (Throwable t) {
-			System.err.println("Failed to get declared methods for " + cl.getName() + ": " + t);
+			System.err.println("[Rhino] Failed to get declared methods for " + cl.getName() + ": " + t);
 			return new Method[0];
 		}
 	}
@@ -833,7 +833,7 @@ public class JavaMembers {
 		try {
 			return cl.getDeclaredFields();
 		} catch (Throwable t) {
-			System.err.println("Failed to get declared fields for " + cl.getName() + ": " + t);
+			System.err.println("[Rhino] Failed to get declared fields for " + cl.getName() + ": " + t);
 			return new Field[0];
 		}
 	}
