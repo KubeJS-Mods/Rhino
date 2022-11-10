@@ -131,7 +131,7 @@ public class JavaMembers {
 			// Does getter method have an empty parameter list with a return
 			// value (eg. a getSomething() or isSomething())?
 			if (method.argTypes.length == 0 && (!isStatic || method.isStatic())) {
-				Class<?> type = method.method().getReturnType();
+				Class<?> type = method.getReturnType();
 				if (type != Void.TYPE) {
 					return method;
 				}
@@ -178,7 +178,7 @@ public class JavaMembers {
 
 		for (MemberBox method : methods) {
 			if (!isStatic || method.isStatic()) {
-				if (method.method().getReturnType() == Void.TYPE) {
+				if (method.getReturnType() == Void.TYPE) {
 					if (method.argTypes.length == 1) {
 						return method;
 					}
@@ -188,9 +188,9 @@ public class JavaMembers {
 		return null;
 	}
 
-	public static JavaMembers lookupClass(SharedContextData cache, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
+	public static JavaMembers lookupClass(Context cx, Scriptable scope, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
 		JavaMembers members;
-		Map<Class<?>, JavaMembers> ct = cache.getClassCacheMap();
+		Map<Class<?>, JavaMembers> ct = cx.sharedContextData.getClassCacheMap();
 
 		Class<?> cl = dynamicType;
 		for (; ; ) {
@@ -204,7 +204,7 @@ public class JavaMembers {
 				return members;
 			}
 			try {
-				members = new JavaMembers(cache, cl, includeProtected);
+				members = new JavaMembers(cl, includeProtected, cx, scope);
 				break;
 			} catch (SecurityException e) {
 				// Reflection may fail for objects that are in a restricted
@@ -239,7 +239,7 @@ public class JavaMembers {
 		return members;
 	}
 
-	public final SharedContextData contextData;
+	public final Context localContext;
 	private final Class<?> cl;
 	private final Map<String, Object> members;
 	private final Map<String, Object> staticMembers;
@@ -247,17 +247,17 @@ public class JavaMembers {
 	private Map<String, FieldAndMethods> fieldAndMethods;
 	private Map<String, FieldAndMethods> staticFieldAndMethods;
 
-	JavaMembers(SharedContextData contextData, Class<?> cl, boolean includeProtected) {
-		this.contextData = contextData;
+	JavaMembers(Class<?> cl, boolean includeProtected, Context cx, Scriptable scope) {
+		this.localContext = cx;
 
-		ClassShutter shutter = contextData.getClassShutter();
+		ClassShutter shutter = cx.sharedContextData.getClassShutter();
 		if (shutter != null && !shutter.visibleToScripts(cl.getName(), ClassShutter.TYPE_MEMBER)) {
-			throw Context.reportRuntimeError1("msg.access.prohibited", cl.getName());
+			throw Context.reportRuntimeError1("msg.access.prohibited", cl.getName(), cx);
 		}
 		this.members = new HashMap<>();
 		this.staticMembers = new HashMap<>();
 		this.cl = cl;
-		reflect(contextData.topLevelScope, includeProtected);
+		reflect(scope, includeProtected, cx);
 	}
 
 	public boolean has(String name, boolean isStatic) {
@@ -269,7 +269,7 @@ public class JavaMembers {
 		return findExplicitFunction(name, isStatic) != null;
 	}
 
-	public Object get(Scriptable scope, String name, Object javaObject, boolean isStatic) {
+	public Object get(Scriptable scope, String name, Object javaObject, boolean isStatic, Context cx) {
 		Map<String, Object> ht = isStatic ? staticMembers : members;
 		Object member = ht.get(name);
 		if (!isStatic && member == null) {
@@ -277,7 +277,7 @@ public class JavaMembers {
 			member = staticMembers.get(name);
 		}
 		if (member == null) {
-			member = this.getExplicitFunction(scope, name, javaObject, isStatic);
+			member = this.getExplicitFunction(scope, name, javaObject, isStatic, cx);
 			if (member == null) {
 				return Scriptable.NOT_FOUND;
 			}
@@ -292,22 +292,22 @@ public class JavaMembers {
 				if (bp.getter == null) {
 					return Scriptable.NOT_FOUND;
 				}
-				rval = bp.getter.invoke(javaObject, ScriptRuntime.EMPTY_OBJECTS);
-				type = bp.getter.method().getReturnType();
+				rval = bp.getter.invoke(javaObject, ScriptRuntime.EMPTY_OBJECTS, cx, scope);
+				type = bp.getter.getReturnType();
 			} else {
 				Field field = (Field) member;
 				rval = field.get(isStatic ? null : javaObject);
 				type = field.getType();
 			}
 		} catch (Exception ex) {
-			throw Context.throwAsScriptRuntimeEx(ex);
+			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		}
 		// Need to wrap the object before we return it.
 		scope = ScriptableObject.getTopLevelScope(scope);
-		return contextData.getWrapFactory().wrap(contextData, scope, rval, type);
+		return cx.sharedContextData.getWrapFactory().wrap(cx, scope, rval, type);
 	}
 
-	public void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic) {
+	public void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic, Context cx) {
 		Map<String, Object> ht = isStatic ? staticMembers : members;
 		Object member = ht.get(name);
 		if (!isStatic && member == null) {
@@ -315,30 +315,28 @@ public class JavaMembers {
 			member = staticMembers.get(name);
 		}
 		if (member == null) {
-			throw reportMemberNotFound(name);
+			throw reportMemberNotFound(name, cx);
 		}
 		if (member instanceof FieldAndMethods) {
 			FieldAndMethods fam = (FieldAndMethods) ht.get(name);
 			member = fam.field;
 		}
 
-		Context cx = Context.getContext();
-
 		// Is this a bean property "set"?
 		if (member instanceof BeanProperty bp) {
 			if (bp.setter == null) {
-				throw reportMemberNotFound(name);
+				throw reportMemberNotFound(name, cx);
 			}
 			// If there's only one setter or if the value is null, use the
 			// main setter. Otherwise, let the NativeJavaMethod decide which
 			// setter to use:
 			if (bp.setters == null || value == null) {
 				Class<?> setType = bp.setter.argTypes[0];
-				Object[] args = {Context.jsToJava(contextData, value, setType)};
+				Object[] args = {Context.jsToJava(cx, value, setType)};
 				try {
-					bp.setter.invoke(javaObject, args);
+					bp.setter.invoke(javaObject, args, cx, scope);
 				} catch (Exception ex) {
-					throw Context.throwAsScriptRuntimeEx(ex);
+					throw Context.throwAsScriptRuntimeEx(ex, cx);
 				}
 			} else {
 				Object[] args = {value};
@@ -347,22 +345,22 @@ public class JavaMembers {
 		} else {
 			if (!(member instanceof Field field)) {
 				String str = (member == null) ? "msg.java.internal.private" : "msg.java.method.assign";
-				throw Context.reportRuntimeError1(str, name);
+				throw Context.reportRuntimeError1(str, name, cx);
 			}
 			int fieldModifiers = field.getModifiers();
 
 			if (Modifier.isFinal(fieldModifiers)) {
 				// treat Java final the same as JavaScript [[READONLY]]
-				throw Context.throwAsScriptRuntimeEx(new IllegalAccessException("Can't modify final field " + field.getName()));
+				throw Context.throwAsScriptRuntimeEx(new IllegalAccessException("Can't modify final field " + field.getName()), cx);
 			}
 
-			Object javaValue = Context.jsToJava(contextData, value, field.getType());
+			Object javaValue = Context.jsToJava(cx, value, field.getType());
 			try {
 				field.set(javaObject, javaValue);
 			} catch (IllegalAccessException accessEx) {
-				throw Context.throwAsScriptRuntimeEx(accessEx);
+				throw Context.throwAsScriptRuntimeEx(accessEx, cx);
 			} catch (IllegalArgumentException argEx) {
-				throw Context.reportRuntimeError3("msg.java.internal.field.type", value.getClass().getName(), field, javaObject.getClass().getName());
+				throw Context.reportRuntimeError3("msg.java.internal.field.type", value.getClass().getName(), field, javaObject.getClass().getName(), cx);
 			}
 		}
 	}
@@ -411,13 +409,13 @@ public class JavaMembers {
 		return null;
 	}
 
-	private Object getExplicitFunction(Scriptable scope, String name, Object javaObject, boolean isStatic) {
+	private Object getExplicitFunction(Scriptable scope, String name, Object javaObject, boolean isStatic, Context cx) {
 		Map<String, Object> ht = isStatic ? staticMembers : members;
 		Object member = null;
 		MemberBox methodOrCtor = findExplicitFunction(name, isStatic);
 
 		if (methodOrCtor != null) {
-			Scriptable prototype = ScriptableObject.getFunctionPrototype(scope);
+			Scriptable prototype = ScriptableObject.getFunctionPrototype(scope, cx);
 
 			if (methodOrCtor.isCtor()) {
 				NativeJavaConstructor fun = new NativeJavaConstructor(methodOrCtor);
@@ -440,7 +438,7 @@ public class JavaMembers {
 		return member;
 	}
 
-	private void reflect(Scriptable scope, boolean includeProtected) {
+	private void reflect(Scriptable scope, boolean includeProtected, Context cx) {
 		if (cl.isAnnotationPresent(HideFromJS.class)) {
 			ctors = new NativeJavaMethod(new MemberBox[0], cl.getSimpleName());
 			return;
@@ -450,7 +448,7 @@ public class JavaMembers {
 		// names to be allocated to the NativeJavaMethod before the field
 		// gets in the way.
 
-		for (MethodInfo methodInfo : getAccessibleMethods(includeProtected)) {
+		for (MethodInfo methodInfo : getAccessibleMethods(cx, includeProtected)) {
 			var method = methodInfo.method;
 			int mods = method.getModifiers();
 			boolean isStatic = Modifier.isStatic(mods);
@@ -503,14 +501,14 @@ public class JavaMembers {
 				}
 				NativeJavaMethod fun = new NativeJavaMethod(methodBoxes);
 				if (scope != null) {
-					ScriptRuntime.setFunctionProtoAndParent(fun, scope);
+					ScriptRuntime.setFunctionProtoAndParent(cx, scope, fun);
 				}
 				ht.put(entry.getKey(), fun);
 			}
 		}
 
 		// Reflect fields.
-		for (FieldInfo fieldInfo : getAccessibleFields(includeProtected)) {
+		for (FieldInfo fieldInfo : getAccessibleFields(cx, includeProtected)) {
 			var field = fieldInfo.field;
 			String name = fieldInfo.name.isEmpty() ? field.getName() : fieldInfo.name;
 
@@ -522,7 +520,7 @@ public class JavaMembers {
 				if (member == null) {
 					ht.put(name, field);
 				} else if (member instanceof NativeJavaMethod method) {
-					FieldAndMethods fam = new FieldAndMethods(scope, method.methods, field);
+					FieldAndMethods fam = new FieldAndMethods(scope, method.methods, field, cx);
 					Map<String, FieldAndMethods> fmht = isStatic ? staticFieldAndMethods : fieldAndMethods;
 					if (fmht == null) {
 						fmht = new HashMap<>();
@@ -550,7 +548,7 @@ public class JavaMembers {
 				}
 			} catch (SecurityException e) {
 				// skip this field
-				Context.reportWarning("Could not access field " + name + " of class " + cl.getName() + " due to lack of privileges.");
+				Context.reportWarning("Could not access field " + name + " of class " + cl.getName() + " due to lack of privileges.", cx);
 			}
 		}
 
@@ -621,7 +619,7 @@ public class JavaMembers {
 							if (getter != null) {
 								// We have a getter. Now, do we have a matching
 								// setter?
-								Class<?> type = getter.method().getReturnType();
+								Class<?> type = getter.getReturnType();
 								setter = extractSetMethod(type, njmSet.methods, isStatic);
 							} else {
 								// No getter, find any set method
@@ -665,7 +663,7 @@ public class JavaMembers {
 		return constructorsList;
 	}
 
-	public List<FieldInfo> getAccessibleFields(boolean includeProtected) {
+	public List<FieldInfo> getAccessibleFields(Context cx, boolean includeProtected) {
 		List<FieldInfo> fieldList = new ArrayList<>();
 
 		try {
@@ -711,7 +709,7 @@ public class JavaMembers {
 							}
 
 							if (info.name.isEmpty()) {
-								info.name = contextData.getRemapper().getMappedField(currentClass, field);
+								info.name = cx.sharedContextData.getRemapper().getMappedField(currentClass, field);
 							}
 
 							fieldList.add(info);
@@ -732,7 +730,7 @@ public class JavaMembers {
 		return fieldList;
 	}
 
-	public Collection<MethodInfo> getAccessibleMethods(boolean includeProtected) {
+	public Collection<MethodInfo> getAccessibleMethods(Context cx, boolean includeProtected) {
 		var methodMap = new HashMap<MethodSignature, MethodInfo>();
 
 		var stack = new ArrayDeque<Class<?>>();
@@ -794,7 +792,7 @@ public class JavaMembers {
 						}
 
 						if (info.name.isEmpty()) {
-							info.name = contextData.getRemapper().getMappedMethod(currentClass, method);
+							info.name = cx.sharedContextData.getRemapper().getMappedMethod(currentClass, method);
 						}
 					}
 				}
@@ -838,7 +836,7 @@ public class JavaMembers {
 		}
 	}
 
-	public Map<String, FieldAndMethods> getFieldAndMethodsObjects(Scriptable scope, Object javaObject, boolean isStatic) {
+	public Map<String, FieldAndMethods> getFieldAndMethodsObjects(Scriptable scope, Object javaObject, boolean isStatic, Context cx) {
 		Map<String, FieldAndMethods> ht = isStatic ? staticFieldAndMethods : fieldAndMethods;
 		if (ht == null) {
 			return null;
@@ -846,15 +844,15 @@ public class JavaMembers {
 		int len = ht.size();
 		Map<String, FieldAndMethods> result = new HashMap<>(len);
 		for (FieldAndMethods fam : ht.values()) {
-			FieldAndMethods famNew = new FieldAndMethods(scope, fam.methods, fam.field);
+			FieldAndMethods famNew = new FieldAndMethods(scope, fam.methods, fam.field, cx);
 			famNew.javaObject = javaObject;
 			result.put(fam.field.getName(), famNew);
 		}
 		return result;
 	}
 
-	RuntimeException reportMemberNotFound(String memberName) {
-		return Context.reportRuntimeError2("msg.java.member.not.found", cl.getName(), memberName);
+	RuntimeException reportMemberNotFound(String memberName, Context cx) {
+		return Context.reportRuntimeError2("msg.java.member.not.found", cl.getName(), memberName, cx);
 	}
 }
 

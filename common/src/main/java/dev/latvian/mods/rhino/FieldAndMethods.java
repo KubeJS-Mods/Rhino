@@ -6,15 +6,15 @@ public class FieldAndMethods extends NativeJavaMethod {
 	public transient Field field;
 	public transient Object javaObject;
 
-	FieldAndMethods(Scriptable scope, MemberBox[] methods, Field field) {
+	FieldAndMethods(Scriptable scope, MemberBox[] methods, Field field, Context cx) {
 		super(methods);
 		this.field = field;
 		setParentScope(scope);
-		setPrototype(getFunctionPrototype(scope));
+		setPrototype(getFunctionPrototype(scope, cx));
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> hint) {
+	public Object getDefaultValue(Class<?> hint, Context cx) {
 		if (hint == ScriptRuntime.FunctionClass) {
 			return this;
 		}
@@ -24,12 +24,11 @@ public class FieldAndMethods extends NativeJavaMethod {
 			rval = field.get(javaObject);
 			type = field.getType();
 		} catch (IllegalAccessException accEx) {
-			throw Context.reportRuntimeError1("msg.java.internal.private", field.getName());
+			throw Context.reportRuntimeError1("msg.java.internal.private", field.getName(), cx);
 		}
-		SharedContextData data = SharedContextData.get(getParentScope());
-		rval = data.getWrapFactory().wrap(data, this, rval, type);
+		rval = cx.sharedContextData.getWrapFactory().wrap(cx, this, rval, type);
 		if (rval instanceof Scriptable) {
-			rval = ((Scriptable) rval).getDefaultValue(hint);
+			rval = ((Scriptable) rval).getDefaultValue(hint, cx);
 		}
 		return rval;
 	}

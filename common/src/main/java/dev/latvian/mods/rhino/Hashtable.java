@@ -27,6 +27,7 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 	 */
 
 	public static final class Entry {
+		private final Context localContext;
 		private final int hashCode;
 		Object key;
 		Object value;
@@ -34,11 +35,14 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 		private Entry next;
 		private Entry prev;
 
-		Entry() {
+		Entry(Context cx) {
+			localContext = cx;
 			hashCode = 0;
 		}
 
-		Entry(Object k, Object value) {
+		Entry(Context cx, Object k, Object value) {
+			localContext = cx;
+
 			if ((k instanceof Number) && (!(k instanceof Double))) {
 				// Hash comparison won't work if we don't do this
 				this.key = ((Number) k).doubleValue();
@@ -89,7 +93,7 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 				return false;
 			}
 			try {
-				return ScriptRuntime.sameZero(key, ((Entry) o).key);
+				return ScriptRuntime.sameZero(localContext, key, ((Entry) o).key);
 			} catch (ClassCastException cce) {
 				return false;
 			}
@@ -101,9 +105,9 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 	private final static class Iter implements Iterator<Entry> {
 		private Entry pos;
 
-		Iter(Entry start) {
+		Iter(Context cx, Entry start) {
 			// Keep the logic simpler by having a dummy at the start
-			Entry dummy = makeDummy();
+			Entry dummy = makeDummy(cx);
 			dummy.next = start;
 			this.pos = dummy;
 		}
@@ -135,22 +139,27 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 		}
 	}
 
-	private static Entry makeDummy() {
-		final Entry d = new Entry();
+	private static Entry makeDummy(Context cx) {
+		final Entry d = new Entry(cx);
 		d.clear();
 		return d;
 	}
 
+	private final Context localContext;
 	private final HashMap<Object, Entry> map = new HashMap<>();
 	private Entry first = null;
 	private Entry last = null;
+
+	public Hashtable(Context cx) {
+		localContext = cx;
+	}
 
 	public int size() {
 		return map.size();
 	}
 
-	public void put(Object key, Object value) {
-		final Entry nv = new Entry(key, value);
+	public void put(Context cx, Object key, Object value) {
+		final Entry nv = new Entry(cx, key, value);
 		final Entry ev = map.putIfAbsent(nv, nv);
 		if (ev == null) {
 			// New value -- insert to end of doubly-linked list
@@ -167,8 +176,8 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 		}
 	}
 
-	public Object get(Object key) {
-		final Entry e = new Entry(key, null);
+	public Object get(Context cx, Object key) {
+		final Entry e = new Entry(cx, key, null);
 		final Entry v = map.get(e);
 		if (v == null) {
 			return null;
@@ -176,13 +185,13 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 		return v.value;
 	}
 
-	public boolean has(Object key) {
-		final Entry e = new Entry(key, null);
+	public boolean has(Context cx, Object key) {
+		final Entry e = new Entry(cx, key, null);
 		return map.containsKey(e);
 	}
 
-	public Object delete(Object key) {
-		final Entry e = new Entry(key, null);
+	public Object delete(Context cx, Object key) {
+		final Entry e = new Entry(cx, key, null);
 		final Entry v = map.remove(e);
 		if (v == null) {
 			return null;
@@ -224,7 +233,7 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 		return v.clear();
 	}
 
-	public void clear() {
+	public void clear(Context cx) {
 		// Zero out all the entries so that existing iterators will skip them all
 		Iterator<Entry> it = iterator();
 		it.forEachRemaining(Entry::clear);
@@ -234,7 +243,7 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 		// will drive forward right into the new list. If they are not, then
 		// nothing is referencing the old list and it'll get GCed.
 		if (first != null) {
-			Entry dummy = makeDummy();
+			Entry dummy = makeDummy(cx);
 			last.next = dummy;
 			first = last = dummy;
 		}
@@ -245,6 +254,6 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 
 	@Override
 	public Iterator<Entry> iterator() {
-		return new Iter(first);
+		return new Iter(localContext, first);
 	}
 }

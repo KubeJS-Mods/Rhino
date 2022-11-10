@@ -63,8 +63,8 @@ public class IdEnumeration implements Consumer<Object> {
 				return Boolean.FALSE;
 			}
 			if (index == ids.length) {
-				obj = obj.getPrototype();
-				changeObject();
+				obj = obj.getPrototype(cx);
+				changeObject(cx);
 				continue;
 			}
 			Object id = ids[index++];
@@ -74,13 +74,13 @@ public class IdEnumeration implements Consumer<Object> {
 			if (id instanceof Symbol) {
 				continue;
 			} else if (id instanceof String strId) {
-				if (!obj.has(strId, obj)) {
+				if (!obj.has(strId, obj, cx)) {
 					continue;   // must have been deleted
 				}
 				currentId = strId;
 			} else {
 				int intId = ((Number) id).intValue();
-				if (!obj.has(intId, obj)) {
+				if (!obj.has(cx, intId, obj)) {
 					continue;   // must have been deleted
 				}
 				currentId = enumNumbers ? Integer.valueOf(intId) : String.valueOf(intId);
@@ -89,14 +89,14 @@ public class IdEnumeration implements Consumer<Object> {
 		}
 	}
 
-	public void changeObject() {
+	public void changeObject(Context cx) {
 		Object[] nids = null;
 		while (obj != null) {
-			nids = obj.getIds();
+			nids = obj.getIds(cx);
 			if (nids.length != 0) {
 				break;
 			}
-			obj = obj.getPrototype();
+			obj = obj.getPrototype(cx);
 		}
 		if (obj != null && ids != null) {
 			Object[] previous = ids;
@@ -137,14 +137,14 @@ public class IdEnumeration implements Consumer<Object> {
 		Object result;
 
 		if (ScriptRuntime.isSymbol(currentId)) {
-			SymbolScriptable so = ScriptableObject.ensureSymbolScriptable(obj);
-			result = so.get((Symbol) currentId, obj);
+			SymbolScriptable so = ScriptableObject.ensureSymbolScriptable(obj, cx);
+			result = so.get(cx, (Symbol) currentId, obj);
 		} else {
 			ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, currentId);
 			if (s.stringId == null) {
-				result = obj.get(s.index, obj);
+				result = obj.get(cx, s.index, obj);
 			} else {
-				result = obj.get(s.stringId, obj);
+				result = obj.get(s.stringId, obj, cx);
 			}
 		}
 
@@ -156,7 +156,7 @@ public class IdEnumeration implements Consumer<Object> {
 
 		if (!b) {
 			// Out of values. Throw StopIteration.
-			throw new JavaScriptException(NativeIterator.getStopIterationObject(scope), null, 0);
+			throw new JavaScriptException(cx, NativeIterator.getStopIterationObject(scope, cx), null, 0);
 		}
 
 		return getId(cx);

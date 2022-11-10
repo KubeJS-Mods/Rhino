@@ -63,14 +63,14 @@ public class NativeGlobal implements IdFunctionCall {
 			}
 			IdFunctionObject f = new IdFunctionObject(obj, FTAG, id, name, arity, scope);
 			if (sealed) {
-				f.sealObject();
+				f.sealObject(cx);
 			}
-			f.exportAsScopeProperty();
+			f.exportAsScopeProperty(cx);
 		}
 
-		ScriptableObject.defineProperty(scope, "NaN", ScriptRuntime.NaNobj, ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT);
-		ScriptableObject.defineProperty(scope, "Infinity", ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY), ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT);
-		ScriptableObject.defineProperty(scope, "undefined", Undefined.instance, ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT);
+		ScriptableObject.defineProperty(scope, "NaN", ScriptRuntime.NaNobj, ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT, cx);
+		ScriptableObject.defineProperty(scope, "Infinity", ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY), ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT, cx);
+		ScriptableObject.defineProperty(scope, "undefined", Undefined.instance, ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT, cx);
 
         /*
             Each error constructor gets its own Error object as a prototype,
@@ -83,26 +83,26 @@ public class NativeGlobal implements IdFunctionCall {
 			}
 			String name = error.name();
 			ScriptableObject errorProto = (ScriptableObject) ScriptRuntime.newBuiltinObject(cx, scope, TopLevel.Builtins.Error, ScriptRuntime.EMPTY_OBJECTS);
-			errorProto.put("name", errorProto, name);
-			errorProto.put("message", errorProto, "");
+			errorProto.put("name", errorProto, name, cx);
+			errorProto.put("message", errorProto, "", cx);
 			IdFunctionObject ctor = new IdFunctionObject(obj, FTAG, Id_new_CommonError, name, 1, scope);
 			ctor.markAsConstructor(errorProto);
-			errorProto.put("constructor", errorProto, ctor);
-			errorProto.setAttributes("constructor", ScriptableObject.DONTENUM);
+			errorProto.put("constructor", errorProto, ctor, cx);
+			errorProto.setAttributes("constructor", ScriptableObject.DONTENUM, cx);
 			if (sealed) {
-				errorProto.sealObject();
-				ctor.sealObject();
+				errorProto.sealObject(cx);
+				ctor.sealObject(cx);
 			}
-			ctor.exportAsScopeProperty();
+			ctor.exportAsScopeProperty(cx);
 		}
 	}
 
 	/**
 	 * The global method parseInt, as per ECMA-262 15.1.2.2.
 	 */
-	static Object js_parseInt(Object[] args) {
-		String s = ScriptRuntime.toString(args, 0);
-		int radix = ScriptRuntime.toInt32(args, 1);
+	static Object js_parseInt(Object[] args, Context cx) {
+		String s = ScriptRuntime.toString(cx, args, 0);
+		int radix = ScriptRuntime.toInt32(cx, args, 1);
 
 		int len = s.length();
 		if (len == 0) {
@@ -144,7 +144,6 @@ public class NativeGlobal implements IdFunctionCall {
 					radix = 16;
 					start += 2;
 				} else if ('0' <= c && c <= '9') {
-					Context cx = Context.getCurrentContext();
 					if (cx == null) {
 						radix = 8;
 						start++;
@@ -162,12 +161,12 @@ public class NativeGlobal implements IdFunctionCall {
 	 *
 	 * @param args the arguments to parseFloat, ignoring args[>=1]
 	 */
-	static Object js_parseFloat(Object[] args) {
+	static Object js_parseFloat(Context cx, Object[] args) {
 		if (args.length < 1) {
 			return ScriptRuntime.NaNobj;
 		}
 
-		String s = ScriptRuntime.toString(args[0]);
+		String s = ScriptRuntime.toString(cx, args[0]);
 		int len = s.length();
 		int start = 0;
 		// Scan forward to skip whitespace
@@ -269,16 +268,16 @@ public class NativeGlobal implements IdFunctionCall {
 	 * for the strange constant names should be directed there.
 	 */
 
-	private static Object js_escape(Object[] args) {
+	private static Object js_escape(Object[] args, Context cx) {
 		final int URL_XALPHAS = 1, URL_XPALPHAS = 2, URL_PATH = 4;
 
-		String s = ScriptRuntime.toString(args, 0);
+		String s = ScriptRuntime.toString(cx, args, 0);
 
 		int mask = URL_XALPHAS | URL_XPALPHAS | URL_PATH;
 		if (args.length > 1) { // the 'mask' argument.  Non-ECMA.
-			double d = ScriptRuntime.toNumber(args[1]);
+			double d = ScriptRuntime.toNumber(cx, args[1]);
 			if (Double.isNaN(d) || ((mask = (int) d) != d) || 0 != (mask & ~(URL_XALPHAS | URL_XPALPHAS | URL_PATH))) {
-				throw Context.reportRuntimeError0("msg.bad.esc.mask");
+				throw Context.reportRuntimeError0("msg.bad.esc.mask", cx);
 			}
 		}
 
@@ -326,8 +325,8 @@ public class NativeGlobal implements IdFunctionCall {
 	 * The global unescape method, as per ECMA-262 15.1.2.5.
 	 */
 
-	private static Object js_unescape(Object[] args) {
-		String s = ScriptRuntime.toString(args, 0);
+	private static Object js_unescape(Object[] args, Context cx) {
+		String s = ScriptRuntime.toString(cx, args, 0);
 		int firstEscapePos = s.indexOf('%');
 		if (firstEscapePos >= 0) {
 			int L = s.length();
@@ -388,7 +387,7 @@ public class NativeGlobal implements IdFunctionCall {
 	 *   given in the ECMA specification for the hidden functions
 	 *   'Encode' and 'Decode'.
 	 */
-	private static String encode(String str, boolean fullUri) {
+	private static String encode(String str, boolean fullUri, Context cx) {
 		byte[] utf8buf = null;
 		StringBuilder sb = null;
 
@@ -406,7 +405,7 @@ public class NativeGlobal implements IdFunctionCall {
 					utf8buf = new byte[6];
 				}
 				if (0xDC00 <= C && C <= 0xDFFF) {
-					throw uriError();
+					throw uriError(cx);
 				}
 				int V;
 				if (C < 0xD800 || 0xDBFF < C) {
@@ -414,11 +413,11 @@ public class NativeGlobal implements IdFunctionCall {
 				} else {
 					k++;
 					if (k == length) {
-						throw uriError();
+						throw uriError(cx);
 					}
 					char C2 = str.charAt(k);
 					if (!(0xDC00 <= C2 && C2 <= 0xDFFF)) {
-						throw uriError();
+						throw uriError(cx);
 					}
 					V = ((C - 0xD800) << 10) + (C2 - 0xDC00) + 0x10000;
 				}
@@ -462,7 +461,7 @@ public class NativeGlobal implements IdFunctionCall {
 		return -1;
 	}
 
-	private static String decode(String str, boolean fullUri) {
+	private static String decode(String str, boolean fullUri, Context cx) {
 		char[] buf = null;
 		int bufTop = 0;
 
@@ -483,11 +482,11 @@ public class NativeGlobal implements IdFunctionCall {
 				}
 				int start = k;
 				if (k + 3 > length) {
-					throw uriError();
+					throw uriError(cx);
 				}
 				int B = unHex(str.charAt(k + 1), str.charAt(k + 2));
 				if (B < 0) {
-					throw uriError();
+					throw uriError(cx);
 				}
 				k += 3;
 				if ((B & 0x80) == 0) {
@@ -498,7 +497,7 @@ public class NativeGlobal implements IdFunctionCall {
 					int utf8Tail, ucs4Char, minUcs4Char;
 					if ((B & 0xC0) == 0x80) {
 						// First  UTF-8 should be ouside 0x80..0xBF
-						throw uriError();
+						throw uriError(cx);
 					} else if ((B & 0x20) == 0) {
 						utf8Tail = 1;
 						ucs4Char = B & 0x1F;
@@ -521,18 +520,18 @@ public class NativeGlobal implements IdFunctionCall {
 						minUcs4Char = 0x4000000;
 					} else {
 						// First UTF-8 can not be 0xFF or 0xFE
-						throw uriError();
+						throw uriError(cx);
 					}
 					if (k + 3 * utf8Tail > length) {
-						throw uriError();
+						throw uriError(cx);
 					}
 					for (int j = 0; j != utf8Tail; j++) {
 						if (str.charAt(k) != '%') {
-							throw uriError();
+							throw uriError(cx);
 						}
 						B = unHex(str.charAt(k + 1), str.charAt(k + 2));
 						if (B < 0 || (B & 0xC0) != 0x80) {
-							throw uriError();
+							throw uriError(cx);
 						}
 						ucs4Char = (ucs4Char << 6) | (B & 0x3F);
 						k += 3;
@@ -546,7 +545,7 @@ public class NativeGlobal implements IdFunctionCall {
 					if (ucs4Char >= 0x10000) {
 						ucs4Char -= 0x10000;
 						if (ucs4Char > 0xFFFFF) {
-							throw uriError();
+							throw uriError(cx);
 						}
 						char H = (char) ((ucs4Char >>> 10) + 0xD800);
 						C = (char) ((ucs4Char & 0x3FF) + 0xDC00);
@@ -580,8 +579,8 @@ public class NativeGlobal implements IdFunctionCall {
 		return false;
 	}
 
-	private static EcmaError uriError() {
-		return ScriptRuntime.constructError("URIError", ScriptRuntime.getMessage0("msg.bad.uri"));
+	private static EcmaError uriError(Context cx) {
+		return ScriptRuntime.constructError(cx, "URIError", ScriptRuntime.getMessage0("msg.bad.uri"));
 	}
 
 	/* Convert one UCS-4 char and write it into a UTF-8 buffer, which must be
@@ -618,18 +617,18 @@ public class NativeGlobal implements IdFunctionCall {
 			switch (methodId) {
 				case Id_decodeURI:
 				case Id_decodeURIComponent: {
-					String str = ScriptRuntime.toString(args, 0);
-					return decode(str, methodId == Id_decodeURI);
+					String str = ScriptRuntime.toString(cx, args, 0);
+					return decode(str, methodId == Id_decodeURI, cx);
 				}
 
 				case Id_encodeURI:
 				case Id_encodeURIComponent: {
-					String str = ScriptRuntime.toString(args, 0);
-					return encode(str, methodId == Id_encodeURI);
+					String str = ScriptRuntime.toString(cx, args, 0);
+					return encode(str, methodId == Id_encodeURI, cx);
 				}
 
 				case Id_escape:
-					return js_escape(args);
+					return js_escape(args, cx);
 
 				case Id_eval:
 					return js_eval(cx, scope, args);
@@ -638,7 +637,7 @@ public class NativeGlobal implements IdFunctionCall {
 					if (args.length < 1) {
 						return Boolean.FALSE;
 					}
-					return NativeNumber.isFinite(args[0]);
+					return NativeNumber.isFinite(args[0], cx);
 				}
 
 				case Id_isNaN: {
@@ -647,10 +646,10 @@ public class NativeGlobal implements IdFunctionCall {
 					if (args.length < 1) {
 						result = true;
 					} else {
-						double d = ScriptRuntime.toNumber(args[0]);
+						double d = ScriptRuntime.toNumber(cx, args[0]);
 						result = Double.isNaN(d);
 					}
-					return ScriptRuntime.wrapBoolean(result);
+					return result;
 				}
 
 				case Id_isXMLName: {
@@ -662,17 +661,17 @@ public class NativeGlobal implements IdFunctionCall {
 							xmlLib.isXMLName(cx, name));
 					 */
 
-					return ScriptRuntime.wrapBoolean(false);
+					return Boolean.FALSE;
 				}
 
 				case Id_parseFloat:
-					return js_parseFloat(args);
+					return js_parseFloat(cx, args);
 
 				case Id_parseInt:
-					return js_parseInt(args);
+					return js_parseInt(args, cx);
 
 				case Id_unescape:
-					return js_unescape(args);
+					return js_unescape(args, cx);
 
 				case Id_uneval: {
 					Object value = (args.length != 0) ? args[0] : Undefined.instance;

@@ -158,6 +158,7 @@ public class Parser {
 		return node.getPosition() + node.getLength();
 	}
 
+	protected final Context cx;
 	private final ErrorReporter errorReporter;
 	protected int nestingOfFunction;
 	protected boolean inUseStrictDirective;
@@ -192,15 +193,16 @@ public class Parser {
 	private int prevNameTokenLineno;
 	private boolean defaultUseStrictDirective;
 
-	public Parser() {
-		this(new CompilerEnvirons());
+	public Parser(Context cx) {
+		this(cx, new CompilerEnvirons());
 	}
 
-	public Parser(CompilerEnvirons compilerEnv) {
-		this(compilerEnv, compilerEnv.getErrorReporter());
+	public Parser(Context cx, CompilerEnvirons compilerEnv) {
+		this(cx, compilerEnv, compilerEnv.getErrorReporter());
 	}
 
-	public Parser(CompilerEnvirons compilerEnv, ErrorReporter errorReporter) {
+	public Parser(Context cx, CompilerEnvirons compilerEnv, ErrorReporter errorReporter) {
+		this.cx = cx;
 		this.compilerEnv = compilerEnv;
 		this.errorReporter = errorReporter;
 		if (errorReporter instanceof IdeErrorReporter) {
@@ -276,7 +278,7 @@ public class Parser {
 				line = ts.getLine();
 				offset = ts.getOffset();
 			}
-			errorReporter.error(message, sourceURI, lineno, line, offset);
+			errorReporter.error(cx, message, sourceURI, lineno, line, offset);
 		}
 	}
 
@@ -301,7 +303,7 @@ public class Parser {
 		if (errorCollector != null) {
 			errorCollector.error(message, sourceURI, position, length);
 		} else {
-			errorReporter.error(message, sourceURI, line, lineSource, lineOffset);
+			errorReporter.error(cx, message, sourceURI, line, lineSource, lineOffset);
 		}
 	}
 
@@ -596,7 +598,7 @@ public class Parser {
 			}
 		} catch (StackOverflowError ex) {
 			String msg = lookupMessage("msg.too.deep.parser.recursion");
-			throw Context.reportRuntimeError(msg, sourceURI, ts.lineno, null, 0);
+			throw Context.reportRuntimeError(cx, msg, sourceURI, ts.lineno, null, 0);
 		} finally {
 			inUseStrictDirective = savedStrictMode;
 		}
@@ -604,7 +606,7 @@ public class Parser {
 		if (this.syntaxErrorCount != 0) {
 			String msg = String.valueOf(this.syntaxErrorCount);
 			msg = lookupMessage("msg.got.syntax.errors", msg);
-			throw errorReporter.runtimeError(msg, sourceURI, baseLineno, null, 0);
+			throw errorReporter.runtimeError(cx, msg, sourceURI, baseLineno, null, 0);
 		}
 
 		// add comments to root in lexical order

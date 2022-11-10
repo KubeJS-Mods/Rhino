@@ -316,7 +316,6 @@ public class ContextFactory {
 	 * </pre>
 	 *
 	 * @return a Context associated with the current thread
-	 * @see Context#getCurrentContext()
 	 * @see Context#exit()
 	 * @see #call(ContextAction)
 	 */

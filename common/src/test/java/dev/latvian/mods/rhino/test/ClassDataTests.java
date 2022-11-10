@@ -16,7 +16,7 @@ public class ClassDataTests {
 	public void classData() {
 		Context cx = Context.enterWithNewFactory();
 		var scope = cx.initStandardObjects();
-		var contextData = SharedContextData.get(scope);
+		var contextData = SharedContextData.get(scope, cx);
 		var cache = contextData.getClassDataCache();
 		var data = cache.of(Player.class);
 		var member = data.getMember("x");

@@ -50,7 +50,7 @@ public interface ErrorReporter {
 	 * @param lineSource the text of the line (may be null)
 	 * @param lineOffset the offset into lineSource where problem was detected
 	 */
-	void error(String message, String sourceName, int line, String lineSource, int lineOffset);
+	void error(Context cx, String message, String sourceName, int line, String lineSource, int lineOffset);
 
 	/**
 	 * Creates an EvaluatorException that may be thrown.
@@ -66,5 +66,5 @@ public interface ErrorReporter {
 	 * @param lineOffset the offset into lineSource where problem was detected
 	 * @return an EvaluatorException that will be thrown.
 	 */
-	EvaluatorException runtimeError(String message, String sourceName, int line, String lineSource, int lineOffset);
+	EvaluatorException runtimeError(Context cx, String message, String sourceName, int line, String lineSource, int lineOffset);
 }

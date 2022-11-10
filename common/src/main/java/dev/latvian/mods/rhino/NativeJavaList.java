@@ -19,21 +19,19 @@ import java.util.function.Predicate;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class NativeJavaList extends NativeJavaObject {
-	private final SharedContextData contextData;
 	private final List list;
 	private final Class<?> listType;
 	private final ValueUnwrapper valueUnwrapper;
 
-	public NativeJavaList(SharedContextData contextData, Scriptable scope, Object jo, List list, @Nullable Class<?> listType, ValueUnwrapper valueUnwrapper) {
-		super(scope, jo, jo.getClass());
-		this.contextData = contextData;
+	public NativeJavaList(Context cx, Scriptable scope, Object jo, List list, @Nullable Class<?> listType, ValueUnwrapper valueUnwrapper) {
+		super(scope, jo, jo.getClass(), cx);
 		this.list = list;
 		this.listType = listType;
 		this.valueUnwrapper = valueUnwrapper;
 	}
 
-	public NativeJavaList(SharedContextData contextData, Scriptable scope, Object jo, List list) {
-		this(contextData, scope, jo, list, null, ValueUnwrapper.DEFAULT);
+	public NativeJavaList(Context cx, Scriptable scope, Object jo, List list) {
+		this(cx, scope, jo, list, null, ValueUnwrapper.DEFAULT);
 	}
 
 	@Override
@@ -42,48 +40,48 @@ public class NativeJavaList extends NativeJavaObject {
 	}
 
 	@Override
-	public boolean has(int index, Scriptable start) {
+	public boolean has(Context cx, int index, Scriptable start) {
 		if (isWithValidIndex(index)) {
 			return true;
 		}
-		return super.has(index, start);
+		return super.has(cx, index, start);
 	}
 
 	@Override
-	public boolean has(Symbol key, Scriptable start) {
+	public boolean has(Context cx, Symbol key, Scriptable start) {
 		if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key)) {
 			return true;
 		}
-		return super.has(key, start);
+		return super.has(cx, key, start);
 	}
 
 	@Override
-	public Object get(int index, Scriptable start) {
+	public Object get(Context cx, int index, Scriptable start) {
 		if (isWithValidIndex(index)) {
-			return valueUnwrapper.unwrap(contextData, this, list.get(index));
+			return valueUnwrapper.unwrap(cx, this, list.get(index));
 		}
 		return Undefined.instance;
 	}
 
 	@Override
-	public Object get(Symbol key, Scriptable start) {
+	public Object get(Context cx, Symbol key, Scriptable start) {
 		if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key)) {
 			return Boolean.TRUE;
 		}
-		return super.get(key, start);
+		return super.get(cx, key, start);
 	}
 
 	@Override
-	public void put(int index, Scriptable start, Object value) {
+	public void put(Context cx, int index, Scriptable start, Object value) {
 		if (isWithValidIndex(index)) {
-			list.set(index, Context.jsToJava(contextData, value, listType));
+			list.set(index, Context.jsToJava(cx, value, listType));
 			return;
 		}
-		super.put(index, start, value);
+		super.put(cx, index, start, value);
 	}
 
 	@Override
-	public Object[] getIds() {
+	public Object[] getIds(Context cx) {
 		List<?> list = (List<?>) javaObject;
 		Object[] result = new Object[list.size()];
 		int i = list.size();
@@ -98,15 +96,15 @@ public class NativeJavaList extends NativeJavaObject {
 	}
 
 	@Override
-	public void delete(int index) {
+	public void delete(int index, Context cx) {
 		if (isWithValidIndex(index)) {
 			Deletable.deleteObject(list.remove(index));
 		}
 	}
 
 	@Override
-	protected void initMembers() {
-		super.initMembers();
+	protected void initMembers(Context cx, Scriptable scope) {
+		super.initMembers(cx, scope);
 		addCustomProperty("length", this::getLength);
 		addCustomFunction("push", this::push, Object.class);
 		addCustomFunction("pop", this::pop);
@@ -129,18 +127,18 @@ public class NativeJavaList extends NativeJavaObject {
 		addCustomFunction("findLastIndex", this::findLastIndex, Predicate.class);
 	}
 
-	private int getLength() {
+	private int getLength(Context cx) {
 		return list.size();
 	}
 
-	private int push(Object[] args) {
+	private int push(Context cx, Object[] args) {
 		if (args.length == 1) {
-			list.add(Context.jsToJava(contextData, args[0], listType));
+			list.add(Context.jsToJava(cx, args[0], listType));
 		} else if (args.length > 1) {
 			Object[] args1 = new Object[args.length];
 
 			for (int i = 0; i < args.length; i++) {
-				args1[i] = Context.jsToJava(contextData, args[i], listType);
+				args1[i] = Context.jsToJava(cx, args[i], listType);
 			}
 
 			list.addAll(Arrays.asList(args1));
@@ -149,7 +147,7 @@ public class NativeJavaList extends NativeJavaObject {
 		return list.size();
 	}
 
-	private Object pop() {
+	private Object pop(Context cx) {
 		if (list.isEmpty()) {
 			return Undefined.instance;
 		}
@@ -157,7 +155,7 @@ public class NativeJavaList extends NativeJavaObject {
 		return list.remove(list.size() - 1);
 	}
 
-	private Object shift() {
+	private Object shift(Context cx) {
 		if (list.isEmpty()) {
 			return Undefined.instance;
 		}
@@ -165,15 +163,15 @@ public class NativeJavaList extends NativeJavaObject {
 		return list.remove(0);
 	}
 
-	private int unshift(Object[] args) {
+	private int unshift(Context cx, Object[] args) {
 		for (int i = args.length - 1; i >= 0; i--) {
-			list.add(0, Context.jsToJava(contextData, args[i], listType));
+			list.add(0, Context.jsToJava(cx, args[i], listType));
 		}
 
 		return list.size();
 	}
 
-	private Object concat(Object[] args) {
+	private Object concat(Context cx, Object[] args) {
 		List<Object> list1 = new ArrayList<>(list);
 
 		if (args.length > 0 && args[0] instanceof List<?>) {
@@ -183,14 +181,14 @@ public class NativeJavaList extends NativeJavaObject {
 		return list1;
 	}
 
-	private String join(Object[] args) {
+	private String join(Context cx, Object[] args) {
 		if (list.isEmpty()) {
 			return "";
 		} else if (list.size() == 1) {
-			return ScriptRuntime.toString(list.get(0));
+			return ScriptRuntime.toString(cx, list.get(0));
 		}
 
-		String j = ScriptRuntime.toString(args[0]);
+		String j = ScriptRuntime.toString(cx, args[0]);
 		StringBuilder sb = new StringBuilder();
 
 		for (int i = 0; i < list.size(); i++) {
@@ -198,13 +196,13 @@ public class NativeJavaList extends NativeJavaObject {
 				sb.append(j);
 			}
 
-			sb.append(ScriptRuntime.toString(list.get(i)));
+			sb.append(ScriptRuntime.toString(cx, list.get(i)));
 		}
 
 		return sb.toString();
 	}
 
-	private NativeJavaList reverse() {
+	private NativeJavaList reverse(Context cx) {
 		if (list.size() > 1) {
 			Collections.reverse(list);
 		}
@@ -212,15 +210,15 @@ public class NativeJavaList extends NativeJavaObject {
 		return this;
 	}
 
-	private Object slice(Object[] args) {
+	private Object slice(Context cx, Object[] args) {
 		throw new IllegalStateException("Not implemented yet!");
 	}
 
-	private Object splice(Object[] args) {
+	private Object splice(Context cx, Object[] args) {
 		throw new IllegalStateException("Not implemented yet!");
 	}
 
-	private Object every(Object[] args) {
+	private Object every(Context cx, Object[] args) {
 		Predicate predicate = (Predicate) args[0];
 
 		for (Object o : list) {
@@ -232,7 +230,7 @@ public class NativeJavaList extends NativeJavaObject {
 		return Boolean.TRUE;
 	}
 
-	private Object some(Object[] args) {
+	private Object some(Context cx, Object[] args) {
 		Predicate predicate = (Predicate) args[0];
 
 		for (Object o : list) {
@@ -244,7 +242,7 @@ public class NativeJavaList extends NativeJavaObject {
 		return Boolean.FALSE;
 	}
 
-	private Object filter(Object[] args) {
+	private Object filter(Context cx, Object[] args) {
 		if (list.isEmpty()) {
 			return this;
 		}
@@ -261,7 +259,7 @@ public class NativeJavaList extends NativeJavaObject {
 		return list1;
 	}
 
-	private Object map(Object[] args) {
+	private Object map(Context cx, Object[] args) {
 		if (list.isEmpty()) {
 			return this;
 		}
@@ -277,7 +275,7 @@ public class NativeJavaList extends NativeJavaObject {
 		return list1;
 	}
 
-	private Object reduce(Object[] args) {
+	private Object reduce(Context cx, Object[] args) {
 		if (list.isEmpty()) {
 			return Undefined.instance;
 		} else if (list.size() == 1) {
@@ -285,16 +283,16 @@ public class NativeJavaList extends NativeJavaObject {
 		}
 
 		BinaryOperator operator = (BinaryOperator) args[0];
-		Object o = valueUnwrapper.unwrap(contextData, this, list.get(0));
+		Object o = valueUnwrapper.unwrap(cx, this, list.get(0));
 
 		for (int i = 1; i < list.size(); i++) {
-			o = valueUnwrapper.unwrap(contextData, this, operator.apply(o, valueUnwrapper.unwrap(contextData, this, list.get(i))));
+			o = valueUnwrapper.unwrap(cx, this, operator.apply(o, valueUnwrapper.unwrap(cx, this, list.get(i))));
 		}
 
 		return o;
 	}
 
-	private Object reduceRight(Object[] args) {
+	private Object reduceRight(Context cx, Object[] args) {
 		if (list.isEmpty()) {
 			return Undefined.instance;
 		} else if (list.size() == 1) {
@@ -302,16 +300,16 @@ public class NativeJavaList extends NativeJavaObject {
 		}
 
 		BinaryOperator operator = (BinaryOperator) args[0];
-		Object o = valueUnwrapper.unwrap(contextData, this, list.get(0));
+		Object o = valueUnwrapper.unwrap(cx, this, list.get(0));
 
 		for (int i = list.size() - 1; i >= 1; i--) {
-			o = valueUnwrapper.unwrap(contextData, this, operator.apply(o, valueUnwrapper.unwrap(contextData, this, list.get(i))));
+			o = valueUnwrapper.unwrap(cx, this, operator.apply(o, valueUnwrapper.unwrap(cx, this, list.get(i))));
 		}
 
 		return o;
 	}
 
-	private Object find(Object[] args) {
+	private Object find(Context cx, Object[] args) {
 		if (list.isEmpty()) {
 			return Undefined.instance;
 		}
@@ -327,7 +325,7 @@ public class NativeJavaList extends NativeJavaObject {
 		return Undefined.instance;
 	}
 
-	private Object findIndex(Object[] args) {
+	private Object findIndex(Context cx, Object[] args) {
 		if (list.isEmpty()) {
 			return -1;
 		}
@@ -343,7 +341,7 @@ public class NativeJavaList extends NativeJavaObject {
 		return -1;
 	}
 
-	private Object findLast(Object[] args) {
+	private Object findLast(Context cx, Object[] args) {
 		if (list.isEmpty()) {
 			return Undefined.instance;
 		}
@@ -361,7 +359,7 @@ public class NativeJavaList extends NativeJavaObject {
 		return Undefined.instance;
 	}
 
-	private Object findLastIndex(Object[] args) {
+	private Object findLastIndex(Context cx, Object[] args) {
 		if (list.isEmpty()) {
 			return -1;
 		}

@@ -28,9 +28,8 @@ public class InterfaceAdapter {
 		}
 
 		Scriptable topScope = ScriptRuntime.getTopCallScope(cx);
-		SharedContextData cache = SharedContextData.get(cx, topScope);
 		InterfaceAdapter adapter;
-		adapter = (InterfaceAdapter) cache.getInterfaceAdapter(cl);
+		adapter = (InterfaceAdapter) cx.sharedContextData.getInterfaceAdapter(cl);
 		ContextFactory cf = cx.getFactory();
 		if (adapter == null) {
 			Method[] methods = cl.getMethods();
@@ -41,7 +40,7 @@ public class InterfaceAdapter {
 				// the same function to be invoked anyway).
 				int length = methods.length;
 				if (length == 0) {
-					throw Context.reportRuntimeError1("msg.no.empty.interface.conversion", cl.getName());
+					throw Context.reportRuntimeError1("msg.no.empty.interface.conversion", cl.getName(), cx);
 				}
 				if (length > 1) {
 					String methodName = null;
@@ -52,16 +51,16 @@ public class InterfaceAdapter {
 							if (methodName == null) {
 								methodName = method.getName();
 							} else if (!methodName.equals(method.getName())) {
-								throw Context.reportRuntimeError1("msg.no.function.interface.conversion", cl.getName());
+								throw Context.reportRuntimeError1("msg.no.function.interface.conversion", cl.getName(), cx);
 							}
 						}
 					}
 				}
 			}
 			adapter = new InterfaceAdapter(cf, cl);
-			cache.cacheInterfaceAdapter(cl, adapter);
+			cx.sharedContextData.cacheInterfaceAdapter(cl, adapter);
 		}
-		return VMBridge.newInterfaceProxy(adapter.proxyHelper, cf, adapter, object, topScope);
+		return VMBridge.newInterfaceProxy(adapter.proxyHelper, cf, adapter, object, topScope, cx);
 	}
 
 	/**
@@ -79,6 +78,7 @@ public class InterfaceAdapter {
 			return Modifier.isAbstract(method.getModifiers());
 		}
 	}
+
 	private final Object proxyHelper;
 
 	private InterfaceAdapter(ContextFactory cf, Class<?> cl) {
@@ -90,32 +90,30 @@ public class InterfaceAdapter {
 	}
 
 	Object invokeImpl(Context cx, Object target, Scriptable topScope, Object thisObject, Method method, Object[] args) {
-		SharedContextData data = SharedContextData.get(cx, topScope);
 		Callable function;
 		if (target instanceof Callable) {
 			function = (Callable) target;
 		} else {
 			Scriptable s = (Scriptable) target;
 			String methodName = method.getName();
-			Object value = ScriptableObject.getProperty(s, methodName);
+			Object value = ScriptableObject.getProperty(s, methodName, cx);
 			if (value == Scriptable.NOT_FOUND) {
 				// We really should throw an error here, but for the sake of
 				// compatibility with JavaAdapter we silently ignore undefined
 				// methods.
-				Context.reportWarning(ScriptRuntime.getMessage1("msg.undefined.function.interface", methodName));
+				Context.reportWarning(ScriptRuntime.getMessage1("msg.undefined.function.interface", methodName), cx);
 				Class<?> resultType = method.getReturnType();
 				if (resultType == Void.TYPE) {
 					return null;
 				}
-				return Context.jsToJava(data, null, resultType);
+				return Context.jsToJava(cx, null, resultType);
 			}
 			if (!(value instanceof Callable)) {
-				throw Context.reportRuntimeError1("msg.not.function.interface", methodName);
+				throw Context.reportRuntimeError1("msg.not.function.interface", methodName, cx);
 			}
 			function = (Callable) value;
 		}
-		var contextData = SharedContextData.get(cx, topScope);
-		WrapFactory wf = contextData.getWrapFactory();
+		WrapFactory wf = cx.sharedContextData.getWrapFactory();
 		if (args == null) {
 			args = ScriptRuntime.EMPTY_OBJECTS;
 		} else {
@@ -123,18 +121,18 @@ public class InterfaceAdapter {
 				Object arg = args[i];
 				// neutralize wrap factory java primitive wrap feature
 				if (!(arg instanceof String || arg instanceof Number || arg instanceof Boolean)) {
-					args[i] = wf.wrap(contextData, topScope, arg, null);
+					args[i] = wf.wrap(cx, topScope, arg, null);
 				}
 			}
 		}
-		Scriptable thisObj = wf.wrapAsJavaObject(contextData, topScope, thisObject, null);
+		Scriptable thisObj = wf.wrapAsJavaObject(cx, topScope, thisObject, null);
 
 		Object result = function.call(cx, topScope, thisObj, args);
 		Class<?> javaResultType = method.getReturnType();
 		if (javaResultType == Void.TYPE) {
 			result = null;
 		} else {
-			result = Context.jsToJava(data, result, javaResultType);
+			result = Context.jsToJava(cx, result, javaResultType);
 		}
 		return result;
 	}

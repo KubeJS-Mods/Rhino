@@ -27,20 +27,20 @@ public class RegExp {
 		Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
 		if (args.length == 0 || args[0] == Undefined.instance) {
 			RECompiled compiled = NativeRegExp.compileRE(cx, "", "", false);
-			re = new NativeRegExp(topScope, compiled);
+			re = new NativeRegExp(topScope, compiled, cx);
 		} else if (args[0] instanceof NativeRegExp) {
 			re = (NativeRegExp) args[0];
 		} else {
-			String src = ScriptRuntime.toString(args[0]);
+			String src = ScriptRuntime.toString(cx, args[0]);
 			String opt;
 			if (optarg < args.length) {
 				args[0] = src;
-				opt = ScriptRuntime.toString(args[optarg]);
+				opt = ScriptRuntime.toString(cx, args[optarg]);
 			} else {
 				opt = null;
 			}
 			RECompiled compiled = NativeRegExp.compileRE(cx, src, opt, forceFlat);
-			re = new NativeRegExp(topScope, compiled);
+			re = new NativeRegExp(topScope, compiled, cx);
 		}
 		return re;
 	}
@@ -102,7 +102,7 @@ public class RegExp {
 		}
 		SubString matchsub = reImpl.lastMatch;
 		String matchstr = matchsub.toString();
-		mdata.arrayobj.put(count, mdata.arrayobj, matchstr);
+		mdata.arrayobj.put(cx, count, mdata.arrayobj, matchstr);
 	}
 
 	/*
@@ -132,7 +132,7 @@ public class RegExp {
 			// JS function which can run new regexps modifing
 			// regexp that are used later by the engine.
 			// TODO: redesign is necessary
-			if (reImpl != ScriptRuntime.getRegExpProxy(cx)) {
+			if (reImpl != cx.getRegExp()) {
 				Kit.codeBug();
 			}
 			RegExp re2 = new RegExp();
@@ -142,7 +142,7 @@ public class RegExp {
 			try {
 				Scriptable parent = ScriptableObject.getTopLevelScope(scope);
 				Object result = rdata.lambda.call(cx, parent, parent, args);
-				lambdaStr = ScriptRuntime.toString(result);
+				lambdaStr = ScriptRuntime.toString(cx, result);
 			} finally {
 				ScriptRuntime.setRegExpProxy(cx, reImpl);
 			}
@@ -352,13 +352,13 @@ public class RegExp {
 	}
 
 	public Scriptable wrapRegExp(Context cx, Scriptable scope, Object compiled) {
-		return new NativeRegExp(scope, (RECompiled) compiled);
+		return new NativeRegExp(scope, (RECompiled) compiled, cx);
 	}
 
 	public Object action(Context cx, Scriptable scope, Scriptable thisObj, Object[] args, int actionType) {
 		GlobData data = new GlobData();
 		data.mode = actionType;
-		data.str = ScriptRuntime.toString(thisObj);
+		data.str = ScriptRuntime.toString(cx, thisObj);
 
 		switch (actionType) {
 			case RA_MATCH -> {
@@ -380,7 +380,7 @@ public class RegExp {
 					re = createRegExp(cx, scope, args, 2, true);
 				} else {
 					Object arg0 = args.length < 1 ? Undefined.instance : args[0];
-					search = ScriptRuntime.toString(arg0);
+					search = ScriptRuntime.toString(cx, arg0);
 				}
 
 				Object arg1 = args.length < 2 ? Undefined.instance : args[1];
@@ -389,7 +389,7 @@ public class RegExp {
 				if (arg1 instanceof Function && (!(arg1 instanceof NativeRegExp))) {
 					lambda = (Function) arg1;
 				} else {
-					repstr = ScriptRuntime.toString(arg1);
+					repstr = ScriptRuntime.toString(cx, arg1);
 				}
 
 				data.lambda = lambda;
@@ -521,7 +521,7 @@ public class RegExp {
 		long limit = 0;  // Initialize to avoid warning.
 		if (limited) {
 			/* Clamp limit between 0 and 1 + string length. */
-			limit = ScriptRuntime.toUint32(args[1]);
+			limit = ScriptRuntime.toUint32(cx, args[1]);
 			if (limit == 0) {
 				return result;
 			}
@@ -532,7 +532,7 @@ public class RegExp {
 
 		// return an array consisting of the target if no separator given
 		if (args.length < 1 || args[0] == Undefined.instance) {
-			result.put(0, result, target);
+			result.put(cx, 0, result, target);
 			return result;
 		}
 
@@ -541,7 +541,7 @@ public class RegExp {
 		Scriptable re = null;
 		RegExp reProxy = null;
 		if (args[0] instanceof Scriptable) {
-			reProxy = ScriptRuntime.getRegExpProxy(cx);
+			reProxy = cx.getRegExp();
 			if (reProxy != null) {
 				Scriptable test = (Scriptable) args[0];
 				if (reProxy.isRegExp(test)) {
@@ -550,7 +550,7 @@ public class RegExp {
 			}
 		}
 		if (re == null) {
-			separator = ScriptRuntime.toString(args[0]);
+			separator = ScriptRuntime.toString(cx, args[0]);
 			matchlen[0] = separator.length();
 		}
 
@@ -572,7 +572,7 @@ public class RegExp {
 				substr = target.substring(ip[0], match);
 			}
 
-			result.put(len, result, substr);
+			result.put(cx, len, result, substr);
 			len++;
 			/*
 			 * Imitate perl's feature of including parenthesized substrings
@@ -585,7 +585,7 @@ public class RegExp {
 					if (limited && len >= limit) {
 						break;
 					}
-					result.put(len, result, parens[0][num]);
+					result.put(cx, len, result, parens[0][num]);
 					len++;
 				}
 				matched[0] = false;

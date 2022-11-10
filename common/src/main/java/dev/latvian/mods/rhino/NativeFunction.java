@@ -18,7 +18,7 @@ public abstract class NativeFunction extends BaseFunction {
 	}
 
 	public final void initScriptFunction(Context cx, Scriptable scope, boolean es6GeneratorFunction) {
-		ScriptRuntime.setFunctionProtoAndParent(this, scope, es6GeneratorFunction);
+		ScriptRuntime.setFunctionProtoAndParent(cx, scope, this, es6GeneratorFunction);
 	}
 
 	@Override
@@ -42,7 +42,7 @@ public abstract class NativeFunction extends BaseFunction {
 	 * @return The next yielded value (if any)
 	 */
 	public Object resumeGenerator(Context cx, Scriptable scope, int operation, Object state, Object value) {
-		throw new EvaluatorException("resumeGenerator() not implemented");
+		throw new EvaluatorException(cx, "resumeGenerator() not implemented");
 	}
 
 

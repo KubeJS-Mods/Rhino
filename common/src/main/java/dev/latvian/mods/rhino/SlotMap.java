@@ -51,6 +51,6 @@ public interface SlotMap extends Iterable<ScriptableObject.Slot> {
 	/**
 	 * Remove the slot at either "key" or "index".
 	 */
-	void remove(Object key, int index);
+	void remove(Object key, int index, Context cx);
 }
 

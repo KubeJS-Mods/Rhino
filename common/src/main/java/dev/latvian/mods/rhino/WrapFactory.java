@@ -50,7 +50,7 @@ public class WrapFactory {
 	 *                   object based on its class, staticType will be used instead.
 	 * @return the wrapped value.
 	 */
-	public Object wrap(SharedContextData data, Scriptable scope, Object obj, Class<?> staticType) {
+	public Object wrap(Context cx, Scriptable scope, Object obj, Class<?> staticType) {
 		if (obj == null || obj == Undefined.instance || obj instanceof Scriptable) {
 			return obj;
 		} else if (staticType == Void.TYPE) {
@@ -72,10 +72,10 @@ public class WrapFactory {
 		Class<?> cls = obj.getClass();
 
 		if (cls.isArray()) {
-			return NativeJavaArray.wrap(data, scope, obj);
+			return NativeJavaArray.wrap(scope, obj, cx);
 		}
 
-		return wrapAsJavaObject(data, scope, obj, staticType);
+		return wrapAsJavaObject(cx, scope, obj, staticType);
 	}
 
 	/**
@@ -86,15 +86,15 @@ public class WrapFactory {
 	 * @param obj   the object to be wrapped
 	 * @return the wrapped value.
 	 */
-	public Scriptable wrapNewObject(SharedContextData data, Scriptable scope, Object obj) {
+	public Scriptable wrapNewObject(Scriptable scope, Object obj, Context cx) {
 		if (obj instanceof Scriptable) {
 			return (Scriptable) obj;
 		}
 		Class<?> cls = obj.getClass();
 		if (cls.isArray()) {
-			return NativeJavaArray.wrap(data, scope, obj);
+			return NativeJavaArray.wrap(scope, obj, cx);
 		}
-		return wrapAsJavaObject(data, scope, obj, null);
+		return wrapAsJavaObject(cx, scope, obj, null);
 	}
 
 	/**
@@ -116,28 +116,28 @@ public class WrapFactory {
 	 *                   object based on its class, staticType will be used instead.
 	 * @return the wrapped value which shall not be null
 	 */
-	public Scriptable wrapAsJavaObject(SharedContextData data, Scriptable scope, Object javaObject, Class<?> staticType) {
+	public Scriptable wrapAsJavaObject(Context cx, Scriptable scope, Object javaObject, Class<?> staticType) {
 		if (javaObject instanceof CustomJavaToJsWrapper w) {
-			return w.convertJavaToJs(data, scope, staticType);
+			return w.convertJavaToJs(cx, scope, staticType);
 		}
 
-		CustomJavaToJsWrapper w = data.wrapCustomJavaToJs(javaObject);
+		CustomJavaToJsWrapper w = cx.sharedContextData.wrapCustomJavaToJs(javaObject);
 
 		if (w != null) {
-			return w.convertJavaToJs(data, scope, staticType);
+			return w.convertJavaToJs(cx, scope, staticType);
 		}
 
 		if (javaObject instanceof Map map) {
-			return new NativeJavaMap(data, scope, map, map);
+			return new NativeJavaMap(cx, scope, map, map);
 		} else if (javaObject instanceof List list) {
-			return new NativeJavaList(data, scope, list, list);
+			return new NativeJavaList(cx, scope, list, list);
 		} else if (javaObject instanceof Set<?> set) {
-			return new NativeJavaList(data, scope, set, new JavaSetWrapper<>(set));
+			return new NativeJavaList(cx, scope, set, new JavaSetWrapper<>(set));
 		}
 
 		// TODO: Wrap Gson
 
-		return new NativeJavaObject(scope, javaObject, staticType);
+		return new NativeJavaObject(scope, javaObject, staticType, cx);
 	}
 
 	/**
@@ -153,8 +153,8 @@ public class WrapFactory {
 	 * @return the wrapped value which shall not be null
 	 * @since 1.7R3
 	 */
-	public Scriptable wrapJavaClass(SharedContextData data, Scriptable scope, Class<?> javaClass) {
-		return new NativeJavaClass(scope, javaClass);
+	public Scriptable wrapJavaClass(Context cx, Scriptable scope, Class<?> javaClass) {
+		return new NativeJavaClass(scope, javaClass, cx);
 	}
 
 	/**
@@ -176,10 +176,6 @@ public class WrapFactory {
 	 * @see #isJavaPrimitiveWrap()
 	 */
 	public final void setJavaPrimitiveWrap(boolean value) {
-		Context cx = Context.getCurrentContext();
-		if (cx != null && cx.isSealed()) {
-			Context.onSealedMutation();
-		}
 		javaPrimitiveWrap = value;
 	}
 

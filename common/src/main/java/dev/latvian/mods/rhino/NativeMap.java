@@ -29,17 +29,17 @@ public class NativeMap extends IdScriptableObject {
 	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	static void init(Context cx, Scriptable scope, boolean sealed) {
-		NativeMap obj = new NativeMap();
-		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, false);
+		NativeMap obj = new NativeMap(cx);
+		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, false, cx);
 
 		ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
-		desc.put("enumerable", desc, Boolean.FALSE);
-		desc.put("configurable", desc, Boolean.TRUE);
-		desc.put("get", desc, obj.get(NativeSet.GETSIZE, obj));
+		desc.put("enumerable", desc, Boolean.FALSE, cx);
+		desc.put("configurable", desc, Boolean.TRUE, cx);
+		desc.put("get", desc, obj.get(cx, NativeSet.GETSIZE, obj), cx);
 		obj.defineOwnProperty(cx, "size", desc);
 
 		if (sealed) {
-			obj.sealObject();
+			obj.sealObject(cx);
 		}
 	}
 
@@ -53,7 +53,7 @@ public class NativeMap extends IdScriptableObject {
 		}
 
 		// Call the "[Symbol.iterator]" property as a function.
-		final Object ito = ScriptRuntime.callIterator(arg1, cx, scope);
+		final Object ito = ScriptRuntime.callIterator(cx, scope, arg1);
 		if (Undefined.instance.equals(ito)) {
 			// Per spec, ignore if the iterator is undefined
 			return;
@@ -62,22 +62,22 @@ public class NativeMap extends IdScriptableObject {
 		// Find the "add" function of our own prototype, since it might have
 		// been replaced. Since we're not fully constructed yet, create a dummy instance
 		// so that we can get our own prototype.
-		ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, map.getClassName()));
-		final Callable set = ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "set", cx, scope);
+		ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, map.getClassName()), cx);
+		final Callable set = ScriptRuntime.getPropFunctionAndThis(cx, scope, dummy.getPrototype(cx), "set");
 		ScriptRuntime.lastStoredScriptable(cx);
 
 		// Finally, run through all the iterated values and add them!
 		try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
 			for (Object val : it) {
-				Scriptable sVal = ensureScriptable(val);
+				Scriptable sVal = ensureScriptable(val, cx);
 				if (sVal instanceof Symbol) {
-					throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(sVal));
+					throw ScriptRuntime.typeError1(cx, "msg.arg.not.object", ScriptRuntime.typeof(cx, sVal));
 				}
-				Object finalKey = sVal.get(0, sVal);
+				Object finalKey = sVal.get(cx, 0, sVal);
 				if (finalKey == NOT_FOUND) {
 					finalKey = Undefined.instance;
 				}
-				Object finalVal = sVal.get(1, sVal);
+				Object finalVal = sVal.get(cx, 1, sVal);
 				if (finalVal == NOT_FOUND) {
 					finalVal = Undefined.instance;
 				}
@@ -86,24 +86,28 @@ public class NativeMap extends IdScriptableObject {
 		}
 	}
 
-	private static NativeMap realThis(Scriptable thisObj, IdFunctionObject f) {
+	private static NativeMap realThis(Scriptable thisObj, IdFunctionObject f, Context cx) {
 		if (thisObj == null) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 		try {
 			final NativeMap nm = (NativeMap) thisObj;
 			if (!nm.instanceOfMap) {
 				// Check for "Map internal data tag"
-				throw incompatibleCallError(f);
+				throw incompatibleCallError(f, cx);
 			}
 			return nm;
 		} catch (ClassCastException cce) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 	}
 
-	private final Hashtable entries = new Hashtable();
+	private final Hashtable entries;
 	private boolean instanceOfMap = false;
+
+	public NativeMap(Context cx) {
+		entries = new Hashtable(cx);
+	}
 
 	@Override
 	public String getClassName() {
@@ -119,39 +123,39 @@ public class NativeMap extends IdScriptableObject {
 		switch (id) {
 			case Id_constructor:
 				if (thisObj == null) {
-					NativeMap nm = new NativeMap();
+					NativeMap nm = new NativeMap(cx);
 					nm.instanceOfMap = true;
 					if (args.length > 0) {
 						loadFromIterable(cx, scope, nm, args[0]);
 					}
 					return nm;
 				}
-				throw ScriptRuntime.typeError1("msg.no.new", "Map");
+				throw ScriptRuntime.typeError1(cx, "msg.no.new", "Map");
 			case Id_set:
-				return realThis(thisObj, f).js_set(args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_set(cx, args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
 			case Id_delete:
-				return realThis(thisObj, f).js_delete(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_delete(cx, args.length > 0 ? args[0] : Undefined.instance);
 			case Id_get:
-				return realThis(thisObj, f).js_get(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_get(cx, args.length > 0 ? args[0] : Undefined.instance);
 			case Id_has:
-				return realThis(thisObj, f).js_has(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_has(cx, args.length > 0 ? args[0] : Undefined.instance);
 			case Id_clear:
-				return realThis(thisObj, f).js_clear();
+				return realThis(thisObj, f, cx).js_clear(cx);
 			case Id_keys:
-				return realThis(thisObj, f).js_iterator(scope, NativeCollectionIterator.Type.KEYS);
+				return realThis(thisObj, f, cx).js_iterator(scope, NativeCollectionIterator.Type.KEYS, cx);
 			case Id_values:
-				return realThis(thisObj, f).js_iterator(scope, NativeCollectionIterator.Type.VALUES);
+				return realThis(thisObj, f, cx).js_iterator(scope, NativeCollectionIterator.Type.VALUES, cx);
 			case Id_entries:
-				return realThis(thisObj, f).js_iterator(scope, NativeCollectionIterator.Type.BOTH);
+				return realThis(thisObj, f, cx).js_iterator(scope, NativeCollectionIterator.Type.BOTH, cx);
 			case Id_forEach:
-				return realThis(thisObj, f).js_forEach(cx, scope, args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_forEach(cx, scope, args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
 			case SymbolId_getSize:
-				return realThis(thisObj, f).js_getSize();
+				return realThis(thisObj, f, cx).js_getSize();
 		}
 		throw new IllegalArgumentException("Map.prototype has no method: " + f.getFunctionName());
 	}
 
-	private Object js_set(Object k, Object v) {
+	private Object js_set(Context cx, Object k, Object v) {
 		// Map.get() does not distinguish between "not found" and a null value. So,
 		// replace true null here with a marker so that we can re-convert in "get".
 		final Object value = (v == null ? NULL_VALUE : v);
@@ -160,17 +164,17 @@ public class NativeMap extends IdScriptableObject {
 		if ((key instanceof Number) && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
 			key = ScriptRuntime.zeroObj;
 		}
-		entries.put(key, value);
+		entries.put(cx, key, value);
 		return this;
 	}
 
-	private Object js_delete(Object arg) {
-		final Object e = entries.delete(arg);
+	private Object js_delete(Context cx, Object arg) {
+		final Object e = entries.delete(cx, arg);
 		return e != null;
 	}
 
-	private Object js_get(Object arg) {
-		final Object val = entries.get(arg);
+	private Object js_get(Context cx, Object arg) {
+		final Object val = entries.get(cx, arg);
 		if (val == null) {
 			return Undefined.instance;
 		}
@@ -180,26 +184,26 @@ public class NativeMap extends IdScriptableObject {
 		return val;
 	}
 
-	private Object js_has(Object arg) {
-		return entries.has(arg);
+	private Object js_has(Context cx, Object arg) {
+		return entries.has(cx, arg);
 	}
 
 	private Object js_getSize() {
 		return entries.size();
 	}
 
-	private Object js_iterator(Scriptable scope, NativeCollectionIterator.Type type) {
-		return new NativeCollectionIterator(scope, ITERATOR_TAG, type, entries.iterator());
+	private Object js_iterator(Scriptable scope, NativeCollectionIterator.Type type, Context cx) {
+		return new NativeCollectionIterator(scope, ITERATOR_TAG, type, entries.iterator(), cx);
 	}
 
-	private Object js_clear() {
-		entries.clear();
+	private Object js_clear(Context cx) {
+		entries.clear(cx);
 		return Undefined.instance;
 	}
 
 	private Object js_forEach(Context cx, Scriptable scope, Object arg1, Object arg2) {
 		if (!(arg1 instanceof final Callable f)) {
-			throw ScriptRuntime.typeError2("msg.isnt.function", arg1, ScriptRuntime.typeof(arg1));
+			throw ScriptRuntime.typeError2(cx, "msg.isnt.function", arg1, ScriptRuntime.typeof(cx, arg1));
 		}
 
 		boolean isStrict = cx.isStrictMode();
@@ -227,10 +231,10 @@ public class NativeMap extends IdScriptableObject {
 	}
 
 	@Override
-	protected void initPrototypeId(int id) {
+	protected void initPrototypeId(int id, Context cx) {
 		switch (id) {
 			case SymbolId_getSize -> {
-				initPrototypeMethod(MAP_TAG, id, NativeSet.GETSIZE, "get size", 0);
+				initPrototypeMethod(MAP_TAG, id, NativeSet.GETSIZE, "get size", 0, cx);
 				return;
 			}
 			case SymbolId_toStringTag -> {
@@ -285,7 +289,7 @@ public class NativeMap extends IdScriptableObject {
 			}
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
-		initPrototypeMethod(MAP_TAG, id, s, fnName, arity);
+		initPrototypeMethod(MAP_TAG, id, s, fnName, arity, cx);
 	}
 
 	@Override

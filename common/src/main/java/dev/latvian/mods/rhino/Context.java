@@ -73,7 +73,6 @@ public class Context {
 	 * ContextFactory instance.
 	 *
 	 * @return a Context associated with the current thread
-	 * @see #getCurrentContext()
 	 * @see #exit()
 	 */
 	public static Context enter() {
@@ -186,8 +185,7 @@ public class Context {
 	 * @param lineOffset the offset into lineSource where problem was detected
 	 * @see ErrorReporter
 	 */
-	public static void reportWarning(String message, String sourceName, int lineno, String lineSource, int lineOffset) {
-		Context cx = Context.getContext();
+	public static void reportWarning(Context cx, String message, String sourceName, int lineno, String lineSource, int lineOffset) {
 		cx.getErrorReporter().warning(message, sourceName, lineno, lineSource, lineOffset);
 	}
 
@@ -195,41 +193,42 @@ public class Context {
 	 * Report a warning using the error reporter for the current thread.
 	 *
 	 * @param message the warning message to report
+	 * @param cx
 	 * @see ErrorReporter
 	 */
-	public static void reportWarning(String message) {
+	public static void reportWarning(String message, Context cx) {
 		int[] linep = {0};
-		String filename = getSourcePositionFromStack(linep);
-		Context.reportWarning(message, filename, linep[0], null, 0);
+		String filename = getSourcePositionFromStack(cx, linep);
+		Context.reportWarning(cx, message, filename, linep[0], null, 0);
 	}
 
-	public static void reportWarning(String message, Throwable t) {
+	public static void reportWarning(Context cx, String message, Throwable t) {
 		int[] linep = {0};
-		String filename = getSourcePositionFromStack(linep);
+		String filename = getSourcePositionFromStack(cx, linep);
 		Writer sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
 		pw.println(message);
 		t.printStackTrace(pw);
 		pw.flush();
-		Context.reportWarning(sw.toString(), filename, linep[0], null, 0);
+		Context.reportWarning(cx, sw.toString(), filename, linep[0], null, 0);
 	}
 
 	/**
 	 * Report an error using the error reporter for the current thread.
 	 *
+	 * @param cx
 	 * @param message    the error message to report
-	 * @param sourceName a string describing the source, such as a filename
 	 * @param lineno     the starting line number
 	 * @param lineSource the text of the line (may be null)
 	 * @param lineOffset the offset into lineSource where problem was detected
+	 * @param sourceName a string describing the source, such as a filename
 	 * @see ErrorReporter
 	 */
-	public static void reportError(String message, String sourceName, int lineno, String lineSource, int lineOffset) {
-		Context cx = getCurrentContext();
+	public static void reportError(Context cx, String message, int lineno, String lineSource, int lineOffset, String sourceName) {
 		if (cx != null) {
-			cx.getErrorReporter().error(message, sourceName, lineno, lineSource, lineOffset);
+			cx.getErrorReporter().error(cx, message, sourceName, lineno, lineSource, lineOffset);
 		} else {
-			throw new EvaluatorException(message, sourceName, lineno, lineSource, lineOffset);
+			throw new EvaluatorException(cx, message, sourceName, lineno, lineSource, lineOffset);
 		}
 	}
 
@@ -239,10 +238,10 @@ public class Context {
 	 * @param message the error message to report
 	 * @see ErrorReporter
 	 */
-	public static void reportError(String message) {
+	public static void reportError(Context cx, String message) {
 		int[] linep = {0};
-		String filename = getSourcePositionFromStack(linep);
-		Context.reportError(message, filename, linep[0], null, 0);
+		String filename = getSourcePositionFromStack(cx, linep);
+		Context.reportError(cx, message, linep[0], null, 0, filename);
 	}
 
 	/**
@@ -257,49 +256,49 @@ public class Context {
 	 * execution of the script
 	 * @see ErrorReporter
 	 */
-	public static EvaluatorException reportRuntimeError(String message, String sourceName, int lineno, String lineSource, int lineOffset) {
-		Context cx = getCurrentContext();
+	public static EvaluatorException reportRuntimeError(Context cx, String message, String sourceName, int lineno, String lineSource, int lineOffset) {
 		if (cx != null) {
-			return cx.getErrorReporter().runtimeError(message, sourceName, lineno, lineSource, lineOffset);
+			return cx.getErrorReporter().runtimeError(cx, message, sourceName, lineno, lineSource, lineOffset);
 		}
-		throw new EvaluatorException(message, sourceName, lineno, lineSource, lineOffset);
+		throw new EvaluatorException(cx, message, sourceName, lineno, lineSource, lineOffset);
 	}
 
-	public static EvaluatorException reportRuntimeError0(String messageId) {
+	public static EvaluatorException reportRuntimeError0(String messageId, Context cx) {
 		String msg = ScriptRuntime.getMessage0(messageId);
-		return reportRuntimeError(msg);
+		return reportRuntimeError(msg, cx);
 	}
 
-	public static EvaluatorException reportRuntimeError1(String messageId, Object arg1) {
+	public static EvaluatorException reportRuntimeError1(String messageId, Object arg1, Context cx) {
 		String msg = ScriptRuntime.getMessage1(messageId, arg1);
-		return reportRuntimeError(msg);
+		return reportRuntimeError(msg, cx);
 	}
 
-	public static EvaluatorException reportRuntimeError2(String messageId, Object arg1, Object arg2) {
+	public static EvaluatorException reportRuntimeError2(String messageId, Object arg1, Object arg2, Context cx) {
 		String msg = ScriptRuntime.getMessage2(messageId, arg1, arg2);
-		return reportRuntimeError(msg);
+		return reportRuntimeError(msg, cx);
 	}
 
-	public static EvaluatorException reportRuntimeError3(String messageId, Object arg1, Object arg2, Object arg3) {
+	public static EvaluatorException reportRuntimeError3(String messageId, Object arg1, Object arg2, Object arg3, Context cx) {
 		String msg = ScriptRuntime.getMessage3(messageId, arg1, arg2, arg3);
-		return reportRuntimeError(msg);
+		return reportRuntimeError(msg, cx);
 	}
 
-	public static EvaluatorException reportRuntimeError4(String messageId, Object arg1, Object arg2, Object arg3, Object arg4) {
+	public static EvaluatorException reportRuntimeError4(String messageId, Object arg1, Object arg2, Object arg3, Object arg4, Context cx) {
 		String msg = ScriptRuntime.getMessage4(messageId, arg1, arg2, arg3, arg4);
-		return reportRuntimeError(msg);
+		return reportRuntimeError(msg, cx);
 	}
 
 	/**
 	 * Report a runtime error using the error reporter for the current thread.
 	 *
 	 * @param message the error message to report
+	 * @param cx
 	 * @see ErrorReporter
 	 */
-	public static EvaluatorException reportRuntimeError(String message) {
+	public static EvaluatorException reportRuntimeError(String message, Context cx) {
 		int[] linep = {0};
-		String filename = getSourcePositionFromStack(linep);
-		return Context.reportRuntimeError(message, filename, linep[0], null, 0);
+		String filename = getSourcePositionFromStack(cx, linep);
+		return Context.reportRuntimeError(cx, message, filename, linep[0], null, 0);
 	}
 
 	/**
@@ -307,69 +306,6 @@ public class Context {
 	 */
 	public static Object getUndefinedValue() {
 		return Undefined.instance;
-	}
-
-	/**
-	 * Convert the value to a JavaScript boolean value.
-	 * <p>
-	 * See ECMA 9.2.
-	 *
-	 * @param value a JavaScript value
-	 * @return the corresponding boolean value converted using
-	 * the ECMA rules
-	 */
-	public static boolean toBoolean(Object value) {
-		return ScriptRuntime.toBoolean(value);
-	}
-
-	/**
-	 * Convert the value to a JavaScript Number value.
-	 * <p>
-	 * Returns a Java double for the JavaScript Number.
-	 * <p>
-	 * See ECMA 9.3.
-	 *
-	 * @param value a JavaScript value
-	 * @return the corresponding double value converted using
-	 * the ECMA rules
-	 */
-	public static double toNumber(Object value) {
-		return ScriptRuntime.toNumber(value);
-	}
-
-	/**
-	 * Convert the value to a JavaScript String value.
-	 * <p>
-	 * See ECMA 9.8.
-	 * <p>
-	 *
-	 * @param value a JavaScript value
-	 * @return the corresponding String value converted using
-	 * the ECMA rules
-	 */
-	public static String toString(Object value) {
-		return ScriptRuntime.toString(value);
-	}
-
-	/**
-	 * Convert the value to an JavaScript object value.
-	 * <p>
-	 * Note that a scope must be provided to look up the constructors
-	 * for Number, Boolean, and String.
-	 * <p>
-	 * See ECMA 9.9.
-	 * <p>
-	 * Additionally, arbitrary Java objects and classes will be
-	 * wrapped in a Scriptable object with its Java fields and methods
-	 * reflected as JavaScript properties of the object.
-	 *
-	 * @param value any Java object
-	 * @param scope global scope containing constructors for Number,
-	 *              Boolean, and String
-	 * @return new JavaScript object
-	 */
-	public static Scriptable toObject(Object value, Scriptable scope) {
-		return ScriptRuntime.toObject(scope, value);
 	}
 
 	/**
@@ -389,8 +325,7 @@ public class Context {
 	 * length 1 and its JavaScript type will be string.
 	 * <p>
 	 * The rest of values will be wrapped as LiveConnect objects
-	 * by calling {@link WrapFactory#wrap(Context cx, Scriptable scope,
-	 * Object obj, Class staticType)} as in:
+	 * by calling {@link Scriptable#getPrototype(Context)} as in:
 	 * <pre>
 	 *    Context cx = Context.getCurrentContext();
 	 *    return cx.getWrapFactory().wrap(cx, scope, value, null);
@@ -400,13 +335,13 @@ public class Context {
 	 * @param scope top scope object
 	 * @return value suitable to pass to any API that takes JavaScript values.
 	 */
-	public static Object javaToJS(SharedContextData contextData, Object value, Scriptable scope) {
+	public static Object javaToJS(Context cx, Object value, Scriptable scope) {
 		if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Scriptable) {
 			return value;
 		} else if (value instanceof Character) {
 			return String.valueOf(((Character) value).charValue());
 		} else {
-			return contextData.getWrapFactory().wrap(contextData, scope, value, null);
+			return cx.sharedContextData.getWrapFactory().wrap(cx, scope, value, null);
 		}
 	}
 
@@ -422,12 +357,12 @@ public class Context {
 	 * @return the converted value
 	 * @throws EvaluatorException if the conversion cannot be performed
 	 */
-	public static Object jsToJava(SharedContextData data, Object value, Class<?> desiredType) throws EvaluatorException {
+	public static Object jsToJava(Context cx, Object value, Class<?> desiredType) throws EvaluatorException {
 		if (desiredType == null) {
 			return value;
 		}
 
-		return NativeJavaObject.coerceTypeImpl(data.hasTypeWrappers() ? data.getTypeWrappers() : null, desiredType, value);
+		return NativeJavaObject.coerceTypeImpl(cx.sharedContextData.hasTypeWrappers() ? cx.sharedContextData.getTypeWrappers() : null, desiredType, value, cx);
 	}
 
 	/**
@@ -448,7 +383,7 @@ public class Context {
 	 * @throws EvaluatorException
 	 * @throws EcmaError
 	 */
-	public static RuntimeException throwAsScriptRuntimeEx(Throwable e) {
+	public static RuntimeException throwAsScriptRuntimeEx(Throwable e, Context cx) {
 		while ((e instanceof InvocationTargetException)) {
 			e = ((InvocationTargetException) e).getTargetException();
 		}
@@ -459,27 +394,14 @@ public class Context {
 		if (e instanceof RhinoException) {
 			throw (RhinoException) e;
 		}
-		throw new WrappedException(e);
-	}
-
-	/**
-	 * Internal method that reports an error for missing calls to
-	 * enter().
-	 */
-	public static Context getContext() {
-		Context cx = getCurrentContext();
-		if (cx == null) {
-			throw new RuntimeException("No Context associated with current Thread");
-		}
-		return cx;
+		throw new WrappedException(cx, e);
 	}
 
 	static Evaluator createInterpreter() {
 		return new Interpreter();
 	}
 
-	public static String getSourcePositionFromStack(int[] linep) {
-		Context cx = getCurrentContext();
+	public static String getSourcePositionFromStack(Context cx, int[] linep) {
 		if (cx == null) {
 			return null;
 		}
@@ -1008,7 +930,7 @@ public class Context {
 		// Annotate so we can check later to ensure no java code in
 		// intervening frames
 		isContinuationsTopCall = true;
-		return ScriptRuntime.doTopCall(function, this, scope, scope, args, isTopLevelStrict);
+		return ScriptRuntime.doTopCall(this, scope, function, scope, args, isTopLevelStrict);
 	}
 
 	/**
@@ -1071,7 +993,7 @@ public class Context {
 		boolean errorseen = false;
 		CompilerEnvirons compilerEnv = new CompilerEnvirons();
 		compilerEnv.initFromContext(this);
-		Parser p = new Parser(compilerEnv, DefaultErrorReporter.instance);
+		Parser p = new Parser(this, compilerEnv, DefaultErrorReporter.instance);
 		try {
 			p.parse(source, null, 1);
 		} catch (EvaluatorException ee) {
@@ -1183,8 +1105,8 @@ public class Context {
 	 * @return the new object
 	 */
 	public Scriptable newObject(Scriptable scope) {
-		NativeObject result = new NativeObject();
-		ScriptRuntime.setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Object);
+		NativeObject result = new NativeObject(this);
+		ScriptRuntime.setBuiltinProtoAndParent(this, scope, result, TopLevel.Builtins.Object);
 		return result;
 	}
 
@@ -1235,8 +1157,8 @@ public class Context {
 	 * @return the new array object
 	 */
 	public Scriptable newArray(Scriptable scope, int length) {
-		NativeArray result = new NativeArray(length);
-		ScriptRuntime.setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Array);
+		NativeArray result = new NativeArray(this, length);
+		ScriptRuntime.setBuiltinProtoAndParent(this, scope, result, TopLevel.Builtins.Array);
 		return result;
 	}
 
@@ -1254,32 +1176,11 @@ public class Context {
 		if (elements.getClass().getComponentType() != ScriptRuntime.ObjectClass) {
 			throw new IllegalArgumentException();
 		}
-		NativeArray result = new NativeArray(elements);
-		ScriptRuntime.setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Array);
+		NativeArray result = new NativeArray(this, elements);
+		ScriptRuntime.setBuiltinProtoAndParent(this, scope, result, TopLevel.Builtins.Array);
 		return result;
 	}
 
-	/**
-	 * Get the elements of a JavaScript array.
-	 * <p>
-	 * If the object defines a length property convertible to double number,
-	 * then the number is converted Uint32 value as defined in Ecma 9.6
-	 * and Java array of that size is allocated.
-	 * The array is initialized with the values obtained by
-	 * calling get() on object for each value of i in [0,length-1]. If
-	 * there is not a defined value for a property the Undefined value
-	 * is used to initialize the corresponding element in the array. The
-	 * Java array is then returned.
-	 * If the object doesn't define a length property or it is not a number,
-	 * empty array is returned.
-	 *
-	 * @param object the JavaScript array or array-like object
-	 * @return a Java array of objects
-	 * @since 1.4 release 2
-	 */
-	public final Object[] getElements(Scriptable object) {
-		return ScriptRuntime.getArrayElements(object);
-	}
 
 	/**
 	 * Returns the maximum stack depth (in terms of number of call frames)
@@ -1542,7 +1443,7 @@ public class Context {
 				compiler = createCompiler();
 			}
 
-			bytecode = compiler.compile(compilerEnv, tree, returnFunction);
+			bytecode = compiler.compile(compilerEnv, tree, returnFunction, this);
 		} catch (ClassFileFormatException e) {
 			// we hit some class file limit, fall back to interpreter or report
 
@@ -1550,7 +1451,7 @@ public class Context {
 			tree = parse(sourceString, sourceName, lineno, compilerEnv, compilationErrorReporter, returnFunction);
 
 			compiler = createInterpreter();
-			bytecode = compiler.compile(compilerEnv, tree, returnFunction);
+			bytecode = compiler.compile(compilerEnv, tree, returnFunction, this);
 		}
 
 		Object result;
@@ -1564,7 +1465,7 @@ public class Context {
 	}
 
 	private ScriptNode parse(String sourceString, String sourceName, int lineno, CompilerEnvirons compilerEnv, ErrorReporter compilationErrorReporter, boolean returnFunction) throws IOException {
-		Parser p = new Parser(compilerEnv, compilationErrorReporter);
+		Parser p = new Parser(this, compilerEnv, compilationErrorReporter);
 		if (returnFunction) {
 			p.calledByCompileFunction = true;
 		}
@@ -1583,14 +1484,14 @@ public class Context {
 			}
 		}
 
-		return new IRFactory(compilerEnv, compilationErrorReporter).transformTree(ast);
+		return new IRFactory(this, compilerEnv, compilationErrorReporter).transformTree(ast);
 	}
 
 	private Evaluator createCompiler() {
 		return createInterpreter();
 	}
 
-	RegExp getRegExp() {
+	public RegExp getRegExp() {
 		if (regExp == null) {
 			regExp = new RegExp();
 		}
@@ -1599,5 +1500,13 @@ public class Context {
 
 	public final boolean isStrictMode() {
 		return isTopLevelStrict || (currentActivationCall != null && currentActivationCall.isStrict);
+	}
+
+	public void addToScope(Scriptable scope, String name, Object value) {
+		if (value instanceof Class<?> c) {
+			ScriptableObject.putProperty(scope, name, new NativeJavaClass(scope, c, this), this);
+		} else {
+			ScriptableObject.putProperty(scope, name, Context.javaToJS(this, value, scope), this);
+		}
 	}
 }

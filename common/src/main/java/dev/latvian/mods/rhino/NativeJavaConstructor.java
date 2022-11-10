@@ -28,7 +28,7 @@ public class NativeJavaConstructor extends BaseFunction {
 
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		return NativeJavaClass.constructSpecific(SharedContextData.get(cx, scope), scope, args, ctor);
+		return NativeJavaClass.constructSpecific(cx, scope, args, ctor);
 	}
 
 	@Override

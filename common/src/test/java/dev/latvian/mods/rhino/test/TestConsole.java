@@ -11,16 +11,21 @@ import java.util.List;
 @RemapPrefixForJS("test1$")
 @RemapPrefixForJS("test2$")
 public class TestConsole {
-	private static ConsoleTheme theme;
-	public static StringBuilder consoleOutput = new StringBuilder();
+	private final Context context;
+	private ConsoleTheme theme;
+	public StringBuilder consoleOutput = new StringBuilder();
 
-	public static void info(Object o) {
+	public TestConsole(Context cx) {
+		context = cx;
+	}
+
+	public void info(Object o) {
 		String s = String.valueOf(o);
 
 		StringBuilder builder = new StringBuilder();
 
 		var lineP = new int[]{0};
-		var lineS = Context.getSourcePositionFromStack(lineP);
+		var lineS = Context.getSourcePositionFromStack(context, lineP);
 
 		if (lineP[0] > 0) {
 			if (lineS != null) {
@@ -43,34 +48,34 @@ public class TestConsole {
 		consoleOutput.append(s);
 	}
 
-	public static String getConsoleOutput() {
+	public String getConsoleOutput() {
 		String s = consoleOutput.toString();
 		consoleOutput.setLength(0);
 		return s;
 	}
 
-	public static void freeze(Object... objects) {
+	public void freeze(Object... objects) {
 		System.out.println("Freezing " + Arrays.toString(objects));
 	}
 
-	public static String[] getTestArray() {
+	public String[] getTestArray() {
 		return new String[]{"abc", "def", "ghi"};
 	}
 
-	public static List<String> getTestList() {
+	public List<String> getTestList() {
 		return new ArrayList<>(Arrays.asList(getTestArray()));
 	}
 
-	public static void test1$setTheme(ConsoleTheme t) {
+	public void test1$setTheme(ConsoleTheme t) {
 		info("Set theme to " + t);
 		theme = t;
 	}
 
-	public static ConsoleTheme test2$getTheme() {
+	public ConsoleTheme test2$getTheme() {
 		return theme;
 	}
 
-	public static void printUnit(String input) {
+	public void printUnit(String input) {
 		info(input + " -> " + UnitContext.DEFAULT.parse(input));
 	}
 }

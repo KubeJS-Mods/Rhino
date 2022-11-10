@@ -7,6 +7,7 @@
 package dev.latvian.mods.rhino.ast;
 
 import dev.latvian.mods.rhino.CompilerEnvirons;
+import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.ErrorReporter;
 import dev.latvian.mods.rhino.EvaluatorException;
 
@@ -51,7 +52,7 @@ public class ErrorCollector implements IdeErrorReporter {
 	 * @throws UnsupportedOperationException
 	 */
 	@Override
-	public void error(String message, String sourceName, int line, String lineSource, int lineOffset) {
+	public void error(Context cx, String message, String sourceName, int line, String lineSource, int lineOffset) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -67,7 +68,7 @@ public class ErrorCollector implements IdeErrorReporter {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public EvaluatorException runtimeError(String message, String sourceName, int line, String lineSource, int lineOffset) {
+	public EvaluatorException runtimeError(Context cx, String message, String sourceName, int line, String lineSource, int lineOffset) {
 		throw new UnsupportedOperationException();
 	}
 

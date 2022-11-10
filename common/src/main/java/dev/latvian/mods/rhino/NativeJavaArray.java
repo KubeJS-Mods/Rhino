@@ -17,18 +17,16 @@ import java.lang.reflect.Array;
  */
 
 public class NativeJavaArray extends NativeJavaObject implements SymbolScriptable {
-	public static NativeJavaArray wrap(SharedContextData data, Scriptable scope, Object array) {
-		return new NativeJavaArray(data, scope, array);
+	public static NativeJavaArray wrap(Scriptable scope, Object array, Context cx) {
+		return new NativeJavaArray(scope, array, cx);
 	}
 
-	SharedContextData contextData;
 	Object array;
 	int length;
 	Class<?> cls;
 
-	public NativeJavaArray(SharedContextData contextData, Scriptable scope, Object array) {
-		super(scope, null, ScriptRuntime.ObjectClass);
-		this.contextData = contextData;
+	public NativeJavaArray(Scriptable scope, Object array, Context cx) {
+		super(scope, null, ScriptRuntime.ObjectClass, cx);
 		Class<?> cl = array.getClass();
 		if (!cl.isArray()) {
 			throw new RuntimeException("Array expected");
@@ -49,73 +47,73 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	}
 
 	@Override
-	public boolean has(String id, Scriptable start) {
-		return id.equals("length") || super.has(id, start);
+	public boolean has(String id, Scriptable start, Context cx) {
+		return id.equals("length") || super.has(id, start, cx);
 	}
 
 	@Override
-	public boolean has(int index, Scriptable start) {
+	public boolean has(Context cx, int index, Scriptable start) {
 		return 0 <= index && index < length;
 	}
 
 	@Override
-	public boolean has(Symbol key, Scriptable start) {
-		return SymbolKey.IS_CONCAT_SPREADABLE.equals(key) || super.has(key, start);
+	public boolean has(Context cx, Symbol key, Scriptable start) {
+		return SymbolKey.IS_CONCAT_SPREADABLE.equals(key) || super.has(cx, key, start);
 	}
 
 	@Override
-	public Object get(String id, Scriptable start) {
+	public Object get(String id, Scriptable start, Context cx) {
 		if (id.equals("length")) {
 			return length;
 		}
-		Object result = super.get(id, start);
-		if (result == NOT_FOUND && !ScriptableObject.hasProperty(getPrototype(), id)) {
-			throw Context.reportRuntimeError2("msg.java.member.not.found", array.getClass().getName(), id);
+		Object result = super.get(id, start, cx);
+		if (result == NOT_FOUND && !ScriptableObject.hasProperty(getPrototype(cx), id, cx)) {
+			throw Context.reportRuntimeError2("msg.java.member.not.found", array.getClass().getName(), id, cx);
 		}
 		return result;
 	}
 
 	@Override
-	public Object get(int index, Scriptable start) {
+	public Object get(Context cx, int index, Scriptable start) {
 		if (0 <= index && index < length) {
 			Object obj = Array.get(array, index);
-			return contextData.getWrapFactory().wrap(contextData, this, obj, cls);
+			return cx.sharedContextData.getWrapFactory().wrap(cx, this, obj, cls);
 		}
 		return Undefined.instance;
 	}
 
 	@Override
-	public Object get(Symbol key, Scriptable start) {
+	public Object get(Context cx, Symbol key, Scriptable start) {
 		if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key)) {
 			return Boolean.TRUE;
 		}
-		return super.get(key, start);
+		return super.get(cx, key, start);
 	}
 
 	@Override
-	public void put(String id, Scriptable start, Object value) {
+	public void put(String id, Scriptable start, Object value, Context cx) {
 		// Ignore assignments to "length"--it's readonly.
 		if (!id.equals("length")) {
-			throw Context.reportRuntimeError1("msg.java.array.member.not.found", id);
+			throw Context.reportRuntimeError1("msg.java.array.member.not.found", id, cx);
 		}
 	}
 
 	@Override
-	public void put(int index, Scriptable start, Object value) {
+	public void put(Context cx, int index, Scriptable start, Object value) {
 		if (0 <= index && index < length) {
-			Array.set(array, index, Context.jsToJava(contextData, value, cls));
+			Array.set(array, index, Context.jsToJava(cx, value, cls));
 		} else {
-			throw Context.reportRuntimeError2("msg.java.array.index.out.of.bounds", String.valueOf(index), String.valueOf(length - 1));
+			throw Context.reportRuntimeError2("msg.java.array.index.out.of.bounds", String.valueOf(index), String.valueOf(length - 1), cx);
 		}
 	}
 
 	@Override
-	public void delete(Symbol key) {
+	public void delete(Context cx, Symbol key) {
 		// All symbols are read-only
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> hint) {
+	public Object getDefaultValue(Class<?> hint, Context cx) {
 		if (hint == null || hint == ScriptRuntime.StringClass) {
 			return array.toString();
 		}
@@ -129,7 +127,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	}
 
 	@Override
-	public Object[] getIds() {
+	public Object[] getIds(Context cx) {
 		Object[] result = new Object[length];
 		int i = length;
 		while (--i >= 0) {
@@ -139,7 +137,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	}
 
 	@Override
-	public boolean hasInstance(Scriptable value) {
+	public boolean hasInstance(Scriptable value, Context cx) {
 		if (!(value instanceof Wrapper)) {
 			return false;
 		}
@@ -148,9 +146,9 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	}
 
 	@Override
-	public Scriptable getPrototype() {
+	public Scriptable getPrototype(Context cx) {
 		if (prototype == null) {
-			prototype = ScriptableObject.getArrayPrototype(this.getParentScope());
+			prototype = ScriptableObject.getArrayPrototype(this.getParentScope(), cx);
 		}
 		return prototype;
 	}

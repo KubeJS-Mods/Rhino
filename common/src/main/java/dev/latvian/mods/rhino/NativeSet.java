@@ -30,17 +30,17 @@ public class NativeSet extends IdScriptableObject {
 	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 	static void init(Context cx, Scriptable scope, boolean sealed) {
-		NativeSet obj = new NativeSet();
-		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, false);
+		NativeSet obj = new NativeSet(cx);
+		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, false, cx);
 
 		ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
-		desc.put("enumerable", desc, Boolean.FALSE);
-		desc.put("configurable", desc, Boolean.TRUE);
-		desc.put("get", desc, obj.get(GETSIZE, obj));
+		desc.put("enumerable", desc, Boolean.FALSE, cx);
+		desc.put("configurable", desc, Boolean.TRUE, cx);
+		desc.put("get", desc, obj.get(cx, GETSIZE, obj), cx);
 		obj.defineOwnProperty(cx, "size", desc);
 
 		if (sealed) {
-			obj.sealObject();
+			obj.sealObject(cx);
 		}
 	}
 
@@ -54,7 +54,7 @@ public class NativeSet extends IdScriptableObject {
 		}
 
 		// Call the "[Symbol.iterator]" property as a function.
-		Object ito = ScriptRuntime.callIterator(arg1, cx, scope);
+		Object ito = ScriptRuntime.callIterator(cx, scope, arg1);
 		if (Undefined.instance.equals(ito)) {
 			// Per spec, ignore if the iterator returns undefined
 			return;
@@ -63,8 +63,8 @@ public class NativeSet extends IdScriptableObject {
 		// Find the "add" function of our own prototype, since it might have
 		// been replaced. Since we're not fully constructed yet, create a dummy instance
 		// so that we can get our own prototype.
-		ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, set.getClassName()));
-		final Callable add = ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "add", cx, scope);
+		ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, set.getClassName()), cx);
+		final Callable add = ScriptRuntime.getPropFunctionAndThis(cx, scope, dummy.getPrototype(cx), "add");
 		// Clean up the value left around by the previous function
 		ScriptRuntime.lastStoredScriptable(cx);
 
@@ -77,24 +77,28 @@ public class NativeSet extends IdScriptableObject {
 		}
 	}
 
-	private static NativeSet realThis(Scriptable thisObj, IdFunctionObject f) {
+	private static NativeSet realThis(Scriptable thisObj, IdFunctionObject f, Context cx) {
 		if (thisObj == null) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 		try {
 			final NativeSet ns = (NativeSet) thisObj;
 			if (!ns.instanceOfSet) {
 				// If we get here, then this object doesn't have the "Set internal data slot."
-				throw incompatibleCallError(f);
+				throw incompatibleCallError(f, cx);
 			}
 			return ns;
 		} catch (ClassCastException cce) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 	}
 
-	private final Hashtable entries = new Hashtable();
+	private final Hashtable entries;
 	private boolean instanceOfSet = false;
+
+	public NativeSet(Context cx) {
+		entries = new Hashtable(cx);
+	}
 
 	@Override
 	public String getClassName() {
@@ -110,56 +114,56 @@ public class NativeSet extends IdScriptableObject {
 		switch (id) {
 			case Id_constructor:
 				if (thisObj == null) {
-					NativeSet ns = new NativeSet();
+					NativeSet ns = new NativeSet(cx);
 					ns.instanceOfSet = true;
 					if (args.length > 0) {
 						loadFromIterable(cx, scope, ns, args[0]);
 					}
 					return ns;
 				} else {
-					throw ScriptRuntime.typeError1("msg.no.new", "Set");
+					throw ScriptRuntime.typeError1(cx, "msg.no.new", "Set");
 				}
 			case Id_add:
-				return realThis(thisObj, f).js_add(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_add(cx, args.length > 0 ? args[0] : Undefined.instance);
 			case Id_delete:
-				return realThis(thisObj, f).js_delete(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_delete(cx, args.length > 0 ? args[0] : Undefined.instance);
 			case Id_has:
-				return realThis(thisObj, f).js_has(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_has(cx, args.length > 0 ? args[0] : Undefined.instance);
 			case Id_clear:
-				return realThis(thisObj, f).js_clear();
+				return realThis(thisObj, f, cx).js_clear(cx);
 			case Id_values:
-				return realThis(thisObj, f).js_iterator(scope, NativeCollectionIterator.Type.VALUES);
+				return realThis(thisObj, f, cx).js_iterator(scope, NativeCollectionIterator.Type.VALUES, cx);
 			case Id_entries:
-				return realThis(thisObj, f).js_iterator(scope, NativeCollectionIterator.Type.BOTH);
+				return realThis(thisObj, f, cx).js_iterator(scope, NativeCollectionIterator.Type.BOTH, cx);
 			case Id_forEach:
-				return realThis(thisObj, f).js_forEach(cx, scope, args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_forEach(cx, scope, args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
 			case SymbolId_getSize:
-				return realThis(thisObj, f).js_getSize();
+				return realThis(thisObj, f, cx).js_getSize();
 		}
 		throw new IllegalArgumentException("Set.prototype has no method: " + f.getFunctionName());
 	}
 
-	private Object js_add(Object k) {
+	private Object js_add(Context cx, Object k) {
 		// Special handling of "negative zero" from the spec.
 		Object key = k;
 		if ((key instanceof Number) && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
 			key = ScriptRuntime.zeroObj;
 		}
-		entries.put(key, key);
+		entries.put(cx, key, key);
 		return this;
 	}
 
-	private Object js_delete(Object arg) {
-		final Object ov = entries.delete(arg);
+	private Object js_delete(Context cx, Object arg) {
+		final Object ov = entries.delete(cx, arg);
 		return ov != null;
 	}
 
-	private Object js_has(Object arg) {
-		return entries.has(arg);
+	private Object js_has(Context cx, Object arg) {
+		return entries.has(cx, arg);
 	}
 
-	private Object js_clear() {
-		entries.clear();
+	private Object js_clear(Context cx) {
+		entries.clear(cx);
 		return Undefined.instance;
 	}
 
@@ -167,13 +171,13 @@ public class NativeSet extends IdScriptableObject {
 		return entries.size();
 	}
 
-	private Object js_iterator(Scriptable scope, NativeCollectionIterator.Type type) {
-		return new NativeCollectionIterator(scope, ITERATOR_TAG, type, entries.iterator());
+	private Object js_iterator(Scriptable scope, NativeCollectionIterator.Type type, Context cx) {
+		return new NativeCollectionIterator(scope, ITERATOR_TAG, type, entries.iterator(), cx);
 	}
 
 	private Object js_forEach(Context cx, Scriptable scope, Object arg1, Object arg2) {
 		if (!(arg1 instanceof final Callable f)) {
-			throw ScriptRuntime.notFunctionError(arg1);
+			throw ScriptRuntime.notFunctionError(cx, arg1);
 		}
 
 		boolean isStrict = cx.isStrictMode();
@@ -196,10 +200,10 @@ public class NativeSet extends IdScriptableObject {
 	}
 
 	@Override
-	protected void initPrototypeId(int id) {
+	protected void initPrototypeId(int id, Context cx) {
 		switch (id) {
 			case SymbolId_getSize -> {
-				initPrototypeMethod(SET_TAG, id, GETSIZE, "get size", 0);
+				initPrototypeMethod(SET_TAG, id, GETSIZE, "get size", 0, cx);
 				return;
 			}
 			case SymbolId_toStringTag -> {
@@ -246,7 +250,7 @@ public class NativeSet extends IdScriptableObject {
 			}
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
-		initPrototypeMethod(SET_TAG, id, s, fnName, arity);
+		initPrototypeMethod(SET_TAG, id, s, fnName, arity, cx);
 	}
 
 	@Override

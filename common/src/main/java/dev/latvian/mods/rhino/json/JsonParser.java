@@ -42,25 +42,23 @@ public class JsonParser {
 		return c >= '0' && c <= '9' ? c - '0' : c >= 'A' && c <= 'F' ? c - 'A' + 10 : c >= 'a' && c <= 'f' ? c - 'a' + 10 : -1;
 	}
 
-	private final Context cx;
 	private final Scriptable scope;
 	private int pos;
 	private int length;
 	private String src;
 
-	public JsonParser(Context cx, Scriptable scope) {
-		this.cx = cx;
+	public JsonParser(Scriptable scope) {
 		this.scope = scope;
 	}
 
-	public synchronized Object parseValue(String json) throws ParseException {
+	public synchronized Object parseValue(Context cx, String json) throws ParseException {
 		if (json == null) {
 			throw new ParseException("Input string may not be null");
 		}
 		pos = 0;
 		length = json.length();
 		src = json;
-		Object value = readValue();
+		Object value = readValue(cx);
 		consumeWhitespace();
 		if (pos < length) {
 			throw new ParseException("Expected end of stream at char " + pos);
@@ -68,13 +66,13 @@ public class JsonParser {
 		return value;
 	}
 
-	private Object readValue() throws ParseException {
+	private Object readValue(Context cx) throws ParseException {
 		consumeWhitespace();
 		while (pos < length) {
 			char c = src.charAt(pos++);
 			return switch (c) {
-				case '{' -> readObject();
-				case '[' -> readArray();
+				case '{' -> readObject(cx);
+				case '[' -> readArray(cx);
 				case 't' -> readTrue();
 				case 'f' -> readFalse();
 				case '"' -> readString();
@@ -86,7 +84,7 @@ public class JsonParser {
 		throw new ParseException("Empty JSON string");
 	}
 
-	private Object readObject() throws ParseException {
+	private Object readObject(Context cx) throws ParseException {
 		consumeWhitespace();
 		Scriptable object = cx.newObject(scope);
 		// handle empty object literal case early
@@ -118,12 +116,12 @@ public class JsonParser {
 					}
 					id = readString();
 					consume(':');
-					value = readValue();
+					value = readValue(cx);
 					long index = ScriptRuntime.indexFromString(id);
 					if (index < 0) {
-						object.put(id, object, value);
+						object.put(id, object, value, cx);
 					} else {
-						object.put((int) index, object, value);
+						object.put(cx, (int) index, object, value);
 					}
 					needsComma = true;
 				}
@@ -134,7 +132,7 @@ public class JsonParser {
 		throw new ParseException("Unterminated object literal");
 	}
 
-	private Object readArray() throws ParseException {
+	private Object readArray(Context cx) throws ParseException {
 		consumeWhitespace();
 		// handle empty array literal case early
 		if (pos < length && src.charAt(pos) == ']') {
@@ -164,7 +162,7 @@ public class JsonParser {
 					if (needsComma) {
 						throw new ParseException("Missing comma in array literal");
 					}
-					list.add(readValue());
+					list.add(readValue(cx));
 					needsComma = true;
 				}
 			}

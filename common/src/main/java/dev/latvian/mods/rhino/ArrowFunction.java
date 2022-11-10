@@ -11,8 +11,8 @@ package dev.latvian.mods.rhino;
  * EcmaScript 6 Rev 14, March 8, 2013 Draft spec , 13.2
  */
 public class ArrowFunction extends BaseFunction {
-	static boolean equalObjectGraphs(ArrowFunction f1, ArrowFunction f2, EqualObjectGraphs eq) {
-		return eq.equalGraphs(f1.boundThis, f2.boundThis) && eq.equalGraphs(f1.targetFunction, f2.targetFunction);
+	static boolean equalObjectGraphs(Context cx, ArrowFunction f1, ArrowFunction f2, EqualObjectGraphs eq) {
+		return eq.equalGraphs(cx, f1.boundThis, f2.boundThis) && eq.equalGraphs(cx, f1.targetFunction, f2.targetFunction);
 	}
 
 	private final Callable targetFunction;
@@ -22,14 +22,14 @@ public class ArrowFunction extends BaseFunction {
 		this.targetFunction = targetFunction;
 		this.boundThis = boundThis;
 
-		ScriptRuntime.setFunctionProtoAndParent(this, scope);
+		ScriptRuntime.setFunctionProtoAndParent(cx, scope, this);
 
 		Function thrower = ScriptRuntime.typeErrorThrower(cx);
-		NativeObject throwing = new NativeObject();
-		throwing.put("get", throwing, thrower);
-		throwing.put("set", throwing, thrower);
-		throwing.put("enumerable", throwing, Boolean.FALSE);
-		throwing.put("configurable", throwing, Boolean.FALSE);
+		NativeObject throwing = new NativeObject(cx);
+		throwing.put("get", throwing, thrower, cx);
+		throwing.put("set", throwing, thrower, cx);
+		throwing.put("enumerable", throwing, Boolean.FALSE, cx);
+		throwing.put("configurable", throwing, Boolean.FALSE, cx);
 		throwing.preventExtensions();
 
 		this.defineOwnProperty(cx, "caller", throwing, false);
@@ -44,15 +44,15 @@ public class ArrowFunction extends BaseFunction {
 
 	@Override
 	public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-		throw ScriptRuntime.typeError1("msg.not.ctor", toString());
+		throw ScriptRuntime.typeError1(cx, "msg.not.ctor", toString());
 	}
 
 	@Override
-	public boolean hasInstance(Scriptable instance) {
+	public boolean hasInstance(Scriptable instance, Context cx) {
 		if (targetFunction instanceof Function) {
-			return ((Function) targetFunction).hasInstance(instance);
+			return ((Function) targetFunction).hasInstance(instance, cx);
 		}
-		throw ScriptRuntime.typeError0("msg.not.ctor");
+		throw ScriptRuntime.typeError0(cx, "msg.not.ctor");
 	}
 
 	@Override

@@ -27,24 +27,24 @@ public class NativeWeakMap extends IdScriptableObject {
 	private static final int SymbolId_toStringTag = 6;
 	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
-	static void init(Scriptable scope, boolean sealed) {
+	static void init(Scriptable scope, boolean sealed, Context cx) {
 		NativeWeakMap m = new NativeWeakMap();
-		m.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+		m.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed, cx);
 	}
 
-	private static NativeWeakMap realThis(Scriptable thisObj, IdFunctionObject f) {
+	private static NativeWeakMap realThis(Scriptable thisObj, IdFunctionObject f, Context cx) {
 		if (thisObj == null) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 		try {
 			final NativeWeakMap nm = (NativeWeakMap) thisObj;
 			if (!nm.instanceOfWeakMap) {
 				// Check for "Map internal data tag"
-				throw incompatibleCallError(f);
+				throw incompatibleCallError(f, cx);
 			}
 			return nm;
 		} catch (ClassCastException cce) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 	}
 
@@ -73,15 +73,15 @@ public class NativeWeakMap extends IdScriptableObject {
 					}
 					return nm;
 				}
-				throw ScriptRuntime.typeError1("msg.no.new", "WeakMap");
+				throw ScriptRuntime.typeError1(cx, "msg.no.new", "WeakMap");
 			case Id_delete:
-				return realThis(thisObj, f).js_delete(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_delete(args.length > 0 ? args[0] : Undefined.instance);
 			case Id_get:
-				return realThis(thisObj, f).js_get(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_get(args.length > 0 ? args[0] : Undefined.instance);
 			case Id_has:
-				return realThis(thisObj, f).js_has(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_has(args.length > 0 ? args[0] : Undefined.instance);
 			case Id_set:
-				return realThis(thisObj, f).js_set(args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_set(args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance, cx);
 		}
 		throw new IllegalArgumentException("WeakMap.prototype has no method: " + f.getFunctionName());
 	}
@@ -113,13 +113,13 @@ public class NativeWeakMap extends IdScriptableObject {
 		return map.containsKey(key);
 	}
 
-	private Object js_set(Object key, Object v) {
+	private Object js_set(Object key, Object v, Context cx) {
 		// As the spec says, only a true "Object" can be the key to a WeakMap.
 		// Use the default object equality here. ScriptableObject does not override
 		// equals or hashCode, which means that in effect we are only keying on object identity.
 		// This is all correct according to the ECMAscript spec.
 		if (!ScriptRuntime.isObject(key)) {
-			throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(key));
+			throw ScriptRuntime.typeError1(cx, "msg.arg.not.object", ScriptRuntime.typeof(cx, key));
 		}
 		// Map.get() does not distinguish between "not found" and a null value. So,
 		// replace true null here with a marker so that we can re-convert in "get".
@@ -129,7 +129,7 @@ public class NativeWeakMap extends IdScriptableObject {
 	}
 
 	@Override
-	protected void initPrototypeId(int id) {
+	protected void initPrototypeId(int id, Context cx) {
 		if (id == SymbolId_toStringTag) {
 			initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG, getClassName(), DONTENUM | READONLY);
 			return;
@@ -160,7 +160,7 @@ public class NativeWeakMap extends IdScriptableObject {
 			}
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
-		initPrototypeMethod(MAP_TAG, id, s, fnName, arity);
+		initPrototypeMethod(MAP_TAG, id, s, fnName, arity, cx);
 	}
 
 	@Override

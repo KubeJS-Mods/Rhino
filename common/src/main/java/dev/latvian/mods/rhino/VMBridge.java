@@ -73,7 +73,7 @@ public class VMBridge {
 		return c;
 	}
 
-	public static Object newInterfaceProxy(Object proxyHelper, final ContextFactory cf, final InterfaceAdapter adapter, final Object target, final Scriptable topScope) {
+	public static Object newInterfaceProxy(Object proxyHelper, final ContextFactory cf, final InterfaceAdapter adapter, final Object target, final Scriptable topScope, Context cx) {
 		Constructor<?> c = (Constructor<?>) proxyHelper;
 
 		InvocationHandler handler = (proxy, method, args) -> {
@@ -103,7 +103,7 @@ public class VMBridge {
 		try {
 			proxy = c.newInstance(handler);
 		} catch (InvocationTargetException ex) {
-			throw Context.throwAsScriptRuntimeEx(ex);
+			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		} catch (IllegalAccessException ex) {
 			// Should not happen
 			throw new IllegalStateException(ex);

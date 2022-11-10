@@ -19,6 +19,7 @@ import java.io.Serial;
 public class JavaScriptException extends RhinoException {
 	@Serial
 	private static final long serialVersionUID = -7666130513694669293L;
+	private final Context localContext;
 	private final Object value;
 
 	/**
@@ -26,7 +27,9 @@ public class JavaScriptException extends RhinoException {
 	 *
 	 * @param value the JavaScript value thrown.
 	 */
-	public JavaScriptException(Object value, String sourceName, int lineNumber) {
+	public JavaScriptException(Context cx, Object value, String sourceName, int lineNumber) {
+		super(cx);
+		this.localContext = cx;
 		recordErrorOrigin(sourceName, lineNumber, null, 0);
 		this.value = value;
 	}
@@ -39,7 +42,7 @@ public class JavaScriptException extends RhinoException {
 			return value.toString();
 		}
 		try {
-			return ScriptRuntime.toString(value);
+			return ScriptRuntime.toString(localContext, value);
 		} catch (RuntimeException rte) {
 			// ScriptRuntime.toString may throw a RuntimeException
 			if (value instanceof Scriptable) {

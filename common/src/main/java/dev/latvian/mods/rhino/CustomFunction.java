@@ -5,6 +5,7 @@ public class CustomFunction extends BaseFunction {
 	private final String functionName;
 	private final Func func;
 	private final Class<?>[] argTypes;
+
 	public CustomFunction(String functionName, Func func, Class<?>[] argTypes) {
 		this.functionName = functionName;
 		this.func = func;
@@ -18,12 +19,11 @@ public class CustomFunction extends BaseFunction {
 
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		SharedContextData data = SharedContextData.get(cx, scope);
 		// First, we marshall the args.
 		Object[] origArgs = args;
 		for (int i = 0; i < args.length; i++) {
 			Object arg = args[i];
-			Object coerced = Context.jsToJava(data, arg, argTypes[i]);
+			Object coerced = Context.jsToJava(cx, arg, argTypes[i]);
 
 			if (coerced != arg) {
 				if (origArgs == args) {
@@ -33,14 +33,13 @@ public class CustomFunction extends BaseFunction {
 			}
 		}
 
-		Object retval = func.call(args);
+		Object retval = func.call(cx, args);
 
 		if (retval == null) {
 			return Undefined.instance;
 		}
 
-		SharedContextData contextData = SharedContextData.get(cx, scope);
-		Object wrapped = contextData.getWrapFactory().wrap(contextData, scope, retval, retval.getClass());
+		Object wrapped = cx.sharedContextData.getWrapFactory().wrap(cx, scope, retval, retval.getClass());
 
 		if (wrapped == null) {
 			wrapped = Undefined.instance;
@@ -50,16 +49,16 @@ public class CustomFunction extends BaseFunction {
 
 	@FunctionalInterface
 	public interface Func {
-		Object call(Object[] args);
+		Object call(Context cx, Object[] args);
 	}
 
 	@FunctionalInterface
 	public interface NoArgFunc extends Func {
-		Object call();
+		Object call(Context cx);
 
 		@Override
-		default Object call(Object[] args) {
-			return call();
+		default Object call(Context cx, Object[] args) {
+			return call(cx);
 		}
 	}
 }

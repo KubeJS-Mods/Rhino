@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
 /**
  * An annotation that marks a Java method as JavaScript function. This can
  * be used as an alternative to the <code>jsFunction_</code> prefix described in
- * {@link ScriptableObject#defineClass(Scriptable, Class)}.
+ * {@link ScriptableObject#defineClass(Scriptable, Class, boolean, boolean, dev.latvian.mods.rhino.Context)}.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

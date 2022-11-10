@@ -11,7 +11,7 @@ public enum MemberType {
 	NUMBER("number"),
 	BOOLEAN("boolean");
 
-	public static MemberType get(@Nullable Object value) {
+	public static MemberType get(@Nullable Object value, Context cx) {
 		if (value == null) {
 			return OBJECT;
 		}
@@ -30,7 +30,7 @@ public enum MemberType {
 		if (value instanceof Boolean) {
 			return BOOLEAN;
 		}
-		throw ScriptRuntime.errorWithClassName("msg.invalid.type", value);
+		throw ScriptRuntime.errorWithClassName("msg.invalid.type", value, cx);
 	}
 
 	private final String name;

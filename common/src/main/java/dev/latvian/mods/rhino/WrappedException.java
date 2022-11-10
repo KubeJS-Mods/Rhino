@@ -22,15 +22,15 @@ public class WrappedException extends EvaluatorException {
 	private final Throwable exception;
 
 	/**
-	 * @see Context#throwAsScriptRuntimeEx(Throwable e)
+	 * @see Context#throwAsScriptRuntimeEx(Throwable, Context)
 	 */
-	public WrappedException(Throwable exception) {
-		super("Wrapped " + exception);
+	public WrappedException(Context cx, Throwable exception) {
+		super(cx, "Wrapped " + exception);
 		this.exception = exception;
 		this.initCause(exception);
 
 		int[] linep = {0};
-		String sourceName = Context.getSourcePositionFromStack(linep);
+		String sourceName = Context.getSourcePositionFromStack(cx, linep);
 		int lineNumber = linep[0];
 		if (sourceName != null) {
 			initSourceName(sourceName);

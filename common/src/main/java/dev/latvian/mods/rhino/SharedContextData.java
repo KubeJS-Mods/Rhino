@@ -43,8 +43,8 @@ public class SharedContextData {
 	 * @return previously associated ClassCache object or a new instance of
 	 * ClassCache if no ClassCache object was found.
 	 */
-	public static SharedContextData get(Scriptable scope) {
-		SharedContextData cache = (SharedContextData) ScriptableObject.getTopScopeValue(scope, AKEY);
+	public static SharedContextData get(Scriptable scope, Context cx) {
+		SharedContextData cache = (SharedContextData) ScriptableObject.getTopScopeValue(scope, AKEY, cx);
 		if (cache == null) {
 			throw new RuntimeException("Can't find top level scope for SharedContextData.get");
 		}
@@ -52,9 +52,10 @@ public class SharedContextData {
 	}
 
 	public static SharedContextData get(Context cx, Scriptable scope) {
-		return cx.sharedContextData != null ? cx.sharedContextData : get(scope);
+		return cx.sharedContextData != null ? cx.sharedContextData : get(scope, cx);
 	}
 
+	public final Context context;
 	public final Scriptable topLevelScope;
 	final List<CustomJavaToJsWrapperProviderHolder<?>> customScriptableWrappers = new ArrayList<>();
 	final Map<Class<?>, CustomJavaToJsWrapperProvider> customScriptableWrapperCache = new HashMap<>();
@@ -69,7 +70,8 @@ public class SharedContextData {
 	private ClassShutter classShutter;
 	private WrapFactory wrapFactory;
 
-	public SharedContextData(Scriptable scope) {
+	public SharedContextData(Context cx, Scriptable scope) {
+		context = cx;
 		topLevelScope = scope;
 	}
 
@@ -213,14 +215,6 @@ public class SharedContextData {
 		}
 
 		classShutter = shutter;
-	}
-
-	public void addToTopLevelScope(String name, Object value) {
-		if (value instanceof Class<?> c) {
-			ScriptableObject.putProperty(topLevelScope, name, new NativeJavaClass(topLevelScope, c));
-		} else {
-			ScriptableObject.putProperty(topLevelScope, name, Context.javaToJS(this, value, topLevelScope));
-		}
 	}
 
 	/**

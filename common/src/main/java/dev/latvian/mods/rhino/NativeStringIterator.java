@@ -9,8 +9,8 @@ package dev.latvian.mods.rhino;
 public final class NativeStringIterator extends ES6Iterator {
 	private static final String ITERATOR_TAG = "StringIterator";
 
-	static void init(ScriptableObject scope, boolean sealed) {
-		init(scope, sealed, new NativeStringIterator(), ITERATOR_TAG);
+	static void init(ScriptableObject scope, boolean sealed, Context cx) {
+		init(scope, sealed, new NativeStringIterator(), ITERATOR_TAG, cx);
 	}
 
 	private String string;
@@ -23,10 +23,10 @@ public final class NativeStringIterator extends ES6Iterator {
 		super();
 	}
 
-	NativeStringIterator(Scriptable scope, Object stringLike) {
-		super(scope, ITERATOR_TAG);
+	NativeStringIterator(Context cx, Scriptable scope, Object stringLike) {
+		super(scope, ITERATOR_TAG, cx);
 		this.index = 0;
-		this.string = ScriptRuntime.toString(stringLike);
+		this.string = ScriptRuntime.toString(cx, stringLike);
 	}
 
 	@Override

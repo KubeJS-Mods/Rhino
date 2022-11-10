@@ -9,8 +9,8 @@ package dev.latvian.mods.rhino;
 public final class NativeArrayIterator extends ES6Iterator {
 	private static final String ITERATOR_TAG = "ArrayIterator";
 
-	static void init(ScriptableObject scope, boolean sealed) {
-		init(scope, sealed, new NativeArrayIterator(), ITERATOR_TAG);
+	static void init(ScriptableObject scope, boolean sealed, Context cx) {
+		init(scope, sealed, new NativeArrayIterator(), ITERATOR_TAG, cx);
 	}
 
 	private ArrayIteratorType type;
@@ -24,8 +24,8 @@ public final class NativeArrayIterator extends ES6Iterator {
 		super();
 	}
 
-	public NativeArrayIterator(Scriptable scope, Scriptable arrayLike, ArrayIteratorType type) {
-		super(scope, ITERATOR_TAG);
+	public NativeArrayIterator(Context cx, Scriptable scope, Scriptable arrayLike, ArrayIteratorType type) {
+		super(scope, ITERATOR_TAG, cx);
 		this.index = 0;
 		this.arrayLike = arrayLike;
 		this.type = type;
@@ -47,7 +47,7 @@ public final class NativeArrayIterator extends ES6Iterator {
 			return index++;
 		}
 
-		Object value = arrayLike.get(index, arrayLike);
+		Object value = arrayLike.get(cx, index, arrayLike);
 		if (value == NOT_FOUND) {
 			value = Undefined.instance;
 		}

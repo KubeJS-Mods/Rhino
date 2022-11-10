@@ -102,11 +102,11 @@ final class NativeDate extends IdScriptableObject {
 	private static final DateFormat localeDateFormatter = new SimpleDateFormat("MMMM d, yyyy");
 	private static final DateFormat localeTimeFormatter = new SimpleDateFormat("h:mm:ss a z");
 
-	static void init(Scriptable scope, boolean sealed) {
+	static void init(Scriptable scope, boolean sealed, Context cx) {
 		NativeDate obj = new NativeDate();
 		// Set the value of the prototype Date to NaN ('invalid date');
 		obj.date = ScriptRuntime.NaN;
-		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed, cx);
 	}
 
 	private static double Day(double t) {
@@ -493,18 +493,18 @@ final class NativeDate extends IdScriptableObject {
 		return result;
 	}
 
-	private static double date_msecFromArgs(Object[] args) {
+	private static double date_msecFromArgs(Object[] args, Context cx) {
 		double[] array = new double[MAXARGS];
 		int loop;
 		double d;
 
 		for (loop = 0; loop < MAXARGS; loop++) {
 			if (loop < args.length) {
-				d = ScriptRuntime.toNumber(args[loop]);
+				d = ScriptRuntime.toNumber(cx, args[loop]);
 				if (Double.isNaN(d) || Double.isInfinite(d)) {
 					return ScriptRuntime.NaN;
 				}
-				array[loop] = ScriptRuntime.toInteger(args[loop]);
+				array[loop] = ScriptRuntime.toInteger(cx, args[loop]);
 			} else {
 				if (loop == 2) {
 					array[loop] = 1; /* Default the date argument to 1. */
@@ -522,11 +522,11 @@ final class NativeDate extends IdScriptableObject {
 		return date_msecFromDate(array[0], array[1], array[2], array[3], array[4], array[5], array[6]);
 	}
 
-	private static double jsStaticFunction_UTC(Object[] args) {
+	private static double jsStaticFunction_UTC(Context cx, Object[] args) {
 		if (args.length == 0) {
 			return ScriptRuntime.NaN;
 		}
-		return TimeClip(date_msecFromArgs(args));
+		return TimeClip(date_msecFromArgs(args, cx));
 	}
 
 	/**
@@ -952,7 +952,7 @@ final class NativeDate extends IdScriptableObject {
 	}
 
 	/* the javascript constructor */
-	private static Object jsConstructor(Object[] args) {
+	private static Object jsConstructor(Object[] args, Context cx) {
 		NativeDate obj = new NativeDate();
 
 		// if called as a constructor with no args,
@@ -970,7 +970,7 @@ final class NativeDate extends IdScriptableObject {
 				return obj;
 			}
 			if (arg0 instanceof Scriptable) {
-				arg0 = ((Scriptable) arg0).getDefaultValue(null);
+				arg0 = ((Scriptable) arg0).getDefaultValue(null, cx);
 			}
 			double date;
 			if (arg0 instanceof CharSequence) {
@@ -978,13 +978,13 @@ final class NativeDate extends IdScriptableObject {
 				date = date_parseString(arg0.toString());
 			} else {
 				// if it's not a string, use it as a millisecond date
-				date = ScriptRuntime.toNumber(arg0);
+				date = ScriptRuntime.toNumber(cx, arg0);
 			}
 			obj.date = TimeClip(date);
 			return obj;
 		}
 
-		double time = date_msecFromArgs(args);
+		double time = date_msecFromArgs(args, cx);
 
 		if (!Double.isNaN(time) && !Double.isInfinite(time)) {
 			time = TimeClip(internalUTC(time));
@@ -1114,7 +1114,7 @@ final class NativeDate extends IdScriptableObject {
 		}
 	}
 
-	private static double makeTime(double date, Object[] args, int methodId) {
+	private static double makeTime(double date, Object[] args, int methodId, Context cx) {
 		if (args.length == 0) {
 			/*
 			 * Satisfy the ECMA rule that if a function is called with
@@ -1168,7 +1168,7 @@ final class NativeDate extends IdScriptableObject {
 		assert numNums <= 4;
 		double[] nums = new double[4];
 		for (int i = 0; i < numNums; i++) {
-			double d = ScriptRuntime.toNumber(args[i]);
+			double d = ScriptRuntime.toNumber(cx, args[i]);
 			if (Double.isNaN(d) || Double.isInfinite(d)) {
 				hasNaN = true;
 			} else {
@@ -1226,7 +1226,7 @@ final class NativeDate extends IdScriptableObject {
 		return TimeClip(result);
 	}
 
-	private static double makeDate(double date, Object[] args, int methodId) {
+	private static double makeDate(double date, Object[] args, int methodId, Context cx) {
 		/* see complaint about ECMA in date_MakeTime */
 		if (args.length == 0) {
 			return ScriptRuntime.NaN;
@@ -1265,7 +1265,7 @@ final class NativeDate extends IdScriptableObject {
 		assert 1 <= numNums && numNums <= 3;
 		double[] nums = new double[3];
 		for (int i = 0; i < numNums; i++) {
-			double d = ScriptRuntime.toNumber(args[i]);
+			double d = ScriptRuntime.toNumber(cx, args[i]);
 			if (Double.isNaN(d) || Double.isInfinite(d)) {
 				hasNaN = true;
 			} else {
@@ -1337,11 +1337,11 @@ final class NativeDate extends IdScriptableObject {
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> typeHint) {
+	public Object getDefaultValue(Class<?> typeHint, Context cx) {
 		if (typeHint == null) {
 			typeHint = ScriptRuntime.StringClass;
 		}
-		return super.getDefaultValue(typeHint);
+		return super.getDefaultValue(typeHint, cx);
 	}
 
 	double getJSTimeValue() {
@@ -1349,15 +1349,15 @@ final class NativeDate extends IdScriptableObject {
 	}
 
 	@Override
-	protected void fillConstructorProperties(IdFunctionObject ctor) {
-		addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_now, "now", 0);
-		addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_parse, "parse", 1);
-		addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_UTC, "UTC", 7);
-		super.fillConstructorProperties(ctor);
+	protected void fillConstructorProperties(IdFunctionObject ctor, Context cx) {
+		addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_now, "now", 0, cx);
+		addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_parse, "parse", 1, cx);
+		addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_UTC, "UTC", 7, cx);
+		super.fillConstructorProperties(ctor, cx);
 	}
 
 	@Override
-	protected void initPrototypeId(int id) {
+	protected void initPrototypeId(int id, Context cx) {
 		String s;
 		int arity;
 		switch (id) {
@@ -1551,7 +1551,7 @@ final class NativeDate extends IdScriptableObject {
 			}
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
-		initPrototypeMethod(DATE_TAG, id, s, arity);
+		initPrototypeMethod(DATE_TAG, id, s, arity, cx);
 	}
 
 	@Override
@@ -1565,12 +1565,12 @@ final class NativeDate extends IdScriptableObject {
 				return ScriptRuntime.wrapNumber(now());
 
 			case ConstructorId_parse: {
-				String dataStr = ScriptRuntime.toString(args, 0);
+				String dataStr = ScriptRuntime.toString(cx, args, 0);
 				return ScriptRuntime.wrapNumber(date_parseString(dataStr));
 			}
 
 			case ConstructorId_UTC:
-				return ScriptRuntime.wrapNumber(jsStaticFunction_UTC(args));
+				return ScriptRuntime.wrapNumber(jsStaticFunction_UTC(cx, args));
 
 			case Id_constructor: {
 				// if called as a function, just return a string
@@ -1578,30 +1578,30 @@ final class NativeDate extends IdScriptableObject {
 				if (thisObj != null) {
 					return date_format(now(), Id_toString);
 				}
-				return jsConstructor(args);
+				return jsConstructor(args, cx);
 			}
 
 			case Id_toJSON: {
 				final String toISOString = "toISOString";
 
 				Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-				Object tv = ScriptRuntime.toPrimitive(o, ScriptRuntime.NumberClass);
+				Object tv = ScriptRuntime.toPrimitive(cx, o, ScriptRuntime.NumberClass);
 				if (tv instanceof Number) {
 					double d = ((Number) tv).doubleValue();
 					if (Double.isNaN(d) || Double.isInfinite(d)) {
 						return null;
 					}
 				}
-				Object toISO = getProperty(o, toISOString);
+				Object toISO = getProperty(o, toISOString, cx);
 				if (toISO == NOT_FOUND) {
-					throw ScriptRuntime.typeError2("msg.function.not.found.in", toISOString, ScriptRuntime.toString(o));
+					throw ScriptRuntime.typeError2(cx, "msg.function.not.found.in", toISOString, ScriptRuntime.toString(cx, o));
 				}
 				if (!(toISO instanceof Callable)) {
-					throw ScriptRuntime.typeError3("msg.isnt.function.in", toISOString, ScriptRuntime.toString(o), ScriptRuntime.toString(toISO));
+					throw ScriptRuntime.typeError3(cx, "msg.isnt.function.in", toISOString, ScriptRuntime.toString(cx, o), ScriptRuntime.toString(cx, toISO));
 				}
 				Object result = ((Callable) toISO).call(cx, scope, o, ScriptRuntime.EMPTY_OBJECTS);
 				if (!ScriptRuntime.isPrimitive(result)) {
-					throw ScriptRuntime.typeError1("msg.toisostring.must.return.primitive", ScriptRuntime.toString(result));
+					throw ScriptRuntime.typeError1(cx, "msg.toisostring.must.return.primitive", ScriptRuntime.toString(cx, result));
 				}
 				return result;
 			}
@@ -1611,7 +1611,7 @@ final class NativeDate extends IdScriptableObject {
 		// The rest of Date.prototype methods require thisObj to be Date
 
 		if (!(thisObj instanceof NativeDate realThis)) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 		double t = realThis.date;
 
@@ -1737,7 +1737,7 @@ final class NativeDate extends IdScriptableObject {
 				return ScriptRuntime.wrapNumber(t);
 
 			case Id_setTime:
-				t = TimeClip(ScriptRuntime.toNumber(args, 0));
+				t = TimeClip(ScriptRuntime.toNumber(cx, args, 0));
 				realThis.date = t;
 				return ScriptRuntime.wrapNumber(t);
 
@@ -1749,7 +1749,7 @@ final class NativeDate extends IdScriptableObject {
 			case Id_setUTCMinutes:
 			case Id_setHours:
 			case Id_setUTCHours:
-				t = makeTime(t, args, id);
+				t = makeTime(t, args, id, cx);
 				realThis.date = t;
 				return ScriptRuntime.wrapNumber(t);
 
@@ -1759,12 +1759,12 @@ final class NativeDate extends IdScriptableObject {
 			case Id_setUTCMonth:
 			case Id_setFullYear:
 			case Id_setUTCFullYear:
-				t = makeDate(t, args, id);
+				t = makeDate(t, args, id, cx);
 				realThis.date = t;
 				return ScriptRuntime.wrapNumber(t);
 
 			case Id_setYear: {
-				double year = ScriptRuntime.toNumber(args, 0);
+				double year = ScriptRuntime.toNumber(cx, args, 0);
 
 				if (Double.isNaN(year) || Double.isInfinite(year)) {
 					t = ScriptRuntime.NaN;
@@ -1793,7 +1793,7 @@ final class NativeDate extends IdScriptableObject {
 					return js_toISOString(t);
 				}
 				String msg = ScriptRuntime.getMessage0("msg.invalid.date");
-				throw ScriptRuntime.rangeError(msg);
+				throw ScriptRuntime.rangeError(cx, msg);
 
 			default:
 				throw new IllegalArgumentException(String.valueOf(id));

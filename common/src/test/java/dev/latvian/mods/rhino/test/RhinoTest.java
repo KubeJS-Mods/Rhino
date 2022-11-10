@@ -16,6 +16,7 @@ public class RhinoTest {
 	public final String testName;
 	public Scriptable sharedScope;
 	public boolean shareScope;
+	public TestConsole console;
 
 	public RhinoTest(String n) {
 		testName = n;
@@ -28,23 +29,24 @@ public class RhinoTest {
 
 	public Scriptable createScope(Context cx) {
 		if (sharedScope != null) {
-			cx.sharedContextData = SharedContextData.get(sharedScope);
+			cx.sharedContextData = SharedContextData.get(sharedScope, cx);
 			return sharedScope;
 		}
 
-		var scope = cx.initStandardObjects();
-		var data = SharedContextData.get(cx, scope);
+		console = new TestConsole(cx);
 
-		var typeWrappers = data.getTypeWrappers();
+		var scope = cx.initStandardObjects();
+
+		var typeWrappers = cx.sharedContextData.getTypeWrappers();
 		typeWrappers.register(CompoundTag.class, NBTUtils::isTagCompound, NBTUtils::toTagCompound);
 		typeWrappers.register(CollectionTag.class, NBTUtils::isTagCollection, NBTUtils::toTagCollection);
 		typeWrappers.register(ListTag.class, NBTUtils::isTagCollection, NBTUtils::toTagList);
 		typeWrappers.register(Tag.class, NBTUtils::toTag);
 
-		data.addCustomJavaToJsWrapper(CompoundTag.class, CompoundTagWrapper::new);
-		data.addCustomJavaToJsWrapper(CollectionTag.class, CollectionTagWrapper::new);
+		cx.sharedContextData.addCustomJavaToJsWrapper(CompoundTag.class, CompoundTagWrapper::new);
+		cx.sharedContextData.addCustomJavaToJsWrapper(CollectionTag.class, CollectionTagWrapper::new);
 
-		registerData(data);
+		registerData(cx, scope);
 
 		if (shareScope) {
 			sharedScope = scope;
@@ -53,12 +55,12 @@ public class RhinoTest {
 		return scope;
 	}
 
-	public void registerData(SharedContextData data) {
-		data.addToTopLevelScope("console", TestConsole.class);
-		data.addToTopLevelScope("NBT", NBTUtils.class);
+	public void registerData(Context cx, Scriptable scope) {
+		cx.addToScope(scope, "console", console);
+		cx.addToScope(scope, "NBT", NBTUtils.class);
 	}
 
-	public void test(String name, String script, String console) {
+	public void test(String name, String script, String match) {
 		var cx = Context.enterWithNewFactory();
 
 		try {
@@ -66,12 +68,12 @@ public class RhinoTest {
 			cx.evaluateString(scope, script, testName + "/" + name, 1, null);
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			TestConsole.info("Error: " + ex.getMessage());
+			console.info("Error: " + ex.getMessage());
 			// ex.printStackTrace();
 		} finally {
 			Context.exit();
 		}
 
-		Assertions.assertEquals(console.trim(), TestConsole.getConsoleOutput().trim());
+		Assertions.assertEquals(match.trim(), console.getConsoleOutput().trim());
 	}
 }
