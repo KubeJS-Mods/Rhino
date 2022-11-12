@@ -6,7 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.classdata.ClassDataCache;
 import dev.latvian.mods.rhino.util.CustomJavaToJsWrapper;
 import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProvider;
 import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProviderHolder;
@@ -30,33 +29,7 @@ import java.util.function.Predicate;
  * @since Rhino 1.5 Release 5
  */
 public class SharedContextData {
-	public static final Object AKEY = "ClassCache";
-
-	/**
-	 * Search for ClassCache object in the given scope.
-	 * The method first calls
-	 * {@link ScriptableObject#getTopLevelScope(Scriptable scope)}
-	 * to get the top most scope and then tries to locate associated
-	 * ClassCache object in the prototype chain of the top scope.
-	 *
-	 * @param scope scope to search for ClassCache object.
-	 * @return previously associated ClassCache object or a new instance of
-	 * ClassCache if no ClassCache object was found.
-	 */
-	public static SharedContextData get(Scriptable scope, Context cx) {
-		SharedContextData cache = (SharedContextData) ScriptableObject.getTopScopeValue(scope, AKEY, cx);
-		if (cache == null) {
-			throw new RuntimeException("Can't find top level scope for SharedContextData.get");
-		}
-		return cache;
-	}
-
-	public static SharedContextData get(Context cx, Scriptable scope) {
-		return cx.sharedContextData != null ? cx.sharedContextData : get(scope, cx);
-	}
-
 	public final Context context;
-	public final Scriptable topLevelScope;
 	final List<CustomJavaToJsWrapperProviderHolder<?>> customScriptableWrappers = new ArrayList<>();
 	final Map<Class<?>, CustomJavaToJsWrapperProvider> customScriptableWrapperCache = new HashMap<>();
 	private final Map<String, Object> extraProperties = new HashMap<>();
@@ -66,13 +39,11 @@ public class SharedContextData {
 	private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
 	private transient Map<Class<?>, Object> interfaceAdapterCache;
 	private int generatedClassSerial;
-	private ClassDataCache classDataCache;
 	private ClassShutter classShutter;
 	private WrapFactory wrapFactory;
 
-	public SharedContextData(Context cx, Scriptable scope) {
+	public SharedContextData(Context cx) {
 		context = cx;
-		topLevelScope = scope;
 	}
 
 	/**
@@ -132,14 +103,6 @@ public class SharedContextData {
 
 	public void setRemapper(Remapper remapper) {
 		this.remapper = remapper;
-	}
-
-	public ClassDataCache getClassDataCache() {
-		if (classDataCache == null) {
-			classDataCache = new ClassDataCache(this);
-		}
-
-		return classDataCache;
 	}
 
 	@Nullable

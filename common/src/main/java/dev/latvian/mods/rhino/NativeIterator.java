@@ -48,7 +48,7 @@ public final class NativeIterator extends IdScriptableObject {
 		 * doesn't have a constructor.
 		 */
 		@Override
-		public boolean hasInstance(Scriptable instance, Context cx) {
+		public boolean hasInstance(Context cx, Scriptable instance) {
 			return instance instanceof StopIteration;
 		}
 	}

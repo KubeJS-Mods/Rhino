@@ -2,6 +2,7 @@ package dev.latvian.mods.rhino.mod.util;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import dev.latvian.mods.rhino.Undefined;
@@ -46,7 +47,7 @@ public interface NBTUtils {
 
 	@Nullable
 	static Object fromTag(@Nullable Tag t) {
-		if (t == null || t == EndTag.INSTANCE) {
+		if (t == null || t instanceof EndTag) {
 			return null;
 		} else if (t instanceof StringTag) {
 			return t.getAsString();
@@ -64,7 +65,7 @@ public interface NBTUtils {
 		} else if (v instanceof Tag tag) {
 			return tag;
 		} else if (v instanceof NBTSerializable s) {
-			return s.toNBT();
+			return s.toNBTJS();
 		} else if (v instanceof CharSequence || v instanceof Character) {
 			return StringTag.valueOf(v.toString());
 		} else if (v instanceof Boolean b) {
@@ -399,6 +400,34 @@ public interface NBTUtils {
 		return tagType == CompoundTag.TYPE ? COMPOUND_TYPE : tagType == ListTag.TYPE ? LIST_TYPE : tagType;
 	}
 
+	static JsonElement toJson(@Nullable Tag t) {
+		if (t == null || t instanceof EndTag) {
+			return JsonNull.INSTANCE;
+		} else if (t instanceof StringTag) {
+			return new JsonPrimitive(t.getAsString());
+		} else if (t instanceof NumericTag) {
+			return new JsonPrimitive(((NumericTag) t).getAsNumber());
+		} else if (t instanceof CollectionTag<?> l) {
+			JsonArray array = new JsonArray();
+
+			for (Tag tag : l) {
+				array.add(toJson(tag));
+			}
+
+			return array;
+		} else if (t instanceof CompoundTag c) {
+			JsonObject object = new JsonObject();
+
+			for (String key : c.getAllKeys()) {
+				object.add(key, toJson(c.get(key)));
+			}
+
+			return object;
+		}
+
+		return JsonNull.INSTANCE;
+	}
+
 	@Nullable
 	static OrderedCompoundTag read(FriendlyByteBuf buf) {
 		int i = buf.readerIndex();
@@ -615,6 +644,4 @@ public interface NBTUtils {
 			return "TAG_List";
 		}
 	};
-
-
 }

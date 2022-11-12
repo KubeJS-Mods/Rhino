@@ -624,7 +624,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	}
 
 	@Override
-	public boolean has(String name, Scriptable start, Context cx) {
+	public boolean has(Context cx, String name, Scriptable start) {
 		return members.has(name, false) || customMembers != null && customMembers.containsKey(name);
 	}
 
@@ -639,7 +639,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	}
 
 	@Override
-	public Object get(String name, Scriptable start, Context cx) {
+	public Object get(Context cx, String name, Scriptable start) {
 		if (fieldAndMethods != null) {
 			Object result = fieldAndMethods.get(name);
 			if (result != null) {
@@ -661,7 +661,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 					Object r1 = cx.sharedContextData.getWrapFactory().wrap(cx, this, r, r.getClass());
 
 					if (r1 instanceof Scriptable) {
-						return ((Scriptable) r1).getDefaultValue(null, cx);
+						return ((Scriptable) r1).getDefaultValue(cx, null);
 					}
 
 					return r1;
@@ -692,14 +692,14 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	}
 
 	@Override
-	public void put(String name, Scriptable start, Object value, Context cx) {
+	public void put(Context cx, String name, Scriptable start, Object value) {
 		// We could be asked to modify the value of a property in the
 		// prototype. Since we can't add a property to a Java object,
 		// we modify it in the prototype rather than copy it down.
 		if (prototype == null || members.has(name, false)) {
 			members.put(this, name, javaObject, value, false, cx);
 		} else {
-			prototype.put(name, prototype, value, cx);
+			prototype.put(cx, name, prototype, value);
 		}
 	}
 
@@ -722,13 +722,13 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	}
 
 	@Override
-	public boolean hasInstance(Scriptable value, Context cx) {
+	public boolean hasInstance(Context cx, Scriptable value) {
 		// This is an instance of a Java class, so always return false
 		return false;
 	}
 
 	@Override
-	public void delete(String name, Context cx) {
+	public void delete(Context cx, String name) {
 		if (fieldAndMethods != null) {
 			Object result = fieldAndMethods.get(name);
 			if (result != null) {
@@ -753,7 +753,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	}
 
 	@Override
-	public void delete(int index, Context cx) {
+	public void delete(Context cx, int index) {
 	}
 
 	@Override
@@ -813,7 +813,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> hint, Context cx) {
+	public Object getDefaultValue(Context cx, Class<?> hint) {
 		Object value;
 		if (hint == null) {
 			if (javaObject instanceof Boolean) {
@@ -834,7 +834,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 			} else {
 				throw Context.reportRuntimeError0("msg.default.value", cx);
 			}
-			Object converterObject = get(converterName, this, cx);
+			Object converterObject = get(cx, converterName, this);
 			if (converterObject instanceof Function f) {
 				value = f.call(cx, f.getParentScope(), this, ScriptRuntime.EMPTY_OBJECTS);
 			} else {

@@ -90,14 +90,14 @@ final class NativeError extends IdScriptableObject {
 		putProperty(obj, "message", "", cx);
 		putProperty(obj, "fileName", "", cx);
 		putProperty(obj, "lineNumber", 0, cx);
-		obj.setAttributes("name", DONTENUM, cx);
-		obj.setAttributes("message", DONTENUM, cx);
+		obj.setAttributes(cx, "name", DONTENUM);
+		obj.setAttributes(cx, "message", DONTENUM);
 		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed, cx);
 		NativeCallSite.init(obj, sealed, cx);
 	}
 
 	static NativeError make(Context cx, Scriptable scope, IdFunctionObject ctorObj, Object[] args) {
-		Scriptable proto = (Scriptable) (ctorObj.get("prototype", ctorObj, cx));
+		Scriptable proto = (Scriptable) (ctorObj.get(cx, "prototype", ctorObj));
 
 		NativeError obj = new NativeError(cx);
 		obj.setPrototype(proto);
@@ -155,7 +155,7 @@ final class NativeError extends IdScriptableObject {
 
 		// Figure out if they passed a function used to hide part of the stack
 		if (func != null) {
-			Object funcName = func.get("name", func, cx);
+			Object funcName = func.get(cx, "name", func);
 			if ((funcName != null) && !Undefined.instance.equals(funcName)) {
 				err.associateValue(STACK_HIDE_KEY, ScriptRuntime.toString(cx, funcName));
 			}
@@ -164,7 +164,7 @@ final class NativeError extends IdScriptableObject {
 		// Define a property on the specified object to get that stack
 		// that delegates to our new error. Build the stack trace lazily
 		// using the "getStack" code from NativeError.
-		obj.defineProperty("stack", err, ERROR_DELEGATE_GET_STACK, ERROR_DELEGATE_SET_STACK, 0, cx);
+		obj.defineProperty(cx, "stack", err, ERROR_DELEGATE_GET_STACK, ERROR_DELEGATE_SET_STACK, 0);
 	}
 
 	private RhinoException stackProvider;
@@ -185,8 +185,8 @@ final class NativeError extends IdScriptableObject {
 		associateValue(ProtoProps.KEY, protoProps);
 
 		// Define constructor properties that delegate to the ProtoProps object.
-		ctor.defineProperty("stackTraceLimit", protoProps, ProtoProps.GET_STACK_LIMIT, ProtoProps.SET_STACK_LIMIT, 0, cx);
-		ctor.defineProperty("prepareStackTrace", protoProps, ProtoProps.GET_PREPARE_STACK, ProtoProps.SET_PREPARE_STACK, 0, cx);
+		ctor.defineProperty(cx, "stackTraceLimit", protoProps, ProtoProps.GET_STACK_LIMIT, ProtoProps.SET_STACK_LIMIT, 0);
+		ctor.defineProperty(cx, "prepareStackTrace", protoProps, ProtoProps.GET_PREPARE_STACK, ProtoProps.SET_PREPARE_STACK, 0);
 
 		super.fillConstructorProperties(ctor, cx);
 	}
@@ -255,7 +255,7 @@ final class NativeError extends IdScriptableObject {
 		// the getter and setter below.
 		if (stackProvider == null) {
 			stackProvider = re;
-			defineProperty("stack", this, ERROR_DELEGATE_GET_STACK, ERROR_DELEGATE_SET_STACK, DONTENUM, cx);
+			defineProperty(cx, "stack", this, ERROR_DELEGATE_GET_STACK, ERROR_DELEGATE_SET_STACK, DONTENUM);
 		}
 	}
 
@@ -294,9 +294,9 @@ final class NativeError extends IdScriptableObject {
 	}
 
 	public Object setStackDelegated(Context cx, Scriptable target, Object value) {
-		target.delete("stack", cx);
+		target.delete(cx, "stack");
 		stackProvider = null;
-		target.put("stack", target, value, cx);
+		target.put(cx, "stack", target, value);
 		return null;
 	}
 

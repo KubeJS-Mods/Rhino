@@ -79,13 +79,13 @@ public interface Scriptable extends IdEnumerationIterator {
 	 * <LI>NOT_FOUND</LI>
 	 * </UL>
 	 *
+	 * @param cx
 	 * @param name  the name of the property
 	 * @param start the object in which the lookup began
-	 * @param cx
 	 * @return the value of the property (may be null), or NOT_FOUND
 	 * @see Context#getUndefinedValue
 	 */
-	Object get(String name, Scriptable start, Context cx);
+	Object get(Context cx, String name, Scriptable start);
 
 	/**
 	 * Get a property from the object selected by an integral index.
@@ -97,7 +97,7 @@ public interface Scriptable extends IdEnumerationIterator {
 	 * @param index the numeric index for the property
 	 * @param start the object in which the lookup began
 	 * @return the value of the property (may be null), or NOT_FOUND
-	 * @see Scriptable#get(String, Scriptable, Context)
+	 * @see Scriptable#get(Context, String, Scriptable)
 	 */
 	Object get(Context cx, int index, Scriptable start);
 
@@ -112,10 +112,10 @@ public interface Scriptable extends IdEnumerationIterator {
 	 * @param name  the name of the property
 	 * @param start the object in which the lookup began
 	 * @return true if and only if the named property is found in the object
-	 * @see Scriptable#get(String, Scriptable, Context)
-	 * @see Scriptable#get(String, Scriptable, Context)
+	 * @see Scriptable#get(Context, String, Scriptable)
+	 * @see Scriptable#get(Context, String, Scriptable)
 	 */
-	boolean has(String name, Scriptable start, Context cx);
+	boolean has(Context cx, String name, Scriptable start);
 
 	/**
 	 * Indicates whether or not an indexed  property is defined in an object.
@@ -176,12 +176,12 @@ public interface Scriptable extends IdEnumerationIterator {
 	 * @param name  the name of the property
 	 * @param start the object whose property is being set
 	 * @param value value to set the property to
-	 * @see Scriptable#get(String, Scriptable, Context)
-	 * @see Scriptable#get(String, Scriptable, Context)
+	 * @see Scriptable#get(Context, String, Scriptable)
+	 * @see Scriptable#get(Context, String, Scriptable)
 	 * @see ScriptableObject#getBase(Scriptable, String, Context)
 	 * @see ScriptRuntime.toObject(Object, Scriptable, Context)
 	 */
-	void put(String name, Scriptable start, Object value, Context cx);
+	void put(Context cx, String name, Scriptable start, Object value);
 
 	/**
 	 * Sets an indexed property in this object.
@@ -220,10 +220,10 @@ public interface Scriptable extends IdEnumerationIterator {
 	 * see deleteProperty in ScriptableObject.
 	 *
 	 * @param name the identifier for the property
-	 * @see Scriptable#get(String, Scriptable, Context)
+	 * @see Scriptable#get(Context, String, Scriptable)
 	 * @see ScriptableObject#getBase(Scriptable, String, Context)
 	 */
-	void delete(String name, Context cx);
+	void delete(Context cx, String name);
 
 	/**
 	 * Removes a property from this object.
@@ -241,7 +241,7 @@ public interface Scriptable extends IdEnumerationIterator {
 	 * @see Scriptable#get(Context, int, Scriptable)
 	 * @see Scriptable#get(Context, int, Scriptable)
 	 */
-	void delete(int index, Context cx);
+	void delete(Context cx, int index);
 
 	/**
 	 * Get the prototype of the object.
@@ -296,11 +296,11 @@ public interface Scriptable extends IdEnumerationIterator {
 	 * <p>
 	 * See ECMA 8.6.2.6.
 	 *
-	 * @param hint the type hint
 	 * @param cx
+	 * @param hint the type hint
 	 * @return the default value
 	 */
-	Object getDefaultValue(Class<?> hint, Context cx);
+	Object getDefaultValue(Context cx, Class<?> hint);
 
 	/**
 	 * The instanceof operator.
@@ -316,12 +316,12 @@ public interface Scriptable extends IdEnumerationIterator {
 	 *
 	 * <p>This operator corresponds to the proposed EMCA [[HasInstance]] operator.
 	 *
+	 * @param cx
 	 * @param instance The value that appeared on the LHS of the instanceof
 	 *                 operator
-	 * @param cx
 	 * @return an implementation dependent value
 	 */
-	boolean hasInstance(Scriptable instance, Context cx);
+	boolean hasInstance(Context cx, Scriptable instance);
 
 	@Override
 	default boolean enumerationIteratorHasNext(Context cx, Consumer<Object> currentId) {

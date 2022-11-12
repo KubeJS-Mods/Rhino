@@ -398,13 +398,13 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 		Object arg0 = args.length > 0 ? args[0] : undefined;
 		Scriptable cooked = ScriptRuntime.toObject(cx, scope, arg0);
 		/* step 4-6 */
-		Object rawValue = cooked.get("raw", cooked, cx);
+		Object rawValue = cooked.get(cx, "raw", cooked);
 		if (rawValue == NOT_FOUND) {
 			rawValue = undefined;
 		}
 		Scriptable raw = ScriptRuntime.toObject(cx, scope, rawValue);
 		/* step 7-9 */
-		Object len = raw.get("length", raw, cx);
+		Object len = raw.get(cx, "length", raw);
 		if (len == NOT_FOUND) {
 			len = undefined;
 		}
@@ -420,7 +420,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 			/* step 13 a-e */
 			Object next;
 			if (nextIndex > Integer.MAX_VALUE) {
-				next = raw.get(Long.toString(nextIndex), raw, cx);
+				next = raw.get(cx, Long.toString(nextIndex), raw);
 			} else {
 				next = raw.get(cx, (int) nextIndex, raw);
 			}
@@ -1132,11 +1132,11 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 	}
 
 	@Override
-	public int getAttributes(int index, Context cx) {
+	public int getAttributes(Context cx, int index) {
 		if (0 <= index && index < string.length()) {
 			return READONLY | PERMANENT;
 		}
-		return super.getAttributes(index, cx);
+		return super.getAttributes(cx, index);
 	}
 
 	@Override
@@ -1174,10 +1174,10 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 		}
 		ScriptableObject desc = new NativeObject(cx);
 		ScriptRuntime.setBuiltinProtoAndParent(cx, scope, desc, TopLevel.Builtins.Object);
-		desc.defineProperty("value", value, EMPTY, cx);
-		desc.defineProperty("writable", Boolean.FALSE, EMPTY, cx);
-		desc.defineProperty("enumerable", Boolean.TRUE, EMPTY, cx);
-		desc.defineProperty("configurable", Boolean.FALSE, EMPTY, cx);
+		desc.defineProperty(cx, "value", value, EMPTY);
+		desc.defineProperty(cx, "writable", Boolean.FALSE, EMPTY);
+		desc.defineProperty(cx, "enumerable", Boolean.TRUE, EMPTY);
+		desc.defineProperty(cx, "configurable", Boolean.FALSE, EMPTY);
 		return desc;
 	}
 

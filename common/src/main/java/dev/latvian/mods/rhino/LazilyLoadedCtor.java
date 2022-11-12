@@ -44,7 +44,7 @@ public final class LazilyLoadedCtor {
 		this.privileged = privileged;
 		this.state = STATE_BEFORE_INIT;
 
-		scope.addLazilyInitializedValue(propertyName, 0, this, ScriptableObject.DONTENUM, cx);
+		scope.addLazilyInitializedValue(cx, propertyName, 0, this, ScriptableObject.DONTENUM);
 	}
 
 	void init(Context cx) {
@@ -91,7 +91,7 @@ public final class LazilyLoadedCtor {
 				}
 				// cl has own static initializer which is expected
 				// to set the property on its own.
-				value = scope.get(propertyName, scope, cx);
+				value = scope.get(cx, propertyName, scope);
 				if (value != Scriptable.NOT_FOUND) {
 					return value;
 				}

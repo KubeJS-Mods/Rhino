@@ -34,9 +34,9 @@ public class NativeSet extends IdScriptableObject {
 		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, false, cx);
 
 		ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
-		desc.put("enumerable", desc, Boolean.FALSE, cx);
-		desc.put("configurable", desc, Boolean.TRUE, cx);
-		desc.put("get", desc, obj.get(cx, GETSIZE, obj), cx);
+		desc.put(cx, "enumerable", desc, Boolean.FALSE);
+		desc.put(cx, "configurable", desc, Boolean.TRUE);
+		desc.put(cx, "get", desc, obj.get(cx, GETSIZE, obj));
 		obj.defineOwnProperty(cx, "size", desc);
 
 		if (sealed) {

@@ -42,8 +42,6 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static final Long NEGATIVE_ONE = (long) -1;
 	private static final int Id_length = 1;
 	private static final int MAX_INSTANCE_ID = 1;
-	private static final Comparator<Object> STRING_COMPARATOR = new StringLikeComparator();
-	private static final Comparator<Object> DEFAULT_COMPARATOR = new ElementComparator();
 	private static final int Id_constructor = 1;
 	private static final int Id_toString = 2;
 	private static final int Id_toLocaleString = 3;
@@ -115,27 +113,16 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	 */
 	private static int maximumInitialCapacity = 10000;
 
-	public static final class StringLikeComparator implements Comparator<Object> {
+	public record StringLikeComparator(Context cx) implements Comparator<Object> {
 		@Override
 		public int compare(final Object x, final Object y) {
-			var cx = Context.getCurrentContext();
 			final String a = ScriptRuntime.toString(cx, x);
 			final String b = ScriptRuntime.toString(cx, y);
 			return a.compareTo(b);
 		}
 	}
 
-	public static final class ElementComparator implements Comparator<Object> {
-		private final Comparator<Object> child;
-
-		public ElementComparator() {
-			child = STRING_COMPARATOR;
-		}
-
-		public ElementComparator(Comparator<Object> c) {
-			child = c;
-		}
-
+	public record ElementComparator(Comparator<Object> child) implements Comparator<Object> {
 		@Override
 		public int compare(final Object x, final Object y) {
 			// Sort NOT_FOUND to very end, Undefined before that, exclusively, as per
@@ -371,9 +358,9 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static void deleteElem(Scriptable target, long index, Context cx) {
 		int i = (int) index;
 		if (i == index) {
-			target.delete(i, cx);
+			target.delete(cx, i);
 		} else {
-			target.delete(Long.toString(index), cx);
+			target.delete(cx, Long.toString(index));
 		}
 	}
 
@@ -393,7 +380,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static void defineElem(Context cx, Scriptable target, long index, Object value) {
 		if (index > Integer.MAX_VALUE) {
 			String id = Long.toString(index);
-			target.put(id, target, value, cx);
+			target.put(cx, id, target, value);
 		} else {
 			target.put(cx, (int) index, target, value);
 		}
@@ -616,7 +603,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				return 0;
 			});
 		} else {
-			comparator = DEFAULT_COMPARATOR;
+			comparator = new ElementComparator(new StringLikeComparator(cx));
 		}
 
 		long llength = getLengthProperty(cx, o, false);
@@ -1853,8 +1840,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	}
 
 	@Override
-	public void put(String id, Scriptable start, Object value, Context cx) {
-		super.put(id, start, value, cx);
+	public void put(Context cx, String id, Scriptable start, Object value) {
+		super.put(cx, id, start, value);
 		if (start == this) {
 			// If the object is sealed, super will throw exception
 			long index = toArrayIndex(cx, id);
@@ -1910,11 +1897,11 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	}
 
 	@Override
-	public void delete(int index, Context cx) {
+	public void delete(Context cx, int index) {
 		if (dense != null && 0 <= index && index < dense.length && !isSealed(cx) && (denseOnly || !isGetterOrSetter(null, index, true))) {
 			dense[index] = NOT_FOUND;
 		} else {
-			super.delete(index, cx);
+			super.delete(cx, index);
 		}
 	}
 
@@ -1972,21 +1959,21 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		}
 		ScriptableObject desc = new NativeObject(cx);
 		ScriptRuntime.setBuiltinProtoAndParent(cx, scope, desc, TopLevel.Builtins.Object);
-		desc.defineProperty("value", value, EMPTY, cx);
-		desc.defineProperty("writable", Boolean.TRUE, EMPTY, cx);
-		desc.defineProperty("enumerable", Boolean.TRUE, EMPTY, cx);
-		desc.defineProperty("configurable", Boolean.TRUE, EMPTY, cx);
+		desc.defineProperty(cx, "value", value, EMPTY);
+		desc.defineProperty(cx, "writable", Boolean.TRUE, EMPTY);
+		desc.defineProperty(cx, "enumerable", Boolean.TRUE, EMPTY);
+		desc.defineProperty(cx, "configurable", Boolean.TRUE, EMPTY);
 		return desc;
 	}
 
 	// #/string_id_map#
 
 	@Override
-	public int getAttributes(int index, Context cx) {
+	public int getAttributes(Context cx, int index) {
 		if (dense != null && index >= 0 && index < dense.length && dense[index] != NOT_FOUND) {
 			return EMPTY;
 		}
-		return super.getAttributes(index, cx);
+		return super.getAttributes(cx, index);
 	}
 
 	@Override
@@ -2065,12 +2052,12 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 						// > MAXINT will appear as string
 						long index = toArrayIndex(cx, strId);
 						if (index >= longVal) {
-							delete(strId, cx);
+							delete(cx, strId);
 						}
 					} else {
 						int index = (Integer) id;
 						if (index >= longVal) {
-							delete(index, cx);
+							delete(cx, index);
 						}
 					}
 				}

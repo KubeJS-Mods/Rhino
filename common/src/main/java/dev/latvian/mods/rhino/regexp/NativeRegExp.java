@@ -130,7 +130,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		NativeRegExpCtor ctor = new NativeRegExpCtor();
 		// Bug #324006: ECMA-262 15.10.6.1 says "The initial value of
 		// RegExp.prototype.constructor is the builtin RegExp constructor."
-		proto.defineProperty("constructor", ctor, ScriptableObject.DONTENUM, cx);
+		proto.defineProperty(cx, "constructor", ctor, ScriptableObject.DONTENUM);
 
 		ScriptRuntime.setFunctionProtoAndParent(cx, scope, ctor);
 
@@ -2432,8 +2432,8 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			 * Define the index and input properties last for better for/in loop
 			 * order (so they come after the elements).
 			 */
-			obj.put("index", obj, start + gData.skipped, cx);
-			obj.put("input", obj, str, cx);
+			obj.put(cx, "index", obj, start + gData.skipped);
+			obj.put(cx, "input", obj, str);
 		}
 
 		if (res.lastMatch == null) {
@@ -2618,7 +2618,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 			case SymbolId_search:
 				Scriptable scriptable = (Scriptable) realThis(thisObj, f, cx).execSub(cx, scope, args, MATCH);
-				return scriptable.get("index", scriptable, cx);
+				return scriptable.get(cx, "index", scriptable);
 		}
 		throw new IllegalArgumentException(String.valueOf(id));
 	}

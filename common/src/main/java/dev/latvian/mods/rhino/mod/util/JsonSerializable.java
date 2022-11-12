@@ -6,5 +6,5 @@ import com.google.gson.JsonElement;
  * @author LatvianModder
  */
 public interface JsonSerializable {
-	JsonElement toJson();
+	JsonElement toJsonJS();
 }

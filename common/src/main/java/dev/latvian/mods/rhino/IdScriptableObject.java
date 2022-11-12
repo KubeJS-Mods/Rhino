@@ -200,7 +200,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 							((SymbolScriptable) start).put(cx, (Symbol) name, start, value);
 						}
 					} else {
-						start.put((String) name, start, value, cx);
+						start.put(cx, (String) name, start, value);
 					}
 				}
 			}
@@ -350,19 +350,19 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 	}
 
 	protected final boolean defaultHas(Context cx, String name) {
-		return super.has(name, this, cx);
+		return super.has(cx, name, this);
 	}
 
 	protected final Object defaultGet(Context cx, String name) {
-		return super.get(name, this, cx);
+		return super.get(cx, name, this);
 	}
 
 	protected final void defaultPut(Context cx, String name, Object value) {
-		super.put(name, this, value, cx);
+		super.put(cx, name, this, value);
 	}
 
 	@Override
-	public boolean has(String name, Scriptable start, Context cx) {
+	public boolean has(Context cx, String name, Scriptable start) {
 		int info = findInstanceIdInfo(name, cx);
 		if (info != 0) {
 			int attr = (info >>> 16);
@@ -378,7 +378,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 				return prototypeValues.has(id);
 			}
 		}
-		return super.has(name, start, cx);
+		return super.has(cx, name, start);
 	}
 
 	@Override
@@ -402,10 +402,10 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 	}
 
 	@Override
-	public Object get(String name, Scriptable start, Context cx) {
+	public Object get(Context cx, String name, Scriptable start) {
 		// Check for slot first for performance. This is a very hot code
 		// path that should be further optimized.
-		Object value = super.get(name, start, cx);
+		Object value = super.get(cx, name, start);
 		if (value != NOT_FOUND) {
 			return value;
 		}
@@ -452,7 +452,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 	}
 
 	@Override
-	public void put(String name, Scriptable start, Object value, Context cx) {
+	public void put(Context cx, String name, Scriptable start, Object value) {
 		int info = findInstanceIdInfo(name, cx);
 		if (info != 0) {
 			if (start == this && isSealed(cx)) {
@@ -464,7 +464,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 					int id = (info & 0xFFFF);
 					setInstanceIdValue(id, value, cx);
 				} else {
-					start.put(name, start, value, cx);
+					start.put(cx, name, start, value);
 				}
 			}
 			return;
@@ -479,7 +479,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 				return;
 			}
 		}
-		super.put(name, start, value, cx);
+		super.put(cx, name, start, value);
 	}
 
 	@Override
@@ -514,7 +514,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 	}
 
 	@Override
-	public void delete(String name, Context cx) {
+	public void delete(Context cx, String name) {
 		int info = findInstanceIdInfo(name, cx);
 		if (info != 0) {
 			// Let the super class to throw exceptions for sealed objects
@@ -541,7 +541,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 				return;
 			}
 		}
-		super.delete(name, cx);
+		super.delete(cx, name);
 	}
 
 	@Override
@@ -576,7 +576,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 	}
 
 	@Override
-	public int getAttributes(String name, Context cx) {
+	public int getAttributes(Context cx, String name) {
 		int info = findInstanceIdInfo(name, cx);
 		if (info != 0) {
 			int attr = (info >>> 16);
@@ -588,11 +588,11 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 				return prototypeValues.getAttributes(id, cx);
 			}
 		}
-		return super.getAttributes(name, cx);
+		return super.getAttributes(cx, name);
 	}
 
 	@Override
-	public int getAttributes(Symbol key, Context cx) {
+	public int getAttributes(Context cx, Symbol key) {
 		int info = findInstanceIdInfo(key);
 		if (info != 0) {
 			int attr = (info >>> 16);
@@ -604,11 +604,11 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 				return prototypeValues.getAttributes(id, cx);
 			}
 		}
-		return super.getAttributes(key, cx);
+		return super.getAttributes(cx, key);
 	}
 
 	@Override
-	public void setAttributes(String name, int attributes, Context cx) {
+	public void setAttributes(Context cx, String name, int attributes) {
 		ScriptableObject.checkValidAttributes(attributes);
 		int info = findInstanceIdInfo(name, cx);
 		if (info != 0) {
@@ -626,7 +626,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 				return;
 			}
 		}
-		super.setAttributes(name, attributes, cx);
+		super.setAttributes(cx, name, attributes);
 	}
 
 	@Override
@@ -858,47 +858,47 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 			int info = findInstanceIdInfo(name, cx);
 			if (info != 0) {
 				int id = (info & 0xFFFF);
-				if (isAccessorDescriptor(desc, cx)) {
-					delete(id, cx); // it will be replaced with a slot
+				if (isAccessorDescriptor(cx, desc)) {
+					delete(cx, id); // it will be replaced with a slot
 				} else {
-					checkPropertyDefinition(desc, cx);
+					checkPropertyDefinition(cx, desc);
 					ScriptableObject current = getOwnPropertyDescriptor(cx, key);
-					checkPropertyChange(name, current, desc, cx);
+					checkPropertyChange(cx, name, current, desc);
 					int attr = (info >>> 16);
 					Object value = getProperty(desc, "value", cx);
 					if (value != NOT_FOUND && (attr & READONLY) == 0) {
 						Object currentValue = getInstanceIdValue(id, cx);
-						if (!sameValue(value, currentValue, cx)) {
+						if (!sameValue(cx, value, currentValue)) {
 							setInstanceIdValue(id, value, cx);
 						}
 					}
-					setAttributes(name, applyDescriptorToAttributeBitset(attr, desc, cx), cx);
+					setAttributes(cx, name, applyDescriptorToAttributeBitset(cx, attr, desc));
 					return;
 				}
 			}
 			if (prototypeValues != null) {
 				int id = prototypeValues.findId(name);
 				if (id != 0) {
-					if (isAccessorDescriptor(desc, cx)) {
+					if (isAccessorDescriptor(cx, desc)) {
 						prototypeValues.delete(id, cx); // it will be replaced with a slot
 					} else {
-						checkPropertyDefinition(desc, cx);
+						checkPropertyDefinition(cx, desc);
 						ScriptableObject current = getOwnPropertyDescriptor(cx, key);
-						checkPropertyChange(name, current, desc, cx);
+						checkPropertyChange(cx, name, current, desc);
 						int attr = prototypeValues.getAttributes(id, cx);
 						Object value = getProperty(desc, "value", cx);
 						if (value != NOT_FOUND && (attr & READONLY) == 0) {
 							Object currentValue = prototypeValues.get(id, cx);
-							if (!sameValue(value, currentValue, cx)) {
+							if (!sameValue(cx, value, currentValue)) {
 								prototypeValues.set(id, this, value, cx);
 							}
 						}
-						prototypeValues.setAttributes(id, applyDescriptorToAttributeBitset(attr, desc, cx), cx);
+						prototypeValues.setAttributes(id, applyDescriptorToAttributeBitset(cx, attr, desc), cx);
 
 						// Handle the regular slot that was created if this property was previously replaced
 						// with an accessor descriptor.
-						if (super.has(name, this, cx)) {
-							super.delete(name, cx);
+						if (super.has(cx, name, this)) {
+							super.delete(cx, name);
 						}
 
 						return;

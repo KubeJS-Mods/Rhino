@@ -970,7 +970,7 @@ final class NativeDate extends IdScriptableObject {
 				return obj;
 			}
 			if (arg0 instanceof Scriptable) {
-				arg0 = ((Scriptable) arg0).getDefaultValue(null, cx);
+				arg0 = ((Scriptable) arg0).getDefaultValue(cx, null);
 			}
 			double date;
 			if (arg0 instanceof CharSequence) {
@@ -1337,11 +1337,11 @@ final class NativeDate extends IdScriptableObject {
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> typeHint, Context cx) {
+	public Object getDefaultValue(Context cx, Class<?> typeHint) {
 		if (typeHint == null) {
 			typeHint = ScriptRuntime.StringClass;
 		}
-		return super.getDefaultValue(typeHint, cx);
+		return super.getDefaultValue(cx, typeHint);
 	}
 
 	double getJSTimeValue() {

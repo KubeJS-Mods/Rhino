@@ -56,7 +56,7 @@ public interface JsonUtils {
 		if (o == null) {
 			return JsonNull.INSTANCE;
 		} else if (o instanceof JsonSerializable) {
-			return ((JsonSerializable) o).toJson();
+			return ((JsonSerializable) o).toJsonJS();
 		} else if (o instanceof JsonElement) {
 			return (JsonElement) o;
 		} else if (o instanceof CharSequence) {

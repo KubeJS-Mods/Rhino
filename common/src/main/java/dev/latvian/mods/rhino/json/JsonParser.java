@@ -119,7 +119,7 @@ public class JsonParser {
 					value = readValue(cx);
 					long index = ScriptRuntime.indexFromString(id);
 					if (index < 0) {
-						object.put(id, object, value, cx);
+						object.put(cx, id, object, value);
 					} else {
 						object.put(cx, (int) index, object, value);
 					}

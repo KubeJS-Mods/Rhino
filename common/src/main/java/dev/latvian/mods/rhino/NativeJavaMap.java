@@ -35,11 +35,11 @@ public class NativeJavaMap extends NativeJavaObject {
 	}
 
 	@Override
-	public boolean has(String name, Scriptable start, Context cx) {
+	public boolean has(Context cx, String name, Scriptable start) {
 		if (map.containsKey(name)) {
 			return true;
 		}
-		return super.has(name, start, cx);
+		return super.has(cx, name, start);
 	}
 
 	@Override
@@ -51,11 +51,11 @@ public class NativeJavaMap extends NativeJavaObject {
 	}
 
 	@Override
-	public Object get(String name, Scriptable start, Context cx) {
+	public Object get(Context cx, String name, Scriptable start) {
 		if (map.containsKey(name)) {
 			return valueUnwrapper.unwrap(cx, this, map.get(name));
 		}
-		return super.get(name, start, cx);
+		return super.get(cx, name, start);
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class NativeJavaMap extends NativeJavaObject {
 	}
 
 	@Override
-	public void put(String name, Scriptable start, Object value, Context cx) {
+	public void put(Context cx, String name, Scriptable start, Object value) {
 		map.put(name, Context.jsToJava(cx, value, mapValueType));
 	}
 
@@ -90,12 +90,12 @@ public class NativeJavaMap extends NativeJavaObject {
 	}
 
 	@Override
-	public void delete(String name, Context cx) {
+	public void delete(Context cx, String name) {
 		Deletable.deleteObject(map.remove(name));
 	}
 
 	@Override
-	public void delete(int index, Context cx) {
+	public void delete(Context cx, int index) {
 		Deletable.deleteObject(map.remove(index));
 	}
 

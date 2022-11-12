@@ -174,7 +174,7 @@ public final class JavaAdapter implements IdFunctionCall {
 				ctorArgs[1] = cx.getFactory();
 				System.arraycopy(args, classCount + 1, ctorArgs, 2, argsCount);
 				// TODO: cache class wrapper?
-				NativeJavaClass classWrapper = new NativeJavaClass(scope, adapterClass, true, cx);
+				NativeJavaClass classWrapper = new NativeJavaClass(cx, scope, adapterClass, true);
 				NativeJavaMethod ctors = classWrapper.members.ctors;
 				int index = ctors.findCachedFunction(cx, ctorArgs);
 				if (index < 0) {

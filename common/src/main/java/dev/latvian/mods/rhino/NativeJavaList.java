@@ -96,7 +96,7 @@ public class NativeJavaList extends NativeJavaObject {
 	}
 
 	@Override
-	public void delete(int index, Context cx) {
+	public void delete(Context cx, int index) {
 		if (isWithValidIndex(index)) {
 			Deletable.deleteObject(list.remove(index));
 		}

@@ -14,7 +14,7 @@ public class FieldAndMethods extends NativeJavaMethod {
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> hint, Context cx) {
+	public Object getDefaultValue(Context cx, Class<?> hint) {
 		if (hint == ScriptRuntime.FunctionClass) {
 			return this;
 		}
@@ -28,7 +28,7 @@ public class FieldAndMethods extends NativeJavaMethod {
 		}
 		rval = cx.sharedContextData.getWrapFactory().wrap(cx, this, rval, type);
 		if (rval instanceof Scriptable) {
-			rval = ((Scriptable) rval).getDefaultValue(hint, cx);
+			rval = ((Scriptable) rval).getDefaultValue(cx, hint);
 		}
 		return rval;
 	}

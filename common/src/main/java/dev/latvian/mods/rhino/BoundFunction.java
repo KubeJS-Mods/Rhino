@@ -43,10 +43,10 @@ public class BoundFunction extends BaseFunction {
 
 		Function thrower = ScriptRuntime.typeErrorThrower(cx);
 		NativeObject throwing = new NativeObject(cx);
-		throwing.put("get", throwing, thrower, cx);
-		throwing.put("set", throwing, thrower, cx);
-		throwing.put("enumerable", throwing, Boolean.FALSE, cx);
-		throwing.put("configurable", throwing, Boolean.FALSE, cx);
+		throwing.put(cx, "get", throwing, thrower);
+		throwing.put(cx, "set", throwing, thrower);
+		throwing.put(cx, "enumerable", throwing, Boolean.FALSE);
+		throwing.put(cx, "configurable", throwing, Boolean.FALSE);
 		throwing.preventExtensions();
 
 		this.defineOwnProperty(cx, "caller", throwing, false);
@@ -68,9 +68,9 @@ public class BoundFunction extends BaseFunction {
 	}
 
 	@Override
-	public boolean hasInstance(Scriptable instance, Context cx) {
+	public boolean hasInstance(Context cx, Scriptable instance) {
 		if (targetFunction instanceof Function) {
-			return ((Function) targetFunction).hasInstance(instance, cx);
+			return ((Function) targetFunction).hasInstance(cx, instance);
 		}
 		throw ScriptRuntime.typeError0(cx, "msg.not.ctor");
 	}

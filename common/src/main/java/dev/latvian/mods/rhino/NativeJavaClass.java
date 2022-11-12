@@ -103,11 +103,11 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 	public NativeJavaClass() {
 	}
 
-	public NativeJavaClass(Scriptable scope, Class<?> cl, Context cx) {
-		this(scope, cl, false, cx);
+	public NativeJavaClass(Context cx, Scriptable scope, Class<?> cl) {
+		this(cx, scope, cl, false);
 	}
 
-	public NativeJavaClass(Scriptable scope, Class<?> cl, boolean isAdapter, Context cx) {
+	public NativeJavaClass(Context cx, Scriptable scope, Class<?> cl, boolean isAdapter) {
 		super(scope, cl, null, isAdapter, cx);
 	}
 
@@ -124,12 +124,12 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 	}
 
 	@Override
-	public boolean has(String name, Scriptable start, Context cx) {
+	public boolean has(Context cx, String name, Scriptable start) {
 		return members.has(name, true) || javaClassPropertyName.equals(name);
 	}
 
 	@Override
-	public Object get(String name, Scriptable start, Context cx) {
+	public Object get(Context cx, String name, Scriptable start) {
 		// When used as a constructor, ScriptRuntime.newObject() asks
 		// for our prototype to create an object of the correct type.
 		// We don't really care what the object is, since we're returning
@@ -168,7 +168,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 	}
 
 	@Override
-	public void put(String name, Scriptable start, Object value, Context cx) {
+	public void put(Context cx, String name, Scriptable start, Object value) {
 		members.put(this, name, javaObject, value, true, cx);
 	}
 
@@ -182,7 +182,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> hint, Context cx) {
+	public Object getDefaultValue(Context cx, Class<?> hint) {
 		if (hint == null || hint == ScriptRuntime.StringClass) {
 			return this.toString();
 		}
@@ -244,7 +244,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 			}
 			// use JavaAdapter to construct a new class on the fly that
 			// implements/extends this interface/abstract class.
-			Object v = topLevel.get("JavaAdapter", topLevel, cx);
+			Object v = topLevel.get(cx, "JavaAdapter", topLevel);
 			if (v != NOT_FOUND) {
 				Function f = (Function) v;
 				// Args are (interface, js object)
@@ -275,7 +275,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 	 * static methods exposed by a JavaNativeClass.
 	 */
 	@Override
-	public boolean hasInstance(Scriptable value, Context cx) {
+	public boolean hasInstance(Context cx, Scriptable value) {
 
 		if (value instanceof Wrapper && !(value instanceof NativeJavaClass)) {
 			Object instance = ((Wrapper) value).unwrap();

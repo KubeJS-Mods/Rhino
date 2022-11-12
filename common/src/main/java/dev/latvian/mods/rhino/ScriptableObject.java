@@ -51,8 +51,8 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * <p>
 	 * Used by getAttributes() and setAttributes().
 	 *
-	 * @see ScriptableObject#getAttributes(String, Context)
-	 * @see ScriptableObject#checkNotSealed(Object, int, Context)
+	 * @see ScriptableObject#getAttributes(Context, String)
+	 * @see ScriptableObject#checkNotSealed(Context, Object, int)
 	 */
 	public static final int EMPTY = 0x00;
 
@@ -61,8 +61,8 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 *
 	 * @see ScriptableObject
 	 * #put(String, Scriptable, Object)
-	 * @see ScriptableObject#getAttributes(String, Context)
-	 * @see ScriptableObject#checkNotSealed(Object, int, Context)
+	 * @see ScriptableObject#getAttributes(Context, String)
+	 * @see ScriptableObject#checkNotSealed(Context, Object, int)
 	 */
 	public static final int READONLY = 0x01;
 
@@ -72,17 +72,17 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * Only enumerated properties will be returned by getIds().
 	 *
 	 * @see Scriptable#getIds(Context)
-	 * @see ScriptableObject#getAttributes(String, Context)
-	 * @see ScriptableObject#checkNotSealed(Object, int, Context)
+	 * @see ScriptableObject#getAttributes(Context, String)
+	 * @see ScriptableObject#checkNotSealed(Context, Object, int)
 	 */
 	public static final int DONTENUM = 0x02;
 
 	/**
 	 * Property attribute indicating property cannot be deleted.
 	 *
-	 * @see Scriptable#get(String, Scriptable, Context)
-	 * @see ScriptableObject#getAttributes(String, Context)
-	 * @see ScriptableObject#checkNotSealed(Object, int, Context)
+	 * @see Scriptable#get(Context, String, Scriptable)
+	 * @see ScriptableObject#getAttributes(Context, String)
+	 * @see ScriptableObject#checkNotSealed(Context, Object, int)
 	 */
 	public static final int PERMANENT = 0x04;
 
@@ -165,29 +165,29 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			int attr = getAttributes();
 			ScriptableObject desc = new NativeObject(cx);
 			ScriptRuntime.setBuiltinProtoAndParent(cx, scope, desc, TopLevel.Builtins.Object);
-			desc.defineProperty("enumerable", (attr & DONTENUM) == 0, EMPTY, cx);
-			desc.defineProperty("configurable", (attr & PERMANENT) == 0, EMPTY, cx);
+			desc.defineProperty(cx, "enumerable", (attr & DONTENUM) == 0, EMPTY);
+			desc.defineProperty(cx, "configurable", (attr & PERMANENT) == 0, EMPTY);
 			if (getter == null && setter == null) {
-				desc.defineProperty("writable", (attr & READONLY) == 0, EMPTY, cx);
+				desc.defineProperty(cx, "writable", (attr & READONLY) == 0, EMPTY);
 			}
 
 			String fName = name == null ? "f" : name.toString();
 			if (getter != null) {
 				if (getter instanceof MemberBox) {
-					desc.defineProperty("get", new FunctionObject(fName, ((MemberBox) getter).member(), scope, cx), EMPTY, cx);
+					desc.defineProperty(cx, "get", new FunctionObject(fName, ((MemberBox) getter).member(), scope, cx), EMPTY);
 				} else if (getter instanceof Member) {
-					desc.defineProperty("get", new FunctionObject(fName, (Member) getter, scope, cx), EMPTY, cx);
+					desc.defineProperty(cx, "get", new FunctionObject(fName, (Member) getter, scope, cx), EMPTY);
 				} else {
-					desc.defineProperty("get", getter, EMPTY, cx);
+					desc.defineProperty(cx, "get", getter, EMPTY);
 				}
 			}
 			if (setter != null) {
 				if (setter instanceof MemberBox) {
-					desc.defineProperty("set", new FunctionObject(fName, ((MemberBox) setter).member(), scope, cx), EMPTY, cx);
+					desc.defineProperty(cx, "set", new FunctionObject(fName, ((MemberBox) setter).member(), scope, cx), EMPTY);
 				} else if (setter instanceof Member) {
-					desc.defineProperty("set", new FunctionObject(fName, (Member) setter, scope, cx), EMPTY, cx);
+					desc.defineProperty(cx, "set", new FunctionObject(fName, (Member) setter, scope, cx), EMPTY);
 				} else {
-					desc.defineProperty("set", setter, EMPTY, cx);
+					desc.defineProperty(cx, "set", setter, EMPTY);
 				}
 			}
 			return desc;
@@ -303,10 +303,10 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	protected static ScriptableObject buildDataDescriptor(Scriptable scope, Object value, int attributes, Context cx) {
 		ScriptableObject desc = new NativeObject(cx);
 		ScriptRuntime.setBuiltinProtoAndParent(cx, scope, desc, TopLevel.Builtins.Object);
-		desc.defineProperty("value", value, EMPTY, cx);
-		desc.defineProperty("writable", (attributes & READONLY) == 0, EMPTY, cx);
-		desc.defineProperty("enumerable", (attributes & DONTENUM) == 0, EMPTY, cx);
-		desc.defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY, cx);
+		desc.defineProperty(cx, "value", value, EMPTY);
+		desc.defineProperty(cx, "writable", (attributes & READONLY) == 0, EMPTY);
+		desc.defineProperty(cx, "enumerable", (attributes & DONTENUM) == 0, EMPTY);
+		desc.defineProperty(cx, "configurable", (attributes & PERMANENT) == 0, EMPTY);
 		return desc;
 	}
 
@@ -691,7 +691,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 				}
 				Method setter = findSetterMethod(methods, name, setterPrefix);
 				int attr = ScriptableObject.PERMANENT | ScriptableObject.DONTENUM | (setter != null ? 0 : ScriptableObject.READONLY);
-				((ScriptableObject) proto).defineProperty(name, null, WrappedReflectionMethod.of(method), WrappedReflectionMethod.of(setter), attr, cx);
+				((ScriptableObject) proto).defineProperty(cx, name, null, WrappedReflectionMethod.of(method), WrappedReflectionMethod.of(setter), attr);
 				continue;
 			}
 
@@ -805,10 +805,10 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 */
 	public static void defineProperty(Scriptable destination, String propertyName, Object value, int attributes, Context cx) {
 		if (!(destination instanceof ScriptableObject so)) {
-			destination.put(propertyName, destination, value, cx);
+			destination.put(cx, propertyName, destination, value);
 			return;
 		}
-		so.defineProperty(propertyName, value, attributes, cx);
+		so.defineProperty(cx, propertyName, value, attributes);
 	}
 
 	/**
@@ -822,7 +822,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 */
 	public static void defineConstProperty(Scriptable destination, String propertyName, Context cx) {
 		if (destination instanceof ConstProperties cp) {
-			cp.defineConst(propertyName, destination, cx);
+			cp.defineConst(cx, propertyName, destination);
 		} else {
 			defineProperty(destination, propertyName, Undefined.instance, CONST, cx);
 		}
@@ -908,7 +908,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		if (ctor instanceof BaseFunction) {
 			proto = ((BaseFunction) ctor).getPrototypeProperty(cx);
 		} else if (ctor instanceof Scriptable ctorObj) {
-			proto = ctorObj.get("prototype", ctorObj, cx);
+			proto = ctorObj.get(cx, "prototype", ctorObj);
 		} else {
 			return null;
 		}
@@ -954,7 +954,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		Scriptable start = obj;
 		Object result;
 		do {
-			result = obj.get(name, start, cx);
+			result = obj.get(cx, name, start);
 			if (result != NOT_FOUND) {
 				break;
 			}
@@ -1077,7 +1077,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * <p>
 	 * Searches for the named property in the prototype chain. If it is found,
 	 * the value of the property in <code>obj</code> is changed through a call
-	 * to {@link Scriptable#get(String, Scriptable, Context)} on the
+	 * to {@link Scriptable#get(Context, String, Scriptable)} on the
 	 * prototype passing <code>obj</code> as the <code>start</code> argument.
 	 * This allows the prototype to veto the property setting in case the
 	 * prototype defines the property with [[ReadOnly]] attribute. If the
@@ -1093,7 +1093,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		if (base == null) {
 			base = obj;
 		}
-		base.put(name, obj, value, cx);
+		base.put(cx, name, obj, value);
 	}
 
 	/**
@@ -1112,7 +1112,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * <p>
 	 * Searches for the named property in the prototype chain. If it is found,
 	 * the value of the property in <code>obj</code> is changed through a call
-	 * to {@link Scriptable#get(String, Scriptable, Context)} on the
+	 * to {@link Scriptable#get(Context, String, Scriptable)} on the
 	 * prototype passing <code>obj</code> as the <code>start</code> argument.
 	 * This allows the prototype to veto the property setting in case the
 	 * prototype defines the property with [[ReadOnly]] attribute. If the
@@ -1129,7 +1129,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			base = obj;
 		}
 		if (base instanceof ConstProperties) {
-			((ConstProperties) base).putConst(name, obj, value, cx);
+			((ConstProperties) base).putConst(cx, name, obj, value);
 		}
 	}
 
@@ -1174,8 +1174,8 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		if (base == null) {
 			return true;
 		}
-		base.delete(name, cx);
-		return !base.has(name, obj, cx);
+		base.delete(cx, name);
+		return !base.has(cx, name, obj);
 	}
 
 	/**
@@ -1195,7 +1195,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		if (base == null) {
 			return true;
 		}
-		base.delete(index, cx);
+		base.delete(cx, index);
 		return !base.has(cx, index, obj);
 	}
 
@@ -1252,7 +1252,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param obj        the JavaScript object
 	 * @param methodName the name of the function property
 	 * @param args       the arguments for the call
-	 * @see Context#getCurrentContext()
 	 */
 	public static Object callMethod(Scriptable obj, String methodName, Object[] args) {
 		return callMethod(null, obj, methodName, args);
@@ -1282,12 +1281,12 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		if (cx != null) {
 			return fun.call(cx, scope, obj, args);
 		}
-		return Context.call(null, fun, scope, obj, args);
+		return Context.call(new ContextFactory(), fun, scope, obj, args);
 	}
 
 	private static Scriptable getBase(Scriptable obj, String name, Context cx) {
 		do {
-			if (obj.has(name, obj, cx)) {
+			if (obj.has(cx, name, obj)) {
 				break;
 			}
 			obj = obj.getPrototype(cx);
@@ -1404,7 +1403,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @return true if and only if the property was found in the object
 	 */
 	@Override
-	public boolean has(String name, Scriptable start, Context cx) {
+	public boolean has(Context cx, String name, Scriptable start) {
 		return null != slotMap.query(name, 0);
 	}
 
@@ -1437,13 +1436,13 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * If the property was created using defineProperty, the
 	 * appropriate getter method is called.
 	 *
+	 * @param cx
 	 * @param name  the name of the property
 	 * @param start the object in which the lookup began
-	 * @param cx
 	 * @return the value of the property (may be null), or NOT_FOUND
 	 */
 	@Override
-	public Object get(String name, Scriptable start, Context cx) {
+	public Object get(Context cx, String name, Scriptable start) {
 		Slot slot = slotMap.query(name, 0);
 		if (slot == null) {
 			return NOT_FOUND;
@@ -1503,15 +1502,15 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param value value to set the property to
 	 */
 	@Override
-	public void put(String name, Scriptable start, Object value, Context cx) {
-		if (putImpl(name, 0, start, value, cx)) {
+	public void put(Context cx, String name, Scriptable start, Object value) {
+		if (putImpl(cx, name, 0, start, value)) {
 			return;
 		}
 
 		if (start == this) {
 			throw Kit.codeBug();
 		}
-		start.put(name, start, value, cx);
+		start.put(cx, name, start, value);
 	}
 
 	/**
@@ -1532,7 +1531,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			return;
 		}
 
-		if (putImpl(null, index, start, value, cx)) {
+		if (putImpl(cx, null, index, start, value)) {
 			return;
 		}
 
@@ -1547,7 +1546,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 */
 	@Override
 	public void put(Context cx, Symbol key, Scriptable start, Object value) {
-		if (putImpl(key, 0, start, value, cx)) {
+		if (putImpl(cx, key, 0, start, value)) {
 			return;
 		}
 
@@ -1566,8 +1565,8 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param name the name of the property
 	 */
 	@Override
-	public void delete(String name, Context cx) {
-		checkNotSealed(name, 0, cx);
+	public void delete(Context cx, String name) {
+		checkNotSealed(cx, name, 0);
 		Slot s = slotMap.query(name, 0);
 		slotMap.remove(name, 0, cx);
 		Deletable.deleteObject(s == null ? null : s.value);
@@ -1582,8 +1581,8 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param index the numeric index for the property
 	 */
 	@Override
-	public void delete(int index, Context cx) {
-		checkNotSealed(null, index, cx);
+	public void delete(Context cx, int index) {
+		checkNotSealed(cx, null, index);
 		Slot s = slotMap.query(null, index);
 		slotMap.remove(null, index, cx);
 		Deletable.deleteObject(s == null ? null : s.value);
@@ -1594,7 +1593,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 */
 	@Override
 	public void delete(Context cx, Symbol key) {
-		checkNotSealed(key, 0, cx);
+		checkNotSealed(cx, key, 0);
 		slotMap.remove(key, 0, cx);
 	}
 
@@ -1614,8 +1613,8 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param value value to set the property to
 	 */
 	@Override
-	public void putConst(String name, Scriptable start, Object value, Context cx) {
-		if (putConstImpl(name, 0, start, value, READONLY, cx)) {
+	public void putConst(Context cx, String name, Scriptable start, Object value) {
+		if (putConstImpl(cx, name, 0, start, value, READONLY)) {
 			return;
 		}
 
@@ -1623,15 +1622,15 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			throw Kit.codeBug();
 		}
 		if (start instanceof ConstProperties) {
-			((ConstProperties) start).putConst(name, start, value, cx);
+			((ConstProperties) start).putConst(cx, name, start, value);
 		} else {
-			start.put(name, start, value, cx);
+			start.put(cx, name, start, value);
 		}
 	}
 
 	@Override
-	public void defineConst(String name, Scriptable start, Context cx) {
-		if (putConstImpl(name, 0, start, Undefined.instance, UNINITIALIZED_CONST, cx)) {
+	public void defineConst(Context cx, String name, Scriptable start) {
+		if (putConstImpl(cx, name, 0, start, Undefined.instance, UNINITIALIZED_CONST)) {
 			return;
 		}
 
@@ -1639,7 +1638,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			throw Kit.codeBug();
 		}
 		if (start instanceof ConstProperties) {
-			((ConstProperties) start).defineConst(name, start, cx);
+			((ConstProperties) start).defineConst(cx, name, start);
 		}
 	}
 
@@ -1666,39 +1665,39 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * The property is specified by <code>name</code>
 	 * as defined for <code>has</code>.<p>
 	 *
-	 * @param name the identifier for the property
 	 * @param cx
+	 * @param name the identifier for the property
 	 * @return the bitset of attributes
 	 * @throws EvaluatorException if the named property is not found
-	 * @see Scriptable#get(String, Scriptable, Context)
+	 * @see Scriptable#get(Context, String, Scriptable)
 	 * @see ScriptableObject#READONLY
 	 * @see ScriptableObject#DONTENUM
 	 * @see ScriptableObject#PERMANENT
 	 * @see ScriptableObject#EMPTY
 	 */
-	public int getAttributes(String name, Context cx) {
+	public int getAttributes(Context cx, String name) {
 		return findAttributeSlot(cx, name, 0, SlotAccess.QUERY).getAttributes();
 	}
 
 	/**
 	 * Get the attributes of an indexed property.
 	 *
-	 * @param index the numeric index for the property
 	 * @param cx
+	 * @param index the numeric index for the property
 	 * @return the bitset of attributes
 	 * @throws EvaluatorException if the named property is not found
 	 *                            is not found
-	 * @see Scriptable#get(String, Scriptable, Context)
+	 * @see Scriptable#get(Context, String, Scriptable)
 	 * @see ScriptableObject#READONLY
 	 * @see ScriptableObject#DONTENUM
 	 * @see ScriptableObject#PERMANENT
 	 * @see ScriptableObject#EMPTY
 	 */
-	public int getAttributes(int index, Context cx) {
+	public int getAttributes(Context cx, int index) {
 		return findAttributeSlot(cx, null, index, SlotAccess.QUERY).getAttributes();
 	}
 
-	public int getAttributes(Symbol sym, Context cx) {
+	public int getAttributes(Context cx, Symbol sym) {
 		return findAttributeSlot(cx, sym, SlotAccess.QUERY).getAttributes();
 	}
 
@@ -1717,14 +1716,14 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param name       the name of the property
 	 * @param attributes the bitset of attributes
 	 * @throws EvaluatorException if the named property is not found
-	 * @see Scriptable#get(String, Scriptable, Context)
+	 * @see Scriptable#get(Context, String, Scriptable)
 	 * @see ScriptableObject#READONLY
 	 * @see ScriptableObject#DONTENUM
 	 * @see ScriptableObject#PERMANENT
 	 * @see ScriptableObject#EMPTY
 	 */
-	public void setAttributes(String name, int attributes, Context cx) {
-		checkNotSealed(name, 0, cx);
+	public void setAttributes(Context cx, String name, int attributes) {
+		checkNotSealed(cx, name, 0);
 		findAttributeSlot(cx, name, 0, SlotAccess.MODIFY).setAttributes(attributes);
 	}
 
@@ -1734,39 +1733,39 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param index      the numeric index for the property
 	 * @param attributes the bitset of attributes
 	 * @throws EvaluatorException if the named property is not found
-	 * @see Scriptable#get(String, Scriptable, Context)
+	 * @see Scriptable#get(Context, String, Scriptable)
 	 * @see ScriptableObject#READONLY
 	 * @see ScriptableObject#DONTENUM
 	 * @see ScriptableObject#PERMANENT
 	 * @see ScriptableObject#EMPTY
 	 */
-	public void setAttributes(int index, int attributes, Context cx) {
-		checkNotSealed(null, index, cx);
+	public void setAttributes(Context cx, int index, int attributes) {
+		checkNotSealed(cx, null, index);
 		findAttributeSlot(cx, null, index, SlotAccess.MODIFY).setAttributes(attributes);
 	}
 
 	/**
 	 * Set attributes of a Symbol-keyed property.
 	 */
-	public void setAttributes(Symbol key, int attributes, Context cx) {
-		checkNotSealed(key, 0, cx);
+	public void setAttributes(Context cx, Symbol key, int attributes) {
+		checkNotSealed(cx, key, 0);
 		findAttributeSlot(cx, key, SlotAccess.MODIFY).setAttributes(attributes);
 	}
 
 	/**
 	 * XXX: write docs.
 	 */
-	public void setGetterOrSetter(String name, int index, Callable getterOrSetter, boolean isSetter, Context cx) {
-		setGetterOrSetter(name, index, getterOrSetter, isSetter, false, cx);
+	public void setGetterOrSetter(Context cx, String name, int index, Callable getterOrSetter, boolean isSetter) {
+		setGetterOrSetter(cx, name, index, getterOrSetter, isSetter, false);
 	}
 
-	private void setGetterOrSetter(String name, int index, Callable getterOrSetter, boolean isSetter, boolean force, Context cx) {
+	private void setGetterOrSetter(Context cx, String name, int index, Callable getterOrSetter, boolean isSetter, boolean force) {
 		if (name != null && index != 0) {
 			throw new IllegalArgumentException(name);
 		}
 
 		if (!force) {
-			checkNotSealed(name, index, cx);
+			checkNotSealed(cx, name, index);
 		}
 
 		final GetterSlot gslot;
@@ -1841,11 +1840,11 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		return false;
 	}
 
-	void addLazilyInitializedValue(String name, int index, LazilyLoadedCtor init, int attributes, Context cx) {
+	void addLazilyInitializedValue(Context cx, String name, int index, LazilyLoadedCtor init, int attributes) {
 		if (name != null && index != 0) {
 			throw new IllegalArgumentException(name);
 		}
-		checkNotSealed(name, index, cx);
+		checkNotSealed(cx, name, index);
 		GetterSlot gslot = (GetterSlot) slotMap.get(name, index, SlotAccess.MODIFY_GETTER_SETTER);
 		gslot.setAttributes(attributes);
 		gslot.getter = null;
@@ -1877,10 +1876,10 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		externalData = array;
 
 		if (array == null) {
-			delete("length", cx);
+			delete(cx, "length");
 		} else {
 			// Define "length" to return whatever length the List gives us.
-			defineProperty("length", null, GET_ARRAY_LENGTH, null, READONLY | DONTENUM, cx);
+			defineProperty(cx, "length", null, GET_ARRAY_LENGTH, null, READONLY | DONTENUM);
 		}
 	}
 
@@ -1964,14 +1963,14 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * <p>
 	 * A <code>hint</code> of null means "no hint".
 	 *
-	 * @param typeHint the type hint
 	 * @param cx
+	 * @param typeHint the type hint
 	 * @return the default value for the object
 	 * <p>
 	 * See ECMA 8.6.2.6.
 	 */
 	@Override
-	public Object getDefaultValue(Class<?> typeHint, Context cx) {
+	public Object getDefaultValue(Context cx, Class<?> typeHint) {
 		return getDefaultValue(this, typeHint, cx);
 	}
 
@@ -1980,13 +1979,13 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 *
 	 * <p>This operator has been proposed to ECMA.
 	 *
+	 * @param cx
 	 * @param instance The value that appeared on the LHS of the instanceof
 	 *                 operator
-	 * @param cx
 	 * @return true if "this" appears in value's prototype chain
 	 */
 	@Override
-	public boolean hasInstance(Scriptable instance, Context cx) {
+	public boolean hasInstance(Context cx, Scriptable instance) {
 		// Default for JS objects (other than Function) is to do prototype
 		// chasing.  This will be overridden in NativeFunction and non-JS
 		// objects.
@@ -2032,16 +2031,16 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * <p>
 	 * Creates the property with an initial value and sets its attributes.
 	 *
+	 * @param cx
 	 * @param propertyName the name of the property to define.
 	 * @param value        the initial value of the property
 	 * @param attributes   the attributes of the JavaScript property
-	 * @param cx
-	 * @see Scriptable#get(String, Scriptable, Context)
+	 * @see Scriptable#get(Context, String, Scriptable)
 	 */
-	public void defineProperty(String propertyName, Object value, int attributes, Context cx) {
-		checkNotSealed(propertyName, 0, cx);
-		put(propertyName, this, value, cx);
-		setAttributes(propertyName, attributes, cx);
+	public void defineProperty(Context cx, String propertyName, Object value, int attributes) {
+		checkNotSealed(cx, propertyName, 0);
+		put(cx, propertyName, this, value);
+		setAttributes(cx, propertyName, attributes);
 	}
 
 	/**
@@ -2051,10 +2050,10 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param value      the initial value of the property
 	 * @param attributes the attributes of the JavaScript property
 	 */
-	public void defineProperty(Symbol key, Object value, int attributes, Context cx) {
-		checkNotSealed(key, 0, cx);
+	public void defineProperty(Context cx, Symbol key, Object value, int attributes) {
+		checkNotSealed(cx, key, 0);
 		put(cx, key, this, value);
-		setAttributes(key, attributes, cx);
+		setAttributes(cx, key, attributes);
 	}
 
 	/**
@@ -2073,7 +2072,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 *                     and "setFoo" methods.
 	 * @param clazz        the Java class to search for the getter and setter
 	 * @param attributes   the attributes of the JavaScript property
-	 * @see Scriptable#get(String, Scriptable, Context)
+	 * @see Scriptable#get(Context, String, Scriptable)
 	 */
 	public void defineProperty(Context cx, String propertyName, Class<?> clazz, int attributes) {
 		int length = propertyName.length();
@@ -2096,7 +2095,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		if (setter == null) {
 			attributes |= ScriptableObject.READONLY;
 		}
-		defineProperty(propertyName, null, getter, setter, attributes, cx);
+		defineProperty(cx, propertyName, null, getter, setter, attributes);
 	}
 
 	/**
@@ -2133,15 +2132,15 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * Object getFoo(Scriptable obj);
 	 * void setFoo(Scriptable obj, SomeType value);</pre>
 	 *
+	 * @param cx
 	 * @param propertyName the name of the property to define.
 	 * @param delegateTo   an object to call the getter and setter methods on,
 	 *                     or null, depending on the form used above.
 	 * @param getter       the method to invoke to get the value of the property
 	 * @param setter       the method to invoke to set the value of the property
 	 * @param attributes   the attributes of the JavaScript property
-	 * @param cx
 	 */
-	public void defineProperty(String propertyName, Object delegateTo, WrappedExecutable getter, WrappedExecutable setter, int attributes, Context cx) {
+	public void defineProperty(Context cx, String propertyName, Object delegateTo, WrappedExecutable getter, WrappedExecutable setter, int attributes) {
 		MemberBox getterBox = null;
 		if (getter != null) {
 			getterBox = new MemberBox(getter);
@@ -2190,7 +2189,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		for (int i = 0, len = ids.length; i < len; ++i) {
 			Object descObj = ScriptRuntime.getObjectElem(cx, props, ids[i]);
 			ScriptableObject desc = ensureScriptableObject(descObj, cx);
-			checkPropertyDefinition(desc, cx);
+			checkPropertyDefinition(cx, desc);
 			descs[i] = desc;
 		}
 		for (int i = 0, len = ids.length; i < len; ++i) {
@@ -2206,7 +2205,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param desc the new property descriptor, as described in 8.6.1
 	 */
 	public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
-		checkPropertyDefinition(desc, cx);
+		checkPropertyDefinition(cx, desc);
 		defineOwnProperty(cx, id, desc, true);
 	}
 
@@ -2227,17 +2226,17 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 
 		if (checkValid) {
 			ScriptableObject current = slot == null ? null : slot.getPropertyDescriptor(cx, this);
-			checkPropertyChange(id, current, desc, cx);
+			checkPropertyChange(cx, id, current, desc);
 		}
 
-		boolean isAccessor = isAccessorDescriptor(desc, cx);
+		boolean isAccessor = isAccessorDescriptor(cx, desc);
 		final int attributes;
 
 		if (slot == null) { // new slot
 			slot = getSlot(cx, id, isAccessor ? SlotAccess.MODIFY_GETTER_SETTER : SlotAccess.MODIFY);
-			attributes = applyDescriptorToAttributeBitset(DONTENUM | READONLY | PERMANENT, desc, cx);
+			attributes = applyDescriptorToAttributeBitset(cx, DONTENUM | READONLY | PERMANENT, desc);
 		} else {
-			attributes = applyDescriptorToAttributeBitset(slot.getAttributes(), desc, cx);
+			attributes = applyDescriptorToAttributeBitset(cx, slot.getAttributes(), desc);
 		}
 
 		if (isAccessor) {
@@ -2273,7 +2272,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		}
 	}
 
-	protected void checkPropertyDefinition(ScriptableObject desc, Context cx) {
+	protected void checkPropertyDefinition(Context cx, ScriptableObject desc) {
 		Object getter = getProperty(desc, "get", cx);
 		if (getter != NOT_FOUND && getter != Undefined.instance && !(getter instanceof Callable)) {
 			throw ScriptRuntime.notFunctionError(cx, getter);
@@ -2282,44 +2281,44 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		if (setter != NOT_FOUND && setter != Undefined.instance && !(setter instanceof Callable)) {
 			throw ScriptRuntime.notFunctionError(cx, setter);
 		}
-		if (isDataDescriptor(desc, cx) && isAccessorDescriptor(desc, cx)) {
+		if (isDataDescriptor(desc, cx) && isAccessorDescriptor(cx, desc)) {
 			throw ScriptRuntime.typeError0(cx, "msg.both.data.and.accessor.desc");
 		}
 	}
 
-	protected void checkPropertyChange(Object id, ScriptableObject current, ScriptableObject desc, Context cx) {
+	protected void checkPropertyChange(Context cx, Object id, ScriptableObject current, ScriptableObject desc) {
 		if (current == null) { // new property
 			if (!isExtensible()) {
 				throw ScriptRuntime.typeError0(cx, "msg.not.extensible");
 			}
 		} else {
-			if (isFalse(current.get("configurable", current, cx), cx)) {
+			if (isFalse(current.get(cx, "configurable", current), cx)) {
 				if (isTrue(getProperty(desc, "configurable", cx), cx)) {
 					throw ScriptRuntime.typeError1(cx, "msg.change.configurable.false.to.true", id);
 				}
-				if (isTrue(current.get("enumerable", current, cx), cx) != isTrue(getProperty(desc, "enumerable", cx), cx)) {
+				if (isTrue(current.get(cx, "enumerable", current), cx) != isTrue(getProperty(desc, "enumerable", cx), cx)) {
 					throw ScriptRuntime.typeError1(cx, "msg.change.enumerable.with.configurable.false", id);
 				}
 				boolean isData = isDataDescriptor(desc, cx);
-				boolean isAccessor = isAccessorDescriptor(desc, cx);
+				boolean isAccessor = isAccessorDescriptor(cx, desc);
 				if (!isData && !isAccessor) {
 					// no further validation required for generic descriptor
 				} else if (isData && isDataDescriptor(current, cx)) {
-					if (isFalse(current.get("writable", current, cx), cx)) {
+					if (isFalse(current.get(cx, "writable", current), cx)) {
 						if (isTrue(getProperty(desc, "writable", cx), cx)) {
 							throw ScriptRuntime.typeError1(cx, "msg.change.writable.false.to.true.with.configurable.false", id);
 						}
 
-						if (!sameValue(getProperty(desc, "value", cx), current.get("value", current, cx), cx)) {
+						if (!sameValue(cx, getProperty(desc, "value", cx), current.get(cx, "value", current))) {
 							throw ScriptRuntime.typeError1(cx, "msg.change.value.with.writable.false", id);
 						}
 					}
-				} else if (isAccessor && isAccessorDescriptor(current, cx)) {
-					if (!sameValue(getProperty(desc, "set", cx), current.get("set", current, cx), cx)) {
+				} else if (isAccessor && isAccessorDescriptor(cx, current)) {
+					if (!sameValue(cx, getProperty(desc, "set", cx), current.get(cx, "set", current))) {
 						throw ScriptRuntime.typeError1(cx, "msg.change.setter.with.configurable.false", id);
 					}
 
-					if (!sameValue(getProperty(desc, "get", cx), current.get("get", current, cx), cx)) {
+					if (!sameValue(cx, getProperty(desc, "get", cx), current.get(cx, "get", current))) {
 						throw ScriptRuntime.typeError1(cx, "msg.change.getter.with.configurable.false", id);
 					}
 				} else {
@@ -2340,7 +2339,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param currentValue the current value
 	 * @return true if values are the same as defined by ES5 9.12
 	 */
-	protected boolean sameValue(Object newValue, Object currentValue, Context cx) {
+	protected boolean sameValue(Context cx, Object newValue, Object currentValue) {
 		if (newValue == NOT_FOUND) {
 			return true;
 		}
@@ -2362,7 +2361,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		return ScriptRuntime.shallowEq(cx, currentValue, newValue);
 	}
 
-	protected int applyDescriptorToAttributeBitset(int attributes, ScriptableObject desc, Context cx) {
+	protected int applyDescriptorToAttributeBitset(Context cx, int attributes, ScriptableObject desc) {
 		Object enumerable = getProperty(desc, "enumerable", cx);
 		if (enumerable != NOT_FOUND) {
 			attributes = ScriptRuntime.toBoolean(cx, enumerable) ? attributes & ~DONTENUM : attributes | DONTENUM;
@@ -2397,7 +2396,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param desc a property descriptor
 	 * @return true if this is an accessor descriptor.
 	 */
-	protected boolean isAccessorDescriptor(ScriptableObject desc, Context cx) {
+	protected boolean isAccessorDescriptor(Context cx, ScriptableObject desc) {
 		return hasProperty(desc, "get", cx) || hasProperty(desc, "set", cx);
 	}
 
@@ -2407,8 +2406,8 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param desc a property descriptor
 	 * @return true if this is a generic descriptor.
 	 */
-	protected boolean isGenericDescriptor(ScriptableObject desc, Context cx) {
-		return !isDataDescriptor(desc, cx) && !isAccessorDescriptor(desc, cx);
+	protected boolean isGenericDescriptor(Context cx, ScriptableObject desc) {
+		return !isDataDescriptor(desc, cx) && !isAccessorDescriptor(cx, desc);
 	}
 
 	/**
@@ -2424,7 +2423,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @param attributes the attributes of the new properties
 	 * @see FunctionObject
 	 */
-	public void defineFunctionProperties(String[] names, Class<?> clazz, int attributes, Context cx) {
+	public void defineFunctionProperties(Context cx, String[] names, Class<?> clazz, int attributes) {
 		Method[] methods = FunctionObject.getMethodList(clazz);
 		for (int i = 0; i < names.length; i++) {
 			String name = names[i];
@@ -2433,7 +2432,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 				throw Context.reportRuntimeError2("msg.method.not.found", name, clazz.getName(), cx);
 			}
 			FunctionObject f = new FunctionObject(name, m, this, cx);
-			defineProperty(name, f, attributes, cx);
+			defineProperty(cx, name, f, attributes);
 		}
 	}
 
@@ -2486,7 +2485,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		return isSealed;
 	}
 
-	private void checkNotSealed(Object key, int index, Context cx) {
+	private void checkNotSealed(Context cx, Object key, int index) {
 		if (!isSealed(cx)) {
 			return;
 		}
@@ -2542,7 +2541,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @return false if this != start and no slot was found.  true if this == start
 	 * or this != start and a READONLY slot was found.
 	 */
-	private boolean putImpl(Object key, int index, Scriptable start, Object value, Context cx) {
+	private boolean putImpl(Context cx, Object key, int index, Scriptable start, Object value) {
 		// This method is very hot (basically called on each assignment)
 		// so we inline the extensible/sealed checks below.
 		Slot slot;
@@ -2564,7 +2563,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			}
 		} else {
 			if (isSealed) {
-				checkNotSealed(key, index, cx);
+				checkNotSealed(cx, key, index);
 			}
 			slot = slotMap.get(key, index, SlotAccess.MODIFY);
 		}
@@ -2581,7 +2580,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @return false if this != start and no slot was found.  true if this == start
 	 * or this != start and a READONLY slot was found.
 	 */
-	private boolean putConstImpl(String name, int index, Scriptable start, Object value, int constFlag, Context cx) {
+	private boolean putConstImpl(Context cx, String name, int index, Scriptable start, Object value, int constFlag) {
 		assert (constFlag != EMPTY);
 		if (!isExtensible) {
 			if (cx.isStrictMode()) {
@@ -2600,7 +2599,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 				return true;
 			}
 		} else {
-			checkNotSealed(name, index, cx);
+			checkNotSealed(cx, name, index);
 			// either const hoisted declaration or initialization
 			slot = slotMap.get(name, index, SlotAccess.MODIFY_CONST);
 			int attr = slot.getAttributes();
@@ -2722,7 +2721,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	public Object get(Context cx, Object key) {
 		Object value = null;
 		if (key instanceof String) {
-			value = get((String) key, this, cx);
+			value = get(cx, (String) key, this);
 		} else if (key instanceof Symbol) {
 			value = get(cx, (Symbol) key, this);
 		} else if (key instanceof Number) {

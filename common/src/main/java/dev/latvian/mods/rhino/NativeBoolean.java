@@ -37,13 +37,13 @@ final class NativeBoolean extends IdScriptableObject {
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> typeHint, Context cx) {
+	public Object getDefaultValue(Context cx, Class<?> typeHint) {
 		// This is actually non-ECMA, but will be proposed
 		// as a change in round 2.
 		if (typeHint == ScriptRuntime.BooleanClass) {
 			return booleanValue;
 		}
-		return super.getDefaultValue(typeHint, cx);
+		return super.getDefaultValue(cx, typeHint);
 	}
 
 	@Override

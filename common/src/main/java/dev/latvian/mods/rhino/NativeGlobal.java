@@ -83,12 +83,12 @@ public class NativeGlobal implements IdFunctionCall {
 			}
 			String name = error.name();
 			ScriptableObject errorProto = (ScriptableObject) ScriptRuntime.newBuiltinObject(cx, scope, TopLevel.Builtins.Error, ScriptRuntime.EMPTY_OBJECTS);
-			errorProto.put("name", errorProto, name, cx);
-			errorProto.put("message", errorProto, "", cx);
+			errorProto.put(cx, "name", errorProto, name);
+			errorProto.put(cx, "message", errorProto, "");
 			IdFunctionObject ctor = new IdFunctionObject(obj, FTAG, Id_new_CommonError, name, 1, scope);
 			ctor.markAsConstructor(errorProto);
-			errorProto.put("constructor", errorProto, ctor, cx);
-			errorProto.setAttributes("constructor", ScriptableObject.DONTENUM, cx);
+			errorProto.put(cx, "constructor", errorProto, ctor);
+			errorProto.setAttributes(cx, "constructor", ScriptableObject.DONTENUM);
 			if (sealed) {
 				errorProto.sealObject(cx);
 				ctor.sealObject(cx);

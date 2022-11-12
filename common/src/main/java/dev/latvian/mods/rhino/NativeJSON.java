@@ -78,7 +78,7 @@ public final class NativeJSON extends IdScriptableObject {
 	public static Object parse(Context cx, Scriptable scope, String jtext, Callable reviver) {
 		Object unfiltered = parse(cx, scope, jtext);
 		Scriptable root = cx.newObject(scope);
-		root.put("", root, unfiltered, cx);
+		root.put(cx, "", root, unfiltered);
 		return walk(cx, scope, reviver, root, "");
 	}
 
@@ -87,7 +87,7 @@ public final class NativeJSON extends IdScriptableObject {
 		if (name instanceof Number) {
 			property = holder.get(cx, ((Number) name).intValue(), holder);
 		} else {
-			property = holder.get(((String) name), holder, cx);
+			property = holder.get(cx, ((String) name), holder);
 		}
 
 		if (property instanceof Scriptable val) {
@@ -99,15 +99,15 @@ public final class NativeJSON extends IdScriptableObject {
 						String id = Long.toString(i);
 						Object newElement = walk(cx, scope, reviver, val, id);
 						if (newElement == Undefined.instance) {
-							val.delete(id, cx);
+							val.delete(cx, id);
 						} else {
-							val.put(id, val, newElement, cx);
+							val.put(cx, id, val, newElement);
 						}
 					} else {
 						int idx = (int) i;
 						Object newElement = walk(cx, scope, reviver, val, idx);
 						if (newElement == Undefined.instance) {
-							val.delete(idx, cx);
+							val.delete(cx, idx);
 						} else {
 							val.put(cx, idx, val, newElement);
 						}
@@ -119,15 +119,15 @@ public final class NativeJSON extends IdScriptableObject {
 					Object newElement = walk(cx, scope, reviver, val, p);
 					if (newElement == Undefined.instance) {
 						if (p instanceof Number) {
-							val.delete(((Number) p).intValue(), cx);
+							val.delete(cx, ((Number) p).intValue());
 						} else {
-							val.delete((String) p, cx);
+							val.delete(cx, (String) p);
 						}
 					} else {
 						if (p instanceof Number) {
 							val.put(cx, ((Number) p).intValue(), val, newElement);
 						} else {
-							val.put((String) p, val, newElement, cx);
+							val.put(cx, (String) p, val, newElement);
 						}
 					}
 				}

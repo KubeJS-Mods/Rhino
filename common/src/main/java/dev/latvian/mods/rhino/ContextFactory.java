@@ -115,8 +115,6 @@ public class ContextFactory {
 
 	private final Object listenersLock = new Object();
 	private volatile boolean sealed;
-	private volatile Object listeners;
-	private boolean disabledListening;
 
 	/**
 	 * Create new {@link Context} instance to be associated with the current
@@ -129,15 +127,6 @@ public class ContextFactory {
 	 */
 	protected Context makeContext() {
 		return new Context(this);
-	}
-
-	/**
-	 * Implementation of {@link Context#hasFeature(int featureIndex)}.
-	 * This can be used to customize {@link Context} without introducing
-	 * additional subclasses.
-	 */
-	protected boolean hasFeature(Context cx, int featureIndex) {
-		return false;
 	}
 
 	/**
@@ -183,60 +172,6 @@ public class ContextFactory {
 	protected void observeInstructionCount(Context cx, int instructionCount) {
 	}
 
-	protected void onContextCreated(Context cx) {
-		Object listeners = this.listeners;
-		for (int i = 0; ; ++i) {
-			Listener l = (Listener) Kit.getListener(listeners, i);
-			if (l == null) {
-				break;
-			}
-			l.contextCreated(cx);
-		}
-	}
-
-	protected void onContextReleased(Context cx) {
-		Object listeners = this.listeners;
-		for (int i = 0; ; ++i) {
-			Listener l = (Listener) Kit.getListener(listeners, i);
-			if (l == null) {
-				break;
-			}
-			l.contextReleased(cx);
-		}
-	}
-
-	public final void addListener(Listener listener) {
-		checkNotSealed();
-		synchronized (listenersLock) {
-			if (disabledListening) {
-				throw new IllegalStateException();
-			}
-			listeners = Kit.addListener(listeners, listener);
-		}
-	}
-
-	public final void removeListener(Listener listener) {
-		checkNotSealed();
-		synchronized (listenersLock) {
-			if (disabledListening) {
-				throw new IllegalStateException();
-			}
-			listeners = Kit.removeListener(listeners, listener);
-		}
-	}
-
-	/**
-	 * The method is used only to implement
-	 * Context.disableStaticContextListening()
-	 */
-	final void disableContextListening() {
-		checkNotSealed();
-		synchronized (listenersLock) {
-			disabledListening = true;
-			listeners = null;
-		}
-	}
-
 	/**
 	 * Checks if this is a sealed ContextFactory.
 	 *
@@ -278,69 +213,6 @@ public class ContextFactory {
 	 */
 	public final <T> T call(ContextAction<T> action) {
 		return Context.call(this, action);
-	}
-
-	/**
-	 * Get a context associated with the current thread, creating one if need
-	 * be. The Context stores the execution state of the JavaScript engine, so
-	 * it is required that the context be entered before execution may begin.
-	 * Once a thread has entered a Context, then getCurrentContext() may be
-	 * called to find the context that is associated with the current thread.
-	 * <p>
-	 * Calling <code>enterContext()</code> will return either the Context
-	 * currently associated with the thread, or will create a new context and
-	 * associate it with the current thread. Each call to
-	 * <code>enterContext()</code> must have a matching call to
-	 * {@link Context#exit()}.
-	 * <pre>
-	 *      Context cx = contextFactory.enterContext();
-	 *      try {
-	 *          ...
-	 *          cx.evaluateString(...);
-	 *      } finally {
-	 *          Context.exit();
-	 *      }
-	 * </pre>
-	 * Instead of using <code>enterContext()</code>, <code>exit()</code> pair consider
-	 * using {@link #call(ContextAction)} which guarantees proper association
-	 * of Context instances with the current thread.
-	 * With this method the above example becomes:
-	 * <pre>
-	 *      ContextFactory.call(new ContextAction() {
-	 *          public Object run(Context cx) {
-	 *              ...
-	 *              cx.evaluateString(...);
-	 *              return null;
-	 *          }
-	 *      });
-	 * </pre>
-	 *
-	 * @return a Context associated with the current thread
-	 * @see Context#exit()
-	 * @see #call(ContextAction)
-	 */
-	public Context enterContext() {
-		return enterContext(null);
-	}
-
-	/**
-	 * Get a Context associated with the current thread, using the given
-	 * Context if need be.
-	 * <p>
-	 * The same as <code>enterContext()</code> except that <code>cx</code>
-	 * is associated with the current thread and returned if the current thread
-	 * has no associated context and <code>cx</code> is not associated with any
-	 * other thread.
-	 *
-	 * @param cx a Context to associate with the thread if possible
-	 * @return a Context associated with the current thread
-	 * @throws IllegalStateException if <code>cx</code> is already associated
-	 *                               with a different thread
-	 * @see #enterContext()
-	 * @see #call(ContextAction)
-	 */
-	public final Context enterContext(Context cx) {
-		return Context.enter(cx, this);
 	}
 
 	/**

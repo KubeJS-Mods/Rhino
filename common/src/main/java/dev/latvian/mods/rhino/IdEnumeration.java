@@ -74,7 +74,7 @@ public class IdEnumeration implements Consumer<Object> {
 			if (id instanceof Symbol) {
 				continue;
 			} else if (id instanceof String strId) {
-				if (!obj.has(strId, obj, cx)) {
+				if (!obj.has(cx, strId, obj)) {
 					continue;   // must have been deleted
 				}
 				currentId = strId;
@@ -144,7 +144,7 @@ public class IdEnumeration implements Consumer<Object> {
 			if (s.stringId == null) {
 				result = obj.get(cx, s.index, obj);
 			} else {
-				result = obj.get(s.stringId, obj, cx);
+				result = obj.get(cx, s.stringId, obj);
 			}
 		}
 

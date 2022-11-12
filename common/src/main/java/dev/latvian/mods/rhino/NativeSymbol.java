@@ -75,7 +75,7 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 
 	private static void createStandardSymbol(Context cx, Scriptable scope, ScriptableObject ctor, String name, SymbolKey key) {
 		Scriptable sym = cx.newObject(scope, CLASS_NAME, new Object[]{name, key});
-		ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT, cx);
+		ctor.defineProperty(cx, name, sym, DONTENUM | READONLY | PERMANENT);
 	}
 
 	private static NativeSymbol getSelf(Context cx, Object thisObj) {
@@ -271,9 +271,9 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 	}
 
 	@Override
-	public void put(String name, Scriptable start, Object value, Context cx) {
+	public void put(Context cx, String name, Scriptable start, Object value) {
 		if (!isSymbol()) {
-			super.put(name, start, value, cx);
+			super.put(cx, name, start, value);
 		} else if (isStrictMode(cx)) {
 			throw ScriptRuntime.typeError0(cx, "msg.no.assign.symbol.strict");
 		}

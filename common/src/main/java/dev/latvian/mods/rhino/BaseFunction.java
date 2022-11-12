@@ -116,14 +116,14 @@ public class BaseFunction extends IdScriptableObject implements Function {
 	 * foo instanceof Foo;  // true<br>
 	 * </code>
 	 *
+	 * @param cx
 	 * @param instance The value that appeared on the LHS of the instanceof
 	 *                 operator
-	 * @param cx
 	 * @return true if the "prototype" property of "this" appears in
 	 * value's prototype chain
 	 */
 	@Override
-	public boolean hasInstance(Scriptable instance, Context cx) {
+	public boolean hasInstance(Context cx, Scriptable instance) {
 		Object protoProp = getProperty(this, "prototype", cx);
 		if (protoProp instanceof Scriptable) {
 			return ScriptRuntime.jsDelegatesTo(cx, instance, (Scriptable) protoProp);
@@ -447,7 +447,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		}
 		NativeObject obj = new NativeObject(cx);
 		final int attr = DONTENUM;
-		obj.defineProperty("constructor", this, attr, cx);
+		obj.defineProperty(cx, "constructor", this, attr);
 		// put the prototype property into the object now, then in the
 		// wacky case of a user defining a function Object(), we don't
 		// get an infinite loop trying to find the prototype.
@@ -474,7 +474,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 			return value;
 		}
 		NativeCall activation = ScriptRuntime.findFunctionActivation(cx, this);
-		return (activation == null) ? null : activation.get("arguments", activation, cx);
+		return (activation == null) ? null : activation.get(cx, "arguments", activation);
 	}
 
 	private Object jsConstructor(Context cx, Scriptable scope, Object[] args) {

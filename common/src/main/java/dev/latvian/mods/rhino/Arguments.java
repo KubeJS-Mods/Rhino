@@ -80,7 +80,7 @@ final class Arguments extends IdScriptableObject {
 		calleeObj = activation.function;
 		callerObj = NOT_FOUND;
 
-		defineProperty(SymbolKey.ITERATOR, iteratorMethod, DONTENUM, cx);
+		defineProperty(cx, SymbolKey.ITERATOR, iteratorMethod, DONTENUM);
 	}
 
 	@Override
@@ -97,12 +97,12 @@ final class Arguments extends IdScriptableObject {
 
 	private void putIntoActivation(int index, Object value, Context cx) {
 		String argName = activation.function.getParamOrVarName(index);
-		activation.put(argName, activation, value, cx);
+		activation.put(cx, argName, activation, value);
 	}
 
 	private Object getFromActivation(int index, Context cx) {
 		String argName = activation.function.getParamOrVarName(index);
-		return activation.get(argName, activation, cx);
+		return activation.get(cx, argName, activation);
 	}
 
 	// #/string_id_map#
@@ -182,16 +182,16 @@ final class Arguments extends IdScriptableObject {
 	}
 
 	@Override
-	public void put(String name, Scriptable start, Object value, Context cx) {
-		super.put(name, start, value, cx);
+	public void put(Context cx, String name, Scriptable start, Object value) {
+		super.put(cx, name, start, value);
 	}
 
 	@Override
-	public void delete(int index, Context cx) {
+	public void delete(Context cx, int index) {
 		if (0 <= index && index < args.length) {
 			removeArg(index);
 		}
-		super.delete(index, cx);
+		super.delete(cx, index);
 	}
 
 	@Override
@@ -251,7 +251,7 @@ final class Arguments extends IdScriptableObject {
 				} else if (value == null) {
 					NativeCall caller = activation.parentActivationCall;
 					if (caller != null) {
-						value = caller.get("arguments", caller, cx);
+						value = caller.get(cx, "arguments", caller);
 					}
 				}
 				return value;
@@ -346,7 +346,7 @@ final class Arguments extends IdScriptableObject {
 		}
 		if (super.has(cx, index, this)) { // the descriptor has been redefined
 			ScriptableObject desc = super.getOwnPropertyDescriptor(cx, id);
-			desc.put("value", desc, value, cx);
+			desc.put(cx, "value", desc, value);
 			return desc;
 		}
 		Scriptable scope = getParentScope();
@@ -374,7 +374,7 @@ final class Arguments extends IdScriptableObject {
 			return;
 		}
 
-		if (isAccessorDescriptor(desc, cx)) {
+		if (isAccessorDescriptor(cx, desc)) {
 			removeArg(index);
 			return;
 		}
@@ -401,12 +401,12 @@ final class Arguments extends IdScriptableObject {
 		if (!cx.isStrictMode()) {
 			return;
 		}
-		setGetterOrSetter("caller", 0, new ThrowTypeError("caller"), true, cx);
-		setGetterOrSetter("caller", 0, new ThrowTypeError("caller"), false, cx);
-		setGetterOrSetter("callee", 0, new ThrowTypeError("callee"), true, cx);
-		setGetterOrSetter("callee", 0, new ThrowTypeError("callee"), false, cx);
-		setAttributes("caller", DONTENUM | PERMANENT, cx);
-		setAttributes("callee", DONTENUM | PERMANENT, cx);
+		setGetterOrSetter(cx, "caller", 0, new ThrowTypeError("caller"), true);
+		setGetterOrSetter(cx, "caller", 0, new ThrowTypeError("caller"), false);
+		setGetterOrSetter(cx, "callee", 0, new ThrowTypeError("callee"), true);
+		setGetterOrSetter(cx, "callee", 0, new ThrowTypeError("callee"), false);
+		setAttributes(cx, "caller", DONTENUM | PERMANENT);
+		setAttributes(cx, "callee", DONTENUM | PERMANENT);
 		callerObj = null;
 		calleeObj = null;
 	}

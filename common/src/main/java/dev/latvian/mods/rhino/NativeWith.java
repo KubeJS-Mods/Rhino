@@ -63,8 +63,8 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 	}
 
 	@Override
-	public boolean has(String id, Scriptable start, Context cx) {
-		return prototype.has(id, prototype, cx);
+	public boolean has(Context cx, String id, Scriptable start) {
+		return prototype.has(cx, id, prototype);
 	}
 
 	@Override
@@ -81,11 +81,11 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 	}
 
 	@Override
-	public Object get(String id, Scriptable start, Context cx) {
+	public Object get(Context cx, String id, Scriptable start) {
 		if (start == this) {
 			start = prototype;
 		}
-		return prototype.get(id, start, cx);
+		return prototype.get(cx, id, start);
 	}
 
 	@Override
@@ -108,11 +108,11 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 	}
 
 	@Override
-	public void put(String id, Scriptable start, Object value, Context cx) {
+	public void put(Context cx, String id, Scriptable start, Object value) {
 		if (start == this) {
 			start = prototype;
 		}
-		prototype.put(id, start, value, cx);
+		prototype.put(cx, id, start, value);
 	}
 
 	@Override
@@ -134,8 +134,8 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 	}
 
 	@Override
-	public void delete(String id, Context cx) {
-		prototype.delete(id, cx);
+	public void delete(Context cx, String id) {
+		prototype.delete(cx, id);
 	}
 
 	@Override
@@ -146,8 +146,8 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 	}
 
 	@Override
-	public void delete(int index, Context cx) {
-		prototype.delete(index, cx);
+	public void delete(Context cx, int index) {
+		prototype.delete(cx, index);
 	}
 
 	@Override
@@ -176,13 +176,13 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> typeHint, Context cx) {
-		return prototype.getDefaultValue(typeHint, cx);
+	public Object getDefaultValue(Context cx, Class<?> typeHint) {
+		return prototype.getDefaultValue(cx, typeHint);
 	}
 
 	@Override
-	public boolean hasInstance(Scriptable value, Context cx) {
-		return prototype.hasInstance(value, cx);
+	public boolean hasInstance(Context cx, Scriptable value) {
+		return prototype.hasInstance(cx, value);
 	}
 
 	/**

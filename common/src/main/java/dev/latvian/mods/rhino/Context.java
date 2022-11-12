@@ -52,23 +52,6 @@ public class Context {
 	public static final String errorReporterProperty = "error reporter";
 
 	/**
-	 * Get the current Context.
-	 * <p>
-	 * The current Context is per-thread; this method looks up
-	 * the Context associated with the current thread. <p>
-	 *
-	 * @return the Context associated with the current thread, or
-	 * null if no context is associated with the current
-	 * thread.
-	 * @see ContextFactory#enterContext()
-	 * @see ContextFactory#call(ContextAction)
-	 */
-	public static Context getCurrentContext() {
-		Object helper = VMBridge.getThreadContextHelper();
-		return VMBridge.getContext(helper);
-	}
-
-	/**
 	 * Same as calling {@link ContextFactory#enterContext()} on the global
 	 * ContextFactory instance.
 	 *
@@ -76,64 +59,17 @@ public class Context {
 	 * @see #exit()
 	 */
 	public static Context enter() {
-		return enter(null, ContextFactory.getGlobal());
+		return enter(new ContextFactory());
 	}
 
-	public static Context enterWithNewFactory() {
-		return enter(null, new ContextFactory());
-	}
+	public static Context enter(ContextFactory factory) {
+		var cx = factory.makeContext();
 
-	static Context enter(Context cx, ContextFactory factory) {
-		Object helper = VMBridge.getThreadContextHelper();
-		Context old = VMBridge.getContext(helper);
-		if (old != null) {
-			cx = old;
-		} else {
-			if (cx == null) {
-				cx = factory.makeContext();
-				if (cx.enterCount != 0) {
-					throw new IllegalStateException("factory.makeContext() returned Context instance already associated with some thread");
-				}
-				factory.onContextCreated(cx);
-				if (factory.isSealed() && !cx.isSealed()) {
-					cx.seal(null);
-				}
-			} else {
-				if (cx.enterCount != 0) {
-					throw new IllegalStateException("can not use Context instance already associated with some thread");
-				}
-			}
-			VMBridge.setContext(helper, cx);
+		if (factory.isSealed() && !cx.isSealed()) {
+			cx.seal(null);
 		}
-		++cx.enterCount;
+
 		return cx;
-	}
-
-	/**
-	 * Exit a block of code requiring a Context.
-	 * <p>
-	 * Calling <code>exit()</code> will remove the association between
-	 * the current thread and a Context if the prior call to
-	 * {@link ContextFactory#enterContext()} on this thread newly associated a
-	 * Context with this thread. Once the current thread no longer has an
-	 * associated Context, it cannot be used to execute JavaScript until it is
-	 * again associated with a Context.
-	 *
-	 * @see ContextFactory#enterContext()
-	 */
-	public static void exit() {
-		Object helper = VMBridge.getThreadContextHelper();
-		Context cx = VMBridge.getContext(helper);
-		if (cx == null) {
-			throw new IllegalStateException("Calling Context.exit without previous Context.enter");
-		}
-		if (cx.enterCount < 1) {
-			Kit.codeBug();
-		}
-		if (--cx.enterCount == 0) {
-			VMBridge.setContext(helper, null);
-			cx.factory.onContextReleased(cx);
-		}
 	}
 
 	/**
@@ -154,7 +90,7 @@ public class Context {
 	 */
 	public static Object call(ContextFactory factory, final Callable callable, final Scriptable scope, final Scriptable thisObj, final Object[] args) {
 		if (factory == null) {
-			factory = ContextFactory.getGlobal();
+			factory = new ContextFactory();
 		}
 		return call(factory, cx -> callable.call(cx, scope, thisObj, args));
 	}
@@ -163,12 +99,8 @@ public class Context {
 	 * The method implements {@link ContextFactory#call(ContextAction)} logic.
 	 */
 	static <T> T call(ContextFactory factory, ContextAction<T> action) {
-		Context cx = enter(null, factory);
-		try {
-			return action.run(cx);
-		} finally {
-			exit();
-		}
+		Context cx = enter(factory);
+		return action.run(cx);
 	}
 
 	static void onSealedMutation() {
@@ -433,7 +365,7 @@ public class Context {
 	private final ContextFactory factory;
 	// Generate an observer count on compiled code
 	public boolean generateObserverCount = false;
-	public SharedContextData sharedContextData;
+	public final SharedContextData sharedContextData;
 	Scriptable topCallScope;
 	boolean isContinuationsTopCall;
 	NativeCall currentActivationCall;
@@ -460,7 +392,6 @@ public class Context {
 	private Object sealKey;
 	private ErrorReporter errorReporter;
 	private int maximumInterpreterStackDepth;
-	private int enterCount;
 	private Object propertyListeners;
 	private Map<Object, Object> threadLocalMap;
 	private ClassLoader applicationClassLoader;
@@ -481,6 +412,7 @@ public class Context {
 		}
 		this.factory = factory;
 		maximumInterpreterStackDepth = Integer.MAX_VALUE;
+		sharedContextData = new SharedContextData(this);
 	}
 
 	/**
@@ -1504,7 +1436,7 @@ public class Context {
 
 	public void addToScope(Scriptable scope, String name, Object value) {
 		if (value instanceof Class<?> c) {
-			ScriptableObject.putProperty(scope, name, new NativeJavaClass(scope, c, this), this);
+			ScriptableObject.putProperty(scope, name, new NativeJavaClass(this, scope, c), this);
 		} else {
 			ScriptableObject.putProperty(scope, name, Context.javaToJS(this, value, scope), this);
 		}

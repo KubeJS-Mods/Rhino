@@ -176,13 +176,13 @@ final class NativeNumber extends IdScriptableObject {
 	protected void fillConstructorProperties(IdFunctionObject ctor, Context cx) {
 		final int attr = DONTENUM | PERMANENT | READONLY;
 
-		ctor.defineProperty("NaN", ScriptRuntime.NaNobj, attr, cx);
-		ctor.defineProperty("POSITIVE_INFINITY", ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY), attr, cx);
-		ctor.defineProperty("NEGATIVE_INFINITY", ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY), attr, cx);
-		ctor.defineProperty("MAX_VALUE", ScriptRuntime.wrapNumber(Double.MAX_VALUE), attr, cx);
-		ctor.defineProperty("MIN_VALUE", ScriptRuntime.wrapNumber(Double.MIN_VALUE), attr, cx);
-		ctor.defineProperty("MAX_SAFE_INTEGER", ScriptRuntime.wrapNumber(MAX_SAFE_INTEGER), attr, cx);
-		ctor.defineProperty("MIN_SAFE_INTEGER", ScriptRuntime.wrapNumber(MIN_SAFE_INTEGER), attr, cx);
+		ctor.defineProperty(cx, "NaN", ScriptRuntime.NaNobj, attr);
+		ctor.defineProperty(cx, "POSITIVE_INFINITY", ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY), attr);
+		ctor.defineProperty(cx, "NEGATIVE_INFINITY", ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY), attr);
+		ctor.defineProperty(cx, "MAX_VALUE", ScriptRuntime.wrapNumber(Double.MAX_VALUE), attr);
+		ctor.defineProperty(cx, "MIN_VALUE", ScriptRuntime.wrapNumber(Double.MIN_VALUE), attr);
+		ctor.defineProperty(cx, "MAX_SAFE_INTEGER", ScriptRuntime.wrapNumber(MAX_SAFE_INTEGER), attr);
+		ctor.defineProperty(cx, "MIN_SAFE_INTEGER", ScriptRuntime.wrapNumber(MIN_SAFE_INTEGER), attr);
 
 		addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isFinite, "isFinite", 1, cx);
 		addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isNaN, "isNaN", 1, cx);

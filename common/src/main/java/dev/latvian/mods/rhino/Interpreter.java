@@ -62,6 +62,7 @@ public final class Interpreter extends Icode implements Evaluator {
 			}
 		}
 
+		final Context localContext;
 		final InterpretedFunction fnOrScript;
 		final InterpreterData idata;
 		final CallFrame varSource; // defaults to this unless continuation frame
@@ -97,6 +98,7 @@ public final class Interpreter extends Icode implements Evaluator {
 		Object throwable;
 
 		CallFrame(Context cx, Scriptable thisObj, InterpretedFunction fnOrScript, CallFrame parentFrame) {
+			localContext = cx;
 			idata = fnOrScript.idata;
 
 			useActivation = idata.itsNeedsActivation;
@@ -227,16 +229,16 @@ public final class Interpreter extends Icode implements Evaluator {
 				// one. It is required as some objects within fully initialized
 				// global scopes (notably, XMLLibImpl) need to have a top scope
 				// in order to evaluate their attributes.
-				final Context cx = Context.enter();
-				try {
-					if (ScriptRuntime.hasTopCall(cx)) {
-						return equalsInTopScope(otherCallFrame);
-					}
-					final Scriptable top = ScriptableObject.getTopLevelScope(scope);
-					return (Boolean) ScriptRuntime.doTopCall(cx, top, (c, scope, thisObj, args) -> equalsInTopScope(otherCallFrame), top, ScriptRuntime.EMPTY_OBJECTS, isStrictTopFrame());
-				} finally {
-					Context.exit();
+				//final Context cx = Context.enter();
+				//try {
+				if (ScriptRuntime.hasTopCall(localContext)) {
+					return equalsInTopScope(otherCallFrame);
 				}
+				final Scriptable top = ScriptableObject.getTopLevelScope(scope);
+				return (Boolean) ScriptRuntime.doTopCall(localContext, top, (c, scope, thisObj, args) -> equalsInTopScope(otherCallFrame), top, ScriptRuntime.EMPTY_OBJECTS, isStrictTopFrame());
+				//} finally {
+				//	Context.exit();
+				//}
 			}
 			return false;
 		}
@@ -258,7 +260,7 @@ public final class Interpreter extends Icode implements Evaluator {
 		}
 
 		private Boolean equalsInTopScope(CallFrame other) {
-			return EqualObjectGraphs.withThreadLocal(eq -> equals(this, other, eq, Context.getCurrentContext()));
+			return EqualObjectGraphs.withThreadLocal(eq -> equals(this, other, eq, localContext));
 		}
 
 		private boolean isStrictTopFrame() {
@@ -1815,7 +1817,7 @@ public final class Interpreter extends Icode implements Evaluator {
 			}
 			String stringReg = frame.idata.argNames[indexReg];
 			if (frame.scope instanceof ConstProperties cp) {
-				cp.putConst(stringReg, frame.scope, val, cx);
+				cp.putConst(cx, stringReg, frame.scope, val);
 			} else {
 				throw Kit.codeBug();
 			}
@@ -1835,7 +1837,7 @@ public final class Interpreter extends Icode implements Evaluator {
 				val = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 			}
 			String stringReg = frame.idata.argNames[indexReg];
-			frame.scope.put(stringReg, frame.scope, val, cx);
+			frame.scope.put(cx, stringReg, frame.scope, val);
 		}
 		return stackTop;
 	}
@@ -1847,7 +1849,7 @@ public final class Interpreter extends Icode implements Evaluator {
 			sDbl[stackTop] = varDbls[indexReg];
 		} else {
 			String stringReg = frame.idata.argNames[indexReg];
-			stack[stackTop] = frame.scope.get(stringReg, frame.scope, cx);
+			stack[stackTop] = frame.scope.get(cx, stringReg, frame.scope);
 		}
 		return stackTop;
 	}

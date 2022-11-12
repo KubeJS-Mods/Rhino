@@ -40,7 +40,7 @@ public class NativeCallSite extends IdScriptableObject {
 
 	static NativeCallSite make(Scriptable scope, Scriptable ctorObj, Context cx) {
 		NativeCallSite cs = new NativeCallSite();
-		Scriptable proto = (Scriptable) (ctorObj.get("prototype", ctorObj, cx));
+		Scriptable proto = (Scriptable) (ctorObj.get(cx, "prototype", ctorObj));
 		cs.setParentScope(scope);
 		cs.setPrototype(proto);
 		return cs;

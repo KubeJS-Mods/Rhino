@@ -47,8 +47,8 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	}
 
 	@Override
-	public boolean has(String id, Scriptable start, Context cx) {
-		return id.equals("length") || super.has(id, start, cx);
+	public boolean has(Context cx, String id, Scriptable start) {
+		return id.equals("length") || super.has(cx, id, start);
 	}
 
 	@Override
@@ -62,11 +62,11 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	}
 
 	@Override
-	public Object get(String id, Scriptable start, Context cx) {
+	public Object get(Context cx, String id, Scriptable start) {
 		if (id.equals("length")) {
 			return length;
 		}
-		Object result = super.get(id, start, cx);
+		Object result = super.get(cx, id, start);
 		if (result == NOT_FOUND && !ScriptableObject.hasProperty(getPrototype(cx), id, cx)) {
 			throw Context.reportRuntimeError2("msg.java.member.not.found", array.getClass().getName(), id, cx);
 		}
@@ -91,7 +91,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	}
 
 	@Override
-	public void put(String id, Scriptable start, Object value, Context cx) {
+	public void put(Context cx, String id, Scriptable start, Object value) {
 		// Ignore assignments to "length"--it's readonly.
 		if (!id.equals("length")) {
 			throw Context.reportRuntimeError1("msg.java.array.member.not.found", id, cx);
@@ -113,7 +113,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> hint, Context cx) {
+	public Object getDefaultValue(Context cx, Class<?> hint) {
 		if (hint == null || hint == ScriptRuntime.StringClass) {
 			return array.toString();
 		}
@@ -137,7 +137,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	}
 
 	@Override
-	public boolean hasInstance(Scriptable value, Context cx) {
+	public boolean hasInstance(Context cx, Scriptable value) {
 		if (!(value instanceof Wrapper)) {
 			return false;
 		}
