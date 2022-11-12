@@ -53,11 +53,6 @@ class NativeRegExpCtor extends BaseFunction {
 	private static final int Id_DOLLAR_9 = DOLLAR_ID_BASE + 9; // #string=$9#
 	private static final int MAX_INSTANCE_ID = DOLLAR_ID_BASE + 9;
 
-	private static RegExp getImpl() {
-		Context cx = Context.getCurrentContext();
-		return ScriptRuntime.getRegExpProxy(cx);
-	}
-
 	private int multilineAttr = PERMANENT;
 	private int starAttr = PERMANENT;
 	private int inputAttr = PERMANENT;
@@ -95,7 +90,7 @@ class NativeRegExpCtor extends BaseFunction {
 	public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
 		NativeRegExp re = new NativeRegExp();
 		re.compile(cx, scope, args);
-		ScriptRuntime.setBuiltinProtoAndParent(re, scope, TopLevel.Builtins.RegExp);
+		ScriptRuntime.setBuiltinProtoAndParent(cx, scope, re, TopLevel.Builtins.RegExp);
 		return re;
 	}
 
@@ -105,7 +100,7 @@ class NativeRegExpCtor extends BaseFunction {
 	}
 
 	@Override
-	protected int findInstanceIdInfo(String s) {
+	protected int findInstanceIdInfo(String s, Context cx) {
 		int id = switch (s) {
 			case "multiline" -> Id_multiline;
 			case "$*" -> Id_STAR;
@@ -132,7 +127,7 @@ class NativeRegExpCtor extends BaseFunction {
 		};
 
 		if (id == 0) {
-			return super.findInstanceIdInfo(s);
+			return super.findInstanceIdInfo(s, cx);
 		}
 
 		int attr = switch (id) {
@@ -181,15 +176,15 @@ class NativeRegExpCtor extends BaseFunction {
 	}
 
 	@Override
-	protected Object getInstanceIdValue(int id) {
+	protected Object getInstanceIdValue(int id, Context cx) {
 		int shifted = id - super.getMaxInstanceId();
 		if (1 <= shifted && shifted <= MAX_INSTANCE_ID) {
-			RegExp impl = getImpl();
+			RegExp impl = cx.getRegExp();
 			Object stringResult;
 			switch (shifted) {
 				case Id_multiline:
 				case Id_STAR:
-					return ScriptRuntime.wrapBoolean(impl.multiline);
+					return impl.multiline;
 
 				case Id_input:
 				case Id_UNDERSCORE:
@@ -225,21 +220,21 @@ class NativeRegExpCtor extends BaseFunction {
 			}
 			return (stringResult == null) ? "" : stringResult.toString();
 		}
-		return super.getInstanceIdValue(id);
+		return super.getInstanceIdValue(id, cx);
 	}
 
 	@Override
-	protected void setInstanceIdValue(int id, Object value) {
+	protected void setInstanceIdValue(int id, Object value, Context cx) {
 		int shifted = id - super.getMaxInstanceId();
 		switch (shifted) {
 			case Id_multiline:
 			case Id_STAR:
-				getImpl().multiline = ScriptRuntime.toBoolean(value);
+				cx.getRegExp().multiline = ScriptRuntime.toBoolean(cx, value);
 				return;
 
 			case Id_input:
 			case Id_UNDERSCORE:
-				getImpl().input = ScriptRuntime.toString(value);
+				cx.getRegExp().input = ScriptRuntime.toString(cx, value);
 				return;
 
 			case Id_lastMatch:
@@ -257,11 +252,11 @@ class NativeRegExpCtor extends BaseFunction {
 					return;
 				}
 		}
-		super.setInstanceIdValue(id, value);
+		super.setInstanceIdValue(id, value, cx);
 	}
 
 	@Override
-	protected void setInstanceIdAttributes(int id, int attr) {
+	protected void setInstanceIdAttributes(int id, int attr, Context cx) {
 		int shifted = id - super.getMaxInstanceId();
 		switch (shifted) {
 			case Id_multiline:
@@ -294,6 +289,6 @@ class NativeRegExpCtor extends BaseFunction {
 					return;
 				}
 		}
-		super.setInstanceIdAttributes(id, attr);
+		super.setInstanceIdAttributes(id, attr, cx);
 	}
 }

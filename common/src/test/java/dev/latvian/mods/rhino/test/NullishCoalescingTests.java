@@ -1,6 +1,5 @@
 package dev.latvian.mods.rhino.test;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("unused")
@@ -8,7 +7,6 @@ public class NullishCoalescingTests {
 	public static final RhinoTest TEST = new RhinoTest("nullishCoalescing");
 
 	@Test
-	@DisplayName("Both Non-Null")
 	public void bothNonNull() {
 		TEST.test("bothNonNull", """
 				let a = 10
@@ -21,7 +19,6 @@ public class NullishCoalescingTests {
 	}
 
 	@Test
-	@DisplayName("First Null")
 	public void firstNull() {
 		TEST.test("firstNull", """
 				let a = null
@@ -34,7 +31,6 @@ public class NullishCoalescingTests {
 	}
 
 	@Test
-	@DisplayName("First Undefined")
 	public void firstUndefined() {
 		TEST.test("firstUndefined", """
 				let a = undefined
@@ -47,7 +43,6 @@ public class NullishCoalescingTests {
 	}
 
 	@Test
-	@DisplayName("First False")
 	public void firstFalse() {
 		TEST.test("firstFalse", """
 				let a = false
@@ -60,7 +55,6 @@ public class NullishCoalescingTests {
 	}
 
 	@Test
-	@DisplayName("First Zero")
 	public void firstZero() {
 		TEST.test("firstZero", """
 				let a = 0
@@ -73,7 +67,6 @@ public class NullishCoalescingTests {
 	}
 
 	@Test
-	@DisplayName("Second Null")
 	public void secondNull() {
 		TEST.test("secondNull", """
 				let a = 10

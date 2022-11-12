@@ -14,7 +14,7 @@ class SpecialRef extends Ref {
 	static Ref createSpecial(Context cx, Scriptable scope, Object object, String name) {
 		Scriptable target = ScriptRuntime.toObjectOrNull(cx, object, scope);
 		if (target == null) {
-			throw ScriptRuntime.undefReadError(object, name);
+			throw ScriptRuntime.undefReadError(cx, object, name);
 		}
 
 		int type;
@@ -42,8 +42,8 @@ class SpecialRef extends Ref {
 	@Override
 	public Object get(Context cx) {
 		return switch (type) {
-			case SPECIAL_NONE -> ScriptRuntime.getObjectProp(target, name, cx);
-			case SPECIAL_PROTO -> target.getPrototype();
+			case SPECIAL_NONE -> ScriptRuntime.getObjectProp(cx, target, name);
+			case SPECIAL_PROTO -> target.getPrototype(cx);
 			case SPECIAL_PARENT -> target.getParentScope();
 			default -> throw Kit.codeBug();
 		};
@@ -59,7 +59,7 @@ class SpecialRef extends Ref {
 	public Object set(Context cx, Scriptable scope, Object value) {
 		switch (type) {
 			case SPECIAL_NONE:
-				return ScriptRuntime.setObjectProp(target, name, value, cx);
+				return ScriptRuntime.setObjectProp(cx, target, name, value);
 			case SPECIAL_PROTO:
 			case SPECIAL_PARENT: {
 				Scriptable obj = ScriptRuntime.toObjectOrNull(cx, value, scope);
@@ -69,10 +69,10 @@ class SpecialRef extends Ref {
 					Scriptable search = obj;
 					do {
 						if (search == target) {
-							throw Context.reportRuntimeError1("msg.cyclic.value", name);
+							throw Context.reportRuntimeError1("msg.cyclic.value", name, cx);
 						}
 						if (type == SPECIAL_PROTO) {
-							search = search.getPrototype();
+							search = search.getPrototype(cx);
 						} else {
 							search = search.getParentScope();
 						}
@@ -80,10 +80,10 @@ class SpecialRef extends Ref {
 				}
 				if (type == SPECIAL_PROTO) {
 					if (target instanceof ScriptableObject && !((ScriptableObject) target).isExtensible()) {
-						throw ScriptRuntime.typeError0("msg.not.extensible");
+						throw ScriptRuntime.typeError0(cx, "msg.not.extensible");
 					}
 
-					if ((value != null && ScriptRuntime.typeof(value) != MemberType.OBJECT) || ScriptRuntime.typeof(target) != MemberType.OBJECT) {
+					if ((value != null && ScriptRuntime.typeof(cx, value) != MemberType.OBJECT) || ScriptRuntime.typeof(cx, target) != MemberType.OBJECT) {
 						return Undefined.instance;
 					}
 					target.setPrototype(obj);
@@ -100,7 +100,7 @@ class SpecialRef extends Ref {
 	@Override
 	public boolean has(Context cx) {
 		if (type == SPECIAL_NONE) {
-			return ScriptRuntime.hasObjectElem(target, name, cx);
+			return ScriptRuntime.hasObjectElem(cx, target, name);
 		}
 		return true;
 	}
@@ -108,7 +108,7 @@ class SpecialRef extends Ref {
 	@Override
 	public boolean delete(Context cx) {
 		if (type == SPECIAL_NONE) {
-			return ScriptRuntime.deleteObjectElem(target, name, cx);
+			return ScriptRuntime.deleteObjectElem(cx, target, name);
 		}
 		return false;
 	}

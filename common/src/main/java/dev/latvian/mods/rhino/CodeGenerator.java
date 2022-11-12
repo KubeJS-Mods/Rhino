@@ -57,7 +57,7 @@ class CodeGenerator extends Icode {
 	private int fixupTableTop;
 	private int exceptionTableTop;
 
-	public InterpreterData compile(CompilerEnvirons compilerEnv, ScriptNode tree, boolean returnFunction) {
+	public InterpreterData compile(CompilerEnvirons compilerEnv, ScriptNode tree, boolean returnFunction, Context cx) {
 		this.compilerEnv = compilerEnv;
 
 		new NodeTransformer().transform(tree, compilerEnv);
@@ -72,14 +72,14 @@ class CodeGenerator extends Icode {
 		itsData.topLevel = true;
 
 		if (returnFunction) {
-			generateFunctionICode();
+			generateFunctionICode(cx);
 		} else {
-			generateICodeFromTree(scriptOrFn);
+			generateICodeFromTree(scriptOrFn, cx);
 		}
 		return itsData;
 	}
 
-	private void generateFunctionICode() {
+	private void generateFunctionICode(Context cx) {
 		itsInFunctionFlag = true;
 
 		FunctionNode theFunction = (FunctionNode) scriptOrFn;
@@ -102,13 +102,13 @@ class CodeGenerator extends Icode {
 
 		itsData.declaredAsVar = (theFunction.getParent() instanceof VariableInitializer);
 
-		generateICodeFromTree(theFunction.getLastChild());
+		generateICodeFromTree(theFunction.getLastChild(), cx);
 	}
 
-	private void generateICodeFromTree(Node tree) {
-		generateNestedFunctions();
+	private void generateICodeFromTree(Node tree, Context cx) {
+		generateNestedFunctions(cx);
 
-		generateRegExpLiterals();
+		generateRegExpLiterals(cx);
 
 		generateTemplateLiterals();
 
@@ -167,7 +167,7 @@ class CodeGenerator extends Icode {
 		}
 	}
 
-	private void generateNestedFunctions() {
+	private void generateNestedFunctions(Context cx) {
 		int functionCount = scriptOrFn.getFunctionCount();
 		if (functionCount == 0) {
 			return;
@@ -180,7 +180,7 @@ class CodeGenerator extends Icode {
 			gen.compilerEnv = compilerEnv;
 			gen.scriptOrFn = fn;
 			gen.itsData = new InterpreterData(itsData);
-			gen.generateFunctionICode();
+			gen.generateFunctionICode(cx);
 			array[i] = gen.itsData;
 
 			final AstNode fnParent = fn.getParent();
@@ -191,14 +191,13 @@ class CodeGenerator extends Icode {
 		itsData.itsNestedFunctions = array;
 	}
 
-	private void generateRegExpLiterals() {
+	private void generateRegExpLiterals(Context cx) {
 		int N = scriptOrFn.getRegexpCount();
 		if (N == 0) {
 			return;
 		}
 
-		Context cx = Context.getContext();
-		RegExp rep = ScriptRuntime.getRegExpProxy(cx);
+		RegExp rep = cx.getRegExp();
 		Object[] array = new Object[N];
 		for (int i = 0; i != N; i++) {
 			String string = scriptOrFn.getRegexpString(i);

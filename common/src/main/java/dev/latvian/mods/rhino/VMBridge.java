@@ -15,36 +15,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 
 public class VMBridge {
-	private static final ThreadLocal<Object[]> contextLocal = new ThreadLocal<>();
-
-	public static Object getThreadContextHelper() {
-		// To make subsequent batch calls to getContext/setContext faster
-		// associate permanently one element array with contextLocal
-		// so getContext/setContext would need just to read/write the first
-		// array element.
-		// Note that it is necessary to use Object[], not Context[] to allow
-		// garbage collection of Rhino classes. For details see comments
-		// by Attila Szegedi in
-		// https://bugzilla.mozilla.org/show_bug.cgi?id=281067#c5
-
-		Object[] storage = contextLocal.get();
-		if (storage == null) {
-			storage = new Object[1];
-			contextLocal.set(storage);
-		}
-		return storage;
-	}
-
-	public static Context getContext(Object contextHelper) {
-		Object[] storage = (Object[]) contextHelper;
-		return (Context) storage[0];
-	}
-
-	public static void setContext(Object contextHelper, Context cx) {
-		Object[] storage = (Object[]) contextHelper;
-		storage[0] = cx;
-	}
-
 	public static boolean tryToMakeAccessible(Object target, AccessibleObject accessible) {
 		if (accessible.canAccess(target)) {
 			return true;
@@ -58,7 +28,7 @@ public class VMBridge {
 		return accessible.canAccess(target);
 	}
 
-	public static Object getInterfaceProxyHelper(ContextFactory cf, Class<?>[] interfaces) {
+	public static Object getInterfaceProxyHelper(Context cx, Class<?>[] interfaces) {
 		// XXX: How to handle interfaces array withclasses from different
 		// class loaders? Using cf.getApplicationClassLoader() ?
 		ClassLoader loader = interfaces[0].getClassLoader();
@@ -73,7 +43,7 @@ public class VMBridge {
 		return c;
 	}
 
-	public static Object newInterfaceProxy(Object proxyHelper, final ContextFactory cf, final InterfaceAdapter adapter, final Object target, final Scriptable topScope) {
+	public static Object newInterfaceProxy(Object proxyHelper, final InterfaceAdapter adapter, final Object target, final Scriptable topScope, Context cx) {
 		Constructor<?> c = (Constructor<?>) proxyHelper;
 
 		InvocationHandler handler = (proxy, method, args) -> {
@@ -97,13 +67,13 @@ public class VMBridge {
 					return "Proxy[" + target.toString() + "]";
 				}
 			}
-			return adapter.invoke(cf, target, topScope, proxy, method, args);
+			return adapter.invoke(cx, target, topScope, proxy, method, args);
 		};
 		Object proxy;
 		try {
 			proxy = c.newInstance(handler);
 		} catch (InvocationTargetException ex) {
-			throw Context.throwAsScriptRuntimeEx(ex);
+			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		} catch (IllegalAccessException ex) {
 			// Should not happen
 			throw new IllegalStateException(ex);

@@ -23,11 +23,12 @@ public interface Evaluator {
 	 * @param compilerEnv    Compiler environment
 	 * @param tree           parse tree
 	 * @param returnFunction if true, compiling a function
+	 * @param cx
 	 * @return an opaque object that can be passed to either
 	 * createFunctionObject or createScriptObject, depending on the
 	 * value of returnFunction
 	 */
-	Object compile(CompilerEnvirons compilerEnv, ScriptNode tree, boolean returnFunction);
+	Object compile(CompilerEnvirons compilerEnv, ScriptNode tree, boolean returnFunction, Context cx);
 
 	/**
 	 * Create a function object.
@@ -54,7 +55,7 @@ public interface Evaluator {
 	 *
 	 * @param ex an exception thrown during execution
 	 */
-	void captureStackInfo(RhinoException ex);
+	void captureStackInfo(Context cx, RhinoException ex);
 
 	/**
 	 * Get the source position information by examining the stack.

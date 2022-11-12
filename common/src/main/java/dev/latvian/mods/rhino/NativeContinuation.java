@@ -15,7 +15,7 @@ public final class NativeContinuation extends IdScriptableObject implements Func
 
 	public static void init(Context cx, Scriptable scope, boolean sealed) {
 		NativeContinuation obj = new NativeContinuation();
-		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed, cx);
 	}
 
 	public static boolean isContinuationConstructor(IdFunctionObject f) {
@@ -51,7 +51,7 @@ public final class NativeContinuation extends IdScriptableObject implements Func
 
 	@Override
 	public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-		throw Context.reportRuntimeError("Direct call is not supported");
+		throw Context.reportRuntimeError("Direct call is not supported", cx);
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public final class NativeContinuation extends IdScriptableObject implements Func
 	// #string_id_map#
 
 	@Override
-	protected void initPrototypeId(int id) {
+	protected void initPrototypeId(int id, Context cx) {
 		String s;
 		int arity;
 		if (id == Id_constructor) {
@@ -71,7 +71,7 @@ public final class NativeContinuation extends IdScriptableObject implements Func
 		} else {
 			throw new IllegalArgumentException(String.valueOf(id));
 		}
-		initPrototypeMethod(FTAG, id, s, arity);
+		initPrototypeMethod(FTAG, id, s, arity, cx);
 	}
 
 	@Override
@@ -81,7 +81,7 @@ public final class NativeContinuation extends IdScriptableObject implements Func
 		}
 		int id = f.methodId();
 		if (id == Id_constructor) {
-			throw Context.reportRuntimeError("Direct call is not supported");
+			throw Context.reportRuntimeError("Direct call is not supported", cx);
 		}
 		throw new IllegalArgumentException(String.valueOf(id));
 	}

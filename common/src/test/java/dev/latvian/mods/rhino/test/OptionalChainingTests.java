@@ -1,6 +1,5 @@
 package dev.latvian.mods.rhino.test;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -12,7 +11,6 @@ public class OptionalChainingTests {
 	public static final RhinoTest TEST = new RhinoTest("optionalChaining").shareScope();
 
 	@Test
-	@DisplayName("Init")
 	@Order(1)
 	public void init() {
 		TEST.test("init", """
@@ -23,7 +21,6 @@ public class OptionalChainingTests {
 	}
 
 	@Test
-	@DisplayName("Should Error")
 	@Order(2)
 	public void shouldError() {
 		TEST.test("shouldError", """
@@ -38,7 +35,6 @@ public class OptionalChainingTests {
 	}
 
 	@Test
-	@DisplayName("Shouldnt Error")
 	@Order(2)
 	public void shouldntError() {
 		TEST.test("shouldntError", """

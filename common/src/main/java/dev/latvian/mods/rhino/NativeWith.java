@@ -16,18 +16,18 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 	private static final Object FTAG = "With";
 	private static final int Id_constructor = 1;
 
-	static void init(Scriptable scope, boolean sealed) {
+	static void init(Scriptable scope, boolean sealed, Context cx) {
 		NativeWith obj = new NativeWith();
 
 		obj.setParentScope(scope);
-		obj.setPrototype(ScriptableObject.getObjectPrototype(scope));
+		obj.setPrototype(ScriptableObject.getObjectPrototype(scope, cx));
 
 		IdFunctionObject ctor = new IdFunctionObject(obj, FTAG, Id_constructor, "With", 0, scope);
 		ctor.markAsConstructor(obj);
 		if (sealed) {
-			ctor.sealObject();
+			ctor.sealObject(cx);
 		}
-		ctor.exportAsScopeProperty();
+		ctor.exportAsScopeProperty(cx);
 	}
 
 	static boolean isWithFunction(Object functionObj) {
@@ -41,7 +41,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 		ScriptRuntime.checkDeprecated(cx, "With");
 		scope = ScriptableObject.getTopLevelScope(scope);
 		NativeWith thisObj = new NativeWith();
-		thisObj.setPrototype(args.length == 0 ? ScriptableObject.getObjectPrototype(scope) : ScriptRuntime.toObject(cx, scope, args[0]));
+		thisObj.setPrototype(args.length == 0 ? ScriptableObject.getObjectPrototype(scope, cx) : ScriptRuntime.toObject(cx, scope, args[0]));
 		thisObj.setParentScope(scope);
 		return thisObj;
 	}
@@ -63,95 +63,95 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 	}
 
 	@Override
-	public boolean has(String id, Scriptable start) {
-		return prototype.has(id, prototype);
+	public boolean has(Context cx, String id, Scriptable start) {
+		return prototype.has(cx, id, prototype);
 	}
 
 	@Override
-	public boolean has(Symbol key, Scriptable start) {
+	public boolean has(Context cx, Symbol key, Scriptable start) {
 		if (prototype instanceof SymbolScriptable) {
-			return ((SymbolScriptable) prototype).has(key, prototype);
+			return ((SymbolScriptable) prototype).has(cx, key, prototype);
 		}
 		return false;
 	}
 
 	@Override
-	public boolean has(int index, Scriptable start) {
-		return prototype.has(index, prototype);
+	public boolean has(Context cx, int index, Scriptable start) {
+		return prototype.has(cx, index, prototype);
 	}
 
 	@Override
-	public Object get(String id, Scriptable start) {
+	public Object get(Context cx, String id, Scriptable start) {
 		if (start == this) {
 			start = prototype;
 		}
-		return prototype.get(id, start);
+		return prototype.get(cx, id, start);
 	}
 
 	@Override
-	public Object get(Symbol key, Scriptable start) {
+	public Object get(Context cx, Symbol key, Scriptable start) {
 		if (start == this) {
 			start = prototype;
 		}
 		if (prototype instanceof SymbolScriptable) {
-			return ((SymbolScriptable) prototype).get(key, start);
+			return ((SymbolScriptable) prototype).get(cx, key, start);
 		}
 		return Scriptable.NOT_FOUND;
 	}
 
 	@Override
-	public Object get(int index, Scriptable start) {
+	public Object get(Context cx, int index, Scriptable start) {
 		if (start == this) {
 			start = prototype;
 		}
-		return prototype.get(index, start);
+		return prototype.get(cx, index, start);
 	}
 
 	@Override
-	public void put(String id, Scriptable start, Object value) {
+	public void put(Context cx, String id, Scriptable start, Object value) {
 		if (start == this) {
 			start = prototype;
 		}
-		prototype.put(id, start, value);
+		prototype.put(cx, id, start, value);
 	}
 
 	@Override
-	public void put(Symbol symbol, Scriptable start, Object value) {
+	public void put(Context cx, Symbol symbol, Scriptable start, Object value) {
 		if (start == this) {
 			start = prototype;
 		}
 		if (prototype instanceof SymbolScriptable) {
-			((SymbolScriptable) prototype).put(symbol, start, value);
+			((SymbolScriptable) prototype).put(cx, symbol, start, value);
 		}
 	}
 
 	@Override
-	public void put(int index, Scriptable start, Object value) {
+	public void put(Context cx, int index, Scriptable start, Object value) {
 		if (start == this) {
 			start = prototype;
 		}
-		prototype.put(index, start, value);
+		prototype.put(cx, index, start, value);
 	}
 
 	@Override
-	public void delete(String id) {
-		prototype.delete(id);
+	public void delete(Context cx, String id) {
+		prototype.delete(cx, id);
 	}
 
 	@Override
-	public void delete(Symbol key) {
+	public void delete(Context cx, Symbol key) {
 		if (prototype instanceof SymbolScriptable) {
-			((SymbolScriptable) prototype).delete(key);
+			((SymbolScriptable) prototype).delete(cx, key);
 		}
 	}
 
 	@Override
-	public void delete(int index) {
-		prototype.delete(index);
+	public void delete(Context cx, int index) {
+		prototype.delete(cx, index);
 	}
 
 	@Override
-	public Scriptable getPrototype() {
+	public Scriptable getPrototype(Context cx) {
 		return prototype;
 	}
 
@@ -171,18 +171,18 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 	}
 
 	@Override
-	public Object[] getIds() {
-		return prototype.getIds();
+	public Object[] getIds(Context cx) {
+		return prototype.getIds(cx);
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> typeHint) {
-		return prototype.getDefaultValue(typeHint);
+	public Object getDefaultValue(Context cx, Class<?> typeHint) {
+		return prototype.getDefaultValue(cx, typeHint);
 	}
 
 	@Override
-	public boolean hasInstance(Scriptable value) {
-		return prototype.hasInstance(value);
+	public boolean hasInstance(Context cx, Scriptable value) {
+		return prototype.hasInstance(cx, value);
 	}
 
 	/**
@@ -197,7 +197,7 @@ public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall 
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (f.hasTag(FTAG)) {
 			if (f.methodId() == Id_constructor) {
-				throw Context.reportRuntimeError1("msg.cant.call.indirect", "With");
+				throw Context.reportRuntimeError1("msg.cant.call.indirect", "With", cx);
 			}
 		}
 		throw f.unknown();

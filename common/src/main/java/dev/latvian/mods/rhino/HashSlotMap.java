@@ -99,15 +99,14 @@ public class HashSlotMap implements SlotMap {
 	}
 
 	@Override
-	public void remove(Object key, int index) {
+	public void remove(Object key, int index, Context cx) {
 		Object name = key == null ? String.valueOf(index) : key;
 		ScriptableObject.Slot slot = map.get(name);
 		if (slot != null) {
 			// non-configurable
 			if ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0) {
-				Context cx = Context.getContext();
 				if (cx.isStrictMode()) {
-					throw ScriptRuntime.typeError1("msg.delete.property.with.configurable.false", key);
+					throw ScriptRuntime.typeError1(cx, "msg.delete.property.with.configurable.false", key);
 				}
 				return;
 			}

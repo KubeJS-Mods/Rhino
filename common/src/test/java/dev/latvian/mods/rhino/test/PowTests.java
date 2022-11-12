@@ -1,6 +1,5 @@
 package dev.latvian.mods.rhino.test;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("unused")
@@ -8,7 +7,6 @@ public class PowTests {
 	public static final RhinoTest TEST = new RhinoTest("pow");
 
 	@Test
-	@DisplayName("Both Whole")
 	public void bothWhole() {
 		TEST.test("bothWhole", """
 				let a = 10
@@ -21,7 +19,6 @@ public class PowTests {
 	}
 
 	@Test
-	@DisplayName("Fraction Exponent")
 	public void fractionExponent() {
 		TEST.test("fractionExponent", """
 				let a = 0.5
@@ -34,7 +31,6 @@ public class PowTests {
 	}
 
 	@Test
-	@DisplayName("Fraction Base")
 	public void fractionBase() {
 		TEST.test("fractionBase", """
 				let a = 2.5
@@ -47,7 +43,6 @@ public class PowTests {
 	}
 
 	@Test
-	@DisplayName("Zero Exponent")
 	public void zeroExponent() {
 		TEST.test("zeroExponent", """
 				let a = 100
@@ -60,7 +55,6 @@ public class PowTests {
 	}
 
 	@Test
-	@DisplayName("Negative Exponent")
 	public void negativeExponent() {
 		TEST.test("negativeExponent", """
 				let a = 400

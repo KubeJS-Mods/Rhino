@@ -1,6 +1,5 @@
 package dev.latvian.mods.rhino.test;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -12,7 +11,6 @@ public class MiscTests {
 	public static final RhinoTest TEST = new RhinoTest("misc").shareScope();
 
 	@Test
-	@DisplayName("Init")
 	@Order(1)
 	public void init() {
 		TEST.test("init", """
@@ -33,9 +31,8 @@ public class MiscTests {
 	}
 
 	@Test
-	@DisplayName("Test Array")
-	public void testArray() {
-		TEST.test("testArray", """
+	public void array() {
+		TEST.test("array", """
 				for (let x of console.testArray) {
 					console.info(x)
 				}
@@ -47,7 +44,6 @@ public class MiscTests {
 	}
 
 	@Test
-	@DisplayName("Enums")
 	public void enums() {
 		TEST.test("enums", """
 				console.theme = 'Dark'
@@ -59,7 +55,6 @@ public class MiscTests {
 	}
 
 	@Test
-	@DisplayName("Array Length")
 	@Order(2)
 	public void arrayLength() {
 		TEST.test("arrayLength", """
@@ -76,7 +71,6 @@ public class MiscTests {
 	}
 
 	@Test
-	@DisplayName("Pop, Unshift, Map")
 	@Order(3)
 	public void popUnshiftMap() {
 		TEST.test("popUnshiftMap", """
@@ -91,7 +85,6 @@ public class MiscTests {
 	}
 
 	@Test
-	@DisplayName("Keys, Values, Entries")
 	@Order(4)
 	public void keysValuesEntries() {
 		TEST.test("keysValuesEntries", """
@@ -106,7 +99,6 @@ public class MiscTests {
 	}
 
 	@Test
-	@DisplayName("Deconstruction")
 	@Order(4)
 	public void deconstruction() {
 		TEST.test("deconstruction", """
@@ -117,6 +109,20 @@ public class MiscTests {
 				a : -39
 				b : 2
 				c : 3439438
+				""");
+	}
+
+	@Test
+	@Order(4)
+	public void typeWrappers() {
+		TEST.test("typeWrappers", """
+				console.printMaterial('wood')
+				console.printMaterial('stone')
+				console.printMaterial('wood')
+				""", """
+				wood#0037c6ad
+				stone#068af865
+				wood#0037c6ad
 				""");
 	}
 }

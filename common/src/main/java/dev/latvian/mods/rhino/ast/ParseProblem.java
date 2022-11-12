@@ -16,6 +16,7 @@ public class ParseProblem {
 	private String sourceName;
 	private int offset;
 	private int length;
+
 	/**
 	 * Constructs a new ParseProblem.
 	 */

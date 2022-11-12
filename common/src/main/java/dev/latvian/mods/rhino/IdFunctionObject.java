@@ -11,8 +11,8 @@ package dev.latvian.mods.rhino;
 import java.util.Objects;
 
 public class IdFunctionObject extends BaseFunction {
-	static boolean equalObjectGraphs(IdFunctionObject f1, IdFunctionObject f2, EqualObjectGraphs eq) {
-		return f1.methodId == f2.methodId && f1.hasTag(f2.tag) && eq.equalGraphs(f1.idcall, f2.idcall);
+	static boolean equalObjectGraphs(Context cx, IdFunctionObject f1, IdFunctionObject f2, EqualObjectGraphs eq) {
+		return f1.methodId == f2.methodId && f1.hasTag(f2.tag) && eq.equalGraphs(cx, f1.idcall, f2.idcall);
 	}
 
 	private final IdFunctionCall idcall;
@@ -78,21 +78,21 @@ public class IdFunctionObject extends BaseFunction {
 		setImmunePrototypeProperty(prototypeProperty);
 	}
 
-	public final void addAsProperty(Scriptable target) {
-		defineProperty(target, functionName, this, DONTENUM);
+	public final void addAsProperty(Scriptable target, Context cx) {
+		defineProperty(target, functionName, this, DONTENUM, cx);
 	}
 
-	public void exportAsScopeProperty() {
-		addAsProperty(getParentScope());
+	public void exportAsScopeProperty(Context cx) {
+		addAsProperty(getParentScope(), cx);
 	}
 
 	@Override
-	public Scriptable getPrototype() {
+	public Scriptable getPrototype(Context cx) {
 		// Lazy initialization of prototype: for native functions this
 		// may not be called at all
-		Scriptable proto = super.getPrototype();
+		Scriptable proto = super.getPrototype(cx);
 		if (proto == null) {
-			proto = getFunctionPrototype(getParentScope());
+			proto = getFunctionPrototype(getParentScope(), cx);
 			setPrototype(proto);
 		}
 		return proto;
@@ -112,7 +112,7 @@ public class IdFunctionObject extends BaseFunction {
 		// to satisfy ECMAScript standard (see bugzilla 202019).
 		// To follow current (2003-05-01) SpiderMonkey behavior, change it to:
 		// return super.createObject(cx, scope);
-		throw ScriptRuntime.typeError1("msg.not.ctor", functionName);
+		throw ScriptRuntime.typeError1(cx, "msg.not.ctor", functionName);
 	}
 
 	@Override

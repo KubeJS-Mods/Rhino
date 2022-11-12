@@ -33,13 +33,13 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
 		this.cx = cx;
 		this.scope = scope;
 		// This will throw if "next" is not a function or undefined
-		next = ScriptRuntime.getPropFunctionAndThis(target, ES6Iterator.NEXT_METHOD, cx, scope);
+		next = ScriptRuntime.getPropFunctionAndThis(cx, scope, target, ES6Iterator.NEXT_METHOD);
 		iterator = ScriptRuntime.lastStoredScriptable(cx);
-		Object retObj = ScriptRuntime.getObjectPropNoWarn(target, ES6Iterator.RETURN_PROPERTY, cx, scope);
+		Object retObj = ScriptRuntime.getObjectPropNoWarn(cx, scope, target, ES6Iterator.RETURN_PROPERTY);
 		// We only care about "return" if it is not null or undefined
 		if ((retObj != null) && !Undefined.isUndefined(retObj)) {
 			if (!(retObj instanceof Callable)) {
-				throw ScriptRuntime.notFunctionError(target, retObj, ES6Iterator.RETURN_PROPERTY);
+				throw ScriptRuntime.notFunctionError(cx, target, retObj, ES6Iterator.RETURN_PROPERTY);
 			}
 			returnFunc = (Callable) retObj;
 		} else {
@@ -71,16 +71,16 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
 			Object val = next.call(cx, scope, iterator, ScriptRuntime.EMPTY_OBJECTS);
 			// This will throw if "val" is not an object. 
 			// "getObjectPropNoWarn" won't, so do this as follows.
-			Object doneval = ScriptableObject.getProperty(ScriptableObject.ensureScriptable(val), ES6Iterator.DONE_PROPERTY);
+			Object doneval = ScriptableObject.getProperty(ScriptableObject.ensureScriptable(val, cx), ES6Iterator.DONE_PROPERTY, cx);
 			if (doneval == Scriptable.NOT_FOUND) {
 				doneval = Undefined.instance;
 			}
 			// It's OK if done is undefined.
-			if (ScriptRuntime.toBoolean(doneval)) {
+			if (ScriptRuntime.toBoolean(cx, doneval)) {
 				isDone = true;
 				return false;
 			}
-			nextVal = ScriptRuntime.getObjectPropNoWarn(val, ES6Iterator.VALUE_PROPERTY, cx, scope);
+			nextVal = ScriptRuntime.getObjectPropNoWarn(cx, scope, val, ES6Iterator.VALUE_PROPERTY);
 			return true;
 		}
 

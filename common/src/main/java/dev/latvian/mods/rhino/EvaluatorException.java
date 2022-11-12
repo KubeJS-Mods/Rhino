@@ -16,8 +16,8 @@ public class EvaluatorException extends RhinoException {
 	@Serial
 	private static final long serialVersionUID = -8743165779676009808L;
 
-	public EvaluatorException(String detail) {
-		super(detail);
+	public EvaluatorException(Context cx, String detail) {
+		super(cx, detail);
 	}
 
 	/**
@@ -30,8 +30,8 @@ public class EvaluatorException extends RhinoException {
 	 * @param sourceName the name of the source reponsible for the error
 	 * @param lineNumber the line number of the source
 	 */
-	public EvaluatorException(String detail, String sourceName, int lineNumber) {
-		this(detail, sourceName, lineNumber, null, 0);
+	public EvaluatorException(Context cx, String detail, String sourceName, int lineNumber) {
+		this(cx, detail, sourceName, lineNumber, null, 0);
 	}
 
 	/**
@@ -48,8 +48,8 @@ public class EvaluatorException extends RhinoException {
 	 * @param lineSource   the source of the line containing the error (may be
 	 *                     null if unknown)
 	 */
-	public EvaluatorException(String detail, String sourceName, int lineNumber, String lineSource, int columnNumber) {
-		super(detail);
+	public EvaluatorException(Context cx, String detail, String sourceName, int lineNumber, String lineSource, int columnNumber) {
+		super(cx, detail);
 		recordErrorOrigin(sourceName, lineNumber, lineSource, columnNumber);
 	}
 }

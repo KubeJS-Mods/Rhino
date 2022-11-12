@@ -276,7 +276,7 @@ public class EmbeddedSlotMap implements SlotMap {
 	}
 
 	@Override
-	public void remove(Object key, int index) {
+	public void remove(Object key, int index, Context cx) {
 		int indexOrHash = (key != null ? key.hashCode() : index);
 
 		if (count != 0) {
@@ -293,9 +293,8 @@ public class EmbeddedSlotMap implements SlotMap {
 			if (slot != null) {
 				// non-configurable
 				if ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0) {
-					Context cx = Context.getContext();
 					if (cx.isStrictMode()) {
-						throw ScriptRuntime.typeError1("msg.delete.property.with.configurable.false", key);
+						throw ScriptRuntime.typeError1(cx, "msg.delete.property.with.configurable.false", key);
 					}
 					return;
 				}

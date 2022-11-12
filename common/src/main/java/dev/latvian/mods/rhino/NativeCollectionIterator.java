@@ -4,8 +4,8 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public class NativeCollectionIterator extends ES6Iterator {
-	static void init(ScriptableObject scope, String tag, boolean sealed) {
-		init(scope, sealed, new NativeCollectionIterator(tag), tag);
+	static void init(ScriptableObject scope, String tag, boolean sealed, Context cx) {
+		init(scope, sealed, new NativeCollectionIterator(tag), tag, cx);
 	}
 
 	private final String className;
@@ -18,8 +18,8 @@ public class NativeCollectionIterator extends ES6Iterator {
 		this.type = Type.BOTH;
 	}
 
-	public NativeCollectionIterator(Scriptable scope, String className, Type type, Iterator<Hashtable.Entry> iterator) {
-		super(scope, className);
+	public NativeCollectionIterator(Scriptable scope, String className, Type type, Iterator<Hashtable.Entry> iterator, Context cx) {
+		super(scope, className, cx);
 		this.className = className;
 		this.iterator = iterator;
 		this.type = type;

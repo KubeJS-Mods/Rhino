@@ -28,21 +28,21 @@ class NativeScript extends BaseFunction {
 	private static final int Id_exec = 4;
 	private static final int MAX_PROTOTYPE_ID = 4;
 
-	static void init(Scriptable scope, boolean sealed) {
+	static void init(Scriptable scope, boolean sealed, Context cx) {
 		NativeScript obj = new NativeScript(null);
-		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed, cx);
 	}
 
-	private static NativeScript realThis(Scriptable thisObj, IdFunctionObject f) {
+	private static NativeScript realThis(Scriptable thisObj, IdFunctionObject f, Context cx) {
 		if (!(thisObj instanceof NativeScript)) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 		return (NativeScript) thisObj;
 	}
 
 	private static Script compile(Context cx, String source) {
 		int[] linep = {0};
-		String filename = Context.getSourcePositionFromStack(linep);
+		String filename = Context.getSourcePositionFromStack(cx, linep);
 		if (filename == null) {
 			filename = "<Script object>";
 			linep[0] = 1;
@@ -78,7 +78,7 @@ class NativeScript extends BaseFunction {
 
 	@Override
 	public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-		throw Context.reportRuntimeError0("msg.script.is.not.constructor");
+		throw Context.reportRuntimeError0("msg.script.is.not.constructor", cx);
 	}
 
 	@Override
@@ -92,7 +92,7 @@ class NativeScript extends BaseFunction {
 	}
 
 	@Override
-	protected void initPrototypeId(int id) {
+	protected void initPrototypeId(int id, Context cx) {
 		String s;
 		int arity;
 		switch (id) {
@@ -114,7 +114,7 @@ class NativeScript extends BaseFunction {
 			}
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
-		initPrototypeMethod(SCRIPT_TAG, id, s, arity);
+		initPrototypeMethod(SCRIPT_TAG, id, s, arity, cx);
 	}
 
 	@Override
@@ -125,21 +125,21 @@ class NativeScript extends BaseFunction {
 		int id = f.methodId();
 		switch (id) {
 			case Id_constructor -> {
-				String source = (args.length == 0) ? "" : ScriptRuntime.toString(args[0]);
+				String source = (args.length == 0) ? "" : ScriptRuntime.toString(cx, args[0]);
 				Script script = compile(cx, source);
 				NativeScript nscript = new NativeScript(script);
-				ScriptRuntime.setObjectProtoAndParent(nscript, scope);
+				ScriptRuntime.setObjectProtoAndParent(cx, scope, nscript);
 				return nscript;
 			}
 			case Id_toString -> {
 				return "not_supported";
 			}
 			case Id_exec -> {
-				throw Context.reportRuntimeError1("msg.cant.call.indirect", "exec");
+				throw Context.reportRuntimeError1("msg.cant.call.indirect", "exec", cx);
 			}
 			case Id_compile -> {
-				NativeScript real = realThis(thisObj, f);
-				String source = ScriptRuntime.toString(args, 0);
+				NativeScript real = realThis(thisObj, f, cx);
+				String source = ScriptRuntime.toString(cx, args, 0);
 				real.script = compile(cx, source);
 				return real;
 			}

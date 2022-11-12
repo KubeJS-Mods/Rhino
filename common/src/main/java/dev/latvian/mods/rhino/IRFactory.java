@@ -365,7 +365,7 @@ public final class IRFactory extends Parser {
 		throw Kit.codeBug();
 	}
 
-	private static Node createBinary(int nodeType, Node left, Node right) {
+	private static Node createBinary(int nodeType, Node left, Node right, Context cx) {
 		switch (nodeType) {
 
 			case Token.ADD:
@@ -375,7 +375,7 @@ public final class IRFactory extends Parser {
 					if (right.type == Token.STRING) {
 						s2 = right.getString();
 					} else if (right.type == Token.NUMBER) {
-						s2 = ScriptRuntime.numberToString(right.getDouble(), 10);
+						s2 = ScriptRuntime.numberToString(cx, right.getDouble(), 10);
 					} else {
 						break;
 					}
@@ -388,7 +388,7 @@ public final class IRFactory extends Parser {
 						return left;
 					} else if (right.type == Token.STRING) {
 						String s1, s2;
-						s1 = ScriptRuntime.numberToString(left.getDouble(), 10);
+						s1 = ScriptRuntime.numberToString(cx, left.getDouble(), 10);
 						s2 = right.getString();
 						right.setString(s1.concat(s2));
 						return right;
@@ -544,16 +544,16 @@ public final class IRFactory extends Parser {
 		return 0;
 	}
 
-	public IRFactory() {
-		super();
+	public IRFactory(Context cx) {
+		super(cx);
 	}
 
-	public IRFactory(CompilerEnvirons env) {
-		this(env, env.getErrorReporter());
+	public IRFactory(Context cx, CompilerEnvirons env) {
+		this(cx, env, env.getErrorReporter());
 	}
 
-	public IRFactory(CompilerEnvirons env, ErrorReporter errorReporter) {
-		super(env, errorReporter);
+	public IRFactory(Context cx, CompilerEnvirons env, ErrorReporter errorReporter) {
+		super(cx, env, errorReporter);
 	}
 
 	/**
@@ -686,7 +686,7 @@ public final class IRFactory extends Parser {
 				// destructuring assignment
 				name = currentScriptOrFn.getNextTempName();
 				defineSymbol(Token.LP, name);
-				expr = createBinary(Token.COMMA, createAssignment(Token.ASSIGN, iter, createName(name)), expr);
+				expr = createBinary(Token.COMMA, createAssignment(Token.ASSIGN, iter, createName(name)), expr, cx);
 			}
 			Node init = createName(name);
 			// Define as a let since we want the scope of the variable to
@@ -957,7 +957,7 @@ public final class IRFactory extends Parser {
 			} else {
 				name = currentScriptOrFn.getNextTempName();
 				defineSymbol(Token.LP, name);
-				expr = createBinary(Token.COMMA, createAssignment(Token.ASSIGN, iter, createName(name)), expr);
+				expr = createBinary(Token.COMMA, createAssignment(Token.ASSIGN, iter, createName(name)), expr, cx);
 			}
 			Node init = createName(name);
 			// Define as a let since we want the scope of the variable to
@@ -1009,7 +1009,7 @@ public final class IRFactory extends Parser {
 	private Node transformInfix(InfixExpression node) {
 		Node left = transform(node.getLeft());
 		Node right = transform(node.getRight());
-		return createBinary(node.getType(), left, right);
+		return createBinary(node.getType(), left, right, cx);
 	}
 
 	private Node transformLabeledStatement(LabeledStatement ls) {
@@ -1094,7 +1094,7 @@ public final class IRFactory extends Parser {
 			key = ScriptRuntime.getIndexObject(s);
 		} else if (id instanceof NumberLiteral) {
 			double n = ((NumberLiteral) id).getNumber();
-			key = ScriptRuntime.getIndexObject(n);
+			key = ScriptRuntime.getIndexObject(cx, n);
 		} else {
 			throw Kit.codeBug();
 		}
@@ -1123,13 +1123,13 @@ public final class IRFactory extends Parser {
 		Node pn = Node.newString("");
 		for (AstNode elem : elems) {
 			if (elem.getType() != Token.TEMPLATE_CHARS) {
-				pn = createBinary(Token.ADD, pn, transform(elem));
+				pn = createBinary(Token.ADD, pn, transform(elem), cx);
 			} else {
 				TemplateCharacters chars = (TemplateCharacters) elem;
 				// skip empty parts, e.g. `ε${expr}ε` where ε denotes the empty string
 				String value = chars.getValue();
 				if (value.length() > 0) {
-					pn = createBinary(Token.ADD, pn, Node.newString(value));
+					pn = createBinary(Token.ADD, pn, Node.newString(value), cx);
 				}
 			}
 		}

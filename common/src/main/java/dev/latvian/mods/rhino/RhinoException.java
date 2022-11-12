@@ -42,18 +42,18 @@ public abstract class RhinoException extends RuntimeException {
 	private String lineSource;
 	private int columnNumber;
 
-	RhinoException() {
+	RhinoException(Context cx) {
 		Evaluator e = Context.createInterpreter();
 		if (e != null) {
-			e.captureStackInfo(this);
+			e.captureStackInfo(cx, this);
 		}
 	}
 
-	RhinoException(String details) {
+	RhinoException(Context cx, String details) {
 		super(details);
 		Evaluator e = Context.createInterpreter();
 		if (e != null) {
-			e.captureStackInfo(this);
+			e.captureStackInfo(cx, this);
 		}
 	}
 

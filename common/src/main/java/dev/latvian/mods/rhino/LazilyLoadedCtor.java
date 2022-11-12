@@ -31,11 +31,11 @@ public final class LazilyLoadedCtor {
 	private Object initializedValue;
 	private int state;
 
-	public LazilyLoadedCtor(ScriptableObject scope, String propertyName, String className, boolean sealed) {
-		this(scope, propertyName, className, sealed, false);
+	public LazilyLoadedCtor(ScriptableObject scope, String propertyName, String className, boolean sealed, Context cx) {
+		this(scope, propertyName, className, sealed, false, cx);
 	}
 
-	LazilyLoadedCtor(ScriptableObject scope, String propertyName, String className, boolean sealed, boolean privileged) {
+	LazilyLoadedCtor(ScriptableObject scope, String propertyName, String className, boolean sealed, boolean privileged, Context cx) {
 
 		this.scope = scope;
 		this.propertyName = propertyName;
@@ -44,10 +44,10 @@ public final class LazilyLoadedCtor {
 		this.privileged = privileged;
 		this.state = STATE_BEFORE_INIT;
 
-		scope.addLazilyInitializedValue(propertyName, 0, this, ScriptableObject.DONTENUM);
+		scope.addLazilyInitializedValue(cx, propertyName, 0, this, ScriptableObject.DONTENUM);
 	}
 
-	void init() {
+	void init(Context cx) {
 		synchronized (this) {
 			if (state == STATE_INITIALIZING) {
 				throw new IllegalStateException("Recursive initialization for " + propertyName);
@@ -58,7 +58,7 @@ public final class LazilyLoadedCtor {
 				// buildValue throws.
 				Object value = Scriptable.NOT_FOUND;
 				try {
-					value = buildValue();
+					value = buildValue(cx);
 				} finally {
 					initializedValue = value;
 					state = STATE_WITH_VALUE;
@@ -74,24 +74,24 @@ public final class LazilyLoadedCtor {
 		return initializedValue;
 	}
 
-	private Object buildValue() {
+	private Object buildValue(Context cx) {
 		//if (privileged) {
 		//	return AccessController.doPrivileged((PrivilegedAction<Object>) () -> buildValue0());
 		//}
-		return buildValue0();
+		return buildValue0(cx);
 	}
 
-	private Object buildValue0() {
+	private Object buildValue0(Context cx) {
 		Class<? extends Scriptable> cl = cast(Kit.classOrNull(className));
 		if (cl != null) {
 			try {
-				Object value = ScriptableObject.buildClassCtor(scope, cl, sealed, false);
+				Object value = ScriptableObject.buildClassCtor(scope, cl, sealed, false, cx);
 				if (value != null) {
 					return value;
 				}
 				// cl has own static initializer which is expected
 				// to set the property on its own.
-				value = scope.get(propertyName, scope);
+				value = scope.get(cx, propertyName, scope);
 				if (value != Scriptable.NOT_FOUND) {
 					return value;
 				}

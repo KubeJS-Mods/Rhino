@@ -125,31 +125,27 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		proto.re = compileRE(cx, "", null, false);
 		proto.activatePrototypeMap(MAX_PROTOTYPE_ID);
 		proto.setParentScope(scope);
-		proto.setPrototype(getObjectPrototype(scope));
+		proto.setPrototype(getObjectPrototype(scope, cx));
 
 		NativeRegExpCtor ctor = new NativeRegExpCtor();
 		// Bug #324006: ECMA-262 15.10.6.1 says "The initial value of
 		// RegExp.prototype.constructor is the builtin RegExp constructor."
-		proto.defineProperty("constructor", ctor, ScriptableObject.DONTENUM);
+		proto.defineProperty(cx, "constructor", ctor, ScriptableObject.DONTENUM);
 
-		ScriptRuntime.setFunctionProtoAndParent(ctor, scope);
+		ScriptRuntime.setFunctionProtoAndParent(cx, scope, ctor);
 
 		ctor.setImmunePrototypeProperty(proto);
 
 		if (sealed) {
-			proto.sealObject();
-			ctor.sealObject();
+			proto.sealObject(cx);
+			ctor.sealObject(cx);
 		}
 
-		defineProperty(scope, "RegExp", ctor, ScriptableObject.DONTENUM);
+		defineProperty(scope, "RegExp", ctor, ScriptableObject.DONTENUM, cx);
 	}
 
-	private static RegExp getImpl(Context cx) {
-		return ScriptRuntime.getRegExpProxy(cx);
-	}
-
-	private static String escapeRegExp(Object src) {
-		String s = ScriptRuntime.toString(src);
+	private static String escapeRegExp(Context cx, Object src) {
+		String s = ScriptRuntime.toString(cx, src);
 		// Escape any naked slashes in regexp source, see bug #510265
 		StringBuilder sb = null; // instantiated only if necessary
 		int start = 0;
@@ -187,10 +183,10 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 				} else if (c == 'm') {
 					f = JSREG_MULTILINE;
 				} else {
-					reportError("msg.invalid.re.flag", String.valueOf(c));
+					reportError("msg.invalid.re.flag", String.valueOf(c), cx);
 				}
 				if ((flags & f) != 0) {
-					reportError("msg.invalid.re.flag", String.valueOf(c));
+					reportError("msg.invalid.re.flag", String.valueOf(c), cx);
 				}
 				flags |= f;
 			}
@@ -208,7 +204,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			state.result.flatIndex = 0;
 			state.progLength += 5;
 		} else {
-			if (!parseDisjunction(state)) {
+			if (!parseDisjunction(state, cx)) {
 				return null;
 			}
 			// Need to reparse if pattern contains invalid backreferences:
@@ -217,7 +213,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			if (state.maxBackReference > state.parenCount) {
 				state = new CompilerState(cx, regexp.source, length, flags);
 				state.backReferenceLimit = state.parenCount;
-				if (!parseDisjunction(state)) {
+				if (!parseDisjunction(state, cx)) {
 					return null;
 				}
 			}
@@ -228,7 +224,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			regexp.classList = new RECharSet[state.classCount];
 			regexp.classCount = state.classCount;
 		}
-		int endPC = emitREBytecode(state, regexp, 0, state.result);
+		int endPC = emitREBytecode(state, regexp, 0, state.result, cx);
 		regexp.program[endPC++] = REOP_END;
 
 		if (debug) {
@@ -399,8 +395,8 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	 *  regexp:     altern                  A regular expression is one or more
 	 *              altern '|' regexp       alternatives separated by vertical bar.
 	 */
-	private static boolean parseDisjunction(CompilerState state) {
-		if (!parseAlternative(state)) {
+	private static boolean parseDisjunction(CompilerState state, Context cx) {
+		if (!parseAlternative(state, cx)) {
 			return false;
 		}
 		char[] source = state.cpbegin;
@@ -410,7 +406,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			++state.cp;
 			result = new RENode(REOP_ALT);
 			result.kid = state.result;
-			if (!parseDisjunction(state)) {
+			if (!parseDisjunction(state, cx)) {
 				return false;
 			}
 			result.kid2 = state.result;
@@ -452,7 +448,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	 *  altern:     item                    An alternative is one or more items,
 	 *              item altern             concatenated together.
 	 */
-	private static boolean parseAlternative(CompilerState state) {
+	private static boolean parseAlternative(CompilerState state, Context cx) {
 		RENode headTerm = null;
 		RENode tailTerm = null;
 		char[] source = state.cpbegin;
@@ -465,7 +461,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 				}
 				return true;
 			}
-			if (!parseTerm(state)) {
+			if (!parseTerm(state, cx)) {
 				return false;
 			}
 			if (headTerm == null) {
@@ -481,7 +477,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	}
 
 	/* calculate the total size of the bitmap required for a class expression */
-	private static boolean calculateBitmapSize(CompilerState state, RENode target, char[] src, int index, int end) {
+	private static boolean calculateBitmapSize(CompilerState state, RENode target, char[] src, int index, int end, Context cx) {
 		char rangeStart = 0;
 		char c;
 		int n;
@@ -610,7 +606,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			}
 			if (inRange) {
 				if (rangeStart > localMax) {
-					reportError("msg.bad.range", "");
+					reportError("msg.bad.range", "", cx);
 					return false;
 				}
 				inRange = false;
@@ -645,7 +641,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		state.progLength += 3;
 	}
 
-	private static int getDecimalValue(char c, CompilerState state, int maxValue, String overflowMessageId) {
+	private static int getDecimalValue(char c, CompilerState state, int maxValue, String overflowMessageId, Context cx) {
 		boolean overflow = false;
 		int start = state.cp;
 		char[] src = state.cpbegin;
@@ -666,12 +662,12 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			}
 		}
 		if (overflow) {
-			reportError(overflowMessageId, String.valueOf(src, start, state.cp - start));
+			reportError(overflowMessageId, String.valueOf(src, start, state.cp - start), cx);
 		}
 		return value;
 	}
 
-	private static boolean parseTerm(CompilerState state) {
+	private static boolean parseTerm(CompilerState state, Context cx) {
 		char[] src = state.cpbegin;
 		char c = src[state.cp++];
 		int nDigits = 2;
@@ -739,7 +735,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 						case '8':
 						case '9':
 							termStart = state.cp - 1;
-							num = getDecimalValue(c, state, 0xFFFF, "msg.overlarge.backref");
+							num = getDecimalValue(c, state, 0xFFFF, "msg.overlarge.backref", cx);
 							/*
 							 * n > count of parentheses, then treat as octal instead.
 							 * Also see note above concerning 'web reality'
@@ -867,7 +863,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 					break;
 				}
 				/* a trailing '\' is an error */
-				reportError("msg.trail.backslash", "");
+				reportError("msg.trail.backslash", "", cx);
 				return false;
 			}
 			case '(' -> {
@@ -891,11 +887,11 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 					result.parenIndex = state.parenCount++;
 				}
 				++state.parenNesting;
-				if (!parseDisjunction(state)) {
+				if (!parseDisjunction(state, cx)) {
 					return false;
 				}
 				if (state.cp == state.cpend || src[state.cp] != ')') {
-					reportError("msg.unterm.paren", "");
+					reportError("msg.unterm.paren", "", cx);
 					return false;
 				}
 				++state.cp;
@@ -907,7 +903,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 				break;
 			}
 			case ')' -> {
-				reportError("msg.re.unmatched.right.paren", "");
+				reportError("msg.re.unmatched.right.paren", "", cx);
 				return false;
 			}
 			case '[' -> {
@@ -916,7 +912,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 				state.result.startIndex = termStart;
 				while (true) {
 					if (state.cp == state.cpend) {
-						reportError("msg.unterm.class", "");
+						reportError("msg.unterm.class", "", cx);
 						return false;
 					}
 					if (src[state.cp] == '\\') {
@@ -934,7 +930,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 				 * Call calculateBitmapSize now as we want any errors it finds
 				 * to be reported during the parse phase, not at execution.
 				 */
-				if (!calculateBitmapSize(state, state.result, src, termStart, state.cp++)) {
+				if (!calculateBitmapSize(state, state.result, src, termStart, state.cp++, cx)) {
 					return false;
 				}
 				state.progLength += 3; /* CLASS, <index> */
@@ -944,7 +940,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 				state.progLength++;
 			}
 			case '*', '+', '?' -> {
-				reportError("msg.bad.quant", String.valueOf(src[state.cp - 1]));
+				reportError("msg.bad.quant", String.valueOf(src[state.cp - 1]), cx);
 				return false;
 			}
 			default -> {
@@ -999,16 +995,16 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 				if (++state.cp < src.length && isDigit(c = src[state.cp])) {
 					++state.cp;
-					min = getDecimalValue(c, state, 0xFFFF, "msg.overlarge.min");
+					min = getDecimalValue(c, state, 0xFFFF, "msg.overlarge.min", cx);
 					if (state.cp < src.length) {
 						c = src[state.cp];
 						if (c == ',' && ++state.cp < src.length) {
 							c = src[state.cp];
 							if (isDigit(c) && ++state.cp < src.length) {
-								max = getDecimalValue(c, state, 0xFFFF, "msg.overlarge.max");
+								max = getDecimalValue(c, state, 0xFFFF, "msg.overlarge.max", cx);
 								c = src[state.cp];
 								if (min > max) {
-									reportError("msg.max.lt.min", String.valueOf(src[state.cp]));
+									reportError("msg.max.lt.min", String.valueOf(src[state.cp]), cx);
 									return false;
 								}
 							}
@@ -1050,23 +1046,23 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		return true;
 	}
 
-	private static void resolveForwardJump(byte[] array, int from, int pc) {
+	private static void resolveForwardJump(byte[] array, int from, int pc, Context cx) {
 		if (from > pc) {
 			throw Kit.codeBug();
 		}
-		addIndex(array, from, pc - from);
+		addIndex(array, from, pc - from, cx);
 	}
 
 	private static int getOffset(byte[] array, int pc) {
 		return getIndex(array, pc);
 	}
 
-	private static int addIndex(byte[] array, int pc, int index) {
+	private static int addIndex(byte[] array, int pc, int index, Context cx) {
 		if (index < 0) {
 			throw Kit.codeBug();
 		}
 		if (index > 0xFFFF) {
-			throw Context.reportRuntimeError("Too complex regexp");
+			throw Context.reportRuntimeError("Too complex regexp", cx);
 		}
 		array[pc] = (byte) (index >> 8);
 		array[pc + 1] = (byte) (index);
@@ -1077,7 +1073,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		return ((array[pc] & 0xFF) << 8) | (array[pc + 1] & 0xFF);
 	}
 
-	private static int emitREBytecode(CompilerState state, RECompiled re, int pc, RENode t) {
+	private static int emitREBytecode(CompilerState state, RECompiled re, int pc, RENode t, Context cx) {
 		RENode nextAlt;
 		int nextAltFixup, nextTermFixup;
 		byte[] program = re.program;
@@ -1092,28 +1088,28 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 				case REOP_ALTPREREQi:
 				case REOP_ALTPREREQ2:
 					boolean ignoreCase = t.op == REOP_ALTPREREQi;
-					addIndex(program, pc, ignoreCase ? upcase(t.chr) : t.chr);
+					addIndex(program, pc, ignoreCase ? upcase(t.chr) : t.chr, cx);
 					pc += INDEX_LEN;
-					addIndex(program, pc, ignoreCase ? upcase((char) t.index) : t.index);
+					addIndex(program, pc, ignoreCase ? upcase((char) t.index) : t.index, cx);
 					pc += INDEX_LEN;
 					// fall through to REOP_ALT
 				case REOP_ALT:
 					nextAlt = t.kid2;
 					nextAltFixup = pc;    /* address of next alternate */
 					pc += INDEX_LEN;
-					pc = emitREBytecode(state, re, pc, t.kid);
+					pc = emitREBytecode(state, re, pc, t.kid, cx);
 					program[pc++] = REOP_JUMP;
 					nextTermFixup = pc;    /* address of following term */
 					pc += INDEX_LEN;
-					resolveForwardJump(program, nextAltFixup, pc);
-					pc = emitREBytecode(state, re, pc, nextAlt);
+					resolveForwardJump(program, nextAltFixup, pc, cx);
+					pc = emitREBytecode(state, re, pc, nextAlt, cx);
 
 					program[pc++] = REOP_JUMP;
 					nextAltFixup = pc;
 					pc += INDEX_LEN;
 
-					resolveForwardJump(program, nextTermFixup, pc);
-					resolveForwardJump(program, nextAltFixup, pc);
+					resolveForwardJump(program, nextTermFixup, pc, cx);
+					resolveForwardJump(program, nextAltFixup, pc, cx);
 					break;
 				case REOP_FLAT:
 					/*
@@ -1131,8 +1127,8 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 						} else {
 							program[pc - 1] = REOP_FLAT;
 						}
-						pc = addIndex(program, pc, t.flatIndex);
-						pc = addIndex(program, pc, t.length);
+						pc = addIndex(program, pc, t.flatIndex, cx);
+						pc = addIndex(program, pc, t.length, cx);
 					} else {
 						if (t.chr < 256) {
 							if ((state.flags & JSREG_FOLD) != 0) {
@@ -1147,32 +1143,32 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 							} else {
 								program[pc - 1] = REOP_UCFLAT1;
 							}
-							pc = addIndex(program, pc, t.chr);
+							pc = addIndex(program, pc, t.chr, cx);
 						}
 					}
 					break;
 				case REOP_LPAREN:
-					pc = addIndex(program, pc, t.parenIndex);
-					pc = emitREBytecode(state, re, pc, t.kid);
+					pc = addIndex(program, pc, t.parenIndex, cx);
+					pc = emitREBytecode(state, re, pc, t.kid, cx);
 					program[pc++] = REOP_RPAREN;
-					pc = addIndex(program, pc, t.parenIndex);
+					pc = addIndex(program, pc, t.parenIndex, cx);
 					break;
 				case REOP_BACKREF:
-					pc = addIndex(program, pc, t.parenIndex);
+					pc = addIndex(program, pc, t.parenIndex, cx);
 					break;
 				case REOP_ASSERT:
 					nextTermFixup = pc;
 					pc += INDEX_LEN;
-					pc = emitREBytecode(state, re, pc, t.kid);
+					pc = emitREBytecode(state, re, pc, t.kid, cx);
 					program[pc++] = REOP_ASSERTTEST;
-					resolveForwardJump(program, nextTermFixup, pc);
+					resolveForwardJump(program, nextTermFixup, pc, cx);
 					break;
 				case REOP_ASSERT_NOT:
 					nextTermFixup = pc;
 					pc += INDEX_LEN;
-					pc = emitREBytecode(state, re, pc, t.kid);
+					pc = emitREBytecode(state, re, pc, t.kid, cx);
 					program[pc++] = REOP_ASSERTNOTTEST;
-					resolveForwardJump(program, nextTermFixup, pc);
+					resolveForwardJump(program, nextTermFixup, pc, cx);
 					break;
 				case REOP_QUANT:
 					if ((t.min == 0) && (t.max == -1)) {
@@ -1185,23 +1181,23 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 						if (!t.greedy) {
 							program[pc - 1] = REOP_MINIMALQUANT;
 						}
-						pc = addIndex(program, pc, t.min);
+						pc = addIndex(program, pc, t.min, cx);
 						// max can be -1 which addIndex does not accept
-						pc = addIndex(program, pc, t.max + 1);
+						pc = addIndex(program, pc, t.max + 1, cx);
 					}
-					pc = addIndex(program, pc, t.parenCount);
-					pc = addIndex(program, pc, t.parenIndex);
+					pc = addIndex(program, pc, t.parenCount, cx);
+					pc = addIndex(program, pc, t.parenIndex, cx);
 					nextTermFixup = pc;
 					pc += INDEX_LEN;
-					pc = emitREBytecode(state, re, pc, t.kid);
+					pc = emitREBytecode(state, re, pc, t.kid, cx);
 					program[pc++] = REOP_ENDCHILD;
-					resolveForwardJump(program, nextTermFixup, pc);
+					resolveForwardJump(program, nextTermFixup, pc, cx);
 					break;
 				case REOP_CLASS:
 					if (!t.sense) {
 						program[pc - 1] = REOP_NCLASS;
 					}
-					pc = addIndex(program, pc, t.index);
+					pc = addIndex(program, pc, t.index, cx);
 					re.classList[t.index] = new RECharSet(t.bmsize, t.startIndex, t.kidlen, t.sense);
 					break;
 				default:
@@ -1318,23 +1314,23 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	}
 
 	/* Add a single character to the RECharSet */
-	private static void addCharacterToCharSet(RECharSet cs, char c) {
+	private static void addCharacterToCharSet(RECharSet cs, char c, Context cx) {
 		int byteIndex = (c / 8);
 		if (c >= cs.length) {
-			throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
+			throw ScriptRuntime.constructError(cx, "SyntaxError", "invalid range in character class");
 		}
 		cs.bits[byteIndex] |= 1 << (c & 0x7);
 	}
 
 	/* Add a character range, c1 to c2 (inclusive) to the RECharSet */
-	private static void addCharacterRangeToCharSet(RECharSet cs, char c1, char c2) {
+	private static void addCharacterRangeToCharSet(RECharSet cs, char c1, char c2, Context cx) {
 		int i;
 
 		int byteIndex1 = (c1 / 8);
 		int byteIndex2 = (c2 / 8);
 
 		if ((c2 >= cs.length) || (c1 > c2)) {
-			throw ScriptRuntime.constructError("SyntaxError", "invalid range in character class");
+			throw ScriptRuntime.constructError(cx, "SyntaxError", "invalid range in character class");
 		}
 
 		c1 &= 0x7;
@@ -1352,16 +1348,16 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	}
 
 	/* Compile the source of the class into a RECharSet */
-	private static void processCharSet(REGlobalData gData, RECharSet charSet) {
+	private static void processCharSet(REGlobalData gData, RECharSet charSet, Context cx) {
 		synchronized (charSet) {
 			if (!charSet.converted) {
-				processCharSetImpl(gData, charSet);
+				processCharSetImpl(gData, charSet, cx);
 				charSet.converted = true;
 			}
 		}
 	}
 
-	private static void processCharSetImpl(REGlobalData gData, RECharSet charSet) {
+	private static void processCharSetImpl(REGlobalData gData, RECharSet charSet, Context cx) {
 		int src = charSet.startIndex;
 		int end = src + charSet.strlength;
 
@@ -1474,60 +1470,60 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 					case 'd':
 						if (inRange) {
-							addCharacterToCharSet(charSet, '-');
+							addCharacterToCharSet(charSet, '-', cx);
 							inRange = false;
 						}
-						addCharacterRangeToCharSet(charSet, '0', '9');
+						addCharacterRangeToCharSet(charSet, '0', '9', cx);
 						continue;   /* don't need range processing */
 					case 'D':
 						if (inRange) {
-							addCharacterToCharSet(charSet, '-');
+							addCharacterToCharSet(charSet, '-', cx);
 							inRange = false;
 						}
-						addCharacterRangeToCharSet(charSet, (char) 0, (char) ('0' - 1));
-						addCharacterRangeToCharSet(charSet, (char) ('9' + 1), (char) (charSet.length - 1));
+						addCharacterRangeToCharSet(charSet, (char) 0, (char) ('0' - 1), cx);
+						addCharacterRangeToCharSet(charSet, (char) ('9' + 1), (char) (charSet.length - 1), cx);
 						continue;
 					case 's':
 						if (inRange) {
-							addCharacterToCharSet(charSet, '-');
+							addCharacterToCharSet(charSet, '-', cx);
 							inRange = false;
 						}
 						for (i = (charSet.length - 1); i >= 0; i--) {
 							if (isREWhiteSpace(i)) {
-								addCharacterToCharSet(charSet, (char) (i));
+								addCharacterToCharSet(charSet, (char) (i), cx);
 							}
 						}
 						continue;
 					case 'S':
 						if (inRange) {
-							addCharacterToCharSet(charSet, '-');
+							addCharacterToCharSet(charSet, '-', cx);
 							inRange = false;
 						}
 						for (i = (charSet.length - 1); i >= 0; i--) {
 							if (!isREWhiteSpace(i)) {
-								addCharacterToCharSet(charSet, (char) (i));
+								addCharacterToCharSet(charSet, (char) (i), cx);
 							}
 						}
 						continue;
 					case 'w':
 						if (inRange) {
-							addCharacterToCharSet(charSet, '-');
+							addCharacterToCharSet(charSet, '-', cx);
 							inRange = false;
 						}
 						for (i = (charSet.length - 1); i >= 0; i--) {
 							if (isWord((char) i)) {
-								addCharacterToCharSet(charSet, (char) (i));
+								addCharacterToCharSet(charSet, (char) (i), cx);
 							}
 						}
 						continue;
 					case 'W':
 						if (inRange) {
-							addCharacterToCharSet(charSet, '-');
+							addCharacterToCharSet(charSet, '-', cx);
 							inRange = false;
 						}
 						for (i = (charSet.length - 1); i >= 0; i--) {
 							if (!isWord((char) i)) {
-								addCharacterToCharSet(charSet, (char) (i));
+								addCharacterToCharSet(charSet, (char) (i), cx);
 							}
 						}
 						continue;
@@ -1542,29 +1538,29 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 				if ((gData.regexp.flags & JSREG_FOLD) != 0) {
 					assert (rangeStart <= thisCh);
 					for (c = rangeStart; c <= thisCh; ) {
-						addCharacterToCharSet(charSet, c);
+						addCharacterToCharSet(charSet, c, cx);
 						char uch = upcase(c);
 						char dch = downcase(c);
 						if (c != uch) {
-							addCharacterToCharSet(charSet, uch);
+							addCharacterToCharSet(charSet, uch, cx);
 						}
 						if (c != dch) {
-							addCharacterToCharSet(charSet, dch);
+							addCharacterToCharSet(charSet, dch, cx);
 						}
 						if (++c == 0) {
 							break; // overflow
 						}
 					}
 				} else {
-					addCharacterRangeToCharSet(charSet, rangeStart, thisCh);
+					addCharacterRangeToCharSet(charSet, rangeStart, thisCh, cx);
 				}
 				inRange = false;
 			} else {
 				if ((gData.regexp.flags & JSREG_FOLD) != 0) {
-					addCharacterToCharSet(charSet, upcase(thisCh));
-					addCharacterToCharSet(charSet, downcase(thisCh));
+					addCharacterToCharSet(charSet, upcase(thisCh), cx);
+					addCharacterToCharSet(charSet, downcase(thisCh), cx);
 				} else {
-					addCharacterToCharSet(charSet, thisCh);
+					addCharacterToCharSet(charSet, thisCh, cx);
 				}
 				if (src < (end - 1)) {
 					if (gData.regexp.source[src] == '-') {
@@ -1581,9 +1577,9 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	 *   Initialize the character set if it this is the first call.
 	 *   Test the bit - if the ^ flag was specified, non-inclusion is a success
 	 */
-	private static boolean classMatcher(REGlobalData gData, RECharSet charSet, char ch) {
+	private static boolean classMatcher(REGlobalData gData, RECharSet charSet, char ch, Context cx) {
 		if (!charSet.converted) {
-			processCharSet(gData, charSet);
+			processCharSet(gData, charSet, cx);
 		}
 
 		int byteIndex = ch >> 3;
@@ -1602,7 +1598,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	 *   get a match, true if we do and update the state of the
 	 *   input and pc if the update flag is true.
 	 */
-	private static int simpleMatch(REGlobalData gData, String input, int op, byte[] program, int pc, int end, boolean updatecp) {
+	private static int simpleMatch(REGlobalData gData, String input, int op, byte[] program, int pc, int end, boolean updatecp, Context cx) {
 		boolean result = false;
 		char matchCh;
 		int parenIndex;
@@ -1745,7 +1741,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 				index = getIndex(program, pc);
 				pc += INDEX_LEN;
 				if (gData.cp != end) {
-					if (classMatcher(gData, gData.regexp.classList[index], input.charAt(gData.cp))) {
+					if (classMatcher(gData, gData.regexp.classList[index], input.charAt(gData.cp), cx)) {
 						gData.cp++;
 						result = true;
 						break;
@@ -1767,7 +1763,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		return -1;
 	}
 
-	private static boolean executeREBytecode(REGlobalData gData, String input, int end) {
+	private static boolean executeREBytecode(REGlobalData gData, String input, int end, Context cx) {
 		int pc = 0;
 		byte[] program = gData.regexp.program;
 		int continuationOp = REOP_END;
@@ -1783,7 +1779,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		if (gData.regexp.anchorCh < 0 && reopIsSimple(op)) {
 			boolean anchor = false;
 			while (gData.cp <= end) {
-				int match = simpleMatch(gData, input, op, program, pc, end, true);
+				int match = simpleMatch(gData, input, op, program, pc, end, true, cx);
 				if (match >= 0) {
 					anchor = true;
 					pc = match;    /* accept skip to next opcode */
@@ -1801,7 +1797,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		for (; ; ) {
 
 			if (reopIsSimple(op)) {
-				int match = simpleMatch(gData, input, op, program, pc, end, true);
+				int match = simpleMatch(gData, input, op, program, pc, end, true, cx);
 				result = match >= 0;
 				if (result) {
 					pc = match;    /* accept skip to next opcode */
@@ -1823,7 +1819,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 						}
 						char c = input.charAt(gData.cp);
 						if (op == REOP_ALTPREREQ2) {
-							if (c != matchCh1 && !classMatcher(gData, gData.regexp.classList[matchCh2], c)) {
+							if (c != matchCh1 && !classMatcher(gData, gData.regexp.classList[matchCh2], c, cx)) {
 								result = false;
 								break;
 							}
@@ -1845,7 +1841,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 						op = program[pc++];
 						int startcp = gData.cp;
 						if (reopIsSimple(op)) {
-							int match = simpleMatch(gData, input, op, program, pc, end, true);
+							int match = simpleMatch(gData, input, op, program, pc, end, true, cx);
 							if (match < 0) {
 								op = program[nextpc++];
 								pc = nextpc;
@@ -1888,7 +1884,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 						int nextpc = pc + getIndex(program, pc); /* start of term after ASSERT */
 						pc += INDEX_LEN;                         /* start of ASSERT child */
 						op = program[pc++];
-						if (reopIsSimple(op) && simpleMatch(gData, input, op, program, pc, end, false) < 0) {
+						if (reopIsSimple(op) && simpleMatch(gData, input, op, program, pc, end, false, cx) < 0) {
 							result = false;
 							break;
 						}
@@ -1901,7 +1897,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 						pc += INDEX_LEN;                         /* start of ASSERT child */
 						op = program[pc++];
 						if (reopIsSimple(op)) {
-							int match = simpleMatch(gData, input, op, program, pc, end, false);
+							int match = simpleMatch(gData, input, op, program, pc, end, false, cx);
 							if (match >= 0 && program[match] == REOP_ASSERTNOTTEST) {
 								result = false;
 								break;
@@ -2049,7 +2045,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 							int startcp = gData.cp;
 							if (reopIsSimple(nextop)) {
 								nextpc++;
-								int match = simpleMatch(gData, input, nextop, program, nextpc, end, true);
+								int match = simpleMatch(gData, input, nextop, program, nextpc, end, true, cx);
 								if (match < 0) {
 									result = (new_min == 0);
 									continuationPc = state.continuationPc;
@@ -2175,7 +2171,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 	}
 
-	private static boolean matchRegExp(REGlobalData gData, RECompiled re, String input, int start, int end, boolean multiline) {
+	private static boolean matchRegExp(REGlobalData gData, RECompiled re, String input, int start, int end, boolean multiline, Context cx) {
 		if (re.parenCount != 0) {
 			gData.parens = new long[re.parenCount];
 		} else {
@@ -2216,7 +2212,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			for (int j = 0; j < re.parenCount; j++) {
 				gData.parens[j] = -1L;
 			}
-			boolean result = executeREBytecode(gData, input, end);
+			boolean result = executeREBytecode(gData, input, end, cx);
 
 			gData.backTrackStackTop = null;
 			gData.stateStackTop = null;
@@ -2232,14 +2228,14 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		return false;
 	}
 
-	private static void reportError(String messageId, String arg) {
+	private static void reportError(String messageId, String arg, Context cx) {
 		String msg = ScriptRuntime.getMessage1(messageId, arg);
-		throw ScriptRuntime.constructError("SyntaxError", msg);
+		throw ScriptRuntime.constructError(cx, "SyntaxError", msg);
 	}
 
-	private static NativeRegExp realThis(Scriptable thisObj, IdFunctionObject f) {
+	private static NativeRegExp realThis(Scriptable thisObj, IdFunctionObject f, Context cx) {
 		if (!(thisObj instanceof NativeRegExp)) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 		return (NativeRegExp) thisObj;
 	}
@@ -2248,10 +2244,10 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	private RECompiled re;
 	private int lastIndexAttr = DONTENUM | PERMANENT;
 
-	NativeRegExp(Scriptable scope, RECompiled regexpCompiled) {
+	NativeRegExp(Scriptable scope, RECompiled regexpCompiled, Context cx) {
 		this.re = regexpCompiled;
-		setLastIndex(ScriptRuntime.zeroObj);
-		ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.RegExp);
+		setLastIndex(ScriptRuntime.zeroObj, cx);
+		ScriptRuntime.setBuiltinProtoAndParent(cx, scope, this, TopLevel.Builtins.RegExp);
 	}
 
 	NativeRegExp() {
@@ -2275,28 +2271,28 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		throw ScriptRuntime.notFunctionError(thisObj);
+		throw ScriptRuntime.notFunctionError(cx, thisObj);
 	}
 
 	@Override
 	public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-		throw ScriptRuntime.notFunctionError(this);
+		throw ScriptRuntime.notFunctionError(cx, this);
 	}
 
 	Scriptable compile(Context cx, Scriptable scope, Object[] args) {
 		if (args.length > 0 && args[0] instanceof NativeRegExp thatObj) {
 			if (args.length > 1 && args[1] != Undefined.instance) {
 				// report error
-				throw ScriptRuntime.typeError0("msg.bad.regexp.compile");
+				throw ScriptRuntime.typeError0(cx, "msg.bad.regexp.compile");
 			}
 			this.re = thatObj.re;
-			setLastIndex(thatObj.lastIndex);
+			setLastIndex(thatObj.lastIndex, cx);
 			return this;
 		}
-		String s = args.length == 0 || args[0] instanceof Undefined ? "" : escapeRegExp(args[0]);
-		String global = args.length > 1 && args[1] != Undefined.instance ? ScriptRuntime.toString(args[1]) : null;
+		String s = args.length == 0 || args[0] instanceof Undefined ? "" : escapeRegExp(cx, args[0]);
+		String global = args.length > 1 && args[1] != Undefined.instance ? ScriptRuntime.toString(cx, args[1]) : null;
 		this.re = compileRE(cx, s, global, false);
-		setLastIndex(ScriptRuntime.zeroObj);
+		setLastIndex(ScriptRuntime.zeroObj, cx);
 		return this;
 	}
 
@@ -2324,33 +2320,33 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	}
 
 	private Object execSub(Context cx, Scriptable scopeObj, Object[] args, int matchType) {
-		RegExp reImpl = getImpl(cx);
+		RegExp reImpl = cx.getRegExp();
 		String str;
 		if (args.length == 0) {
 			str = reImpl.input;
 			if (str == null) {
-				str = ScriptRuntime.toString(Undefined.instance);
+				str = ScriptRuntime.toString(cx, Undefined.instance);
 			}
 		} else {
-			str = ScriptRuntime.toString(args[0]);
+			str = ScriptRuntime.toString(cx, args[0]);
 		}
 		double d = 0;
 		if ((re.flags & JSREG_GLOB) != 0) {
-			d = ScriptRuntime.toInteger(lastIndex);
+			d = ScriptRuntime.toInteger(cx, lastIndex);
 		}
 
 		Object rval;
 		if (d < 0 || str.length() < d) {
-			setLastIndex(ScriptRuntime.zeroObj);
+			setLastIndex(ScriptRuntime.zeroObj, cx);
 			rval = null;
 		} else {
 			int[] indexp = {(int) d};
 			rval = executeRegExp(cx, scopeObj, reImpl, str, indexp, matchType);
 			if ((re.flags & JSREG_GLOB) != 0) {
 				if (rval == null || rval == Undefined.instance) {
-					setLastIndex(ScriptRuntime.zeroObj);
+					setLastIndex(ScriptRuntime.zeroObj, cx);
 				} else {
-					setLastIndex((double) indexp[0]);
+					setLastIndex((double) indexp[0], cx);
 				}
 			}
 		}
@@ -2371,7 +2367,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		//
 		// Call the recursive matcher to do the real work.
 		//
-		boolean matches = matchRegExp(gData, re, str, start, end, res.multiline);
+		boolean matches = matchRegExp(gData, re, str, start, end, res.multiline, cx);
 		if (!matches) {
 			if (matchType != PREFIX) {
 				return null;
@@ -2403,7 +2399,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			obj = (Scriptable) result;
 
 			String matchstr = str.substring(index, index + matchlen);
-			obj.put(0, obj, matchstr);
+			obj.put(cx, 0, obj, matchstr);
 		}
 
 		if (re.parenCount == 0) {
@@ -2420,11 +2416,11 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 					parsub = new SubString(str, cap_index, cap_length);
 					res.parens[num] = parsub;
 					if (matchType != TEST) {
-						obj.put(num + 1, obj, parsub.toString());
+						obj.put(cx, num + 1, obj, parsub.toString());
 					}
 				} else {
 					if (matchType != TEST) {
-						obj.put(num + 1, obj, Undefined.instance);
+						obj.put(cx, num + 1, obj, Undefined.instance);
 					}
 				}
 			}
@@ -2436,8 +2432,8 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			 * Define the index and input properties last for better for/in loop
 			 * order (so they come after the elements).
 			 */
-			obj.put("index", obj, start + gData.skipped);
-			obj.put("input", obj, str);
+			obj.put(cx, "index", obj, start + gData.skipped);
+			obj.put(cx, "input", obj, str);
 		}
 
 		if (res.lastMatch == null) {
@@ -2470,7 +2466,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	}
 
 	@Override
-	protected int findInstanceIdInfo(String s) {
+	protected int findInstanceIdInfo(String s, Context cx) {
 		int id = switch (s) {
 			case "lastIndex" -> Id_lastIndex;
 			case "source" -> Id_source;
@@ -2481,7 +2477,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		};
 
 		if (id == 0) {
-			return super.findInstanceIdInfo(s);
+			return super.findInstanceIdInfo(s, cx);
 		}
 
 		int attr = switch (id) {
@@ -2505,29 +2501,29 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	}
 
 	@Override
-	protected Object getInstanceIdValue(int id) {
+	protected Object getInstanceIdValue(int id, Context cx) {
 		return switch (id) {
 			case Id_lastIndex -> lastIndex;
 			case Id_source -> new String(re.source);
-			case Id_global -> ScriptRuntime.wrapBoolean((re.flags & JSREG_GLOB) != 0);
-			case Id_ignoreCase -> ScriptRuntime.wrapBoolean((re.flags & JSREG_FOLD) != 0);
-			case Id_multiline -> ScriptRuntime.wrapBoolean((re.flags & JSREG_MULTILINE) != 0);
-			default -> super.getInstanceIdValue(id);
+			case Id_global -> (re.flags & JSREG_GLOB) != 0;
+			case Id_ignoreCase -> (re.flags & JSREG_FOLD) != 0;
+			case Id_multiline -> (re.flags & JSREG_MULTILINE) != 0;
+			default -> super.getInstanceIdValue(id, cx);
 		};
 	}
 
-	private void setLastIndex(Object value) {
+	private void setLastIndex(Object value, Context cx) {
 		if ((lastIndexAttr & READONLY) != 0) {
-			throw ScriptRuntime.typeError1("msg.modify.readonly", "lastIndex");
+			throw ScriptRuntime.typeError1(cx, "msg.modify.readonly", "lastIndex");
 		}
 		lastIndex = value;
 	}
 
 	@Override
-	protected void setInstanceIdValue(int id, Object value) {
+	protected void setInstanceIdValue(int id, Object value, Context cx) {
 		switch (id) {
 			case Id_lastIndex:
-				setLastIndex(value);
+				setLastIndex(value, cx);
 				return;
 			case Id_source:
 			case Id_global:
@@ -2535,26 +2531,26 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			case Id_multiline:
 				return;
 		}
-		super.setInstanceIdValue(id, value);
+		super.setInstanceIdValue(id, value, cx);
 	}
 
 	@Override
-	protected void setInstanceIdAttributes(int id, int attr) {
+	protected void setInstanceIdAttributes(int id, int attr, Context cx) {
 		if (id == Id_lastIndex) {
 			lastIndexAttr = attr;
 			return;
 		}
-		super.setInstanceIdAttributes(id, attr);
+		super.setInstanceIdAttributes(id, attr, cx);
 	}
 
 	@Override
-	protected void initPrototypeId(int id) {
+	protected void initPrototypeId(int id, Context cx) {
 		if (id == SymbolId_match) {
-			initPrototypeMethod(REGEXP_TAG, id, SymbolKey.MATCH, "[Symbol.match]", 1);
+			initPrototypeMethod(REGEXP_TAG, id, SymbolKey.MATCH, "[Symbol.match]", 1, cx);
 			return;
 		}
 		if (id == SymbolId_search) {
-			initPrototypeMethod(REGEXP_TAG, id, SymbolKey.SEARCH, "[Symbol.search]", 1);
+			initPrototypeMethod(REGEXP_TAG, id, SymbolKey.SEARCH, "[Symbol.search]", 1, cx);
 			return;
 		}
 
@@ -2587,7 +2583,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			}
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
-		initPrototypeMethod(REGEXP_TAG, id, s, arity);
+		initPrototypeMethod(REGEXP_TAG, id, s, arity, cx);
 	}
 
 	// #/string_id_map#
@@ -2600,29 +2596,29 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		int id = f.methodId();
 		switch (id) {
 			case Id_compile:
-				return realThis(thisObj, f).compile(cx, scope, args);
+				return realThis(thisObj, f, cx).compile(cx, scope, args);
 
 			case Id_toString:
 			case Id_toSource:
-				return realThis(thisObj, f).toString();
+				return realThis(thisObj, f, cx).toString();
 
 			case Id_exec:
-				return realThis(thisObj, f).execSub(cx, scope, args, MATCH);
+				return realThis(thisObj, f, cx).execSub(cx, scope, args, MATCH);
 
 			case Id_test: {
-				Object x = realThis(thisObj, f).execSub(cx, scope, args, TEST);
+				Object x = realThis(thisObj, f, cx).execSub(cx, scope, args, TEST);
 				return Boolean.TRUE.equals(x) ? Boolean.TRUE : Boolean.FALSE;
 			}
 
 			case Id_prefix:
-				return realThis(thisObj, f).execSub(cx, scope, args, PREFIX);
+				return realThis(thisObj, f, cx).execSub(cx, scope, args, PREFIX);
 
 			case SymbolId_match:
-				return realThis(thisObj, f).execSub(cx, scope, args, MATCH);
+				return realThis(thisObj, f, cx).execSub(cx, scope, args, MATCH);
 
 			case SymbolId_search:
-				Scriptable scriptable = (Scriptable) realThis(thisObj, f).execSub(cx, scope, args, MATCH);
-				return scriptable.get("index", scriptable);
+				Scriptable scriptable = (Scriptable) realThis(thisObj, f, cx).execSub(cx, scope, args, MATCH);
+				return scriptable.get(cx, "index", scriptable);
 		}
 		throw new IllegalArgumentException(String.valueOf(id));
 	}

@@ -80,12 +80,12 @@ public final class JavaAdapter implements IdFunctionCall {
 		IdFunctionObject ctor = new IdFunctionObject(obj, FTAG, Id_JavaAdapter, "JavaAdapter", 1, scope);
 		ctor.markAsConstructor(null);
 		if (sealed) {
-			ctor.sealObject();
+			ctor.sealObject(cx);
 		}
-		ctor.exportAsScopeProperty();
+		ctor.exportAsScopeProperty(cx);
 	}
 
-	public static Object convertResult(Object result, Class<?> c) {
+	public static Object convertResult(Context cx, Object result, Class<?> c) {
 		if (result == Undefined.instance && (c != ScriptRuntime.ObjectClass && c != ScriptRuntime.StringClass)) {
 			// Avoid an error for an undefined value; return null instead.
 			return null;
@@ -95,14 +95,12 @@ public final class JavaAdapter implements IdFunctionCall {
 			return result;
 		}
 
-		// FIXME
-		Context cx = Context.getContext();
-		return Context.jsToJava(cx.sharedContextData, result, c);
+		return Context.jsToJava(cx, result, c);
 	}
 
-	public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter) {
+	public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter, Context cx) {
 		Scriptable scope = ScriptableObject.getTopLevelScope(obj);
-		NativeJavaObject res = new NativeJavaObject(scope, adapter, null, true);
+		NativeJavaObject res = new NativeJavaObject(scope, adapter, null, true, cx);
 		res.setPrototype(obj);
 		return res;
 	}
@@ -115,10 +113,8 @@ public final class JavaAdapter implements IdFunctionCall {
 	static Object js_createAdapter(Context cx, Scriptable scope, Object[] args) {
 		int N = args.length;
 		if (N == 0) {
-			throw ScriptRuntime.typeError0("msg.adapter.zero.args");
+			throw ScriptRuntime.typeError0(cx, "msg.adapter.zero.args");
 		}
-
-		SharedContextData contextData = SharedContextData.get(cx, scope);
 
 		// Expected arguments:
 		// Any number of NativeJavaClass objects representing the super-class
@@ -137,7 +133,7 @@ public final class JavaAdapter implements IdFunctionCall {
 				break;
 			}
 			if (!(arg instanceof NativeJavaClass)) {
-				throw ScriptRuntime.typeError2("msg.not.java.class.arg", String.valueOf(classCount), ScriptRuntime.toString(arg));
+				throw ScriptRuntime.typeError2(cx, "msg.not.java.class.arg", String.valueOf(classCount), ScriptRuntime.toString(cx, arg));
 			}
 		}
 		Class<?> superClass = null;
@@ -147,7 +143,7 @@ public final class JavaAdapter implements IdFunctionCall {
 			Class<?> c = ((NativeJavaClass) args[i]).getClassObject();
 			if (!c.isInterface()) {
 				if (superClass != null) {
-					throw ScriptRuntime.typeError2("msg.only.one.super", superClass.getName(), c.getName());
+					throw ScriptRuntime.typeError2(cx, "msg.only.one.super", superClass.getName(), c.getName());
 				}
 				superClass = c;
 			} else {
@@ -162,7 +158,7 @@ public final class JavaAdapter implements IdFunctionCall {
 		Class<?>[] interfaces = new Class[interfaceCount];
 		System.arraycopy(intfs, 0, interfaces, 0, interfaceCount);
 		// next argument is implementation, must be scriptable
-		Scriptable obj = ScriptableObject.ensureScriptable(args[classCount]);
+		Scriptable obj = ScriptableObject.ensureScriptable(args[classCount], cx);
 
 		Class<?> adapterClass = getAdapterClass(cx, scope, superClass, interfaces, obj);
 		Object adapter;
@@ -175,22 +171,22 @@ public final class JavaAdapter implements IdFunctionCall {
 				// invoke the right constructor.
 				Object[] ctorArgs = new Object[argsCount + 2];
 				ctorArgs[0] = obj;
-				ctorArgs[1] = cx.getFactory();
+				ctorArgs[1] = cx;
 				System.arraycopy(args, classCount + 1, ctorArgs, 2, argsCount);
 				// TODO: cache class wrapper?
-				NativeJavaClass classWrapper = new NativeJavaClass(scope, adapterClass, true);
+				NativeJavaClass classWrapper = new NativeJavaClass(cx, scope, adapterClass, true);
 				NativeJavaMethod ctors = classWrapper.members.ctors;
-				int index = ctors.findCachedFunction(contextData, ctorArgs);
+				int index = ctors.findCachedFunction(cx, ctorArgs);
 				if (index < 0) {
 					String sig = NativeJavaMethod.scriptSignature(args);
-					throw Context.reportRuntimeError2("msg.no.java.ctor", adapterClass.getName(), sig);
+					throw Context.reportRuntimeError2("msg.no.java.ctor", adapterClass.getName(), sig, cx);
 				}
 
 				// Found the constructor, so try invoking it.
-				adapter = NativeJavaClass.constructInternal(contextData, ctorArgs, ctors.methods[index]);
+				adapter = NativeJavaClass.constructInternal(cx, scope, ctorArgs, ctors.methods[index]);
 			} else {
-				Class<?>[] ctorParms = {ScriptRuntime.ScriptableClass, ScriptRuntime.ContextFactoryClass};
-				Object[] ctorArgs = {obj, cx.getFactory()};
+				Class<?>[] ctorParms = {ScriptRuntime.ScriptableClass, Context.class};
+				Object[] ctorArgs = {obj, cx};
 				adapter = adapterClass.getConstructor(ctorParms).newInstance(ctorArgs);
 			}
 
@@ -200,27 +196,27 @@ public final class JavaAdapter implements IdFunctionCall {
 				Object unwrapped = ((Wrapper) self).unwrap();
 				if (unwrapped instanceof Scriptable) {
 					if (unwrapped instanceof ScriptableObject) {
-						ScriptRuntime.setObjectProtoAndParent((ScriptableObject) unwrapped, scope);
+						ScriptRuntime.setObjectProtoAndParent(cx, scope, (ScriptableObject) unwrapped);
 					}
 					return unwrapped;
 				}
 			}
 			return self;
 		} catch (Exception ex) {
-			throw Context.throwAsScriptRuntimeEx(ex);
+			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		}
 	}
 
-	private static ObjToIntMap getObjectFunctionNames(Scriptable obj) {
-		Object[] ids = ScriptableObject.getPropertyIds(obj);
+	private static ObjToIntMap getObjectFunctionNames(Context cx, Scriptable obj) {
+		Object[] ids = ScriptableObject.getPropertyIds(cx, obj);
 		ObjToIntMap map = new ObjToIntMap(ids.length);
 		for (int i = 0; i != ids.length; ++i) {
 			if (!(ids[i] instanceof String id)) {
 				continue;
 			}
-			Object value = ScriptableObject.getProperty(obj, id);
+			Object value = ScriptableObject.getProperty(obj, id, cx);
 			if (value instanceof Function f) {
-				int length = ScriptRuntime.toInt32(ScriptableObject.getProperty(f, "length"));
+				int length = ScriptRuntime.toInt32(cx, ScriptableObject.getProperty(f, "length", cx));
 				if (length < 0) {
 					length = 0;
 				}
@@ -231,26 +227,25 @@ public final class JavaAdapter implements IdFunctionCall {
 	}
 
 	private static Class<?> getAdapterClass(Context cx, Scriptable scope, Class<?> superClass, Class<?>[] interfaces, Scriptable obj) {
-		SharedContextData cache = SharedContextData.get(cx, scope);
-		Map<JavaAdapterSignature, Class<?>> generated = cache.getInterfaceAdapterCacheMap();
+		Map<JavaAdapterSignature, Class<?>> generated = cx.sharedContextData.getInterfaceAdapterCacheMap();
 
-		ObjToIntMap names = getObjectFunctionNames(obj);
+		ObjToIntMap names = getObjectFunctionNames(cx, obj);
 		JavaAdapterSignature sig;
 		sig = new JavaAdapterSignature(superClass, interfaces, names);
 		Class<?> adapterClass = generated.get(sig);
 		if (adapterClass == null) {
-			String adapterName = "adapter" + cache.newClassSerialNumber();
-			byte[] code = createAdapterCode(names, adapterName, superClass, interfaces, null);
+			String adapterName = "adapter" + cx.sharedContextData.newClassSerialNumber();
+			byte[] code = createAdapterCode(names, adapterName, superClass, interfaces, null, cx);
 
-			adapterClass = loadAdapterClass(adapterName, code);
+			adapterClass = loadAdapterClass(cx, adapterName, code);
 			generated.put(sig, adapterClass);
 		}
 		return adapterClass;
 	}
 
-	public static byte[] createAdapterCode(ObjToIntMap functionNames, String adapterName, Class<?> superClass, Class<?>[] interfaces, String scriptClassName) {
+	public static byte[] createAdapterCode(ObjToIntMap functionNames, String adapterName, Class<?> superClass, Class<?>[] interfaces, String scriptClassName, Context cx) {
 		ClassFileWriter cfw = new ClassFileWriter(adapterName, superClass.getName(), "<adapter>");
-		cfw.addField("factory", "Ldev/latvian/mods/rhino/ContextFactory;", (short) (ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL));
+		cfw.addField("context", "Ldev/latvian/mods/rhino/Context;", (short) (ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL));
 		cfw.addField("delegee", "Ldev/latvian/mods/rhino/Scriptable;", (short) (ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL));
 		cfw.addField("self", "Ldev/latvian/mods/rhino/Scriptable;", (short) (ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL));
 		int interfacesCount = interfaces == null ? 0 : interfaces.length;
@@ -303,7 +298,7 @@ public final class JavaAdapter implements IdFunctionCall {
 				String methodSignature = getMethodSignature(method, argTypes);
 				String methodKey = methodName + methodSignature;
 				if (!generatedOverrides.has(methodKey)) {
-					generateMethod(cfw, adapterName, methodName, argTypes, method.getReturnType(), true);
+					generateMethod(cfw, adapterName, methodName, argTypes, method.getReturnType(), true, cx);
 					generatedOverrides.put(methodKey, 0);
 					generatedMethods.put(methodName, 0);
 				}
@@ -330,7 +325,7 @@ public final class JavaAdapter implements IdFunctionCall {
 				String methodSignature = getMethodSignature(method, argTypes);
 				String methodKey = methodName + methodSignature;
 				if (!generatedOverrides.has(methodKey)) {
-					generateMethod(cfw, adapterName, methodName, argTypes, method.getReturnType(), true);
+					generateMethod(cfw, adapterName, methodName, argTypes, method.getReturnType(), true, cx);
 					generatedOverrides.put(methodKey, 0);
 					generatedMethods.put(methodName, 0);
 
@@ -356,7 +351,7 @@ public final class JavaAdapter implements IdFunctionCall {
 			for (int k = 0; k < length; k++) {
 				parms[k] = ScriptRuntime.ObjectClass;
 			}
-			generateMethod(cfw, adapterName, functionName, parms, ScriptRuntime.ObjectClass, false);
+			generateMethod(cfw, adapterName, functionName, parms, ScriptRuntime.ObjectClass, false, cx);
 		}
 		return cfw.toByteArray();
 	}
@@ -403,8 +398,7 @@ public final class JavaAdapter implements IdFunctionCall {
 		}
 	}
 
-	static Class<?> loadAdapterClass(String className, byte[] classBytes) {
-		Context cx = Context.getContext();
+	static Class<?> loadAdapterClass(Context cx, String className, byte[] classBytes) {
 		GeneratedClassLoader loader = cx.createClassLoader(cx.getApplicationClassLoader());
 		Class<?> result = loader.defineClass(className, classBytes);
 		loader.linkClass(result);
@@ -418,13 +412,13 @@ public final class JavaAdapter implements IdFunctionCall {
 		// Note that we swapped arguments in app-facing constructors to avoid
 		// conflicting signatures with serial constructor defined below.
 		if (parameters.length == 0) {
-			cfw.startMethod("<init>", "(Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/ContextFactory;)V", ClassFileWriter.ACC_PUBLIC);
+			cfw.startMethod("<init>", "(Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/Context;)V", ClassFileWriter.ACC_PUBLIC);
 
 			// Invoke base class constructor
 			cfw.add(ByteCode.ALOAD_0);  // this
 			cfw.addInvoke(ByteCode.INVOKESPECIAL, superName, "<init>", "()V");
 		} else {
-			StringBuilder sig = new StringBuilder("(Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/ContextFactory;");
+			StringBuilder sig = new StringBuilder("(Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/Context;");
 			int marker = sig.length(); // lets us reuse buffer for super signature
 			for (Class<?> c : parameters) {
 				appendTypeString(sig, c);
@@ -450,8 +444,8 @@ public final class JavaAdapter implements IdFunctionCall {
 
 		// Save parameter in instance variable "factory"
 		cfw.add(ByteCode.ALOAD_0);  // this
-		cfw.add(ByteCode.ALOAD_2);  // second arg: ContextFactory instance
-		cfw.add(ByteCode.PUTFIELD, adapterName, "factory", "Ldev/latvian/mods/rhino/ContextFactory;");
+		cfw.add(ByteCode.ALOAD_2);  // second arg: Context instance
+		cfw.add(ByteCode.PUTFIELD, adapterName, "context", "Ldev/latvian/mods/rhino/Context;");
 
 		cfw.add(ByteCode.ALOAD_0);  // this for the following PUTFIELD for self
 		// create a wrapper object to be used as "this" in method calls
@@ -465,7 +459,7 @@ public final class JavaAdapter implements IdFunctionCall {
 	}
 
 	private static void generateSerialCtor(ClassFileWriter cfw, String adapterName, String superName) {
-		cfw.startMethod("<init>", "(Ldev/latvian/mods/rhino/ContextFactory;" + "Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/Scriptable;" + ")V", ClassFileWriter.ACC_PUBLIC);
+		cfw.startMethod("<init>", "(Ldev/latvian/mods/rhino/Context;" + "Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/Scriptable;" + ")V", ClassFileWriter.ACC_PUBLIC);
 
 		// Invoke base class constructor
 		cfw.add(ByteCode.ALOAD_0);  // this
@@ -473,8 +467,8 @@ public final class JavaAdapter implements IdFunctionCall {
 
 		// Save parameter in instance variable "factory"
 		cfw.add(ByteCode.ALOAD_0);  // this
-		cfw.add(ByteCode.ALOAD_1);  // first arg: ContextFactory instance
-		cfw.add(ByteCode.PUTFIELD, adapterName, "factory", "Ldev/latvian/mods/rhino/ContextFactory;");
+		cfw.add(ByteCode.ALOAD_1);  // first arg: Context instance
+		cfw.add(ByteCode.PUTFIELD, adapterName, "context", "Ldev/latvian/mods/rhino/Context;");
 
 		// Save parameter in instance variable "delegee"
 		cfw.add(ByteCode.ALOAD_0);  // this
@@ -499,7 +493,7 @@ public final class JavaAdapter implements IdFunctionCall {
 		// Set factory to null to use current global when necessary
 		cfw.add(ByteCode.ALOAD_0);
 		cfw.add(ByteCode.ACONST_NULL);
-		cfw.add(ByteCode.PUTFIELD, adapterName, "factory", "Ldev/latvian/mods/rhino/ContextFactory;");
+		cfw.add(ByteCode.PUTFIELD, adapterName, "context", "Ldev/latvian/mods/rhino/Context;");
 
 		// Load script class
 		cfw.add(ByteCode.NEW, scriptClassName);
@@ -657,7 +651,7 @@ public final class JavaAdapter implements IdFunctionCall {
 		}
 	}
 
-	private static void generateMethod(ClassFileWriter cfw, String genName, String methodName, Class<?>[] parms, Class<?> returnType, boolean convertResult) {
+	private static void generateMethod(ClassFileWriter cfw, String genName, String methodName, Class<?>[] parms, Class<?> returnType, boolean convertResult, Context cx) {
 		StringBuilder sb = new StringBuilder();
 		int paramsEnd = appendMethodSignature(parms, returnType, sb);
 		String methodSignature = sb.toString();
@@ -667,7 +661,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
 		// push factory
 		cfw.add(ByteCode.ALOAD_0);
-		cfw.add(ByteCode.GETFIELD, genName, "factory", "Ldev/latvian/mods/rhino/ContextFactory;");
+		cfw.add(ByteCode.GETFIELD, genName, "context", "Ldev/latvian/mods/rhino/Context;");
 
 		// push self
 		cfw.add(ByteCode.ALOAD_0);
@@ -686,7 +680,7 @@ public final class JavaAdapter implements IdFunctionCall {
 		if (parms.length > 64) {
 			// If it will be an issue, then passing a static boolean array
 			// can be an option, but for now using simple bitmask
-			throw Context.reportRuntimeError0("JavaAdapter can not subclass methods with more then" + " 64 arguments.");
+			throw Context.reportRuntimeError0("JavaAdapter can not subclass methods with more then" + " 64 arguments.", cx);
 		}
 		long convertionMask = 0;
 		for (int i = 0; i != parms.length; ++i) {
@@ -698,7 +692,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
 		// go through utility method, which creates a Context to run the
 		// method in.
-		cfw.addInvoke(ByteCode.INVOKESTATIC, "dev/latvian/mods/rhino/JavaAdapter", "callMethod", "(Ldev/latvian/mods/rhino/ContextFactory;" + "Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/Function;" + "[Ljava/lang/Object;" + "J" + ")Ljava/lang/Object;");
+		cfw.addInvoke(ByteCode.INVOKESTATIC, "dev/latvian/mods/rhino/JavaAdapter", "callMethod", "(Ldev/latvian/mods/rhino/Context;" + "Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/Function;" + "[Ljava/lang/Object;" + "J" + ")Ljava/lang/Object;");
 
 		generateReturnResult(cfw, returnType, convertResult);
 

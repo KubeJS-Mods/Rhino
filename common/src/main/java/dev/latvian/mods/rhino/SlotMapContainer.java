@@ -68,8 +68,8 @@ class SlotMapContainer implements SlotMap {
 	}
 
 	@Override
-	public void remove(Object key, int index) {
-		map.remove(key, index);
+	public void remove(Object key, int index, Context cx) {
+		map.remove(key, index, cx);
 	}
 
 	@Override

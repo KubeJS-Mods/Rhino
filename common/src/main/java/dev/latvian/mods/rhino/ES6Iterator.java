@@ -17,14 +17,14 @@ public abstract class ES6Iterator extends IdScriptableObject {
 	private static final int SymbolId_toStringTag = 3;
 	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
-	protected static void init(ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag) {
+	protected static void init(ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag, Context cx) {
 		if (scope != null) {
 			prototype.setParentScope(scope);
-			prototype.setPrototype(getObjectPrototype(scope));
+			prototype.setPrototype(getObjectPrototype(scope, cx));
 		}
 		prototype.activatePrototypeMap(MAX_PROTOTYPE_ID);
 		if (sealed) {
-			prototype.sealObject();
+			prototype.sealObject(cx);
 		}
 
 		// Need to access Iterator prototype when constructing
@@ -43,8 +43,8 @@ public abstract class ES6Iterator extends IdScriptableObject {
 
 	static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done, Object value) {
 		final Scriptable iteratorResult = cx.newObject(scope);
-		ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value);
-		ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);
+		ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value, cx);
+		ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done, cx);
 		return iteratorResult;
 	}
 
@@ -54,25 +54,25 @@ public abstract class ES6Iterator extends IdScriptableObject {
 	protected ES6Iterator() {
 	}
 
-	protected ES6Iterator(Scriptable scope, String tag) {
+	protected ES6Iterator(Scriptable scope, String tag, Context cx) {
 		// Set parent and prototype properties. Since we don't have a
 		// "Iterator" constructor in the top scope, we stash the
 		// prototype in the top scope's associated value.
 		this.tag = tag;
 		Scriptable top = ScriptableObject.getTopLevelScope(scope);
 		this.setParentScope(top);
-		IdScriptableObject prototype = (IdScriptableObject) ScriptableObject.getTopScopeValue(top, tag);
+		IdScriptableObject prototype = (IdScriptableObject) ScriptableObject.getTopScopeValue(top, tag, cx);
 		setPrototype(prototype);
 	}
 
 	@Override
-	protected void initPrototypeId(int id) {
+	protected void initPrototypeId(int id, Context cx) {
 		switch (id) {
 			case Id_next -> {
-				initPrototypeMethod(getTag(), id, NEXT_METHOD, 0);
+				initPrototypeMethod(getTag(), id, NEXT_METHOD, 0, cx);
 			}
 			case SymbolId_iterator -> {
-				initPrototypeMethod(getTag(), id, SymbolKey.ITERATOR, "[Symbol.iterator]", DONTENUM | READONLY);
+				initPrototypeMethod(getTag(), id, SymbolKey.ITERATOR, "[Symbol.iterator]", DONTENUM | READONLY, cx);
 			}
 			case SymbolId_toStringTag -> {
 				initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG, getClassName(), DONTENUM | READONLY);
@@ -89,7 +89,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
 		int id = f.methodId();
 
 		if (!(thisObj instanceof ES6Iterator iterator)) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 
 		return switch (id) {

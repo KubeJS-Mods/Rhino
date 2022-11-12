@@ -64,74 +64,72 @@ public final class MemberBox {
 	transient Class<?>[] argTypes;
 	transient Object delegateTo;
 	transient boolean vararg;
-	public transient Executable memberObject;
+	public transient Executable executable;
+	public transient WrappedExecutable wrappedExecutable;
 
-	MemberBox(Method method) {
-		init(method);
+	MemberBox(Executable executable) {
+		this.executable = executable;
+		this.argTypes = executable.getParameterTypes();
+		this.vararg = executable.isVarArgs();
 	}
 
-	MemberBox(Constructor<?> constructor) {
-		init(constructor);
-	}
+	MemberBox(WrappedExecutable wrappedExecutable) {
+		var executable = wrappedExecutable.unwrap();
 
-	private void init(Method method) {
-		this.memberObject = method;
-		this.argTypes = method.getParameterTypes();
-		this.vararg = method.isVarArgs();
-	}
-
-	private void init(Constructor<?> constructor) {
-		this.memberObject = constructor;
-		this.argTypes = constructor.getParameterTypes();
-		this.vararg = constructor.isVarArgs();
-	}
-
-	Method method() {
-		return (Method) memberObject;
+		if (executable != null) {
+			this.executable = executable;
+			this.argTypes = executable.getParameterTypes();
+			this.vararg = executable.isVarArgs();
+		} else {
+			this.wrappedExecutable = wrappedExecutable;
+			this.vararg = false;
+		}
 	}
 
 	Constructor<?> ctor() {
-		return (Constructor<?>) memberObject;
+		return (Constructor<?>) executable;
 	}
 
 	Member member() {
-		return memberObject;
+		return executable;
 	}
 
 	boolean isMethod() {
-		return memberObject instanceof Method;
+		return executable instanceof Method;
 	}
 
 	boolean isCtor() {
-		return memberObject instanceof Constructor;
+		return executable instanceof Constructor;
 	}
 
 	boolean isStatic() {
-		return Modifier.isStatic(memberObject.getModifiers());
+		return Modifier.isStatic(executable.getModifiers());
 	}
 
 	boolean isPublic() {
-		return Modifier.isPublic(memberObject.getModifiers());
+		return Modifier.isPublic(executable.getModifiers());
 	}
 
 	String getName() {
-		return memberObject.getName();
+		return wrappedExecutable != null ? wrappedExecutable.toString() : executable.getName();
 	}
 
 	Class<?> getDeclaringClass() {
-		return memberObject.getDeclaringClass();
+		return executable.getDeclaringClass();
+	}
+
+	Class<?> getReturnType() {
+		return wrappedExecutable != null ? wrappedExecutable.getReturnType() : ((Method) executable).getReturnType();
 	}
 
 	String toJavaDeclaration() {
 		StringBuilder sb = new StringBuilder();
 		if (isMethod()) {
-			Method method = method();
-			sb.append(method.getReturnType());
+			sb.append(getReturnType());
 			sb.append(' ');
-			sb.append(method.getName());
+			sb.append(getName());
 		} else {
-			Constructor<?> ctor = ctor();
-			String name = ctor.getDeclaringClass().getName();
+			String name = getDeclaringClass().getName();
 			int lastDot = name.lastIndexOf('.');
 			if (lastDot >= 0) {
 				name = name.substring(lastDot + 1);
@@ -144,22 +142,30 @@ public final class MemberBox {
 
 	@Override
 	public String toString() {
-		return memberObject.toString();
+		return executable.toString();
 	}
 
-	Object invoke(Object target, Object[] args) {
-		Method method = method();
+	Object invoke(Object target, Object[] args, Context cx, Scriptable scope) {
+		if (wrappedExecutable != null) {
+			try {
+				return wrappedExecutable.invoke(cx, scope, target, args);
+			} catch (Exception ex) {
+				throw Context.throwAsScriptRuntimeEx(ex, cx);
+			}
+		}
+
+		Method method = (Method) executable;
 		try {
 			try {
 				return method.invoke(target, args);
 			} catch (IllegalAccessException ex) {
 				Method accessible = searchAccessibleMethod(method, argTypes);
 				if (accessible != null) {
-					memberObject = accessible;
+					executable = accessible;
 					method = accessible;
 				} else {
 					if (!VMBridge.tryToMakeAccessible(target, method)) {
-						throw Context.throwAsScriptRuntimeEx(ex);
+						throw Context.throwAsScriptRuntimeEx(ex, cx);
 					}
 				}
 				// Retry after recovery
@@ -174,25 +180,33 @@ public final class MemberBox {
 			if (e instanceof ContinuationPending) {
 				throw (ContinuationPending) e;
 			}
-			throw Context.throwAsScriptRuntimeEx(e);
+			throw Context.throwAsScriptRuntimeEx(e, cx);
 		} catch (Exception ex) {
-			throw Context.throwAsScriptRuntimeEx(ex);
+			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		}
 	}
 
-	Object newInstance(Object[] args) {
+	Object newInstance(Object[] args, Context cx, Scriptable scope) {
+		if (wrappedExecutable != null) {
+			try {
+				return wrappedExecutable.construct(cx, scope, args);
+			} catch (Exception ex) {
+				throw Context.throwAsScriptRuntimeEx(ex, cx);
+			}
+		}
+
 		Constructor<?> ctor = ctor();
 		try {
 			try {
 				return ctor.newInstance(args);
 			} catch (IllegalAccessException ex) {
 				if (!VMBridge.tryToMakeAccessible(null, ctor)) {
-					throw Context.throwAsScriptRuntimeEx(ex);
+					throw Context.throwAsScriptRuntimeEx(ex, cx);
 				}
 			}
 			return ctor.newInstance(args);
 		} catch (Exception ex) {
-			throw Context.throwAsScriptRuntimeEx(ex);
+			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		}
 	}
 }

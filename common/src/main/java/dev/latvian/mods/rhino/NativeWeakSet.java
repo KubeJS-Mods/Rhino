@@ -24,24 +24,24 @@ public class NativeWeakSet extends IdScriptableObject {
 	private static final int SymbolId_toStringTag = 5;
 	private static final int MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
-	static void init(Scriptable scope, boolean sealed) {
+	static void init(Scriptable scope, boolean sealed, Context cx) {
 		NativeWeakSet m = new NativeWeakSet();
-		m.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+		m.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed, cx);
 	}
 
-	private static NativeWeakSet realThis(Scriptable thisObj, IdFunctionObject f) {
+	private static NativeWeakSet realThis(Scriptable thisObj, IdFunctionObject f, Context cx) {
 		if (thisObj == null) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 		try {
 			final NativeWeakSet ns = (NativeWeakSet) thisObj;
 			if (!ns.instanceOfWeakSet) {
 				// Check for "Set internal data tag"
-				throw incompatibleCallError(f);
+				throw incompatibleCallError(f, cx);
 			}
 			return ns;
 		} catch (ClassCastException cce) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 	}
 
@@ -72,24 +72,24 @@ public class NativeWeakSet extends IdScriptableObject {
 					}
 					return ns;
 				}
-				throw ScriptRuntime.typeError1("msg.no.new", "WeakSet");
+				throw ScriptRuntime.typeError1(cx, "msg.no.new", "WeakSet");
 			case Id_add:
-				return realThis(thisObj, f).js_add(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_add(args.length > 0 ? args[0] : Undefined.instance, cx);
 			case Id_delete:
-				return realThis(thisObj, f).js_delete(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_delete(args.length > 0 ? args[0] : Undefined.instance);
 			case Id_has:
-				return realThis(thisObj, f).js_has(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_has(args.length > 0 ? args[0] : Undefined.instance);
 		}
 		throw new IllegalArgumentException("WeakMap.prototype has no method: " + f.getFunctionName());
 	}
 
-	private Object js_add(Object key) {
+	private Object js_add(Object key, Context cx) {
 		// As the spec says, only a true "Object" can be the key to a WeakSet.
 		// Use the default object equality here. ScriptableObject does not override
 		// equals or hashCode, which means that in effect we are only keying on object identity.
 		// This is all correct according to the ECMAscript spec.
 		if (!ScriptRuntime.isObject(key)) {
-			throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(key));
+			throw ScriptRuntime.typeError1(cx, "msg.arg.not.object", ScriptRuntime.typeof(cx, key));
 		}
 		// Add a value to the map, but don't make it the key -- otherwise the WeakHashMap
 		// will never GC anything.
@@ -112,7 +112,7 @@ public class NativeWeakSet extends IdScriptableObject {
 	}
 
 	@Override
-	protected void initPrototypeId(int id) {
+	protected void initPrototypeId(int id, Context cx) {
 		if (id == SymbolId_toStringTag) {
 			initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG, getClassName(), DONTENUM | READONLY);
 			return;
@@ -139,7 +139,7 @@ public class NativeWeakSet extends IdScriptableObject {
 			}
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
-		initPrototypeMethod(MAP_TAG, id, s, fnName, arity);
+		initPrototypeMethod(MAP_TAG, id, s, fnName, arity, cx);
 	}
 
 	@Override

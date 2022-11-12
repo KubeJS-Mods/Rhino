@@ -62,22 +62,22 @@ public class FunctionObject extends BaseFunction {
 				if (arg instanceof String) {
 					return arg;
 				}
-				return ScriptRuntime.toString(arg);
+				return ScriptRuntime.toString(cx, arg);
 			case JAVA_INT_TYPE:
 				if (arg instanceof Integer) {
 					return arg;
 				}
-				return ScriptRuntime.toInt32(arg);
+				return ScriptRuntime.toInt32(cx, arg);
 			case JAVA_BOOLEAN_TYPE:
 				if (arg instanceof Boolean) {
 					return arg;
 				}
-				return ScriptRuntime.toBoolean(arg) ? Boolean.TRUE : Boolean.FALSE;
+				return ScriptRuntime.toBoolean(cx, arg) ? Boolean.TRUE : Boolean.FALSE;
 			case JAVA_DOUBLE_TYPE:
 				if (arg instanceof Double) {
 					return arg;
 				}
-				return ScriptRuntime.toNumber(arg);
+				return ScriptRuntime.toNumber(cx, arg);
 			case JAVA_SCRIPTABLE_TYPE:
 				return ScriptRuntime.toObjectOrNull(cx, arg, scope);
 			case JAVA_OBJECT_TYPE:
@@ -87,13 +87,13 @@ public class FunctionObject extends BaseFunction {
 		}
 	}
 
-	static Method findSingleMethod(Method[] methods, String name) {
+	static Method findSingleMethod(Method[] methods, String name, Context cx) {
 		Method found = null;
 		for (int i = 0, N = methods.length; i != N; ++i) {
 			Method method = methods[i];
 			if (method != null && name.equals(method.getName())) {
 				if (found != null) {
-					throw Context.reportRuntimeError2("msg.no.overload", name, method.getDeclaringClass().getName());
+					throw Context.reportRuntimeError2("msg.no.overload", name, method.getDeclaringClass().getName(), cx);
 				}
 				found = method;
 			}
@@ -214,7 +214,7 @@ public class FunctionObject extends BaseFunction {
 	 * @param scope               enclosing scope of function
 	 * @see Scriptable
 	 */
-	public FunctionObject(String name, Member methodOrConstructor, Scriptable scope) {
+	public FunctionObject(String name, Member methodOrConstructor, Scriptable scope, Context cx) {
 		if (methodOrConstructor instanceof Constructor) {
 			member = new MemberBox((Constructor<?>) methodOrConstructor);
 			isStatic = true; // well, doesn't take a 'this'
@@ -230,12 +230,12 @@ public class FunctionObject extends BaseFunction {
 			// Either variable args or an error.
 			if (types[1].isArray()) {
 				if (!isStatic || types[0] != ScriptRuntime.ContextClass || types[1].getComponentType() != ScriptRuntime.ObjectClass || types[2] != ScriptRuntime.FunctionClass || types[3] != Boolean.TYPE) {
-					throw Context.reportRuntimeError1("msg.varargs.ctor", methodName);
+					throw Context.reportRuntimeError1("msg.varargs.ctor", methodName, cx);
 				}
 				parmsLength = VARARGS_CTOR;
 			} else {
 				if (!isStatic || types[0] != ScriptRuntime.ContextClass || types[1] != ScriptRuntime.ScriptableClass || types[2].getComponentType() != ScriptRuntime.ObjectClass || types[3] != ScriptRuntime.FunctionClass) {
-					throw Context.reportRuntimeError1("msg.varargs.fun", methodName);
+					throw Context.reportRuntimeError1("msg.varargs.fun", methodName, cx);
 				}
 				parmsLength = VARARGS_METHOD;
 			}
@@ -246,7 +246,7 @@ public class FunctionObject extends BaseFunction {
 				for (int i = 0; i != arity; ++i) {
 					int tag = getTypeTag(types[i]);
 					if (tag == JAVA_UNSUPPORTED_TYPE) {
-						throw Context.reportRuntimeError2("msg.bad.parms", types[i].getName(), methodName);
+						throw Context.reportRuntimeError2("msg.bad.parms", types[i].getName(), methodName, cx);
 					}
 					typeTags[i] = (byte) tag;
 				}
@@ -254,8 +254,7 @@ public class FunctionObject extends BaseFunction {
 		}
 
 		if (member.isMethod()) {
-			Method method = member.method();
-			Class<?> returnType = method.getReturnType();
+			Class<?> returnType = member.getReturnType();
 			if (returnType == Void.TYPE) {
 				hasVoidReturn = true;
 			} else {
@@ -264,11 +263,11 @@ public class FunctionObject extends BaseFunction {
 		} else {
 			Class<?> ctorType = member.getDeclaringClass();
 			if (!ScriptRuntime.ScriptableClass.isAssignableFrom(ctorType)) {
-				throw Context.reportRuntimeError1("msg.bad.ctor.return", ctorType.getName());
+				throw Context.reportRuntimeError1("msg.bad.ctor.return", ctorType.getName(), cx);
 			}
 		}
 
-		ScriptRuntime.setFunctionProtoAndParent(this, scope);
+		ScriptRuntime.setFunctionProtoAndParent(cx, scope, this);
 	}
 
 	/**
@@ -295,17 +294,6 @@ public class FunctionObject extends BaseFunction {
 	}
 
 	/**
-	 * Get Java method or constructor this function represent.
-	 */
-	public Member getMethodOrConstructor() {
-		if (member.isMethod()) {
-			return member.method();
-		} else {
-			return member.ctor();
-		}
-	}
-
-	/**
 	 * Define this function as a JavaScript constructor.
 	 * <p>
 	 * Sets up the "prototype" and "constructor" properties. Also
@@ -321,18 +309,18 @@ public class FunctionObject extends BaseFunction {
 	 * @see Scriptable#setPrototype
 	 * @see Scriptable#getClassName
 	 */
-	public void addAsConstructor(Scriptable scope, Scriptable prototype) {
-		initAsConstructor(scope, prototype);
-		defineProperty(scope, prototype.getClassName(), this, DONTENUM);
+	public void addAsConstructor(Scriptable scope, Scriptable prototype, Context cx) {
+		initAsConstructor(scope, prototype, cx);
+		defineProperty(scope, prototype.getClassName(), this, DONTENUM, cx);
 	}
 
-	void initAsConstructor(Scriptable scope, Scriptable prototype) {
-		ScriptRuntime.setFunctionProtoAndParent(this, scope);
+	void initAsConstructor(Scriptable scope, Scriptable prototype, Context cx) {
+		ScriptRuntime.setFunctionProtoAndParent(cx, scope, this);
 		setImmunePrototypeProperty(prototype);
 
 		prototype.setParentScope(this);
 
-		defineProperty(prototype, "constructor", this, DONTENUM | PERMANENT | READONLY);
+		defineProperty(prototype, "constructor", this, DONTENUM | PERMANENT | READONLY, cx);
 		setParentScope(scope);
 	}
 
@@ -361,13 +349,13 @@ public class FunctionObject extends BaseFunction {
 		if (parmsLength < 0) {
 			if (parmsLength == VARARGS_METHOD) {
 				Object[] invokeArgs = {cx, thisObj, args, this};
-				result = member.invoke(null, invokeArgs);
+				result = member.invoke(null, invokeArgs, cx, scope);
 				checkMethodResult = true;
 			} else {
 				boolean inNewExpr = (thisObj == null);
 				Boolean b = inNewExpr ? Boolean.TRUE : Boolean.FALSE;
 				Object[] invokeArgs = {cx, args, this, b};
-				result = (member.isCtor()) ? member.newInstance(invokeArgs) : member.invoke(null, invokeArgs);
+				result = (member.isCtor()) ? member.newInstance(invokeArgs, cx, scope) : member.invoke(null, invokeArgs, cx, scope);
 			}
 
 		} else {
@@ -388,7 +376,7 @@ public class FunctionObject extends BaseFunction {
 					}
 					if (!compatible) {
 						// Couldn't find an object to call this on.
-						throw ScriptRuntime.typeError1("msg.incompat.call", functionName);
+						throw ScriptRuntime.typeError1(cx, "msg.incompat.call", functionName);
 					}
 				}
 			}
@@ -419,10 +407,10 @@ public class FunctionObject extends BaseFunction {
 			}
 
 			if (member.isMethod()) {
-				result = member.invoke(thisObj, invokeArgs);
+				result = member.invoke(thisObj, invokeArgs, cx, scope);
 				checkMethodResult = true;
 			} else {
-				result = member.newInstance(invokeArgs);
+				result = member.newInstance(invokeArgs, cx, scope);
 			}
 
 		}
@@ -431,8 +419,7 @@ public class FunctionObject extends BaseFunction {
 			if (hasVoidReturn) {
 				result = Undefined.instance;
 			} else if (returnTypeTag == JAVA_UNSUPPORTED_TYPE) {
-				var contextData = SharedContextData.get(cx, scope);
-				result = contextData.getWrapFactory().wrap(contextData, scope, result, null);
+				result = cx.sharedContextData.getWrapFactory().wrap(cx, scope, result, null);
 			}
 			// XXX: the code assumes that if returnTypeTag == JAVA_OBJECT_TYPE
 			// then the Java method did a proper job of converting the
@@ -458,10 +445,10 @@ public class FunctionObject extends BaseFunction {
 		try {
 			result = (Scriptable) member.getDeclaringClass().newInstance();
 		} catch (Exception ex) {
-			throw Context.throwAsScriptRuntimeEx(ex);
+			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		}
 
-		result.setPrototype(getClassPrototype());
+		result.setPrototype(getClassPrototype(cx));
 		result.setParentScope(getParentScope());
 		return result;
 	}

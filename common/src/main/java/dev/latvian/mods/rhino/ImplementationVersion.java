@@ -18,6 +18,7 @@ public class ImplementationVersion {
 	public static String get() {
 		return version.versionString;
 	}
+
 	private String versionString;
 
 	private ImplementationVersion() {

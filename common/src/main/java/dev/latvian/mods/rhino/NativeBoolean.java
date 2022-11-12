@@ -20,9 +20,9 @@ final class NativeBoolean extends IdScriptableObject {
 	private static final int Id_valueOf = 4;
 	private static final int MAX_PROTOTYPE_ID = 4;
 
-	static void init(Scriptable scope, boolean sealed) {
+	static void init(Scriptable scope, boolean sealed, Context cx) {
 		NativeBoolean obj = new NativeBoolean(false);
-		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed, cx);
 	}
 
 	private final boolean booleanValue;
@@ -37,22 +37,22 @@ final class NativeBoolean extends IdScriptableObject {
 	}
 
 	@Override
-	public Object getDefaultValue(Class<?> typeHint) {
+	public Object getDefaultValue(Context cx, Class<?> typeHint) {
 		// This is actually non-ECMA, but will be proposed
 		// as a change in round 2.
 		if (typeHint == ScriptRuntime.BooleanClass) {
-			return ScriptRuntime.wrapBoolean(booleanValue);
+			return booleanValue;
 		}
-		return super.getDefaultValue(typeHint);
+		return super.getDefaultValue(cx, typeHint);
 	}
 
 	@Override
-	protected void initPrototypeId(int id) {
+	protected void initPrototypeId(int id, Context cx) {
 		switch (id) {
-			case Id_constructor -> initPrototypeMethod(BOOLEAN_TAG, id, "constructor", 1);
-			case Id_toString -> initPrototypeMethod(BOOLEAN_TAG, id, "toString", 0);
-			case Id_toSource -> initPrototypeMethod(BOOLEAN_TAG, id, "toSource", 0);
-			case Id_valueOf -> initPrototypeMethod(BOOLEAN_TAG, id, "valueOf", 0);
+			case Id_constructor -> initPrototypeMethod(BOOLEAN_TAG, id, "constructor", 1, cx);
+			case Id_toString -> initPrototypeMethod(BOOLEAN_TAG, id, "toString", 0, cx);
+			case Id_toSource -> initPrototypeMethod(BOOLEAN_TAG, id, "toSource", 0, cx);
+			case Id_valueOf -> initPrototypeMethod(BOOLEAN_TAG, id, "valueOf", 0, cx);
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 	}
@@ -73,20 +73,20 @@ final class NativeBoolean extends IdScriptableObject {
 				// avoidObjectDetection() is used to implement document.all
 				// see Note on page
 				//   https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean
-				b = (!(args[0] instanceof ScriptableObject) || !((ScriptableObject) args[0]).avoidObjectDetection()) && ScriptRuntime.toBoolean(args[0]);
+				b = (!(args[0] instanceof ScriptableObject) || !((ScriptableObject) args[0]).avoidObjectDetection()) && ScriptRuntime.toBoolean(cx, args[0]);
 			}
 			if (thisObj == null) {
 				// new Boolean(val) creates a new boolean object.
 				return new NativeBoolean(b);
 			}
 			// Boolean(val) converts val to a boolean.
-			return ScriptRuntime.wrapBoolean(b);
+			return b;
 		}
 
 		// The rest of Boolean.prototype methods require thisObj to be Boolean
 
 		if (!(thisObj instanceof NativeBoolean)) {
-			throw incompatibleCallError(f);
+			throw incompatibleCallError(f, cx);
 		}
 		boolean value = ((NativeBoolean) thisObj).booleanValue;
 
@@ -99,7 +99,7 @@ final class NativeBoolean extends IdScriptableObject {
 				return "not_supported";
 
 			case Id_valueOf:
-				return ScriptRuntime.wrapBoolean(value);
+				return value;
 		}
 		throw new IllegalArgumentException(String.valueOf(id));
 	}
