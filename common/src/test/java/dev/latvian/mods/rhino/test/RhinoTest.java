@@ -29,6 +29,7 @@ public class RhinoTest {
 		typeWrappers.register(CollectionTag.class, NBTUtils::isTagCollection, NBTUtils::toTagCollection);
 		typeWrappers.register(ListTag.class, NBTUtils::isTagCollection, NBTUtils::toTagList);
 		typeWrappers.register(Tag.class, NBTUtils::toTag);
+		typeWrappers.register(TestMaterial.class, TestMaterial::get);
 
 		context.sharedContextData.addCustomJavaToJsWrapper(CompoundTag.class, CompoundTagWrapper::new);
 		context.sharedContextData.addCustomJavaToJsWrapper(CollectionTag.class, CollectionTagWrapper::new);

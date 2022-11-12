@@ -1246,44 +1246,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		return result;
 	}
 
-	/**
-	 * Call a method of an object.
-	 *
-	 * @param obj        the JavaScript object
-	 * @param methodName the name of the function property
-	 * @param args       the arguments for the call
-	 */
-	public static Object callMethod(Scriptable obj, String methodName, Object[] args) {
-		return callMethod(null, obj, methodName, args);
-	}
-
-	/**
-	 * Call a method of an object.
-	 *
-	 * @param cx         the Context object associated with the current thread.
-	 * @param obj        the JavaScript object
-	 * @param methodName the name of the function property
-	 * @param args       the arguments for the call
-	 */
-	public static Object callMethod(Context cx, Scriptable obj, String methodName, Object[] args) {
-		Object funObj = getProperty(obj, methodName, cx);
-		if (!(funObj instanceof Function fun)) {
-			throw ScriptRuntime.notFunctionError(cx, obj, methodName);
-		}
-		// XXX: What should be the scope when calling funObj?
-		// The following favor scope stored in the object on the assumption
-		// that is more useful especially under dynamic scope setup.
-		// An alternative is to check for dynamic scope flag
-		// and use ScriptableObject.getTopLevelScope(fun) if the flag is not
-		// set. But that require access to Context and messy code
-		// so for now it is not checked.
-		Scriptable scope = ScriptableObject.getTopLevelScope(obj);
-		if (cx != null) {
-			return fun.call(cx, scope, obj, args);
-		}
-		return Context.call(new ContextFactory(), fun, scope, obj, args);
-	}
-
 	private static Scriptable getBase(Scriptable obj, String name, Context cx) {
 		do {
 			if (obj.has(cx, name, obj)) {

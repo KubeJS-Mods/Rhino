@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Array;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -14,11 +13,6 @@ import java.util.function.Predicate;
  */
 public class TypeWrappers {
 	private final Map<Class<?>, TypeWrapper<?>> wrappers = new LinkedHashMap<>();
-
-	@Deprecated
-	public <F, T> void register(String id, Class<F> from, Class<T> to, Function<F, T> factory) {
-		// Keep old one for now so that it doesn't crash
-	}
 
 	@SuppressWarnings("unchecked")
 	public <T> void register(Class<T> target, Predicate<Object> validator, TypeWrapperFactory<T> factory) {

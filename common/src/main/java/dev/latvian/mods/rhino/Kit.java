@@ -89,7 +89,7 @@ public class Kit {
 	 * Check that testClass is accessible from the given loader.
 	 */
 	static boolean testIfCanLoadRhinoClasses(ClassLoader loader) {
-		Class<?> testClass = ScriptRuntime.ContextFactoryClass;
+		Class<?> testClass = Context.class;
 		Class<?> x = Kit.classOrNull(loader, testClass.getName());
 		// The check covers the case when x == null =>
 		// loader does not know about testClass or the case

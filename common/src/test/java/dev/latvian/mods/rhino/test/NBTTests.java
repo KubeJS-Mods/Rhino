@@ -1,6 +1,5 @@
 package dev.latvian.mods.rhino.test;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("unused")
@@ -8,7 +7,6 @@ public class NBTTests {
 	public static final RhinoTest TEST = new RhinoTest("nbt");
 
 	@Test
-	@DisplayName("Compound")
 	public void compound() {
 		TEST.test("compound", """
 				let compoundTagTest = NBT.compoundTag()
@@ -25,7 +23,6 @@ public class NBTTests {
 	}
 
 	@Test
-	@DisplayName("List")
 	public void list() {
 		TEST.test("list", """
 				let listTagTest = NBT.listTag()

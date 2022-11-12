@@ -453,7 +453,7 @@ public class JavaMembers {
 			int mods = method.getModifiers();
 			boolean isStatic = Modifier.isStatic(mods);
 			Map<String, Object> ht = isStatic ? staticMembers : members;
-			String name = methodInfo.name.isEmpty() ? method.getName() : methodInfo.name;
+			String name = methodInfo.name;
 
 			Object value = ht.get(name);
 			if (value == null) {
@@ -510,7 +510,7 @@ public class JavaMembers {
 		// Reflect fields.
 		for (FieldInfo fieldInfo : getAccessibleFields(cx, includeProtected)) {
 			var field = fieldInfo.field;
-			String name = fieldInfo.name.isEmpty() ? field.getName() : fieldInfo.name;
+			String name = fieldInfo.name;
 
 			int mods = field.getModifiers();
 			try {
@@ -712,6 +712,10 @@ public class JavaMembers {
 								info.name = cx.sharedContextData.getRemapper().getMappedField(currentClass, field);
 							}
 
+							if (info.name.isEmpty()) {
+								info.name = field.getName();
+							}
+
 							fieldList.add(info);
 						} catch (Exception ex) {
 							// ex.printStackTrace();
@@ -793,6 +797,10 @@ public class JavaMembers {
 
 						if (info.name.isEmpty()) {
 							info.name = cx.sharedContextData.getRemapper().getMappedMethod(currentClass, method);
+						}
+
+						if (info.name.isEmpty()) {
+							info.name = method.getName();
 						}
 					}
 				}

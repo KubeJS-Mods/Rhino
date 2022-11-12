@@ -30,7 +30,6 @@ public class InterfaceAdapter {
 		Scriptable topScope = ScriptRuntime.getTopCallScope(cx);
 		InterfaceAdapter adapter;
 		adapter = (InterfaceAdapter) cx.sharedContextData.getInterfaceAdapter(cl);
-		ContextFactory cf = cx.getFactory();
 		if (adapter == null) {
 			Method[] methods = cl.getMethods();
 			if (object instanceof Callable) {
@@ -57,10 +56,10 @@ public class InterfaceAdapter {
 					}
 				}
 			}
-			adapter = new InterfaceAdapter(cf, cl);
+			adapter = new InterfaceAdapter(cx, cl);
 			cx.sharedContextData.cacheInterfaceAdapter(cl, adapter);
 		}
-		return VMBridge.newInterfaceProxy(adapter.proxyHelper, cf, adapter, object, topScope, cx);
+		return VMBridge.newInterfaceProxy(adapter.proxyHelper, adapter, object, topScope, cx);
 	}
 
 	/**
@@ -81,12 +80,12 @@ public class InterfaceAdapter {
 
 	private final Object proxyHelper;
 
-	private InterfaceAdapter(ContextFactory cf, Class<?> cl) {
-		this.proxyHelper = VMBridge.getInterfaceProxyHelper(cf, new Class[]{cl});
+	private InterfaceAdapter(Context cx, Class<?> cl) {
+		this.proxyHelper = VMBridge.getInterfaceProxyHelper(cx, new Class[]{cl});
 	}
 
-	public Object invoke(ContextFactory cf, final Object target, final Scriptable topScope, final Object thisObject, final Method method, final Object[] args) {
-		return cf.call(cx -> invokeImpl(cx, target, topScope, thisObject, method, args));
+	public Object invoke(Context cx, final Object target, final Scriptable topScope, final Object thisObject, final Method method, final Object[] args) {
+		return invokeImpl(cx, target, topScope, thisObject, method, args);
 	}
 
 	Object invokeImpl(Context cx, Object target, Scriptable topScope, Object thisObject, Method method, Object[] args) {

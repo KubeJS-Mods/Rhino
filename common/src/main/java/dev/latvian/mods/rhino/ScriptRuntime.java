@@ -41,7 +41,6 @@ public class ScriptRuntime {
 	public final static Class<String> StringClass = String.class;
 	public final static Class<Date> DateClass = Date.class;
 	public final static Class<?> ContextClass = Context.class;
-	public final static Class<ContextFactory> ContextFactoryClass = ContextFactory.class;
 	public final static Class<Function> FunctionClass = Function.class;
 	public final static Class<ScriptableObject> ScriptableObjectClass = ScriptableObject.class;
 	public static final Class<Scriptable> ScriptableClass = Scriptable.class;
@@ -2616,9 +2615,8 @@ public class ScriptRuntime {
 		cx.topCallScope = ScriptableObject.getTopLevelScope(scope);
 		boolean previousTopLevelStrict = cx.isTopLevelStrict;
 		cx.isTopLevelStrict = isTopLevelStrict;
-		ContextFactory f = cx.getFactory();
 		try {
-			result = f.doTopCall(callable, cx, scope, thisObj, args);
+			result = cx.doTopCall(callable, scope, thisObj, args);
 		} finally {
 			cx.topCallScope = null;
 			// Cleanup cached references

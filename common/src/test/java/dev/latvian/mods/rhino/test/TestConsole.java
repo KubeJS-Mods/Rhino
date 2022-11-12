@@ -12,7 +12,7 @@ import java.util.List;
 @RemapPrefixForJS("test2$")
 public class TestConsole {
 	private final Context context;
-	private ConsoleTheme theme;
+	private TestConsoleTheme theme;
 	public StringBuilder consoleOutput = new StringBuilder();
 
 	public TestConsole(Context cx) {
@@ -66,16 +66,20 @@ public class TestConsole {
 		return new ArrayList<>(Arrays.asList(getTestArray()));
 	}
 
-	public void test1$setTheme(ConsoleTheme t) {
+	public void test1$setTheme(TestConsoleTheme t) {
 		info("Set theme to " + t);
 		theme = t;
 	}
 
-	public ConsoleTheme test2$getTheme() {
+	public TestConsoleTheme test2$getTheme() {
 		return theme;
 	}
 
 	public void printUnit(String input) {
 		info(input + " -> " + UnitContext.DEFAULT.parse(input));
+	}
+
+	public void printMaterial(TestMaterial material) {
+		info("%s#%08x".formatted(material.name(), material.hashCode()));
 	}
 }

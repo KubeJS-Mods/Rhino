@@ -171,7 +171,7 @@ public final class JavaAdapter implements IdFunctionCall {
 				// invoke the right constructor.
 				Object[] ctorArgs = new Object[argsCount + 2];
 				ctorArgs[0] = obj;
-				ctorArgs[1] = cx.getFactory();
+				ctorArgs[1] = cx;
 				System.arraycopy(args, classCount + 1, ctorArgs, 2, argsCount);
 				// TODO: cache class wrapper?
 				NativeJavaClass classWrapper = new NativeJavaClass(cx, scope, adapterClass, true);
@@ -185,8 +185,8 @@ public final class JavaAdapter implements IdFunctionCall {
 				// Found the constructor, so try invoking it.
 				adapter = NativeJavaClass.constructInternal(cx, scope, ctorArgs, ctors.methods[index]);
 			} else {
-				Class<?>[] ctorParms = {ScriptRuntime.ScriptableClass, ScriptRuntime.ContextFactoryClass};
-				Object[] ctorArgs = {obj, cx.getFactory()};
+				Class<?>[] ctorParms = {ScriptRuntime.ScriptableClass, Context.class};
+				Object[] ctorArgs = {obj, cx};
 				adapter = adapterClass.getConstructor(ctorParms).newInstance(ctorArgs);
 			}
 
@@ -245,7 +245,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
 	public static byte[] createAdapterCode(ObjToIntMap functionNames, String adapterName, Class<?> superClass, Class<?>[] interfaces, String scriptClassName, Context cx) {
 		ClassFileWriter cfw = new ClassFileWriter(adapterName, superClass.getName(), "<adapter>");
-		cfw.addField("factory", "Ldev/latvian/mods/rhino/ContextFactory;", (short) (ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL));
+		cfw.addField("context", "Ldev/latvian/mods/rhino/Context;", (short) (ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL));
 		cfw.addField("delegee", "Ldev/latvian/mods/rhino/Scriptable;", (short) (ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL));
 		cfw.addField("self", "Ldev/latvian/mods/rhino/Scriptable;", (short) (ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL));
 		int interfacesCount = interfaces == null ? 0 : interfaces.length;
@@ -412,13 +412,13 @@ public final class JavaAdapter implements IdFunctionCall {
 		// Note that we swapped arguments in app-facing constructors to avoid
 		// conflicting signatures with serial constructor defined below.
 		if (parameters.length == 0) {
-			cfw.startMethod("<init>", "(Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/ContextFactory;)V", ClassFileWriter.ACC_PUBLIC);
+			cfw.startMethod("<init>", "(Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/Context;)V", ClassFileWriter.ACC_PUBLIC);
 
 			// Invoke base class constructor
 			cfw.add(ByteCode.ALOAD_0);  // this
 			cfw.addInvoke(ByteCode.INVOKESPECIAL, superName, "<init>", "()V");
 		} else {
-			StringBuilder sig = new StringBuilder("(Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/ContextFactory;");
+			StringBuilder sig = new StringBuilder("(Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/Context;");
 			int marker = sig.length(); // lets us reuse buffer for super signature
 			for (Class<?> c : parameters) {
 				appendTypeString(sig, c);
@@ -444,8 +444,8 @@ public final class JavaAdapter implements IdFunctionCall {
 
 		// Save parameter in instance variable "factory"
 		cfw.add(ByteCode.ALOAD_0);  // this
-		cfw.add(ByteCode.ALOAD_2);  // second arg: ContextFactory instance
-		cfw.add(ByteCode.PUTFIELD, adapterName, "factory", "Ldev/latvian/mods/rhino/ContextFactory;");
+		cfw.add(ByteCode.ALOAD_2);  // second arg: Context instance
+		cfw.add(ByteCode.PUTFIELD, adapterName, "context", "Ldev/latvian/mods/rhino/Context;");
 
 		cfw.add(ByteCode.ALOAD_0);  // this for the following PUTFIELD for self
 		// create a wrapper object to be used as "this" in method calls
@@ -459,7 +459,7 @@ public final class JavaAdapter implements IdFunctionCall {
 	}
 
 	private static void generateSerialCtor(ClassFileWriter cfw, String adapterName, String superName) {
-		cfw.startMethod("<init>", "(Ldev/latvian/mods/rhino/ContextFactory;" + "Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/Scriptable;" + ")V", ClassFileWriter.ACC_PUBLIC);
+		cfw.startMethod("<init>", "(Ldev/latvian/mods/rhino/Context;" + "Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/Scriptable;" + ")V", ClassFileWriter.ACC_PUBLIC);
 
 		// Invoke base class constructor
 		cfw.add(ByteCode.ALOAD_0);  // this
@@ -467,8 +467,8 @@ public final class JavaAdapter implements IdFunctionCall {
 
 		// Save parameter in instance variable "factory"
 		cfw.add(ByteCode.ALOAD_0);  // this
-		cfw.add(ByteCode.ALOAD_1);  // first arg: ContextFactory instance
-		cfw.add(ByteCode.PUTFIELD, adapterName, "factory", "Ldev/latvian/mods/rhino/ContextFactory;");
+		cfw.add(ByteCode.ALOAD_1);  // first arg: Context instance
+		cfw.add(ByteCode.PUTFIELD, adapterName, "context", "Ldev/latvian/mods/rhino/Context;");
 
 		// Save parameter in instance variable "delegee"
 		cfw.add(ByteCode.ALOAD_0);  // this
@@ -493,7 +493,7 @@ public final class JavaAdapter implements IdFunctionCall {
 		// Set factory to null to use current global when necessary
 		cfw.add(ByteCode.ALOAD_0);
 		cfw.add(ByteCode.ACONST_NULL);
-		cfw.add(ByteCode.PUTFIELD, adapterName, "factory", "Ldev/latvian/mods/rhino/ContextFactory;");
+		cfw.add(ByteCode.PUTFIELD, adapterName, "context", "Ldev/latvian/mods/rhino/Context;");
 
 		// Load script class
 		cfw.add(ByteCode.NEW, scriptClassName);
@@ -661,7 +661,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
 		// push factory
 		cfw.add(ByteCode.ALOAD_0);
-		cfw.add(ByteCode.GETFIELD, genName, "factory", "Ldev/latvian/mods/rhino/ContextFactory;");
+		cfw.add(ByteCode.GETFIELD, genName, "context", "Ldev/latvian/mods/rhino/Context;");
 
 		// push self
 		cfw.add(ByteCode.ALOAD_0);
@@ -692,7 +692,7 @@ public final class JavaAdapter implements IdFunctionCall {
 
 		// go through utility method, which creates a Context to run the
 		// method in.
-		cfw.addInvoke(ByteCode.INVOKESTATIC, "dev/latvian/mods/rhino/JavaAdapter", "callMethod", "(Ldev/latvian/mods/rhino/ContextFactory;" + "Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/Function;" + "[Ljava/lang/Object;" + "J" + ")Ljava/lang/Object;");
+		cfw.addInvoke(ByteCode.INVOKESTATIC, "dev/latvian/mods/rhino/JavaAdapter", "callMethod", "(Ldev/latvian/mods/rhino/Context;" + "Ldev/latvian/mods/rhino/Scriptable;" + "Ldev/latvian/mods/rhino/Function;" + "[Ljava/lang/Object;" + "J" + ")Ljava/lang/Object;");
 
 		generateReturnResult(cfw, returnType, convertResult);
 

@@ -1,6 +1,5 @@
 package dev.latvian.mods.rhino.test;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("unused")
@@ -8,7 +7,6 @@ public class ScopeTests {
 	public static final RhinoTest TEST = new RhinoTest("scope");
 
 	@Test
-	@DisplayName("Const in Two Blocks")
 	public void constInTwoBlocks() {
 		TEST.test("constInTwoBlocks", """
 				if (false) {
@@ -27,7 +25,6 @@ public class ScopeTests {
 
 	/* Need to figure out what the actual values should be
 	@Test
-	@DisplayName("Scopes II")
 	@Order(4)
 	public void scopes2() {
 		TEST.test("scopes2", """

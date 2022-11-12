@@ -51,25 +51,8 @@ public class Context {
 	public static final String languageVersionProperty = "language version";
 	public static final String errorReporterProperty = "error reporter";
 
-	/**
-	 * Same as calling {@link ContextFactory#enterContext()} on the global
-	 * ContextFactory instance.
-	 *
-	 * @return a Context associated with the current thread
-	 * @see #exit()
-	 */
 	public static Context enter() {
-		return enter(new ContextFactory());
-	}
-
-	public static Context enter(ContextFactory factory) {
-		var cx = factory.makeContext();
-
-		if (factory.isSealed() && !cx.isSealed()) {
-			cx.seal(null);
-		}
-
-		return cx;
+		return new Context();
 	}
 
 	/**
@@ -85,26 +68,9 @@ public class Context {
 	 * It is allowed but not advisable to use null for <code>factory</code>
 	 * argument in which case the global static singleton ContextFactory
 	 * instance will be used to create new context instances.
-	 *
-	 * @see ContextFactory#call(ContextAction)
 	 */
-	public static Object call(ContextFactory factory, final Callable callable, final Scriptable scope, final Scriptable thisObj, final Object[] args) {
-		if (factory == null) {
-			factory = new ContextFactory();
-		}
-		return call(factory, cx -> callable.call(cx, scope, thisObj, args));
-	}
-
-	/**
-	 * The method implements {@link ContextFactory#call(ContextAction)} logic.
-	 */
-	static <T> T call(ContextFactory factory, ContextAction<T> action) {
-		Context cx = enter(factory);
-		return action.run(cx);
-	}
-
-	static void onSealedMutation() {
-		throw new IllegalStateException();
+	public static Object call(Context cx, final Callable callable, final Scriptable scope, final Scriptable thisObj, final Object[] args) {
+		return callable.call(cx, scope, thisObj, args);
 	}
 
 	/**
@@ -362,7 +328,6 @@ public class Context {
 		return null;
 	}
 
-	private final ContextFactory factory;
 	// Generate an observer count on compiled code
 	public boolean generateObserverCount = false;
 	public final SharedContextData sharedContextData;
@@ -388,7 +353,6 @@ public class Context {
 	// It can be used to return the second Scriptable result from function
 	Scriptable scratchScriptable;
 	boolean isTopLevelStrict;
-	private boolean sealed;
 	private Object sealKey;
 	private ErrorReporter errorReporter;
 	private int maximumInterpreterStackDepth;
@@ -406,83 +370,9 @@ public class Context {
 	 *                otherwise use its factory's services.
 	 * @throws IllegalArgumentException if factory parameter is null.
 	 */
-	protected Context(ContextFactory factory) {
-		if (factory == null) {
-			throw new IllegalArgumentException("factory == null");
-		}
-		this.factory = factory;
+	protected Context() {
 		maximumInterpreterStackDepth = Integer.MAX_VALUE;
 		sharedContextData = new SharedContextData(this);
-	}
-
-	/**
-	 * Return {@link ContextFactory} instance used to create this Context.
-	 */
-	public final ContextFactory getFactory() {
-		return factory;
-	}
-
-	/**
-	 * Checks if this is a sealed Context. A sealed Context instance does not
-	 * allow to modify any of its properties and will throw an exception
-	 * on any such attempt.
-	 *
-	 * @see #seal(Object sealKey)
-	 */
-	public final boolean isSealed() {
-		return sealed;
-	}
-
-	/**
-	 * Seal this Context object so any attempt to modify any of its properties
-	 * including calling {@link #enter()} and {@link #exit()} methods will
-	 * throw an exception.
-	 * <p>
-	 * If <code>sealKey</code> is not null, calling
-	 * {@link #unseal(Object sealKey)} with the same key unseals
-	 * the object. If <code>sealKey</code> is null, unsealing is no longer possible.
-	 *
-	 * @see #isSealed()
-	 * @see #unseal(Object)
-	 */
-	public final void seal(Object sealKey) {
-		if (sealed) {
-			onSealedMutation();
-		}
-		sealed = true;
-		this.sealKey = sealKey;
-	}
-
-	/**
-	 * Unseal previously sealed Context object.
-	 * The <code>sealKey</code> argument should not be null and should match
-	 * <code>sealKey</code> suplied with the last call to
-	 * {@link #seal(Object)} or an exception will be thrown.
-	 *
-	 * @see #isSealed()
-	 * @see #seal(Object sealKey)
-	 */
-	public final void unseal(Object sealKey) {
-		if (sealKey == null) {
-			throw new IllegalArgumentException();
-		}
-		if (this.sealKey != sealKey) {
-			throw new IllegalArgumentException();
-		}
-		if (!sealed) {
-			throw new IllegalStateException();
-		}
-		sealed = false;
-		this.sealKey = null;
-	}
-
-	@Deprecated
-	public void setLanguageVersion(int version) {
-		if (sealed) {
-			onSealedMutation();
-		}
-
-		System.out.println("Context#setLanguageVersion(v) is deprecated!");
 	}
 
 	/**
@@ -524,9 +414,6 @@ public class Context {
 	 * @see ErrorReporter
 	 */
 	public final ErrorReporter setErrorReporter(ErrorReporter reporter) {
-		if (sealed) {
-			onSealedMutation();
-		}
 		if (reporter == null) {
 			throw new IllegalArgumentException();
 		}
@@ -551,9 +438,6 @@ public class Context {
 	 * @see #removePropertyChangeListener(java.beans.PropertyChangeListener)
 	 */
 	public final void addPropertyChangeListener(PropertyChangeListener l) {
-		if (sealed) {
-			onSealedMutation();
-		}
 		propertyListeners = Kit.addListener(propertyListeners, l);
 	}
 
@@ -566,9 +450,6 @@ public class Context {
 	 * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
 	 */
 	public final void removePropertyChangeListener(PropertyChangeListener l) {
-		if (sealed) {
-			onSealedMutation();
-		}
 		propertyListeners = Kit.removeListener(propertyListeners, l);
 	}
 
@@ -1150,9 +1031,6 @@ public class Context {
 	 * @throws IllegalArgumentException if the new depth is not at least 1
 	 */
 	public final void setMaximumInterpreterStackDepth(int max) {
-		if (sealed) {
-			onSealedMutation();
-		}
 		if (max < 1) {
 			throw new IllegalArgumentException("Cannot set maximumInterpreterStackDepth to less than 1");
 		}
@@ -1190,9 +1068,6 @@ public class Context {
 	 * @param value the value to save
 	 */
 	public synchronized final void putThreadLocal(Object key, Object value) {
-		if (sealed) {
-			onSealedMutation();
-		}
 		if (threadLocalMap == null) {
 			threadLocalMap = new HashMap<>();
 		}
@@ -1206,9 +1081,6 @@ public class Context {
 	 * @since 1.5 release 2
 	 */
 	public final void removeThreadLocal(Object key) {
-		if (sealed) {
-			onSealedMutation();
-		}
 		if (threadLocalMap == null) {
 			return;
 		}
@@ -1244,9 +1116,6 @@ public class Context {
 	 * @param threshold The instruction threshold
 	 */
 	public final void setInstructionObserverThreshold(int threshold) {
-		if (sealed) {
-			onSealedMutation();
-		}
 		if (threshold < 0) {
 			throw new IllegalArgumentException();
 		}
@@ -1289,8 +1158,6 @@ public class Context {
 	 * @throws Error to terminate the script
 	 */
 	protected void observeInstructionCount(int instructionCount) {
-		ContextFactory f = getFactory();
-		f.observeInstructionCount(this, instructionCount);
 	}
 
 	/********** end of API **********/
@@ -1301,42 +1168,28 @@ public class Context {
 	 * using the result of {@link #getFactory()}.
 	 */
 	public GeneratedClassLoader createClassLoader(ClassLoader parent) {
-		ContextFactory f = getFactory();
-		return f.createClassLoader(parent);
+		return new DefiningClassLoader(parent);
 	}
 
 	public final ClassLoader getApplicationClassLoader() {
 		if (applicationClassLoader == null) {
-			ContextFactory f = getFactory();
-			ClassLoader loader = f.getApplicationClassLoader();
-			if (loader == null) {
-				ClassLoader threadLoader = Thread.currentThread().getContextClassLoader();
-				if (threadLoader != null && Kit.testIfCanLoadRhinoClasses(threadLoader)) {
-					// Thread.getContextClassLoader is not cached since
-					// its caching prevents it from GC which may lead to
-					// a memory leak and hides updates to
-					// Thread.getContextClassLoader
-					return threadLoader;
-				}
-				// Thread.getContextClassLoader can not load Rhino classes,
-				// try to use the loader of ContextFactory or Context
-				// subclasses.
-				Class<?> fClass = f.getClass();
-				if (fClass != ScriptRuntime.ContextFactoryClass) {
-					loader = fClass.getClassLoader();
-				} else {
-					loader = getClass().getClassLoader();
-				}
+			ClassLoader threadLoader = Thread.currentThread().getContextClassLoader();
+			if (threadLoader != null && Kit.testIfCanLoadRhinoClasses(threadLoader)) {
+				// Thread.getContextClassLoader is not cached since
+				// its caching prevents it from GC which may lead to
+				// a memory leak and hides updates to
+				// Thread.getContextClassLoader
+				return threadLoader;
 			}
-			applicationClassLoader = loader;
+			// Thread.getContextClassLoader can not load Rhino classes,
+			// try to use the loader of ContextFactory or Context
+			// subclasses.
+			applicationClassLoader = getClass().getClassLoader();
 		}
 		return applicationClassLoader;
 	}
 
 	public final void setApplicationClassLoader(ClassLoader loader) {
-		if (sealed) {
-			onSealedMutation();
-		}
 		if (loader == null) {
 			// restore default behaviour
 			applicationClassLoader = null;
@@ -1440,5 +1293,17 @@ public class Context {
 		} else {
 			ScriptableObject.putProperty(scope, name, Context.javaToJS(this, value, scope), this);
 		}
+	}
+
+	/**
+	 * Execute top call to script or function.
+	 * When the runtime is about to execute a script or function that will
+	 * create the first stack frame with scriptable code, it calls this method
+	 * to perform the real call. In this way execution of any script
+	 * happens inside this function.
+	 */
+	protected Object doTopCall(Callable callable, Scriptable scope, Scriptable thisObj, Object[] args) {
+		Object result = callable.call(this, scope, thisObj, args);
+		return result instanceof ConsString ? result.toString() : result;
 	}
 }
