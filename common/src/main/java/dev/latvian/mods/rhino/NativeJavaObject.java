@@ -265,25 +265,24 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 		TypeWrapperFactory<?> typeWrapper = typeWrappers == null ? null : typeWrappers.getWrapperFactory(type, unwrappedValue);
 
 		if (typeWrapper != null) {
-			return typeWrapper.wrap(unwrappedValue);
+			return typeWrapper.wrap(cx, unwrappedValue);
 		}
 
 		switch (getJSTypeCode(value)) {
-
-			case JSTYPE_NULL:
+			case JSTYPE_NULL -> {
 				// raise error if type.isPrimitive()
 				if (type.isPrimitive()) {
 					return reportConversionError(value, type, cx);
 				}
 				return null;
-
-			case JSTYPE_UNDEFINED:
+			}
+			case JSTYPE_UNDEFINED -> {
 				if (type == ScriptRuntime.StringClass || type == ScriptRuntime.ObjectClass) {
 					return "undefined";
 				}
 				return reportConversionError("undefined", type, value, cx);
-
-			case JSTYPE_BOOLEAN:
+			}
+			case JSTYPE_BOOLEAN -> {
 				// Under LC3, only JS Booleans can be coerced into a Boolean value
 				if (type == Boolean.TYPE || type == ScriptRuntime.BooleanClass || type == ScriptRuntime.ObjectClass) {
 					return value;
@@ -292,7 +291,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 				} else {
 					return reportConversionError(value, type, cx);
 				}
-			case JSTYPE_NUMBER:
+			}
+			case JSTYPE_NUMBER -> {
 				if (type == ScriptRuntime.StringClass) {
 					return ScriptRuntime.toString(cx, value);
 				} else if (type == ScriptRuntime.ObjectClass) {
@@ -311,8 +311,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 				} else {
 					return reportConversionError(value, type, cx);
 				}
-
-			case JSTYPE_STRING:
+			}
+			case JSTYPE_STRING -> {
 				if (type == ScriptRuntime.StringClass || type.isInstance(value)) {
 					return value.toString();
 				} else if (type == Character.TYPE || type == ScriptRuntime.CharacterClass) {
@@ -329,8 +329,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 				} else {
 					return reportConversionError(value, type, cx);
 				}
-
-			case JSTYPE_JAVA_CLASS:
+			}
+			case JSTYPE_JAVA_CLASS -> {
 				if (type == ScriptRuntime.ClassClass || type == ScriptRuntime.ObjectClass) {
 					return unwrappedValue;
 				} else if (type == ScriptRuntime.StringClass) {
@@ -338,9 +338,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 				} else {
 					return reportConversionError(unwrappedValue, type, cx);
 				}
-
-			case JSTYPE_JAVA_OBJECT:
-			case JSTYPE_JAVA_ARRAY:
+			}
+			case JSTYPE_JAVA_OBJECT, JSTYPE_JAVA_ARRAY -> {
 				if (type.isPrimitive()) {
 					if (type == Boolean.TYPE) {
 						return reportConversionError(unwrappedValue, type, cx);
@@ -354,7 +353,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 					return unwrappedValue;
 				}
 				return reportConversionError(unwrappedValue, type, cx);
-			case JSTYPE_OBJECT:
+			}
+			case JSTYPE_OBJECT -> {
 				if (type == ScriptRuntime.StringClass) {
 					return ScriptRuntime.toString(cx, value);
 				} else if (type.isPrimitive()) {
@@ -394,6 +394,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 				} else {
 					return reportConversionError(value, type, cx);
 				}
+			}
 		}
 
 
