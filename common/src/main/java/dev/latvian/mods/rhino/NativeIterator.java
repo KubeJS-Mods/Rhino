@@ -130,7 +130,7 @@ public final class NativeIterator extends IdScriptableObject {
 			Iterator<?> iterator = getJavaIterator(obj);
 			if (iterator != null) {
 				scope = getTopLevelScope(scope);
-				return cx.sharedContextData.getWrapFactory().wrap(cx, scope, new WrappedJavaIterator(cx, iterator, scope), WrappedJavaIterator.class);
+				return cx.getWrapFactory().wrap(cx, scope, new WrappedJavaIterator(cx, iterator, scope), WrappedJavaIterator.class);
 			}
 
 			// Otherwise, just call the runtime routine

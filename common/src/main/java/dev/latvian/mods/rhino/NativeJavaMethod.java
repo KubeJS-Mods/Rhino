@@ -468,7 +468,7 @@ public class NativeJavaMethod extends BaseFunction {
 			System.err.println(" ----- Returned " + retval + " actual = " + actualType + " expect = " + staticType);
 		}
 
-		Object wrapped = cx.sharedContextData.getWrapFactory().wrap(cx, scope, retval, staticType);
+		Object wrapped = cx.getWrapFactory().wrap(cx, scope, retval, staticType);
 		if (debug) {
 			Class<?> actualType = (wrapped == null) ? null : wrapped.getClass();
 			System.err.println(" ----- Wrapped as " + wrapped + " class = " + actualType);

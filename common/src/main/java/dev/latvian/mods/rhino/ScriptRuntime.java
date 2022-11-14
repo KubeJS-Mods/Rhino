@@ -943,7 +943,7 @@ public class ScriptRuntime {
 		}
 
 		// Extension: Wrap as a LiveConnect object.
-		Object wrapped = cx.sharedContextData.getWrapFactory().wrap(cx, scope, val, null);
+		Object wrapped = cx.getWrapFactory().wrap(cx, scope, val, null);
 		if (wrapped instanceof Scriptable) {
 			return (Scriptable) wrapped;
 		}
@@ -2771,11 +2771,11 @@ public class ScriptRuntime {
 			}
 
 			if (javaException != null && isVisible(cx, javaException, ClassShutter.TYPE_EXCEPTION)) {
-				Object wrap = cx.sharedContextData.getWrapFactory().wrap(cx, scope, javaException, null);
+				Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
 				ScriptableObject.defineProperty(errorObject, "javaException", wrap, ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM, cx);
 			}
 			if (isVisible(cx, re, ClassShutter.TYPE_EXCEPTION)) {
-				Object wrap = cx.sharedContextData.getWrapFactory().wrap(cx, scope, re, null);
+				Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
 				ScriptableObject.defineProperty(errorObject, "rhinoException", wrap, ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM, cx);
 			}
 			obj = errorObject;
@@ -2844,18 +2844,18 @@ public class ScriptRuntime {
 		}
 
 		if (javaException != null && isVisible(cx, javaException, ClassShutter.TYPE_EXCEPTION)) {
-			Object wrap = cx.sharedContextData.getWrapFactory().wrap(cx, scope, javaException, null);
+			Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
 			ScriptableObject.defineProperty(errorObject, "javaException", wrap, ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM, cx);
 		}
 		if (isVisible(cx, re, ClassShutter.TYPE_EXCEPTION)) {
-			Object wrap = cx.sharedContextData.getWrapFactory().wrap(cx, scope, re, null);
+			Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
 			ScriptableObject.defineProperty(errorObject, "rhinoException", wrap, ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM, cx);
 		}
 		return errorObject;
 	}
 
 	private static boolean isVisible(Context cx, Object obj, int type) {
-		ClassShutter shutter = cx.sharedContextData.getClassShutter();
+		ClassShutter shutter = cx.getClassShutter();
 		return shutter == null || shutter.visibleToScripts(obj.getClass().getName(), type);
 	}
 

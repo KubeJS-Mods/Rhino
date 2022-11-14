@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,7 +63,7 @@ public class JavaMembers {
 	}
 
 	public static class MethodInfo {
-		public final Method method;
+		public Method method;
 		public String name = "";
 		public boolean hidden = false;
 
@@ -190,7 +191,7 @@ public class JavaMembers {
 
 	public static JavaMembers lookupClass(Context cx, Scriptable scope, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
 		JavaMembers members;
-		Map<Class<?>, JavaMembers> ct = cx.sharedContextData.getClassCacheMap();
+		Map<Class<?>, JavaMembers> ct = cx.getClassCacheMap();
 
 		Class<?> cl = dynamicType;
 		for (; ; ) {
@@ -250,7 +251,7 @@ public class JavaMembers {
 	JavaMembers(Class<?> cl, boolean includeProtected, Context cx, Scriptable scope) {
 		this.localContext = cx;
 
-		ClassShutter shutter = cx.sharedContextData.getClassShutter();
+		ClassShutter shutter = cx.getClassShutter();
 		if (shutter != null && !shutter.visibleToScripts(cl.getName(), ClassShutter.TYPE_MEMBER)) {
 			throw Context.reportRuntimeError1("msg.access.prohibited", cl.getName(), cx);
 		}
@@ -304,7 +305,7 @@ public class JavaMembers {
 		}
 		// Need to wrap the object before we return it.
 		scope = ScriptableObject.getTopLevelScope(scope);
-		return cx.sharedContextData.getWrapFactory().wrap(cx, scope, rval, type);
+		return cx.getWrapFactory().wrap(cx, scope, rval, type);
 	}
 
 	public void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic, Context cx) {
@@ -663,8 +664,8 @@ public class JavaMembers {
 		return constructorsList;
 	}
 
-	public List<FieldInfo> getAccessibleFields(Context cx, boolean includeProtected) {
-		List<FieldInfo> fieldList = new ArrayList<>();
+	public Collection<FieldInfo> getAccessibleFields(Context cx, boolean includeProtected) {
+		var fieldMap = new LinkedHashMap<String, FieldInfo>();
 
 		try {
 			Class<?> currentClass = cl;
@@ -709,14 +710,16 @@ public class JavaMembers {
 							}
 
 							if (info.name.isEmpty()) {
-								info.name = cx.sharedContextData.getRemapper().getMappedField(currentClass, field);
+								info.name = cx.getRemapper().getMappedField(currentClass, field);
 							}
 
 							if (info.name.isEmpty()) {
 								info.name = field.getName();
 							}
 
-							fieldList.add(info);
+							if (!fieldMap.containsKey(info.name)) {
+								fieldMap.put(info.name, info);
+							}
 						} catch (Exception ex) {
 							// ex.printStackTrace();
 						}
@@ -731,11 +734,11 @@ public class JavaMembers {
 			// fall through to !includePrivate case
 		}
 
-		return fieldList;
+		return fieldMap.values();
 	}
 
 	public Collection<MethodInfo> getAccessibleMethods(Context cx, boolean includeProtected) {
-		var methodMap = new HashMap<MethodSignature, MethodInfo>();
+		var methodMap = new LinkedHashMap<MethodSignature, MethodInfo>();
 
 		var stack = new ArrayDeque<Class<?>>();
 		stack.add(cl);
@@ -774,34 +777,30 @@ public class JavaMembers {
 						}
 					}
 
-					if (info != null) {
-						if (hidden) {
-							info.hidden = true;
-							continue;
-						}
+					if (info == null) {
+						continue;
+					} else if (hidden) {
+						info.hidden = true;
+						continue;
+					}
 
-						var remap = method.getAnnotation(RemapForJS.class);
+					var remap = method.getAnnotation(RemapForJS.class);
 
-						if (remap != null) {
-							info.name = remap.value().trim();
-						}
+					if (remap != null) {
+						info.name = remap.value().trim();
+					}
 
-						if (info.name.isEmpty()) {
-							for (String s : remapPrefixes) {
-								if (method.getName().startsWith(s)) {
-									info.name = method.getName().substring(s.length()).trim();
-									break;
-								}
+					if (info.name.isEmpty()) {
+						for (String s : remapPrefixes) {
+							if (method.getName().startsWith(s)) {
+								info.name = method.getName().substring(s.length()).trim();
+								break;
 							}
 						}
+					}
 
-						if (info.name.isEmpty()) {
-							info.name = cx.sharedContextData.getRemapper().getMappedMethod(currentClass, method);
-						}
-
-						if (info.name.isEmpty()) {
-							info.name = method.getName();
-						}
+					if (info.name.isEmpty()) {
+						info.name = cx.getRemapper().getMappedMethod(currentClass, method);
 					}
 				}
 			}
@@ -815,10 +814,14 @@ public class JavaMembers {
 			}
 		}
 
-		List<MethodInfo> list = new ArrayList<>(methodMap.size());
+		var list = new ArrayList<MethodInfo>(methodMap.size());
 
 		for (var m : methodMap.values()) {
 			if (!m.hidden) {
+				if (m.name.isEmpty()) {
+					m.name = m.method.getName();
+				}
+
 				list.add(m);
 			}
 		}

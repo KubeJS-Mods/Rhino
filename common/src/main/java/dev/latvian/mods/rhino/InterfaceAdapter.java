@@ -29,7 +29,7 @@ public class InterfaceAdapter {
 
 		Scriptable topScope = ScriptRuntime.getTopCallScope(cx);
 		InterfaceAdapter adapter;
-		adapter = (InterfaceAdapter) cx.sharedContextData.getInterfaceAdapter(cl);
+		adapter = (InterfaceAdapter) cx.getInterfaceAdapter(cl);
 		if (adapter == null) {
 			Method[] methods = cl.getMethods();
 			if (object instanceof Callable) {
@@ -57,7 +57,7 @@ public class InterfaceAdapter {
 				}
 			}
 			adapter = new InterfaceAdapter(cx, cl);
-			cx.sharedContextData.cacheInterfaceAdapter(cl, adapter);
+			cx.cacheInterfaceAdapter(cl, adapter);
 		}
 		return VMBridge.newInterfaceProxy(adapter.proxyHelper, adapter, object, topScope, cx);
 	}
@@ -112,7 +112,7 @@ public class InterfaceAdapter {
 			}
 			function = (Callable) value;
 		}
-		WrapFactory wf = cx.sharedContextData.getWrapFactory();
+		WrapFactory wf = cx.getWrapFactory();
 		if (args == null) {
 			args = ScriptRuntime.EMPTY_OBJECTS;
 		} else {

@@ -34,7 +34,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 		// we need to force this to be wrapped, because construct _has_
 		// to return a scriptable
 		Scriptable topLevel = ScriptableObject.getTopLevelScope(scope);
-		return cx.sharedContextData.getWrapFactory().wrapNewObject(topLevel, instance, cx);
+		return cx.getWrapFactory().wrapNewObject(topLevel, instance, cx);
 	}
 
 	static Object constructInternal(Context cx, Scriptable scope, Object[] args, MemberBox ctor) {
@@ -152,14 +152,14 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 		Scriptable scope = ScriptableObject.getTopLevelScope(start);
 
 		if (javaClassPropertyName.equals(name)) {
-			return cx.sharedContextData.getWrapFactory().wrap(cx, scope, javaObject, ScriptRuntime.ClassClass);
+			return cx.getWrapFactory().wrap(cx, scope, javaObject, ScriptRuntime.ClassClass);
 		}
 
 		// experimental:  look for nested classes by appending $name to
 		// current class' name.
 		Class<?> nestedClass = findNestedClass(getClassObject(), name);
 		if (nestedClass != null) {
-			Scriptable nestedValue = cx.sharedContextData.getWrapFactory().wrapJavaClass(cx, scope, nestedClass);
+			Scriptable nestedValue = cx.getWrapFactory().wrapJavaClass(cx, scope, nestedClass);
 			nestedValue.setParentScope(this);
 			return nestedValue;
 		}
@@ -240,7 +240,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 			// bytecode generation won't work on Dalvik VM.
 			if ("Dalvik".equals(System.getProperty("java.vm.name")) && classObject.isInterface()) {
 				Object obj = createInterfaceAdapter(cx, classObject, ScriptableObject.ensureScriptableObject(args[0], cx));
-				return cx.sharedContextData.getWrapFactory().wrapAsJavaObject(cx, scope, obj, null);
+				return cx.getWrapFactory().wrapAsJavaObject(cx, scope, obj, null);
 			}
 			// use JavaAdapter to construct a new class on the fly that
 			// implements/extends this interface/abstract class.

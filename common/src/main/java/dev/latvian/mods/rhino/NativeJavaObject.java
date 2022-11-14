@@ -64,7 +64,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	 * "preferred method conversions" from Live Connect 3</a>
 	 */
 	static int getConversionWeight(Context cx, Object fromObj, Class<?> to) {
-		if (cx.sharedContextData.hasTypeWrappers() && cx.sharedContextData.getTypeWrappers().getWrapperFactory(to, fromObj) != null) {
+		if (cx.hasTypeWrappers() && cx.getTypeWrappers().getWrapperFactory(to, fromObj) != null) {
 			return CONVERSION_NONTRIVIAL;
 		}
 
@@ -659,7 +659,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 						return Undefined.instance;
 					}
 
-					Object r1 = cx.sharedContextData.getWrapFactory().wrap(cx, this, r, r.getClass());
+					Object r1 = cx.getWrapFactory().wrap(cx, this, r, r.getClass());
 
 					if (r1 instanceof Scriptable) {
 						return ((Scriptable) r1).getDefaultValue(cx, null);

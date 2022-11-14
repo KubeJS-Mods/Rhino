@@ -39,7 +39,7 @@ public class CustomFunction extends BaseFunction {
 			return Undefined.instance;
 		}
 
-		Object wrapped = cx.sharedContextData.getWrapFactory().wrap(cx, scope, retval, retval.getClass());
+		Object wrapped = cx.getWrapFactory().wrap(cx, scope, retval, retval.getClass());
 
 		if (wrapped == null) {
 			wrapped = Undefined.instance;

@@ -227,14 +227,14 @@ public final class JavaAdapter implements IdFunctionCall {
 	}
 
 	private static Class<?> getAdapterClass(Context cx, Scriptable scope, Class<?> superClass, Class<?>[] interfaces, Scriptable obj) {
-		Map<JavaAdapterSignature, Class<?>> generated = cx.sharedContextData.getInterfaceAdapterCacheMap();
+		Map<JavaAdapterSignature, Class<?>> generated = cx.getInterfaceAdapterCacheMap();
 
 		ObjToIntMap names = getObjectFunctionNames(cx, obj);
 		JavaAdapterSignature sig;
 		sig = new JavaAdapterSignature(superClass, interfaces, names);
 		Class<?> adapterClass = generated.get(sig);
 		if (adapterClass == null) {
-			String adapterName = "adapter" + cx.sharedContextData.newClassSerialNumber();
+			String adapterName = "adapter" + cx.newClassSerialNumber();
 			byte[] code = createAdapterCode(names, adapterName, superClass, interfaces, null, cx);
 
 			adapterClass = loadAdapterClass(cx, adapterName, code);

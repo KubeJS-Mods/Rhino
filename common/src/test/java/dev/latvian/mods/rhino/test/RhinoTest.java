@@ -24,15 +24,15 @@ public class RhinoTest {
 		context = Context.enter();
 		console = new TestConsole(context);
 
-		var typeWrappers = context.sharedContextData.getTypeWrappers();
+		var typeWrappers = context.getTypeWrappers();
 		typeWrappers.registerSimple(CompoundTag.class, NBTUtils::isTagCompound, NBTUtils::toTagCompound);
 		typeWrappers.registerSimple(CollectionTag.class, NBTUtils::isTagCollection, NBTUtils::toTagCollection);
 		typeWrappers.registerSimple(ListTag.class, NBTUtils::isTagCollection, NBTUtils::toTagList);
 		typeWrappers.registerSimple(Tag.class, NBTUtils::toTag);
 		typeWrappers.registerSimple(TestMaterial.class, TestMaterial::get);
 
-		context.sharedContextData.addCustomJavaToJsWrapper(CompoundTag.class, CompoundTagWrapper::new);
-		context.sharedContextData.addCustomJavaToJsWrapper(CollectionTag.class, CollectionTagWrapper::new);
+		context.addCustomJavaToJsWrapper(CompoundTag.class, CompoundTagWrapper::new);
+		context.addCustomJavaToJsWrapper(CollectionTag.class, CollectionTagWrapper::new);
 
 		rootScope = context.initStandardObjects();
 		context.addToScope(rootScope, "console", console);
