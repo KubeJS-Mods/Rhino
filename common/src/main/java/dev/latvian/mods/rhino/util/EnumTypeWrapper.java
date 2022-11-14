@@ -1,5 +1,6 @@
 package dev.latvian.mods.rhino.util;
 
+import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 
 import java.util.HashMap;
@@ -55,7 +56,7 @@ public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 	}
 
 	@Override
-	public T wrap(Object o) {
+	public T wrap(Context cx, Object o) {
 		if (o instanceof CharSequence) {
 			String s = o.toString().toLowerCase();
 

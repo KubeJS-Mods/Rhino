@@ -1,15 +1,20 @@
 package dev.latvian.mods.rhino.util.wrap;
 
+import dev.latvian.mods.rhino.Context;
+
 /**
  * @author LatvianModder
  */
 @FunctionalInterface
 public interface TypeWrapperFactory<T> {
-	//TypeWrapperFactory<Object> OBJECT_TO_ARRAY = o -> {
-	//	Object array = Array.newInstance(o.getClass(), 1);
-	//	Array.set(array, 0, o);
-	//	return array;
-	//};
+	interface Simple<T> extends TypeWrapperFactory<T> {
+		T wrapSimple(Object o);
 
-	T wrap(Object o);
+		@Override
+		default T wrap(Context cx, Object o) {
+			return wrapSimple(o);
+		}
+	}
+
+	T wrap(Context cx, Object o);
 }

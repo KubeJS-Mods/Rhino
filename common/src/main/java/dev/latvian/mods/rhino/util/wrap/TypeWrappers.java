@@ -52,6 +52,14 @@ public class TypeWrappers {
 		register(target, TypeWrapper.ALWAYS_VALID, factory);
 	}
 
+	public <T> void registerSimple(Class<T> target, Predicate<Object> validator, TypeWrapperFactory.Simple<T> factory) {
+		register(target, validator, factory);
+	}
+
+	public <T> void registerSimple(Class<T> target, TypeWrapperFactory.Simple<T> factory) {
+		register(target, TypeWrapper.ALWAYS_VALID, factory);
+	}
+
 	@Nullable
 	public TypeWrapperFactory<?> getWrapperFactory(Class<?> target, @Nullable Object from) {
 		if (target == Object.class) {

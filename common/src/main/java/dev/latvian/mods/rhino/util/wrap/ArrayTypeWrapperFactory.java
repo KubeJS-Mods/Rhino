@@ -1,5 +1,7 @@
 package dev.latvian.mods.rhino.util.wrap;
 
+import dev.latvian.mods.rhino.Context;
+
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,7 +25,7 @@ public class ArrayTypeWrapperFactory<T> implements TypeWrapperFactory<T[]> {
 
 	@Override
 	@SuppressWarnings("all")
-	public T[] wrap(Object o) {
+	public T[] wrap(Context cx, Object o) {
 		if (o == null) {
 			return emptyArray;
 		} else if (o instanceof Iterable) {
@@ -48,7 +50,7 @@ public class ArrayTypeWrapperFactory<T> implements TypeWrapperFactory<T[]> {
 
 			for (Object o1 : (Iterable<Object>) o) {
 				if (typeWrapper.validator.test(o1)) {
-					array[index] = typeWrapper.factory.wrap(o1);
+					array[index] = typeWrapper.factory.wrap(cx, o1);
 					index++;
 				}
 			}
@@ -68,7 +70,7 @@ public class ArrayTypeWrapperFactory<T> implements TypeWrapperFactory<T[]> {
 				Object o1 = Array.get(o, i);
 
 				if (typeWrapper.validator.test(o1)) {
-					array[index] = typeWrapper.factory.wrap(o1);
+					array[index] = typeWrapper.factory.wrap(cx, o1);
 					index++;
 				}
 			}
@@ -76,7 +78,7 @@ public class ArrayTypeWrapperFactory<T> implements TypeWrapperFactory<T[]> {
 			return index == 0 ? emptyArray : index == array.length ? array : Arrays.copyOf(array, index, arrayTarget);
 		} else if (typeWrapper.validator.test(o)) {
 			T[] array = (T[]) Array.newInstance(target, 1);
-			array[0] = typeWrapper.factory.wrap(o);
+			array[0] = typeWrapper.factory.wrap(cx, o);
 			return array;
 		}
 

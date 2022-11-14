@@ -77,7 +77,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	public Object get(Context cx, int index, Scriptable start) {
 		if (0 <= index && index < length) {
 			Object obj = Array.get(array, index);
-			return cx.sharedContextData.getWrapFactory().wrap(cx, this, obj, cls);
+			return cx.getWrapFactory().wrap(cx, this, obj, cls);
 		}
 		return Undefined.instance;
 	}

@@ -12,17 +12,26 @@ import dev.latvian.mods.rhino.ast.AstRoot;
 import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter.ClassFileFormatException;
 import dev.latvian.mods.rhino.regexp.RegExp;
+import dev.latvian.mods.rhino.util.CustomJavaToJsWrapper;
+import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProvider;
+import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProviderHolder;
+import dev.latvian.mods.rhino.util.DefaultRemapper;
+import dev.latvian.mods.rhino.util.Remapper;
+import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
+import org.jetbrains.annotations.Nullable;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 /**
  * This class represents the runtime context of an executing script.
@@ -48,7 +57,6 @@ import java.util.Map;
 
 @SuppressWarnings("ThrowableNotThrown")
 public class Context {
-	public static final String languageVersionProperty = "language version";
 	public static final String errorReporterProperty = "error reporter";
 
 	public static Context enter() {
@@ -239,7 +247,7 @@ public class Context {
 		} else if (value instanceof Character) {
 			return String.valueOf(((Character) value).charValue());
 		} else {
-			return cx.sharedContextData.getWrapFactory().wrap(cx, scope, value, null);
+			return cx.getWrapFactory().wrap(cx, scope, value, null);
 		}
 	}
 
@@ -260,7 +268,7 @@ public class Context {
 			return value;
 		}
 
-		return NativeJavaObject.coerceTypeImpl(cx.sharedContextData.hasTypeWrappers() ? cx.sharedContextData.getTypeWrappers() : null, desiredType, value, cx);
+		return NativeJavaObject.coerceTypeImpl(cx.hasTypeWrappers() ? cx.getTypeWrappers() : null, desiredType, value, cx);
 	}
 
 	/**
@@ -330,7 +338,6 @@ public class Context {
 
 	// Generate an observer count on compiled code
 	public boolean generateObserverCount = false;
-	public final SharedContextData sharedContextData;
 	Scriptable topCallScope;
 	boolean isContinuationsTopCall;
 	NativeCall currentActivationCall;
@@ -360,6 +367,20 @@ public class Context {
 	private Map<Object, Object> threadLocalMap;
 	private ClassLoader applicationClassLoader;
 
+	// custom data
+
+	final List<CustomJavaToJsWrapperProviderHolder<?>> customScriptableWrappers = new ArrayList<>();
+	final Map<Class<?>, CustomJavaToJsWrapperProvider> customScriptableWrapperCache = new HashMap<>();
+	private final Map<String, Object> properties = new HashMap<>();
+	TypeWrappers typeWrappers;
+	Remapper remapper = DefaultRemapper.INSTANCE;
+	private transient Map<Class<?>, JavaMembers> classTable;
+	private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
+	private transient Map<Class<?>, Object> interfaceAdapterCache;
+	private int generatedClassSerial;
+	private ClassShutter classShutter;
+	private WrapFactory wrapFactory;
+
 	/**
 	 * Creates a new context. Provided as a preferred super constructor for
 	 * subclasses in place of the deprecated default public constructor.
@@ -372,7 +393,6 @@ public class Context {
 	 */
 	protected Context() {
 		maximumInterpreterStackDepth = Integer.MAX_VALUE;
-		sharedContextData = new SharedContextData(this);
 	}
 
 	/**
@@ -405,82 +425,6 @@ public class Context {
 			return DefaultErrorReporter.instance;
 		}
 		return errorReporter;
-	}
-
-	/**
-	 * Change the current error reporter.
-	 *
-	 * @return the previous error reporter
-	 * @see ErrorReporter
-	 */
-	public final ErrorReporter setErrorReporter(ErrorReporter reporter) {
-		if (reporter == null) {
-			throw new IllegalArgumentException();
-		}
-		ErrorReporter old = getErrorReporter();
-		if (reporter == old) {
-			return old;
-		}
-		Object listeners = propertyListeners;
-		if (listeners != null) {
-			firePropertyChangeImpl(listeners, errorReporterProperty, old, reporter);
-		}
-		this.errorReporter = reporter;
-		return old;
-	}
-
-	/**
-	 * Register an object to receive notifications when a bound property
-	 * has changed
-	 *
-	 * @param l the listener
-	 * @see java.beans.PropertyChangeEvent
-	 * @see #removePropertyChangeListener(java.beans.PropertyChangeListener)
-	 */
-	public final void addPropertyChangeListener(PropertyChangeListener l) {
-		propertyListeners = Kit.addListener(propertyListeners, l);
-	}
-
-	/**
-	 * Remove an object from the list of objects registered to receive
-	 * notification of changes to a bounded property
-	 *
-	 * @param l the listener
-	 * @see java.beans.PropertyChangeEvent
-	 * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
-	 */
-	public final void removePropertyChangeListener(PropertyChangeListener l) {
-		propertyListeners = Kit.removeListener(propertyListeners, l);
-	}
-
-	/**
-	 * Notify any registered listeners that a bounded property has changed
-	 *
-	 * @param property the bound property
-	 * @param oldValue the old value
-	 * @param newValue the new value
-	 * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
-	 * @see #removePropertyChangeListener(java.beans.PropertyChangeListener)
-	 * @see java.beans.PropertyChangeListener
-	 * @see java.beans.PropertyChangeEvent
-	 */
-	final void firePropertyChange(String property, Object oldValue, Object newValue) {
-		Object listeners = propertyListeners;
-		if (listeners != null) {
-			firePropertyChangeImpl(listeners, property, oldValue, newValue);
-		}
-	}
-
-	private void firePropertyChangeImpl(Object listeners, String property, Object oldValue, Object newValue) {
-		for (int i = 0; ; ++i) {
-			Object l = Kit.getListener(listeners, i);
-			if (l == null) {
-				break;
-			}
-			if (l instanceof PropertyChangeListener pcl) {
-				pcl.propertyChange(new PropertyChangeEvent(this, property, oldValue, newValue));
-			}
-		}
 	}
 
 	/**
@@ -787,38 +731,6 @@ public class Context {
 	}
 
 	/**
-	 * Check whether a string is ready to be compiled.
-	 * <p>
-	 * stringIsCompilableUnit is intended to support interactive compilation of
-	 * JavaScript.  If compiling the string would result in an error
-	 * that might be fixed by appending more source, this method
-	 * returns false.  In every other case, it returns true.
-	 * <p>
-	 * Interactive shells may accumulate source lines, using this
-	 * method after each new line is appended to check whether the
-	 * statement being entered is complete.
-	 *
-	 * @param source the source buffer to check
-	 * @return whether the source is ready for compilation
-	 * @since 1.4 Release 2
-	 */
-	public final boolean stringIsCompilableUnit(String source) {
-		boolean errorseen = false;
-		CompilerEnvirons compilerEnv = new CompilerEnvirons();
-		compilerEnv.initFromContext(this);
-		Parser p = new Parser(this, compilerEnv, DefaultErrorReporter.instance);
-		try {
-			p.parse(source, null, 1);
-		} catch (EvaluatorException ee) {
-			errorseen = true;
-		}
-		// Return false only if an error occurred as a result of reading past
-		// the end of the file, i.e. if the source could be fixed by
-		// appending more source.
-		return !(errorseen && p.eof());
-	}
-
-	/**
 	 * Compiles the source in the given reader.
 	 * <p>
 	 * Returns a script that may later be executed.
@@ -875,27 +787,6 @@ public class Context {
 			// Should not happen when dealing with source as string
 			throw new RuntimeException(ioe);
 		}
-	}
-
-	/**
-	 * Compile a JavaScript function.
-	 * <p>
-	 * The function source must be a function definition as defined by
-	 * ECMA (e.g., "function f(a) { return a; }").
-	 *
-	 * @param scope          the scope to compile relative to
-	 * @param source         the function definition source
-	 * @param sourceName     a string describing the source, such as a filename
-	 * @param lineno         the starting line number
-	 * @param securityDomain an arbitrary object that specifies security
-	 *                       information about the origin or owner of the script. For
-	 *                       implementations that don't care about security, this value
-	 *                       may be null.
-	 * @return a Function that may later be called
-	 * @see Function
-	 */
-	public final Function compileFunction(Scriptable scope, String source, String sourceName, int lineno, Object securityDomain) {
-		return compileFunction(scope, source, null, null, sourceName, lineno, securityDomain);
 	}
 
 	final Function compileFunction(Scriptable scope, String source, Evaluator compiler, ErrorReporter compilationErrorReporter, String sourceName, int lineno, Object securityDomain) {
@@ -1305,5 +1196,176 @@ public class Context {
 	protected Object doTopCall(Callable callable, Scriptable scope, Scriptable thisObj, Object[] args) {
 		Object result = callable.call(this, scope, thisObj, args);
 		return result instanceof ConsString ? result.toString() : result;
+	}
+
+	// custom data
+
+	/**
+	 * @return a map from classes to associated JavaMembers objects
+	 */
+	Map<Class<?>, JavaMembers> getClassCacheMap() {
+		if (classTable == null) {
+			// Use 1 as concurrency level here and for other concurrent hash maps
+			// as we don't expect high levels of sustained concurrent writes.
+			classTable = new ConcurrentHashMap<>(16, 0.75f, 1);
+		}
+		return classTable;
+	}
+
+	Map<JavaAdapter.JavaAdapterSignature, Class<?>> getInterfaceAdapterCacheMap() {
+		if (classAdapterCache == null) {
+			classAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);
+		}
+		return classAdapterCache;
+	}
+
+	/**
+	 * Internal engine method to return serial number for generated classes
+	 * to ensure name uniqueness.
+	 */
+	public final synchronized int newClassSerialNumber() {
+		return ++generatedClassSerial;
+	}
+
+	Object getInterfaceAdapter(Class<?> cl) {
+		return interfaceAdapterCache == null ? null : interfaceAdapterCache.get(cl);
+	}
+
+	synchronized void cacheInterfaceAdapter(Class<?> cl, Object iadapter) {
+		if (interfaceAdapterCache == null) {
+			interfaceAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);
+		}
+
+		interfaceAdapterCache.put(cl, iadapter);
+	}
+
+	public TypeWrappers getTypeWrappers() {
+		if (typeWrappers == null) {
+			typeWrappers = new TypeWrappers();
+		}
+
+		return typeWrappers;
+	}
+
+	public boolean hasTypeWrappers() {
+		return typeWrappers != null;
+	}
+
+	public Remapper getRemapper() {
+		return remapper;
+	}
+
+	public void setRemapper(Remapper remapper) {
+		this.remapper = remapper;
+	}
+
+	@Nullable
+	@SuppressWarnings("unchecked")
+	public CustomJavaToJsWrapper wrapCustomJavaToJs(Object javaObject) {
+		if (customScriptableWrappers.isEmpty()) {
+			return null;
+		}
+
+		var provider = customScriptableWrapperCache.get(javaObject.getClass());
+
+		if (provider == null) {
+			for (CustomJavaToJsWrapperProviderHolder wrapper : customScriptableWrappers) {
+				provider = wrapper.create(javaObject);
+
+				if (provider != null) {
+					break;
+				}
+			}
+
+			if (provider == null) {
+				provider = CustomJavaToJsWrapperProvider.NONE;
+			}
+
+			customScriptableWrapperCache.put(javaObject.getClass(), provider);
+		}
+
+		return provider.create(javaObject);
+	}
+
+	public <T> void addCustomJavaToJsWrapper(Predicate<T> predicate, CustomJavaToJsWrapperProvider<T> provider) {
+		customScriptableWrappers.add(new CustomJavaToJsWrapperProviderHolder<>(predicate, provider));
+	}
+
+	public <T> void addCustomJavaToJsWrapper(Class<T> type, CustomJavaToJsWrapperProvider<T> provider) {
+		addCustomJavaToJsWrapper(new CustomJavaToJsWrapperProviderHolder.PredicateFromClass<>(type), provider);
+	}
+
+	public void setProperty(String key, @Nullable Object value) {
+		if (value == null) {
+			properties.remove(key);
+		} else {
+			properties.put(key, value);
+		}
+	}
+
+	@Nullable
+	public Object getProperty(String key) {
+		return properties.get(key);
+	}
+
+	@Nullable
+	@SuppressWarnings("unchecked")
+	public <T> T getProperty(String key, T def) {
+		return (T) properties.getOrDefault(key, def);
+	}
+
+	@Nullable
+	public final synchronized ClassShutter getClassShutter() {
+		return classShutter;
+	}
+
+	/**
+	 * Set the LiveConnect access filter for this context.
+	 * <p> {@link ClassShutter} may only be set if it is currently null.
+	 * Otherwise a SecurityException is thrown.
+	 *
+	 * @param shutter a ClassShutter object
+	 * @throws SecurityException if there is already a ClassShutter
+	 *                           object for this Context
+	 */
+	public synchronized final void setClassShutter(ClassShutter shutter) {
+		if (shutter == null) {
+			throw new IllegalArgumentException();
+		}
+
+		if (classShutter != null) {
+			throw new SecurityException("Cannot overwrite existing " + "ClassShutter object");
+		}
+
+		classShutter = shutter;
+	}
+
+	/**
+	 * Return the current WrapFactory, or null if none is defined.
+	 *
+	 * @see WrapFactory
+	 * @since 1.5 Release 4
+	 */
+	public final WrapFactory getWrapFactory() {
+		if (wrapFactory == null) {
+			wrapFactory = new WrapFactory();
+		}
+		return wrapFactory;
+	}
+
+	/**
+	 * Set a WrapFactory for this Context.
+	 * <p>
+	 * The WrapFactory allows custom object wrapping behavior for
+	 * Java object manipulated with JavaScript.
+	 *
+	 * @see WrapFactory
+	 * @since 1.5 Release 4
+	 */
+	public final void setWrapFactory(WrapFactory wrapFactory) {
+		if (wrapFactory == null) {
+			throw new IllegalArgumentException();
+		}
+		this.wrapFactory = wrapFactory;
 	}
 }
