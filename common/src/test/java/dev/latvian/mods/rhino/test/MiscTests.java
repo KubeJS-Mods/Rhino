@@ -21,8 +21,8 @@ public class MiscTests {
 				"1.0"
 		);
 	}
-  
-  @Test
+
+	@Test
 	public void testDelete() {
 		TEST.test("delete", "let x = {a: 1}; delete x.a; console.info(x.a);", "undefined");
 	}
