@@ -438,7 +438,7 @@ public final class NativeJSON extends IdScriptableObject {
 			case "toSource" -> Id_toSource;
 			case "parse" -> Id_parse;
 			case "stringify" -> Id_stringify;
-			default -> super.findPrototypeId(s);
+			default -> 0;
 		};
 	}
 }
