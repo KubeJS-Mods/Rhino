@@ -322,7 +322,7 @@ final class NativeError extends IdScriptableObject {
 			case "constructor" -> Id_constructor;
 			case "toString" -> Id_toString;
 			case "toSource" -> Id_toSource;
-			default -> super.findPrototypeId(s);
+			default -> 0;
 		};
 	}
 }

@@ -157,7 +157,7 @@ public class NativeWeakSet extends IdScriptableObject {
 			case "add" -> Id_add;
 			case "delete" -> Id_delete;
 			case "has" -> Id_has;
-			default -> super.findPrototypeId(s);
+			default -> 0;
 		};
 	}
 
