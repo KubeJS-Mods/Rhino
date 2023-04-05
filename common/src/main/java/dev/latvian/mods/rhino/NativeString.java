@@ -1245,7 +1245,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 			case "padEnd" -> Id_padEnd;
 			case "trimStart" -> Id_trimStart;
 			case "trimEnd" -> Id_trimEnd;
-			default -> super.findPrototypeId(s);
+			default -> 0;
 		};
 	}
 }
