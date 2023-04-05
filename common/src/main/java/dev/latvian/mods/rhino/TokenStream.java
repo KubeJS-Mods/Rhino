@@ -48,7 +48,7 @@ class TokenStream {
 			case "const" -> Token.CONST;
 			case "continue" -> Token.CONTINUE;
 			case "default" -> Token.DEFAULT;
-			case "delprop" -> Token.DELPROP;
+			case "delete" -> Token.DELPROP;
 			case "do" -> Token.DO;
 			case "else" -> Token.ELSE;
 			case "finally" -> Token.FINALLY;

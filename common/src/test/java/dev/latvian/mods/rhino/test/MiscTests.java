@@ -11,6 +11,22 @@ public class MiscTests {
 	public static final RhinoTest TEST = new RhinoTest("misc").shareScope();
 
 	@Test
+	public void testFunctionAssignment() {
+		TEST.test("functionAssignment",
+				"""
+						let x = () => {};
+						x.abc = 1;
+						console.info(x.abc);
+						""",
+				"1.0"
+		);
+	}
+
+	@Test
+	public void testDelete() {
+		TEST.test("delete", "let x = {a: 1}; delete x.a; console.info(x.a);", "undefined");
+	}
+
 	@Order(1)
 	public void init() {
 		TEST.test("init", """

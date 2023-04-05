@@ -1851,7 +1851,7 @@ final class NativeDate extends IdScriptableObject {
 			case "setYear" -> Id_setYear;
 			case "toISOString" -> Id_toISOString;
 			case "toJSON" -> Id_toJSON;
-			default -> super.findPrototypeId(s);
+			default -> 0;
 		};
 	}
 }

@@ -537,7 +537,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 			case "apply" -> Id_apply;
 			case "call" -> Id_call;
 			case "bind" -> Id_bind;
-			default -> super.findPrototypeId(s);
+			default -> 0;
 		};
 	}
 }

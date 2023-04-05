@@ -339,7 +339,7 @@ final class NativeNumber extends IdScriptableObject {
 			case "toFixed" -> Id_toFixed;
 			case "toExponential" -> Id_toExponential;
 			case "toPrecision" -> Id_toPrecision;
-			default -> super.findPrototypeId(s);
+			default -> 0;
 		};
 	}
 }
