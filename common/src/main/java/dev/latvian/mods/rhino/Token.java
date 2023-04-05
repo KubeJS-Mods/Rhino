@@ -247,7 +247,7 @@ public interface Token {
 			case POS -> "POS";
 			case NEG -> "NEG";
 			case NEW -> "NEW";
-			case DELPROP -> "DELPROP";
+			case DELPROP -> "DELETE";
 			case TYPEOF -> "TYPEOF";
 			case GETPROP -> "GETPROP";
 			case GETPROPNOWARN -> "GETPROPNOWARN";

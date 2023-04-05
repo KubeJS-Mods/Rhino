@@ -10,6 +10,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 public class MiscTests {
 	public static final RhinoTest TEST = new RhinoTest("misc").shareScope();
 
+	@Test
 	public void testFunctionAssignment() {
 		TEST.test("functionAssignment",
 				"""
@@ -19,6 +20,11 @@ public class MiscTests {
 						""",
 				"1.0"
 		);
+	}
+  
+  @Test
+	public void testDelete() {
+		TEST.test("delete", "let x = {a: 1}; delete x.a; console.info(x.a);", "undefined");
 	}
 
 	@Order(1)
