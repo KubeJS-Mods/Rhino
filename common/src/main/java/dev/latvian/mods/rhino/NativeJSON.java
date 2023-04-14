@@ -237,9 +237,9 @@ public final class NativeJSON extends IdScriptableObject {
 
 			for (Object o : (Iterable<?>) v) {
 				json.add(stringify0(cx, remapper, o));
-
-				return json;
 			}
+
+			return json;
 		}
 
 		if (v instanceof Wrapper) {

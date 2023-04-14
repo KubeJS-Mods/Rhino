@@ -141,4 +141,12 @@ public class MiscTests {
 				wood#0037c6ad
 				""");
 	}
+
+	@Test
+	public void testJsonStringifyWithNestedArrays() {
+		TEST.test("jsonStringifyWithNestedArrays", """
+				const thing = {nested: [1, 2, 3]};
+				console.info(JSON.stringify(thing));
+				""", "{\"nested\":[1.0,2.0,3.0]}");
+	}
 }
