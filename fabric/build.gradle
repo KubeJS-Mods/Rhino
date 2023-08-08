@@ -18,13 +18,6 @@ loom {
 	accessWidenerPath = accessWidenerFile
 }
 
-sourceSets {
-	main {
-		resources {
-			srcDir generatedResources
-		}
-	}
-}
 
 dependencies {
 	modApi("net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}")
@@ -37,6 +30,14 @@ dependencies {
 task copyAccessWidener(type: Copy) {
 	from accessWidenerFile
 	into generatedResources
+}
+
+sourceSets {
+	main {
+		resources {
+			srcDir copyAccessWidener
+		}
+	}
 }
 
 processResources {

@@ -462,7 +462,7 @@ public interface NBTUtils {
 	TagType<OrderedCompoundTag> COMPOUND_TYPE = new TagType.VariableSize<>() {
 		@Override
 		public OrderedCompoundTag load(DataInput dataInput, int i, NbtAccounter nbtAccounter) throws IOException {
-			nbtAccounter.accountBits(384L);
+			nbtAccounter.accountBytes(48L);
 			if (i > 512) {
 				throw new RuntimeException("Tried to read NBT tag with too high complexity, depth > 512");
 			} else {
@@ -471,12 +471,12 @@ public interface NBTUtils {
 				byte typeId;
 				while ((typeId = dataInput.readByte()) != 0) {
 					String key = dataInput.readUTF();
-					nbtAccounter.accountBits(224L + 16L * key.length());
+					nbtAccounter.accountBytes(28L + 2L * key.length());
 					TagType<?> valueType = convertType(TagTypes.getType(typeId));
 					Tag value = valueType.load(dataInput, i + 1, nbtAccounter);
 
 					if (map.put(key, value) != null) {
-						nbtAccounter.accountBits(288L);
+						nbtAccounter.accountBytes(36L);
 					}
 				}
 
@@ -562,7 +562,7 @@ public interface NBTUtils {
 	TagType<ListTag> LIST_TYPE = new TagType.VariableSize<>() {
 		@Override
 		public ListTag load(DataInput dataInput, int i, NbtAccounter nbtAccounter) throws IOException {
-			nbtAccounter.accountBits(296L);
+			nbtAccounter.accountBytes(37L);
 			if (i > 512) {
 				throw new RuntimeException("Tried to read NBT tag with too high complexity, depth > 512");
 			} else {
@@ -571,7 +571,7 @@ public interface NBTUtils {
 				if (typeId == 0 && size > 0) {
 					throw new RuntimeException("Missing type on ListTag");
 				} else {
-					nbtAccounter.accountBits(32L * (long) size);
+					nbtAccounter.accountBytes(4L * (long) size);
 					TagType<?> valueType = convertType(TagTypes.getType(typeId));
 					ListTag list = new ListTag();
 
