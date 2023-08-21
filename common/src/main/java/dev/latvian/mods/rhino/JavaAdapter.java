@@ -452,6 +452,7 @@ public final class JavaAdapter implements IdFunctionCall {
 		cfw.add(ByteCode.ALOAD_1);  // the Scriptable delegee
 		cfw.add(ByteCode.ALOAD_0);  // this
 		cfw.addInvoke(ByteCode.INVOKESTATIC, "dev/latvian/mods/rhino/JavaAdapter", "createAdapterWrapper", "(Ldev/latvian/mods/rhino/Scriptable;" + "Ljava/lang/Object;" + ")Ldev/latvian/mods/rhino/Scriptable;");
+		// cfw.addInvoke(ByteCode.INVOKESTATIC, "dev/latvian/mods/rhino/JavaAdapter", "createAdapterWrapper", "(Ldev/latvian/mods/rhino/Scriptable;" + "Ljava/lang/Object;" + "Ldev/latvian/mods/rhino/Context;" + ")Ldev/latvian/mods/rhino/Scriptable;");
 		cfw.add(ByteCode.PUTFIELD, adapterName, "self", "Ldev/latvian/mods/rhino/Scriptable;");
 
 		cfw.add(ByteCode.RETURN);
@@ -514,6 +515,7 @@ public final class JavaAdapter implements IdFunctionCall {
 		cfw.add(ByteCode.ALOAD_1);  // the Scriptable
 		cfw.add(ByteCode.ALOAD_0);  // this
 		cfw.addInvoke(ByteCode.INVOKESTATIC, "dev/latvian/mods/rhino/JavaAdapter", "createAdapterWrapper", "(Ldev/latvian/mods/rhino/Scriptable;" + "Ljava/lang/Object;" + ")Ldev/latvian/mods/rhino/Scriptable;");
+		// cfw.addInvoke(ByteCode.INVOKESTATIC, "dev/latvian/mods/rhino/JavaAdapter", "createAdapterWrapper", "(Ldev/latvian/mods/rhino/Scriptable;" + "Ljava/lang/Object;" + "Ldev/latvian/mods/rhino/Context;" + ")Ldev/latvian/mods/rhino/Scriptable;");
 		cfw.add(ByteCode.PUTFIELD, adapterName, "self", "Ldev/latvian/mods/rhino/Scriptable;");
 
 		cfw.add(ByteCode.RETURN);
