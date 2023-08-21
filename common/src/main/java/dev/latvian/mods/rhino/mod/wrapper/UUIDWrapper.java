@@ -32,6 +32,12 @@ public interface UUIDWrapper {
 
 	@Nullable
 	static UUID fromString(Object o) {
+		if (o instanceof UUID) {
+			return (UUID) o;
+		} else if (o == null) {
+			return null;
+		}
+
 		String s = String.valueOf(o);
 
 		if (o == null || !(s.length() == 32 || s.length() == 36)) {
