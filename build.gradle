@@ -22,14 +22,6 @@ allprojects {
 			url "https://maven.architectury.dev/"
 		}
 
-		maven {
-			url "https://maven.saps.dev/minecraft"
-			content {
-				includeGroup "dev.latvian.mods"
-				includeGroup "dev.ftb.mods"
-			}
-		}
-
 		mavenLocal()
 	}
 }
