@@ -5,6 +5,7 @@ on:
     branches:
       # main and dev versions for each mc ver here
         - "1.20/dev"
+        - "1.20/main"
   workflow_dispatch:
     inputs:
       norelease:
@@ -32,7 +33,6 @@ jobs:
         uses: gradle/gradle-build-action@v2
         env:
           MAVEN_TOKEN: ${{ secrets.MAVEN_TOKEN }}
-          FTB_MAVEN_TOKEN: ${{ secrets.FTB_MAVEN_TOKEN }}
           SAPS_TOKEN: ${{ secrets.SAPS_TOKEN }}
         with:
           arguments: build -x test publish --stacktrace --no-daemon
