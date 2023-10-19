@@ -67,7 +67,12 @@ public class VMBridge {
 					return "Proxy[" + target.toString() + "]";
 				}
 			}
-			return adapter.invoke(cx, target, topScope, proxy, method, args);
+
+			if (method.isDefault()) {
+				return InvocationHandler.invokeDefault(proxy, method, args);
+			} else {
+				return adapter.invoke(cx, target, topScope, proxy, method, args);
+			}
 		};
 		Object proxy;
 		try {
