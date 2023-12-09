@@ -338,7 +338,7 @@ public class Context {
 
 	// Generate an observer count on compiled code
 	public boolean generateObserverCount = false;
-	Scriptable topCallScope;
+	private Scriptable topCallScope;
 	boolean isContinuationsTopCall;
 	NativeCall currentActivationCall;
 	BaseFunction typeErrorThrower;
@@ -358,12 +358,9 @@ public class Context {
 	// It can be used to return the second uint32 result from function
 	long scratchUint32;
 	// It can be used to return the second Scriptable result from function
-	Scriptable scratchScriptable;
+	private Scriptable scratchScriptable;
 	boolean isTopLevelStrict;
-	private Object sealKey;
-	private ErrorReporter errorReporter;
 	private int maximumInterpreterStackDepth;
-	private Object propertyListeners;
 	private Map<Object, Object> threadLocalMap;
 	private ClassLoader applicationClassLoader;
 
@@ -385,10 +382,6 @@ public class Context {
 	 * Creates a new context. Provided as a preferred super constructor for
 	 * subclasses in place of the deprecated default public constructor.
 	 *
-	 * @param factory the context factory associated with this context (most
-	 *                likely, the one that created the context). Can not be null. The context
-	 *                features are inherited from the factory, and the context will also
-	 *                otherwise use its factory's services.
 	 * @throws IllegalArgumentException if factory parameter is null.
 	 */
 	protected Context() {
@@ -421,10 +414,7 @@ public class Context {
 	 * @see ErrorReporter
 	 */
 	public final ErrorReporter getErrorReporter() {
-		if (errorReporter == null) {
-			return DefaultErrorReporter.instance;
-		}
-		return errorReporter;
+		return DefaultErrorReporter.instance;
 	}
 
 	/**
@@ -681,7 +671,7 @@ public class Context {
 			// Can only be applied to scripts
 			throw new IllegalArgumentException("Function argument was not" + " created by interpreted mode ");
 		}
-		if (ScriptRuntime.hasTopCall(this)) {
+		if (hasTopCallScope()) {
 			throw new IllegalStateException("Cannot have any pending top " + "calls when executing a script with continuations");
 		}
 		// Annotate so we can check later to ensure no java code in
@@ -1367,5 +1357,39 @@ public class Context {
 			throw new IllegalArgumentException();
 		}
 		this.wrapFactory = wrapFactory;
+	}
+
+	public synchronized boolean hasTopCallScope() {
+		return topCallScope != null;
+	}
+
+	public synchronized Scriptable getTopCallScope() {
+		return topCallScope;
+	}
+
+	public synchronized Scriptable getTopCallOrThrow() {
+		if (topCallScope == null) {
+			throw new IllegalStateException();
+		}
+
+		return topCallScope;
+	}
+
+	public synchronized void setTopCall(Scriptable scope) {
+		topCallScope = scope;
+	}
+
+	public synchronized void storeScriptable(Scriptable value) {
+		// The previously stored scratchScriptable should be consumed
+		if (scratchScriptable != null) {
+			throw new IllegalStateException();
+		}
+		scratchScriptable = value;
+	}
+
+	public synchronized Scriptable lastStoredScriptable() {
+		Scriptable result = scratchScriptable;
+		scratchScriptable = null;
+		return result;
 	}
 }

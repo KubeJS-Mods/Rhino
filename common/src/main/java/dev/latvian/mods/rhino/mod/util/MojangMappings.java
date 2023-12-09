@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -154,6 +155,10 @@ public class MojangMappings {
 	public ClassDef getClass(String name) {
 		var mmc = classesMM.get(name);
 		return mmc != null ? mmc : classes.get(name);
+	}
+
+	public Collection<ClassDef> getMMClasses() {
+		return classesMM.values();
 	}
 
 	public TypeDef getType(String string) {

@@ -231,7 +231,7 @@ public final class Interpreter extends Icode implements Evaluator {
 				// in order to evaluate their attributes.
 				//final Context cx = Context.enter();
 				//try {
-				if (ScriptRuntime.hasTopCall(localContext)) {
+				if (localContext.hasTopCallScope()) {
 					return equalsInTopScope(otherCallFrame);
 				}
 				final Scriptable top = ScriptableObject.getTopLevelScope(scope);
@@ -412,7 +412,7 @@ public final class Interpreter extends Icode implements Evaluator {
 	}
 
 	static Object interpret(InterpretedFunction ifun, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		if (!ScriptRuntime.hasTopCall(cx)) {
+		if (!cx.hasTopCallScope()) {
 			Kit.codeBug();
 		}
 
@@ -445,7 +445,7 @@ public final class Interpreter extends Icode implements Evaluator {
 	}
 
 	public static Object restartContinuation(NativeContinuation c, Context cx, Scriptable scope, Object[] args) {
-		if (!ScriptRuntime.hasTopCall(cx)) {
+		if (!cx.hasTopCallScope()) {
 			return ScriptRuntime.doTopCall(cx, scope, c, null, args, cx.isTopLevelStrict);
 		}
 
@@ -935,7 +935,7 @@ public final class Interpreter extends Icode implements Evaluator {
 								++stackTop;
 								stack[stackTop] = ScriptRuntime.getNameFunctionAndThis(cx, frame.scope, stringReg);
 								++stackTop;
-								stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
+								stack[stackTop] = cx.lastStoredScriptable();
 								continue;
 							case Icode_PROP_AND_THIS: {
 								Object obj = stack[stackTop];
@@ -945,7 +945,7 @@ public final class Interpreter extends Icode implements Evaluator {
 								// stringReg: property
 								stack[stackTop] = ScriptRuntime.getPropFunctionAndThis(cx, frame.scope, obj, stringReg);
 								++stackTop;
-								stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
+								stack[stackTop] = cx.lastStoredScriptable();
 								continue;
 							}
 							case Icode_ELEM_AND_THIS: {
@@ -958,7 +958,7 @@ public final class Interpreter extends Icode implements Evaluator {
 									id = ScriptRuntime.wrapNumber(sDbl[stackTop]);
 								}
 								stack[stackTop - 1] = ScriptRuntime.getElemFunctionAndThis(cx, frame.scope, obj, id);
-								stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
+								stack[stackTop] = cx.lastStoredScriptable();
 								continue;
 							}
 							case Icode_VALUE_AND_THIS: {
@@ -968,7 +968,7 @@ public final class Interpreter extends Icode implements Evaluator {
 								}
 								stack[stackTop] = ScriptRuntime.getValueFunctionAndThis(cx, value);
 								++stackTop;
-								stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
+								stack[stackTop] = cx.lastStoredScriptable();
 								continue;
 							}
 							case Icode_CALLSPECIAL: {
@@ -2118,7 +2118,7 @@ public final class Interpreter extends Icode implements Evaluator {
 		}
 		if (applyThis == null) {
 			// This covers the case of args[0] == (null|undefined) as well.
-			applyThis = ScriptRuntime.getTopCallScope(cx);
+			applyThis = cx.getTopCallOrThrow();
 		}
 		if (op == Icode_TAIL_CALL) {
 			exitFrame(cx, frame, null);
@@ -2223,7 +2223,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
 	private static NativeContinuation captureContinuation(Context cx, CallFrame frame, boolean requireContinuationsTopFrame) {
 		NativeContinuation c = new NativeContinuation();
-		ScriptRuntime.setObjectProtoAndParent(cx, ScriptRuntime.getTopCallScope(cx), c);
+		ScriptRuntime.setObjectProtoAndParent(cx, cx.getTopCallOrThrow(), c);
 
 		// Make sure that all frames are frozen
 		CallFrame x = frame;

@@ -150,7 +150,7 @@ public final class ES6Generator extends IdScriptableObject {
 			Object[] nextArgs = Undefined.instance.equals(value) ? ScriptRuntime.EMPTY_OBJECTS : new Object[]{value};
 
 			Callable nextFn = ScriptRuntime.getPropFunctionAndThis(cx, scope, delegee, ES6Iterator.NEXT_METHOD);
-			Scriptable nextThis = ScriptRuntime.lastStoredScriptable(cx);
+			Scriptable nextThis = cx.lastStoredScriptable();
 			Object nr = nextFn.call(cx, scope, nextThis, nextArgs);
 
 			Scriptable nextResult = ScriptableObject.ensureScriptable(nr, cx);
@@ -178,7 +178,7 @@ public final class ES6Generator extends IdScriptableObject {
 		try {
 			// Delegate to "throw" method. If it's not defined we'll get an error here.
 			Callable throwFn = ScriptRuntime.getPropFunctionAndThis(cx, scope, delegee, "throw");
-			Scriptable nextThis = ScriptRuntime.lastStoredScriptable(cx);
+			Scriptable nextThis = cx.lastStoredScriptable();
 			Object throwResult = throwFn.call(cx, scope, nextThis, new Object[]{value});
 
 			if (ScriptRuntime.isIteratorDone(cx, throwResult)) {

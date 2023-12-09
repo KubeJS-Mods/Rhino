@@ -159,7 +159,7 @@ public class ScriptRuntime {
 					return 0;
 				}
 			};
-			ScriptRuntime.setFunctionProtoAndParent(cx, cx.topCallScope, thrower);
+			ScriptRuntime.setFunctionProtoAndParent(cx, cx.getTopCallScope(), thrower);
 			thrower.preventExtensions();
 			cx.typeErrorThrower = thrower;
 		}
@@ -887,7 +887,7 @@ public class ScriptRuntime {
 		if (obj instanceof Scriptable) {
 			return (Scriptable) obj;
 		} else if (obj != null && obj != Undefined.instance) {
-			return toObject(cx, getTopCallScope(cx), obj);
+			return toObject(cx, cx.getTopCallOrThrow(), obj);
 		}
 		return null;
 	}
@@ -1527,7 +1527,7 @@ public class ScriptRuntime {
 			if (!(result instanceof Callable)) {
 				throw notFunctionError(cx, result, name);
 			}
-			storeScriptable(cx, thisObj);
+			cx.storeScriptable(thisObj);
 		}
 
 		return result;
@@ -1719,7 +1719,7 @@ public class ScriptRuntime {
 			}
 			// Top scope is not NativeWith or NativeCall => thisObj == scope
 			Scriptable thisObj = scope;
-			storeScriptable(cx, thisObj);
+			cx.storeScriptable(thisObj);
 			return (Callable) result;
 		}
 
@@ -1763,7 +1763,7 @@ public class ScriptRuntime {
 			throw notFunctionError(cx, value, elem);
 		}
 
-		storeScriptable(cx, thisObj);
+		cx.storeScriptable(thisObj);
 		return (Callable) value;
 	}
 
@@ -1796,7 +1796,7 @@ public class ScriptRuntime {
 			throw notFunctionError(cx, thisObj, value, property);
 		}
 
-		storeScriptable(cx, thisObj);
+		cx.storeScriptable(thisObj);
 		return (Callable) value;
 	}
 
@@ -1816,12 +1816,11 @@ public class ScriptRuntime {
 		if (f instanceof Scriptable) {
 			thisObj = ((Scriptable) f).getParentScope();
 		}
+
 		if (thisObj == null) {
-			if (cx.topCallScope == null) {
-				throw new IllegalStateException();
-			}
-			thisObj = cx.topCallScope;
+			thisObj = cx.getTopCallOrThrow();
 		}
+
 		if (thisObj.getParentScope() != null) {
 			if (thisObj instanceof NativeWith) {
 				// functions defined inside with should have with target
@@ -1831,7 +1830,7 @@ public class ScriptRuntime {
 				thisObj = ScriptableObject.getTopLevelScope(thisObj);
 			}
 		}
-		storeScriptable(cx, thisObj);
+		cx.storeScriptable(thisObj);
 		return f;
 	}
 
@@ -1842,7 +1841,7 @@ public class ScriptRuntime {
 	 */
 	public static Object callIterator(Context cx, Scriptable scope, Object obj) {
 		final Callable getIterator = ScriptRuntime.getElemFunctionAndThis(cx, scope, obj, SymbolKey.ITERATOR);
-		final Scriptable iterable = ScriptRuntime.lastStoredScriptable(cx);
+		final Scriptable iterable = cx.lastStoredScriptable();
 		return getIterator.call(cx, scope, iterable, ScriptRuntime.EMPTY_OBJECTS);
 	}
 
@@ -2591,34 +2590,22 @@ public class ScriptRuntime {
 		return d1 <= d2;
 	}
 
-	public static boolean hasTopCall(Context cx) {
-		return (cx.topCallScope != null);
-	}
-
-	public static Scriptable getTopCallScope(Context cx) {
-		Scriptable scope = cx.topCallScope;
-		if (scope == null) {
-			throw new IllegalStateException();
-		}
-		return scope;
-	}
-
 	public static Object doTopCall(Context cx, Scriptable scope, Callable callable, Scriptable thisObj, Object[] args, boolean isTopLevelStrict) {
 		if (scope == null) {
 			throw new IllegalArgumentException();
 		}
-		if (cx.topCallScope != null) {
+		if (cx.hasTopCallScope()) {
 			throw new IllegalStateException();
 		}
 
 		Object result;
-		cx.topCallScope = ScriptableObject.getTopLevelScope(scope);
+		cx.setTopCall(ScriptableObject.getTopLevelScope(scope));
 		boolean previousTopLevelStrict = cx.isTopLevelStrict;
 		cx.isTopLevelStrict = isTopLevelStrict;
 		try {
 			result = cx.doTopCall(callable, scope, thisObj, args);
 		} finally {
-			cx.topCallScope = null;
+			cx.setTopCall(null);
 			// Cleanup cached references
 			cx.isTopLevelStrict = previousTopLevelStrict;
 
@@ -2632,7 +2619,7 @@ public class ScriptRuntime {
 	}
 
 	public static void initScript(Context cx, Scriptable scope, NativeFunction funObj, Scriptable thisObj, boolean evalScript) {
-		if (cx.topCallScope == null) {
+		if (!cx.hasTopCallScope()) {
 			throw new IllegalStateException();
 		}
 
@@ -2678,7 +2665,7 @@ public class ScriptRuntime {
 	}
 
 	public static void enterActivationFunction(Context cx, Scriptable scope) {
-		if (cx.topCallScope == null) {
+		if (!cx.hasTopCallScope()) {
 			throw new IllegalStateException();
 		}
 		NativeCall call = (NativeCall) scope;
@@ -3241,20 +3228,6 @@ public class ScriptRuntime {
 			throw new IllegalStateException();
 		}
 		return value;
-	}
-
-	private static void storeScriptable(Context cx, Scriptable value) {
-		// The previously stored scratchScriptable should be consumed
-		if (cx.scratchScriptable != null) {
-			throw new IllegalStateException();
-		}
-		cx.scratchScriptable = value;
-	}
-
-	public static Scriptable lastStoredScriptable(Context cx) {
-		Scriptable result = cx.scratchScriptable;
-		cx.scratchScriptable = null;
-		return result;
 	}
 
 	static String makeUrlForGeneratedScript(boolean isEval, String masterScriptUrl, int masterScriptLine) {

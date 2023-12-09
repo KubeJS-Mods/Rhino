@@ -27,7 +27,7 @@ public class InterfaceAdapter {
 			throw new IllegalArgumentException();
 		}
 
-		Scriptable topScope = ScriptRuntime.getTopCallScope(cx);
+		Scriptable topScope = cx.getTopCallOrThrow();
 		InterfaceAdapter adapter;
 		adapter = (InterfaceAdapter) cx.getInterfaceAdapter(cl);
 		if (adapter == null) {
