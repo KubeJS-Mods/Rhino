@@ -67,7 +67,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!cx.hasTopCallScope()) {
-			return ScriptRuntime.doTopCall(cx, scope, this, thisObj, args, idata.isStrict);
+			return cx.doTopCall(scope, this, thisObj, args, idata.isStrict);
 		}
 		return Interpreter.interpret(this, cx, scope, thisObj, args);
 	}
@@ -80,7 +80,7 @@ final class InterpretedFunction extends NativeFunction implements Script {
 		}
 		if (!cx.hasTopCallScope()) {
 			// It will go through "call" path. but they are equivalent
-			return ScriptRuntime.doTopCall(cx, scope, this, scope, ScriptRuntime.EMPTY_OBJECTS, idata.isStrict);
+			return cx.doTopCall(scope, this, scope, ScriptRuntime.EMPTY_OBJECTS, idata.isStrict);
 		}
 		return Interpreter.interpret(this, cx, scope, scope, ScriptRuntime.EMPTY_OBJECTS);
 	}

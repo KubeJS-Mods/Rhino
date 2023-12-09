@@ -7,6 +7,7 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.ast.FunctionNode;
+import dev.latvian.mods.rhino.regexp.NativeRegExp;
 import dev.latvian.mods.rhino.regexp.RegExp;
 import dev.latvian.mods.rhino.util.SpecialEquality;
 import dev.latvian.mods.rhino.v8dtoa.DoubleConversion;
@@ -207,16 +208,13 @@ public class ScriptRuntime {
 
 		NativeWith.init(scope, sealed, cx);
 		NativeCall.init(scope, sealed, cx);
-		NativeScript.init(scope, sealed, cx);
 
 		NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
 
 		NativeArrayIterator.init(scope, sealed, cx);
 		NativeStringIterator.init(scope, sealed, cx);
 
-		// define lazy-loaded properties using their class name
-		new LazilyLoadedCtor(scope, "RegExp", "dev.latvian.mods.rhino.regexp.NativeRegExp", sealed, true, cx);
-		new LazilyLoadedCtor(scope, "Continuation", "dev.latvian.mods.rhino.NativeContinuation", sealed, true, cx);
+		NativeRegExp.init(cx, scope, sealed);
 
 		NativeSymbol.init(cx, scope, sealed);
 		NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed, cx);
@@ -235,9 +233,7 @@ public class ScriptRuntime {
 
 	public static ScriptableObject initStandardObjects(Context cx, ScriptableObject scope, boolean sealed) {
 		ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
-
-		new LazilyLoadedCtor(s, "JavaAdapter", "dev.latvian.mods.rhino.JavaAdapter", sealed, true, cx);
-
+		JavaAdapter.init(cx, scope, sealed);
 		return s;
 	}
 
@@ -2588,34 +2584,6 @@ public class ScriptRuntime {
 			d2 = toNumber(cx, val2);
 		}
 		return d1 <= d2;
-	}
-
-	public static Object doTopCall(Context cx, Scriptable scope, Callable callable, Scriptable thisObj, Object[] args, boolean isTopLevelStrict) {
-		if (scope == null) {
-			throw new IllegalArgumentException();
-		}
-		if (cx.hasTopCallScope()) {
-			throw new IllegalStateException();
-		}
-
-		Object result;
-		cx.setTopCall(ScriptableObject.getTopLevelScope(scope));
-		boolean previousTopLevelStrict = cx.isTopLevelStrict;
-		cx.isTopLevelStrict = isTopLevelStrict;
-		try {
-			result = cx.doTopCall(callable, scope, thisObj, args);
-		} finally {
-			cx.setTopCall(null);
-			// Cleanup cached references
-			cx.isTopLevelStrict = previousTopLevelStrict;
-
-			if (cx.currentActivationCall != null) {
-				// Function should always call exitActivationFunction
-				// if it creates activation record
-				throw new IllegalStateException();
-			}
-		}
-		return result;
 	}
 
 	public static void initScript(Context cx, Scriptable scope, NativeFunction funObj, Scriptable thisObj, boolean evalScript) {
