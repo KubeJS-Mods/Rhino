@@ -233,7 +233,7 @@ public class ScriptRuntime {
 
 	public static ScriptableObject initStandardObjects(Context cx, ScriptableObject scope, boolean sealed) {
 		ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
-		JavaAdapter.init(cx, scope, sealed);
+		JavaAdapter.init(cx, s, sealed);
 		return s;
 	}
 
