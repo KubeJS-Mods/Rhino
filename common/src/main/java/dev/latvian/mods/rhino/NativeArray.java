@@ -462,7 +462,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 							Callable fun;
 							Scriptable funThis;
 							fun = ScriptRuntime.getPropFunctionAndThis(cx, scope, elem, "toLocaleString");
-							funThis = ScriptRuntime.lastStoredScriptable(cx);
+							funThis = cx.lastStoredScriptable();
 							elem = fun.call(cx, scope, funThis, ScriptRuntime.EMPTY_OBJECTS);
 						}
 						result.append(ScriptRuntime.toString(cx, elem));
@@ -586,7 +586,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		final Comparator<Object> comparator;
 		if (args.length > 0 && Undefined.instance != args[0]) {
 			final Callable jsCompareFunction = ScriptRuntime.getValueFunctionAndThis(cx, args[0]);
-			final Scriptable funThis = ScriptRuntime.lastStoredScriptable(cx);
+			final Scriptable funThis = cx.lastStoredScriptable();
 			final Object[] cmpBuf = new Object[2]; // Buffer for cmp arguments
 			comparator = new ElementComparator((x, y) -> {
 				// This comparator is invoked only for non-undefined objects

@@ -66,7 +66,7 @@ public class NativeSet extends IdScriptableObject {
 		ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, set.getClassName()), cx);
 		final Callable add = ScriptRuntime.getPropFunctionAndThis(cx, scope, dummy.getPrototype(cx), "add");
 		// Clean up the value left around by the previous function
-		ScriptRuntime.lastStoredScriptable(cx);
+		cx.lastStoredScriptable();
 
 		// Finally, run through all the iterated values and add them!
 		try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {

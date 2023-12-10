@@ -341,7 +341,7 @@ public class JavaMembers {
 				}
 			} else {
 				Object[] args = {value};
-				bp.setters.call(cx, ScriptableObject.getTopLevelScope(scope), scope, args);
+				cx.callSync(bp.setters, ScriptableObject.getTopLevelScope(scope), scope, args);
 			}
 		} else {
 			if (!(member instanceof Field field)) {
