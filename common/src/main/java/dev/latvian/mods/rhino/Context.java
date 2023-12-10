@@ -21,10 +21,7 @@ import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,8 +54,6 @@ import java.util.function.Predicate;
 
 @SuppressWarnings("ThrowableNotThrown")
 public class Context {
-	public static final String errorReporterProperty = "error reporter";
-
 	public static Context enter() {
 		return new Context();
 	}
@@ -106,17 +101,6 @@ public class Context {
 		int[] linep = {0};
 		String filename = getSourcePositionFromStack(cx, linep);
 		Context.reportWarning(cx, message, filename, linep[0], null, 0);
-	}
-
-	public static void reportWarning(Context cx, String message, Throwable t) {
-		int[] linep = {0};
-		String filename = getSourcePositionFromStack(cx, linep);
-		Writer sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		pw.println(message);
-		t.printStackTrace(pw);
-		pw.flush();
-		Context.reportWarning(cx, sw.toString(), filename, linep[0], null, 0);
 	}
 
 	/**
@@ -336,9 +320,11 @@ public class Context {
 		return null;
 	}
 
+	public final Object lock = new Object();
+
 	// Generate an observer count on compiled code
 	public boolean generateObserverCount = false;
-	Scriptable topCallScope;
+	private Scriptable topCallScope;
 	boolean isContinuationsTopCall;
 	NativeCall currentActivationCall;
 	BaseFunction typeErrorThrower;
@@ -358,12 +344,9 @@ public class Context {
 	// It can be used to return the second uint32 result from function
 	long scratchUint32;
 	// It can be used to return the second Scriptable result from function
-	Scriptable scratchScriptable;
+	private Scriptable scratchScriptable;
 	boolean isTopLevelStrict;
-	private Object sealKey;
-	private ErrorReporter errorReporter;
 	private int maximumInterpreterStackDepth;
-	private Object propertyListeners;
 	private Map<Object, Object> threadLocalMap;
 	private ClassLoader applicationClassLoader;
 
@@ -385,10 +368,6 @@ public class Context {
 	 * Creates a new context. Provided as a preferred super constructor for
 	 * subclasses in place of the deprecated default public constructor.
 	 *
-	 * @param factory the context factory associated with this context (most
-	 *                likely, the one that created the context). Can not be null. The context
-	 *                features are inherited from the factory, and the context will also
-	 *                otherwise use its factory's services.
 	 * @throws IllegalArgumentException if factory parameter is null.
 	 */
 	protected Context() {
@@ -421,10 +400,7 @@ public class Context {
 	 * @see ErrorReporter
 	 */
 	public final ErrorReporter getErrorReporter() {
-		if (errorReporter == null) {
-			return DefaultErrorReporter.instance;
-		}
-		return errorReporter;
+		return DefaultErrorReporter.instance;
 	}
 
 	/**
@@ -639,95 +615,6 @@ public class Context {
 			return script.exec(this, scope);
 		}
 		return null;
-	}
-
-	/**
-	 * Execute script that may pause execution by capturing a continuation.
-	 * Caller must be prepared to catch a ContinuationPending exception
-	 * and resume execution by calling
-	 * {@link #resumeContinuation(Object, Scriptable, Object)}.
-	 *
-	 * @param script The script to execute. Script must have been compiled
-	 *               with interpreted mode (optimization level -1)
-	 * @param scope  The scope to execute the script against
-	 * @throws ContinuationPending if the script calls a function that results
-	 *                             in a call to {@link #captureContinuation()}
-	 * @since 1.7 Release 2
-	 */
-	public Object executeScriptWithContinuations(Script script, Scriptable scope) throws ContinuationPending {
-		if (!(script instanceof InterpretedFunction) || !((InterpretedFunction) script).isScript()) {
-			// Can only be applied to scripts
-			throw new IllegalArgumentException("Script argument was not" + " a script or was not created by interpreted mode ");
-		}
-		return callFunctionWithContinuations((InterpretedFunction) script, scope, ScriptRuntime.EMPTY_OBJECTS);
-	}
-
-	/**
-	 * Call function that may pause execution by capturing a continuation.
-	 * Caller must be prepared to catch a ContinuationPending exception
-	 * and resume execution by calling
-	 * {@link #resumeContinuation(Object, Scriptable, Object)}.
-	 *
-	 * @param function The function to call. The function must have been
-	 *                 compiled with interpreted mode (optimization level -1)
-	 * @param scope    The scope to execute the script against
-	 * @param args     The arguments for the function
-	 * @throws ContinuationPending if the script calls a function that results
-	 *                             in a call to {@link #captureContinuation()}
-	 * @since 1.7 Release 2
-	 */
-	public Object callFunctionWithContinuations(Callable function, Scriptable scope, Object[] args) throws ContinuationPending {
-		if (!(function instanceof InterpretedFunction)) {
-			// Can only be applied to scripts
-			throw new IllegalArgumentException("Function argument was not" + " created by interpreted mode ");
-		}
-		if (ScriptRuntime.hasTopCall(this)) {
-			throw new IllegalStateException("Cannot have any pending top " + "calls when executing a script with continuations");
-		}
-		// Annotate so we can check later to ensure no java code in
-		// intervening frames
-		isContinuationsTopCall = true;
-		return ScriptRuntime.doTopCall(this, scope, function, scope, args, isTopLevelStrict);
-	}
-
-	/**
-	 * Capture a continuation from the current execution. The execution must
-	 * have been started via a call to
-	 * {@link #executeScriptWithContinuations(Script, Scriptable)} or
-	 * {@link #callFunctionWithContinuations(Callable, Scriptable, Object[])}.
-	 * This implies that the code calling
-	 * this method must have been called as a function from the
-	 * JavaScript script. Also, there cannot be any non-JavaScript code
-	 * between the JavaScript frames (e.g., a call to eval()). The
-	 * ContinuationPending exception returned must be thrown.
-	 *
-	 * @return A ContinuationPending exception that must be thrown
-	 * @since 1.7 Release 2
-	 */
-	public ContinuationPending captureContinuation() {
-		return new ContinuationPending(Interpreter.captureContinuation(this));
-	}
-
-	/**
-	 * Restarts execution of the JavaScript suspended at the call
-	 * to {@link #captureContinuation()}. Execution of the code will resume
-	 * with the functionResult as the result of the call that captured the
-	 * continuation.
-	 * Execution of the script will either conclude normally and the
-	 * result returned, another continuation will be captured and
-	 * thrown, or the script will terminate abnormally and throw an exception.
-	 *
-	 * @param continuation   The value returned by
-	 *                       {@link ContinuationPending#getContinuation()}
-	 * @param functionResult This value will appear to the code being resumed
-	 *                       as the result of the function that captured the continuation
-	 * @throws ContinuationPending if another continuation is captured before
-	 *                             the code terminates
-	 * @since 1.7 Release 2
-	 */
-	public Object resumeContinuation(Object continuation, Scriptable scope, Object functionResult) throws ContinuationPending {
-		Object[] args = {functionResult};
-		return Interpreter.restartContinuation((NativeContinuation) continuation, this, scope, args);
 	}
 
 	/**
@@ -1186,18 +1073,6 @@ public class Context {
 		}
 	}
 
-	/**
-	 * Execute top call to script or function.
-	 * When the runtime is about to execute a script or function that will
-	 * create the first stack frame with scriptable code, it calls this method
-	 * to perform the real call. In this way execution of any script
-	 * happens inside this function.
-	 */
-	protected Object doTopCall(Callable callable, Scriptable scope, Scriptable thisObj, Object[] args) {
-		Object result = callable.call(this, scope, thisObj, args);
-		return result instanceof ConsString ? result.toString() : result;
-	}
-
 	// custom data
 
 	/**
@@ -1367,5 +1242,102 @@ public class Context {
 			throw new IllegalArgumentException();
 		}
 		this.wrapFactory = wrapFactory;
+	}
+
+	public boolean hasTopCallScope() {
+		synchronized (lock) {
+			return topCallScope != null;
+		}
+	}
+
+	public Scriptable getTopCallScope() {
+		synchronized (lock) {
+			return topCallScope;
+		}
+	}
+
+	public Scriptable getTopCallScopeOrThrow() {
+		synchronized (lock) {
+			if (topCallScope == null) {
+				throw new IllegalStateException();
+			}
+
+			return topCallScope;
+		}
+	}
+
+	public void setTopCall(Scriptable scope) {
+		synchronized (lock) {
+			topCallScope = scope;
+		}
+	}
+
+	public void storeScriptable(Scriptable value) {
+		synchronized (lock) {
+			// The previously stored scratchScriptable should be consumed
+			if (scratchScriptable != null) {
+				throw new IllegalStateException();
+			}
+			scratchScriptable = value;
+		}
+	}
+
+	public Scriptable lastStoredScriptable() {
+		synchronized (lock) {
+			Scriptable result = scratchScriptable;
+			scratchScriptable = null;
+			return result;
+		}
+	}
+
+	/**
+	 * Call {@link
+	 * Callable#call(Context cx, Scriptable scope, Scriptable thisObj,
+	 * Object[] args)}
+	 * using the Context instance associated with the current thread.
+	 * If no Context is associated with the thread, then makeContext() will be called to construct
+	 * new Context instance. The instance will be temporary associated
+	 * with the thread during call to {@link ContextAction#run(Context)}.
+	 * <p>
+	 * It is allowed but not advisable to use null for <code>factory</code>
+	 * argument in which case the global static singleton ContextFactory
+	 * instance will be used to create new context instances.
+	 */
+	public Object callSync(Callable callable, Scriptable scope, Scriptable thisObj, Object[] args) {
+		synchronized (lock) {
+			return callable.call(this, scope, thisObj, args);
+		}
+	}
+
+	public Object doTopCall(Scriptable scope, Callable callable, Scriptable thisObj, Object[] args, boolean isTopLevelStrict) {
+		if (scope == null) {
+			throw new IllegalArgumentException();
+		}
+		if (hasTopCallScope()) {
+			throw new IllegalStateException();
+		}
+
+		Object result;
+		setTopCall(ScriptableObject.getTopLevelScope(scope));
+		boolean previousTopLevelStrict = this.isTopLevelStrict;
+		this.isTopLevelStrict = isTopLevelStrict;
+		try {
+			result = callSync(callable, scope, thisObj, args);
+
+			if (result instanceof ConsString) {
+				result = result.toString();
+			}
+		} finally {
+			setTopCall(null);
+			// Cleanup cached references
+			this.isTopLevelStrict = previousTopLevelStrict;
+
+			if (currentActivationCall != null) {
+				// Function should always call exitActivationFunction
+				// if it creates activation record
+				throw new IllegalStateException();
+			}
+		}
+		return result;
 	}
 }

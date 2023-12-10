@@ -64,7 +64,7 @@ public class NativeMap extends IdScriptableObject {
 		// so that we can get our own prototype.
 		ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, map.getClassName()), cx);
 		final Callable set = ScriptRuntime.getPropFunctionAndThis(cx, scope, dummy.getPrototype(cx), "set");
-		ScriptRuntime.lastStoredScriptable(cx);
+		cx.lastStoredScriptable();
 
 		// Finally, run through all the iterated values and add them!
 		try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {

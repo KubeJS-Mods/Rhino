@@ -27,7 +27,7 @@ public class InterfaceAdapter {
 			throw new IllegalArgumentException();
 		}
 
-		Scriptable topScope = ScriptRuntime.getTopCallScope(cx);
+		Scriptable topScope = cx.getTopCallScope();
 		InterfaceAdapter adapter;
 		adapter = (InterfaceAdapter) cx.getInterfaceAdapter(cl);
 		if (adapter == null) {
@@ -84,11 +84,7 @@ public class InterfaceAdapter {
 		this.proxyHelper = VMBridge.getInterfaceProxyHelper(cx, new Class[]{cl});
 	}
 
-	public Object invoke(Context cx, final Object target, final Scriptable topScope, final Object thisObject, final Method method, final Object[] args) {
-		return invokeImpl(cx, target, topScope, thisObject, method, args);
-	}
-
-	Object invokeImpl(Context cx, Object target, Scriptable topScope, Object thisObject, Method method, Object[] args) {
+	public Object invoke(Context cx, Object target, Scriptable topScope, Object thisObject, Method method, Object[] args) {
 		Callable function;
 		if (target instanceof Callable) {
 			function = (Callable) target;
@@ -126,7 +122,7 @@ public class InterfaceAdapter {
 		}
 		Scriptable thisObj = wf.wrapAsJavaObject(cx, topScope, thisObject, null);
 
-		Object result = function.call(cx, topScope, thisObj, args);
+		Object result = cx.callSync(function, topScope, thisObj, args);
 		Class<?> javaResultType = method.getReturnType();
 		if (javaResultType == Void.TYPE) {
 			result = null;

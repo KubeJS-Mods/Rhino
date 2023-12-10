@@ -254,15 +254,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 					return f.call(cx, f.getParentScope(), start, ScriptRuntime.EMPTY_OBJECTS);
 				}
 			}
-			Object val = this.value;
-			if (val instanceof LazilyLoadedCtor initializer) {
-				try {
-					initializer.init(cx);
-				} finally {
-					this.value = val = initializer.getValue();
-				}
-			}
-			return val;
+			return this.value;
 		}
 	}
 
@@ -1802,18 +1794,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		return false;
 	}
 
-	void addLazilyInitializedValue(Context cx, String name, int index, LazilyLoadedCtor init, int attributes) {
-		if (name != null && index != 0) {
-			throw new IllegalArgumentException(name);
-		}
-		checkNotSealed(cx, name, index);
-		GetterSlot gslot = (GetterSlot) slotMap.get(name, index, SlotAccess.MODIFY_GETTER_SETTER);
-		gslot.setAttributes(attributes);
-		gslot.getter = null;
-		gslot.setter = null;
-		gslot.value = init;
-	}
-
 	/**
 	 * Return the array that was previously set by the call to "setExternalArrayData".
 	 *
@@ -2419,16 +2399,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		if (!isSealed) {
 			final long stamp = slotMap.readLock();
 			try {
-				for (Slot slot : slotMap) {
-					Object value = slot.value;
-					if (value instanceof LazilyLoadedCtor initializer) {
-						try {
-							initializer.init(cx);
-						} finally {
-							slot.value = initializer.getValue();
-						}
-					}
-				}
 				isSealed = true;
 			} finally {
 				slotMap.unlockRead(stamp);

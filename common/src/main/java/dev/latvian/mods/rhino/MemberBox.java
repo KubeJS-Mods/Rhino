@@ -177,9 +177,6 @@ public final class MemberBox {
 			do {
 				e = ((InvocationTargetException) e).getTargetException();
 			} while ((e instanceof InvocationTargetException));
-			if (e instanceof ContinuationPending) {
-				throw (ContinuationPending) e;
-			}
 			throw Context.throwAsScriptRuntimeEx(e, cx);
 		} catch (Exception ex) {
 			throw Context.throwAsScriptRuntimeEx(ex, cx);
