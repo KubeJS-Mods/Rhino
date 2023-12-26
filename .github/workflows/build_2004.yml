@@ -3,8 +3,8 @@ name: Java CI
 on:
   push:
     branches:
-      - "1.20/dev"
-      - "1.20/main"
+      - "1.20.4/dev"
+      - "1.20.4/main"
   workflow_dispatch:
     inputs:
       norelease:

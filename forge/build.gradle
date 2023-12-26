@@ -4,34 +4,39 @@ plugins {
 
 architectury {
 	platformSetupLoomIde()
-	forge()
+	neoForge {
+		platformPackage = "forge"
+	}
 }
 
 configurations {
-	developmentForge.extendsFrom common
+	developmentNeoForge.extendsFrom common
 }
 
 loom {
 	accessWidenerPath = project(":common").file("src/main/resources/rhino.accesswidener")
-	forge {
-		convertAccessWideners = true
-		extraAccessWideners.add("rhino.accesswidener")
-		mixinConfigs = [
-				"rhino-common.mixins.json"
-		]
+
+	interfaceInjection {
+		interfaceInjectionSourceSets.add project(':common').sourceSets.main
+	}
+}
+
+repositories {
+	maven {
+		url "https://maven.neoforged.net/releases"
 	}
 }
 
 dependencies {
-	forge("net.minecraftforge:forge:${rootProject.minecraft_version}-${rootProject.forge_version}")
+	neoForge("net.neoforged:neoforge:${rootProject.forge_version}")
 
 	common(project(path: ":common", configuration: "namedElements")) { transitive false }
-	bundle(project(path: ":common", configuration: "transformProductionForge")) { transitive false }
+	bundle(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive false }
 }
 
 processResources {
 	def toReplace = [
-			"version"             : project.version
+			"version": project.version
 	]
 
 	inputs.properties toReplace
@@ -54,6 +59,10 @@ jar {
 	}
 }
 
+remapJar {
+	atAccessWideners.add "kubejs.accesswidener"
+}
+
 components.java {
 	withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
 		skip()
@@ -64,8 +73,8 @@ unifiedPublishing {
 	project {
 		releaseType = rootProject.artifact_type
 		gameVersions = Arrays.asList(rootProject.supported_versions.split(','))
-		gameLoaders = ["forge"]
-		displayName = "$mod_name Forge $project.version"
+		gameLoaders = ["neoforge"]
+		displayName = "$mod_name NeoForge $project.version"
 		changelog = getGitChangelog()
 		mainPublication remapJar
 
@@ -89,7 +98,7 @@ unifiedPublishing {
 publishing {
 	publications {
 		mavenForge(MavenPublication) {
-			artifactId = "${rootProject.archives_base_name}-${project.name}"
+			artifactId = "${rootProject.archives_base_name}-neoforge"
 			from components.java
 		}
 	}

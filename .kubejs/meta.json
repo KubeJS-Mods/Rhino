@@ -1,5 +1,5 @@
 {
-	"minecraft": 2001,
+	"minecraft": 2004,
 	"type": "architectury",
 	"version": {
 		"file": "gradle.properties",
@@ -9,8 +9,8 @@
 	},
 	"downloads": [
 		{
-			"name": "Forge",
-			"url": "https://maven.saps.dev/releases/dev/latvian/mods/rhino-forge/{version}/rhino-forge-{version}.jar"
+			"name": "NeoForge",
+			"url": "https://maven.saps.dev/releases/dev/latvian/mods/rhino-neoforge/{version}/rhino-neoforge-{version}.jar"
 		},
 		{
 			"name": "Fabric",
