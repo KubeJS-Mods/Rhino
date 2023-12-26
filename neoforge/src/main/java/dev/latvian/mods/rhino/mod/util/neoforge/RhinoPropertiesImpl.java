@@ -16,6 +16,10 @@ public class RhinoPropertiesImpl {
 		return !FMLLoader.isProduction();
 	}
 
+	public static boolean needsRemapping() {
+		return false;
+	}
+
 	public static InputStream openResource(String path) throws Exception {
 		return Files.newInputStream(ModList.get().getModFileById("rhino").getFile().findResource(path));
 	}

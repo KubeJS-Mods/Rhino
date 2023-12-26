@@ -15,6 +15,10 @@ public class RhinoPropertiesImpl {
 		return FabricLoader.getInstance().isDevelopmentEnvironment();
 	}
 
+	public static boolean needsRemapping() {
+		return true;
+	}
+
 	public static InputStream openResource(String path) throws Exception {
 		return Files.newInputStream(FabricLoader.getInstance().getModContainer("rhino").get().findPath(path).get());
 	}

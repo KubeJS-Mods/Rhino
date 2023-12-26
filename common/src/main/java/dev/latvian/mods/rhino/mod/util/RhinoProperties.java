@@ -25,6 +25,11 @@ public enum RhinoProperties {
 	}
 
 	@ExpectPlatform
+	public static boolean needsRemapping() {
+		throw new AssertionError();
+	}
+
+	@ExpectPlatform
 	public static InputStream openResource(String path) throws Exception {
 		throw new AssertionError();
 	}
