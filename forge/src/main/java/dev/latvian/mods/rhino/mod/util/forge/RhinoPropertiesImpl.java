@@ -1,7 +1,7 @@
 package dev.latvian.mods.rhino.mod.util.forge;
 
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.loading.FMLLoader;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.FMLLoader;
 
 import java.io.InputStream;
 import java.nio.file.Files;

@@ -54,7 +54,7 @@ public class RhinoModFabric implements ModInitializer {
 
 				for (var methodDef : classDef.getMethods()) {
 					var rawMethodName = methodDef.getName(rawNamespace);
-					var rawMethodDesc = methodDef.getDescriptor(rawNamespace);
+					var rawMethodDesc = methodDef.getDesc(methodDef.getTree().getNamespaceId(rawNamespace));
 					var sig = new MojangMappings.NamedSignature(rawMethodName, context.mappings().readSignatureFromDescriptor(rawMethodDesc));
 					var mmMethod = mmClass.members.get(sig);
 

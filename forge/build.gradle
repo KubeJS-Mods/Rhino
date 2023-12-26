@@ -60,7 +60,7 @@ jar {
 }
 
 remapJar {
-	atAccessWideners.add "kubejs.accesswidener"
+	atAccessWideners.add "rhino.accesswidener"
 }
 
 components.java {
