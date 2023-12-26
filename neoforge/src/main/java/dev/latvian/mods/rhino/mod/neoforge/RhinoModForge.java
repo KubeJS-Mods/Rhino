@@ -1,4 +1,4 @@
-package dev.latvian.mods.rhino.mod.forge;
+package dev.latvian.mods.rhino.mod.neoforge;
 
 import dev.latvian.mods.rhino.mod.util.MojangMappings;
 import dev.latvian.mods.rhino.mod.util.RemappingHelper;

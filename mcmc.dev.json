@@ -25,9 +25,9 @@
 			"classifier": "sources"
 		},
 		{
-			"suffix": "forge",
-			"directory": "forge/build/libs",
-			"pattern": "rhino-forge-([\\d-.]+build\\.\\d+)\\.jar",
+			"suffix": "neoforge",
+			"directory": "neoforge/build/libs",
+			"pattern": "rhino-neoforge-([\\d-.]+build\\.\\d+)\\.jar",
 			"version": "$1"
 		},
 		{
