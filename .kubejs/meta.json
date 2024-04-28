@@ -10,7 +10,7 @@
 	"downloads": [
 		{
 			"name": "Download",
-			"url": "https://maven.latvian.dev/releases/dev/latvian/mods/rhino/{version}/rhino-{version}.jar"
+			"url": "https://maven.latvian.dev/releases/dev/latvian/mods/rhino-neoforge/{version}/rhino-neoforge-{version}.jar"
 		}
 	]
 }
