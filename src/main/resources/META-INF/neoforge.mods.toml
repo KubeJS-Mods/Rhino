@@ -1,0 +1,16 @@
+modLoader = "javafml"
+loaderVersion = "[2,)"
+issueTrackerURL = "https://github.com/KubeJS-Mods/Rhino/issues"
+license = "MPL-2.0"
+
+[[mods]]
+modId = "rhino"
+version = "${version}"
+displayName = "Rhino"
+authors = "Lat, Mozilla"
+description = '''
+A fork of Mozilla's Rhino library, modified for use in mods
+'''
+
+[[mixins]]
+config = "rhino.mixins.json"

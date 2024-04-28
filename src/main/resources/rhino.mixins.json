@@ -1,0 +1,21 @@
+{
+	"required": true,
+	"package": "dev.latvian.mods.rhino.mod.core.mixin.common",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"ChatFormattingMixin",
+		"DirectionMixin",
+		"DyeColorMixin",
+		"NumericTagMixin",
+		"ResourceKeyMixin",
+		"ResourceLocationMixin",
+		"StringTagMixin",
+		"TextColorMixin"
+	],
+	"client": [
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"minVersion": "0.8"
+}
