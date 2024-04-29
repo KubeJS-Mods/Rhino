@@ -137,7 +137,7 @@ remapJar {
 
 unifiedPublishing {
 	project {
-		releaseType = rootProject.artifact_type
+		releaseType = "${ENV.RELEASE_TYPE ?: 'release'}"
 		gameVersions = Arrays.asList(rootProject.supported_versions.split(','))
 		gameLoaders = ["neoforge"]
 		displayName = "$mod_name NeoForge $project.version"
