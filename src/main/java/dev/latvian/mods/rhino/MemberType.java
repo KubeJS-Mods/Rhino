@@ -15,7 +15,7 @@ public enum MemberType {
 		if (value == null) {
 			return OBJECT;
 		}
-		if (value == Undefined.instance) {
+		if (value == Undefined.INSTANCE) {
 			return UNDEFINED;
 		}
 		if (value instanceof Scriptable) {

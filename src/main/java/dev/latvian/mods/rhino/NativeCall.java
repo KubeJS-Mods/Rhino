@@ -48,7 +48,7 @@ public final class NativeCall extends IdScriptableObject {
 		if (paramAndVarCount != 0) {
 			for (int i = 0; i < paramCount; ++i) {
 				String name = function.getParamOrVarName(i);
-				Object val = i < args.length ? args[i] : Undefined.instance;
+				Object val = i < args.length ? args[i] : Undefined.INSTANCE;
 				defineProperty(cx, name, val, PERMANENT);
 			}
 		}
@@ -65,9 +65,9 @@ public final class NativeCall extends IdScriptableObject {
 				String name = function.getParamOrVarName(i);
 				if (!super.has(cx, name, this)) {
 					if (function.getParamOrVarConst(i)) {
-						defineProperty(cx, name, Undefined.instance, CONST);
+						defineProperty(cx, name, Undefined.INSTANCE, CONST);
 					} else if (!(function instanceof InterpretedFunction) || ((InterpretedFunction) function).hasFunctionNamed(name)) {
-						defineProperty(cx, name, Undefined.instance, PERMANENT);
+						defineProperty(cx, name, Undefined.INSTANCE, PERMANENT);
 					}
 				}
 			}

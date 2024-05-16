@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -1337,9 +1339,9 @@ final class NativeDate extends IdScriptableObject {
 	}
 
 	@Override
-	public Object getDefaultValue(Context cx, Class<?> typeHint) {
+	public Object getDefaultValue(Context cx, DefaultValueTypeHint typeHint) {
 		if (typeHint == null) {
-			typeHint = ScriptRuntime.StringClass;
+			typeHint = DefaultValueTypeHint.STRING;
 		}
 		return super.getDefaultValue(cx, typeHint);
 	}
@@ -1585,7 +1587,7 @@ final class NativeDate extends IdScriptableObject {
 				final String toISOString = "toISOString";
 
 				Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-				Object tv = ScriptRuntime.toPrimitive(cx, o, ScriptRuntime.NumberClass);
+				Object tv = ScriptRuntime.toPrimitive(cx, o, DefaultValueTypeHint.NUMBER);
 				if (tv instanceof Number) {
 					double d = ((Number) tv).doubleValue();
 					if (Double.isNaN(d) || Double.isInfinite(d)) {

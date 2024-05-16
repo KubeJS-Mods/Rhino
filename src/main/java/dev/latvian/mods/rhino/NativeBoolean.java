@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
+
 /**
  * This class implements the Boolean native object.
  * See ECMA 15.6.
@@ -37,10 +39,10 @@ final class NativeBoolean extends IdScriptableObject {
 	}
 
 	@Override
-	public Object getDefaultValue(Context cx, Class<?> typeHint) {
+	public Object getDefaultValue(Context cx, DefaultValueTypeHint typeHint) {
 		// This is actually non-ECMA, but will be proposed
 		// as a change in round 2.
-		if (typeHint == ScriptRuntime.BooleanClass) {
+		if (typeHint == DefaultValueTypeHint.BOOLEAN) {
 			return booleanValue;
 		}
 		return super.getDefaultValue(cx, typeHint);

@@ -380,13 +380,14 @@ public class NativeJavaMethod extends BaseFunction {
 		}
 
 		MemberBox meth = methods[index];
-		Class<?>[] argTypes = meth.argTypes;
+		var argTypes = meth.argTypes;
+		var genericArgTypes = meth.genericArgTypes;
 
 		if (meth.vararg) {
 			// marshall the explicit parameters
 			Object[] newArgs = new Object[argTypes.length];
 			for (int i = 0; i < argTypes.length - 1; i++) {
-				newArgs[i] = Context.jsToJava(cx, args[i], argTypes[i]);
+				newArgs[i] = cx.jsToJava(args[i], argTypes[i], genericArgTypes[i]);
 			}
 
 			Object varArgs;
@@ -395,13 +396,13 @@ public class NativeJavaMethod extends BaseFunction {
 			// is given and it is a Java or ECMA array or is null.
 			if (args.length == argTypes.length && (args[args.length - 1] == null || args[args.length - 1] instanceof NativeArray || args[args.length - 1] instanceof NativeJavaArray)) {
 				// convert the ECMA array into a native array
-				varArgs = Context.jsToJava(cx, args[args.length - 1], argTypes[argTypes.length - 1]);
+				varArgs = cx.jsToJava(args[args.length - 1], argTypes[argTypes.length - 1], genericArgTypes[argTypes.length - 1]);
 			} else {
 				// marshall the variable parameters
 				Class<?> componentType = argTypes[argTypes.length - 1].getComponentType();
 				varArgs = Array.newInstance(componentType, args.length - argTypes.length + 1);
 				for (int i = 0; i < Array.getLength(varArgs); i++) {
-					Object value = Context.jsToJava(cx, args[argTypes.length - 1 + i], componentType);
+					Object value = cx.jsToJava(args[argTypes.length - 1 + i], componentType);
 					Array.set(varArgs, i, value);
 				}
 			}
@@ -427,7 +428,7 @@ public class NativeJavaMethod extends BaseFunction {
 				}
 				 */
 
-				coerced = Context.jsToJava(cx, coerced, argTypes[i]);
+				coerced = cx.jsToJava(coerced, argTypes[i], genericArgTypes[i]);
 
 				if (coerced != arg) {
 					if (origArgs == args) {
@@ -468,14 +469,14 @@ public class NativeJavaMethod extends BaseFunction {
 			System.err.println(" ----- Returned " + retval + " actual = " + actualType + " expect = " + staticType);
 		}
 
-		Object wrapped = cx.getWrapFactory().wrap(cx, scope, retval, staticType);
+		Object wrapped = cx.wrap(scope, retval, staticType, meth.getGenericReturnType());
 		if (debug) {
 			Class<?> actualType = (wrapped == null) ? null : wrapped.getClass();
 			System.err.println(" ----- Wrapped as " + wrapped + " class = " + actualType);
 		}
 
 		if (wrapped == null && staticType == Void.TYPE) {
-			wrapped = Undefined.instance;
+			wrapped = Undefined.INSTANCE;
 		}
 		return wrapped;
 	}

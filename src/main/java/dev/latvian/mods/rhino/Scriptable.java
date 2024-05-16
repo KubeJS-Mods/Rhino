@@ -8,6 +8,8 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
+
 import java.util.function.Consumer;
 
 /**
@@ -300,7 +302,7 @@ public interface Scriptable extends IdEnumerationIterator {
 	 * @param hint the type hint
 	 * @return the default value
 	 */
-	Object getDefaultValue(Context cx, Class<?> hint);
+	Object getDefaultValue(Context cx, DefaultValueTypeHint hint);
 
 	/**
 	 * The instanceof operator.

@@ -47,7 +47,7 @@ final class NativeNumber extends IdScriptableObject {
 	private static Object execConstructorCall(Context cx, int id, Object[] args) {
 		switch (id) {
 			case ConstructorId_isFinite:
-				if ((args.length == 0) || (Undefined.instance == args[0])) {
+				if ((args.length == 0) || (Undefined.INSTANCE == args[0])) {
 					return Boolean.FALSE;
 				}
 				if (args[0] instanceof Number) {
@@ -57,7 +57,7 @@ final class NativeNumber extends IdScriptableObject {
 				return Boolean.FALSE;
 
 			case ConstructorId_isNaN:
-				if ((args.length == 0) || (Undefined.instance == args[0])) {
+				if ((args.length == 0) || (Undefined.INSTANCE == args[0])) {
 					return Boolean.FALSE;
 				}
 				if (args[0] instanceof Number) {
@@ -66,7 +66,7 @@ final class NativeNumber extends IdScriptableObject {
 				return Boolean.FALSE;
 
 			case ConstructorId_isInteger:
-				if ((args.length == 0) || (Undefined.instance == args[0])) {
+				if ((args.length == 0) || (Undefined.INSTANCE == args[0])) {
 					return Boolean.FALSE;
 				}
 				if (args[0] instanceof Number) {
@@ -75,7 +75,7 @@ final class NativeNumber extends IdScriptableObject {
 				return Boolean.FALSE;
 
 			case ConstructorId_isSafeInteger:
-				if ((args.length == 0) || (Undefined.instance == args[0])) {
+				if ((args.length == 0) || (Undefined.INSTANCE == args[0])) {
 					return Boolean.FALSE;
 				}
 				if (args[0] instanceof Number) {
@@ -267,7 +267,7 @@ final class NativeNumber extends IdScriptableObject {
 			case Id_toString:
 			case Id_toLocaleString: {
 				// toLocaleString is just an alias for toString for now
-				int base = (args.length == 0 || args[0] == Undefined.instance) ? 10 : ScriptRuntime.toInt32(cx, args[0]);
+				int base = (args.length == 0 || args[0] == Undefined.INSTANCE) ? 10 : ScriptRuntime.toInt32(cx, args[0]);
 				return ScriptRuntime.numberToString(cx, value, base);
 			}
 
@@ -297,7 +297,7 @@ final class NativeNumber extends IdScriptableObject {
 
 			case Id_toPrecision: {
 				// Undefined precision, fall back to ToString()
-				if (args.length == 0 || args[0] == Undefined.instance) {
+				if (args.length == 0 || args[0] == Undefined.INSTANCE) {
 					return ScriptRuntime.numberToString(cx, value, 10);
 				}
 				// Handle special values before range check

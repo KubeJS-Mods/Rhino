@@ -66,7 +66,7 @@ final class NativeError extends IdScriptableObject {
 
 		public Object getPrepareStackTrace(Context cx) {
 			Object ps = getPrepareStackTrace();
-			return (ps == null ? Undefined.instance : ps);
+			return (ps == null ? Undefined.INSTANCE : ps);
 		}
 
 		public Function getPrepareStackTrace() {
@@ -74,7 +74,7 @@ final class NativeError extends IdScriptableObject {
 		}
 
 		public Object setPrepareStackTrace(Context cx, Object value) {
-			if ((value == null) || Undefined.instance.equals(value)) {
+			if ((value == null) || Undefined.INSTANCE.equals(value)) {
 				prepareStackTrace = null;
 			} else if (value instanceof Function) {
 				prepareStackTrace = (Function) value;
@@ -105,7 +105,7 @@ final class NativeError extends IdScriptableObject {
 
 		int arglen = args.length;
 		if (arglen >= 1) {
-			if (args[0] != Undefined.instance) {
+			if (args[0] != Undefined.INSTANCE) {
 				putProperty(obj, "message", ScriptRuntime.toString(cx, args[0]), cx);
 			}
 			if (arglen >= 2) {
@@ -121,13 +121,13 @@ final class NativeError extends IdScriptableObject {
 
 	private static Object js_toString(Context cx, Scriptable thisObj) {
 		Object name = getProperty(thisObj, "name", cx);
-		if (name == NOT_FOUND || name == Undefined.instance) {
+		if (name == NOT_FOUND || name == Undefined.INSTANCE) {
 			name = "Error";
 		} else {
 			name = ScriptRuntime.toString(cx, name);
 		}
 		Object msg = getProperty(thisObj, "message", cx);
-		if (msg == NOT_FOUND || msg == Undefined.instance) {
+		if (msg == NOT_FOUND || msg == Undefined.INSTANCE) {
 			msg = "";
 		} else {
 			msg = ScriptRuntime.toString(cx, msg);
@@ -156,7 +156,7 @@ final class NativeError extends IdScriptableObject {
 		// Figure out if they passed a function used to hide part of the stack
 		if (func != null) {
 			Object funcName = func.get(cx, "name", func);
-			if ((funcName != null) && !Undefined.instance.equals(funcName)) {
+			if ((funcName != null) && !Undefined.INSTANCE.equals(funcName)) {
 				err.associateValue(STACK_HIDE_KEY, ScriptRuntime.toString(cx, funcName));
 			}
 		}
@@ -243,7 +243,7 @@ final class NativeError extends IdScriptableObject {
 
 			case ConstructorId_captureStackTrace:
 				js_captureStackTrace(cx, thisObj, args);
-				return Undefined.instance;
+				return Undefined.INSTANCE;
 		}
 		throw new IllegalArgumentException(String.valueOf(id));
 	}

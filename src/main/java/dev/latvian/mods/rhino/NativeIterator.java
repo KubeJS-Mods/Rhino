@@ -24,7 +24,7 @@ public final class NativeIterator extends IdScriptableObject {
 	private static final int MAX_PROTOTYPE_ID = 3;
 
 	public static class StopIteration extends NativeObject {
-		private Object value = Undefined.instance;
+		private Object value = Undefined.INSTANCE;
 
 		public StopIteration(Context cx) {
 			super(cx.factory);
@@ -115,8 +115,8 @@ public final class NativeIterator extends IdScriptableObject {
 
 	/* The JavaScript constructor */
 	private static Object jsConstructor(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
-			Object argument = args.length == 0 ? Undefined.instance : args[0];
+		if (args.length == 0 || args[0] == null || args[0] == Undefined.INSTANCE) {
+			Object argument = args.length == 0 ? Undefined.INSTANCE : args[0];
 			throw ScriptRuntime.typeError1(cx, "msg.no.properties", ScriptRuntime.toString(cx, argument));
 		}
 		Scriptable obj = ScriptRuntime.toObject(cx, scope, args[0]);
@@ -130,7 +130,7 @@ public final class NativeIterator extends IdScriptableObject {
 			Iterator<?> iterator = getJavaIterator(obj);
 			if (iterator != null) {
 				scope = getTopLevelScope(scope);
-				return cx.getWrapFactory().wrap(cx, scope, new WrappedJavaIterator(cx, iterator, scope), WrappedJavaIterator.class);
+				return cx.wrap(scope, new WrappedJavaIterator(cx, iterator, scope), WrappedJavaIterator.class);
 			}
 
 			// Otherwise, just call the runtime routine

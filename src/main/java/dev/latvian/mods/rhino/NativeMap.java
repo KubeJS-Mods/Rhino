@@ -6,8 +6,6 @@
 
 package dev.latvian.mods.rhino;
 
-import java.util.Iterator;
-
 public class NativeMap extends IdScriptableObject {
 	static final String ITERATOR_TAG = "Map Iterator";
 	private static final Object MAP_TAG = "Map";
@@ -48,13 +46,13 @@ public class NativeMap extends IdScriptableObject {
 	 * to do... Make this static because NativeWeakMap has the exact same requirement.
 	 */
 	static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject map, Object arg1) {
-		if ((arg1 == null) || Undefined.instance.equals(arg1)) {
+		if ((arg1 == null) || Undefined.INSTANCE.equals(arg1)) {
 			return;
 		}
 
 		// Call the "[Symbol.iterator]" property as a function.
 		final Object ito = ScriptRuntime.callIterator(cx, scope, arg1);
-		if (Undefined.instance.equals(ito)) {
+		if (Undefined.INSTANCE.equals(ito)) {
 			// Per spec, ignore if the iterator is undefined
 			return;
 		}
@@ -75,11 +73,11 @@ public class NativeMap extends IdScriptableObject {
 				}
 				Object finalKey = sVal.get(cx, 0, sVal);
 				if (finalKey == NOT_FOUND) {
-					finalKey = Undefined.instance;
+					finalKey = Undefined.INSTANCE;
 				}
 				Object finalVal = sVal.get(cx, 1, sVal);
 				if (finalVal == NOT_FOUND) {
-					finalVal = Undefined.instance;
+					finalVal = Undefined.INSTANCE;
 				}
 				set.call(cx, scope, map, new Object[]{finalKey, finalVal});
 			}
@@ -132,13 +130,13 @@ public class NativeMap extends IdScriptableObject {
 				}
 				throw ScriptRuntime.typeError1(cx, "msg.no.new", "Map");
 			case Id_set:
-				return realThis(thisObj, f, cx).js_set(cx, args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_set(cx, args.length > 0 ? args[0] : Undefined.INSTANCE, args.length > 1 ? args[1] : Undefined.INSTANCE);
 			case Id_delete:
-				return realThis(thisObj, f, cx).js_delete(cx, args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_delete(cx, args.length > 0 ? args[0] : Undefined.INSTANCE);
 			case Id_get:
-				return realThis(thisObj, f, cx).js_get(cx, args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_get(cx, args.length > 0 ? args[0] : Undefined.INSTANCE);
 			case Id_has:
-				return realThis(thisObj, f, cx).js_has(cx, args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_has(cx, args.length > 0 ? args[0] : Undefined.INSTANCE);
 			case Id_clear:
 				return realThis(thisObj, f, cx).js_clear(cx);
 			case Id_keys:
@@ -148,7 +146,7 @@ public class NativeMap extends IdScriptableObject {
 			case Id_entries:
 				return realThis(thisObj, f, cx).js_iterator(scope, NativeCollectionIterator.Type.BOTH, cx);
 			case Id_forEach:
-				return realThis(thisObj, f, cx).js_forEach(cx, scope, args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_forEach(cx, scope, args.length > 0 ? args[0] : Undefined.INSTANCE, args.length > 1 ? args[1] : Undefined.INSTANCE);
 			case SymbolId_getSize:
 				return realThis(thisObj, f, cx).js_getSize();
 		}
@@ -176,7 +174,7 @@ public class NativeMap extends IdScriptableObject {
 	private Object js_get(Context cx, Object arg) {
 		final Object val = entries.get(cx, arg);
 		if (val == null) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 		if (val == NULL_VALUE) {
 			return null;
@@ -198,7 +196,7 @@ public class NativeMap extends IdScriptableObject {
 
 	private Object js_clear(Context cx) {
 		entries.clear(cx);
-		return Undefined.instance;
+		return Undefined.INSTANCE;
 	}
 
 	private Object js_forEach(Context cx, Scriptable scope, Object arg1, Object arg2) {
@@ -207,8 +205,8 @@ public class NativeMap extends IdScriptableObject {
 		}
 
 		boolean isStrict = cx.isStrictMode();
-		Iterator<Hashtable.Entry> i = entries.iterator();
-		while (i.hasNext()) {
+
+		for (var entry : entries) {
 			// Per spec must convert every time so that primitives are always regenerated...
 			Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, arg2, scope);
 
@@ -216,18 +214,18 @@ public class NativeMap extends IdScriptableObject {
 				thisObj = scope;
 			}
 			if (thisObj == null) {
-				thisObj = Undefined.SCRIPTABLE_UNDEFINED;
+				thisObj = Undefined.SCRIPTABLE_INSTANCE;
 			}
 
-			final Hashtable.Entry e = i.next();
-			Object val = e.value;
+			Object val = entry.value;
+
 			if (val == NULL_VALUE) {
 				val = null;
 			}
 
-			f.call(cx, scope, thisObj, new Object[]{val, e.key, this});
+			f.call(cx, scope, thisObj, new Object[]{val, entry.key, this});
 		}
-		return Undefined.instance;
+		return Undefined.INSTANCE;
 	}
 
 	@Override

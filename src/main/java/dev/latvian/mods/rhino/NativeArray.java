@@ -127,8 +127,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		public int compare(final Object x, final Object y) {
 			// Sort NOT_FOUND to very end, Undefined before that, exclusively, as per
 			// ECMA 22.1.3.25.1.
-			if (x == Undefined.instance) {
-				if (y == Undefined.instance) {
+			if (x == Undefined.INSTANCE) {
+				if (y == Undefined.INSTANCE) {
 					return 0;
 				}
 				if (y == NOT_FOUND) {
@@ -142,7 +142,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			if (y == NOT_FOUND) {
 				return -1;
 			}
-			if (y == Undefined.instance) {
+			if (y == Undefined.INSTANCE) {
 				return -1;
 			}
 
@@ -246,9 +246,9 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	}
 
 	private static Object js_from(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		final Scriptable items = ScriptRuntime.toObject(cx, scope, (args.length >= 1) ? args[0] : Undefined.instance);
-		Object mapArg = (args.length >= 2) ? args[1] : Undefined.instance;
-		Scriptable thisArg = Undefined.SCRIPTABLE_UNDEFINED;
+		final Scriptable items = ScriptRuntime.toObject(cx, scope, (args.length >= 1) ? args[0] : Undefined.INSTANCE);
+		Object mapArg = (args.length >= 2) ? args[1] : Undefined.INSTANCE;
+		Scriptable thisArg = Undefined.SCRIPTABLE_INSTANCE;
 		final boolean mapping = !Undefined.isUndefined(mapArg);
 		Function mapFn = null;
 
@@ -366,7 +366,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 	private static Object getElem(Context cx, Scriptable target, long index) {
 		Object elem = getRawElem(target, index, cx);
-		return (elem != NOT_FOUND ? elem : Undefined.instance);
+		return (elem != NOT_FOUND ? elem : Undefined.INSTANCE);
 	}
 
 	// same as getElem, but without converting NOT_FOUND to undefined
@@ -445,7 +445,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 						result.append(separator);
 					}
 					Object elem = getRawElem(o, i, cx);
-					if (elem == NOT_FOUND || elem == null || elem == Undefined.instance) {
+					if (elem == NOT_FOUND || elem == null || elem == Undefined.INSTANCE) {
 						haslast = false;
 						continue;
 					}
@@ -502,7 +502,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			throw Context.reportRuntimeError1("msg.arraylength.too.big", String.valueOf(llength), cx);
 		}
 		// if no args, use "," as separator
-		String separator = (args.length < 1 || args[0] == Undefined.instance) ? "," : ScriptRuntime.toString(cx, args[0]);
+		String separator = (args.length < 1 || args[0] == Undefined.INSTANCE) ? "," : ScriptRuntime.toString(cx, args[0]);
 		if (o instanceof NativeArray na) {
 			if (na.denseOnly) {
 				StringBuilder sb = new StringBuilder();
@@ -512,7 +512,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 					}
 					if (i < na.dense.length) {
 						Object temp = na.dense[i];
-						if (temp != null && temp != Undefined.instance && temp != NOT_FOUND) {
+						if (temp != null && temp != Undefined.INSTANCE && temp != NOT_FOUND) {
 							sb.append(ScriptRuntime.toString(cx, temp));
 						}
 					}
@@ -527,7 +527,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		int total_size = 0;
 		for (int i = 0; i != length; i++) {
 			Object temp = getElem(cx, o, i);
-			if (temp != null && temp != Undefined.instance) {
+			if (temp != null && temp != Undefined.INSTANCE) {
 				String str = ScriptRuntime.toString(cx, temp);
 				total_size += str.length();
 				buf[i] = str;
@@ -584,7 +584,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
 		final Comparator<Object> comparator;
-		if (args.length > 0 && Undefined.instance != args[0]) {
+		if (args.length > 0 && Undefined.INSTANCE != args[0]) {
 			final Callable jsCompareFunction = ScriptRuntime.getValueFunctionAndThis(cx, args[0]);
 			final Scriptable funThis = cx.lastStoredScriptable();
 			final Object[] cmpBuf = new Object[2]; // Buffer for cmp arguments
@@ -672,7 +672,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			// have setLength which does that for us.
 			deleteElem(o, length, cx);
 		} else {
-			result = Undefined.instance;
+			result = Undefined.INSTANCE;
 		}
 		// necessary to match js even when length < 0; js pop will give a
 		// length property to any target it is called on.
@@ -690,7 +690,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				Object result = na.dense[0];
 				System.arraycopy(na.dense, 1, na.dense, 0, (int) na.length);
 				na.dense[(int) na.length] = NOT_FOUND;
-				return result == NOT_FOUND ? Undefined.instance : result;
+				return result == NOT_FOUND ? Undefined.INSTANCE : result;
 			}
 		}
 		Object result;
@@ -716,7 +716,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			// have setLength which does that for us.
 			deleteElem(o, length, cx);
 		} else {
-			result = Undefined.instance;
+			result = Undefined.INSTANCE;
 		}
 		setLengthProperty(cx, o, length);
 		return result;
@@ -950,7 +950,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			end = len;
 		} else {
 			begin = toSliceIndex(ScriptRuntime.toInteger(cx, args[0]), len);
-			if (args.length == 1 || args[1] == Undefined.instance) {
+			if (args.length == 1 || args[1] == Undefined.INSTANCE) {
 				end = len;
 			} else {
 				end = toSliceIndex(ScriptRuntime.toInteger(cx, args[1]), len);
@@ -985,7 +985,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	}
 
 	private static Object js_indexOf(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
+		Object compareTo = args.length > 0 ? args[0] : Undefined.INSTANCE;
 
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 		long length = getLengthProperty(cx, o, false);
@@ -1040,7 +1040,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	}
 
 	private static Object js_lastIndexOf(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
+		Object compareTo = args.length > 0 ? args[0] : Undefined.INSTANCE;
 
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 		long length = getLengthProperty(cx, o, false);
@@ -1098,7 +1098,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
        See ECMA-262 22.1.3.13
     */
 	private static Boolean js_includes(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
+		Object compareTo = args.length > 0 ? args[0] : Undefined.INSTANCE;
 
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 		long len = ScriptRuntime.toLength(cx, new Object[]{getProperty(thisObj, "length", cx)}, 0);
@@ -1130,7 +1130,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 						elementK = getProperty(proto, i, cx);
 					}
 					if (elementK == NOT_FOUND) {
-						elementK = Undefined.instance;
+						elementK = Undefined.INSTANCE;
 					}
 					if (ScriptRuntime.sameZero(cx, elementK, compareTo)) {
 						return Boolean.TRUE;
@@ -1142,7 +1142,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		for (; k < len; k++) {
 			Object elementK = getRawElem(o, k, cx);
 			if (elementK == NOT_FOUND) {
-				elementK = Undefined.instance;
+				elementK = Undefined.INSTANCE;
 			}
 			if (ScriptRuntime.sameZero(cx, elementK, compareTo)) {
 				return Boolean.TRUE;
@@ -1177,7 +1177,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			fin = Math.min(relativeEnd, len);
 		}
 
-		Object value = args.length > 0 ? args[0] : Undefined.instance;
+		Object value = args.length > 0 ? args[0] : Undefined.INSTANCE;
 		for (long i = k; i < fin; i++) {
 			setRawElem(cx, thisObj, i, value);
 		}
@@ -1189,7 +1189,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 		long len = getLengthProperty(cx, o, false);
 
-		Object targetArg = (args.length >= 1) ? args[0] : Undefined.instance;
+		Object targetArg = (args.length >= 1) ? args[0] : Undefined.INSTANCE;
 		long relativeTarget = (long) ScriptRuntime.toInteger(cx, targetArg);
 		long to;
 		if (relativeTarget < 0) {
@@ -1198,7 +1198,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			to = Math.min(relativeTarget, len);
 		}
 
-		Object startArg = (args.length >= 2) ? args[1] : Undefined.instance;
+		Object startArg = (args.length >= 2) ? args[1] : Undefined.INSTANCE;
 		long relativeStart = (long) ScriptRuntime.toInteger(cx, startArg);
 		long from;
 		if (relativeStart < 0) {
@@ -1271,7 +1271,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		}
 
 		long length = getLengthProperty(cx, o, id == Id_map);
-		Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
+		Object callbackArg = args.length > 0 ? args[0] : Undefined.INSTANCE;
 		if (callbackArg == null || !(callbackArg instanceof Function f)) {
 			throw ScriptRuntime.notFunctionError(cx, callbackArg);
 		}
@@ -1286,7 +1286,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 		Scriptable parent = getTopLevelScope(f);
 		Scriptable thisArg;
-		if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
+		if (args.length < 2 || args[1] == null || args[1] == Undefined.INSTANCE) {
 			thisArg = parent;
 		} else {
 			thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
@@ -1303,7 +1303,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			Object elem = getRawElem(o, i, cx);
 			if (elem == NOT_FOUND) {
 				if (id == Id_find || id == Id_findIndex) {
-					elem = Undefined.instance;
+					elem = Undefined.INSTANCE;
 				} else {
 					continue;
 				}
@@ -1350,7 +1350,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			case Id_filter, Id_map -> array;
 			case Id_some -> Boolean.FALSE;
 			case Id_findIndex -> ScriptRuntime.wrapNumber(-1);
-			default -> Undefined.instance;
+			default -> Undefined.INSTANCE;
 		};
 	}
 
@@ -1361,7 +1361,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
 		long length = getLengthProperty(cx, o, false);
-		Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
+		Object callbackArg = args.length > 0 ? args[0] : Undefined.INSTANCE;
 		if (callbackArg == null || !(callbackArg instanceof Function f)) {
 			throw ScriptRuntime.notFunctionError(cx, callbackArg);
 		}
@@ -2141,7 +2141,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			throw new IndexOutOfBoundsException();
 		}
 		Object value = getRawElem(this, index, cx);
-		if (value == NOT_FOUND || value == Undefined.instance) {
+		if (value == NOT_FOUND || value == Undefined.INSTANCE) {
 			return null;
 		} else if (value instanceof Wrapper) {
 			return ((Wrapper) value).unwrap();

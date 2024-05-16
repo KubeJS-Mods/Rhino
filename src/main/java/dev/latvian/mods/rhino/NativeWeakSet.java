@@ -74,11 +74,11 @@ public class NativeWeakSet extends IdScriptableObject {
 				}
 				throw ScriptRuntime.typeError1(cx, "msg.no.new", "WeakSet");
 			case Id_add:
-				return realThis(thisObj, f, cx).js_add(args.length > 0 ? args[0] : Undefined.instance, cx);
+				return realThis(thisObj, f, cx).js_add(args.length > 0 ? args[0] : Undefined.INSTANCE, cx);
 			case Id_delete:
-				return realThis(thisObj, f, cx).js_delete(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_delete(args.length > 0 ? args[0] : Undefined.INSTANCE);
 			case Id_has:
-				return realThis(thisObj, f, cx).js_has(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_has(args.length > 0 ? args[0] : Undefined.INSTANCE);
 		}
 		throw new IllegalArgumentException("WeakMap.prototype has no method: " + f.getFunctionName());
 	}

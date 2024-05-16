@@ -2281,7 +2281,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 	Scriptable compile(Context cx, Scriptable scope, Object[] args) {
 		if (args.length > 0 && args[0] instanceof NativeRegExp thatObj) {
-			if (args.length > 1 && args[1] != Undefined.instance) {
+			if (args.length > 1 && args[1] != Undefined.INSTANCE) {
 				// report error
 				throw ScriptRuntime.typeError0(cx, "msg.bad.regexp.compile");
 			}
@@ -2290,7 +2290,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			return this;
 		}
 		String s = args.length == 0 || args[0] instanceof Undefined ? "" : escapeRegExp(cx, args[0]);
-		String global = args.length > 1 && args[1] != Undefined.instance ? ScriptRuntime.toString(cx, args[1]) : null;
+		String global = args.length > 1 && args[1] != Undefined.INSTANCE ? ScriptRuntime.toString(cx, args[1]) : null;
 		this.re = compileRE(cx, s, global, false);
 		setLastIndex(ScriptRuntime.zeroObj, cx);
 		return this;
@@ -2325,7 +2325,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 		if (args.length == 0) {
 			str = reImpl.input;
 			if (str == null) {
-				str = ScriptRuntime.toString(cx, Undefined.instance);
+				str = ScriptRuntime.toString(cx, Undefined.INSTANCE);
 			}
 		} else {
 			str = ScriptRuntime.toString(cx, args[0]);
@@ -2343,7 +2343,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			int[] indexp = {(int) d};
 			rval = executeRegExp(cx, scopeObj, reImpl, str, indexp, matchType);
 			if ((re.flags & JSREG_GLOB) != 0) {
-				if (rval == null || rval == Undefined.instance) {
+				if (rval == null || rval == Undefined.INSTANCE) {
 					setLastIndex(ScriptRuntime.zeroObj, cx);
 				} else {
 					setLastIndex((double) indexp[0], cx);
@@ -2372,7 +2372,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			if (matchType != PREFIX) {
 				return null;
 			}
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 		int index = gData.cp;
 		int ep = indexp[0] = index;
@@ -2420,7 +2420,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 					}
 				} else {
 					if (matchType != TEST) {
-						obj.put(cx, num + 1, obj, Undefined.instance);
+						obj.put(cx, num + 1, obj, Undefined.INSTANCE);
 					}
 				}
 			}

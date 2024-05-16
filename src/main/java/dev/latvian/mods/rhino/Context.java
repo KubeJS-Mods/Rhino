@@ -12,12 +12,20 @@ import dev.latvian.mods.rhino.ast.AstRoot;
 import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter.ClassFileFormatException;
 import dev.latvian.mods.rhino.regexp.RegExp;
+import dev.latvian.mods.rhino.util.ClassVisibilityContext;
+import dev.latvian.mods.rhino.util.CustomJavaToJsWrapper;
+import dev.latvian.mods.rhino.util.JavaSetWrapper;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -163,7 +171,7 @@ public class Context {
 	 * Get the singleton object that represents the JavaScript Undefined value.
 	 */
 	public static Object getUndefinedValue() {
-		return Undefined.instance;
+		return Undefined.INSTANCE;
 	}
 
 	/**
@@ -193,13 +201,13 @@ public class Context {
 	 * @param scope top scope object
 	 * @return value suitable to pass to any API that takes JavaScript values.
 	 */
-	public static Object javaToJS(Context cx, Object value, Scriptable scope) {
+	public Object javaToJS(Object value, Scriptable scope) {
 		if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Scriptable) {
 			return value;
 		} else if (value instanceof Character) {
 			return String.valueOf(((Character) value).charValue());
 		} else {
-			return cx.getWrapFactory().wrap(cx, scope, value, null);
+			return wrap(scope, value, null, null);
 		}
 	}
 
@@ -215,12 +223,18 @@ public class Context {
 	 * @return the converted value
 	 * @throws EvaluatorException if the conversion cannot be performed
 	 */
-	public static Object jsToJava(Context cx, Object value, Class<?> desiredType) throws EvaluatorException {
+	public Object jsToJava(Object value, Class<?> desiredType, Type desiredGenericType) throws EvaluatorException {
 		if (desiredType == null) {
 			return value;
+		} else if (desiredType == Object.class) {
+			return Wrapper.unwrapped(value);
+		} else {
+			return NativeJavaObject.coerceTypeImpl(factory.getTypeWrappers(), desiredType, value, this);
 		}
+	}
 
-		return NativeJavaObject.coerceTypeImpl(cx.factory.hasTypeWrappers() ? cx.factory.getTypeWrappers() : null, desiredType, value, cx);
+	public Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
+		return jsToJava(value, desiredType, desiredType);
 	}
 
 	/**
@@ -315,7 +329,7 @@ public class Context {
 	// It can be used to return the second Scriptable result from function
 	private Scriptable scratchScriptable;
 	boolean isTopLevelStrict;
-	private int maximumInterpreterStackDepth;
+
 	private Map<Object, Object> threadLocalMap;
 	private ClassLoader applicationClassLoader;
 
@@ -325,7 +339,6 @@ public class Context {
 	private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
 	private transient Map<Class<?>, Object> interfaceAdapterCache;
 	private int generatedClassSerial;
-	private WrapFactory wrapFactory;
 
 	/**
 	 * Creates a new context. Provided as a preferred super constructor for
@@ -335,7 +348,6 @@ public class Context {
 	 */
 	public Context(ContextFactory factory) {
 		this.factory = factory;
-		maximumInterpreterStackDepth = Integer.MAX_VALUE;
 	}
 
 	/**
@@ -736,49 +748,6 @@ public class Context {
 		return result;
 	}
 
-
-	/**
-	 * Returns the maximum stack depth (in terms of number of call frames)
-	 * allowed in a single invocation of interpreter. If the set depth would be
-	 * exceeded, the interpreter will throw an EvaluatorException in the script.
-	 * Defaults to Integer.MAX_VALUE. The setting only has effect for
-	 * interpreted functions (those compiled with optimization level set to -1).
-	 * As the interpreter doesn't use the Java stack but rather manages its own
-	 * stack in the heap memory, a runaway recursion in interpreted code would
-	 * eventually consume all available memory and cause OutOfMemoryError
-	 * instead of a StackOverflowError limited to only a single thread. This
-	 * setting helps prevent such situations.
-	 *
-	 * @return The current maximum interpreter stack depth.
-	 */
-	public final int getMaximumInterpreterStackDepth() {
-		return maximumInterpreterStackDepth;
-	}
-
-	/**
-	 * Sets the maximum stack depth (in terms of number of call frames)
-	 * allowed in a single invocation of interpreter. If the set depth would be
-	 * exceeded, the interpreter will throw an EvaluatorException in the script.
-	 * Defaults to Integer.MAX_VALUE. The setting only has effect for
-	 * interpreted functions (those compiled with optimization level set to -1).
-	 * As the interpreter doesn't use the Java stack but rather manages its own
-	 * stack in the heap memory, a runaway recursion in interpreted code would
-	 * eventually consume all available memory and cause OutOfMemoryError
-	 * instead of a StackOverflowError limited to only a single thread. This
-	 * setting helps prevent such situations.
-	 *
-	 * @param max the new maximum interpreter stack depth
-	 * @throws IllegalStateException    if this context's optimization level is not
-	 *                                  -1
-	 * @throws IllegalArgumentException if the new depth is not at least 1
-	 */
-	public final void setMaximumInterpreterStackDepth(int max) {
-		if (max < 1) {
-			throw new IllegalArgumentException("Cannot set maximumInterpreterStackDepth to less than 1");
-		}
-		maximumInterpreterStackDepth = max;
-	}
-
 	/**
 	 * Get a value corresponding to a key.
 	 * <p>
@@ -1019,7 +988,7 @@ public class Context {
 		if (value instanceof Class<?> c) {
 			ScriptableObject.putProperty(scope, name, new NativeJavaClass(this, scope, c), this);
 		} else {
-			ScriptableObject.putProperty(scope, name, Context.javaToJS(this, value, scope), this);
+			ScriptableObject.putProperty(scope, name, javaToJS(value, scope), this);
 		}
 	}
 
@@ -1065,32 +1034,69 @@ public class Context {
 	}
 
 	/**
-	 * Return the current WrapFactory, or null if none is defined.
+	 * Return true iff the Java class with the given name should be exposed
+	 * to scripts.
+	 * <p>
+	 * An embedding may filter which Java classes are exposed through
+	 * LiveConnect to JavaScript scripts.
+	 * <p>
+	 * Due to the fact that there is no package reflection in Java,
+	 * this method will also be called with package names. There
+	 * is no way for Rhino to tell if "Packages.a.b" is a package name
+	 * or a class that doesn't exist. What Rhino does is attempt
+	 * to load each segment of "Packages.a.b.c": It first attempts to
+	 * load class "a", then attempts to load class "a.b", then
+	 * finally attempts to load class "a.b.c". On a Rhino installation
+	 * without any ClassShutter set, and without any of the
+	 * above classes, the expression "Packages.a.b.c" will result in
+	 * a [JavaPackage a.b.c] and not an error.
+	 * <p>
+	 * With ClassShutter supplied, Rhino will first call
+	 * visibleToScripts before attempting to look up the class name. If
+	 * visibleToScripts returns false, the class name lookup is not
+	 * performed and subsequent Rhino execution assumes the class is
+	 * not present. So for "java.lang.System.out.println" the lookup
+	 * of "java.lang.System" is skipped and thus Rhino assumes that
+	 * "java.lang.System" doesn't exist. So then for "java.lang.System.out",
+	 * Rhino attempts to load the class "java.lang.System.out" because
+	 * it assumes that "java.lang.System" is a package name.
+	 * <p>
 	 *
-	 * @see WrapFactory
-	 * @since 1.5 Release 4
+	 * @param fullClassName the full name of the class (including the package
+	 *                      name, with '.' as a delimiter). For example the
+	 *                      standard string class is "java.lang.String"
+	 * @return whether or not to reveal this class to scripts
 	 */
-	public final WrapFactory getWrapFactory() {
-		if (wrapFactory == null) {
-			wrapFactory = new WrapFactory();
-		}
-		return wrapFactory;
+	public boolean visibleToScripts(String fullClassName, ClassVisibilityContext type) {
+		return true;
 	}
 
-	/**
-	 * Set a WrapFactory for this Context.
-	 * <p>
-	 * The WrapFactory allows custom object wrapping behavior for
-	 * Java object manipulated with JavaScript.
-	 *
-	 * @see WrapFactory
-	 * @since 1.5 Release 4
-	 */
-	public final void setWrapFactory(WrapFactory wrapFactory) {
-		if (wrapFactory == null) {
-			throw new IllegalArgumentException();
+	public Object wrap(Scriptable scope, Object obj, Class<?> staticType, Type genericType) {
+		if (obj == null || obj == Undefined.INSTANCE || obj instanceof Scriptable) {
+			return obj;
+		} else if (staticType == Void.TYPE) {
+			return Undefined.INSTANCE;
+		} else if (staticType == Character.TYPE) {
+			return (int) (Character) obj;
+		} else if (staticType != null && staticType.isPrimitive()) {
+			return obj;
 		}
-		this.wrapFactory = wrapFactory;
+
+		Class<?> cls = obj.getClass();
+
+		if (cls.isArray()) {
+			return NativeJavaArray.wrap(scope, obj, this);
+		}
+
+		return wrapAsJavaObject(scope, obj, staticType, genericType);
+	}
+
+	public Object wrap(Scriptable scope, Object obj, Class<?> staticType) {
+		return wrap(scope, obj, staticType, staticType);
+	}
+
+	public Object wrap(Scriptable scope, Object obj) {
+		return wrap(scope, obj, null, null);
 	}
 
 	public boolean hasTopCallScope() {
@@ -1188,5 +1194,115 @@ public class Context {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Wrap a Java class as Scriptable instance to allow access to its static
+	 * members and fields and use as constructor from JavaScript.
+	 * <p>
+	 * Subclasses can override this method to provide custom wrappers for
+	 * Java classes.
+	 *
+	 * @param scope     the scope of the executing script
+	 * @param javaClass the class to be wrapped
+	 * @return the wrapped value which shall not be null
+	 * @since 1.7R3
+	 */
+	public Scriptable wrapJavaClass(Scriptable scope, Class<?> javaClass) {
+		return new NativeJavaClass(this, scope, javaClass);
+	}
+
+	/**
+	 * Wrap Java object as Scriptable instance to allow full access to its
+	 * methods and fields from JavaScript.
+	 * <p>
+	 * {@link #wrap(Scriptable, Object, Class, Type)} and
+	 * {@link #wrapNewObject(Scriptable, Object)} call this method
+	 * when they can not convert <code>javaObject</code> to JavaScript primitive
+	 * value or JavaScript array.
+	 * <p>
+	 * Subclasses can override the method to provide custom wrappers
+	 * for Java objects.
+	 *
+	 * @param scope      the scope of the executing script
+	 * @param javaObject the object to be wrapped
+	 * @param staticType type hint. If security restrictions prevent to wrap
+	 *                   object based on its class, staticType will be used instead.
+	 * @return the wrapped value which shall not be null
+	 */
+	public Scriptable wrapAsJavaObject(Scriptable scope, Object javaObject, Class<?> staticType, Type genericType) {
+		if (javaObject instanceof CustomJavaToJsWrapper w) {
+			return w.convertJavaToJs(this, scope, staticType);
+		}
+
+		CustomJavaToJsWrapper w = factory.wrapCustomJavaToJs(javaObject);
+
+		if (w != null) {
+			return w.convertJavaToJs(this, scope, staticType);
+		}
+
+		if (javaObject instanceof Map map) {
+			return new NativeJavaMap(this, scope, map, map);
+		} else if (javaObject instanceof List list) {
+			return new NativeJavaList(this, scope, list, list);
+		} else if (javaObject instanceof Set<?> set) {
+			return new NativeJavaList(this, scope, set, new JavaSetWrapper<>(set));
+		}
+
+		// TODO: Wrap Gson
+		return new NativeJavaObject(scope, javaObject, staticType, this);
+	}
+
+	/**
+	 * Wrap an object newly created by a constructor call.
+	 *
+	 * @param scope the scope of the executing script
+	 * @param obj   the object to be wrapped
+	 * @return the wrapped value.
+	 */
+	public Scriptable wrapNewObject(Scriptable scope, Object obj) {
+		if (obj instanceof Scriptable) {
+			return (Scriptable) obj;
+		}
+		Class<?> cls = obj.getClass();
+		if (cls.isArray()) {
+			return NativeJavaArray.wrap(scope, obj, this);
+		}
+		return wrapAsJavaObject(scope, obj, null, null);
+	}
+
+	public int getConversionWeight(Object fromObj, Class<?> to) {
+		if (factory.getTypeWrappers().getWrapperFactory(to, fromObj) != null) {
+			return NativeJavaObject.CONVERSION_NONTRIVIAL;
+		}
+
+		return NativeJavaObject.CONVERSION_NONE;
+	}
+
+	/**
+	 * Create class loader for generated classes.
+	 */
+	public GeneratedClassLoader createClassLoader(ClassLoader parent) {
+		return new DefiningClassLoader(parent);
+	}
+
+	public String getMappedClass(Class<?> from) {
+		return "";
+	}
+
+	public String getUnmappedClass(String from) {
+		return "";
+	}
+
+	public String getMappedField(Class<?> from, Field field) {
+		return "";
+	}
+
+	public String getMappedMethod(Class<?> from, Method method) {
+		return "";
+	}
+
+	public int getMaximumInterpreterStackDepth() {
+		return Integer.MAX_VALUE;
 	}
 }

@@ -15,7 +15,6 @@ import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonWriter;
 import dev.latvian.mods.rhino.json.JsonParser;
 import dev.latvian.mods.rhino.util.HideFromJS;
-import dev.latvian.mods.rhino.util.Remapper;
 
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
@@ -98,7 +97,7 @@ public final class NativeJSON extends IdScriptableObject {
 					if (i > Integer.MAX_VALUE) {
 						String id = Long.toString(i);
 						Object newElement = walk(cx, scope, reviver, val, id);
-						if (newElement == Undefined.instance) {
+						if (newElement == Undefined.INSTANCE) {
 							val.delete(cx, id);
 						} else {
 							val.put(cx, id, val, newElement);
@@ -106,7 +105,7 @@ public final class NativeJSON extends IdScriptableObject {
 					} else {
 						int idx = (int) i;
 						Object newElement = walk(cx, scope, reviver, val, idx);
-						if (newElement == Undefined.instance) {
+						if (newElement == Undefined.INSTANCE) {
 							val.delete(cx, idx);
 						} else {
 							val.put(cx, idx, val, newElement);
@@ -117,7 +116,7 @@ public final class NativeJSON extends IdScriptableObject {
 				Object[] keys = val.getIds(cx);
 				for (Object p : keys) {
 					Object newElement = walk(cx, scope, reviver, val, p);
-					if (newElement == Undefined.instance) {
+					if (newElement == Undefined.INSTANCE) {
 						if (p instanceof Number) {
 							val.delete(cx, ((Number) p).intValue());
 						} else {
@@ -144,7 +143,7 @@ public final class NativeJSON extends IdScriptableObject {
 	}
 
 	public static String stringify(Object value, Object replacer, Object space, Context cx) {
-		JsonElement e = stringify0(cx, cx.factory.getRemapper(), value);
+		JsonElement e = stringify0(cx, value);
 
 		StringWriter stringWriter = new StringWriter();
 		JsonWriter writer = new JsonWriter(stringWriter);
@@ -185,8 +184,8 @@ public final class NativeJSON extends IdScriptableObject {
 		}
 	}
 
-	private static void type(Remapper remapper, StringBuilder builder, Class<?> type) {
-		String s = remapper.getMappedClass(type);
+	private static void type(Context cx, StringBuilder builder, Class<?> type) {
+		String s = cx.getMappedClass(type);
 
 		if (s.startsWith("java.lang.") || s.startsWith("java.util.")) {
 			builder.append(s.substring(10));
@@ -195,7 +194,7 @@ public final class NativeJSON extends IdScriptableObject {
 		}
 	}
 
-	private static void params(Remapper remapper, StringBuilder builder, Class<?>[] params) {
+	private static void params(Context cx, StringBuilder builder, Class<?>[] params) {
 		builder.append('(');
 
 		for (int i = 0; i < params.length; i++) {
@@ -203,7 +202,7 @@ public final class NativeJSON extends IdScriptableObject {
 				builder.append(", ");
 			}
 
-			type(remapper, builder, params[i]);
+			type(cx, builder, params[i]);
 		}
 
 		builder.append(')');
@@ -211,7 +210,7 @@ public final class NativeJSON extends IdScriptableObject {
 
 	// #string_id_map#
 
-	public static JsonElement stringify0(Context cx, Remapper remapper, Object v) {
+	public static JsonElement stringify0(Context cx, Object v) {
 		if (v == null) {
 			return JsonNull.INSTANCE;
 		} else if (v instanceof Boolean) {
@@ -228,7 +227,7 @@ public final class NativeJSON extends IdScriptableObject {
 			JsonObject json = new JsonObject();
 
 			for (Map.Entry<?, ?> entry : ((Map<?, ?>) v).entrySet()) {
-				json.add(entry.getKey().toString(), stringify0(cx, remapper, entry.getValue()));
+				json.add(entry.getKey().toString(), stringify0(cx, entry.getValue()));
 			}
 
 			return json;
@@ -236,7 +235,7 @@ public final class NativeJSON extends IdScriptableObject {
 			JsonArray json = new JsonArray();
 
 			for (Object o : (Iterable<?>) v) {
-				json.add(stringify0(cx, remapper, o));
+				json.add(stringify0(cx, o));
 			}
 
 			return json;
@@ -254,7 +253,7 @@ public final class NativeJSON extends IdScriptableObject {
 			array++;
 		}
 
-		var mcl = remapper.getMappedClass(cl);
+		var mcl = cx.getMappedClass(cl);
 		StringBuilder clName = new StringBuilder(mcl.isEmpty() ? cl.getName() : mcl);
 
 		if (array > 0) {
@@ -281,7 +280,7 @@ public final class NativeJSON extends IdScriptableObject {
 			}
 
 			StringBuilder builder = new StringBuilder("new ");
-			String s = remapper.getMappedClass(constructor.getDeclaringClass());
+			String s = cx.getMappedClass(constructor.getDeclaringClass());
 
 			if (s.isEmpty()) {
 				s = constructor.getDeclaringClass().getName();
@@ -289,7 +288,7 @@ public final class NativeJSON extends IdScriptableObject {
 
 			int si = s.lastIndexOf('.');
 			builder.append(si == -1 || si >= s.length() ? s : s.substring(si + 1));
-			params(remapper, builder, constructor.getParameterTypes());
+			params(cx, builder, constructor.getParameterTypes());
 			list.add(builder.toString());
 		}
 
@@ -314,9 +313,9 @@ public final class NativeJSON extends IdScriptableObject {
 				builder.append("native ");
 			}
 
-			type(remapper, builder, field.getType());
+			type(cx, builder, field.getType());
 			builder.append(' ');
-			builder.append(remapper.getMappedField(cl, field));
+			builder.append(cx.getMappedField(cl, field));
 			list.add(builder.toString());
 		}
 
@@ -337,10 +336,10 @@ public final class NativeJSON extends IdScriptableObject {
 				builder.append("native ");
 			}
 
-			type(remapper, builder, method.getReturnType());
+			type(cx, builder, method.getReturnType());
 			builder.append(' ');
-			builder.append(remapper.getMappedMethod(cl, method));
-			params(remapper, builder, method.getParameterTypes());
+			builder.append(cx.getMappedMethod(cl, method));
+			params(cx, builder, method.getParameterTypes());
 
 			String s = builder.toString();
 

@@ -38,7 +38,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
 
 	// 25.1.1.3 The IteratorResult Interface
 	static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done) {
-		return makeIteratorResult(cx, scope, done, Undefined.instance);
+		return makeIteratorResult(cx, scope, done, Undefined.INSTANCE);
 	}
 
 	static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done, Object value) {
@@ -122,7 +122,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
 	abstract protected Object nextValue(Context cx, Scriptable scope);
 
 	protected Object next(Context cx, Scriptable scope) {
-		Object value = Undefined.instance;
+		Object value = Undefined.INSTANCE;
 		boolean done = isDone(cx, scope) || this.exhausted;
 		if (!done) {
 			value = nextValue(cx, scope);

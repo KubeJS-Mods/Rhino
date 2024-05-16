@@ -401,7 +401,7 @@ public class FunctionObject extends BaseFunction {
 			} else {
 				invokeArgs = new Object[parmsLength];
 				for (int i = 0; i != parmsLength; ++i) {
-					Object arg = (i < argsLength) ? args[i] : Undefined.instance;
+					Object arg = (i < argsLength) ? args[i] : Undefined.INSTANCE;
 					invokeArgs[i] = convertArg(cx, scope, arg, typeTags[i]);
 				}
 			}
@@ -417,9 +417,9 @@ public class FunctionObject extends BaseFunction {
 
 		if (checkMethodResult) {
 			if (hasVoidReturn) {
-				result = Undefined.instance;
+				result = Undefined.INSTANCE;
 			} else if (returnTypeTag == JAVA_UNSUPPORTED_TYPE) {
-				result = cx.getWrapFactory().wrap(cx, scope, result, null);
+				result = cx.wrap(scope, result);
 			}
 			// XXX: the code assumes that if returnTypeTag == JAVA_OBJECT_TYPE
 			// then the Java method did a proper job of converting the

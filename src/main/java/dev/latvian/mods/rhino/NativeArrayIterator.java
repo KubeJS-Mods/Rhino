@@ -49,7 +49,7 @@ public final class NativeArrayIterator extends ES6Iterator {
 
 		Object value = arrayLike.get(cx, index, arrayLike);
 		if (value == NOT_FOUND) {
-			value = Undefined.instance;
+			value = Undefined.INSTANCE;
 		}
 
 		if (type == ArrayIteratorType.ENTRIES) {

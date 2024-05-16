@@ -101,14 +101,13 @@ public class InterfaceAdapter {
 				if (resultType == Void.TYPE) {
 					return null;
 				}
-				return Context.jsToJava(cx, null, resultType);
+				return cx.jsToJava(null, resultType, method.getGenericReturnType());
 			}
 			if (!(value instanceof Callable)) {
 				throw Context.reportRuntimeError1("msg.not.function.interface", methodName, cx);
 			}
 			function = (Callable) value;
 		}
-		WrapFactory wf = cx.getWrapFactory();
 		if (args == null) {
 			args = ScriptRuntime.EMPTY_OBJECTS;
 		} else {
@@ -116,18 +115,18 @@ public class InterfaceAdapter {
 				Object arg = args[i];
 				// neutralize wrap factory java primitive wrap feature
 				if (!(arg instanceof String || arg instanceof Number || arg instanceof Boolean)) {
-					args[i] = wf.wrap(cx, topScope, arg, null);
+					args[i] = cx.wrap(topScope, arg);
 				}
 			}
 		}
-		Scriptable thisObj = wf.wrapAsJavaObject(cx, topScope, thisObject, null);
+		Scriptable thisObj = cx.wrapAsJavaObject(topScope, thisObject, null, null);
 
 		Object result = cx.callSync(function, topScope, thisObj, args);
 		Class<?> javaResultType = method.getReturnType();
 		if (javaResultType == Void.TYPE) {
 			result = null;
 		} else {
-			result = Context.jsToJava(cx, result, javaResultType);
+			result = cx.jsToJava(result, javaResultType, method.getGenericReturnType());
 		}
 		return result;
 	}

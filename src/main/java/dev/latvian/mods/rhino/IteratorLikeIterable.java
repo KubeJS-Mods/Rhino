@@ -73,7 +73,7 @@ public class IteratorLikeIterable implements Iterable<Object>, Closeable {
 			// "getObjectPropNoWarn" won't, so do this as follows.
 			Object doneval = ScriptableObject.getProperty(ScriptableObject.ensureScriptable(val, cx), ES6Iterator.DONE_PROPERTY, cx);
 			if (doneval == Scriptable.NOT_FOUND) {
-				doneval = Undefined.instance;
+				doneval = Undefined.INSTANCE;
 			}
 			// It's OK if done is undefined.
 			if (ScriptRuntime.toBoolean(cx, doneval)) {

@@ -6,7 +6,10 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
+
 import java.lang.reflect.Array;
+import java.lang.reflect.Type;
 
 /**
  * This class reflects Java arrays into the JavaScript environment.
@@ -23,7 +26,8 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 
 	Object array;
 	int length;
-	Class<?> cls;
+	Class<?> componentType;
+	Type genericComponentType;
 
 	public NativeJavaArray(Scriptable scope, Object array, Context cx) {
 		super(scope, null, ScriptRuntime.ObjectClass, cx);
@@ -33,7 +37,8 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 		}
 		this.array = array;
 		this.length = Array.getLength(array);
-		this.cls = cl.getComponentType();
+		this.componentType = cl.getComponentType();
+		this.genericComponentType = componentType; // fixme
 	}
 
 	@Override
@@ -77,9 +82,9 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	public Object get(Context cx, int index, Scriptable start) {
 		if (0 <= index && index < length) {
 			Object obj = Array.get(array, index);
-			return cx.getWrapFactory().wrap(cx, this, obj, cls);
+			return cx.wrap(this, obj, componentType, genericComponentType);
 		}
-		return Undefined.instance;
+		return Undefined.INSTANCE;
 	}
 
 	@Override
@@ -101,7 +106,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	@Override
 	public void put(Context cx, int index, Scriptable start, Object value) {
 		if (0 <= index && index < length) {
-			Array.set(array, index, Context.jsToJava(cx, value, cls));
+			Array.set(array, index, cx.jsToJava(value, componentType, genericComponentType));
 		} else {
 			throw Context.reportRuntimeError2("msg.java.array.index.out.of.bounds", String.valueOf(index), String.valueOf(length - 1), cx);
 		}
@@ -113,14 +118,14 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	}
 
 	@Override
-	public Object getDefaultValue(Context cx, Class<?> hint) {
-		if (hint == null || hint == ScriptRuntime.StringClass) {
+	public Object getDefaultValue(Context cx, DefaultValueTypeHint hint) {
+		if (hint == null || hint == DefaultValueTypeHint.STRING) {
 			return array.toString();
 		}
-		if (hint == ScriptRuntime.BooleanClass) {
+		if (hint == DefaultValueTypeHint.BOOLEAN) {
 			return Boolean.TRUE;
 		}
-		if (hint == ScriptRuntime.NumberClass) {
+		if (hint == DefaultValueTypeHint.NUMBER) {
 			return ScriptRuntime.NaNobj;
 		}
 		return this;
@@ -142,7 +147,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 			return false;
 		}
 		Object instance = ((Wrapper) value).unwrap();
-		return cls.isInstance(instance);
+		return componentType.isInstance(instance);
 	}
 
 	@Override

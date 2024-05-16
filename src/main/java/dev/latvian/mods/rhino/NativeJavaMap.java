@@ -8,6 +8,7 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.util.Deletable;
 import dev.latvian.mods.rhino.util.ValueUnwrapper;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,12 +17,14 @@ import java.util.Map;
 public class NativeJavaMap extends NativeJavaObject {
 	private final Map map;
 	private final Class<?> mapValueType;
+	private final Type mapValueGenericType;
 	private final ValueUnwrapper valueUnwrapper;
 
 	public NativeJavaMap(Context cx, Scriptable scope, Object jo, Map map, Class<?> mapValueType, ValueUnwrapper valueUnwrapper) {
 		super(scope, jo, jo.getClass(), cx);
 		this.map = map;
 		this.mapValueType = mapValueType;
+		this.mapValueGenericType = mapValueType;
 		this.valueUnwrapper = valueUnwrapper;
 	}
 
@@ -68,12 +71,12 @@ public class NativeJavaMap extends NativeJavaObject {
 
 	@Override
 	public void put(Context cx, String name, Scriptable start, Object value) {
-		map.put(name, Context.jsToJava(cx, value, mapValueType));
+		map.put(name, cx.jsToJava(value, mapValueType, mapValueGenericType));
 	}
 
 	@Override
 	public void put(Context cx, int index, Scriptable start, Object value) {
-		map.put(index, Context.jsToJava(cx, value, mapValueType));
+		map.put(index, cx.jsToJava(value, mapValueType, mapValueGenericType));
 	}
 
 	@Override

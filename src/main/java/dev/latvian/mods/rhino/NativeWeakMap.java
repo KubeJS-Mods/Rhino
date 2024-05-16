@@ -75,13 +75,13 @@ public class NativeWeakMap extends IdScriptableObject {
 				}
 				throw ScriptRuntime.typeError1(cx, "msg.no.new", "WeakMap");
 			case Id_delete:
-				return realThis(thisObj, f, cx).js_delete(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_delete(args.length > 0 ? args[0] : Undefined.INSTANCE);
 			case Id_get:
-				return realThis(thisObj, f, cx).js_get(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_get(args.length > 0 ? args[0] : Undefined.INSTANCE);
 			case Id_has:
-				return realThis(thisObj, f, cx).js_has(args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_has(args.length > 0 ? args[0] : Undefined.INSTANCE);
 			case Id_set:
-				return realThis(thisObj, f, cx).js_set(args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance, cx);
+				return realThis(thisObj, f, cx).js_set(args.length > 0 ? args[0] : Undefined.INSTANCE, args.length > 1 ? args[1] : Undefined.INSTANCE, cx);
 		}
 		throw new IllegalArgumentException("WeakMap.prototype has no method: " + f.getFunctionName());
 	}
@@ -95,11 +95,11 @@ public class NativeWeakMap extends IdScriptableObject {
 
 	private Object js_get(Object key) {
 		if (!ScriptRuntime.isObject(key)) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 		Object result = map.get(key);
 		if (result == null) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		} else if (result == NULL_VALUE) {
 			return null;
 		}

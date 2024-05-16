@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 import dev.latvian.mods.rhino.util.Deletable;
 import dev.latvian.mods.rhino.util.JavaIteratorWrapper;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
@@ -32,9 +33,9 @@ import java.util.Map;
  */
 
 public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
-	static final byte CONVERSION_TRIVIAL = 1;
-	static final byte CONVERSION_NONTRIVIAL = 0;
-	static final byte CONVERSION_NONE = 99;
+	public static final int CONVERSION_TRIVIAL = 1;
+	public static final int CONVERSION_NONTRIVIAL = 0;
+	public static final int CONVERSION_NONE = 99;
 	private static final Object COERCED_INTERFACE_KEY = "Coerced Interface";
 	private static final int JSTYPE_UNDEFINED = 0; // undefined type
 	private static final int JSTYPE_NULL = 1; // null
@@ -65,8 +66,10 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	 * "preferred method conversions" from Live Connect 3</a>
 	 */
 	static int getConversionWeight(Context cx, Object fromObj, Class<?> to) {
-		if (cx.factory.hasTypeWrappers() && cx.factory.getTypeWrappers().getWrapperFactory(to, fromObj) != null) {
-			return CONVERSION_NONTRIVIAL;
+		int fcw = cx.getConversionWeight(fromObj, to);
+
+		if (fcw != CONVERSION_NONE) {
+			return fcw;
 		}
 
 		int fromCode = getJSTypeCode(fromObj);
@@ -224,7 +227,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	private static int getJSTypeCode(Object value) {
 		if (value == null) {
 			return JSTYPE_NULL;
-		} else if (value == Undefined.instance) {
+		} else if (value == Undefined.INSTANCE) {
 			return JSTYPE_UNDEFINED;
 		} else if (value instanceof CharSequence) {
 			return JSTYPE_STRING;
@@ -657,10 +660,10 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 					Object r = ((CustomProperty) result).get(cx);
 
 					if (r == null) {
-						return Undefined.instance;
+						return Undefined.INSTANCE;
 					}
 
-					Object r1 = cx.getWrapFactory().wrap(cx, this, r, r.getClass());
+					Object r1 = cx.wrap(this, r, r.getClass());
 
 					if (r1 instanceof Scriptable) {
 						return ((Scriptable) r1).getDefaultValue(cx, null);
@@ -815,23 +818,23 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	}
 
 	@Override
-	public Object getDefaultValue(Context cx, Class<?> hint) {
+	public Object getDefaultValue(Context cx, DefaultValueTypeHint hint) {
 		Object value;
 		if (hint == null) {
 			if (javaObject instanceof Boolean) {
-				hint = ScriptRuntime.BooleanClass;
+				hint = DefaultValueTypeHint.BOOLEAN;
 			}
 			if (javaObject instanceof Number) {
-				hint = ScriptRuntime.NumberClass;
+				hint = DefaultValueTypeHint.NUMBER;
 			}
 		}
-		if (hint == null || hint == ScriptRuntime.StringClass) {
+		if (hint == null || hint == DefaultValueTypeHint.STRING) {
 			value = javaObject.toString();
 		} else {
 			String converterName;
-			if (hint == ScriptRuntime.BooleanClass) {
+			if (hint == DefaultValueTypeHint.BOOLEAN) {
 				converterName = "booleanValue";
-			} else if (hint == ScriptRuntime.NumberClass) {
+			} else if (hint == DefaultValueTypeHint.NUMBER) {
 				converterName = "doubleValue";
 			} else {
 				throw Context.reportRuntimeError0("msg.default.value", cx);
@@ -840,7 +843,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 			if (converterObject instanceof Function f) {
 				value = f.call(cx, f.getParentScope(), this, ScriptRuntime.EMPTY_OBJECTS);
 			} else {
-				if (hint == ScriptRuntime.NumberClass && javaObject instanceof Boolean) {
+				if (hint == DefaultValueTypeHint.NUMBER && javaObject instanceof Boolean) {
 					boolean b = (Boolean) javaObject;
 					value = b ? ScriptRuntime.wrapNumber(1.0) : ScriptRuntime.zeroObj;
 				} else {

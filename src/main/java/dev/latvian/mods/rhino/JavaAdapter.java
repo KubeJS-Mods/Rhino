@@ -86,7 +86,7 @@ public final class JavaAdapter implements IdFunctionCall {
 	}
 
 	public static Object convertResult(Context cx, Object result, Class<?> c) {
-		if (result == Undefined.instance && (c != ScriptRuntime.ObjectClass && c != ScriptRuntime.StringClass)) {
+		if (result == Undefined.INSTANCE && (c != ScriptRuntime.ObjectClass && c != ScriptRuntime.StringClass)) {
 			// Avoid an error for an undefined value; return null instead.
 			return null;
 		}
@@ -95,7 +95,7 @@ public final class JavaAdapter implements IdFunctionCall {
 			return result;
 		}
 
-		return Context.jsToJava(cx, result, c);
+		return cx.jsToJava(result, c);
 	}
 
 	public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter, Context cx) {
@@ -399,7 +399,7 @@ public final class JavaAdapter implements IdFunctionCall {
 	}
 
 	static Class<?> loadAdapterClass(Context cx, String className, byte[] classBytes) {
-		GeneratedClassLoader loader = cx.factory.createClassLoader(cx.getApplicationClassLoader());
+		GeneratedClassLoader loader = cx.createClassLoader(cx.getApplicationClassLoader());
 		Class<?> result = loader.defineClass(className, classBytes);
 		loader.linkClass(result);
 		return result;

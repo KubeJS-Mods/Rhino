@@ -89,7 +89,7 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 	private static NativeSymbol js_constructor(Context cx, Object[] args) {
 		String desc;
 		if (args.length > 0) {
-			if (Undefined.instance.equals(args[0])) {
+			if (Undefined.INSTANCE.equals(args[0])) {
 				desc = "";
 			} else {
 				desc = ScriptRuntime.toString(cx, args[0]);
@@ -236,7 +236,7 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 	}
 
 	private Object js_for(Context cx, Scriptable scope, Object[] args) {
-		String name = (args.length > 0 ? ScriptRuntime.toString(cx, args[0]) : ScriptRuntime.toString(cx, Undefined.instance));
+		String name = (args.length > 0 ? ScriptRuntime.toString(cx, args[0]) : ScriptRuntime.toString(cx, Undefined.INSTANCE));
 
 		Map<String, NativeSymbol> table = getGlobalMap();
 		NativeSymbol ret = table.get(name);
@@ -249,7 +249,7 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 	}
 
 	private Object js_keyFor(Context cx, Scriptable scope, Object[] args) {
-		Object s = (args.length > 0 ? args[0] : Undefined.instance);
+		Object s = (args.length > 0 ? args[0] : Undefined.INSTANCE);
 		if (!(s instanceof NativeSymbol sym)) {
 			throw ScriptRuntime.throwCustomError(cx, scope, "TypeError", "Not a Symbol");
 		}
@@ -260,7 +260,7 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 				return e.getKey();
 			}
 		}
-		return Undefined.instance;
+		return Undefined.INSTANCE;
 	}
 
 	// Symbol objects have a special property that one cannot add properties.

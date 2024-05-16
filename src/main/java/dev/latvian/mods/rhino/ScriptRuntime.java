@@ -10,6 +10,8 @@ import dev.latvian.mods.rhino.ast.FunctionNode;
 import dev.latvian.mods.rhino.mod.util.ToStringJS;
 import dev.latvian.mods.rhino.regexp.NativeRegExp;
 import dev.latvian.mods.rhino.regexp.RegExp;
+import dev.latvian.mods.rhino.util.ClassVisibilityContext;
+import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 import dev.latvian.mods.rhino.util.SpecialEquality;
 import dev.latvian.mods.rhino.v8dtoa.DoubleConversion;
 import dev.latvian.mods.rhino.v8dtoa.FastDtoa;
@@ -305,7 +307,7 @@ public class ScriptRuntime {
 		if (val instanceof Boolean) {
 			return (Boolean) val;
 		}
-		if (val == null || val == Undefined.instance) {
+		if (val == null || val == Undefined.INSTANCE) {
 			return false;
 		}
 		if (val instanceof CharSequence) {
@@ -334,7 +336,7 @@ public class ScriptRuntime {
 		if (val == null) {
 			return +0.0;
 		}
-		if (val == Undefined.instance) {
+		if (val == Undefined.INSTANCE) {
 			return NaN;
 		}
 		if (val instanceof String) {
@@ -350,7 +352,7 @@ public class ScriptRuntime {
 			throw typeError0(cx, "msg.not.a.number");
 		}
 		if (val instanceof Scriptable) {
-			val = ((Scriptable) val).getDefaultValue(cx, NumberClass);
+			val = ((Scriptable) val).getDefaultValue(cx, DefaultValueTypeHint.NUMBER);
 			if ((val instanceof Scriptable) && !isSymbol(val)) {
 				throw errorWithClassName("msg.primitive.expected", val, cx);
 			}
@@ -645,7 +647,7 @@ public class ScriptRuntime {
 		Object[] result = new Object[count];
 		System.arraycopy(args, 0, result, 0, args.length);
 		if (args.length < count) {
-			Arrays.fill(result, args.length, count, Undefined.instance);
+			Arrays.fill(result, args.length, count, Undefined.INSTANCE);
 		}
 		return result;
 	}
@@ -753,7 +755,7 @@ public class ScriptRuntime {
 		if (val == null) {
 			return "null";
 		}
-		if (val == Undefined.instance || val == Undefined.SCRIPTABLE_UNDEFINED) {
+		if (val == Undefined.INSTANCE || val == Undefined.SCRIPTABLE_INSTANCE) {
 			return "undefined";
 		}
 		if (val instanceof String) {
@@ -771,7 +773,7 @@ public class ScriptRuntime {
 			throw typeError0(cx, "msg.not.a.string");
 		}
 		if (val instanceof Scriptable) {
-			val = ((Scriptable) val).getDefaultValue(cx, StringClass);
+			val = ((Scriptable) val).getDefaultValue(cx, DefaultValueTypeHint.STRING);
 			if ((val instanceof Scriptable) && !isSymbol(val)) {
 				throw errorWithClassName("msg.primitive.expected", val, cx);
 			}
@@ -837,7 +839,7 @@ public class ScriptRuntime {
 		if (value == null) {
 			return "null";
 		}
-		if (value == Undefined.instance) {
+		if (value == Undefined.INSTANCE) {
 			return "undefined";
 		}
 		if (value instanceof CharSequence) {
@@ -883,7 +885,7 @@ public class ScriptRuntime {
 	public static Scriptable toObjectOrNull(Context cx, Object obj) {
 		if (obj instanceof Scriptable) {
 			return (Scriptable) obj;
-		} else if (obj != null && obj != Undefined.instance) {
+		} else if (obj != null && obj != Undefined.INSTANCE) {
 			return toObject(cx, cx.getTopCallOrThrow(), obj);
 		}
 		return null;
@@ -895,7 +897,7 @@ public class ScriptRuntime {
 	public static Scriptable toObjectOrNull(Context cx, Object obj, Scriptable scope) {
 		if (obj instanceof Scriptable) {
 			return (Scriptable) obj;
-		} else if (obj != null && obj != Undefined.instance) {
+		} else if (obj != null && obj != Undefined.INSTANCE) {
 			return toObject(cx, scope, obj);
 		}
 		return null;
@@ -940,7 +942,7 @@ public class ScriptRuntime {
 		}
 
 		// Extension: Wrap as a LiveConnect object.
-		Object wrapped = cx.getWrapFactory().wrap(cx, scope, val, null);
+		Object wrapped = cx.wrap(scope, val);
 		if (wrapped instanceof Scriptable) {
 			return (Scriptable) wrapped;
 		}
@@ -1232,7 +1234,7 @@ public class ScriptRuntime {
 		}
 
 		if (result == Scriptable.NOT_FOUND) {
-			result = Undefined.instance;
+			result = Undefined.INSTANCE;
 		}
 
 		return result;
@@ -1255,7 +1257,7 @@ public class ScriptRuntime {
 
 		Object result = ScriptableObject.getProperty(obj, property, cx);
 		if (result == Scriptable.NOT_FOUND) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 
 		return result;
@@ -1268,7 +1270,7 @@ public class ScriptRuntime {
 		}
 		Object result = ScriptableObject.getProperty(sobj, property, cx);
 		if (result == Scriptable.NOT_FOUND) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 		return result;
 	}
@@ -1276,11 +1278,11 @@ public class ScriptRuntime {
 	public static Object getObjectPropOptional(Context cx, Scriptable scope, Object obj, String property) {
 		Scriptable sobj = toObjectOrNull(cx, obj, scope);
 		if (sobj == null) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 		Object result = ScriptableObject.getProperty(sobj, property, cx);
 		if (result == Scriptable.NOT_FOUND) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 		return result;
 	}
@@ -1306,7 +1308,7 @@ public class ScriptRuntime {
 	public static Object getObjectIndex(Context cx, Scriptable obj, int index) {
 		Object result = ScriptableObject.getProperty(obj, index, cx);
 		if (result == Scriptable.NOT_FOUND) {
-			result = Undefined.instance;
+			result = Undefined.INSTANCE;
 		}
 
 		return result;
@@ -1932,7 +1934,7 @@ public class ScriptRuntime {
 		Scriptable callThis = null;
 
 		if (L != 0) {
-			callThis = args[0] == Undefined.instance ? Undefined.SCRIPTABLE_UNDEFINED : toObjectOrNull(cx, args[0], scope);
+			callThis = args[0] == Undefined.INSTANCE ? Undefined.SCRIPTABLE_INSTANCE : toObjectOrNull(cx, args[0], scope);
 		}
 
 		Object[] callArgs;
@@ -1960,7 +1962,7 @@ public class ScriptRuntime {
 	}
 
 	static Object[] getApplyArguments(Context cx, Object arg1) {
-		if (arg1 == null || arg1 == Undefined.instance) {
+		if (arg1 == null || arg1 == Undefined.INSTANCE) {
 			return ScriptRuntime.EMPTY_OBJECTS;
 		} else if (arg1 instanceof Scriptable && isArrayLike(cx, (Scriptable) arg1)) {
 			return ScriptRuntime.getArrayElements(cx, (Scriptable) arg1);
@@ -1976,7 +1978,7 @@ public class ScriptRuntime {
 		if (thisObj instanceof Callable) {
 			function = (Callable) thisObj;
 		} else {
-			Object value = thisObj.getDefaultValue(cx, ScriptRuntime.FunctionClass);
+			Object value = thisObj.getDefaultValue(cx, DefaultValueTypeHint.FUNCTION);
 			if (!(value instanceof Callable)) {
 				throw ScriptRuntime.notFunctionError(cx, value, thisObj);
 			}
@@ -1992,7 +1994,7 @@ public class ScriptRuntime {
 	 */
 	public static Object evalSpecial(Context cx, Scriptable scope, Object thisArg, Object[] args, String filename, int lineNumber) {
 		if (args.length < 1) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 		Object x = args[0];
 		if (!(x instanceof CharSequence)) {
@@ -2061,7 +2063,7 @@ public class ScriptRuntime {
 		if (value == null) {
 			return false;
 		}
-		if (Undefined.instance.equals(value)) {
+		if (Undefined.INSTANCE.equals(value)) {
 			return false;
 		}
 		if (value instanceof ScriptableObject) {
@@ -2229,7 +2231,7 @@ public class ScriptRuntime {
 		return toPrimitive(cx, val, null);
 	}
 
-	public static Object toPrimitive(Context cx, Object val, Class<?> typeHint) {
+	public static Object toPrimitive(Context cx, Object val, DefaultValueTypeHint typeHint) {
 		if (!(val instanceof Scriptable s)) {
 			return val;
 		}
@@ -2246,8 +2248,8 @@ public class ScriptRuntime {
 	 * See ECMA 11.9
 	 */
 	public static boolean eq(Context cx, Object x, Object y) {
-		if (x == null || x == Undefined.instance) {
-			if (y == null || y == Undefined.instance) {
+		if (x == null || x == Undefined.INSTANCE) {
+			if (y == null || y == Undefined.INSTANCE) {
 				return true;
 			}
 			if (y instanceof ScriptableObject) {
@@ -2382,11 +2384,11 @@ public class ScriptRuntime {
 	}
 
 	public static boolean isPrimitive(Object obj) {
-		return obj == null || obj == Undefined.instance || (obj instanceof Number) || (obj instanceof String) || (obj instanceof Boolean);
+		return obj == null || obj == Undefined.INSTANCE || (obj instanceof Number) || (obj instanceof String) || (obj instanceof Boolean);
 	}
 
 	static boolean eqNumber(Context cx, double x, Object y) {
-		if (y == null || y == Undefined.instance) {
+		if (y == null || y == Undefined.INSTANCE) {
 			return false;
 		} else if (y instanceof Number) {
 			return x == ((Number) y).doubleValue();
@@ -2412,7 +2414,7 @@ public class ScriptRuntime {
 	}
 
 	private static boolean eqString(Context cx, CharSequence x, Object y) {
-		if (y == null || y == Undefined.instance) {
+		if (y == null || y == Undefined.INSTANCE) {
 			return false;
 		} else if (y instanceof CharSequence c) {
 			return x.length() == c.length() && x.toString().equals(c.toString());
@@ -2444,8 +2446,8 @@ public class ScriptRuntime {
 			// NaN check
 			double d = ((Number) x).doubleValue();
 			return !Double.isNaN(d);
-		} else if (x == null || x == Undefined.instance || x == Undefined.SCRIPTABLE_UNDEFINED) {
-			return (x == Undefined.instance && y == Undefined.SCRIPTABLE_UNDEFINED) || (x == Undefined.SCRIPTABLE_UNDEFINED && y == Undefined.instance);
+		} else if (x == null || x == Undefined.INSTANCE || x == Undefined.SCRIPTABLE_INSTANCE) {
+			return (x == Undefined.INSTANCE && y == Undefined.SCRIPTABLE_INSTANCE) || (x == Undefined.SCRIPTABLE_INSTANCE && y == Undefined.INSTANCE);
 		}
 
 		Object x1 = Wrapper.unwrapped(x);
@@ -2545,10 +2547,10 @@ public class ScriptRuntime {
 				throw typeError0(cx, "msg.compare.symbol");
 			}
 			if (val1 instanceof Scriptable) {
-				val1 = ((Scriptable) val1).getDefaultValue(cx, NumberClass);
+				val1 = ((Scriptable) val1).getDefaultValue(cx, DefaultValueTypeHint.NUMBER);
 			}
 			if (val2 instanceof Scriptable) {
-				val2 = ((Scriptable) val2).getDefaultValue(cx, NumberClass);
+				val2 = ((Scriptable) val2).getDefaultValue(cx, DefaultValueTypeHint.NUMBER);
 			}
 			if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
 				return val1.toString().compareTo(val2.toString()) < 0;
@@ -2573,10 +2575,10 @@ public class ScriptRuntime {
 				throw typeError0(cx, "msg.compare.symbol");
 			}
 			if (val1 instanceof Scriptable) {
-				val1 = ((Scriptable) val1).getDefaultValue(cx, NumberClass);
+				val1 = ((Scriptable) val1).getDefaultValue(cx, DefaultValueTypeHint.NUMBER);
 			}
 			if (val2 instanceof Scriptable) {
-				val2 = ((Scriptable) val2).getDefaultValue(cx, NumberClass);
+				val2 = ((Scriptable) val2).getDefaultValue(cx, DefaultValueTypeHint.NUMBER);
 			}
 			if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
 				return val1.toString().compareTo(val2.toString()) <= 0;
@@ -2613,10 +2615,10 @@ public class ScriptRuntime {
 					} else if (!evalScript) {
 						if (!(funObj instanceof InterpretedFunction) || ((InterpretedFunction) funObj).hasFunctionNamed(name)) {
 							// Global var definitions are supposed to be DONTDELETE
-							ScriptableObject.defineProperty(varScope, name, Undefined.instance, ScriptableObject.PERMANENT, cx);
+							ScriptableObject.defineProperty(varScope, name, Undefined.INSTANCE, ScriptableObject.PERMANENT, cx);
 						}
 					} else {
-						varScope.put(cx, name, varScope, Undefined.instance);
+						varScope.put(cx, name, varScope, Undefined.INSTANCE);
 					}
 				} else {
 					ScriptableObject.redefineProperty(scope, name, isConst, cx);
@@ -2726,12 +2728,12 @@ public class ScriptRuntime {
 				((NativeError) errorObject).setStackProvider(re, cx);
 			}
 
-			if (javaException != null && isVisible(cx, javaException, ClassShutter.TYPE_EXCEPTION)) {
-				Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+			if (javaException != null && cx.visibleToScripts(javaException.getClass().getName(), ClassVisibilityContext.EXCEPTION)) {
+				Object wrap = cx.wrap(scope, javaException);
 				ScriptableObject.defineProperty(errorObject, "javaException", wrap, ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM, cx);
 			}
-			if (isVisible(cx, re, ClassShutter.TYPE_EXCEPTION)) {
-				Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+			if (cx.visibleToScripts(re.getClass().getName(), ClassVisibilityContext.EXCEPTION)) {
+				Object wrap = cx.wrap(scope, re);
 				ScriptableObject.defineProperty(errorObject, "rhinoException", wrap, ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM, cx);
 			}
 			obj = errorObject;
@@ -2741,11 +2743,11 @@ public class ScriptRuntime {
 		// See ECMA 12.4
 		catchScopeObject.defineProperty(cx, exceptionName, obj, ScriptableObject.PERMANENT);
 
-		if (isVisible(cx, t, ClassShutter.TYPE_EXCEPTION)) {
+		if (cx.visibleToScripts(t.getClass().getName(), ClassVisibilityContext.EXCEPTION)) {
 			// Add special Rhino object __exception__ defined in the catch
 			// scope that can be used to retrieve the Java exception associated
 			// with the JavaScript exception (to get stack trace info, etc.)
-			catchScopeObject.defineProperty(cx, "__exception__", Context.javaToJS(cx, t, scope), ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
+			catchScopeObject.defineProperty(cx, "__exception__", cx.javaToJS(t, scope), ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
 		}
 
 		if (cacheObj) {
@@ -2799,20 +2801,15 @@ public class ScriptRuntime {
 			((NativeError) errorObject).setStackProvider(re, cx);
 		}
 
-		if (javaException != null && isVisible(cx, javaException, ClassShutter.TYPE_EXCEPTION)) {
-			Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException, null);
+		if (javaException != null && cx.visibleToScripts(javaException.getClass().getName(), ClassVisibilityContext.EXCEPTION)) {
+			Object wrap = cx.wrap(scope, javaException);
 			ScriptableObject.defineProperty(errorObject, "javaException", wrap, ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM, cx);
 		}
-		if (isVisible(cx, re, ClassShutter.TYPE_EXCEPTION)) {
-			Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+		if (cx.visibleToScripts(re.getClass().getName(), ClassVisibilityContext.EXCEPTION)) {
+			Object wrap = cx.wrap(scope, re);
 			ScriptableObject.defineProperty(errorObject, "rhinoException", wrap, ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM, cx);
 		}
 		return errorObject;
-	}
-
-	private static boolean isVisible(Context cx, Object obj, int type) {
-		ClassShutter shutter = cx.factory.getClassShutter();
-		return shutter == null || shutter.visibleToScripts(obj.getClass().getName(), type);
 	}
 
 	public static Scriptable enterWith(Context cx, Scriptable scope, Object obj) {
@@ -2986,7 +2983,7 @@ public class ScriptRuntime {
 		Object[] result = new Object[len];
 		for (int i = 0; i < len; i++) {
 			Object elem = ScriptableObject.getProperty(object, i, cx);
-			result[i] = (elem == Scriptable.NOT_FOUND) ? Undefined.instance : elem;
+			result[i] = (elem == Scriptable.NOT_FOUND) ? Undefined.INSTANCE : elem;
 		}
 		return result;
 	}

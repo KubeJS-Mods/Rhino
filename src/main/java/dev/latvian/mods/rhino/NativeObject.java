@@ -238,7 +238,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					throw ScriptRuntime.typeError0(cx, "msg." + (thisObj == null ? "null" : "undef") + ".to.object");
 				}
 				boolean result;
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				if (arg instanceof Symbol) {
 					result = ensureSymbolScriptable(thisObj, cx).has(cx, (Symbol) arg, thisObj);
 				} else {
@@ -258,7 +258,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				}
 
 				boolean result;
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 
 				if (arg instanceof Symbol) {
 					result = ((SymbolScriptable) thisObj).has(cx, (Symbol) arg, thisObj);
@@ -318,7 +318,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			case Id___defineGetter__:
 			case Id___defineSetter__: {
 				if (args.length < 2 || !(args[1] instanceof Callable getterOrSetter)) {
-					Object badArg = (args.length >= 2 ? args[1] : Undefined.instance);
+					Object badArg = (args.length >= 2 ? args[1] : Undefined.INSTANCE);
 					throw ScriptRuntime.notFunctionError(cx, badArg);
 				}
 				if (!(thisObj instanceof ScriptableObject so)) {
@@ -332,12 +332,12 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					((NativeArray) so).setDenseOnly(false);
 				}
 			}
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 
 			case Id___lookupGetter__:
 			case Id___lookupSetter__: {
 				if (args.length < 1 || !(thisObj instanceof ScriptableObject so)) {
-					return Undefined.instance;
+					return Undefined.INSTANCE;
 				}
 
 				ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
@@ -365,10 +365,10 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					return gs;
 				}
 			}
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 
 			case ConstructorId_getPrototypeOf: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				Scriptable obj = getCompatibleObject(cx, scope, arg);
 				return obj.getPrototype(cx);
 			}
@@ -402,7 +402,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return obj;
 			}
 			case ConstructorId_keys: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				Scriptable obj = getCompatibleObject(cx, scope, arg);
 				Object[] ids = obj.getIds(cx);
 				for (int i = 0; i < ids.length; i++) {
@@ -411,7 +411,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return cx.newArray(scope, ids);
 			}
 			case ConstructorId_entries: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				Scriptable obj = getCompatibleObject(cx, scope, arg);
 				Object[] ids = obj.getIds(cx);
 				Object[] entries = new Object[ids.length];
@@ -424,7 +424,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return cx.newArray(scope, entries);
 			}
 			case ConstructorId_values: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				Scriptable obj = getCompatibleObject(cx, scope, arg);
 				Object[] ids = obj.getIds(cx);
 				Object[] values = new Object[ids.length];
@@ -434,7 +434,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return cx.newArray(scope, values);
 			}
 			case ConstructorId_getOwnPropertyNames: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				Scriptable s = getCompatibleObject(cx, scope, arg);
 				ScriptableObject obj = ensureScriptableObject(s, cx);
 				Object[] ids = obj.getIds(cx, true, false);
@@ -444,7 +444,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return cx.newArray(scope, ids);
 			}
 			case ConstructorId_getOwnPropertySymbols: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				Scriptable s = getCompatibleObject(cx, scope, arg);
 				ScriptableObject obj = ensureScriptableObject(s, cx);
 				Object[] ids = obj.getIds(cx, true, true);
@@ -457,27 +457,27 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return cx.newArray(scope, syms.toArray());
 			}
 			case ConstructorId_getOwnPropertyDescriptor: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				// TODO(norris): There's a deeper issue here if
 				// arg instanceof Scriptable. Should we create a new
 				// interface to admit the new ECMAScript 5 operations?
 				Scriptable s = getCompatibleObject(cx, scope, arg);
 				ScriptableObject obj = ensureScriptableObject(s, cx);
-				Object nameArg = args.length < 2 ? Undefined.instance : args[1];
+				Object nameArg = args.length < 2 ? Undefined.INSTANCE : args[1];
 				Scriptable desc = obj.getOwnPropertyDescriptor(cx, nameArg);
-				return desc == null ? Undefined.instance : desc;
+				return desc == null ? Undefined.INSTANCE : desc;
 			}
 			case ConstructorId_defineProperty: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				ScriptableObject obj = ensureScriptableObject(arg, cx);
-				Object name = args.length < 2 ? Undefined.instance : args[1];
-				Object descArg = args.length < 3 ? Undefined.instance : args[2];
+				Object name = args.length < 2 ? Undefined.INSTANCE : args[1];
+				Object descArg = args.length < 3 ? Undefined.INSTANCE : args[2];
 				ScriptableObject desc = ensureScriptableObject(descArg, cx);
 				obj.defineOwnProperty(cx, name, desc);
 				return obj;
 			}
 			case ConstructorId_isExtensible: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				if (!(arg instanceof ScriptableObject)) {
 					return Boolean.FALSE;
 				}
@@ -486,7 +486,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return obj.isExtensible();
 			}
 			case ConstructorId_preventExtensions: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				if (!(arg instanceof ScriptableObject)) {
 					return arg;
 				}
@@ -496,15 +496,15 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return obj;
 			}
 			case ConstructorId_defineProperties: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				ScriptableObject obj = ensureScriptableObject(arg, cx);
-				Object propsObj = args.length < 2 ? Undefined.instance : args[1];
+				Object propsObj = args.length < 2 ? Undefined.INSTANCE : args[1];
 				Scriptable props = ScriptRuntime.toObject(cx, scope, propsObj);
 				obj.defineOwnProperties(cx, ensureScriptableObject(props, cx));
 				return obj;
 			}
 			case ConstructorId_create: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				Scriptable obj = (arg == null) ? null : ensureScriptable(arg, cx);
 
 				ScriptableObject newObject = new NativeObject(cx.factory);
@@ -519,7 +519,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return newObject;
 			}
 			case ConstructorId_isSealed: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				if (!(arg instanceof ScriptableObject)) {
 					return Boolean.TRUE;
 				}
@@ -540,7 +540,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return Boolean.TRUE;
 			}
 			case ConstructorId_isFrozen: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				if (!(arg instanceof ScriptableObject)) {
 					return Boolean.TRUE;
 				}
@@ -564,7 +564,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return Boolean.TRUE;
 			}
 			case ConstructorId_seal: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				if (!(arg instanceof ScriptableObject)) {
 					return arg;
 				}
@@ -583,7 +583,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return obj;
 			}
 			case ConstructorId_freeze: {
-				Object arg = args.length < 1 ? Undefined.instance : args[0];
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				if (!(arg instanceof ScriptableObject)) {
 					return arg;
 				}
@@ -635,8 +635,8 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 
 			case ConstructorId_is: {
-				Object a1 = args.length < 1 ? Undefined.instance : args[0];
-				Object a2 = args.length < 2 ? Undefined.instance : args[1];
+				Object a1 = args.length < 1 ? Undefined.INSTANCE : args[0];
+				Object a2 = args.length < 2 ? Undefined.INSTANCE : args[1];
 				return ScriptRuntime.same(cx, a1, a2);
 			}
 

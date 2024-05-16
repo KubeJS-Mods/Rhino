@@ -90,7 +90,7 @@ public class NativeCallSite extends IdScriptableObject {
 		}
 		NativeCallSite cs = (NativeCallSite) obj;
 		if ((cs.element == null) || (cs.element.lineNumber < 0)) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 		return cs.element.lineNumber;
 	}
@@ -190,7 +190,7 @@ public class NativeCallSite extends IdScriptableObject {
 			case Id_getFunctionName -> getFunctionName(thisObj, cx);
 			case Id_getFileName -> getFileName(thisObj, cx);
 			case Id_getLineNumber -> getLineNumber(thisObj, cx);
-			case Id_getThis, Id_getTypeName, Id_getFunction, Id_getColumnNumber -> Undefined.instance;
+			case Id_getThis, Id_getTypeName, Id_getFunction, Id_getColumnNumber -> Undefined.INSTANCE;
 			case Id_getMethodName -> null;
 			case Id_getEvalOrigin, Id_isEval, Id_isConstructor, Id_isNative, Id_isToplevel -> Boolean.FALSE;
 			case Id_toString -> js_toString(thisObj, cx);

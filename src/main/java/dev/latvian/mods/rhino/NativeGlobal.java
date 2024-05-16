@@ -70,7 +70,7 @@ public class NativeGlobal implements IdFunctionCall {
 
 		ScriptableObject.defineProperty(scope, "NaN", ScriptRuntime.NaNobj, ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT, cx);
 		ScriptableObject.defineProperty(scope, "Infinity", ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY), ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT, cx);
-		ScriptableObject.defineProperty(scope, "undefined", Undefined.instance, ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT, cx);
+		ScriptableObject.defineProperty(scope, "undefined", Undefined.INSTANCE, ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT, cx);
 
         /*
             Each error constructor gets its own Error object as a prototype,
@@ -674,7 +674,7 @@ public class NativeGlobal implements IdFunctionCall {
 					return js_unescape(args, cx);
 
 				case Id_uneval: {
-					Object value = (args.length != 0) ? args[0] : Undefined.instance;
+					Object value = (args.length != 0) ? args[0] : Undefined.INSTANCE;
 					return ScriptRuntime.uneval(cx, scope, value);
 				}
 

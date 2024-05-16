@@ -339,7 +339,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 	 */
 	@Override
 	public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		return Undefined.instance;
+		return Undefined.INSTANCE;
 	}
 
 	@Override
@@ -433,7 +433,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 			if (this instanceof NativeFunction) {
 				result = setupDefaultPrototype(cx);
 			} else {
-				result = Undefined.instance;
+				result = Undefined.INSTANCE;
 			}
 		} else if (result == UniqueTag.NULL_VALUE) {
 			result = null;

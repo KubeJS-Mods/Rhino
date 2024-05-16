@@ -49,13 +49,13 @@ public class NativeSet extends IdScriptableObject {
 	 * to do. This is common code with NativeWeakSet.
 	 */
 	static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject set, Object arg1) {
-		if ((arg1 == null) || Undefined.instance.equals(arg1)) {
+		if ((arg1 == null) || Undefined.INSTANCE.equals(arg1)) {
 			return;
 		}
 
 		// Call the "[Symbol.iterator]" property as a function.
 		Object ito = ScriptRuntime.callIterator(cx, scope, arg1);
-		if (Undefined.instance.equals(ito)) {
+		if (Undefined.INSTANCE.equals(ito)) {
 			// Per spec, ignore if the iterator returns undefined
 			return;
 		}
@@ -71,7 +71,7 @@ public class NativeSet extends IdScriptableObject {
 		// Finally, run through all the iterated values and add them!
 		try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
 			for (Object val : it) {
-				final Object finalVal = val == NOT_FOUND ? Undefined.instance : val;
+				final Object finalVal = val == NOT_FOUND ? Undefined.INSTANCE : val;
 				add.call(cx, scope, set, new Object[]{finalVal});
 			}
 		}
@@ -124,11 +124,11 @@ public class NativeSet extends IdScriptableObject {
 					throw ScriptRuntime.typeError1(cx, "msg.no.new", "Set");
 				}
 			case Id_add:
-				return realThis(thisObj, f, cx).js_add(cx, args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_add(cx, args.length > 0 ? args[0] : Undefined.INSTANCE);
 			case Id_delete:
-				return realThis(thisObj, f, cx).js_delete(cx, args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_delete(cx, args.length > 0 ? args[0] : Undefined.INSTANCE);
 			case Id_has:
-				return realThis(thisObj, f, cx).js_has(cx, args.length > 0 ? args[0] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_has(cx, args.length > 0 ? args[0] : Undefined.INSTANCE);
 			case Id_clear:
 				return realThis(thisObj, f, cx).js_clear(cx);
 			case Id_values:
@@ -136,7 +136,7 @@ public class NativeSet extends IdScriptableObject {
 			case Id_entries:
 				return realThis(thisObj, f, cx).js_iterator(scope, NativeCollectionIterator.Type.BOTH, cx);
 			case Id_forEach:
-				return realThis(thisObj, f, cx).js_forEach(cx, scope, args.length > 0 ? args[0] : Undefined.instance, args.length > 1 ? args[1] : Undefined.instance);
+				return realThis(thisObj, f, cx).js_forEach(cx, scope, args.length > 0 ? args[0] : Undefined.INSTANCE, args.length > 1 ? args[1] : Undefined.INSTANCE);
 			case SymbolId_getSize:
 				return realThis(thisObj, f, cx).js_getSize();
 		}
@@ -164,7 +164,7 @@ public class NativeSet extends IdScriptableObject {
 
 	private Object js_clear(Context cx) {
 		entries.clear(cx);
-		return Undefined.instance;
+		return Undefined.INSTANCE;
 	}
 
 	private Object js_getSize() {
@@ -190,13 +190,13 @@ public class NativeSet extends IdScriptableObject {
 				thisObj = scope;
 			}
 			if (thisObj == null) {
-				thisObj = Undefined.SCRIPTABLE_UNDEFINED;
+				thisObj = Undefined.SCRIPTABLE_INSTANCE;
 			}
 
 			final Hashtable.Entry e = i.next();
 			f.call(cx, scope, thisObj, new Object[]{e.value, e.value, this});
 		}
-		return Undefined.instance;
+		return Undefined.INSTANCE;
 	}
 
 	@Override

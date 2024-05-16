@@ -9,6 +9,7 @@ import dev.latvian.mods.rhino.util.Deletable;
 import dev.latvian.mods.rhino.util.ValueUnwrapper;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,12 +22,14 @@ import java.util.function.Predicate;
 public class NativeJavaList extends NativeJavaObject {
 	private final List list;
 	private final Class<?> listType;
+	private final Type listGenericType;
 	private final ValueUnwrapper valueUnwrapper;
 
 	public NativeJavaList(Context cx, Scriptable scope, Object jo, List list, @Nullable Class<?> listType, ValueUnwrapper valueUnwrapper) {
 		super(scope, jo, jo.getClass(), cx);
 		this.list = list;
 		this.listType = listType;
+		this.listGenericType = listType;
 		this.valueUnwrapper = valueUnwrapper;
 	}
 
@@ -60,7 +63,7 @@ public class NativeJavaList extends NativeJavaObject {
 		if (isWithValidIndex(index)) {
 			return valueUnwrapper.unwrap(cx, this, list.get(index));
 		}
-		return Undefined.instance;
+		return Undefined.INSTANCE;
 	}
 
 	@Override
@@ -74,7 +77,7 @@ public class NativeJavaList extends NativeJavaObject {
 	@Override
 	public void put(Context cx, int index, Scriptable start, Object value) {
 		if (isWithValidIndex(index)) {
-			list.set(index, Context.jsToJava(cx, value, listType));
+			list.set(index, cx.jsToJava(value, listType, listGenericType));
 			return;
 		}
 		super.put(cx, index, start, value);
@@ -133,12 +136,12 @@ public class NativeJavaList extends NativeJavaObject {
 
 	private int push(Context cx, Object[] args) {
 		if (args.length == 1) {
-			list.add(Context.jsToJava(cx, args[0], listType));
+			list.add(cx.jsToJava(args[0], listType, listGenericType));
 		} else if (args.length > 1) {
 			Object[] args1 = new Object[args.length];
 
 			for (int i = 0; i < args.length; i++) {
-				args1[i] = Context.jsToJava(cx, args[i], listType);
+				args1[i] = cx.jsToJava(args[i], listType, listGenericType);
 			}
 
 			list.addAll(Arrays.asList(args1));
@@ -149,7 +152,7 @@ public class NativeJavaList extends NativeJavaObject {
 
 	private Object pop(Context cx) {
 		if (list.isEmpty()) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 
 		return list.remove(list.size() - 1);
@@ -157,7 +160,7 @@ public class NativeJavaList extends NativeJavaObject {
 
 	private Object shift(Context cx) {
 		if (list.isEmpty()) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 
 		return list.remove(0);
@@ -165,7 +168,7 @@ public class NativeJavaList extends NativeJavaObject {
 
 	private int unshift(Context cx, Object[] args) {
 		for (int i = args.length - 1; i >= 0; i--) {
-			list.add(0, Context.jsToJava(cx, args[i], listType));
+			list.add(0, cx.jsToJava(args[i], listType, listGenericType));
 		}
 
 		return list.size();
@@ -277,7 +280,7 @@ public class NativeJavaList extends NativeJavaObject {
 
 	private Object reduce(Context cx, Object[] args) {
 		if (list.isEmpty()) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		} else if (list.size() == 1) {
 			return list.get(0);
 		}
@@ -294,7 +297,7 @@ public class NativeJavaList extends NativeJavaObject {
 
 	private Object reduceRight(Context cx, Object[] args) {
 		if (list.isEmpty()) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		} else if (list.size() == 1) {
 			return list.get(0);
 		}
@@ -311,7 +314,7 @@ public class NativeJavaList extends NativeJavaObject {
 
 	private Object find(Context cx, Object[] args) {
 		if (list.isEmpty()) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 
 		Predicate predicate = (Predicate) args[0];
@@ -322,7 +325,7 @@ public class NativeJavaList extends NativeJavaObject {
 			}
 		}
 
-		return Undefined.instance;
+		return Undefined.INSTANCE;
 	}
 
 	private Object findIndex(Context cx, Object[] args) {
@@ -343,7 +346,7 @@ public class NativeJavaList extends NativeJavaObject {
 
 	private Object findLast(Context cx, Object[] args) {
 		if (list.isEmpty()) {
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 
 		Predicate predicate = (Predicate) args[0];
@@ -356,7 +359,7 @@ public class NativeJavaList extends NativeJavaObject {
 			}
 		}
 
-		return Undefined.instance;
+		return Undefined.INSTANCE;
 	}
 
 	private Object findLastIndex(Context cx, Object[] args) {

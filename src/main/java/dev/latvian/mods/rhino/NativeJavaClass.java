@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.Map;
@@ -34,17 +36,18 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 		// we need to force this to be wrapped, because construct _has_
 		// to return a scriptable
 		Scriptable topLevel = ScriptableObject.getTopLevelScope(scope);
-		return cx.getWrapFactory().wrapNewObject(topLevel, instance, cx);
+		return cx.wrapNewObject(topLevel, instance);
 	}
 
 	static Object constructInternal(Context cx, Scriptable scope, Object[] args, MemberBox ctor) {
-		Class<?>[] argTypes = ctor.argTypes;
+		var argTypes = ctor.argTypes;
+		var genericArgTypes = ctor.genericArgTypes;
 
 		if (ctor.vararg) {
 			// marshall the explicit parameter
 			Object[] newArgs = new Object[argTypes.length];
 			for (int i = 0; i < argTypes.length - 1; i++) {
-				newArgs[i] = Context.jsToJava(cx, args[i], argTypes[i]);
+				newArgs[i] = cx.jsToJava(args[i], argTypes[i], genericArgTypes[i]);
 			}
 
 			Object varArgs;
@@ -53,13 +56,13 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 			// is given and it is a Java or ECMA array.
 			if (args.length == argTypes.length && (args[args.length - 1] == null || args[args.length - 1] instanceof NativeArray || args[args.length - 1] instanceof NativeJavaArray)) {
 				// convert the ECMA array into a native array
-				varArgs = Context.jsToJava(cx, args[args.length - 1], argTypes[argTypes.length - 1]);
+				varArgs = cx.jsToJava(args[args.length - 1], argTypes[argTypes.length - 1], genericArgTypes[argTypes.length - 1]);
 			} else {
 				// marshall the variable parameter
 				Class<?> componentType = argTypes[argTypes.length - 1].getComponentType();
 				varArgs = Array.newInstance(componentType, args.length - argTypes.length + 1);
 				for (int i = 0; i < Array.getLength(varArgs); i++) {
-					Object value = Context.jsToJava(cx, args[argTypes.length - 1 + i], componentType);
+					Object value = cx.jsToJava(args[argTypes.length - 1 + i], componentType);
 					Array.set(varArgs, i, value);
 				}
 			}
@@ -72,7 +75,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 			Object[] origArgs = args;
 			for (int i = 0; i < args.length; i++) {
 				Object arg = args[i];
-				Object x = Context.jsToJava(cx, arg, argTypes[i]);
+				Object x = cx.jsToJava(arg, argTypes[i], genericArgTypes[i]);
 				if (x != arg) {
 					if (args == origArgs) {
 						args = origArgs.clone();
@@ -152,14 +155,14 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 		Scriptable scope = ScriptableObject.getTopLevelScope(start);
 
 		if (javaClassPropertyName.equals(name)) {
-			return cx.getWrapFactory().wrap(cx, scope, javaObject, ScriptRuntime.ClassClass);
+			return cx.wrap(scope, javaObject, ScriptRuntime.ClassClass);
 		}
 
 		// experimental:  look for nested classes by appending $name to
 		// current class' name.
 		Class<?> nestedClass = findNestedClass(getClassObject(), name);
 		if (nestedClass != null) {
-			Scriptable nestedValue = cx.getWrapFactory().wrapJavaClass(cx, scope, nestedClass);
+			Scriptable nestedValue = cx.wrapJavaClass(scope, nestedClass);
 			nestedValue.setParentScope(this);
 			return nestedValue;
 		}
@@ -182,14 +185,14 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 	}
 
 	@Override
-	public Object getDefaultValue(Context cx, Class<?> hint) {
-		if (hint == null || hint == ScriptRuntime.StringClass) {
+	public Object getDefaultValue(Context cx, DefaultValueTypeHint hint) {
+		if (hint == null || hint == DefaultValueTypeHint.STRING) {
 			return this.toString();
 		}
-		if (hint == ScriptRuntime.BooleanClass) {
+		if (hint == DefaultValueTypeHint.BOOLEAN) {
 			return Boolean.TRUE;
 		}
-		if (hint == ScriptRuntime.NumberClass) {
+		if (hint == DefaultValueTypeHint.NUMBER) {
 			return ScriptRuntime.NaNobj;
 		}
 		return this;
@@ -240,7 +243,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 			// bytecode generation won't work on Dalvik VM.
 			if ("Dalvik".equals(System.getProperty("java.vm.name")) && classObject.isInterface()) {
 				Object obj = createInterfaceAdapter(cx, classObject, ScriptableObject.ensureScriptableObject(args[0], cx));
-				return cx.getWrapFactory().wrapAsJavaObject(cx, scope, obj, null);
+				return cx.wrapAsJavaObject(scope, obj, null, null);
 			}
 			// use JavaAdapter to construct a new class on the fly that
 			// implements/extends this interface/abstract class.

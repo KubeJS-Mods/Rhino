@@ -84,7 +84,7 @@ class SpecialRef extends Ref {
 					}
 
 					if ((value != null && ScriptRuntime.typeof(cx, value) != MemberType.OBJECT) || ScriptRuntime.typeof(cx, target) != MemberType.OBJECT) {
-						return Undefined.instance;
+						return Undefined.INSTANCE;
 					}
 					target.setPrototype(obj);
 				} else {

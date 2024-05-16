@@ -76,8 +76,8 @@ public class Hashtable implements Iterable<Hashtable.Entry> {
 		 */
 		Object clear() {
 			final Object ret = value;
-			key = Undefined.instance;
-			value = Undefined.instance;
+			key = Undefined.INSTANCE;
+			value = Undefined.INSTANCE;
 			deleted = true;
 			return ret;
 		}

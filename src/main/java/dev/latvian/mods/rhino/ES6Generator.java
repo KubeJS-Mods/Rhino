@@ -119,7 +119,7 @@ public final class ES6Generator extends IdScriptableObject {
 			throw incompatibleCallError(f, cx);
 		}
 
-		Object value = args.length >= 1 ? args[0] : Undefined.instance;
+		Object value = args.length >= 1 ? args[0] : Undefined.INSTANCE;
 
 		switch (id) {
 			case Id_return:
@@ -147,7 +147,7 @@ public final class ES6Generator extends IdScriptableObject {
 	private Scriptable resumeDelegee(Context cx, Scriptable scope, Object value) {
 		try {
 			// Be super-careful and only pass an arg to next if it expects one
-			Object[] nextArgs = Undefined.instance.equals(value) ? ScriptRuntime.EMPTY_OBJECTS : new Object[]{value};
+			Object[] nextArgs = Undefined.INSTANCE.equals(value) ? ScriptRuntime.EMPTY_OBJECTS : new Object[]{value};
 
 			Callable nextFn = ScriptRuntime.getPropFunctionAndThis(cx, scope, delegee, ES6Iterator.NEXT_METHOD);
 			Scriptable nextThis = cx.lastStoredScriptable();
@@ -186,7 +186,7 @@ public final class ES6Generator extends IdScriptableObject {
 				try {
 					// Return a result to the original generator, but first optionally call "return"
 					returnCalled = true;
-					callReturnOptionally(cx, scope, Undefined.instance);
+					callReturnOptionally(cx, scope, Undefined.INSTANCE);
 				} finally {
 					delegee = null;
 				}
@@ -200,7 +200,7 @@ public final class ES6Generator extends IdScriptableObject {
 			try {
 				if (!returnCalled) {
 					try {
-						callReturnOptionally(cx, scope, Undefined.instance);
+						callReturnOptionally(cx, scope, Undefined.INSTANCE);
 					} catch (RhinoException re2) {
 						return resumeAbruptLocal(cx, scope, GeneratorState.GENERATOR_THROW, re2);
 					}
@@ -268,7 +268,7 @@ public final class ES6Generator extends IdScriptableObject {
 				try {
 					// Re-execute but update state in case we end up back here
 					// Value shall be Undefined based on the very complex spec!
-					delResult = resumeDelegee(cx, scope, Undefined.instance);
+					delResult = resumeDelegee(cx, scope, Undefined.INSTANCE);
 				} finally {
 					state = State.EXECUTING;
 				}
@@ -378,10 +378,10 @@ public final class ES6Generator extends IdScriptableObject {
 	}
 
 	private Object callReturnOptionally(Context cx, Scriptable scope, Object value) {
-		Object[] retArgs = Undefined.instance.equals(value) ? ScriptRuntime.EMPTY_OBJECTS : new Object[]{value};
+		Object[] retArgs = Undefined.INSTANCE.equals(value) ? ScriptRuntime.EMPTY_OBJECTS : new Object[]{value};
 		// Delegate to "return" method. If it's not defined we ignore it
 		Object retFnObj = ScriptRuntime.getObjectPropNoWarn(cx, scope, delegee, ES6Iterator.RETURN_METHOD);
-		if (!Undefined.instance.equals(retFnObj)) {
+		if (!Undefined.INSTANCE.equals(retFnObj)) {
 			if (!(retFnObj instanceof Callable)) {
 				throw ScriptRuntime.typeError2(cx, "msg.isnt.function", ES6Iterator.RETURN_METHOD, ScriptRuntime.typeof(cx, retFnObj));
 			}

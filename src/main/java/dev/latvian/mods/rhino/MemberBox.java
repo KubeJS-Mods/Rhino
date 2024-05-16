@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 
 /**
  * Wrapper class for Method and Constructor instances to cache
@@ -62,6 +63,7 @@ public final class MemberBox {
 	}
 
 	transient Class<?>[] argTypes;
+	transient Type[] genericArgTypes;
 	transient Object delegateTo;
 	transient boolean vararg;
 	public transient Executable executable;
@@ -70,6 +72,7 @@ public final class MemberBox {
 	MemberBox(Executable executable) {
 		this.executable = executable;
 		this.argTypes = executable.getParameterTypes();
+		this.genericArgTypes = executable.getGenericParameterTypes();
 		this.vararg = executable.isVarArgs();
 	}
 
@@ -79,6 +82,7 @@ public final class MemberBox {
 		if (executable != null) {
 			this.executable = executable;
 			this.argTypes = executable.getParameterTypes();
+			this.genericArgTypes = executable.getGenericParameterTypes();
 			this.vararg = executable.isVarArgs();
 		} else {
 			this.wrappedExecutable = wrappedExecutable;
@@ -120,6 +124,11 @@ public final class MemberBox {
 
 	Class<?> getReturnType() {
 		return wrappedExecutable != null ? wrappedExecutable.getReturnType() : ((Method) executable).getReturnType();
+	}
+
+	Type getGenericReturnType() {
+		return wrappedExecutable != null ? wrappedExecutable.getGenericReturnType() : ((Method) executable).getGenericReturnType();
+
 	}
 
 	String toJavaDeclaration() {

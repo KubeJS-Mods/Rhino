@@ -14,6 +14,7 @@ import dev.latvian.mods.rhino.annotations.JSGetter;
 import dev.latvian.mods.rhino.annotations.JSSetter;
 import dev.latvian.mods.rhino.annotations.JSStaticFunction;
 import dev.latvian.mods.rhino.mod.util.WrappedReflectionMethod;
+import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 import dev.latvian.mods.rhino.util.Deletable;
 
 import java.io.Serial;
@@ -313,10 +314,10 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		return new SlotMapContainer(initialSize);
 	}
 
-	public static Object getDefaultValue(Scriptable object, Class<?> typeHint, Context cx) {
+	public static Object getDefaultValue(Scriptable object, DefaultValueTypeHint typeHint, Context cx) {
 		for (int i = 0; i < 2; i++) {
 			boolean tryToString;
-			if (typeHint == ScriptRuntime.StringClass) {
+			if (typeHint == DefaultValueTypeHint.STRING) {
 				tryToString = (i == 0);
 			} else {
 				tryToString = (i == 1);
@@ -337,7 +338,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 				if (!(v instanceof Scriptable)) {
 					return v;
 				}
-				if (typeHint == ScriptRuntime.ScriptableClass || typeHint == ScriptRuntime.FunctionClass) {
+				if (typeHint == DefaultValueTypeHint.CLASS || typeHint == DefaultValueTypeHint.FUNCTION) {
 					return v;
 				}
 				if (tryToString && v instanceof Wrapper) {
@@ -351,8 +352,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			}
 		}
 		// fall through to error
-		String arg = (typeHint == null) ? "undefined" : typeHint.getName();
-		throw ScriptRuntime.typeError1(cx, "msg.default.value", arg);
+		throw ScriptRuntime.typeError1(cx, "msg.default.value", (typeHint == null ? "undefined" : typeHint.name));
 	}
 
 	/**
@@ -816,7 +816,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		if (destination instanceof ConstProperties cp) {
 			cp.defineConst(cx, propertyName, destination);
 		} else {
-			defineProperty(destination, propertyName, Undefined.instance, CONST, cx);
+			defineProperty(destination, propertyName, Undefined.INSTANCE, CONST, cx);
 		}
 	}
 
@@ -1584,7 +1584,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 
 	@Override
 	public void defineConst(Context cx, String name, Scriptable start) {
-		if (putConstImpl(cx, name, 0, start, Undefined.instance, UNINITIALIZED_CONST)) {
+		if (putConstImpl(cx, name, 0, start, Undefined.INSTANCE, UNINITIALIZED_CONST)) {
 			return;
 		}
 
@@ -1744,7 +1744,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		} else {
 			gslot.getter = getterOrSetter;
 		}
-		gslot.value = Undefined.instance;
+		gslot.value = Undefined.INSTANCE;
 	}
 
 	/**
@@ -1770,9 +1770,9 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		}
 		if (slot instanceof GetterSlot gslot) {
 			Object result = isSetter ? gslot.setter : gslot.getter;
-			return result != null ? result : Undefined.instance;
+			return result != null ? result : Undefined.INSTANCE;
 		}
-		return Undefined.instance;
+		return Undefined.INSTANCE;
 	}
 
 	/**
@@ -1912,7 +1912,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * See ECMA 8.6.2.6.
 	 */
 	@Override
-	public Object getDefaultValue(Context cx, Class<?> typeHint) {
+	public Object getDefaultValue(Context cx, DefaultValueTypeHint typeHint) {
 		return getDefaultValue(this, typeHint, cx);
 	}
 
@@ -2197,7 +2197,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 				gslot.setter = setter;
 			}
 
-			gslot.value = Undefined.instance;
+			gslot.value = Undefined.INSTANCE;
 			gslot.setAttributes(attributes);
 		} else {
 			if (slot instanceof GetterSlot && isDataDescriptor(desc, cx)) {
@@ -2208,7 +2208,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			if (value != NOT_FOUND) {
 				slot.value = value;
 			} else if (isNew) {
-				slot.value = Undefined.instance;
+				slot.value = Undefined.INSTANCE;
 			}
 			slot.setAttributes(attributes);
 		}
@@ -2216,11 +2216,11 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 
 	protected void checkPropertyDefinition(Context cx, ScriptableObject desc) {
 		Object getter = getProperty(desc, "get", cx);
-		if (getter != NOT_FOUND && getter != Undefined.instance && !(getter instanceof Callable)) {
+		if (getter != NOT_FOUND && getter != Undefined.INSTANCE && !(getter instanceof Callable)) {
 			throw ScriptRuntime.notFunctionError(cx, getter);
 		}
 		Object setter = getProperty(desc, "set", cx);
-		if (setter != NOT_FOUND && setter != Undefined.instance && !(setter instanceof Callable)) {
+		if (setter != NOT_FOUND && setter != Undefined.INSTANCE && !(setter instanceof Callable)) {
 			throw ScriptRuntime.notFunctionError(cx, setter);
 		}
 		if (isDataDescriptor(desc, cx) && isAccessorDescriptor(cx, desc)) {
@@ -2286,7 +2286,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 			return true;
 		}
 		if (currentValue == NOT_FOUND) {
-			currentValue = Undefined.instance;
+			currentValue = Undefined.INSTANCE;
 		}
 		// Special rules for numbers: NaN is considered the same value,
 		// while zeroes with different signs are considered different.
@@ -2659,7 +2659,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		} else if (key instanceof Number) {
 			value = get(cx, ((Number) key).intValue(), this);
 		}
-		if (value == NOT_FOUND || value == Undefined.instance) {
+		if (value == NOT_FOUND || value == Undefined.INSTANCE) {
 			return null;
 		} else if (value instanceof Wrapper) {
 			return ((Wrapper) value).unwrap();

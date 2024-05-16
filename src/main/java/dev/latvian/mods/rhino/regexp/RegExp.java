@@ -25,7 +25,7 @@ public class RegExp {
 	private static NativeRegExp createRegExp(Context cx, Scriptable scope, Object[] args, int optarg, boolean forceFlat) {
 		NativeRegExp re;
 		Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
-		if (args.length == 0 || args[0] == Undefined.instance) {
+		if (args.length == 0 || args[0] == Undefined.INSTANCE) {
 			RECompiled compiled = NativeRegExp.compileRE(cx, "", "", false);
 			re = new NativeRegExp(topScope, compiled, cx);
 		} else if (args[0] instanceof NativeRegExp) {
@@ -123,7 +123,7 @@ public class RegExp {
 				if (sub != null) {
 					args[i + 1] = sub.toString();
 				} else {
-					args[i + 1] = Undefined.instance;
+					args[i + 1] = Undefined.INSTANCE;
 				}
 			}
 			args[parenCount + 1] = reImpl.leftContext.length;
@@ -379,11 +379,11 @@ public class RegExp {
 				if (useRE) {
 					re = createRegExp(cx, scope, args, 2, true);
 				} else {
-					Object arg0 = args.length < 1 ? Undefined.instance : args[0];
+					Object arg0 = args.length < 1 ? Undefined.INSTANCE : args[0];
 					search = ScriptRuntime.toString(cx, arg0);
 				}
 
-				Object arg1 = args.length < 2 ? Undefined.instance : args[1];
+				Object arg1 = args.length < 2 ? Undefined.INSTANCE : args[1];
 				String repstr = null;
 				Function lambda = null;
 				if (arg1 instanceof Function && (!(arg1 instanceof NativeRegExp))) {
@@ -517,7 +517,7 @@ public class RegExp {
 		Scriptable result = cx.newArray(scope, 0);
 
 		// Use the second argument as the split limit, if given.
-		boolean limited = (args.length > 1) && (args[1] != Undefined.instance);
+		boolean limited = (args.length > 1) && (args[1] != Undefined.INSTANCE);
 		long limit = 0;  // Initialize to avoid warning.
 		if (limited) {
 			/* Clamp limit between 0 and 1 + string length. */
@@ -531,7 +531,7 @@ public class RegExp {
 		}
 
 		// return an array consisting of the target if no separator given
-		if (args.length < 1 || args[0] == Undefined.instance) {
+		if (args.length < 1 || args[0] == Undefined.INSTANCE) {
 			result.put(cx, 0, result, target);
 			return result;
 		}

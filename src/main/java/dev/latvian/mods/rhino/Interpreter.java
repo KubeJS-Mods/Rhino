@@ -117,7 +117,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
 			// Initialize initial values of variables that change during
 			// interpretation.
-			result = Undefined.instance;
+			result = Undefined.INSTANCE;
 			pcSourceLineStart = idata.firstLinePC;
 
 			savedStackTop = emptyStackTop;
@@ -191,7 +191,7 @@ public final class Interpreter extends Icode implements Evaluator {
 				System.arraycopy(argsDbl, argShift, sDbl, 0, definedArgs);
 			}
 			for (int i = definedArgs; i != idata.itsMaxVars; ++i) {
-				stack[i] = Undefined.instance;
+				stack[i] = Undefined.INSTANCE;
 			}
 		}
 
@@ -231,11 +231,13 @@ public final class Interpreter extends Icode implements Evaluator {
 				// in order to evaluate their attributes.
 				//final Context cx = Context.enter();
 				//try {
-				if (localContext.hasTopCallScope()) {
+				var cx = localContext.factory.enter();
+
+				if (cx.hasTopCallScope()) {
 					return equalsInTopScope(otherCallFrame);
 				}
 				final Scriptable top = ScriptableObject.getTopLevelScope(scope);
-				return (Boolean) localContext.doTopCall(top, (c, scope, thisObj, args) -> equalsInTopScope(otherCallFrame), top, ScriptRuntime.EMPTY_OBJECTS, isStrictTopFrame());
+				return (Boolean) cx.doTopCall(top, (c, scope, thisObj, args) -> equalsInTopScope(otherCallFrame), top, ScriptRuntime.EMPTY_OBJECTS, isStrictTopFrame());
 				//} finally {
 				//	Context.exit();
 				//}
@@ -260,7 +262,7 @@ public final class Interpreter extends Icode implements Evaluator {
 		}
 
 		private Boolean equalsInTopScope(CallFrame other) {
-			return EqualObjectGraphs.withThreadLocal(eq -> equals(this, other, eq, localContext));
+			return EqualObjectGraphs.withThreadLocal(eq -> equals(this, other, eq, localContext.factory.enter()));
 		}
 
 		private boolean isStrictTopFrame() {
@@ -382,7 +384,7 @@ public final class Interpreter extends Icode implements Evaluator {
 					throw e;
 				}
 			}
-			return Undefined.instance;
+			return Undefined.INSTANCE;
 		}
 		Object result = interpretLoop(cx, frame, generatorState);
 		if (generatorState.returnedException != null) {
@@ -397,7 +399,7 @@ public final class Interpreter extends Icode implements Evaluator {
 		// it holds ContinuationJump
 
 		final Object DBL_MRK = UniqueTag.DOUBLE_MARK;
-		final Object undefined = Undefined.instance;
+		final Object undefined = Undefined.INSTANCE;
 
 		final boolean instructionCounting = (cx.instructionThreshold != 0);
 		// arbitrary number to add to instructionCount when calling
@@ -2041,7 +2043,7 @@ public final class Interpreter extends Icode implements Evaluator {
 		} else if (x == UniqueTag.DOUBLE_MARK) {
 			double d = frame.sDbl[i];
 			return !Double.isNaN(d) && d != 0.0;
-		} else if (x == null || x == Undefined.instance) {
+		} else if (x == null || x == Undefined.INSTANCE) {
 			return false;
 		} else if (x instanceof Number) {
 			double d = ((Number) x).doubleValue();

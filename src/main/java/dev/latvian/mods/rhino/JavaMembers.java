@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.util.ClassVisibilityContext;
 import dev.latvian.mods.rhino.util.HideFromJS;
 import dev.latvian.mods.rhino.util.RemapForJS;
 import dev.latvian.mods.rhino.util.RemapPrefixForJS;
@@ -14,6 +15,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -251,8 +253,7 @@ public class JavaMembers {
 	JavaMembers(Class<?> cl, boolean includeProtected, Context cx, Scriptable scope) {
 		this.localContext = cx;
 
-		ClassShutter shutter = cx.factory.getClassShutter();
-		if (shutter != null && !shutter.visibleToScripts(cl.getName(), ClassShutter.TYPE_MEMBER)) {
+		if (!cx.visibleToScripts(cl.getName(), ClassVisibilityContext.MEMBER)) {
 			throw Context.reportRuntimeError1("msg.access.prohibited", cl.getName(), cx);
 		}
 		this.members = new HashMap<>();
@@ -288,6 +289,7 @@ public class JavaMembers {
 		}
 		Object rval;
 		Class<?> type;
+		Type genericType;
 		try {
 			if (member instanceof BeanProperty bp) {
 				if (bp.getter == null) {
@@ -295,17 +297,19 @@ public class JavaMembers {
 				}
 				rval = bp.getter.invoke(javaObject, ScriptRuntime.EMPTY_OBJECTS, cx, scope);
 				type = bp.getter.getReturnType();
+				genericType = bp.getter.getGenericReturnType();
 			} else {
 				Field field = (Field) member;
 				rval = field.get(isStatic ? null : javaObject);
 				type = field.getType();
+				genericType = field.getGenericType();
 			}
 		} catch (Exception ex) {
 			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		}
 		// Need to wrap the object before we return it.
 		scope = ScriptableObject.getTopLevelScope(scope);
-		return cx.getWrapFactory().wrap(cx, scope, rval, type);
+		return cx.wrap(scope, rval, type, genericType);
 	}
 
 	public void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic, Context cx) {
@@ -332,8 +336,7 @@ public class JavaMembers {
 			// main setter. Otherwise, let the NativeJavaMethod decide which
 			// setter to use:
 			if (bp.setters == null || value == null) {
-				Class<?> setType = bp.setter.argTypes[0];
-				Object[] args = {Context.jsToJava(cx, value, setType)};
+				Object[] args = {cx.jsToJava(value, bp.setter.argTypes[0], bp.setter.genericArgTypes[0])};
 				try {
 					bp.setter.invoke(javaObject, args, cx, scope);
 				} catch (Exception ex) {
@@ -355,7 +358,7 @@ public class JavaMembers {
 				throw Context.throwAsScriptRuntimeEx(new IllegalAccessException("Can't modify final field " + field.getName()), cx);
 			}
 
-			Object javaValue = Context.jsToJava(cx, value, field.getType());
+			Object javaValue = cx.jsToJava(value, field.getType(), field.getGenericType());
 			try {
 				field.set(javaObject, javaValue);
 			} catch (IllegalAccessException accessEx) {
@@ -710,7 +713,7 @@ public class JavaMembers {
 							}
 
 							if (info.name.isEmpty()) {
-								info.name = cx.factory.getRemapper().getMappedField(currentClass, field);
+								info.name = cx.getMappedField(currentClass, field);
 							}
 
 							if (info.name.isEmpty()) {
@@ -800,7 +803,7 @@ public class JavaMembers {
 					}
 
 					if (info.name.isEmpty()) {
-						info.name = cx.factory.getRemapper().getMappedMethod(currentClass, method);
+						info.name = cx.getMappedMethod(currentClass, method);
 					}
 				}
 			}

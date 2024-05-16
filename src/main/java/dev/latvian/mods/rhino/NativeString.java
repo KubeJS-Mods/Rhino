@@ -158,7 +158,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 		}
 
 		if (Id_endsWith == methodId) {
-			if (args.length == 0 || args.length == 1 || (args.length == 2 && args[1] == Undefined.instance)) {
+			if (args.length == 0 || args.length == 1 || (args.length == 2 && args[1] == Undefined.INSTANCE)) {
 				position = target.length();
 			}
 			return target.substring(0, (int) position).endsWith(searchStr) ? 0 : -1;
@@ -198,7 +198,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 			start = length;
 		}
 
-		if (args.length <= 1 || args[1] == Undefined.instance) {
+		if (args.length <= 1 || args[1] == Undefined.INSTANCE) {
 			end = length;
 		} else {
 			end = ScriptRuntime.toInteger(cx, args[1]);
@@ -301,7 +301,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 			begin = length;
 		}
 
-		if (args.length < 2 || args[1] == Undefined.instance) {
+		if (args.length < 2 || args[1] == Undefined.INSTANCE) {
 			end = length;
 		} else {
 			end = ScriptRuntime.toInteger(cx, args[1]);
@@ -393,7 +393,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 	 * <p>15.5.3.4 String.raw [ECMA 6 - draft]</p>
 	 */
 	private static CharSequence js_raw(Context cx, Scriptable scope, Object[] args) {
-		final Object undefined = Undefined.instance;
+		final Object undefined = Undefined.INSTANCE;
 		/* step 1-3 */
 		Object arg0 = args.length > 0 ? args[0] : undefined;
 		Scriptable cooked = ScriptRuntime.toObject(cx, scope, arg0);
@@ -1084,7 +1084,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 					String str = ScriptRuntime.toString(cx, ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
 					double cnt = ScriptRuntime.toInteger(cx, args, 0);
 
-					return (cnt < 0 || cnt >= str.length()) ? Undefined.instance : Integer.valueOf(str.codePointAt((int) cnt));
+					return (cnt < 0 || cnt >= str.length()) ? Undefined.INSTANCE : Integer.valueOf(str.codePointAt((int) cnt));
 				}
 
 				case SymbolId_iterator:
