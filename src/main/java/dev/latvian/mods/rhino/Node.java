@@ -70,16 +70,16 @@ public class Node implements Iterable<Node> {
 	public static final int RIGHT = 2;
 
 	public static final int    // values for SPECIALCALL_PROP
-			NON_SPECIALCALL = 0;
+		NON_SPECIALCALL = 0;
 	public static final int SPECIALCALL_EVAL = 1;
 	public static final int SPECIALCALL_WITH = 2;
 
 	public static final int   // flags for INCRDECR_PROP
-			DECR_FLAG = 0x1;
+		DECR_FLAG = 0x1;
 	public static final int POST_FLAG = 0x2;
 
 	public static final int   // flags for MEMBER_TYPE_PROP
-			PROPERTY_FLAG = 0x1; // property access: element is valid name
+		PROPERTY_FLAG = 0x1; // property access: element is valid name
 	public static final int ATTRIBUTE_FLAG = 0x2; // x.@y or x..@y
 	public static final int DESCENDANTS_FLAG = 0x4; // x..y or x..@i
 	/**

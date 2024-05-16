@@ -11,6 +11,7 @@ import dev.latvian.mods.rhino.util.JavaIteratorWrapper;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
 import org.jetbrains.annotations.Nullable;
+import org.openjdk.nashorn.internal.runtime.NativeJavaPackage;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
@@ -64,7 +65,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	 * "preferred method conversions" from Live Connect 3</a>
 	 */
 	static int getConversionWeight(Context cx, Object fromObj, Class<?> to) {
-		if (cx.hasTypeWrappers() && cx.getTypeWrappers().getWrapperFactory(to, fromObj) != null) {
+		if (cx.factory.hasTypeWrappers() && cx.factory.getTypeWrappers().getWrapperFactory(to, fromObj) != null) {
 			return CONVERSION_NONTRIVIAL;
 		}
 

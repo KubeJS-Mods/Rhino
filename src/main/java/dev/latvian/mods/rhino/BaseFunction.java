@@ -385,7 +385,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 	 * {@link #call} unless they are already set.
 	 */
 	public Scriptable createObject(Context cx, Scriptable scope) {
-		Scriptable newInstance = new NativeObject(cx);
+		Scriptable newInstance = new NativeObject(cx.factory);
 		newInstance.setPrototype(getClassPrototype(cx));
 		newInstance.setParentScope(getParentScope());
 		return newInstance;
@@ -445,7 +445,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		if (prototypeProperty != null) {
 			return prototypeProperty;
 		}
-		NativeObject obj = new NativeObject(cx);
+		NativeObject obj = new NativeObject(cx.factory);
 		final int attr = DONTENUM;
 		obj.defineProperty(cx, "constructor", this, attr);
 		// put the prototype property into the object now, then in the

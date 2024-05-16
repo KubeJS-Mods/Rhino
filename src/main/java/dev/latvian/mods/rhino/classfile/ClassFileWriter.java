@@ -1682,13 +1682,13 @@ public class ClassFileWriter {
 		}
 
 		int attrLength = 2 +                    // attribute_name_index
-				4 +                    // attribute_length
-				2 +                    // max_stack
-				2 +                    // max_locals
-				4 +                    // code_length
-				itsCodeBufferTop + 2 +                    // exception_table_length
-				(itsExceptionTableTop * 8) + 2 +                    // attributes_count
-				lineNumberTableLength + variableTableLength + stackMapTableLength;
+			4 +                    // attribute_length
+			2 +                    // max_stack
+			2 +                    // max_locals
+			4 +                    // code_length
+			itsCodeBufferTop + 2 +                    // exception_table_length
+			(itsExceptionTableTop * 8) + 2 +                    // attributes_count
+			lineNumberTableLength + variableTableLength + stackMapTableLength;
 
 		if (attrLength > 65536) {
 			// See http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html,

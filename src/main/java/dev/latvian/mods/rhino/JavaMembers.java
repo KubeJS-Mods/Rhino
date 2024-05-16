@@ -251,7 +251,7 @@ public class JavaMembers {
 	JavaMembers(Class<?> cl, boolean includeProtected, Context cx, Scriptable scope) {
 		this.localContext = cx;
 
-		ClassShutter shutter = cx.getClassShutter();
+		ClassShutter shutter = cx.factory.getClassShutter();
 		if (shutter != null && !shutter.visibleToScripts(cl.getName(), ClassShutter.TYPE_MEMBER)) {
 			throw Context.reportRuntimeError1("msg.access.prohibited", cl.getName(), cx);
 		}
@@ -710,7 +710,7 @@ public class JavaMembers {
 							}
 
 							if (info.name.isEmpty()) {
-								info.name = cx.getRemapper().getMappedField(currentClass, field);
+								info.name = cx.factory.getRemapper().getMappedField(currentClass, field);
 							}
 
 							if (info.name.isEmpty()) {
@@ -800,7 +800,7 @@ public class JavaMembers {
 					}
 
 					if (info.name.isEmpty()) {
-						info.name = cx.getRemapper().getMappedMethod(currentClass, method);
+						info.name = cx.factory.getRemapper().getMappedMethod(currentClass, method);
 					}
 				}
 			}

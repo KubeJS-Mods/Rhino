@@ -642,7 +642,7 @@ final class NativeDate extends IdScriptableObject {
 			int hour = values[HOUR], min = values[MIN], sec = values[SEC], msec = values[MSEC];
 			int tzhour = values[TZHOUR], tzmin = values[TZMIN];
 			if (year > 275943 // ceil(1e8/365) + 1970 = 275943
-					|| (month < 1 || month > 12) || (day < 1 || day > DaysInMonth(year, month)) || hour > 24 || (hour == 24 && (min > 0 || sec > 0 || msec > 0)) || min > 59 || sec > 59 || tzhour > 23 || tzmin > 59) {
+				|| (month < 1 || month > 12) || (day < 1 || day > DaysInMonth(year, month)) || hour > 24 || (hour == 24 && (min > 0 || sec > 0 || msec > 0)) || min > 59 || sec > 59 || tzhour > 23 || tzmin > 59) {
 				break syntax;
 			}
 			// valid ISO-8601 format, compute date in milliseconds

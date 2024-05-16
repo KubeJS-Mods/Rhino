@@ -3364,8 +3364,8 @@ public class Parser {
 			return;
 		}
 		boolean activation = "arguments".equals(name) &&
-				// An arrow function not generate arguments. So it not need activation.
-				((FunctionNode) currentScriptOrFn).getFunctionType() != FunctionNode.ARROW_FUNCTION;
+			// An arrow function not generate arguments. So it not need activation.
+			((FunctionNode) currentScriptOrFn).getFunctionType() != FunctionNode.ARROW_FUNCTION;
 		if (activation) {
 			setRequiresActivation();
 		}

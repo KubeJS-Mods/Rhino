@@ -8,43 +8,43 @@ import org.junit.jupiter.api.TestMethodOrder;
 @SuppressWarnings("unused")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class OptionalChainingTests {
-	public static final RhinoTest TEST = new RhinoTest("optionalChaining").shareScope();
+	public static final RhinoTest TEST = new RhinoTest("optionalChaining");
 
 	@Test
 	@Order(1)
 	public void init() {
 		TEST.test("init", """
-				let a = { b: { c: 'd' } }
-				let e = { f: {} }
-				let h = null
-				""", "");
+			shared.a = { b: { c: 'd' } }
+			shared.e = { f: {} }
+			shared.h = null
+			""", "");
 	}
 
 	@Test
 	@Order(2)
 	public void shouldError() {
 		TEST.test("shouldError", """
-				console.info(a.b.c)
-				console.info(e.f.g)
-				console.info(h.i.j)
-				""", """
-				d
-				undefined
-				Error: TypeError: Cannot read property "i" from null (optionalChaining/shouldError#3)
-				""");
+			console.info(shared.a.b.c)
+			console.info(shared.e.f.g)
+			console.info(shared.h.i.j)
+			""", """
+			d
+			undefined
+			Error: TypeError: Cannot read property "i" from null (optionalChaining/shouldError#3)
+			""");
 	}
 
 	@Test
 	@Order(2)
 	public void shouldntError() {
 		TEST.test("shouldntError", """
-				console.info(a?.b?.c)
-				console.info(e?.f?.g)
-				console.info(h?.i?.j)
-				""", """
-				d
-				undefined
-				undefined
-				""");
+			console.info(shared.a?.b?.c)
+			console.info(shared.e?.f?.g)
+			console.info(shared.h?.i?.j)
+			""", """
+			d
+			undefined
+			undefined
+			""");
 	}
 }

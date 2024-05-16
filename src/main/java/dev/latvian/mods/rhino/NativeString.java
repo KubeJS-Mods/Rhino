@@ -1172,7 +1172,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 		if (scope == null) {
 			scope = this;
 		}
-		ScriptableObject desc = new NativeObject(cx);
+		ScriptableObject desc = new NativeObject(cx.factory);
 		ScriptRuntime.setBuiltinProtoAndParent(cx, scope, desc, TopLevel.Builtins.Object);
 		desc.defineProperty(cx, "value", value, EMPTY);
 		desc.defineProperty(cx, "writable", Boolean.FALSE, EMPTY);

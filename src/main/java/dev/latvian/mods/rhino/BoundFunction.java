@@ -42,7 +42,7 @@ public class BoundFunction extends BaseFunction {
 		ScriptRuntime.setFunctionProtoAndParent(cx, scope, this);
 
 		Function thrower = ScriptRuntime.typeErrorThrower(cx);
-		NativeObject throwing = new NativeObject(cx);
+		NativeObject throwing = new NativeObject(cx.factory);
 		throwing.put(cx, "get", throwing, thrower);
 		throwing.put(cx, "set", throwing, thrower);
 		throwing.put(cx, "enumerable", throwing, Boolean.FALSE);

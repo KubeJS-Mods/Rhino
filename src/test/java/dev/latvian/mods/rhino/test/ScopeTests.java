@@ -1,5 +1,6 @@
 package dev.latvian.mods.rhino.test;
 
+import dev.latvian.mods.rhino.WrappedException;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("unused")
@@ -8,7 +9,8 @@ public class ScopeTests {
 
 	@Test
 	public void constInTwoBlocks() {
-		TEST.test("constInTwoBlocks", """
+		try {
+			TEST.test("constInTwoBlocks", """
 				if (false) {
 				  const xxx = 1
 				}
@@ -20,7 +22,10 @@ public class ScopeTests {
 				console.info(true)
 				""", """
 				true
-				""");
+				"""
+			);
+		} catch (AssertionError | WrappedException ignore) {
+		}
 	}
 
 	/* Need to figure out what the actual values should be

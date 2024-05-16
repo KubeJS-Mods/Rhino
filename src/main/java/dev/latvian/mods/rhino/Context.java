@@ -12,23 +12,13 @@ import dev.latvian.mods.rhino.ast.AstRoot;
 import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter.ClassFileFormatException;
 import dev.latvian.mods.rhino.regexp.RegExp;
-import dev.latvian.mods.rhino.util.CustomJavaToJsWrapper;
-import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProvider;
-import dev.latvian.mods.rhino.util.CustomJavaToJsWrapperProviderHolder;
-import dev.latvian.mods.rhino.util.DefaultRemapper;
-import dev.latvian.mods.rhino.util.Remapper;
-import dev.latvian.mods.rhino.util.wrap.TypeWrappers;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
 
 /**
  * This class represents the runtime context of an executing script.
@@ -54,10 +44,6 @@ import java.util.function.Predicate;
 
 @SuppressWarnings("ThrowableNotThrown")
 public class Context {
-	public static Context enter() {
-		return new Context();
-	}
-
 	/**
 	 * Report a warning using the error reporter for the current thread.
 	 *
@@ -234,7 +220,7 @@ public class Context {
 			return value;
 		}
 
-		return NativeJavaObject.coerceTypeImpl(cx.hasTypeWrappers() ? cx.getTypeWrappers() : null, desiredType, value, cx);
+		return NativeJavaObject.coerceTypeImpl(cx.factory.hasTypeWrappers() ? cx.factory.getTypeWrappers() : null, desiredType, value, cx);
 	}
 
 	/**
@@ -302,6 +288,7 @@ public class Context {
 		return null;
 	}
 
+	public final ContextFactory factory;
 	public final Object lock = new Object();
 
 	// Generate an observer count on compiled code
@@ -334,16 +321,10 @@ public class Context {
 
 	// custom data
 
-	final List<CustomJavaToJsWrapperProviderHolder<?>> customScriptableWrappers = new ArrayList<>();
-	final Map<Class<?>, CustomJavaToJsWrapperProvider> customScriptableWrapperCache = new HashMap<>();
-	private final Map<String, Object> properties = new HashMap<>();
-	TypeWrappers typeWrappers;
-	Remapper remapper = DefaultRemapper.INSTANCE;
 	private transient Map<Class<?>, JavaMembers> classTable;
 	private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
 	private transient Map<Class<?>, Object> interfaceAdapterCache;
 	private int generatedClassSerial;
-	private ClassShutter classShutter;
 	private WrapFactory wrapFactory;
 
 	/**
@@ -352,7 +333,8 @@ public class Context {
 	 *
 	 * @throws IllegalArgumentException if factory parameter is null.
 	 */
-	protected Context() {
+	public Context(ContextFactory factory) {
+		this.factory = factory;
 		maximumInterpreterStackDepth = Integer.MAX_VALUE;
 	}
 
@@ -678,7 +660,7 @@ public class Context {
 	 * @return the new object
 	 */
 	public Scriptable newObject(Scriptable scope) {
-		NativeObject result = new NativeObject(this);
+		NativeObject result = new NativeObject(factory);
 		ScriptRuntime.setBuiltinProtoAndParent(this, scope, result, TopLevel.Builtins.Object);
 		return result;
 	}
@@ -907,11 +889,6 @@ public class Context {
 	 * The method is useful to observe long running scripts and if necessary
 	 * to terminate them.
 	 * <p>
-	 * The default implementation calls
-	 * {@link ContextFactory#observeInstructionCount(Context cx,
-	 * int instructionCount)}
-	 * that allows to customize Context behavior without introducing
-	 * Context subclasses.
 	 *
 	 * @param instructionCount amount of script instruction executed since
 	 *                         last call to <code>observeInstructionCount</code>
@@ -921,15 +898,6 @@ public class Context {
 	}
 
 	/********** end of API **********/
-
-	/**
-	 * Create class loader for generated classes.
-	 * The method calls {@link ContextFactory#createClassLoader(ClassLoader)}
-	 * using the result of {@link #getFactory()}.
-	 */
-	public GeneratedClassLoader createClassLoader(ClassLoader parent) {
-		return new DefiningClassLoader(parent);
-	}
 
 	public final ClassLoader getApplicationClassLoader() {
 		if (applicationClassLoader == null) {
@@ -1094,107 +1062,6 @@ public class Context {
 		}
 
 		interfaceAdapterCache.put(cl, iadapter);
-	}
-
-	public TypeWrappers getTypeWrappers() {
-		if (typeWrappers == null) {
-			typeWrappers = new TypeWrappers();
-		}
-
-		return typeWrappers;
-	}
-
-	public boolean hasTypeWrappers() {
-		return typeWrappers != null;
-	}
-
-	public Remapper getRemapper() {
-		return remapper;
-	}
-
-	public void setRemapper(Remapper remapper) {
-		this.remapper = remapper;
-	}
-
-	@Nullable
-	@SuppressWarnings("unchecked")
-	public CustomJavaToJsWrapper wrapCustomJavaToJs(Object javaObject) {
-		if (customScriptableWrappers.isEmpty()) {
-			return null;
-		}
-
-		var provider = customScriptableWrapperCache.get(javaObject.getClass());
-
-		if (provider == null) {
-			for (CustomJavaToJsWrapperProviderHolder wrapper : customScriptableWrappers) {
-				provider = wrapper.create(javaObject);
-
-				if (provider != null) {
-					break;
-				}
-			}
-
-			if (provider == null) {
-				provider = CustomJavaToJsWrapperProvider.NONE;
-			}
-
-			customScriptableWrapperCache.put(javaObject.getClass(), provider);
-		}
-
-		return provider.create(javaObject);
-	}
-
-	public <T> void addCustomJavaToJsWrapper(Predicate<T> predicate, CustomJavaToJsWrapperProvider<T> provider) {
-		customScriptableWrappers.add(new CustomJavaToJsWrapperProviderHolder<>(predicate, provider));
-	}
-
-	public <T> void addCustomJavaToJsWrapper(Class<T> type, CustomJavaToJsWrapperProvider<T> provider) {
-		addCustomJavaToJsWrapper(new CustomJavaToJsWrapperProviderHolder.PredicateFromClass<>(type), provider);
-	}
-
-	public void setProperty(String key, @Nullable Object value) {
-		if (value == null) {
-			properties.remove(key);
-		} else {
-			properties.put(key, value);
-		}
-	}
-
-	@Nullable
-	public Object getProperty(String key) {
-		return properties.get(key);
-	}
-
-	@Nullable
-	@SuppressWarnings("unchecked")
-	public <T> T getProperty(String key, T def) {
-		return (T) properties.getOrDefault(key, def);
-	}
-
-	@Nullable
-	public final synchronized ClassShutter getClassShutter() {
-		return classShutter;
-	}
-
-	/**
-	 * Set the LiveConnect access filter for this context.
-	 * <p> {@link ClassShutter} may only be set if it is currently null.
-	 * Otherwise a SecurityException is thrown.
-	 *
-	 * @param shutter a ClassShutter object
-	 * @throws SecurityException if there is already a ClassShutter
-	 *                           object for this Context
-	 */
-	public synchronized final void setClassShutter(ClassShutter shutter) {
-		if (shutter == null) {
-			throw new IllegalArgumentException();
-		}
-
-		if (classShutter != null) {
-			throw new SecurityException("Cannot overwrite existing " + "ClassShutter object");
-		}
-
-		classShutter = shutter;
 	}
 
 	/**

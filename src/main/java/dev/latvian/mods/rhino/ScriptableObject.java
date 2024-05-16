@@ -163,7 +163,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		@Override
 		ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
 			int attr = getAttributes();
-			ScriptableObject desc = new NativeObject(cx);
+			ScriptableObject desc = new NativeObject(cx.factory);
 			ScriptRuntime.setBuiltinProtoAndParent(cx, scope, desc, TopLevel.Builtins.Object);
 			desc.defineProperty(cx, "enumerable", (attr & DONTENUM) == 0, EMPTY);
 			desc.defineProperty(cx, "configurable", (attr & PERMANENT) == 0, EMPTY);
@@ -293,7 +293,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	}
 
 	protected static ScriptableObject buildDataDescriptor(Scriptable scope, Object value, int attributes, Context cx) {
-		ScriptableObject desc = new NativeObject(cx);
+		ScriptableObject desc = new NativeObject(cx.factory);
 		ScriptRuntime.setBuiltinProtoAndParent(cx, scope, desc, TopLevel.Builtins.Object);
 		desc.defineProperty(cx, "value", value, EMPTY);
 		desc.defineProperty(cx, "writable", (attributes & READONLY) == 0, EMPTY);

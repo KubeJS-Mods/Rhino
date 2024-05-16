@@ -138,9 +138,9 @@ public class FastDtoa {
 		// Instead of using the buffer directly we use its distance to too_high.
 		// Conceptually rest ~= too_high - buffer
 		while (rest < small_distance &&  // Negated condition 1
-				unsafe_interval - rest >= ten_kappa &&  // Negated condition 2
-				(rest + ten_kappa < small_distance ||  // buffer{-1} > w_high
-						small_distance - rest >= rest + ten_kappa - small_distance)) {
+			unsafe_interval - rest >= ten_kappa &&  // Negated condition 2
+			(rest + ten_kappa < small_distance ||  // buffer{-1} > w_high
+				small_distance - rest >= rest + ten_kappa - small_distance)) {
 			buffer.decreaseLast();
 			rest += ten_kappa;
 		}

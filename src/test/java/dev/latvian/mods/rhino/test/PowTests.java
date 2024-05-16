@@ -9,60 +9,60 @@ public class PowTests {
 	@Test
 	public void bothWhole() {
 		TEST.test("bothWhole", """
-				let a = 10
-				let b = 3
-				let c = a ** b
-				console.info(c)
-				""", """
-				1000.0
-				""");
+			let a = 10
+			let b = 3
+			let c = a ** b
+			console.info(c)
+			""", """
+			1000.0
+			""");
 	}
 
 	@Test
 	public void fractionExponent() {
 		TEST.test("fractionExponent", """
-				let a = 0.5
-				let b = 0.5
-				let c = a ** b
-				console.info(c)
-				""", """
-				0.7071067811865476
-				""");
+			let a = 0.5
+			let b = 0.5
+			let c = a ** b
+			console.info(c)
+			""", """
+			0.7071067811865476
+			""");
 	}
 
 	@Test
 	public void fractionBase() {
 		TEST.test("fractionBase", """
-				let a = 2.5
-				let b = 3
-				let c = a ** b
-				console.info(c)
-				""", """
-				15.625
-				""");
+			let a = 2.5
+			let b = 3
+			let c = a ** b
+			console.info(c)
+			""", """
+			15.625
+			""");
 	}
 
 	@Test
 	public void zeroExponent() {
 		TEST.test("zeroExponent", """
-				let a = 100
-				let b = 0
-				let c = a ** b
-				console.info(c)
-				""", """
-				1.0
-				""");
+			let a = 100
+			let b = 0
+			let c = a ** b
+			console.info(c)
+			""", """
+			1.0
+			""");
 	}
 
 	@Test
 	public void negativeExponent() {
 		TEST.test("negativeExponent", """
-				let a = 400
-				let b = -1
-				let c = a ** b
-				console.info(c)
-				""", """
-				0.0025
-				""");
+			let a = 400
+			let b = -1
+			let c = a ** b
+			console.info(c)
+			""", """
+			0.0025
+			""");
 	}
 }

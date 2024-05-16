@@ -121,7 +121,7 @@ public class WrapFactory {
 			return w.convertJavaToJs(cx, scope, staticType);
 		}
 
-		CustomJavaToJsWrapper w = cx.wrapCustomJavaToJs(javaObject);
+		CustomJavaToJsWrapper w = cx.factory.wrapCustomJavaToJs(javaObject);
 
 		if (w != null) {
 			return w.convertJavaToJs(cx, scope, staticType);

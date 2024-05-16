@@ -71,10 +71,10 @@ public class ParseProblem {
 	@Override
 	public String toString() {
 		String sb = sourceName + ":" +
-				"offset=" + offset + "," +
-				"length=" + length + "," +
-				(type == Type.Error ? "error: " : "warning: ") +
-				message;
+			"offset=" + offset + "," +
+			"length=" + length + "," +
+			(type == Type.Error ? "error: " : "warning: ") +
+			message;
 		return sb;
 	}
 

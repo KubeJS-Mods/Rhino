@@ -1,6 +1,7 @@
 package dev.latvian.mods.rhino.test;
 
 import dev.latvian.mods.rhino.Context;
+import dev.latvian.mods.rhino.ContextFactory;
 import dev.latvian.mods.rhino.util.RemapPrefixForJS;
 import dev.latvian.mods.unit.UnitContext;
 
@@ -11,12 +12,12 @@ import java.util.List;
 @RemapPrefixForJS("test1$")
 @RemapPrefixForJS("test2$")
 public class TestConsole {
-	private final Context context;
+	private final ContextFactory factory;
 	private TestConsoleTheme theme;
 	public StringBuilder consoleOutput = new StringBuilder();
 
-	public TestConsole(Context cx) {
-		context = cx;
+	public TestConsole(ContextFactory factory) {
+		this.factory = factory;
 	}
 
 	public void info(Object o) {
@@ -25,7 +26,7 @@ public class TestConsole {
 		StringBuilder builder = new StringBuilder();
 
 		var lineP = new int[]{0};
-		var lineS = Context.getSourcePositionFromStack(context, lineP);
+		var lineS = Context.getSourcePositionFromStack(factory.enter(), lineP);
 
 		if (lineP[0] > 0) {
 			if (lineS != null) {

@@ -58,11 +58,11 @@ class DToA {
 	private static final double[] bigtens = {1e16, 1e32, 1e64, 1e128, 1e256};
 	/* Mapping of JSDToStrMode -> JS_dtoa mode */
 	private static final int[] dtoaModes = {
-			0,   /* DTOSTR_STANDARD */
-			0,   /* DTOSTR_STANDARD_EXPONENTIAL, */
-			3,   /* DTOSTR_FIXED, */
-			2,   /* DTOSTR_EXPONENTIAL, */
-			2
+		0,   /* DTOSTR_STANDARD */
+		0,   /* DTOSTR_STANDARD_EXPONENTIAL, */
+		3,   /* DTOSTR_FIXED, */
+		2,   /* DTOSTR_EXPONENTIAL, */
+		2
 	};  /* DTOSTR_PRECISION */
 
 	private static char BASEDIGIT(int digit) {

@@ -75,7 +75,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 	private static final int MAX_PROTOTYPE_ID = 12;
 
 	static void init(Context cx, Scriptable scope, boolean sealed) {
-		NativeObject obj = new NativeObject(cx);
+		NativeObject obj = new NativeObject(cx.factory);
 		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed, cx);
 	}
 
@@ -84,10 +84,10 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		return ensureScriptable(s, cx);
 	}
 
-	public final Context localContext;
+	public final ContextFactory factory;
 
-	public NativeObject(Context cx) {
-		localContext = cx;
+	public NativeObject(ContextFactory factory) {
+		this.factory = factory;
 	}
 
 	@Override
@@ -210,7 +210,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					return f.construct(cx, scope, args);
 				}
 				if (args.length == 0 || args[0] == null || Undefined.isUndefined(args[0])) {
-					return new NativeObject(cx);
+					return new NativeObject(cx.factory);
 				}
 				return ScriptRuntime.toObject(cx, scope, args[0]);
 			}
@@ -507,7 +507,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				Object arg = args.length < 1 ? Undefined.instance : args[0];
 				Scriptable obj = (arg == null) ? null : ensureScriptable(arg, cx);
 
-				ScriptableObject newObject = new NativeObject(cx);
+				ScriptableObject newObject = new NativeObject(cx.factory);
 				newObject.setParentScope(scope);
 				newObject.setPrototype(obj);
 
@@ -649,9 +649,9 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 	@Override
 	public boolean containsKey(Object key) {
 		if (key instanceof String) {
-			return has(localContext, (String) key, this);
+			return has(factory.enter(), (String) key, this);
 		} else if (key instanceof Number) {
-			return has(localContext, ((Number) key).intValue(), this);
+			return has(factory.enter(), ((Number) key).intValue(), this);
 		}
 		return false;
 	}
@@ -670,9 +670,9 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 	public Object remove(Object key) {
 		Object value = get(key);
 		if (key instanceof String) {
-			delete(localContext, (String) key);
+			delete(factory.enter(), (String) key);
 		} else if (key instanceof Number) {
-			delete(localContext, ((Number) key).intValue());
+			delete(factory.enter(), ((Number) key).intValue());
 		}
 		return value;
 	}
@@ -699,7 +699,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 
 	@Override
 	public Object get(Object key) {
-		return get(localContext, key);
+		return get(factory.enter(), key);
 	}
 
 	@Override
@@ -763,7 +763,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		@Override
 		public Iterator<Entry<Object, Object>> iterator() {
 			return new Iterator<>() {
-				final Object[] ids = getIds(localContext);
+				final Object[] ids = getIds(factory.enter());
 				Object key = null;
 				int index = 0;
 
@@ -839,7 +839,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		@Override
 		public Iterator<Object> iterator() {
 			return new Iterator<>() {
-				final Object[] ids = getIds(localContext);
+				final Object[] ids = getIds(factory.enter());
 				Object key;
 				int index = 0;
 
@@ -880,7 +880,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		@Override
 		public Iterator<Object> iterator() {
 			return new Iterator<>() {
-				final Object[] ids = getIds(localContext);
+				final Object[] ids = getIds(factory.enter());
 				Object key;
 				int index = 0;
 

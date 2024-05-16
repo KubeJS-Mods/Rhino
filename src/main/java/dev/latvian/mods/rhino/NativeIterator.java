@@ -27,7 +27,7 @@ public final class NativeIterator extends IdScriptableObject {
 		private Object value = Undefined.instance;
 
 		public StopIteration(Context cx) {
-			super(cx);
+			super(cx.factory);
 		}
 
 		public StopIteration(Context cx, Object val) {
@@ -230,7 +230,7 @@ public final class NativeIterator extends IdScriptableObject {
 			case Id_next -> iterator.objectIterator.nextExec(cx, scope);
 			case Id___iterator__ ->
 				/// XXX: what about argument? SpiderMonkey apparently ignores it
-					thisObj;
+				thisObj;
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		};
 	}

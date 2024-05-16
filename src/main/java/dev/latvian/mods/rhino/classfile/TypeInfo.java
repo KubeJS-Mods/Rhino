@@ -67,7 +67,7 @@ final class TypeInfo {
 				// short
 				// boolean
 				case 'B', 'C', 'S', 'Z', 'I' -> // all of the above are verified as integers
-						INTEGER;
+					INTEGER;
 				case 'D' -> DOUBLE;
 				case 'F' -> FLOAT;
 				case 'J' -> LONG;

@@ -144,7 +144,7 @@ public final class NativeJSON extends IdScriptableObject {
 	}
 
 	public static String stringify(Object value, Object replacer, Object space, Context cx) {
-		JsonElement e = stringify0(cx, cx.getRemapper(), value);
+		JsonElement e = stringify0(cx, cx.factory.getRemapper(), value);
 
 		StringWriter stringWriter = new StringWriter();
 		JsonWriter writer = new JsonWriter(stringWriter);

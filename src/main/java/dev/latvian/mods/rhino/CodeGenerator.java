@@ -529,7 +529,7 @@ class CodeGenerator extends Icode {
 			case Token.USE_STACK ->
 				// Indicates that stack was modified externally,
 				// like placed catch object
-					stackChange(1);
+				stackChange(1);
 			case Token.REF_CALL, Token.CALL, Token.NEW -> {
 				if (type == Token.NEW) {
 					visitExpression(child, 0);

@@ -7,6 +7,7 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.ast.FunctionNode;
+import dev.latvian.mods.rhino.mod.util.ToStringJS;
 import dev.latvian.mods.rhino.regexp.NativeRegExp;
 import dev.latvian.mods.rhino.regexp.RegExp;
 import dev.latvian.mods.rhino.util.SpecialEquality;
@@ -176,7 +177,7 @@ public class ScriptRuntime {
 
 	public static ScriptableObject initSafeStandardObjects(Context cx, ScriptableObject scope, boolean sealed) {
 		if (scope == null) {
-			scope = new NativeObject(cx);
+			scope = new NativeObject(cx.factory);
 		}
 		scope.associateValue(LIBRARY_SCOPE_KEY, scope);
 
@@ -283,7 +284,7 @@ public class ScriptRuntime {
 			// <LS>
 			// <PS>
 			case ' ', '\n', '\r', '\t', '\u00A0', '\u000C', '\u000B', '\u2028', '\u2029', '\uFEFF' -> // <BOM>
-					true;
+				true;
 			default -> Character.getType(c) == Character.SPACE_SEPARATOR;
 		};
 	}
@@ -776,7 +777,7 @@ public class ScriptRuntime {
 			}
 			return toString(cx, val);
 		}
-		return val.toString();
+		return ToStringJS.toStringJS(cx, val);
 	}
 
 	static String defaultObjectToString(Scriptable obj) {
@@ -2736,7 +2737,7 @@ public class ScriptRuntime {
 			obj = errorObject;
 		}
 
-		NativeObject catchScopeObject = new NativeObject(cx);
+		NativeObject catchScopeObject = new NativeObject(cx.factory);
 		// See ECMA 12.4
 		catchScopeObject.defineProperty(cx, exceptionName, obj, ScriptableObject.PERMANENT);
 
@@ -2810,7 +2811,7 @@ public class ScriptRuntime {
 	}
 
 	private static boolean isVisible(Context cx, Object obj, int type) {
-		ClassShutter shutter = cx.getClassShutter();
+		ClassShutter shutter = cx.factory.getClassShutter();
 		return shutter == null || shutter.visibleToScripts(obj.getClass().getName(), type);
 	}
 

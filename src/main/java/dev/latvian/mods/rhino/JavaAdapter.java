@@ -399,7 +399,7 @@ public final class JavaAdapter implements IdFunctionCall {
 	}
 
 	static Class<?> loadAdapterClass(Context cx, String className, byte[] classBytes) {
-		GeneratedClassLoader loader = cx.createClassLoader(cx.getApplicationClassLoader());
+		GeneratedClassLoader loader = cx.factory.createClassLoader(cx.getApplicationClassLoader());
 		Class<?> result = loader.defineClass(className, classBytes);
 		loader.linkClass(result);
 		return result;
