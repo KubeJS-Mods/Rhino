@@ -103,9 +103,6 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 
 	private Map<String, FieldAndMethods> staticFieldAndMethods;
 
-	public NativeJavaClass() {
-	}
-
 	public NativeJavaClass(Context cx, Scriptable scope, Class<?> cl) {
 		this(cx, scope, cl, false);
 	}
@@ -242,7 +239,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 			// When running on Android create an InterfaceAdapter since our
 			// bytecode generation won't work on Dalvik VM.
 			if ("Dalvik".equals(System.getProperty("java.vm.name")) && classObject.isInterface()) {
-				Object obj = createInterfaceAdapter(cx, classObject, ScriptableObject.ensureScriptableObject(args[0], cx));
+				Object obj = cx.createInterfaceAdapter(classObject, classObject, ScriptableObject.ensureScriptableObject(args[0], cx));
 				return cx.wrapAsJavaObject(scope, obj, null, null);
 			}
 			// use JavaAdapter to construct a new class on the fly that

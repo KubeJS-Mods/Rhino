@@ -15,81 +15,48 @@ import dev.latvian.mods.rhino.regexp.RegExp;
 import dev.latvian.mods.rhino.util.ClassVisibilityContext;
 import dev.latvian.mods.rhino.util.CustomJavaToJsWrapper;
 import dev.latvian.mods.rhino.util.JavaSetWrapper;
+import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * This class represents the runtime context of an executing script.
- * <p>
- * Before executing a script, an instance of Context must be created
- * and associated with the thread that will be executing the script.
- * The Context will be used to store information about the executing
- * of the script such as the call stack. Contexts are associated with
- * the current thread  using the {@link #enter()} method.<p>
- * <p>
- * Different forms of script execution are supported. Scripts may be
- * evaluated from the source directly, or first compiled and then later
- * executed. Interactive execution is also supported.<p>
- * <p>
- * Some aspects of script execution, such as type conversions and
- * object creation, may be accessed directly through methods of
- * Context.
- *
- * @author Norris Boyd
- * @author Brendan Eich
- * @see Scriptable
- */
-
 @SuppressWarnings("ThrowableNotThrown")
 public class Context {
-	/**
-	 * Report a warning using the error reporter for the current thread.
-	 *
-	 * @param message    the warning message to report
-	 * @param sourceName a string describing the source, such as a filename
-	 * @param lineno     the starting line number
-	 * @param lineSource the text of the line (may be null)
-	 * @param lineOffset the offset into lineSource where problem was detected
-	 * @see ErrorReporter
-	 */
+	public static final int CONVERSION_TRIVIAL = 1;
+	public static final int CONVERSION_NONTRIVIAL = 0;
+	public static final int CONVERSION_NONE = 99;
+	public static final int JSTYPE_UNDEFINED = 0; // undefined type
+	public static final int JSTYPE_NULL = 1; // null
+	public static final int JSTYPE_BOOLEAN = 2; // boolean
+	public static final int JSTYPE_NUMBER = 3; // number
+	public static final int JSTYPE_STRING = 4; // string
+	public static final int JSTYPE_JAVA_CLASS = 5; // JavaClass
+	public static final int JSTYPE_JAVA_OBJECT = 6; // JavaObject
+	public static final int JSTYPE_JAVA_ARRAY = 7; // JavaArray
+	public static final int JSTYPE_OBJECT = 8; // Scriptable
+
 	public static void reportWarning(Context cx, String message, String sourceName, int lineno, String lineSource, int lineOffset) {
 		cx.getErrorReporter().warning(message, sourceName, lineno, lineSource, lineOffset);
 	}
 
-	/**
-	 * Report a warning using the error reporter for the current thread.
-	 *
-	 * @param message the warning message to report
-	 * @param cx
-	 * @see ErrorReporter
-	 */
 	public static void reportWarning(String message, Context cx) {
 		int[] linep = {0};
 		String filename = getSourcePositionFromStack(cx, linep);
 		Context.reportWarning(cx, message, filename, linep[0], null, 0);
 	}
 
-	/**
-	 * Report an error using the error reporter for the current thread.
-	 *
-	 * @param cx
-	 * @param message    the error message to report
-	 * @param lineno     the starting line number
-	 * @param lineSource the text of the line (may be null)
-	 * @param lineOffset the offset into lineSource where problem was detected
-	 * @param sourceName a string describing the source, such as a filename
-	 * @see ErrorReporter
-	 */
 	public static void reportError(Context cx, String message, int lineno, String lineSource, int lineOffset, String sourceName) {
 		if (cx != null) {
 			cx.getErrorReporter().error(cx, message, sourceName, lineno, lineSource, lineOffset);
@@ -98,12 +65,6 @@ public class Context {
 		}
 	}
 
-	/**
-	 * Report an error using the error reporter for the current thread.
-	 *
-	 * @param message the error message to report
-	 * @see ErrorReporter
-	 */
 	public static void reportError(Context cx, String message) {
 		int[] linep = {0};
 		String filename = getSourcePositionFromStack(cx, linep);
@@ -172,69 +133,6 @@ public class Context {
 	 */
 	public static Object getUndefinedValue() {
 		return Undefined.INSTANCE;
-	}
-
-	/**
-	 * Convenient method to convert java value to its closest representation
-	 * in JavaScript.
-	 * <p>
-	 * If value is an instance of String, Number, Boolean, Function or
-	 * Scriptable, it is returned as it and will be treated as the corresponding
-	 * JavaScript type of string, number, boolean, function and object.
-	 * <p>
-	 * Note that for Number instances during any arithmetic operation in
-	 * JavaScript the engine will always use the result of
-	 * <code>Number.doubleValue()</code> resulting in a precision loss if
-	 * the number can not fit into double.
-	 * <p>
-	 * If value is an instance of Character, it will be converted to string of
-	 * length 1 and its JavaScript type will be string.
-	 * <p>
-	 * The rest of values will be wrapped as LiveConnect objects
-	 * by calling {@link Scriptable#getPrototype(Context)} as in:
-	 * <pre>
-	 *    Context cx = Context.getCurrentContext();
-	 *    return cx.getWrapFactory().wrap(cx, scope, value, null);
-	 * </pre>
-	 *
-	 * @param value any Java object
-	 * @param scope top scope object
-	 * @return value suitable to pass to any API that takes JavaScript values.
-	 */
-	public Object javaToJS(Object value, Scriptable scope) {
-		if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Scriptable) {
-			return value;
-		} else if (value instanceof Character) {
-			return String.valueOf(((Character) value).charValue());
-		} else {
-			return wrap(scope, value, null, null);
-		}
-	}
-
-	/**
-	 * Convert a JavaScript value into the desired type.
-	 * Uses the semantics defined with LiveConnect3 and throws an
-	 * Illegal argument exception if the conversion cannot be performed.
-	 *
-	 * @param value       the JavaScript value to convert
-	 * @param desiredType the Java type to convert to. Primitive Java
-	 *                    types are represented using the TYPE fields in the corresponding
-	 *                    wrapper class in java.lang.
-	 * @return the converted value
-	 * @throws EvaluatorException if the conversion cannot be performed
-	 */
-	public Object jsToJava(Object value, Class<?> desiredType, Type desiredGenericType) throws EvaluatorException {
-		if (desiredType == null) {
-			return value;
-		} else if (desiredType == Object.class) {
-			return Wrapper.unwrapped(value);
-		} else {
-			return NativeJavaObject.coerceTypeImpl(factory.getTypeWrappers(), desiredType, value, this);
-		}
-	}
-
-	public Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
-		return jsToJava(value, desiredType, desiredType);
 	}
 
 	/**
@@ -311,10 +209,6 @@ public class Context {
 	boolean isContinuationsTopCall;
 	NativeCall currentActivationCall;
 	BaseFunction typeErrorThrower;
-	// for Objects, Arrays to tag themselves as being printed out,
-	// so they don't print themselves out recursively.
-	// Use ObjToIntMap instead of java.util.HashSet for JDK 1.1 compatibility
-	ObjToIntMap iterating;
 	RegExp regExp;
 	// For the interpreter to store the last frame for error reports etc.
 	Object lastInterpreterFrame;
@@ -866,7 +760,6 @@ public class Context {
 	protected void observeInstructionCount(int instructionCount) {
 	}
 
-	/********** end of API **********/
 
 	public final ClassLoader getApplicationClassLoader() {
 		if (applicationClassLoader == null) {
@@ -1271,12 +1164,12 @@ public class Context {
 		return wrapAsJavaObject(scope, obj, null, null);
 	}
 
-	public int getConversionWeight(Object fromObj, Class<?> to) {
-		if (factory.getTypeWrappers().getWrapperFactory(to, fromObj) != null) {
-			return NativeJavaObject.CONVERSION_NONTRIVIAL;
+	public int internalConversionWeight(Object fromObj, Class<?> target, Type genericTarget) {
+		if (factory.getTypeWrappers().hasWrapper(fromObj, target, genericTarget)) {
+			return CONVERSION_NONTRIVIAL;
 		}
 
-		return NativeJavaObject.CONVERSION_NONE;
+		return CONVERSION_NONE;
 	}
 
 	/**
@@ -1304,5 +1197,586 @@ public class Context {
 
 	public int getMaximumInterpreterStackDepth() {
 		return Integer.MAX_VALUE;
+	}
+
+	public Object createInterfaceAdapter(Class<?> type, Type genericType, ScriptableObject so) {
+		// XXX: Currently only instances of ScriptableObject are
+		// supported since the resulting interface proxies should
+		// be reused next time conversion is made and generic
+		// Callable has no storage for it. Weak references can
+		// address it but for now use this restriction.
+
+		Object key = Kit.makeHashKeyFromPair("Coerced Interface", type);
+		Object old = so.getAssociatedValue(key);
+		if (old != null) {
+			// Function was already wrapped
+			return old;
+		}
+		Object glue = InterfaceAdapter.create(this, type, so);
+		// Store for later retrieval
+		glue = so.associateValue(key, glue);
+		return glue;
+	}
+
+	public Object javaToJS(Object value, Scriptable scope) {
+		if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Scriptable) {
+			return value;
+		} else if (value instanceof Character) {
+			return String.valueOf(((Character) value).charValue());
+		} else {
+			return wrap(scope, value, null, null);
+		}
+	}
+
+	public final Object jsToJava(Object value, Class<?> desiredType, Type desiredGenericType) throws EvaluatorException {
+		if (desiredType == null) {
+			return value;
+		} else if (desiredType == Object.class) {
+			return Wrapper.unwrapped(value);
+		} else if (desiredType.isArray() && value instanceof NativeArray array) {
+			if (desiredGenericType instanceof GenericArrayType type) {
+				var componentType = type.getGenericComponentType();
+
+				if (componentType instanceof Class<?> arrayType) {
+					// Make a new java array, and coerce the JS array components
+					// to the target (component) type.
+					long length = array.getLength();
+					var result = Array.newInstance(arrayType, (int) length);
+					for (int i = 0; i < length; ++i) {
+						try {
+							Array.set(result, i, jsToJava(array.get(this, i, array), arrayType, type.getGenericComponentType()));
+						} catch (EvaluatorException ee) {
+							return reportConversionError(value, arrayType);
+						}
+					}
+
+					return result;
+				} else if (componentType instanceof GenericArrayType subtype) {
+					System.out.println("uhhh");
+				}
+			}
+		}
+
+		return internalJsToJava(value, desiredType, desiredGenericType);
+	}
+
+	public final Object jsToJava(Object value, Class<?> desiredType) throws EvaluatorException {
+		return jsToJava(value, desiredType, desiredType);
+	}
+
+	private static int getJSTypeCode(Object value) {
+		if (value == null) {
+			return JSTYPE_NULL;
+		} else if (value == Undefined.INSTANCE) {
+			return JSTYPE_UNDEFINED;
+		} else if (value instanceof CharSequence) {
+			return JSTYPE_STRING;
+		} else if (value instanceof Number) {
+			return JSTYPE_NUMBER;
+		} else if (value instanceof Boolean) {
+			return JSTYPE_BOOLEAN;
+		} else if (value instanceof Scriptable) {
+			if (value instanceof NativeJavaClass) {
+				return JSTYPE_JAVA_CLASS;
+			} else if (value instanceof NativeJavaArray) {
+				return JSTYPE_JAVA_ARRAY;
+			} else if (value instanceof Wrapper) {
+				return JSTYPE_JAVA_OBJECT;
+			} else {
+				return JSTYPE_OBJECT;
+			}
+		} else if (value instanceof Class) {
+			return JSTYPE_JAVA_CLASS;
+		} else {
+			Class<?> valueClass = value.getClass();
+			if (valueClass.isArray()) {
+				return JSTYPE_JAVA_ARRAY;
+			}
+			return JSTYPE_JAVA_OBJECT;
+		}
+	}
+
+	protected Object internalJsToJava(Object value, Class<?> target, Type genericTarget) {
+		var typeWrappers = factory.getTypeWrappers();
+
+		if (value == null || value.getClass() == target) {
+			return value;
+		}
+
+		if (target.isArray()) {
+			// Make a new java array, and coerce the JS array components to the target (component) type.
+			Class<?> arrayType = target.getComponentType();
+			var arrayGenericType = genericTarget instanceof GenericArrayType arr ? arr.getGenericComponentType() : arrayType;
+
+			if (value instanceof NativeArray array) {
+				long length = array.getLength();
+
+				Object result = Array.newInstance(arrayType, (int) length);
+				for (int i = 0; i < length; ++i) {
+					try {
+						Array.set(result, i, jsToJava(array.get(this, i, array), arrayType, arrayGenericType));
+					} catch (EvaluatorException ee) {
+						return reportConversionError(value, target);
+					}
+				}
+
+				return result;
+			} else {
+				// Convert a single value to an array
+				Object result = Array.newInstance(arrayType, 1);
+				Array.set(result, 0, jsToJava(value, arrayType, arrayGenericType));
+				return result;
+			}
+		}
+		/*else if (o instanceof Iterable) {
+			int size;
+
+			if (o instanceof Collection) {
+				size = ((Collection) o).size();
+			} else {
+				size = 0;
+
+				for (Object o1 : (Iterable<Object>) o) {
+					size++;
+				}
+			}
+
+			if (size == 0) {
+				return emptyArray;
+			}
+
+			T[] array = (T[]) Array.newInstance(target, size);
+			int index = 0;
+
+			for (Object o1 : (Iterable<Object>) o) {
+				if (typeWrapper.validator.test(o1)) {
+					array[index] = typeWrapper.factory.wrap(cx, o1);
+					index++;
+				}
+			}
+
+			return index == 0 ? emptyArray : index == array.length ? array : Arrays.copyOf(array, index, arrayTarget);
+		}
+		 */
+
+		Object unwrappedValue = Wrapper.unwrapped(value);
+
+
+		TypeWrapperFactory<?> typeWrapper = typeWrappers == null ? null : typeWrappers.getWrapperFactory(unwrappedValue, target, genericTarget);
+
+		if (typeWrapper != null) {
+			return typeWrapper.wrap(this, unwrappedValue, target, genericTarget);
+		}
+
+		switch (getJSTypeCode(value)) {
+			case JSTYPE_NULL -> {
+				// raise error if type.isPrimitive()
+				if (target.isPrimitive()) {
+					return reportConversionError(value, target);
+				}
+				return null;
+			}
+			case JSTYPE_UNDEFINED -> {
+				if (target == ScriptRuntime.StringClass || target == ScriptRuntime.ObjectClass) {
+					return "undefined";
+				}
+				return reportConversionError("undefined", target, value);
+			}
+			case JSTYPE_BOOLEAN -> {
+				// Under LC3, only JS Booleans can be coerced into a Boolean value
+				if (target == Boolean.TYPE || target == ScriptRuntime.BooleanClass || target == ScriptRuntime.ObjectClass) {
+					return value;
+				} else if (target == ScriptRuntime.StringClass) {
+					return value.toString();
+				} else {
+					return reportConversionError(value, target);
+				}
+			}
+			case JSTYPE_NUMBER -> {
+				if (target == ScriptRuntime.StringClass) {
+					return ScriptRuntime.toString(this, value);
+				} else if (target == ScriptRuntime.ObjectClass) {
+					/*
+					if (cx.hasFeature(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE)) {
+						//to process numbers like 2.0 as 2 without decimal place
+						long roundedValue = Math.round(toDouble(value));
+						if (roundedValue == toDouble(value)) {
+							return coerceToNumber(Long.TYPE, value);
+						}
+					}
+					 */
+					return coerceToNumber(Double.TYPE, value);
+				} else if ((target.isPrimitive() && target != Boolean.TYPE) || ScriptRuntime.NumberClass.isAssignableFrom(target)) {
+					return coerceToNumber(target, value);
+				} else {
+					return reportConversionError(value, target);
+				}
+			}
+			case JSTYPE_STRING -> {
+				if (target == ScriptRuntime.StringClass || target.isInstance(value)) {
+					return value.toString();
+				} else if (target == Character.TYPE || target == ScriptRuntime.CharacterClass) {
+					// Special case for converting a single char string to a
+					// character
+					// Placed here because it applies *only* to JS strings,
+					// not other JS objects converted to strings
+					if (((CharSequence) value).length() == 1) {
+						return ((CharSequence) value).charAt(0);
+					}
+					return coerceToNumber(target, value);
+				} else if ((target.isPrimitive() && target != Boolean.TYPE) || ScriptRuntime.NumberClass.isAssignableFrom(target)) {
+					return coerceToNumber(target, value);
+				} else {
+					return reportConversionError(value, target);
+				}
+			}
+			case JSTYPE_JAVA_CLASS -> {
+				if (target == ScriptRuntime.ClassClass || target == ScriptRuntime.ObjectClass) {
+					return unwrappedValue;
+				} else if (target == ScriptRuntime.StringClass) {
+					return unwrappedValue.toString();
+				} else {
+					return reportConversionError(unwrappedValue, target);
+				}
+			}
+			case JSTYPE_JAVA_OBJECT, JSTYPE_JAVA_ARRAY -> {
+				if (target.isPrimitive()) {
+					if (target == Boolean.TYPE) {
+						return reportConversionError(unwrappedValue, target);
+					}
+					return coerceToNumber(target, unwrappedValue);
+				}
+				if (target == ScriptRuntime.StringClass) {
+					return unwrappedValue.toString();
+				}
+				if (target.isInstance(unwrappedValue)) {
+					return unwrappedValue;
+				}
+				return reportConversionError(unwrappedValue, target);
+			}
+			case JSTYPE_OBJECT -> {
+				if (target == ScriptRuntime.StringClass) {
+					return ScriptRuntime.toString(this, value);
+				} else if (target.isPrimitive()) {
+					if (target == Boolean.TYPE) {
+						return reportConversionError(value, target);
+					}
+					return coerceToNumber(target, value);
+				} else if (target.isInstance(value)) {
+					return value;
+				} else if (target == ScriptRuntime.DateClass && value instanceof NativeDate) {
+					double time = ((NativeDate) value).getJSTimeValue();
+					// XXX: This will replace NaN by 0
+					return new Date((long) time);
+				} else if (value instanceof Wrapper) {
+					if (target.isInstance(unwrappedValue)) {
+						return unwrappedValue;
+					}
+					return reportConversionError(unwrappedValue, target);
+				} else if (target.isInterface() && (value instanceof NativeObject || value instanceof NativeFunction || value instanceof ArrowFunction)) {
+					// Try to use function/object as implementation of Java interface.
+					return createInterfaceAdapter(target, genericTarget, (ScriptableObject) value);
+				} else {
+					return reportConversionError(value, target);
+				}
+			}
+		}
+
+		return value;
+	}
+
+	public final boolean canConvert(Object from, Class<?> target, Type genericTarget) {
+		return getConversionWeight(from, target, genericTarget) < CONVERSION_NONE;
+	}
+
+	public final int getConversionWeight(Object from, Class<?> target, Type genericTarget) {
+		int fcw = internalConversionWeight(from, target, genericTarget);
+
+		if (fcw != CONVERSION_NONE) {
+			return fcw;
+		}
+
+		int fromCode = getJSTypeCode(from);
+
+		switch (fromCode) {
+			case JSTYPE_UNDEFINED -> {
+				if (target == ScriptRuntime.StringClass || target == ScriptRuntime.ObjectClass) {
+					return 1;
+				}
+			}
+			case JSTYPE_NULL -> {
+				if (!target.isPrimitive()) {
+					return 1;
+				}
+			}
+			case JSTYPE_BOOLEAN -> {
+				// "boolean" is #1
+				if (target == Boolean.TYPE) {
+					return 1;
+				} else if (target == ScriptRuntime.BooleanClass) {
+					return 2;
+				} else if (target == ScriptRuntime.ObjectClass) {
+					return 3;
+				} else if (target == ScriptRuntime.StringClass) {
+					return 4;
+				}
+			}
+			case JSTYPE_NUMBER -> {
+				if (target.isPrimitive()) {
+					if (target == Double.TYPE) {
+						return 1;
+					} else if (target != Boolean.TYPE) {
+						return 1 + getSizeRank(target);
+					}
+				} else {
+					if (target == ScriptRuntime.StringClass) {
+						// native numbers are #1-8
+						return 9;
+					} else if (target == ScriptRuntime.ObjectClass) {
+						return 10;
+					} else if (ScriptRuntime.NumberClass.isAssignableFrom(target)) {
+						// "double" is #1
+						return 2;
+					}
+				}
+			}
+			case JSTYPE_STRING -> {
+				if (target == ScriptRuntime.StringClass) {
+					return 1;
+				} else if (target.isInstance(from)) {
+					return 2;
+				} else if (target.isPrimitive()) {
+					if (target == Character.TYPE) {
+						return 3;
+					} else if (target != Boolean.TYPE) {
+						return 4;
+					}
+				}
+			}
+			case JSTYPE_JAVA_CLASS -> {
+				if (target == ScriptRuntime.ClassClass) {
+					return 1;
+				} else if (target == ScriptRuntime.ObjectClass) {
+					return 3;
+				} else if (target == ScriptRuntime.StringClass) {
+					return 4;
+				}
+			}
+			case JSTYPE_JAVA_OBJECT, JSTYPE_JAVA_ARRAY -> {
+				Object javaObj = from;
+				if (javaObj instanceof Wrapper) {
+					javaObj = ((Wrapper) javaObj).unwrap();
+				}
+				if (target.isInstance(javaObj)) {
+					return CONVERSION_NONTRIVIAL;
+				}
+				if (target == ScriptRuntime.StringClass) {
+					return 2;
+				} else if (target.isPrimitive() && target != Boolean.TYPE) {
+					return (fromCode == JSTYPE_JAVA_ARRAY) ? CONVERSION_NONE : 2 + getSizeRank(target);
+				}
+			}
+			case JSTYPE_OBJECT -> {
+				// Other objects takes #1-#3 spots
+				if (target != ScriptRuntime.ObjectClass && target.isInstance(from)) {
+					// No conversion required, but don't apply for java.lang.Object
+					return 1;
+				}
+				if (target.isArray()) {
+					if (from instanceof NativeArray) {
+						// This is a native array conversion to a java array
+						// Array conversions are all equal, and preferable to object
+						// and string conversion, per LC3.
+						return 2;
+					}
+				} else if (target == ScriptRuntime.ObjectClass) {
+					return 3;
+				} else if (target == ScriptRuntime.StringClass) {
+					return 4;
+				} else if (target == ScriptRuntime.DateClass) {
+					if (from instanceof NativeDate) {
+						// This is a native date to java date conversion
+						return 1;
+					}
+				} else if (target.isInterface()) {
+
+					if (from instanceof NativeFunction) {
+						// See comments in createInterfaceAdapter
+						return 1;
+					}
+					if (from instanceof NativeObject) {
+						return 2;
+					}
+					return 12;
+				} else if (target.isPrimitive() && target != Boolean.TYPE) {
+					return 4 + getSizeRank(target);
+				}
+			}
+		}
+
+		return CONVERSION_NONE;
+	}
+
+	public static int getSizeRank(Class<?> aType) {
+		if (aType == Double.TYPE) {
+			return 1;
+		} else if (aType == Float.TYPE) {
+			return 2;
+		} else if (aType == Long.TYPE) {
+			return 3;
+		} else if (aType == Integer.TYPE) {
+			return 4;
+		} else if (aType == Short.TYPE) {
+			return 5;
+		} else if (aType == Character.TYPE) {
+			return 6;
+		} else if (aType == Byte.TYPE) {
+			return 7;
+		} else if (aType == Boolean.TYPE) {
+			return CONVERSION_NONE;
+		} else {
+			return 8;
+		}
+	}
+
+	protected Object coerceToNumber(Class<?> type, Object value) {
+		Class<?> valueClass = value.getClass();
+
+		// Character
+		if (type == Character.TYPE || type == ScriptRuntime.CharacterClass) {
+			if (valueClass == ScriptRuntime.CharacterClass) {
+				return value;
+			}
+			return (char) toInteger(value, ScriptRuntime.CharacterClass, Character.MIN_VALUE, Character.MAX_VALUE);
+		}
+
+		// Double, Float
+		if (type == ScriptRuntime.ObjectClass || type == ScriptRuntime.DoubleClass || type == Double.TYPE) {
+			return valueClass == ScriptRuntime.DoubleClass ? value : Double.valueOf(toDouble(value));
+		}
+
+		if (type == ScriptRuntime.FloatClass || type == Float.TYPE) {
+			if (valueClass == ScriptRuntime.FloatClass) {
+				return value;
+			}
+			double number = toDouble(value);
+			if (Double.isInfinite(number) || Double.isNaN(number) || number == 0.0) {
+				return (float) number;
+			}
+
+			double absNumber = Math.abs(number);
+			if (absNumber < Float.MIN_VALUE) {
+				return (number > 0.0) ? +0.0f : -0.0f;
+			} else if (absNumber > Float.MAX_VALUE) {
+				return (number > 0.0) ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY;
+			} else {
+				return (float) number;
+			}
+		}
+
+		// Integer, Long, Short, Byte
+		if (type == ScriptRuntime.IntegerClass || type == Integer.TYPE) {
+			if (valueClass == ScriptRuntime.IntegerClass) {
+				return value;
+			}
+			return (int) toInteger(value, ScriptRuntime.IntegerClass, Integer.MIN_VALUE, Integer.MAX_VALUE);
+		}
+
+		if (type == ScriptRuntime.LongClass || type == Long.TYPE) {
+			if (valueClass == ScriptRuntime.LongClass) {
+				return value;
+			}
+			/* Long values cannot be expressed exactly in doubles.
+			 * We thus use the largest and smallest double value that
+			 * has a value expressible as a long value. We build these
+			 * numerical values from their hexidecimal representations
+			 * to avoid any problems caused by attempting to parse a
+			 * decimal representation.
+			 */
+			final double max = Double.longBitsToDouble(0x43dfffffffffffffL);
+			final double min = Double.longBitsToDouble(0xc3e0000000000000L);
+			return toInteger(value, ScriptRuntime.LongClass, min, max);
+		}
+
+		if (type == ScriptRuntime.ShortClass || type == Short.TYPE) {
+			if (valueClass == ScriptRuntime.ShortClass) {
+				return value;
+			}
+			return (short) toInteger(value, ScriptRuntime.ShortClass, Short.MIN_VALUE, Short.MAX_VALUE);
+		}
+
+		if (type == ScriptRuntime.ByteClass || type == Byte.TYPE) {
+			if (valueClass == ScriptRuntime.ByteClass) {
+				return value;
+			}
+			return (byte) toInteger(value, ScriptRuntime.ByteClass, Byte.MIN_VALUE, Byte.MAX_VALUE);
+		}
+
+		return toDouble(value);
+	}
+
+	protected double toDouble(Object value) {
+		if (value instanceof Number) {
+			return ((Number) value).doubleValue();
+		} else if (value instanceof String) {
+			return ScriptRuntime.toNumber(this, (String) value);
+		} else if (value instanceof Scriptable) {
+			if (value instanceof Wrapper) {
+				// XXX: optimize tail-recursion?
+				return toDouble(((Wrapper) value).unwrap());
+			}
+			return ScriptRuntime.toNumber(this, value);
+		} else {
+			Method meth;
+			try {
+				meth = value.getClass().getMethod("doubleValue", (Class[]) null);
+			} catch (NoSuchMethodException | SecurityException e) {
+				meth = null;
+			}
+			if (meth != null) {
+				try {
+					return ((Number) meth.invoke(value, (Object[]) null)).doubleValue();
+				} catch (IllegalAccessException | InvocationTargetException e) {
+					// XXX: ignore, or error message?
+					reportConversionError(value, Double.TYPE);
+				}
+			}
+			return ScriptRuntime.toNumber(this, value.toString());
+		}
+	}
+
+	protected long toInteger(Object value, Class<?> type, double min, double max) {
+		double d = toDouble(value);
+
+		if (Double.isInfinite(d) || Double.isNaN(d)) {
+			// Convert to string first, for more readable message
+			reportConversionError(ScriptRuntime.toString(this, value), type);
+		}
+
+		if (d > 0.0) {
+			d = Math.floor(d);
+		} else {
+			d = Math.ceil(d);
+		}
+
+		if (d < min || d > max) {
+			// Convert to string first, for more readable message
+			reportConversionError(ScriptRuntime.toString(this, value), type);
+		}
+		return (long) d;
+	}
+
+	private Object reportConversionError(Object value, Class<?> type) {
+		return reportConversionError(value, type, value);
+	}
+
+	private Object reportConversionError(Object value, Class<?> type, Object stringValue) {
+		// It uses String.valueOf(value), not value.toString() since
+		// value can be null, bug 282447.
+		throw Context.reportRuntimeError2("msg.conversion.not.allowed", String.valueOf(stringValue), JavaMembers.javaSignature(type), this);
+	}
+
+	public String defaultObjectToSource(Scriptable scope, Scriptable thisObj, Object[] args) {
+		return "not_supported";
 	}
 }

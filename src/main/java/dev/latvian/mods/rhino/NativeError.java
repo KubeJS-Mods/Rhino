@@ -239,7 +239,7 @@ final class NativeError extends IdScriptableObject {
 				return js_toString(cx, thisObj);
 
 			case Id_toSource:
-				return "not_supported";
+				return "Error";
 
 			case ConstructorId_captureStackTrace:
 				js_captureStackTrace(cx, thisObj, args);

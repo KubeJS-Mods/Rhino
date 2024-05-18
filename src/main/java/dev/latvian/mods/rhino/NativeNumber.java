@@ -270,9 +270,8 @@ final class NativeNumber extends IdScriptableObject {
 				int base = (args.length == 0 || args[0] == Undefined.INSTANCE) ? 10 : ScriptRuntime.toInt32(cx, args[0]);
 				return ScriptRuntime.numberToString(cx, value, base);
 			}
-
 			case Id_toSource:
-				return "not_supported";
+				return ScriptRuntime.numberToString(cx, value, 10);
 
 			case Id_valueOf:
 				return ScriptRuntime.wrapNumber(value);

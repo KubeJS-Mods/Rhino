@@ -203,31 +203,26 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 			return super.execIdCall(f, cx, scope, thisObj, args);
 		}
 		int id = f.methodId();
-		switch (id) {
-			case ConstructorId_for:
-				return js_for(cx, scope, args);
-			case ConstructorId_keyFor:
-				return js_keyFor(cx, scope, args);
-
-			case Id_constructor:
+		return switch (id) {
+			case ConstructorId_for -> js_for(cx, scope, args);
+			case ConstructorId_keyFor -> js_keyFor(cx, scope, args);
+			case Id_constructor -> {
 				if (thisObj == null) {
 					if (cx.getThreadLocal(CONSTRUCTOR_SLOT) == null) {
 						// We should never get to this via "new".
 						throw ScriptRuntime.typeError0(cx, "msg.no.symbol.new");
 					}
 					// Unless we are being called by our own internal "new"
-					return js_constructor(cx, args);
+					yield js_constructor(cx, args);
 				}
-				return construct(cx, scope, args);
-
-			case Id_toString:
-				return getSelf(cx, thisObj).toString();
-			case Id_valueOf:
-			case SymbolId_toPrimitive:
-				return getSelf(cx, thisObj).js_valueOf();
-			default:
-				return super.execIdCall(f, cx, scope, thisObj, args);
-		}
+				yield construct(cx, scope, args);
+				// We should never get to this via "new".
+				// Unless we are being called by our own internal "new"
+			}
+			case Id_toString -> getSelf(cx, thisObj).toString();
+			case Id_valueOf, SymbolId_toPrimitive -> getSelf(cx, thisObj).js_valueOf();
+			default -> super.execIdCall(f, cx, scope, thisObj, args);
+		};
 	}
 
 	private Object js_valueOf() {

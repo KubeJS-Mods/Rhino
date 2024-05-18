@@ -836,11 +836,9 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 				case Id_toString:
 				case Id_valueOf:
 					// ECMA 15.5.4.2: 'the toString function is not generic.
-					CharSequence cs = realThis(thisObj, f, cx).string;
-					return cs instanceof String ? cs : cs.toString();
-
+					return realThis(thisObj, f, cx).string.toString();
 				case Id_toSource: {
-					return "not_supported";
+					return ScriptRuntime.escapeAndWrapString(realThis(thisObj, f, cx).string.toString());
 				}
 
 				case Id_charAt:

@@ -19,7 +19,7 @@ public class RhinoTest {
 		this.shared = new HashMap<>();
 
 		var typeWrappers = factory.getTypeWrappers();
-		typeWrappers.registerSimple(TestMaterial.class, TestMaterial::get);
+		typeWrappers.register(TestMaterial.class, (cx, from, target, genericTarget) -> TestMaterial.get(from));
 	}
 
 	public void test(String name, String script, String match) {
@@ -28,6 +28,7 @@ public class RhinoTest {
 			var rootScope = context.initStandardObjects();
 			context.addToScope(rootScope, "console", console);
 			context.addToScope(rootScope, "shared", shared);
+			context.addToScope(rootScope, "testName", name);
 			context.evaluateString(rootScope, script, testName + "/" + name, 1, null);
 		} catch (Exception ex) {
 			ex.printStackTrace();

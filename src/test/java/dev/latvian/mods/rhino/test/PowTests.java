@@ -14,7 +14,7 @@ public class PowTests {
 			let c = a ** b
 			console.info(c)
 			""", """
-			1000.0
+			1000
 			""");
 	}
 
@@ -50,7 +50,7 @@ public class PowTests {
 			let c = a ** b
 			console.info(c)
 			""", """
-			1.0
+			1
 			""");
 	}
 

@@ -2,6 +2,7 @@ package dev.latvian.mods.rhino.test;
 
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.ContextFactory;
+import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.util.RemapPrefixForJS;
 import dev.latvian.mods.unit.UnitContext;
 
@@ -21,7 +22,7 @@ public class TestConsole {
 	}
 
 	public void info(Object o) {
-		String s = String.valueOf(o);
+		String s = ScriptRuntime.toString(factory.enter(), o);
 
 		StringBuilder builder = new StringBuilder();
 
@@ -82,5 +83,10 @@ public class TestConsole {
 
 	public void printMaterial(TestMaterial material) {
 		info("%s#%08x".formatted(material.name(), material.hashCode()));
+	}
+
+	public void genericType(WithContext<String>[] test) {
+		info("Generic type:");
+		info(test);
 	}
 }

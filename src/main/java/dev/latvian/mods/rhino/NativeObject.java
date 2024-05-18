@@ -314,7 +314,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 			}
 
 			case Id_toSource:
-				return ScriptRuntime.defaultObjectToSource(cx, scope, thisObj, args);
+				return cx.defaultObjectToSource(scope, thisObj, args);
 			case Id___defineGetter__:
 			case Id___defineSetter__: {
 				if (args.length < 2 || !(args[1] instanceof Callable getterOrSetter)) {

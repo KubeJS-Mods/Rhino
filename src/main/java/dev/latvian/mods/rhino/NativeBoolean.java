@@ -92,18 +92,11 @@ final class NativeBoolean extends IdScriptableObject {
 		}
 		boolean value = ((NativeBoolean) thisObj).booleanValue;
 
-		switch (id) {
-
-			case Id_toString:
-				return value ? "true" : "false";
-
-			case Id_toSource:
-				return "not_supported";
-
-			case Id_valueOf:
-				return value;
-		}
-		throw new IllegalArgumentException(String.valueOf(id));
+		return switch (id) {
+			case Id_toString, Id_toSource -> value ? "true" : "false";
+			case Id_valueOf -> value;
+			default -> throw new IllegalArgumentException(String.valueOf(id));
+		};
 	}
 
 	@Override

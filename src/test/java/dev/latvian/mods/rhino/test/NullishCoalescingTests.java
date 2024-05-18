@@ -14,7 +14,7 @@ public class NullishCoalescingTests {
 			let c = a ?? b
 			console.info(c)
 			""", """
-			10.0
+			10
 			""");
 	}
 
@@ -26,7 +26,7 @@ public class NullishCoalescingTests {
 			let c = a ?? b
 			console.info(c)
 			""", """
-			20.0
+			20
 			""");
 	}
 
@@ -38,7 +38,7 @@ public class NullishCoalescingTests {
 			let c = a ?? b
 			console.info(c)
 			""", """
-			20.0
+			20
 			""");
 	}
 
@@ -62,7 +62,7 @@ public class NullishCoalescingTests {
 			let c = a ?? b
 			console.info(c)
 			""", """
-			0.0
+			0
 			""");
 	}
 
@@ -74,7 +74,7 @@ public class NullishCoalescingTests {
 			let c = a ?? b
 			console.info(c)
 			""", """
-			10.0
+			10
 			""");
 	}
 }

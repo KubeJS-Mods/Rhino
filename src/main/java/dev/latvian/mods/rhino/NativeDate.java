@@ -1642,7 +1642,7 @@ final class NativeDate extends IdScriptableObject {
 				return js_NaN_date_str;
 
 			case Id_toSource:
-				return "not_supported";
+				return "Date";
 
 			case Id_valueOf:
 			case Id_getTime:

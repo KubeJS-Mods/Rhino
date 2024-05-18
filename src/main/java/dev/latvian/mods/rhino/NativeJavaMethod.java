@@ -8,6 +8,7 @@ package dev.latvian.mods.rhino;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -92,7 +93,7 @@ public class NativeJavaMethod extends BaseFunction {
 				}
 			}
 			for (int j = 0; j != alength; ++j) {
-				if (!NativeJavaObject.canConvert(cx, args[j], member.argTypes[j])) {
+				if (!cx.canConvert(args[j], member.argTypes[j], member.genericArgTypes[j])) {
 					if (debug) {
 						printDebug("Rejecting (args can't convert) ", member, args);
 					}
@@ -124,7 +125,7 @@ public class NativeJavaMethod extends BaseFunction {
 				}
 			}
 			for (int j = 0; j < alength; j++) {
-				if (!NativeJavaObject.canConvert(cx, args[j], member.argTypes[j])) {
+				if (!cx.canConvert(args[j], member.argTypes[j], member.genericArgTypes[j])) {
 					if (debug) {
 						printDebug("Rejecting (args can't convert) ", member, args);
 					}
@@ -153,7 +154,7 @@ public class NativeJavaMethod extends BaseFunction {
 						bestFitIndex = extraBestFits[j];
 					}
 					MemberBox bestFit = methodsOrCtors[bestFitIndex];
-					int preference = preferSignature(cx, args, member.argTypes, member.vararg, bestFit.argTypes, bestFit.vararg);
+					int preference = preferSignature(cx, args, member.argTypes, member.genericArgTypes, member.vararg, bestFit.argTypes, bestFit.genericArgTypes, bestFit.vararg);
 					if (preference == PREFERENCE_AMBIGUOUS) {
 						break;
 					} else if (preference == PREFERENCE_FIRST_ARG) {
@@ -253,20 +254,25 @@ public class NativeJavaMethod extends BaseFunction {
 	 * Returns one of PREFERENCE_EQUAL, PREFERENCE_FIRST_ARG,
 	 * PREFERENCE_SECOND_ARG, or PREFERENCE_AMBIGUOUS.
 	 */
-	private static int preferSignature(Context cx, Object[] args, Class<?>[] sig1, boolean vararg1, Class<?>[] sig2, boolean vararg2) {
+	private static int preferSignature(Context cx, Object[] args, Class<?>[] sig1, Type[] gsig1, boolean vararg1, Class<?>[] sig2, Type[] gsig2, boolean vararg2) {
 		int totalPreference = 0;
 		for (int j = 0; j < args.length; j++) {
 			Class<?> type1 = vararg1 && j >= sig1.length ? sig1[sig1.length - 1] : sig1[j];
 			Class<?> type2 = vararg2 && j >= sig2.length ? sig2[sig2.length - 1] : sig2[j];
+
 			if (type1 == type2) {
 				continue;
 			}
+
+			Type gType1 = vararg1 && j >= gsig1.length ? gsig1[gsig1.length - 1] : gsig1[j];
+			Type gType2 = vararg2 && j >= gsig2.length ? gsig2[gsig2.length - 1] : gsig2[j];
+
 			Object arg = args[j];
 
 			// Determine which of type1, type2 is easier to convert from arg.
 
-			int rank1 = NativeJavaObject.getConversionWeight(cx, arg, type1);
-			int rank2 = NativeJavaObject.getConversionWeight(cx, arg, type2);
+			int rank1 = cx.getConversionWeight(arg, type1, gType1);
+			int rank2 = cx.getConversionWeight(arg, type2, gType2);
 
 			int preference;
 			if (rank1 < rank2) {
@@ -275,7 +281,7 @@ public class NativeJavaMethod extends BaseFunction {
 				preference = PREFERENCE_SECOND_ARG;
 			} else {
 				// Equal ranks
-				if (rank1 == NativeJavaObject.CONVERSION_NONTRIVIAL) {
+				if (rank1 == Context.CONVERSION_NONTRIVIAL) {
 					if (type1.isAssignableFrom(type2)) {
 						preference = PREFERENCE_SECOND_ARG;
 					} else if (type2.isAssignableFrom(type1)) {

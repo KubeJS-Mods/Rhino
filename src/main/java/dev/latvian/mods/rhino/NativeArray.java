@@ -407,86 +407,58 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static String toStringHelper(Context cx, Scriptable scope, Scriptable thisObj, boolean toLocale) {
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-		/* It's probably redundant to handle long lengths in this
-		 * function; StringBuilders are limited to 2^31 in java.
-		 */
-		long length = getLengthProperty(cx, o, false);
+		int length = (int) getLengthProperty(cx, o, false);
+
+		if (length == 0) {
+			return "[]";
+		}
 
 		StringBuilder result = new StringBuilder(256);
+		result.append('[');
 
-		// whether to return '4,unquoted,5' or '[4, "quoted", 5]'
-		String separator;
+		// make toSource print null and undefined values in recent versions
+		for (int i = 0; i < length; i++) {
+			if (i > 0) {
+				result.append(", ");
+			}
+			Object elem = getRawElem(o, i, cx);
+			if (elem == NOT_FOUND || elem == null || elem == Undefined.INSTANCE) {
+				continue;
+			}
 
-		separator = ",";
-
-		boolean haslast = false;
-		long i = 0;
-
-		boolean toplevel, iterating;
-		if (cx.iterating == null) {
-			toplevel = true;
-			iterating = false;
-			cx.iterating = new ObjToIntMap(31);
-		} else {
-			toplevel = false;
-			iterating = cx.iterating.has(o);
+			result.append(ScriptRuntime.uneval(cx, scope, elem));
 		}
 
-		// Make sure cx.iterating is set to null when done
-		// so we don't leak memory
-		try {
-			if (!iterating) {
-				// stop recursion
-				cx.iterating.put(o, 0);
+		result.append(']');
 
-				// make toSource print null and undefined values in recent versions
-				for (i = 0; i < length; i++) {
-					if (i > 0) {
-						result.append(separator);
-					}
-					Object elem = getRawElem(o, i, cx);
-					if (elem == NOT_FOUND || elem == null || elem == Undefined.INSTANCE) {
-						haslast = false;
-						continue;
-					}
-					haslast = true;
+		return result.toString();
+	}
 
-					if (false) {
-						result.append(ScriptRuntime.uneval(cx, scope, elem));
+	private static String toSource(Context cx, Scriptable scope, Scriptable thisObj) {
+		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-					} else if (elem instanceof String) {
-						result.append((String) elem);
+		int length = (int) getLengthProperty(cx, o, false);
 
-					} else {
-						if (toLocale) {
-							Callable fun;
-							Scriptable funThis;
-							fun = ScriptRuntime.getPropFunctionAndThis(cx, scope, elem, "toLocaleString");
-							funThis = cx.lastStoredScriptable();
-							elem = fun.call(cx, scope, funThis, ScriptRuntime.EMPTY_OBJECTS);
-						}
-						result.append(ScriptRuntime.toString(cx, elem));
-					}
-				}
-
-				// processing of thisObj done, remove it from the recursion detector
-				// to allow thisObj to be again in the array later on
-				cx.iterating.remove(o);
-			}
-		} finally {
-			if (toplevel) {
-				cx.iterating = null;
-			}
+		if (length == 0) {
+			return "[]";
 		}
 
-		if (false) {
-			//for [,,].length behavior; we want toString to be symmetric.
-			if (!haslast && i > 0) {
-				result.append(", ]");
-			} else {
-				result.append(']');
+		StringBuilder result = new StringBuilder(256);
+		result.append('[');
+
+		for (int i = 0; i < length; i++) {
+			if (i > 0) {
+				result.append(", ");
 			}
+			Object elem = getRawElem(o, i, cx);
+			if (elem == NOT_FOUND || elem == null || elem == Undefined.INSTANCE) {
+				continue;
+			}
+
+			result.append(ScriptRuntime.uneval(cx, scope, elem));
 		}
+
+		result.append(']');
 		return result.toString();
 	}
 
@@ -1741,7 +1713,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 					return toStringHelper(cx, scope, thisObj, true);
 
 				case Id_toSource:
-					return "not_supported";
+					return toSource(cx, scope, thisObj);
 
 				case Id_join:
 					return js_join(cx, scope, thisObj, args);

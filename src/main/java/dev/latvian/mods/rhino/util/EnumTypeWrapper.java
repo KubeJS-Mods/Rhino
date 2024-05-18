@@ -3,12 +3,14 @@ package dev.latvian.mods.rhino.util;
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
-	private static final Map<Class<?>, EnumTypeWrapper<?>> WRAPPERS = new HashMap<>();
+	private static final Map<Class<?>, EnumTypeWrapper<?>> WRAPPERS = new IdentityHashMap<>();
 
 	@SuppressWarnings("unchecked")
 	public static <T> EnumTypeWrapper<T> get(Class<T> enumType) {
@@ -16,7 +18,9 @@ public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 			throw new IllegalArgumentException("Class " + enumType.getName() + " is not an enum!");
 		}
 
-		return (EnumTypeWrapper<T>) WRAPPERS.computeIfAbsent(enumType, EnumTypeWrapper::new);
+		synchronized (WRAPPERS) {
+			return (EnumTypeWrapper<T>) WRAPPERS.computeIfAbsent(enumType, EnumTypeWrapper::new);
+		}
 	}
 
 	public static String getName(Class<?> enumType, Enum<?> e, boolean cache) {
@@ -46,7 +50,7 @@ public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 		this.enumType = enumType;
 		this.indexValues = enumType.getEnumConstants();
 		this.nameValues = new HashMap<>();
-		this.valueNames = new HashMap<>();
+		this.valueNames = new IdentityHashMap<>();
 
 		for (T t : indexValues) {
 			String name = getName(enumType, (Enum<?>) t, false).toLowerCase();
@@ -56,9 +60,9 @@ public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 	}
 
 	@Override
-	public T wrap(Context cx, Object o) {
-		if (o instanceof CharSequence) {
-			String s = o.toString().toLowerCase();
+	public T wrap(Context cx, Object from, Class<?> toType, Type toGenericType) {
+		if (from instanceof CharSequence) {
+			String s = from.toString().toLowerCase();
 
 			if (s.isEmpty()) {
 				return null;
@@ -71,8 +75,8 @@ public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 			}
 
 			return t;
-		} else if (o instanceof Number) {
-			int index = ((Number) o).intValue();
+		} else if (from instanceof Number) {
+			int index = ((Number) from).intValue();
 
 			if (index < 0 || index >= indexValues.length) {
 				throw new IllegalArgumentException(index + " is not a valid enum index! Valid values are: 0 - " + (indexValues.length - 1));
@@ -81,6 +85,6 @@ public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 			return indexValues[index];
 		}
 
-		return (T) o;
+		return (T) from;
 	}
 }

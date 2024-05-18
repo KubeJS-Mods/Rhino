@@ -18,7 +18,7 @@ public class MiscTests {
 				x.abc = 1;
 				console.info(x.abc);
 				""",
-			"1.0"
+			"1"
 		);
 	}
 
@@ -112,9 +112,9 @@ public class MiscTests {
 			console.info(Object.values(shared.testObject))
 			console.info(Object.entries(shared.testObject))
 			""", """
-			[a, b, c]
-			[-39.0, 2.0, 3439438.0]
-			[[a, -39.0], [b, 2.0], [c, 3439438.0]]
+			['a', 'b', 'c']
+			[-39, 2, 3439438]
+			[['a', -39], ['b', 2], ['c', 3439438]]
 			""");
 	}
 
@@ -147,10 +147,25 @@ public class MiscTests {
 	}
 
 	@Test
-	public void testJsonStringifyWithNestedArrays() {
+	public void jsonStringifyWithNestedArrays() {
 		TEST.test("jsonStringifyWithNestedArrays", """
 			const thing = {nested: [1, 2, 3]};
 			console.info(JSON.stringify(thing));
 			""", "{\"nested\":[1.0,2.0,3.0]}");
+	}
+
+	@Test
+	public void genericTypes() {
+		TEST.test("genericTypes", "console.genericType(['a', 'b']);", "Generic type:\n[WithContext[a], WithContext[b]]");
+	}
+
+	@Test
+	public void genericTypesUnwrapped() {
+		TEST.test("genericTypesUnwrapped", "console.genericType('a');", "Generic type:\n[WithContext[a]]");
+	}
+
+	@Test
+	public void genericTypesFromList() {
+		TEST.test("genericTypesFromList", "console.genericType('a');", "Generic type:\n[WithContext[a]]");
 	}
 }

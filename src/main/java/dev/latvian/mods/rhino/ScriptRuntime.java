@@ -16,6 +16,7 @@ import dev.latvian.mods.rhino.util.SpecialEquality;
 import dev.latvian.mods.rhino.v8dtoa.DoubleConversion;
 import dev.latvian.mods.rhino.v8dtoa.FastDtoa;
 
+import java.lang.reflect.Array;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -652,8 +653,10 @@ public class ScriptRuntime {
 		return result;
 	}
 
-	public static String escapeString(String s) {
-		return escapeString(s, '"');
+	public static String escapeAndWrapString(String s) {
+		var c = s.indexOf('\'') == -1 ? '\'' : '"';
+		var escaped = escapeString(s, c);
+		return c + escaped + c;
 	}
 
 	/**
@@ -779,6 +782,28 @@ public class ScriptRuntime {
 			}
 			return toString(cx, val);
 		}
+		if (val.getClass().isArray()) {
+			var builder = new StringBuilder();
+			int length = Array.getLength(val);
+
+			if (length == 0) {
+				builder.append("[]");
+			} else {
+				builder.append('[');
+
+				for (int i = 0; i < length; i++) {
+					if (i > 0) {
+						builder.append(", ");
+					}
+
+					builder.append(toString(cx, Array.get(val, i)));
+				}
+
+				builder.append(']');
+			}
+
+			return builder.toString();
+		}
 		return ToStringJS.toStringJS(cx, val);
 	}
 
@@ -843,8 +868,7 @@ public class ScriptRuntime {
 			return "undefined";
 		}
 		if (value instanceof CharSequence) {
-			String escaped = escapeString(value.toString());
-			return '\"' + escaped + '\"';
+			return escapeAndWrapString(value.toString());
 		}
 		if (value instanceof Number) {
 			double d = ((Number) value).doubleValue();
@@ -869,10 +893,6 @@ public class ScriptRuntime {
 		}
 		warnAboutNonJSObject(cx, value);
 		return value.toString();
-	}
-
-	static String defaultObjectToSource(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		return "not_supported";
 	}
 
 	/**
