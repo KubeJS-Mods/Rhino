@@ -29,6 +29,14 @@ public class TypeWrappers {
 		register(target, TypeWrapperValidator.ALWAYS_VALID, factory);
 	}
 
+	public <T> void registerDirect(Class<T> target, TypeWrapperValidator validator, DirectTypeWrapperFactory<T> factory) {
+		register(target, validator, factory);
+	}
+
+	public <T> void registerDirect(Class<T> target, DirectTypeWrapperFactory<T> factory) {
+		register(target, TypeWrapperValidator.ALWAYS_VALID, factory);
+	}
+
 	public boolean hasWrapper(Object from, Class<?> target, Type genericTarget) {
 		if (target.isEnum() || target.isRecord()) {
 			return true;

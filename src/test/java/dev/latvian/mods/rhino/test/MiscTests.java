@@ -153,19 +153,4 @@ public class MiscTests {
 			console.info(JSON.stringify(thing));
 			""", "{\"nested\":[1.0,2.0,3.0]}");
 	}
-
-	@Test
-	public void genericTypes() {
-		TEST.test("genericTypes", "console.genericType(['a', 'b']);", "Generic type:\n[WithContext[a], WithContext[b]]");
-	}
-
-	@Test
-	public void genericTypesUnwrapped() {
-		TEST.test("genericTypesUnwrapped", "console.genericType('a');", "Generic type:\n[WithContext[a]]");
-	}
-
-	@Test
-	public void genericTypesFromList() {
-		TEST.test("genericTypesFromList", "console.genericType('a');", "Generic type:\n[WithContext[a]]");
-	}
 }

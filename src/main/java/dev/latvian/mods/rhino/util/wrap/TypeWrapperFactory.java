@@ -9,5 +9,5 @@ import java.lang.reflect.Type;
  */
 @FunctionalInterface
 public interface TypeWrapperFactory<T> {
-	T wrap(Context cx, Object from, Class<?> toType, Type toGenericType);
+	T wrap(Context cx, Object from, Class<?> target, Type genericTarget);
 }

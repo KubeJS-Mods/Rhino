@@ -40,4 +40,14 @@ public class TypeUtils {
 		var className = type == null ? "null" : type.getClass().getName();
 		throw new IllegalArgumentException("Expected a Class, ParameterizedType, GenericArrayType, TypeVariable or WildcardType, but <" + type + "> is of type " + className);
 	}
+
+	public static Type getComponentType(Type type, Type fallback) {
+		if (type instanceof Class<?> c) {
+			return c.getComponentType();
+		} else if (type instanceof GenericArrayType arr) {
+			return arr.getGenericComponentType();
+		} else {
+			return fallback;
+		}
+	}
 }

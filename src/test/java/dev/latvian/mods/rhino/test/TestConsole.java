@@ -9,6 +9,8 @@ import dev.latvian.mods.unit.UnitContext;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @RemapPrefixForJS("test1$")
 @RemapPrefixForJS("test2$")
@@ -85,8 +87,23 @@ public class TestConsole {
 		info("%s#%08x".formatted(material.name(), material.hashCode()));
 	}
 
-	public void genericType(WithContext<String>[] test) {
-		info("Generic type:");
-		info(test);
+	public void genericArrayArg(WithContext<String>[] arg) {
+		info("Generic array:");
+		info(arg);
+	}
+
+	public void genericListArg(List<WithContext<String>> arg) {
+		info("Generic list:");
+		info(arg);
+	}
+
+	public void genericSetArg(Set<WithContext<String>> arg) {
+		info("Generic set:");
+		info(arg);
+	}
+
+	public void genericMapArg(Map<WithContext<String>, Integer> arg) {
+		info("Generic map:");
+		info(arg);
 	}
 }

@@ -20,21 +20,21 @@ import java.util.function.Predicate;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class NativeJavaList extends NativeJavaObject {
-	private final List list;
-	private final Class<?> listType;
-	private final Type listGenericType;
+	public final List list;
+	public final Class<?> listType;
+	public final Type listGenericType;
 	private final ValueUnwrapper valueUnwrapper;
 
-	public NativeJavaList(Context cx, Scriptable scope, Object jo, List list, @Nullable Class<?> listType, ValueUnwrapper valueUnwrapper) {
+	public NativeJavaList(Context cx, Scriptable scope, Object jo, List list, @Nullable Class<?> listType, Type listGenericType, ValueUnwrapper valueUnwrapper) {
 		super(scope, jo, jo.getClass(), cx);
 		this.list = list;
 		this.listType = listType;
-		this.listGenericType = listType;
+		this.listGenericType = listGenericType;
 		this.valueUnwrapper = valueUnwrapper;
 	}
 
 	public NativeJavaList(Context cx, Scriptable scope, Object jo, List list) {
-		this(cx, scope, jo, list, null, ValueUnwrapper.DEFAULT);
+		this(cx, scope, jo, list, null, null, ValueUnwrapper.DEFAULT);
 	}
 
 	@Override

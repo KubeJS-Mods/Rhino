@@ -60,7 +60,7 @@ public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 	}
 
 	@Override
-	public T wrap(Context cx, Object from, Class<?> toType, Type toGenericType) {
+	public T wrap(Context cx, Object from, Class<?> target, Type genericTarget) {
 		if (from instanceof CharSequence) {
 			String s = from.toString().toLowerCase();
 
