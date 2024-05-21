@@ -20,25 +20,17 @@ import java.lang.reflect.Type;
  */
 
 public class NativeJavaArray extends NativeJavaObject implements SymbolScriptable {
-	public static NativeJavaArray wrap(Scriptable scope, Object array, Context cx) {
-		return new NativeJavaArray(scope, array, cx);
-	}
-
 	Object array;
 	int length;
 	Class<?> componentType;
 	Type genericComponentType;
 
-	public NativeJavaArray(Scriptable scope, Object array, Context cx) {
+	public NativeJavaArray(Scriptable scope, Object array, Class<?> componentType, Type genericComponentType, Context cx) {
 		super(scope, null, ScriptRuntime.ObjectClass, cx);
-		Class<?> cl = array.getClass();
-		if (!cl.isArray()) {
-			throw new RuntimeException("Array expected");
-		}
 		this.array = array;
 		this.length = Array.getLength(array);
-		this.componentType = cl.getComponentType();
-		this.genericComponentType = componentType; // fixme
+		this.componentType = componentType;
+		this.genericComponentType = genericComponentType;
 	}
 
 	@Override

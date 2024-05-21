@@ -70,6 +70,10 @@ public class TestConsole {
 		return new ArrayList<>(Arrays.asList(getTestArray()));
 	}
 
+	public Map<String, String> getTestMap() {
+		return Map.of("test", "10.5");
+	}
+
 	public void test1$setTheme(TestConsoleTheme t) {
 		info("Set theme to " + t);
 		theme = t;
@@ -87,23 +91,23 @@ public class TestConsole {
 		info("%s#%08x".formatted(material.name(), material.hashCode()));
 	}
 
-	public void genericArrayArg(WithContext<String>[] arg) {
-		info("Generic array:");
+	public void genericsArrayArg(WithContext<String>[] arg) {
+		info("Generics array:");
 		info(arg);
 	}
 
-	public void genericListArg(List<WithContext<String>> arg) {
-		info("Generic list:");
+	public void genericsListArg(List<WithContext<String>> arg) {
+		info("Generics list:");
 		info(arg);
 	}
 
-	public void genericSetArg(Set<WithContext<String>> arg) {
-		info("Generic set:");
+	public void genericsSetArg(Set<WithContext<String>> arg) {
+		info("Generics set:");
 		info(arg);
 	}
 
-	public void genericMapArg(Map<WithContext<String>, Integer> arg) {
-		info("Generic map:");
+	public void genericsMapArg(Map<WithContext<TestMaterial>, Integer> arg) {
+		info("Generics map:");
 		info(arg);
 	}
 }

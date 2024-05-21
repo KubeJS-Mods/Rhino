@@ -3,7 +3,6 @@ package dev.latvian.mods.rhino.util;
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.EvaluatorException;
 import dev.latvian.mods.rhino.NativeArray;
-import dev.latvian.mods.rhino.NativeJavaList;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
@@ -31,16 +30,6 @@ public interface ArrayValueProvider {
 			return null;
 		}
 	};
-
-	static ArrayValueProvider of(Object value) {
-		return switch (value) {
-			case NativeArray array -> fromNativeArray(array);
-			case NativeJavaList list -> fromJavaList(list.list, list);
-			case List<?> list -> fromJavaList(list, list);
-			case Iterable<?> itr -> fromIterable(itr);
-			case null, default -> value == null ? FromObject.FROM_NULL : new FromObject(value);
-		};
-	}
 
 	int getLength(Context cx);
 
@@ -155,19 +144,32 @@ public interface ArrayValueProvider {
 		}
 	}
 
-	static ArrayValueProvider fromJavaArray(Object array) {
-		return Array.getLength(array) == 0 ? EMPTY : new FromJavaArray(array);
-	}
-
-	record FromJavaArray(Object array) implements ArrayValueProvider {
+	record FromJavaArray(Object array, int length) implements ArrayValueProvider {
 		@Override
 		public int getLength(Context cx) {
-			return Array.getLength(array);
+			return length;
 		}
 
 		@Override
 		public Object getArrayValue(Context cx, int index) {
 			return Array.get(array, index);
+		}
+
+		@Override
+		public Object getErrorSource(Context cx) {
+			return array;
+		}
+	}
+
+	record FromPlainJavaArray(Object[] array) implements ArrayValueProvider {
+		@Override
+		public int getLength(Context cx) {
+			return array.length;
+		}
+
+		@Override
+		public Object getArrayValue(Context cx, int index) {
+			return array[index];
 		}
 
 		@Override

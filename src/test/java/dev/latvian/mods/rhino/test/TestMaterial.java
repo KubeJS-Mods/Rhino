@@ -9,4 +9,9 @@ public record TestMaterial(String name) {
 	public static synchronized TestMaterial get(Object o) {
 		return MATERIALS.computeIfAbsent(String.valueOf(o), TestMaterial::new);
 	}
+
+	@Override
+	public String toString() {
+		return "M[" + name + "]";
+	}
 }

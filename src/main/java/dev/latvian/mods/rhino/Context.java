@@ -18,6 +18,7 @@ import dev.latvian.mods.rhino.util.CustomJavaToJsWrapper;
 import dev.latvian.mods.rhino.util.JavaSetWrapper;
 import dev.latvian.mods.rhino.util.TypeUtils;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -28,11 +29,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -982,7 +987,7 @@ public class Context {
 		Class<?> cls = obj.getClass();
 
 		if (cls.isArray()) {
-			return NativeJavaArray.wrap(scope, obj, this);
+			return new NativeJavaArray(scope, obj, cls.getComponentType(), genericType instanceof GenericArrayType arr ? arr.getGenericComponentType() : cls.getComponentType(), this);
 		}
 
 		return wrapAsJavaObject(scope, obj, staticType, genericType);
@@ -1163,7 +1168,7 @@ public class Context {
 		}
 		Class<?> cls = obj.getClass();
 		if (cls.isArray()) {
-			return NativeJavaArray.wrap(scope, obj, this);
+			return new NativeJavaArray(scope, obj, cls.getComponentType(), cls.getComponentType(), this);
 		}
 		return wrapAsJavaObject(scope, obj, null, null);
 	}
@@ -1203,6 +1208,134 @@ public class Context {
 		return Integer.MAX_VALUE;
 	}
 
+	protected ArrayValueProvider arrayValueProviderOf(Object value) {
+		if (value instanceof Object[] arr) {
+			return arr.length == 0 ? ArrayValueProvider.EMPTY : new ArrayValueProvider.FromPlainJavaArray(arr);
+		} else if (value != null && value.getClass().isArray()) {
+			int len = Array.getLength(value);
+			return len == 0 ? ArrayValueProvider.EMPTY : new ArrayValueProvider.FromJavaArray(value, len);
+		}
+
+		return switch (value) {
+			case NativeArray array -> ArrayValueProvider.fromNativeArray(array);
+			case NativeJavaList list -> ArrayValueProvider.fromJavaList(list.list, list);
+			case List<?> list -> ArrayValueProvider.fromJavaList(list, list);
+			case Iterable<?> itr -> ArrayValueProvider.fromIterable(itr);
+			case null, default -> value == null ? ArrayValueProvider.FromObject.FROM_NULL : new ArrayValueProvider.FromObject(value);
+		};
+	}
+
+	protected Object arrayOf(@Nullable Object from, @Nullable Class<?> target, @Nullable Type genericTarget) {
+		if (from instanceof Object[] arr) {
+			if (target == null) {
+				return from;
+			}
+
+			return arr.length == 0 ? Array.newInstance(target, 0) : new ArrayValueProvider.FromPlainJavaArray(arr).createArray(this, target, genericTarget);
+		} else if (from != null && from.getClass().isArray()) {
+			if (target == null) {
+				return from;
+			}
+
+			int len = Array.getLength(from);
+			return len == 0 ? Array.newInstance(target, 0) : new ArrayValueProvider.FromJavaArray(from, len).createArray(this, target, genericTarget);
+		}
+
+		return arrayValueProviderOf(from).createArray(this, target, genericTarget);
+	}
+
+	protected Object listOf(@Nullable Object from, @Nullable Class<?> target, @Nullable Type genericTarget) {
+		if (from instanceof NativeJavaList n) {
+			if (target == null) {
+				// No conversion necessary
+				return n.list;
+			} else if (target == n.listType && Objects.equals(genericTarget, n.listGenericType)) {
+				// No conversion necessary
+				return n.list;
+			} else {
+				var list = new ArrayList<>(n.list.size());
+
+				for (var o : n.list) {
+					list.add(jsToJava(o, target, genericTarget));
+				}
+
+				return list;
+			}
+		}
+
+		return arrayValueProviderOf(from).createList(this, target, genericTarget);
+	}
+
+	protected Object setOf(@Nullable Object from, @Nullable Class<?> target, @Nullable Type genericTarget) {
+		if (from instanceof NativeJavaList n) {
+			if (target == null) {
+				// No conversion necessary
+				return new LinkedHashSet<>(n.list);
+			} else if (target == n.listType && Objects.equals(genericTarget, n.listGenericType)) {
+				// No conversion necessary
+				return new LinkedHashSet<>(n.list);
+			} else {
+				var set = new LinkedHashSet<>(n.list.size());
+
+				for (var o : n.list) {
+					set.add(jsToJava(o, target, genericTarget));
+				}
+
+				return set;
+			}
+		}
+
+		return arrayValueProviderOf(from).createSet(this, target, genericTarget);
+	}
+
+	protected Object mapOf(@Nullable Object from, @Nullable Class<?> kTarget, @Nullable Type kGenericTarget, @Nullable Class<?> vTarget, @Nullable Type vGenericTarget) {
+		if (from instanceof NativeJavaMap n) {
+			if (kTarget == null && vTarget == null) {
+				// No conversion necessary
+				return n.map;
+			} else if (kTarget == n.mapKeyType && Objects.equals(kGenericTarget, n.mapKeyGenericType) && vTarget == n.mapValueType && Objects.equals(vGenericTarget, n.mapValueGenericType)) {
+				// No conversion necessary
+				return n.map;
+			} else {
+				if (n.map.isEmpty()) {
+					return Map.of();
+				}
+
+				var map = new LinkedHashMap<>(n.map.size());
+
+				for (var entry : ((Map<?, ?>) n.map).entrySet()) {
+					map.put(jsToJava(entry.getKey(), kTarget, kGenericTarget), jsToJava(entry.getValue(), vTarget, vGenericTarget));
+				}
+
+				return map;
+			}
+		} else if (from instanceof NativeObject obj) {
+			var keys = obj.getIds(this);
+			var map = new LinkedHashMap<>(keys.length);
+
+			for (var key : keys) {
+				map.put(jsToJava(key, kTarget, kGenericTarget), jsToJava(obj.get(this, key), vTarget, vGenericTarget));
+			}
+
+			return map;
+		} else if (from instanceof Map<?, ?> m) {
+			if (kTarget == null && vTarget == null) {
+				// No conversion necessary
+				return m;
+			}
+
+			var map = new LinkedHashMap<>(m.size());
+
+			for (var entry : m.entrySet()) {
+				map.put(jsToJava(entry.getKey(), kTarget, kGenericTarget), jsToJava(entry.getValue(), vTarget, vGenericTarget));
+			}
+
+			return map;
+		} else {
+			return reportConversionError(from, Map.class);
+		}
+	}
+
 	public Object createInterfaceAdapter(Class<?> type, Type genericType, ScriptableObject so) {
 		// XXX: Currently only instances of ScriptableObject are
 		// supported since the resulting interface proxies should
@@ -1232,54 +1365,65 @@ public class Context {
 		}
 	}
 
-	public final Object jsToJava(Object from, Class<?> target, Type genericTarget) throws EvaluatorException {
+	public final Object jsToJava(@Nullable Object from, @Nullable Class<?> target, @Nullable Type genericTarget) throws EvaluatorException {
 		if (target == null) {
 			return from;
 		} else if (target == Object.class) {
 			return Wrapper.unwrapped(from);
-		} else if (target.isArray()) {
-			var desiredComponentType = target.componentType();
-			var desiredComponentGenericType = TypeUtils.getComponentType(genericTarget, desiredComponentType);
-
-			if (from != null && from.getClass() == target) {
-				return new ArrayValueProvider.FromJavaArray(from).createArray(this, desiredComponentType, desiredComponentGenericType);
-			}
-
-			return ArrayValueProvider.of(from).createArray(this, desiredComponentType, desiredComponentGenericType);
 		} else if (target == Set.class) {
 			if (genericTarget instanceof ParameterizedType pt) {
 				var types = pt.getActualTypeArguments();
 				var c = types.length == 1 ? TypeUtils.getRawType(types[0]) : Object.class;
 
-				if (c != Object.class) {
-					return ArrayValueProvider.of(from).createSet(this, c, types[0]);
+				if (c != null && c != Object.class) {
+					return setOf(from, c, types[0]);
 				}
 			}
 
-			return ArrayValueProvider.of(from).createSet(this, null, null);
+			return setOf(from, null, null);
+		} else if (target == Map.class) {
+			Class<?> kType = null;
+			Type kGenericType = null;
+			Class<?> vType = null;
+			Type vGenericType = null;
+
+			if (genericTarget instanceof ParameterizedType pt) {
+				var types = pt.getActualTypeArguments();
+				var kRaw = types.length == 2 ? TypeUtils.getRawType(types[0]) : Object.class;
+				var vRaw = types.length == 2 ? TypeUtils.getRawType(types[1]) : Object.class;
+
+				if (kRaw != null && kRaw != Object.class) {
+					kType = kRaw;
+					kGenericType = types[0];
+				}
+
+				if (vRaw != null && vRaw != Object.class) {
+					vType = vRaw;
+					vGenericType = types[1];
+				}
+			}
+
+			return mapOf(from, kType, kGenericType, vType, vGenericType);
+		} else if (target.isArray()) {
+			var desiredComponentType = target.componentType();
+			var desiredComponentGenericType = TypeUtils.getComponentType(genericTarget, desiredComponentType);
+
+			if (from != null && from.getClass() == target) {
+				return arrayOf(from, desiredComponentType, desiredComponentGenericType);
+			}
+
+			return arrayOf(from, desiredComponentType, desiredComponentGenericType);
 		} else if (List.class.isAssignableFrom(target)) {
 			if (genericTarget instanceof ParameterizedType pt) {
 				var types = pt.getActualTypeArguments();
 				var c = types.length == 1 ? TypeUtils.getRawType(types[0]) : Object.class;
 
-				if (c != Object.class) {
-					return ArrayValueProvider.of(from).createList(this, c, types[0]);
+				if (c != null && c != Object.class) {
+					return listOf(from, c, types[0]);
 				}
 			}
 
-			return ArrayValueProvider.of(from).createList(this, null, null);
-		} else if (target == Map.class) {
-			if (genericTarget instanceof ParameterizedType pt) {
-				var types = pt.getActualTypeArguments();
-				var k = types.length == 2 ? TypeUtils.getRawType(types[0]) : Object.class;
-				var v = types.length == 2 ? TypeUtils.getRawType(types[1]) : Object.class;
-
-				if (k != Object.class || v != Object.class) {
-					return ArrayValueProvider.of(from).createSet(this, k, types[0]);
-				}
-			}
-
-			return ArrayValueProvider.of(from).createSet(this, null, null);
+			return listOf(from, null, null);
 		}
 
 		return internalJsToJava(from, target, genericTarget);

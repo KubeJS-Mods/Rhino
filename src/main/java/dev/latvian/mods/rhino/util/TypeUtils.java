@@ -10,15 +10,6 @@ import java.lang.reflect.WildcardType;
 public class TypeUtils {
 	public static final Type[] NO_TYPES = new Type[0];
 
-	public static Type[] getGenericTypes(Type type) {
-		return switch (type) {
-			case ParameterizedType paramType -> paramType.getActualTypeArguments();
-			case GenericArrayType arrayType -> new Type[]{arrayType.getGenericComponentType()};
-			case WildcardType wildcard -> new Type[]{getRawType(wildcard.getUpperBounds()[0])};
-			case null, default -> NO_TYPES;
-		};
-	}
-
 	public static Class<?> getRawType(Type type) {
 		if (type instanceof Class<?> clz) {
 			return clz;
@@ -37,8 +28,7 @@ public class TypeUtils {
 			return getRawType(wildcard.getUpperBounds()[0]);
 		}
 
-		var className = type == null ? "null" : type.getClass().getName();
-		throw new IllegalArgumentException("Expected a Class, ParameterizedType, GenericArrayType, TypeVariable or WildcardType, but <" + type + "> is of type " + className);
+		return null;
 	}
 
 	public static Type getComponentType(Type type, Type fallback) {

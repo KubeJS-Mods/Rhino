@@ -15,21 +15,25 @@ import java.util.Map;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class NativeJavaMap extends NativeJavaObject {
-	private final Map map;
-	private final Class<?> mapValueType;
-	private final Type mapValueGenericType;
+	public final Map map;
+	public final Class<?> mapKeyType;
+	public final Type mapKeyGenericType;
+	public final Class<?> mapValueType;
+	public final Type mapValueGenericType;
 	private final ValueUnwrapper valueUnwrapper;
 
-	public NativeJavaMap(Context cx, Scriptable scope, Object jo, Map map, Class<?> mapValueType, ValueUnwrapper valueUnwrapper) {
+	public NativeJavaMap(Context cx, Scriptable scope, Object jo, Map map, Class<?> mapKeyType, Type mapKeyGenericType, Class<?> mapValueType, Type mapValueGenericType, ValueUnwrapper valueUnwrapper) {
 		super(scope, jo, jo.getClass(), cx);
 		this.map = map;
+		this.mapKeyType = mapKeyType;
+		this.mapKeyGenericType = mapKeyGenericType;
 		this.mapValueType = mapValueType;
-		this.mapValueGenericType = mapValueType;
+		this.mapValueGenericType = mapValueGenericType;
 		this.valueUnwrapper = valueUnwrapper;
 	}
 
 	public NativeJavaMap(Context cx, Scriptable scope, Object jo, Map map) {
-		this(cx, scope, jo, map, Object.class, ValueUnwrapper.DEFAULT);
+		this(cx, scope, jo, map, null, null, null, null, ValueUnwrapper.DEFAULT);
 	}
 
 	@Override
