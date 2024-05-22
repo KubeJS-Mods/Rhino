@@ -6,7 +6,6 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.Deletable;
-import dev.latvian.mods.rhino.util.ValueUnwrapper;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -20,20 +19,14 @@ public class NativeJavaMap extends NativeJavaObject {
 	public final Type mapKeyGenericType;
 	public final Class<?> mapValueType;
 	public final Type mapValueGenericType;
-	private final ValueUnwrapper valueUnwrapper;
 
-	public NativeJavaMap(Context cx, Scriptable scope, Object jo, Map map, Class<?> mapKeyType, Type mapKeyGenericType, Class<?> mapValueType, Type mapValueGenericType, ValueUnwrapper valueUnwrapper) {
+	public NativeJavaMap(Context cx, Scriptable scope, Object jo, Map map, Class<?> mapKeyType, Type mapKeyGenericType, Class<?> mapValueType, Type mapValueGenericType) {
 		super(scope, jo, jo.getClass(), cx);
 		this.map = map;
 		this.mapKeyType = mapKeyType;
 		this.mapKeyGenericType = mapKeyGenericType;
 		this.mapValueType = mapValueType;
 		this.mapValueGenericType = mapValueGenericType;
-		this.valueUnwrapper = valueUnwrapper;
-	}
-
-	public NativeJavaMap(Context cx, Scriptable scope, Object jo, Map map) {
-		this(cx, scope, jo, map, null, null, null, null, ValueUnwrapper.DEFAULT);
 	}
 
 	@Override
@@ -60,7 +53,7 @@ public class NativeJavaMap extends NativeJavaObject {
 	@Override
 	public Object get(Context cx, String name, Scriptable start) {
 		if (map.containsKey(name)) {
-			return valueUnwrapper.unwrap(cx, this, map.get(name));
+			return cx.javaToJS(map.get(cx.jsToJava(name, mapKeyType, mapKeyGenericType)), start, mapValueType, mapValueGenericType);
 		}
 		return super.get(cx, name, start);
 	}
@@ -68,7 +61,7 @@ public class NativeJavaMap extends NativeJavaObject {
 	@Override
 	public Object get(Context cx, int index, Scriptable start) {
 		if (map.containsKey(index)) {
-			return valueUnwrapper.unwrap(cx, this, map.get(index));
+			return cx.javaToJS(map.get(cx.jsToJava(index, mapKeyType, mapKeyGenericType)), start, mapValueType, mapValueGenericType);
 		}
 		return super.get(cx, index, start);
 	}

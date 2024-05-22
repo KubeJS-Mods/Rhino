@@ -76,4 +76,9 @@ public class GenericsTests {
 	public void mapArgMap() {
 		TEST.test("mapArgMap", "console.genericsMapArg(console.testMap);", "Generics map:\n{W[M[test]]: 10}");
 	}
+
+	@Test
+	public void materialHolder() {
+		TEST.test("materialHolder", "console.registerMaterial('minecraft:iron');", "Registered material: minecraft:iron");
+	}
 }

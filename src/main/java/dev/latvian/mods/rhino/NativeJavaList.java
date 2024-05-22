@@ -6,7 +6,6 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.util.Deletable;
-import dev.latvian.mods.rhino.util.ValueUnwrapper;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
@@ -23,18 +22,12 @@ public class NativeJavaList extends NativeJavaObject {
 	public final List list;
 	public final Class<?> listType;
 	public final Type listGenericType;
-	private final ValueUnwrapper valueUnwrapper;
 
-	public NativeJavaList(Context cx, Scriptable scope, Object jo, List list, @Nullable Class<?> listType, Type listGenericType, ValueUnwrapper valueUnwrapper) {
+	public NativeJavaList(Context cx, Scriptable scope, Object jo, List list, @Nullable Class<?> listType, @Nullable Type listGenericType) {
 		super(scope, jo, jo.getClass(), cx);
 		this.list = list;
 		this.listType = listType;
 		this.listGenericType = listGenericType;
-		this.valueUnwrapper = valueUnwrapper;
-	}
-
-	public NativeJavaList(Context cx, Scriptable scope, Object jo, List list) {
-		this(cx, scope, jo, list, null, null, ValueUnwrapper.DEFAULT);
 	}
 
 	@Override
@@ -61,8 +54,9 @@ public class NativeJavaList extends NativeJavaObject {
 	@Override
 	public Object get(Context cx, int index, Scriptable start) {
 		if (isWithValidIndex(index)) {
-			return valueUnwrapper.unwrap(cx, this, list.get(index));
+			return cx.javaToJS(list.get(index), start, listType, listGenericType);
 		}
+
 		return Undefined.INSTANCE;
 	}
 
@@ -286,10 +280,10 @@ public class NativeJavaList extends NativeJavaObject {
 		}
 
 		BinaryOperator operator = (BinaryOperator) args[0];
-		Object o = valueUnwrapper.unwrap(cx, this, list.get(0));
+		Object o = get(cx, 0, this);
 
 		for (int i = 1; i < list.size(); i++) {
-			o = valueUnwrapper.unwrap(cx, this, operator.apply(o, valueUnwrapper.unwrap(cx, this, list.get(i))));
+			o = operator.apply(o, get(cx, i, this));
 		}
 
 		return o;
@@ -299,14 +293,14 @@ public class NativeJavaList extends NativeJavaObject {
 		if (list.isEmpty()) {
 			return Undefined.INSTANCE;
 		} else if (list.size() == 1) {
-			return list.get(0);
+			return list.get(0); // might not be correct start index
 		}
 
 		BinaryOperator operator = (BinaryOperator) args[0];
-		Object o = valueUnwrapper.unwrap(cx, this, list.get(0));
+		Object o = get(cx, 0, this);
 
 		for (int i = list.size() - 1; i >= 1; i--) {
-			o = valueUnwrapper.unwrap(cx, this, operator.apply(o, valueUnwrapper.unwrap(cx, this, list.get(i))));
+			o = operator.apply(o, get(cx, i, this));
 		}
 
 		return o;

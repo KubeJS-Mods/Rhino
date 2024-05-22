@@ -1,4 +1,4 @@
-package dev.latvian.mods.rhino.util;
+package dev.latvian.mods.rhino.type;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
@@ -8,8 +8,6 @@ import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 
 public class TypeUtils {
-	public static final Type[] NO_TYPES = new Type[0];
-
 	public static Class<?> getRawType(Type type) {
 		if (type instanceof Class<?> clz) {
 			return clz;

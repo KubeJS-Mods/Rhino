@@ -4,14 +4,14 @@ import dev.latvian.mods.rhino.util.EnumTypeWrapper;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.LinkedHashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 /**
  * @author LatvianModder
  */
 public class TypeWrappers {
-	public final Map<Class<?>, TypeWrapper<?>> wrappers = new LinkedHashMap<>();
+	public final Map<Class<?>, TypeWrapper<?>> wrappers = new IdentityHashMap<>();
 
 	public <T> void register(Class<T> target, TypeWrapperValidator validator, TypeWrapperFactory<T> factory) {
 		if (target == null || target == Object.class) {

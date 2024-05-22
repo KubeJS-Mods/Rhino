@@ -21,6 +21,7 @@ public class RhinoTest {
 		var typeWrappers = factory.getTypeWrappers();
 		typeWrappers.registerDirect(TestMaterial.class, TestMaterial::get);
 		typeWrappers.register(WithContext.class, WithContext::of);
+		typeWrappers.register(Holder.class, Holder::of);
 	}
 
 	public void test(String name, String script, String match) {

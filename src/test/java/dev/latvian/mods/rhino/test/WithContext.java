@@ -1,7 +1,7 @@
 package dev.latvian.mods.rhino.test;
 
 import dev.latvian.mods.rhino.Context;
-import dev.latvian.mods.rhino.util.TypeUtils;
+import dev.latvian.mods.rhino.type.TypeUtils;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

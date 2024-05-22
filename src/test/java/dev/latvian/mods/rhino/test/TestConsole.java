@@ -110,4 +110,8 @@ public class TestConsole {
 		info("Generics map:");
 		info(arg);
 	}
+
+	public void registerMaterial(Holder<TestMaterial> holder) {
+		info("Registered material: " + holder.value().name());
+	}
 }

@@ -12,11 +12,11 @@ import dev.latvian.mods.rhino.ast.AstRoot;
 import dev.latvian.mods.rhino.ast.ScriptNode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter.ClassFileFormatException;
 import dev.latvian.mods.rhino.regexp.RegExp;
+import dev.latvian.mods.rhino.type.TypeUtils;
 import dev.latvian.mods.rhino.util.ArrayValueProvider;
 import dev.latvian.mods.rhino.util.ClassVisibilityContext;
 import dev.latvian.mods.rhino.util.CustomJavaToJsWrapper;
 import dev.latvian.mods.rhino.util.JavaSetWrapper;
-import dev.latvian.mods.rhino.util.TypeUtils;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 import org.jetbrains.annotations.Nullable;
 
@@ -1134,21 +1134,62 @@ public class Context {
 	 */
 	public Scriptable wrapAsJavaObject(Scriptable scope, Object javaObject, Class<?> staticType, Type genericType) {
 		if (javaObject instanceof CustomJavaToJsWrapper w) {
-			return w.convertJavaToJs(this, scope, staticType);
-		}
-
-		CustomJavaToJsWrapper w = factory.wrapCustomJavaToJs(javaObject);
-
-		if (w != null) {
-			return w.convertJavaToJs(this, scope, staticType);
+			return w.convertJavaToJs(this, scope, staticType, genericType);
 		}
 
 		if (javaObject instanceof Map map) {
-			return new NativeJavaMap(this, scope, map, map);
+			Class<?> kType = null;
+			Type kGenericType = null;
+			Class<?> vType = null;
+			Type vGenericType = null;
+
+			if (staticType != null && genericType instanceof ParameterizedType pt) {
+				var types = pt.getActualTypeArguments();
+				var kRaw = types.length == 2 ? TypeUtils.getRawType(types[0]) : Object.class;
+				var vRaw = types.length == 2 ? TypeUtils.getRawType(types[1]) : Object.class;
+
+				if (kRaw != null && kRaw != Object.class) {
+					kType = kRaw;
+					kGenericType = types[0];
+				}
+
+				if (vRaw != null && vRaw != Object.class) {
+					vType = vRaw;
+					vGenericType = types[1];
+				}
+			}
+
+			return new NativeJavaMap(this, scope, map, map, kType, kGenericType, vType, vGenericType);
 		} else if (javaObject instanceof List list) {
-			return new NativeJavaList(this, scope, list, list);
+			Class<?> lType = null;
+			Type lGenericType = null;
+
+			if (staticType != null && genericType instanceof ParameterizedType pt) {
+				var types = pt.getActualTypeArguments();
+				var raw = types.length == 1 ? TypeUtils.getRawType(types[0]) : Object.class;
+
+				if (raw != null && raw != Object.class) {
+					lType = raw;
+					lGenericType = pt.getActualTypeArguments()[0];
+				}
+			}
+
+			return new NativeJavaList(this, scope, list, list, lType, lGenericType);
 		} else if (javaObject instanceof Set<?> set) {
-			return new NativeJavaList(this, scope, set, new JavaSetWrapper<>(set));
+			Class<?> lType = null;
+			Type lGenericType = null;
+
+			if (staticType != null && genericType instanceof ParameterizedType pt) {
+				var types = pt.getActualTypeArguments();
+				var raw = types.length == 1 ? TypeUtils.getRawType(types[0]) : Object.class;
+
+				if (raw != null && raw != Object.class) {
+					lType = raw;
+					lGenericType = pt.getActualTypeArguments()[0];
+				}
+			}
+
+			return new NativeJavaList(this, scope, set, new JavaSetWrapper<>(set), lType, lGenericType);
 		}
 
 		// TODO: Wrap Gson
@@ -1356,12 +1397,16 @@ public class Context {
 	}
 
 	public Object javaToJS(Object value, Scriptable scope) {
+		return javaToJS(value, scope, null, null);
+	}
+
+	public Object javaToJS(Object value, Scriptable scope, @Nullable Class<?> target, @Nullable Type genericTarget) {
 		if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Scriptable) {
 			return value;
 		} else if (value instanceof Character) {
 			return String.valueOf(((Character) value).charValue());
 		} else {
-			return wrap(scope, value, null, null);
+			return wrap(scope, value, target, genericTarget);
 		}
 	}
 
@@ -1496,6 +1541,10 @@ public class Context {
 		}
 
 		Object unwrappedValue = Wrapper.unwrapped(from);
+
+		if (unwrappedValue instanceof TypeWrapperFactory<?> f) {
+			return f.wrap(this, unwrappedValue, target, genericTarget);
+		}
 
 		TypeWrapperFactory<?> typeWrapper = typeWrappers == null ? null : typeWrappers.getWrapperFactory(unwrappedValue, target, genericTarget);
 
