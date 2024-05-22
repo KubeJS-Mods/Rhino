@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeInfo;
+
 import java.util.Iterator;
 
 /**
@@ -130,7 +132,7 @@ public final class NativeIterator extends IdScriptableObject {
 			Iterator<?> iterator = getJavaIterator(obj);
 			if (iterator != null) {
 				scope = getTopLevelScope(scope);
-				return cx.wrap(scope, new WrappedJavaIterator(cx, iterator, scope), WrappedJavaIterator.class);
+				return cx.wrap(scope, new WrappedJavaIterator(cx, iterator, scope), TypeInfo.of(WrappedJavaIterator.class));
 			}
 
 			// Otherwise, just call the runtime routine

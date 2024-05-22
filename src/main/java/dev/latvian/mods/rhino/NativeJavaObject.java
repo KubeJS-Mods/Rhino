@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 import dev.latvian.mods.rhino.util.Deletable;
 import dev.latvian.mods.rhino.util.JavaIteratorWrapper;
@@ -35,20 +36,20 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	 */
 	protected Scriptable parent;
 	protected transient Object javaObject;
-	protected transient Class<?> staticType;
+	protected transient TypeInfo typeInfo;
 	protected transient JavaMembers members;
 	protected transient Map<String, FieldAndMethods> fieldAndMethods;
-	protected transient Map<String, Object> customMembers;
+	protected transient Map<String, CustomMember> customMembers;
 	protected transient boolean isAdapter;
 
-	public NativeJavaObject(Scriptable scope, Object javaObject, Class<?> staticType, Context cx) {
-		this(scope, javaObject, staticType, false, cx);
+	public NativeJavaObject(Scriptable scope, Object javaObject, TypeInfo typeInfo, Context cx) {
+		this(scope, javaObject, typeInfo, false, cx);
 	}
 
-	public NativeJavaObject(Scriptable scope, Object javaObject, Class<?> staticType, boolean isAdapter, Context cx) {
+	public NativeJavaObject(Scriptable scope, Object javaObject, TypeInfo typeInfo, boolean isAdapter, Context cx) {
 		this.parent = scope;
 		this.javaObject = javaObject;
-		this.staticType = staticType;
+		this.typeInfo = typeInfo;
 		this.isAdapter = isAdapter;
 		initMembers(cx, scope);
 	}
@@ -58,31 +59,31 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 		if (javaObject != null) {
 			dynamicType = javaObject.getClass();
 		} else {
-			dynamicType = staticType;
+			dynamicType = typeInfo.asClass();
 		}
-		members = JavaMembers.lookupClass(cx, scope, dynamicType, staticType, isAdapter);
+		members = JavaMembers.lookupClass(cx, scope, dynamicType, typeInfo.asClass(), isAdapter);
 		fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false, cx);
 		customMembers = null;
 	}
 
-	protected void addCustomMember(String name, Object fm) {
+	public void addCustomMember(CustomMember member) {
 		if (customMembers == null) {
 			customMembers = new HashMap<>();
 		}
 
-		customMembers.put(name, fm);
+		customMembers.put(member.name(), member);
 	}
 
-	protected void addCustomFunction(String name, CustomFunction.Func func, Class<?>... argTypes) {
-		addCustomMember(name, new CustomFunction(name, func, argTypes));
+	protected void addCustomFunction(String name, TypeInfo returnType, CustomFunction.Func func, TypeInfo... argTypes) {
+		addCustomMember(new CustomMember(name, returnType, new CustomFunction(name, func, argTypes)));
 	}
 
-	protected void addCustomFunction(String name, CustomFunction.NoArgFunc func) {
-		addCustomFunction(name, func, CustomFunction.NO_ARGS);
+	protected void addCustomFunction(String name, TypeInfo returnType, CustomFunction.NoArgFunc func) {
+		addCustomFunction(name, returnType, func, TypeInfo.EMPTY_ARRAY);
 	}
 
-	public void addCustomProperty(String name, CustomProperty getter) {
-		addCustomMember(name, getter);
+	public void addCustomProperty(String name, TypeInfo type, CustomProperty getter) {
+		addCustomMember(new CustomMember(name, type, getter));
 	}
 
 	@Override
@@ -110,26 +111,16 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 		}
 
 		if (customMembers != null) {
-			Object result = customMembers.get(name);
+			var member = customMembers.get(name);
 
-			if (result != null) {
-				if (result instanceof CustomProperty) {
-					Object r = ((CustomProperty) result).get(cx);
+			if (member != null) {
+				var value = member.value();
 
-					if (r == null) {
-						return Undefined.INSTANCE;
-					}
-
-					Object r1 = cx.wrap(this, r, r.getClass());
-
-					if (r1 instanceof Scriptable) {
-						return ((Scriptable) r1).getDefaultValue(cx, null);
-					}
-
-					return r1;
+				if (value instanceof CustomProperty p) {
+					value = p.get(cx);
 				}
 
-				return result;
+				return cx.javaToJS(value, start, member.type());
 			}
 		}
 

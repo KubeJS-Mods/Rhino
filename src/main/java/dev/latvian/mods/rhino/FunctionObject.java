@@ -419,7 +419,7 @@ public class FunctionObject extends BaseFunction {
 			if (hasVoidReturn) {
 				result = Undefined.INSTANCE;
 			} else if (returnTypeTag == JAVA_UNSUPPORTED_TYPE) {
-				result = cx.wrap(scope, result);
+				result = cx.wrap(scope, result, member.returnType);
 			}
 			// XXX: the code assumes that if returnTypeTag == JAVA_OBJECT_TYPE
 			// then the Java method did a proper job of converting the

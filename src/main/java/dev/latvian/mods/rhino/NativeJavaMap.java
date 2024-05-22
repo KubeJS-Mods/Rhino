@@ -5,9 +5,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.Deletable;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,18 +15,14 @@ import java.util.Map;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class NativeJavaMap extends NativeJavaObject {
 	public final Map map;
-	public final Class<?> mapKeyType;
-	public final Type mapKeyGenericType;
-	public final Class<?> mapValueType;
-	public final Type mapValueGenericType;
+	public final TypeInfo mapKeyType;
+	public final TypeInfo mapValueType;
 
-	public NativeJavaMap(Context cx, Scriptable scope, Object jo, Map map, Class<?> mapKeyType, Type mapKeyGenericType, Class<?> mapValueType, Type mapValueGenericType) {
-		super(scope, jo, jo.getClass(), cx);
+	public NativeJavaMap(Context cx, Scriptable scope, Object jo, Map map, TypeInfo type) {
+		super(scope, jo, type, cx);
 		this.map = map;
-		this.mapKeyType = mapKeyType;
-		this.mapKeyGenericType = mapKeyGenericType;
-		this.mapValueType = mapValueType;
-		this.mapValueGenericType = mapValueGenericType;
+		this.mapKeyType = type.param(0);
+		this.mapValueType = type.param(1);
 	}
 
 	@Override
@@ -53,7 +49,7 @@ public class NativeJavaMap extends NativeJavaObject {
 	@Override
 	public Object get(Context cx, String name, Scriptable start) {
 		if (map.containsKey(name)) {
-			return cx.javaToJS(map.get(cx.jsToJava(name, mapKeyType, mapKeyGenericType)), start, mapValueType, mapValueGenericType);
+			return cx.javaToJS(map.get(cx.jsToJava(name, mapKeyType)), start, mapValueType);
 		}
 		return super.get(cx, name, start);
 	}
@@ -61,19 +57,19 @@ public class NativeJavaMap extends NativeJavaObject {
 	@Override
 	public Object get(Context cx, int index, Scriptable start) {
 		if (map.containsKey(index)) {
-			return cx.javaToJS(map.get(cx.jsToJava(index, mapKeyType, mapKeyGenericType)), start, mapValueType, mapValueGenericType);
+			return cx.javaToJS(map.get(cx.jsToJava(index, mapKeyType)), start, mapValueType);
 		}
 		return super.get(cx, index, start);
 	}
 
 	@Override
 	public void put(Context cx, String name, Scriptable start, Object value) {
-		map.put(name, cx.jsToJava(value, mapValueType, mapValueGenericType));
+		map.put(name, cx.jsToJava(value, mapValueType));
 	}
 
 	@Override
 	public void put(Context cx, int index, Scriptable start, Object value) {
-		map.put(index, cx.jsToJava(value, mapValueType, mapValueGenericType));
+		map.put(index, cx.jsToJava(value, mapValueType));
 	}
 
 	@Override
@@ -102,7 +98,7 @@ public class NativeJavaMap extends NativeJavaObject {
 	@Override
 	protected void initMembers(Context cx, Scriptable scope) {
 		super.initMembers(cx, scope);
-		addCustomFunction("hasOwnProperty", this::hasOwnProperty, String.class);
+		addCustomFunction("hasOwnProperty", TypeInfo.BOOLEAN, this::hasOwnProperty, TypeInfo.STRING);
 	}
 
 	private boolean hasOwnProperty(Context cx, Object[] args) {

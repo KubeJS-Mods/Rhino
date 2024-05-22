@@ -1,12 +1,13 @@
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 
 public class FieldAndMethods extends NativeJavaMethod {
 	public transient Field field;
+	public transient TypeInfo fieldType;
 	public transient Object javaObject;
 
 	FieldAndMethods(Scriptable scope, MemberBox[] methods, Field field, Context cx) {
@@ -22,16 +23,17 @@ public class FieldAndMethods extends NativeJavaMethod {
 			return this;
 		}
 		Object rval;
-		Class<?> type;
-		Type genericType;
 		try {
 			rval = field.get(javaObject);
-			type = field.getType();
-			genericType = field.getGenericType();
 		} catch (IllegalAccessException accEx) {
 			throw Context.reportRuntimeError1("msg.java.internal.private", field.getName(), cx);
 		}
-		rval = cx.wrap(this, rval, type, genericType);
+
+		if (fieldType == null) {
+			this.fieldType = TypeInfo.of(field.getGenericType());
+		}
+
+		rval = cx.wrap(this, rval, fieldType);
 		if (rval instanceof Scriptable) {
 			rval = ((Scriptable) rval).getDefaultValue(cx, hint);
 		}

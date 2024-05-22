@@ -6,9 +6,10 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeInfo;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -93,7 +94,7 @@ public class NativeJavaMethod extends BaseFunction {
 				}
 			}
 			for (int j = 0; j != alength; ++j) {
-				if (!cx.canConvert(args[j], member.argTypes[j], member.genericArgTypes[j])) {
+				if (!cx.canConvert(args[j], member.argTypeInfos[j])) {
 					if (debug) {
 						printDebug("Rejecting (args can't convert) ", member, args);
 					}
@@ -125,7 +126,7 @@ public class NativeJavaMethod extends BaseFunction {
 				}
 			}
 			for (int j = 0; j < alength; j++) {
-				if (!cx.canConvert(args[j], member.argTypes[j], member.genericArgTypes[j])) {
+				if (!cx.canConvert(args[j], member.argTypeInfos[j])) {
 					if (debug) {
 						printDebug("Rejecting (args can't convert) ", member, args);
 					}
@@ -154,7 +155,7 @@ public class NativeJavaMethod extends BaseFunction {
 						bestFitIndex = extraBestFits[j];
 					}
 					MemberBox bestFit = methodsOrCtors[bestFitIndex];
-					int preference = preferSignature(cx, args, member.argTypes, member.genericArgTypes, member.vararg, bestFit.argTypes, bestFit.genericArgTypes, bestFit.vararg);
+					int preference = preferSignature(cx, args, member.argTypeInfos, member.vararg, bestFit.argTypeInfos, bestFit.vararg);
 					if (preference == PREFERENCE_AMBIGUOUS) {
 						break;
 					} else if (preference == PREFERENCE_FIRST_ARG) {
@@ -254,25 +255,22 @@ public class NativeJavaMethod extends BaseFunction {
 	 * Returns one of PREFERENCE_EQUAL, PREFERENCE_FIRST_ARG,
 	 * PREFERENCE_SECOND_ARG, or PREFERENCE_AMBIGUOUS.
 	 */
-	private static int preferSignature(Context cx, Object[] args, Class<?>[] sig1, Type[] gsig1, boolean vararg1, Class<?>[] sig2, Type[] gsig2, boolean vararg2) {
+	private static int preferSignature(Context cx, Object[] args, TypeInfo[] sig1, boolean vararg1, TypeInfo[] sig2, boolean vararg2) {
 		int totalPreference = 0;
 		for (int j = 0; j < args.length; j++) {
-			Class<?> type1 = vararg1 && j >= sig1.length ? sig1[sig1.length - 1] : sig1[j];
-			Class<?> type2 = vararg2 && j >= sig2.length ? sig2[sig2.length - 1] : sig2[j];
+			var type1 = vararg1 && j >= sig1.length ? sig1[sig1.length - 1] : sig1[j];
+			var type2 = vararg2 && j >= sig2.length ? sig2[sig2.length - 1] : sig2[j];
 
-			if (type1 == type2) {
+			if (type1.equals(type2)) {
 				continue;
 			}
-
-			Type gType1 = vararg1 && j >= gsig1.length ? gsig1[gsig1.length - 1] : gsig1[j];
-			Type gType2 = vararg2 && j >= gsig2.length ? gsig2[gsig2.length - 1] : gsig2[j];
 
 			Object arg = args[j];
 
 			// Determine which of type1, type2 is easier to convert from arg.
 
-			int rank1 = cx.getConversionWeight(arg, type1, gType1);
-			int rank2 = cx.getConversionWeight(arg, type2, gType2);
+			int rank1 = cx.getConversionWeight(arg, type1);
+			int rank2 = cx.getConversionWeight(arg, type2);
 
 			int preference;
 			if (rank1 < rank2) {
@@ -282,9 +280,9 @@ public class NativeJavaMethod extends BaseFunction {
 			} else {
 				// Equal ranks
 				if (rank1 == Context.CONVERSION_NONTRIVIAL) {
-					if (type1.isAssignableFrom(type2)) {
+					if (type1.asClass().isAssignableFrom(type2.asClass())) {
 						preference = PREFERENCE_SECOND_ARG;
-					} else if (type2.isAssignableFrom(type1)) {
+					} else if (type2.asClass().isAssignableFrom(type1.asClass())) {
 						preference = PREFERENCE_FIRST_ARG;
 					} else {
 						preference = PREFERENCE_AMBIGUOUS;
@@ -386,14 +384,13 @@ public class NativeJavaMethod extends BaseFunction {
 		}
 
 		MemberBox meth = methods[index];
-		var argTypes = meth.argTypes;
-		var genericArgTypes = meth.genericArgTypes;
+		var argTypes = meth.argTypeInfos;
 
 		if (meth.vararg) {
 			// marshall the explicit parameters
 			Object[] newArgs = new Object[argTypes.length];
 			for (int i = 0; i < argTypes.length - 1; i++) {
-				newArgs[i] = cx.jsToJava(args[i], argTypes[i], genericArgTypes[i]);
+				newArgs[i] = cx.jsToJava(args[i], argTypes[i]);
 			}
 
 			Object varArgs;
@@ -402,12 +399,13 @@ public class NativeJavaMethod extends BaseFunction {
 			// is given and it is a Java or ECMA array or is null.
 			if (args.length == argTypes.length && (args[args.length - 1] == null || args[args.length - 1] instanceof NativeArray || args[args.length - 1] instanceof NativeJavaArray)) {
 				// convert the ECMA array into a native array
-				varArgs = cx.jsToJava(args[args.length - 1], argTypes[argTypes.length - 1], genericArgTypes[argTypes.length - 1]);
+				varArgs = cx.jsToJava(args[args.length - 1], argTypes[argTypes.length - 1]);
 			} else {
 				// marshall the variable parameters
-				Class<?> componentType = argTypes[argTypes.length - 1].getComponentType();
-				varArgs = Array.newInstance(componentType, args.length - argTypes.length + 1);
-				for (int i = 0; i < Array.getLength(varArgs); i++) {
+				var componentType = argTypes[argTypes.length - 1].componentType();
+				varArgs = Array.newInstance(componentType.asClass(), args.length - argTypes.length + 1);
+				int len = Array.getLength(varArgs);
+				for (int i = 0; i < len; i++) {
 					Object value = cx.jsToJava(args[argTypes.length - 1 + i], componentType);
 					Array.set(varArgs, i, value);
 				}
@@ -434,7 +432,7 @@ public class NativeJavaMethod extends BaseFunction {
 				}
 				 */
 
-				coerced = cx.jsToJava(coerced, argTypes[i], genericArgTypes[i]);
+				coerced = cx.jsToJava(coerced, argTypes[i]);
 
 				if (coerced != arg) {
 					if (origArgs == args) {
@@ -468,20 +466,20 @@ public class NativeJavaMethod extends BaseFunction {
 		}
 
 		Object retval = meth.invoke(javaObject, args, cx, scope);
-		Class<?> staticType = meth.getReturnType();
+		var staticType = meth.returnType;
 
 		if (debug) {
 			Class<?> actualType = (retval == null) ? null : retval.getClass();
 			System.err.println(" ----- Returned " + retval + " actual = " + actualType + " expect = " + staticType);
 		}
 
-		Object wrapped = cx.wrap(scope, retval, staticType, meth.getGenericReturnType());
+		Object wrapped = cx.wrap(scope, retval, staticType);
 		if (debug) {
 			Class<?> actualType = (wrapped == null) ? null : wrapped.getClass();
 			System.err.println(" ----- Wrapped as " + wrapped + " class = " + actualType);
 		}
 
-		if (wrapped == null && staticType == Void.TYPE) {
+		if (wrapped == null && staticType == TypeInfo.VOID) {
 			wrapped = Undefined.INSTANCE;
 		}
 		return wrapped;

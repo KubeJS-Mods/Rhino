@@ -6,10 +6,10 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Type;
 
 /**
  * This class reflects Java arrays into the JavaScript environment.
@@ -22,15 +22,13 @@ import java.lang.reflect.Type;
 public class NativeJavaArray extends NativeJavaObject implements SymbolScriptable {
 	Object array;
 	int length;
-	Class<?> componentType;
-	Type genericComponentType;
+	TypeInfo componentType;
 
-	public NativeJavaArray(Scriptable scope, Object array, Class<?> componentType, Type genericComponentType, Context cx) {
-		super(scope, null, ScriptRuntime.ObjectClass, cx);
+	public NativeJavaArray(Scriptable scope, Object array, TypeInfo type, Context cx) {
+		super(scope, null, type, cx);
 		this.array = array;
 		this.length = Array.getLength(array);
-		this.componentType = componentType;
-		this.genericComponentType = genericComponentType;
+		this.componentType = type.componentType();
 	}
 
 	@Override
@@ -74,7 +72,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	public Object get(Context cx, int index, Scriptable start) {
 		if (0 <= index && index < length) {
 			Object obj = Array.get(array, index);
-			return cx.wrap(this, obj, componentType, genericComponentType);
+			return cx.wrap(this, obj, componentType);
 		}
 		return Undefined.INSTANCE;
 	}
@@ -98,7 +96,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 	@Override
 	public void put(Context cx, int index, Scriptable start, Object value) {
 		if (0 <= index && index < length) {
-			Array.set(array, index, cx.jsToJava(value, componentType, genericComponentType));
+			Array.set(array, index, cx.jsToJava(value, componentType));
 		} else {
 			throw Context.reportRuntimeError2("msg.java.array.index.out.of.bounds", String.valueOf(index), String.valueOf(length - 1), cx);
 		}
@@ -139,7 +137,7 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 			return false;
 		}
 		Object instance = ((Wrapper) value).unwrap();
-		return componentType.isInstance(instance);
+		return componentType.asClass().isInstance(instance);
 	}
 
 	@Override

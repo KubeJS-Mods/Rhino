@@ -1,23 +1,16 @@
 package dev.latvian.mods.rhino;
 
-import java.lang.reflect.Type;
+import dev.latvian.mods.rhino.type.TypeInfo;
 
 public class CustomFunction extends BaseFunction {
-	public static final Class<?>[] NO_ARGS = new Class<?>[0];
 	private final String functionName;
 	private final Func func;
-	private final Class<?>[] argTypes;
-	private final Type[] genericArgTypes;
+	private final TypeInfo[] argTypes;
 
-	public CustomFunction(String functionName, Func func, Class<?>[] argTypes, Type[] genericArgTypes) {
+	public CustomFunction(String functionName, Func func, TypeInfo[] argTypes) {
 		this.functionName = functionName;
 		this.func = func;
-		this.argTypes = argTypes;
-		this.genericArgTypes = genericArgTypes == null || genericArgTypes.length == 0 || genericArgTypes.length != argTypes.length ? null : genericArgTypes;
-	}
-
-	public CustomFunction(String functionName, Func func, Class<?>[] argTypes) {
-		this(functionName, func, argTypes, null);
+		this.argTypes = argTypes.length == 0 ? TypeInfo.EMPTY_ARRAY : argTypes;
 	}
 
 	@Override
@@ -31,7 +24,7 @@ public class CustomFunction extends BaseFunction {
 		Object[] origArgs = args;
 		for (int i = 0; i < args.length; i++) {
 			Object arg = args[i];
-			Object coerced = cx.jsToJava(arg, argTypes[i], genericArgTypes == null ? argTypes[i] : genericArgTypes[i]);
+			Object coerced = cx.jsToJava(arg, argTypes[i]);
 
 			if (coerced != arg) {
 				if (origArgs == args) {
@@ -41,18 +34,7 @@ public class CustomFunction extends BaseFunction {
 			}
 		}
 
-		Object retval = func.call(cx, args);
-
-		if (retval == null) {
-			return Undefined.INSTANCE;
-		}
-
-		Object wrapped = cx.wrap(scope, retval, retval.getClass());
-
-		if (wrapped == null) {
-			wrapped = Undefined.INSTANCE;
-		}
-		return wrapped;
+		return func.call(cx, args);
 	}
 
 	@FunctionalInterface

@@ -1,8 +1,7 @@
 package dev.latvian.mods.rhino.util.wrap;
 
 import dev.latvian.mods.rhino.Context;
-
-import java.lang.reflect.Type;
+import dev.latvian.mods.rhino.type.TypeInfo;
 
 /**
  * @author LatvianModder
@@ -11,7 +10,7 @@ import java.lang.reflect.Type;
 public interface DirectTypeWrapperFactory<T> extends TypeWrapperFactory<T> {
 	T wrap(Object from);
 
-	default T wrap(Context cx, Object from, Class<?> target, Type genericTarget) {
+	default T wrap(Context cx, Object from, TypeInfo target) {
 		return wrap(from);
 	}
 }

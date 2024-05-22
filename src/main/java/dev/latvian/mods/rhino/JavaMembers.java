@@ -6,6 +6,7 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.ClassVisibilityContext;
 import dev.latvian.mods.rhino.util.HideFromJS;
 import dev.latvian.mods.rhino.util.RemapForJS;
@@ -15,7 +16,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -288,28 +288,25 @@ public class JavaMembers {
 			return member;
 		}
 		Object rval;
-		Class<?> type;
-		Type genericType;
+		TypeInfo type;
 		try {
 			if (member instanceof BeanProperty bp) {
 				if (bp.getter == null) {
 					return Scriptable.NOT_FOUND;
 				}
 				rval = bp.getter.invoke(javaObject, ScriptRuntime.EMPTY_OBJECTS, cx, scope);
-				type = bp.getter.getReturnType();
-				genericType = bp.getter.getGenericReturnType();
+				type = TypeInfo.of(bp.getter.getGenericReturnType());
 			} else {
 				Field field = (Field) member;
 				rval = field.get(isStatic ? null : javaObject);
-				type = field.getType();
-				genericType = field.getGenericType();
+				type = TypeInfo.of(field.getGenericType());
 			}
 		} catch (Exception ex) {
 			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		}
 		// Need to wrap the object before we return it.
 		scope = ScriptableObject.getTopLevelScope(scope);
-		return cx.wrap(scope, rval, type, genericType);
+		return cx.wrap(scope, rval, type);
 	}
 
 	public void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic, Context cx) {
@@ -336,7 +333,7 @@ public class JavaMembers {
 			// main setter. Otherwise, let the NativeJavaMethod decide which
 			// setter to use:
 			if (bp.setters == null || value == null) {
-				Object[] args = {cx.jsToJava(value, bp.setter.argTypes[0], bp.setter.genericArgTypes[0])};
+				Object[] args = {cx.jsToJava(value, bp.setter.argTypeInfos[0])};
 				try {
 					bp.setter.invoke(javaObject, args, cx, scope);
 				} catch (Exception ex) {
@@ -358,7 +355,8 @@ public class JavaMembers {
 				throw Context.throwAsScriptRuntimeEx(new IllegalAccessException("Can't modify final field " + field.getName()), cx);
 			}
 
-			Object javaValue = cx.jsToJava(value, field.getType(), field.getGenericType());
+			// This definitely could use some cache
+			Object javaValue = cx.jsToJava(value, TypeInfo.of(field.getGenericType()));
 			try {
 				field.set(javaObject, javaValue);
 			} catch (IllegalAccessException accessEx) {

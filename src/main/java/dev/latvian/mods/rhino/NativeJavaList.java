@@ -5,10 +5,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.Deletable;
-import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,15 +18,15 @@ import java.util.function.Predicate;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class NativeJavaList extends NativeJavaObject {
-	public final List list;
-	public final Class<?> listType;
-	public final Type listGenericType;
+	private static final TypeInfo REDUCE_FUNC_ARG = TypeInfo.of(BinaryOperator.class);
 
-	public NativeJavaList(Context cx, Scriptable scope, Object jo, List list, @Nullable Class<?> listType, @Nullable Type listGenericType) {
-		super(scope, jo, jo.getClass(), cx);
+	public final List list;
+	public final TypeInfo listType;
+
+	public NativeJavaList(Context cx, Scriptable scope, Object jo, List list, TypeInfo type) {
+		super(scope, jo, type, cx);
 		this.list = list;
-		this.listType = listType;
-		this.listGenericType = listGenericType;
+		this.listType = type.param(0);
 	}
 
 	@Override
@@ -54,7 +53,7 @@ public class NativeJavaList extends NativeJavaObject {
 	@Override
 	public Object get(Context cx, int index, Scriptable start) {
 		if (isWithValidIndex(index)) {
-			return cx.javaToJS(list.get(index), start, listType, listGenericType);
+			return cx.javaToJS(list.get(index), start, listType);
 		}
 
 		return Undefined.INSTANCE;
@@ -71,7 +70,7 @@ public class NativeJavaList extends NativeJavaObject {
 	@Override
 	public void put(Context cx, int index, Scriptable start, Object value) {
 		if (isWithValidIndex(index)) {
-			list.set(index, cx.jsToJava(value, listType, listGenericType));
+			list.set(index, cx.jsToJava(value, listType));
 			return;
 		}
 		super.put(cx, index, start, value);
@@ -102,26 +101,28 @@ public class NativeJavaList extends NativeJavaObject {
 	@Override
 	protected void initMembers(Context cx, Scriptable scope) {
 		super.initMembers(cx, scope);
-		addCustomProperty("length", this::getLength);
-		addCustomFunction("push", this::push, Object.class);
-		addCustomFunction("pop", this::pop);
-		addCustomFunction("shift", this::shift);
-		addCustomFunction("unshift", this::unshift, Object.class);
-		addCustomFunction("concat", this::concat, List.class);
-		addCustomFunction("join", this::join, String.class);
-		addCustomFunction("reverse", this::reverse);
-		addCustomFunction("slice", this::slice, Object.class);
-		addCustomFunction("splice", this::splice, Object.class);
-		addCustomFunction("every", this::every, Predicate.class);
-		addCustomFunction("some", this::some, Predicate.class);
-		addCustomFunction("filter", this::filter, Predicate.class);
-		addCustomFunction("map", this::map, Function.class);
-		addCustomFunction("reduce", this::reduce, BinaryOperator.class);
-		addCustomFunction("reduceRight", this::reduceRight, BinaryOperator.class);
-		addCustomFunction("find", this::find, Predicate.class);
-		addCustomFunction("findIndex", this::findIndex, Predicate.class);
-		addCustomFunction("findLast", this::findLast, Predicate.class);
-		addCustomFunction("findLastIndex", this::findLastIndex, Predicate.class);
+		var reduceFuncArg = REDUCE_FUNC_ARG.withParams(listType);
+
+		addCustomProperty("length", TypeInfo.INT, this::getLength);
+		addCustomFunction("push", TypeInfo.INT, this::push, TypeInfo.OBJECT);
+		addCustomFunction("pop", listType, this::pop);
+		addCustomFunction("shift", listType, this::shift);
+		addCustomFunction("unshift", TypeInfo.INT, this::unshift, TypeInfo.OBJECT);
+		addCustomFunction("concat", typeInfo, this::concat, TypeInfo.RAW_LIST);
+		addCustomFunction("join", TypeInfo.STRING, this::join, TypeInfo.STRING);
+		addCustomFunction("reverse", TypeInfo.NONE, this::reverse);
+		addCustomFunction("slice", TypeInfo.NONE, this::slice, TypeInfo.OBJECT);
+		addCustomFunction("splice", TypeInfo.NONE, this::splice, TypeInfo.OBJECT);
+		addCustomFunction("every", TypeInfo.BOOLEAN, this::every, TypeInfo.RAW_PREDICATE);
+		addCustomFunction("some", TypeInfo.BOOLEAN, this::some, TypeInfo.RAW_PREDICATE);
+		addCustomFunction("filter", typeInfo, this::filter, TypeInfo.RAW_PREDICATE);
+		addCustomFunction("map", TypeInfo.RAW_LIST, this::map, TypeInfo.RAW_FUNCTION);
+		addCustomFunction("reduce", listType, this::reduce, reduceFuncArg);
+		addCustomFunction("reduceRight", listType, this::reduceRight, reduceFuncArg);
+		addCustomFunction("find", listType, this::find, TypeInfo.RAW_PREDICATE);
+		addCustomFunction("findIndex", TypeInfo.NONE, this::findIndex, TypeInfo.RAW_PREDICATE);
+		addCustomFunction("findLast", listType, this::findLast, TypeInfo.RAW_PREDICATE);
+		addCustomFunction("findLastIndex", TypeInfo.NONE, this::findLastIndex, TypeInfo.RAW_PREDICATE);
 	}
 
 	private int getLength(Context cx) {
@@ -130,12 +131,12 @@ public class NativeJavaList extends NativeJavaObject {
 
 	private int push(Context cx, Object[] args) {
 		if (args.length == 1) {
-			list.add(cx.jsToJava(args[0], listType, listGenericType));
+			list.add(cx.jsToJava(args[0], listType));
 		} else if (args.length > 1) {
 			Object[] args1 = new Object[args.length];
 
 			for (int i = 0; i < args.length; i++) {
-				args1[i] = cx.jsToJava(args[i], listType, listGenericType);
+				args1[i] = cx.jsToJava(args[i], listType);
 			}
 
 			list.addAll(Arrays.asList(args1));
@@ -162,7 +163,7 @@ public class NativeJavaList extends NativeJavaObject {
 
 	private int unshift(Context cx, Object[] args) {
 		for (int i = args.length - 1; i >= 0; i--) {
-			list.add(0, cx.jsToJava(args[i], listType, listGenericType));
+			list.add(0, cx.jsToJava(args[i], listType));
 		}
 
 		return list.size();
@@ -172,7 +173,7 @@ public class NativeJavaList extends NativeJavaObject {
 		List<Object> list1 = new ArrayList<>(list);
 
 		if (args.length > 0 && args[0] instanceof List<?>) {
-			list1.addAll((List<?>) args[0]);
+			list1.addAll((List<?>) cx.jsToJava(args[0], typeInfo));
 		}
 
 		return list1;

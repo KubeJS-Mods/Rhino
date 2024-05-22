@@ -3,9 +3,9 @@ package dev.latvian.mods.rhino.util;
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.EvaluatorException;
 import dev.latvian.mods.rhino.NativeArray;
+import dev.latvian.mods.rhino.type.TypeInfo;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -37,13 +37,13 @@ public interface ArrayValueProvider {
 
 	Object getErrorSource(Context cx);
 
-	default Object createArray(Context cx, Class<?> target, Type genericTarget) {
+	default Object createArray(Context cx, TypeInfo target) {
 		int len = getLength(cx);
-		var arr = Array.newInstance(target, len);
+		var arr = target.newArray(len);
 
 		for (int i = 0; i < len; i++) {
 			try {
-				Array.set(arr, i, cx.jsToJava(getArrayValue(cx, i), target, genericTarget));
+				Array.set(arr, i, cx.jsToJava(getArrayValue(cx, i), target));
 			} catch (EvaluatorException ee) {
 				return cx.reportConversionError(getErrorSource(cx), target);
 			}
@@ -52,14 +52,14 @@ public interface ArrayValueProvider {
 		return arr;
 	}
 
-	default Object createList(Context cx, Class<?> target, Type genericTarget) {
+	default Object createList(Context cx, TypeInfo target) {
 		int len = getLength(cx);
 
 		if (len == 0) {
 			return List.of();
 		} else if (len == 1) {
 			try {
-				return List.of(cx.jsToJava(getArrayValue(cx, 0), target, genericTarget));
+				return List.of(cx.jsToJava(getArrayValue(cx, 0), target));
 			} catch (EvaluatorException ee) {
 				return cx.reportConversionError(getErrorSource(cx), target);
 			}
@@ -69,7 +69,7 @@ public interface ArrayValueProvider {
 
 		for (int i = 0; i < len; i++) {
 			try {
-				list.add(cx.jsToJava(getArrayValue(cx, i), target, genericTarget));
+				list.add(cx.jsToJava(getArrayValue(cx, i), target));
 			} catch (EvaluatorException ee) {
 				return cx.reportConversionError(getErrorSource(cx), target);
 			}
@@ -78,14 +78,14 @@ public interface ArrayValueProvider {
 		return list;
 	}
 
-	default Object createSet(Context cx, Class<?> target, Type genericTarget) {
+	default Object createSet(Context cx, TypeInfo target) {
 		int len = getLength(cx);
 
 		if (len == 0) {
 			return Set.of();
 		} else if (len == 1) {
 			try {
-				return Set.of(cx.jsToJava(getArrayValue(cx, 0), target, genericTarget));
+				return Set.of(cx.jsToJava(getArrayValue(cx, 0), target));
 			} catch (EvaluatorException ee) {
 				return cx.reportConversionError(getErrorSource(cx), target);
 			}
@@ -95,7 +95,7 @@ public interface ArrayValueProvider {
 
 		for (int i = 0; i < len; i++) {
 			try {
-				set.add(cx.jsToJava(getArrayValue(cx, i), target, genericTarget));
+				set.add(cx.jsToJava(getArrayValue(cx, i), target));
 			} catch (EvaluatorException ee) {
 				return cx.reportConversionError(getErrorSource(cx), target);
 			}

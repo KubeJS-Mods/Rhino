@@ -1,9 +1,9 @@
 package dev.latvian.mods.rhino.util;
 
 import dev.latvian.mods.rhino.Context;
+import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -60,7 +60,7 @@ public class EnumTypeWrapper<T> implements TypeWrapperFactory<T> {
 	}
 
 	@Override
-	public T wrap(Context cx, Object from, Class<?> target, Type genericTarget) {
+	public T wrap(Context cx, Object from, TypeInfo target) {
 		if (from instanceof CharSequence) {
 			String s = from.toString().toLowerCase();
 

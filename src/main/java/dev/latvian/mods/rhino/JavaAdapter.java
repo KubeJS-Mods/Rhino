@@ -8,6 +8,7 @@ package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.classfile.ByteCode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter;
+import dev.latvian.mods.rhino.type.TypeInfo;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -85,17 +86,13 @@ public final class JavaAdapter implements IdFunctionCall {
 		ctor.exportAsScopeProperty(cx);
 	}
 
-	public static Object convertResult(Context cx, Object result, Class<?> c) {
-		if (result == Undefined.INSTANCE && (c != ScriptRuntime.ObjectClass && c != ScriptRuntime.StringClass)) {
+	public static Object convertResult(Context cx, Object result, TypeInfo c) {
+		if (result == Undefined.INSTANCE && (c != TypeInfo.OBJECT && c != TypeInfo.STRING)) {
 			// Avoid an error for an undefined value; return null instead.
 			return null;
 		}
 
-		if (c == null) {
-			return result;
-		}
-
-		return cx.jsToJava(result, c);
+		return c == null ? result : cx.jsToJava(result, c);
 	}
 
 	public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter, Context cx) {

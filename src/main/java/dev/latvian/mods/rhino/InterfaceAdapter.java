@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeInfo;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -101,14 +103,14 @@ public class InterfaceAdapter {
 				if (resultType == Void.TYPE) {
 					return null;
 				}
-				return cx.jsToJava(null, resultType, method.getGenericReturnType());
+				return cx.jsToJava(null, TypeInfo.of(method.getGenericReturnType()));
 			}
 			if (!(value instanceof Callable)) {
 				throw Context.reportRuntimeError1("msg.not.function.interface", methodName, cx);
 			}
 			function = (Callable) value;
 		}
-		if (args == null) {
+		if (args == null || args.length == 0) {
 			args = ScriptRuntime.EMPTY_OBJECTS;
 		} else {
 			for (int i = 0, N = args.length; i != N; ++i) {
@@ -119,14 +121,14 @@ public class InterfaceAdapter {
 				}
 			}
 		}
-		Scriptable thisObj = cx.wrapAsJavaObject(topScope, thisObject, null, null);
+		Scriptable thisObj = cx.wrapAsJavaObject(topScope, thisObject, TypeInfo.NONE);
 
 		Object result = cx.callSync(function, topScope, thisObj, args);
-		Class<?> javaResultType = method.getReturnType();
+		var javaResultType = method.getGenericReturnType();
 		if (javaResultType == Void.TYPE) {
 			result = null;
 		} else {
-			result = cx.jsToJava(result, javaResultType, method.getGenericReturnType());
+			result = cx.jsToJava(result, TypeInfo.of(javaResultType));
 		}
 		return result;
 	}

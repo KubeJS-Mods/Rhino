@@ -1,10 +1,10 @@
 package dev.latvian.mods.rhino.util.wrap;
 
-import java.lang.reflect.Type;
+import dev.latvian.mods.rhino.type.TypeInfo;
 
 @FunctionalInterface
 public interface TypeWrapperValidator {
-	TypeWrapperValidator ALWAYS_VALID = (from, target, genericTarget) -> true;
+	TypeWrapperValidator ALWAYS_VALID = (from, target) -> true;
 
-	boolean isValid(Object from, Class<?> target, Type genericTarget);
+	boolean isValid(Object from, TypeInfo target);
 }

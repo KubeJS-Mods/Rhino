@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeInfo;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.InvocationTargetException;
@@ -62,8 +64,9 @@ public final class MemberBox {
 		return null;
 	}
 
-	transient Class<?>[] argTypes;
-	transient Type[] genericArgTypes;
+	transient Class[] argTypes;
+	transient TypeInfo[] argTypeInfos;
+	transient TypeInfo returnType;
 	transient Object delegateTo;
 	transient boolean vararg;
 	public transient Executable executable;
@@ -72,7 +75,8 @@ public final class MemberBox {
 	MemberBox(Executable executable) {
 		this.executable = executable;
 		this.argTypes = executable.getParameterTypes();
-		this.genericArgTypes = executable.getGenericParameterTypes();
+		this.argTypeInfos = TypeInfo.ofArray(executable.getGenericParameterTypes());
+		this.returnType = executable instanceof Method m ? TypeInfo.of(m.getGenericReturnType()) : executable instanceof Constructor<?> c ? TypeInfo.of(c.getDeclaringClass()) : TypeInfo.NONE;
 		this.vararg = executable.isVarArgs();
 	}
 
@@ -82,7 +86,8 @@ public final class MemberBox {
 		if (executable != null) {
 			this.executable = executable;
 			this.argTypes = executable.getParameterTypes();
-			this.genericArgTypes = executable.getGenericParameterTypes();
+			this.argTypeInfos = TypeInfo.ofArray(executable.getGenericParameterTypes());
+			this.returnType = executable instanceof Method m ? TypeInfo.of(m.getGenericReturnType()) : executable instanceof Constructor<?> c ? TypeInfo.of(c.getDeclaringClass()) : TypeInfo.NONE;
 			this.vararg = executable.isVarArgs();
 		} else {
 			this.wrappedExecutable = wrappedExecutable;

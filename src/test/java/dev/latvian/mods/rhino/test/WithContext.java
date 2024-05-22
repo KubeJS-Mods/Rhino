@@ -1,20 +1,16 @@
 package dev.latvian.mods.rhino.test;
 
 import dev.latvian.mods.rhino.Context;
-import dev.latvian.mods.rhino.type.TypeUtils;
+import dev.latvian.mods.rhino.type.TypeInfo;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Objects;
 
 public record WithContext<T>(Context cx, T value) {
-	public static WithContext<?> of(Context cx, Object from, Class<?> target, Type genericTarget) {
-		if (genericTarget instanceof ParameterizedType parameterizedType) {
-			var types = parameterizedType.getActualTypeArguments();
+	public static WithContext<?> of(Context cx, Object from, TypeInfo target) {
+		var type = target.param(0);
 
-			if (types.length == 1) {
-				return new WithContext<>(cx, cx.jsToJava(from, TypeUtils.getRawType(types[0]), types[0]));
-			}
+		if (type.convert()) {
+			return new WithContext<>(cx, cx.jsToJava(from, type));
 		}
 
 		return new WithContext<>(cx, from);

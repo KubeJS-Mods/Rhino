@@ -931,42 +931,35 @@ public class ScriptRuntime {
 	public static Scriptable toObject(Context cx, Scriptable scope, Object val) {
 		if (val == null) {
 			throw typeError0(cx, "msg.null.to.object");
-		}
-		if (Undefined.isUndefined(val)) {
+		} else if (Undefined.isUndefined(val)) {
 			throw typeError0(cx, "msg.undef.to.object");
-		}
-
-		if (isSymbol(val)) {
+		} else if (isSymbol(val)) {
 			NativeSymbol result = new NativeSymbol((NativeSymbol) val);
 			setBuiltinProtoAndParent(cx, scope, result, TopLevel.Builtins.Symbol);
 			return result;
-		}
-		if (val instanceof Scriptable) {
+		} else if (val instanceof Scriptable) {
 			return (Scriptable) val;
-		}
-		if (val instanceof CharSequence) {
+		} else if (val instanceof CharSequence) {
 			// FIXME we want to avoid toString() here, especially for concat()
 			NativeString result = new NativeString((CharSequence) val);
 			setBuiltinProtoAndParent(cx, scope, result, TopLevel.Builtins.String);
 			return result;
-		}
-		if (val instanceof Number) {
+		} else if (val instanceof Number) {
 			NativeNumber result = new NativeNumber(cx, ((Number) val).doubleValue());
 			setBuiltinProtoAndParent(cx, scope, result, TopLevel.Builtins.Number);
 			return result;
-		}
-		if (val instanceof Boolean) {
+		} else if (val instanceof Boolean) {
 			NativeBoolean result = new NativeBoolean((Boolean) val);
 			setBuiltinProtoAndParent(cx, scope, result, TopLevel.Builtins.Boolean);
 			return result;
+		} else {
+			// Extension: Wrap as a LiveConnect object.
+			Object wrapped = cx.wrap(scope, val);
+			if (wrapped instanceof Scriptable) {
+				return (Scriptable) wrapped;
+			}
+			throw errorWithClassName("msg.invalid.type", val, cx);
 		}
-
-		// Extension: Wrap as a LiveConnect object.
-		Object wrapped = cx.wrap(scope, val);
-		if (wrapped instanceof Scriptable) {
-			return (Scriptable) wrapped;
-		}
-		throw errorWithClassName("msg.invalid.type", val, cx);
 	}
 
 	public static Scriptable newObject(Context cx, Scriptable scope, String constructorName, Object[] args) {

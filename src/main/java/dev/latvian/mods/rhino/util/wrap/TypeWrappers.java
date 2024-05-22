@@ -1,9 +1,9 @@
 package dev.latvian.mods.rhino.util.wrap;
 
+import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.EnumTypeWrapper;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
@@ -37,36 +37,38 @@ public class TypeWrappers {
 		register(target, TypeWrapperValidator.ALWAYS_VALID, factory);
 	}
 
-	public boolean hasWrapper(Object from, Class<?> target, Type genericTarget) {
-		if (target.isEnum() || target.isRecord()) {
+	public boolean hasWrapper(Object from, TypeInfo target) {
+		var cl = target.asClass();
+
+		if (cl == null) {
+			return false;
+		} else if (cl.isEnum() || cl.isRecord()) {
 			return true;
 		}
 
-		var wrapper = wrappers.get(target);
-		return wrapper != null && wrapper.validator().isValid(from, target, genericTarget);
+		var wrapper = wrappers.get(cl);
+		return wrapper != null && wrapper.validator().isValid(from, target);
 	}
 
 	@Nullable
-	public TypeWrapperFactory<?> getWrapperFactory(@Nullable Object from, Class<?> target, Type genericTarget) {
-		if (target == Object.class) {
+	public TypeWrapperFactory<?> getWrapperFactory(@Nullable Object from, TypeInfo target) {
+		if (target == TypeInfo.OBJECT) {
 			return null;
 		}
 
-		var wrapper = wrappers.get(target);
+		var cl = target.asClass();
 
-		if (wrapper != null && wrapper.validator().isValid(from, target, genericTarget)) {
+		var wrapper = wrappers.get(cl);
+
+		if (wrapper != null && wrapper.validator().isValid(from, target)) {
 			return wrapper.factory();
-		} else if (target.isEnum()) {
-			return EnumTypeWrapper.get(target);
-		} else if (target.isRecord()) {
-
+		} else if (cl.isEnum()) {
+			return EnumTypeWrapper.get(cl);
+		} else if (cl.isRecord()) {
+			// FIXME: record type wrapper
+			return null;
+		} else {
+			return null;
 		}
-
-		//else if (from != null && target.isArray() && !from.getClass().isArray() && target.getComponentType() == from.getClass() && !target.isPrimitive())
-		//{
-		//	return TypeWrapperFactory.OBJECT_TO_ARRAY;
-		//}
-
-		return null;
 	}
 }
