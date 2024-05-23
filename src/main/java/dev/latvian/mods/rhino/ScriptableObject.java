@@ -13,7 +13,7 @@ import dev.latvian.mods.rhino.annotations.JSFunction;
 import dev.latvian.mods.rhino.annotations.JSGetter;
 import dev.latvian.mods.rhino.annotations.JSSetter;
 import dev.latvian.mods.rhino.annotations.JSStaticFunction;
-import dev.latvian.mods.rhino.mod.util.WrappedReflectionMethod;
+import dev.latvian.mods.rhino.util.WrappedReflectionMethod;
 import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 import dev.latvian.mods.rhino.util.Deletable;
 

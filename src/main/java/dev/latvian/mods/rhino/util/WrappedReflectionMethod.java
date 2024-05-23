@@ -1,4 +1,4 @@
-package dev.latvian.mods.rhino.mod.util;
+package dev.latvian.mods.rhino.util;
 
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.Scriptable;

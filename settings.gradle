@@ -7,4 +7,4 @@ pluginManagement {
 	}
 }
 
-rootProject.name = 'Rhino-1.20.5'
+rootProject.name = 'Rhino-1.20.6'

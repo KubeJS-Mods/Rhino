@@ -7,7 +7,7 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.ast.FunctionNode;
-import dev.latvian.mods.rhino.mod.util.ToStringJS;
+import dev.latvian.mods.rhino.util.ToStringJS;
 import dev.latvian.mods.rhino.regexp.NativeRegExp;
 import dev.latvian.mods.rhino.regexp.RegExp;
 import dev.latvian.mods.rhino.util.ClassVisibilityContext;
