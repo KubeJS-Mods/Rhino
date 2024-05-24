@@ -15,37 +15,37 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public sealed interface TypeInfo permits NoTypeInfo, ClassTypeInfo, ArrayTypeInfo, ParameterizedTypeInfo {
+public interface TypeInfo {
 	TypeInfo NONE = new NoTypeInfo();
 
 	TypeInfo[] EMPTY_ARRAY = new TypeInfo[0];
 
-	TypeInfo OBJECT = new ClassTypeInfo(Object.class);
+	TypeInfo OBJECT = new BasicClassTypeInfo(Object.class);
 	TypeInfo OBJECT_ARRAY = OBJECT.asArray();
-	TypeInfo VOID = new ClassTypeInfo(Void.class);
-	TypeInfo STRING = new ClassTypeInfo(String.class);
+	TypeInfo VOID = new PrimitiveClassTypeInfo(Void.class);
+	TypeInfo STRING = new BasicClassTypeInfo(String.class);
 	TypeInfo STRING_ARRAY = STRING.asArray();
-	TypeInfo BOOLEAN = new ClassTypeInfo(Boolean.class, true);
-	TypeInfo NUMBER = new ClassTypeInfo(Number.class);
-	TypeInfo BYTE = new ClassTypeInfo(Byte.class, true);
-	TypeInfo SHORT = new ClassTypeInfo(Short.class, true);
-	TypeInfo INT = new ClassTypeInfo(Integer.class, true);
-	TypeInfo LONG = new ClassTypeInfo(Long.class, true);
-	TypeInfo FLOAT = new ClassTypeInfo(Float.class, true);
-	TypeInfo DOUBLE = new ClassTypeInfo(Double.class, true);
-	TypeInfo CHARACTER = new ClassTypeInfo(Character.class, true);
-	TypeInfo CLASS = new ClassTypeInfo(Class.class);
-	TypeInfo DATE = new ClassTypeInfo(Date.class);
+	TypeInfo BOOLEAN = new PrimitiveClassTypeInfo(Boolean.class);
+	TypeInfo NUMBER = new BasicClassTypeInfo(Number.class);
+	TypeInfo BYTE = new PrimitiveClassTypeInfo(Byte.class);
+	TypeInfo SHORT = new PrimitiveClassTypeInfo(Short.class);
+	TypeInfo INT = new PrimitiveClassTypeInfo(Integer.class);
+	TypeInfo LONG = new PrimitiveClassTypeInfo(Long.class);
+	TypeInfo FLOAT = new PrimitiveClassTypeInfo(Float.class);
+	TypeInfo DOUBLE = new PrimitiveClassTypeInfo(Double.class);
+	TypeInfo CHARACTER = new PrimitiveClassTypeInfo(Character.class);
+	TypeInfo CLASS = new BasicClassTypeInfo(Class.class);
+	TypeInfo DATE = new BasicClassTypeInfo(Date.class);
 
-	TypeInfo RUNNABLE = new ClassTypeInfo(Runnable.class);
-	TypeInfo RAW_CONSUMER = new ClassTypeInfo(Consumer.class);
-	TypeInfo RAW_SUPPLIER = new ClassTypeInfo(Supplier.class);
-	TypeInfo RAW_FUNCTION = new ClassTypeInfo(Function.class);
-	TypeInfo RAW_PREDICATE = new ClassTypeInfo(Predicate.class);
+	TypeInfo RUNNABLE = new InterfaceTypeInfo(Runnable.class, Boolean.TRUE);
+	TypeInfo RAW_CONSUMER = new InterfaceTypeInfo(Consumer.class, Boolean.TRUE);
+	TypeInfo RAW_SUPPLIER = new InterfaceTypeInfo(Supplier.class, Boolean.TRUE);
+	TypeInfo RAW_FUNCTION = new InterfaceTypeInfo(Function.class, Boolean.TRUE);
+	TypeInfo RAW_PREDICATE = new InterfaceTypeInfo(Predicate.class, Boolean.TRUE);
 
-	TypeInfo RAW_LIST = new ClassTypeInfo(List.class);
-	TypeInfo RAW_SET = new ClassTypeInfo(Set.class);
-	TypeInfo RAW_MAP = new ClassTypeInfo(Map.class);
+	TypeInfo RAW_LIST = new InterfaceTypeInfo(List.class, Boolean.FALSE);
+	TypeInfo RAW_SET = new InterfaceTypeInfo(Set.class, Boolean.FALSE);
+	TypeInfo RAW_MAP = new InterfaceTypeInfo(Map.class, Boolean.FALSE);
 
 	Class<?> asClass();
 
@@ -53,11 +53,15 @@ public sealed interface TypeInfo permits NoTypeInfo, ClassTypeInfo, ArrayTypeInf
 		return NONE;
 	}
 
+	default boolean is(TypeInfo info) {
+		return this == info;
+	}
+
 	default boolean isPrimitive() {
 		return false;
 	}
 
-	default boolean convert() {
+	default boolean shouldConvert() {
 		return true;
 	}
 
@@ -112,9 +116,21 @@ public sealed interface TypeInfo permits NoTypeInfo, ClassTypeInfo, ArrayTypeInf
 			return STRING_ARRAY;
 		} else if (c.isArray()) {
 			return of(c.getComponentType()).asArray();
+		} else if (c.isEnum()) {
+			synchronized (EnumTypeInfo.CACHE) {
+				return EnumTypeInfo.CACHE.computeIfAbsent(c, EnumTypeInfo::new);
+			}
+		} else if (c.isRecord()) {
+			synchronized (RecordTypeInfo.CACHE) {
+				return RecordTypeInfo.CACHE.computeIfAbsent(c, RecordTypeInfo::new);
+			}
+		} else if (c.isInterface()) {
+			synchronized (InterfaceTypeInfo.CACHE) {
+				return InterfaceTypeInfo.CACHE.computeIfAbsent(c, InterfaceTypeInfo::new);
+			}
 		} else {
-			synchronized (ClassTypeInfo.CACHE) {
-				return ClassTypeInfo.CACHE.computeIfAbsent(c, ClassTypeInfo::new);
+			synchronized (BasicClassTypeInfo.CACHE) {
+				return BasicClassTypeInfo.CACHE.computeIfAbsent(c, BasicClassTypeInfo::new);
 			}
 		}
 	}
@@ -166,5 +182,17 @@ public sealed interface TypeInfo permits NoTypeInfo, ClassTypeInfo, ArrayTypeInf
 		}
 
 		return new ParameterizedTypeInfo(this, params);
+	}
+
+	default boolean isFunctionalInterface() {
+		return false;
+	}
+
+	default Map<String, RecordTypeInfo.Component> recordComponents() {
+		return Map.of();
+	}
+
+	default List<Object> enumConstants() {
+		return List.of();
 	}
 }

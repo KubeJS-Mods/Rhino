@@ -61,6 +61,7 @@ public class InterfaceAdapter {
 			adapter = new InterfaceAdapter(cx, cl);
 			cx.cacheInterfaceAdapter(cl, adapter);
 		}
+
 		return VMBridge.newInterfaceProxy(adapter.proxyHelper, adapter, object, topScope, cx);
 	}
 

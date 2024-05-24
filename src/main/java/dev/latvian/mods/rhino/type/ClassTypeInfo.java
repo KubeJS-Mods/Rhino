@@ -1,22 +1,10 @@
 package dev.latvian.mods.rhino.type;
 
-import java.util.IdentityHashMap;
-import java.util.Map;
-
-public final class ClassTypeInfo implements TypeInfo {
-	static final Map<Class<?>, ClassTypeInfo> CACHE = new IdentityHashMap<>();
-
+public abstract class ClassTypeInfo extends TypeInfoBase {
 	private final Class<?> type;
-	private final boolean primitive;
-	private TypeInfo asArray;
 
-	public ClassTypeInfo(Class<?> type, boolean primitive) {
+	ClassTypeInfo(Class<?> type) {
 		this.type = type;
-		this.primitive = primitive;
-	}
-
-	public ClassTypeInfo(Class<?> type) {
-		this(type, false);
 	}
 
 	@Override
@@ -25,12 +13,7 @@ public final class ClassTypeInfo implements TypeInfo {
 	}
 
 	@Override
-	public boolean isPrimitive() {
-		return primitive;
-	}
-
-	@Override
-	public boolean convert() {
+	public boolean shouldConvert() {
 		return type != Object.class;
 	}
 
@@ -47,14 +30,5 @@ public final class ClassTypeInfo implements TypeInfo {
 	@Override
 	public String toString() {
 		return type.getName();
-	}
-
-	@Override
-	public TypeInfo asArray() {
-		if (asArray == null) {
-			asArray = new ArrayTypeInfo(this);
-		}
-
-		return asArray;
 	}
 }

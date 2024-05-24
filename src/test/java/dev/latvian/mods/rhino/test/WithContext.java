@@ -9,7 +9,7 @@ public record WithContext<T>(Context cx, T value) {
 	public static WithContext<?> of(Context cx, Object from, TypeInfo target) {
 		var type = target.param(0);
 
-		if (type.convert()) {
+		if (type.shouldConvert()) {
 			return new WithContext<>(cx, cx.jsToJava(from, type));
 		}
 

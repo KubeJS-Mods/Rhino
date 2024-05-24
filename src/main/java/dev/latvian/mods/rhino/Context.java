@@ -40,8 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("ThrowableNotThrown")
 public class Context {
+	public static final int CONVERSION_EXACT = 0;
 	public static final int CONVERSION_TRIVIAL = 1;
-	public static final int CONVERSION_NONTRIVIAL = 0;
 	public static final int CONVERSION_NONE = 99;
 	public static final int JSTYPE_UNDEFINED = 0; // undefined type
 	public static final int JSTYPE_NULL = 1; // null
@@ -1157,7 +1157,7 @@ public class Context {
 
 	public int internalConversionWeight(Object fromObj, TypeInfo target) {
 		if (factory.getTypeWrappers().hasWrapper(fromObj, target)) {
-			return CONVERSION_NONTRIVIAL;
+			return CONVERSION_EXACT;
 		}
 
 		return CONVERSION_NONE;
@@ -1318,6 +1318,30 @@ public class Context {
 		}
 	}
 
+	protected Object classOf(Object from) {
+		if (from instanceof NativeJavaClass n) {
+			return n;
+		} else if (from instanceof Class<?> c) {
+			if (visibleToScripts(c.getName(), ClassVisibilityContext.ARGUMENT)) {
+				return c;
+			} else {
+				throw reportRuntimeError("Class " + c.getName() + " not allowed", this);
+			}
+		} else {
+			var s = ScriptRuntime.toString(this, from);
+
+			if (visibleToScripts(s, ClassVisibilityContext.ARGUMENT)) {
+				try {
+					return Class.forName(s);
+				} catch (ClassNotFoundException e) {
+					throw reportRuntimeError("Failed to load class " + s, this);
+				}
+			} else {
+				throw reportRuntimeError("Class " + from + " not allowed", this);
+			}
+		}
+	}
+
 	public Object createInterfaceAdapter(TypeInfo type, ScriptableObject so) {
 		var cl = type.asClass();
 
@@ -1362,45 +1386,45 @@ public class Context {
 			return from;
 		}
 
-		var cl = target.asClass();
-
-		if (cl == Object.class) {
+		if (target == TypeInfo.OBJECT) {
 			return Wrapper.unwrapped(from);
-		} else if (cl == Set.class) {
+		} else if (target.is(TypeInfo.RAW_SET)) {
 			return setOf(from, target.param(0));
-		} else if (cl == Map.class) {
+		} else if (target.is(TypeInfo.RAW_MAP)) {
 			return mapOf(from, target.param(0), target.param(1));
 		} else if (target instanceof ArrayTypeInfo) {
 			return arrayOf(from, target.componentType());
-		} else if (List.class.isAssignableFrom(cl)) {
+		} else if (List.class.isAssignableFrom(target.asClass())) {
 			return listOf(from, target.param(0));
+		} else if (target.is(TypeInfo.CLASS)) {
+			return classOf(from);
 		}
 
 		return internalJsToJava(from, target);
 	}
 
-	private static int getJSTypeCode(Object value) {
-		if (value == null) {
+	private static int getJSTypeCode(Object from) {
+		if (from == null) {
 			return JSTYPE_NULL;
-		} else if (value == Undefined.INSTANCE) {
+		} else if (from == Undefined.INSTANCE) {
 			return JSTYPE_UNDEFINED;
-		} else if (value instanceof CharSequence) {
+		} else if (from instanceof CharSequence) {
 			return JSTYPE_STRING;
-		} else if (value instanceof Number) {
+		} else if (from instanceof Number) {
 			return JSTYPE_NUMBER;
-		} else if (value instanceof Boolean) {
+		} else if (from instanceof Boolean) {
 			return JSTYPE_BOOLEAN;
-		} else if (value instanceof Scriptable) {
-			return switch (value) {
+		} else if (from instanceof Scriptable) {
+			return switch (from) {
 				case NativeJavaClass ignore -> JSTYPE_JAVA_CLASS;
 				case NativeJavaArray ignore -> JSTYPE_JAVA_ARRAY;
 				case Wrapper ignore -> JSTYPE_JAVA_OBJECT;
 				default -> JSTYPE_OBJECT;
 			};
-		} else if (value instanceof Class) {
+		} else if (from instanceof Class) {
 			return JSTYPE_JAVA_CLASS;
 		} else {
-			Class<?> valueClass = value.getClass();
+			Class<?> valueClass = from.getClass();
 			if (valueClass.isArray()) {
 				return JSTYPE_JAVA_ARRAY;
 			}
@@ -1578,80 +1602,74 @@ public class Context {
 
 		if (fcw != CONVERSION_NONE) {
 			return fcw;
-		}
-
-		if (target instanceof ArrayTypeInfo || Collection.class.isAssignableFrom(target.asClass())) {
-			return CONVERSION_NONTRIVIAL;
+		} else if (target instanceof ArrayTypeInfo || Collection.class.isAssignableFrom(target.asClass())) {
+			return CONVERSION_EXACT;
+		} else if (target.is(TypeInfo.CLASS)) {
+			return from instanceof Class<?> || from instanceof NativeJavaClass ? CONVERSION_TRIVIAL : CONVERSION_EXACT;
+		} else if (from == null) {
+			if (!target.isPrimitive()) {
+				return CONVERSION_TRIVIAL;
+			}
+		} else if (from == Undefined.INSTANCE) {
+			if (target == TypeInfo.STRING || target == TypeInfo.OBJECT) {
+				return CONVERSION_TRIVIAL;
+			}
+		} else if (from instanceof CharSequence) {
+			if (target == TypeInfo.STRING) {
+				return CONVERSION_TRIVIAL;
+			} else if (target.asClass().isInstance(from)) {
+				return 2;
+			} else if (target.isPrimitive()) {
+				if (target == TypeInfo.CHARACTER) {
+					return 3;
+				} else if (target != TypeInfo.BOOLEAN) {
+					return 4;
+				}
+			}
+		} else if (from instanceof Number) {
+			if (target.isPrimitive()) {
+				if (target == TypeInfo.DOUBLE) {
+					return CONVERSION_TRIVIAL;
+				} else if (target != TypeInfo.BOOLEAN) {
+					return CONVERSION_TRIVIAL + getSizeRank(target);
+				}
+			} else {
+				if (target == TypeInfo.STRING) {
+					// native numbers are #1-8
+					return 9;
+				} else if (target == TypeInfo.OBJECT) {
+					return 10;
+				} else if (ScriptRuntime.NumberClass.isAssignableFrom(target.asClass())) {
+					// "double" is #1
+					return 2;
+				}
+			}
+		} else if (from instanceof Boolean) {
+			// "boolean" is #1
+			if (target == TypeInfo.BOOLEAN) {
+				return CONVERSION_TRIVIAL;
+			} else if (target == TypeInfo.OBJECT) {
+				return 3;
+			} else if (target == TypeInfo.STRING) {
+				return 4;
+			}
+		} else if (from instanceof Class || from instanceof NativeJavaClass) {
+			if (target.is(TypeInfo.CLASS)) {
+				return CONVERSION_EXACT;
+			} else if (target == TypeInfo.OBJECT) {
+				return 3;
+			} else if (target == TypeInfo.STRING) {
+				return 4;
+			}
 		}
 
 		int fromCode = getJSTypeCode(from);
 
 		switch (fromCode) {
-			case JSTYPE_UNDEFINED -> {
-				if (target == TypeInfo.STRING || target == TypeInfo.OBJECT) {
-					return 1;
-				}
-			}
-			case JSTYPE_NULL -> {
-				if (!target.isPrimitive()) {
-					return 1;
-				}
-			}
-			case JSTYPE_BOOLEAN -> {
-				// "boolean" is #1
-				if (target == TypeInfo.BOOLEAN) {
-					return 1;
-				} else if (target == TypeInfo.OBJECT) {
-					return 3;
-				} else if (target == TypeInfo.STRING) {
-					return 4;
-				}
-			}
-			case JSTYPE_NUMBER -> {
-				if (target.isPrimitive()) {
-					if (target == TypeInfo.DOUBLE) {
-						return 1;
-					} else if (target != TypeInfo.BOOLEAN) {
-						return 1 + getSizeRank(target);
-					}
-				} else {
-					if (target == TypeInfo.STRING) {
-						// native numbers are #1-8
-						return 9;
-					} else if (target == TypeInfo.OBJECT) {
-						return 10;
-					} else if (ScriptRuntime.NumberClass.isAssignableFrom(target.asClass())) {
-						// "double" is #1
-						return 2;
-					}
-				}
-			}
-			case JSTYPE_STRING -> {
-				if (target == TypeInfo.STRING) {
-					return 1;
-				} else if (target.asClass().isInstance(from)) {
-					return 2;
-				} else if (target.isPrimitive()) {
-					if (target == TypeInfo.CHARACTER) {
-						return 3;
-					} else if (target != TypeInfo.BOOLEAN) {
-						return 4;
-					}
-				}
-			}
-			case JSTYPE_JAVA_CLASS -> {
-				if (target == TypeInfo.CLASS) {
-					return 1;
-				} else if (target == TypeInfo.OBJECT) {
-					return 3;
-				} else if (target == TypeInfo.STRING) {
-					return 4;
-				}
-			}
 			case JSTYPE_JAVA_OBJECT, JSTYPE_JAVA_ARRAY -> {
 				Object javaObj = Wrapper.unwrapped(from);
 				if (target.asClass().isInstance(javaObj)) {
-					return CONVERSION_NONTRIVIAL;
+					return CONVERSION_EXACT;
 				} else if (target == TypeInfo.STRING) {
 					return 2;
 				} else if (target.isPrimitive() && target != TypeInfo.BOOLEAN) {
@@ -1666,7 +1684,7 @@ public class Context {
 				// Other objects takes #1-#3 spots
 				if (target != TypeInfo.OBJECT && target.asClass().isInstance(from)) {
 					// No conversion required, but don't apply for java.lang.Object
-					return 1;
+					return CONVERSION_TRIVIAL;
 				}
 				if (target instanceof ArrayTypeInfo) {
 					if (from instanceof NativeArray) {
@@ -1675,7 +1693,7 @@ public class Context {
 						// and string conversion, per LC3.
 						return 2;
 					} else {
-						return 1;
+						return CONVERSION_TRIVIAL;
 					}
 				} else if (target == TypeInfo.OBJECT) {
 					return 3;
@@ -1684,13 +1702,12 @@ public class Context {
 				} else if (target == TypeInfo.DATE) {
 					if (from instanceof NativeDate) {
 						// This is a native date to java date conversion
-						return 1;
+						return CONVERSION_TRIVIAL;
 					}
-				} else if (target.asClass().isInterface()) {
-
+				} else if (target.isFunctionalInterface()) {
 					if (from instanceof NativeFunction) {
 						// See comments in createInterfaceAdapter
-						return 1;
+						return CONVERSION_TRIVIAL;
 					}
 					if (from instanceof NativeObject) {
 						return 2;

@@ -2,11 +2,11 @@ package dev.latvian.mods.rhino.type;
 
 import java.lang.reflect.Array;
 
-public final class ArrayTypeInfo implements TypeInfo {
+public final class ArrayTypeInfo extends TypeInfoBase {
 	private final TypeInfo component;
 	private Class<?> asClass;
 
-	public ArrayTypeInfo(TypeInfo component) {
+	ArrayTypeInfo(TypeInfo component) {
 		this.component = component;
 	}
 

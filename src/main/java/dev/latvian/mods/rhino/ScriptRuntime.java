@@ -7,12 +7,12 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.ast.FunctionNode;
-import dev.latvian.mods.rhino.util.ToStringJS;
 import dev.latvian.mods.rhino.regexp.NativeRegExp;
 import dev.latvian.mods.rhino.regexp.RegExp;
 import dev.latvian.mods.rhino.util.ClassVisibilityContext;
 import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 import dev.latvian.mods.rhino.util.SpecialEquality;
+import dev.latvian.mods.rhino.util.ToStringJS;
 import dev.latvian.mods.rhino.v8dtoa.DoubleConversion;
 import dev.latvian.mods.rhino.v8dtoa.FastDtoa;
 
@@ -2281,9 +2281,9 @@ public class ScriptRuntime {
 
 		if (x1 == y1) {
 			return true;
-		} else if (SpecialEquality.checkSpecialEquality(x1, y1, false)) {
+		} else if (SpecialEquality.checkSpecialEquality(cx, x1, y1, false)) {
 			return true;
-		} else if (SpecialEquality.checkSpecialEquality(y1, x1, false)) {
+		} else if (SpecialEquality.checkSpecialEquality(cx, y1, x1, false)) {
 			return true;
 		} else if (x instanceof Number) {
 			return eqNumber(cx, ((Number) x).doubleValue(), y);
@@ -2468,9 +2468,9 @@ public class ScriptRuntime {
 
 		if (x1 == y1) {
 			return true;
-		} else if (SpecialEquality.checkSpecialEquality(x1, y1, true)) {
+		} else if (SpecialEquality.checkSpecialEquality(cx, x1, y1, true)) {
 			return true;
-		} else if (SpecialEquality.checkSpecialEquality(y1, x1, true)) {
+		} else if (SpecialEquality.checkSpecialEquality(cx, y1, x1, true)) {
 			return true;
 		} else if (x1 instanceof Number) {
 			if (y1 instanceof Number) {

@@ -12,6 +12,7 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 public class VMBridge {
@@ -43,10 +44,9 @@ public class VMBridge {
 		return c;
 	}
 
-	public static Object newInterfaceProxy(Object proxyHelper, final InterfaceAdapter adapter, final Object target, final Scriptable topScope, Context cx) {
-		Constructor<?> c = (Constructor<?>) proxyHelper;
-
-		InvocationHandler handler = (proxy, method, args) -> {
+	public record AdapterInvocationHandler(Context cx, InterfaceAdapter adapter, Object target, Scriptable topScope) implements InvocationHandler {
+		@Override
+		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 			// In addition to methods declared in the interface, proxies
 			// also route some java.lang.Object methods through the
 			// invocation handler.
@@ -74,10 +74,14 @@ public class VMBridge {
 			} else {
 				return adapter.invoke(cx, target, topScope, proxy, method, args);
 			}
-		};
-		Object proxy;
+		}
+	}
+
+	public static Object newInterfaceProxy(Object proxyHelper, final InterfaceAdapter adapter, final Object target, final Scriptable topScope, Context cx) {
+		Constructor<?> c = (Constructor<?>) proxyHelper;
+
 		try {
-			proxy = c.newInstance(handler);
+			return c.newInstance(new AdapterInvocationHandler(cx, adapter, target, topScope));
 		} catch (InvocationTargetException ex) {
 			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		} catch (IllegalAccessException ex) {
@@ -87,6 +91,5 @@ public class VMBridge {
 			// Should not happen
 			throw new IllegalStateException(ex);
 		}
-		return proxy;
 	}
 }

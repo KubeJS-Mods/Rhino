@@ -1,7 +1,6 @@
 package dev.latvian.mods.rhino.util.wrap;
 
 import dev.latvian.mods.rhino.type.TypeInfo;
-import dev.latvian.mods.rhino.util.EnumTypeWrapper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.IdentityHashMap;
@@ -38,15 +37,11 @@ public class TypeWrappers {
 	}
 
 	public boolean hasWrapper(Object from, TypeInfo target) {
-		var cl = target.asClass();
-
-		if (cl == null) {
-			return false;
-		} else if (cl.isEnum() || cl.isRecord()) {
+		if (target instanceof TypeWrapperFactory<?>) {
 			return true;
 		}
 
-		var wrapper = wrappers.get(cl);
+		var wrapper = wrappers.get(target.asClass());
 		return wrapper != null && wrapper.validator().isValid(from, target);
 	}
 
@@ -62,11 +57,8 @@ public class TypeWrappers {
 
 		if (wrapper != null && wrapper.validator().isValid(from, target)) {
 			return wrapper.factory();
-		} else if (cl.isEnum()) {
-			return EnumTypeWrapper.get(cl);
-		} else if (cl.isRecord()) {
-			// FIXME: record type wrapper
-			return null;
+		} else if (target instanceof TypeWrapperFactory<?> w) {
+			return w;
 		} else {
 			return null;
 		}

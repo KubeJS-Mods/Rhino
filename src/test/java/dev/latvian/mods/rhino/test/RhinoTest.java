@@ -30,6 +30,7 @@ public class RhinoTest {
 			var rootScope = context.initStandardObjects();
 			context.addToScope(rootScope, "console", console);
 			context.addToScope(rootScope, "shared", shared);
+			context.addToScope(rootScope, "EventBus", new EventBus(console));
 			context.testName = name;
 			context.evaluateString(rootScope, script, testName + "/" + name, 1, null);
 		} catch (Exception ex) {

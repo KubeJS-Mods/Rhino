@@ -4,5 +4,6 @@ public enum ClassVisibilityContext {
 	UNKNOWN,
 	MEMBER,
 	CLASS_IN_PACKAGE,
+	ARGUMENT,
 	EXCEPTION
 }

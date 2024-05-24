@@ -1,13 +1,13 @@
 package dev.latvian.mods.rhino.type;
 
-public final class NoTypeInfo implements TypeInfo {
+final class NoTypeInfo implements TypeInfo {
 	@Override
 	public Class<?> asClass() {
 		return Object.class;
 	}
 
 	@Override
-	public boolean convert() {
+	public boolean shouldConvert() {
 		return false;
 	}
 

@@ -279,7 +279,7 @@ public class NativeJavaMethod extends BaseFunction {
 				preference = PREFERENCE_SECOND_ARG;
 			} else {
 				// Equal ranks
-				if (rank1 == Context.CONVERSION_NONTRIVIAL) {
+				if (rank1 == Context.CONVERSION_EXACT) {
 					if (type1.asClass().isAssignableFrom(type2.asClass())) {
 						preference = PREFERENCE_SECOND_ARG;
 					} else if (type2.asClass().isAssignableFrom(type1.asClass())) {
