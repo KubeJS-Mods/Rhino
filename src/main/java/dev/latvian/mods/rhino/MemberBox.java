@@ -25,6 +25,8 @@ import java.lang.reflect.Type;
  */
 
 public final class MemberBox {
+	private static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
+
 	private static Method searchAccessibleMethod(Method method, Class<?>[] params) {
 		int modifiers = method.getModifiers();
 		if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers)) {
@@ -69,6 +71,7 @@ public final class MemberBox {
 	transient TypeInfo returnType;
 	transient Object delegateTo;
 	transient boolean vararg;
+	transient boolean firstArgContext;
 	public transient Executable executable;
 	public transient WrappedExecutable wrappedExecutable;
 
@@ -78,6 +81,23 @@ public final class MemberBox {
 		this.argTypeInfos = TypeInfo.ofArray(executable.getGenericParameterTypes());
 		this.returnType = executable instanceof Method m ? TypeInfo.of(m.getGenericReturnType()) : executable instanceof Constructor<?> c ? TypeInfo.of(c.getDeclaringClass()) : TypeInfo.NONE;
 		this.vararg = executable.isVarArgs();
+
+		if (argTypes.length >= 1 && Context.class.isAssignableFrom(argTypes[0])) {
+			firstArgContext = true;
+
+			var newArgTypes = new Class[argTypes.length - 1];
+			System.arraycopy(argTypes, 1, newArgTypes, 0, newArgTypes.length);
+			argTypes = newArgTypes;
+
+			var newArgTypeInfos = new TypeInfo[argTypeInfos.length - 1];
+			System.arraycopy(argTypeInfos, 1, newArgTypeInfos, 0, newArgTypeInfos.length);
+			argTypeInfos = newArgTypeInfos;
+		}
+
+		if (argTypes.length == 0) {
+			argTypes = EMPTY_CLASS_ARRAY;
+			argTypeInfos = TypeInfo.EMPTY_ARRAY;
+		}
 	}
 
 	MemberBox(WrappedExecutable wrappedExecutable) {
@@ -89,6 +109,23 @@ public final class MemberBox {
 			this.argTypeInfos = TypeInfo.ofArray(executable.getGenericParameterTypes());
 			this.returnType = executable instanceof Method m ? TypeInfo.of(m.getGenericReturnType()) : executable instanceof Constructor<?> c ? TypeInfo.of(c.getDeclaringClass()) : TypeInfo.NONE;
 			this.vararg = executable.isVarArgs();
+
+			if (argTypes.length >= 1 && Context.class.isAssignableFrom(argTypes[0])) {
+				firstArgContext = true;
+
+				var newArgTypes = new Class[argTypes.length - 1];
+				System.arraycopy(argTypes, 1, newArgTypes, 0, newArgTypes.length);
+				argTypes = newArgTypes;
+
+				var newArgTypeInfos = new TypeInfo[argTypeInfos.length - 1];
+				System.arraycopy(argTypeInfos, 1, newArgTypeInfos, 0, newArgTypeInfos.length);
+				argTypeInfos = newArgTypeInfos;
+			}
+
+			if (argTypes.length == 0) {
+				argTypes = EMPTY_CLASS_ARRAY;
+				argTypeInfos = TypeInfo.EMPTY_ARRAY;
+			}
 		} else {
 			this.wrappedExecutable = wrappedExecutable;
 			this.vararg = false;
@@ -171,7 +208,7 @@ public final class MemberBox {
 		Method method = (Method) executable;
 		try {
 			try {
-				return method.invoke(target, args);
+				return method.invoke(target, firstArgContext ? cx.insertContextArg(args) : args);
 			} catch (IllegalAccessException ex) {
 				Method accessible = searchAccessibleMethod(method, argTypes);
 				if (accessible != null) {
@@ -183,7 +220,7 @@ public final class MemberBox {
 					}
 				}
 				// Retry after recovery
-				return method.invoke(target, args);
+				return method.invoke(target, firstArgContext ? cx.insertContextArg(args) : args);
 			}
 		} catch (InvocationTargetException ite) {
 			// Must allow ContinuationPending exceptions to propagate unhindered

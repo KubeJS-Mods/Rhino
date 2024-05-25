@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.DoubleSupplier;
 
 @SuppressWarnings("ThrowableNotThrown")
 public class Context {
@@ -1831,21 +1832,9 @@ public class Context {
 				return toDouble(((Wrapper) value).unwrap());
 			}
 			return ScriptRuntime.toNumber(this, value);
+		} else if (value instanceof DoubleSupplier) {
+			return ((DoubleSupplier) value).getAsDouble();
 		} else {
-			Method meth;
-			try {
-				meth = value.getClass().getMethod("doubleValue", (Class[]) null);
-			} catch (NoSuchMethodException | SecurityException e) {
-				meth = null;
-			}
-			if (meth != null) {
-				try {
-					return ((Number) meth.invoke(value, (Object[]) null)).doubleValue();
-				} catch (IllegalAccessException | InvocationTargetException e) {
-					// XXX: ignore, or error message?
-					reportConversionError(value, TypeInfo.DOUBLE);
-				}
-			}
 			return ScriptRuntime.toNumber(this, value.toString());
 		}
 	}
@@ -1883,5 +1872,16 @@ public class Context {
 
 	public String defaultObjectToSource(Scriptable scope, Scriptable thisObj, Object[] args) {
 		return "not_supported";
+	}
+
+	public Object[] insertContextArg(Object[] args) {
+		if (!(args[0] instanceof Context)) {
+			Object[] newArgs = new Object[args.length + 1];
+			newArgs[0] = this;
+			System.arraycopy(args, 0, newArgs, 1, args.length);
+			return newArgs;
+		}
+
+		return args;
 	}
 }

@@ -9,14 +9,19 @@ import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-public record WrappedReflectionMethod(Method method) implements WrappedExecutable {
+public record WrappedReflectionMethod(Method method, boolean firstArgContext) implements WrappedExecutable {
 	public static WrappedExecutable of(Method method) {
-		return method == null ? null : new WrappedReflectionMethod(method);
+		if (method == null) {
+			return null;
+		} else {
+			var p = method.getParameterTypes();
+			return new WrappedReflectionMethod(method, p.length > 0 && Context.class.isAssignableFrom(p[0]));
+		}
 	}
 
 	@Override
 	public Object invoke(Context cx, Scriptable scope, Object self, Object[] args) throws Exception {
-		return method.invoke(self, args);
+		return method.invoke(self, firstArgContext ? cx.insertContextArg(args) : args);
 	}
 
 	@Override

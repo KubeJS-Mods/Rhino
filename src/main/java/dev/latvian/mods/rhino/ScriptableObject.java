@@ -13,9 +13,9 @@ import dev.latvian.mods.rhino.annotations.JSFunction;
 import dev.latvian.mods.rhino.annotations.JSGetter;
 import dev.latvian.mods.rhino.annotations.JSSetter;
 import dev.latvian.mods.rhino.annotations.JSStaticFunction;
-import dev.latvian.mods.rhino.util.WrappedReflectionMethod;
 import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 import dev.latvian.mods.rhino.util.Deletable;
+import dev.latvian.mods.rhino.util.WrappedReflectionMethod;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -519,8 +519,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 
 	static <T extends Scriptable> BaseFunction buildClassCtor(Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance, Context cx) throws IllegalAccessException, InstantiationException, InvocationTargetException {
 		Method[] methods = FunctionObject.getMethodList(clazz);
-		for (int i = 0; i < methods.length; i++) {
-			Method method = methods[i];
+		for (Method method : methods) {
 			if (!method.getName().equals("init")) {
 				continue;
 			}
