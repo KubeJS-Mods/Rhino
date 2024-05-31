@@ -1401,6 +1401,10 @@ public class Context {
 			return classOf(from);
 		}
 
+		if (from == null || from.getClass() == target.asClass()) {
+			return from;
+		}
+
 		return internalJsToJava(from, target);
 	}
 
@@ -1434,12 +1438,6 @@ public class Context {
 	}
 
 	protected Object internalJsToJava(Object from, TypeInfo target) {
-		var typeWrappers = factory.getTypeWrappers();
-
-		if (from == null || from.getClass() == target.asClass()) {
-			return from;
-		}
-
 		if (target instanceof ArrayTypeInfo) {
 			// Make a new java array, and coerce the JS array components to the target (component) type.
 			var arrayType = target.componentType();
@@ -1471,7 +1469,7 @@ public class Context {
 			return f.wrap(this, unwrappedValue, target);
 		}
 
-		TypeWrapperFactory<?> typeWrapper = typeWrappers == null ? null : typeWrappers.getWrapperFactory(unwrappedValue, target);
+		var typeWrapper = factory.getTypeWrappers().getWrapperFactory(unwrappedValue, target);
 
 		if (typeWrapper != null) {
 			return typeWrapper.wrap(this, unwrappedValue, target);
@@ -1591,6 +1589,10 @@ public class Context {
 			}
 		}
 
+		return internalJsToJavaLast(from, target);
+	}
+
+	protected Object internalJsToJavaLast(Object from, TypeInfo target) {
 		return from;
 	}
 

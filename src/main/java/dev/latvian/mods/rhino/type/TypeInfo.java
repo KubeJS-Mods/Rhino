@@ -195,4 +195,8 @@ public interface TypeInfo {
 	default List<Object> enumConstants() {
 		return List.of();
 	}
+
+	default TypeInfo or(TypeInfo info) {
+		return new JSOrTypeInfo(this, info);
+	}
 }
