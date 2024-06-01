@@ -1,7 +1,5 @@
 package dev.latvian.mods.rhino.type;
 
-import java.lang.reflect.Array;
-
 public final class ArrayTypeInfo extends TypeInfoBase {
 	private final TypeInfo component;
 	private Class<?> asClass;
@@ -13,7 +11,7 @@ public final class ArrayTypeInfo extends TypeInfoBase {
 	@Override
 	public Class<?> asClass() {
 		if (asClass == null) {
-			asClass = Array.newInstance(component.asClass(), 0).getClass();
+			asClass = component.newArray(0).getClass();
 		}
 
 		return asClass;
