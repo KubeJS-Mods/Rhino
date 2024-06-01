@@ -1,23 +1,37 @@
 package dev.latvian.mods.rhino.type;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+
 import java.util.Map;
 
 // {a: string, b: number}
-public record JSObjectTypeInfo(Map<String, TypeInfo> fields) implements TypeInfo {
-	public static JSObjectTypeInfo of(String key, TypeInfo value) {
-		return new JSObjectTypeInfo(Map.of(key, value));
+public record JSObjectTypeInfo(Map<String, Field> fields) implements TypeInfo {
+	public record Field(String name, TypeInfo type, boolean optional) {
+		public Field(String name, TypeInfo type) {
+			this(name, type, false);
+		}
 	}
 
-	public static JSObjectTypeInfo of(String key1, TypeInfo value1, String key2, TypeInfo value2) {
-		return new JSObjectTypeInfo(Map.of(key1, value1, key2, value2));
+	public static JSObjectTypeInfo of(Field field) {
+		return new JSObjectTypeInfo(Map.of(field.name, field));
 	}
 
-	public static JSObjectTypeInfo of(String key1, TypeInfo value1, String key2, TypeInfo value2, String key3, TypeInfo value3) {
-		return new JSObjectTypeInfo(Map.of(key1, value1, key2, value2, key3, value3));
+	public static JSObjectTypeInfo of(Field field1, Field field2) {
+		return new JSObjectTypeInfo(Map.of(field1.name, field1, field2.name, field2));
 	}
 
-	public static JSObjectTypeInfo of(Map<String, TypeInfo> fields) {
-		return new JSObjectTypeInfo(fields);
+	public static JSObjectTypeInfo of(Field field1, Field field2, Field field3) {
+		return new JSObjectTypeInfo(Map.of(field1.name, field1, field2.name, field2, field3.name, field3));
+	}
+
+	public static JSObjectTypeInfo of(Field... fields) {
+		var map = new Object2ObjectArrayMap<String, Field>(fields.length);
+
+		for (var field : fields) {
+			map.put(field.name, field);
+		}
+
+		return new JSObjectTypeInfo(map);
 	}
 
 	@Override
