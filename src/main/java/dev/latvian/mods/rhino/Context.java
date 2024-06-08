@@ -1164,6 +1164,10 @@ public class Context {
 		return CONVERSION_NONE;
 	}
 
+	public int internalConversionWeightLast(Object fromObj, TypeInfo target) {
+		return CONVERSION_NONE;
+	}
+
 	/**
 	 * Create class loader for generated classes.
 	 */
@@ -1680,7 +1684,7 @@ public class Context {
 				} else if (target instanceof ArrayTypeInfo) {
 					return 3;
 				} else {
-					return CONVERSION_NONE;
+					return internalConversionWeightLast(from, target);
 				}
 			}
 			case JSTYPE_OBJECT -> {
@@ -1722,7 +1726,7 @@ public class Context {
 			}
 		}
 
-		return CONVERSION_NONE;
+		return internalConversionWeightLast(from, target);
 	}
 
 	public static int getSizeRank(TypeInfo aType) {

@@ -27,6 +27,11 @@ final class NoTypeInfo implements TypeInfo {
 	}
 
 	@Override
+	public void append(TypeStringContext ctx, StringBuilder sb) {
+		sb.append('?');
+	}
+
+	@Override
 	public TypeInfo asArray() {
 		return this;
 	}

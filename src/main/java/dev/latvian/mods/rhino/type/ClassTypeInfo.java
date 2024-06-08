@@ -31,4 +31,9 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
 	public String toString() {
 		return type.getName();
 	}
+
+	@Override
+	public void append(TypeStringContext ctx, StringBuilder sb) {
+		ctx.appendClassName(sb, this);
+	}
 }

@@ -1,41 +1,48 @@
 package dev.latvian.mods.rhino.type;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import java.util.List;
 
-import java.util.Map;
-
-// {a: string, b: number}
-public record JSObjectTypeInfo(Map<String, Field> fields) implements TypeInfo {
-	public record Field(String name, TypeInfo type, boolean optional) {
-		public Field(String name, TypeInfo type) {
-			this(name, type, false);
-		}
+// {a: string, b?: number}
+public record JSObjectTypeInfo(List<JSOptionalParam> fields) implements TypeInfo {
+	public static JSObjectTypeInfo of(JSOptionalParam field) {
+		return new JSObjectTypeInfo(List.of(field));
 	}
 
-	public static JSObjectTypeInfo of(Field field) {
-		return new JSObjectTypeInfo(Map.of(field.name, field));
+	public static JSObjectTypeInfo of(JSOptionalParam field1, JSOptionalParam field2) {
+		return new JSObjectTypeInfo(List.of(field1, field2));
 	}
 
-	public static JSObjectTypeInfo of(Field field1, Field field2) {
-		return new JSObjectTypeInfo(Map.of(field1.name, field1, field2.name, field2));
-	}
-
-	public static JSObjectTypeInfo of(Field field1, Field field2, Field field3) {
-		return new JSObjectTypeInfo(Map.of(field1.name, field1, field2.name, field2, field3.name, field3));
-	}
-
-	public static JSObjectTypeInfo of(Field... fields) {
-		var map = new Object2ObjectArrayMap<String, Field>(fields.length);
-
-		for (var field : fields) {
-			map.put(field.name, field);
-		}
-
-		return new JSObjectTypeInfo(map);
+	public static JSObjectTypeInfo of(JSOptionalParam... fields) {
+		return new JSObjectTypeInfo(List.of(fields));
 	}
 
 	@Override
 	public Class<?> asClass() {
 		return TypeInfo.class;
+	}
+
+	@Override
+	public String toString() {
+		return TypeStringContext.DEFAULT.toString(this);
+	}
+
+	@Override
+	public void append(TypeStringContext ctx, StringBuilder sb) {
+		sb.append('{');
+
+		boolean first = true;
+
+		for (var field : fields) {
+			if (first) {
+				first = false;
+			} else {
+				sb.append(',');
+				ctx.appendSpace(sb);
+			}
+
+			field.append(ctx, sb);
+		}
+
+		sb.append('}');
 	}
 }

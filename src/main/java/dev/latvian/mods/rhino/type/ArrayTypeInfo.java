@@ -33,6 +33,13 @@ public final class ArrayTypeInfo extends TypeInfoBase {
 	}
 
 	@Override
+	public void append(TypeStringContext ctx, StringBuilder sb) {
+		ctx.append(sb, component);
+		sb.append('[');
+		sb.append(']');
+	}
+
+	@Override
 	public String signature() {
 		return component.signature() + "[]";
 	}

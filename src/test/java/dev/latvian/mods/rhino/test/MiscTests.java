@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import java.lang.reflect.Modifier;
+
 @SuppressWarnings("unused")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class MiscTests {
@@ -152,5 +154,17 @@ public class MiscTests {
 			const thing = {nested: [1, 2, 3]};
 			console.info(JSON.stringify(thing));
 			""", "{\"nested\":[1.0,2.0,3.0]}");
+	}
+
+	@Test
+	public void types() {
+		for (var method : GenericObject.class.getDeclaredMethods()) {
+			if (!Modifier.isStatic(method.getModifiers())) {
+				GenericObject.test = method.getName();
+				GenericObject.test(method.getName(), method.getGenericReturnType());
+			}
+		}
+
+		GenericObject.test = "";
 	}
 }

@@ -141,7 +141,21 @@ public interface TypeInfo {
 			case ParameterizedType paramType -> of(paramType.getRawType()).withParams(ofArray(paramType.getActualTypeArguments()));
 			case GenericArrayType arrType -> of(arrType.getGenericComponentType()).asArray();
 			case TypeVariable<?> ignore -> NONE; // ClassTypeInfo.OBJECT
-			case WildcardType wildcard -> of(wildcard.getUpperBounds()[0]);
+			case WildcardType wildcard -> {
+				var lower = wildcard.getLowerBounds();
+
+				if (lower.length == 0) {
+					var upper = wildcard.getUpperBounds();
+
+					if (upper.length == 0 || upper[0] == Object.class) {
+						yield NONE;
+					}
+
+					yield of(upper[0]);
+				} else {
+					yield of(lower[0]);
+				}
+			}
 			case null, default -> NONE;
 		};
 	}
@@ -198,5 +212,9 @@ public interface TypeInfo {
 
 	default TypeInfo or(TypeInfo info) {
 		return new JSOrTypeInfo(this, info);
+	}
+
+	default void append(TypeStringContext ctx, StringBuilder sb) {
+		sb.append(this);
 	}
 }

@@ -50,19 +50,24 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 
 	@Override
 	public String toString() {
-		var sb = new StringBuilder(rawType.toString());
+		return TypeStringContext.DEFAULT.toString(this);
+	}
+
+	@Override
+	public void append(TypeStringContext ctx, StringBuilder sb) {
+		ctx.append(sb, rawType);
 		sb.append('<');
 
 		for (int i = 0; i < params.length; i++) {
 			if (i > 0) {
-				sb.append(", ");
+				sb.append(',');
+				ctx.appendSpace(sb);
 			}
 
-			sb.append(params[i]);
+			ctx.append(sb, params[i]);
 		}
 
 		sb.append('>');
-		return sb.toString();
 	}
 
 	@Override
@@ -76,6 +81,11 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 
 	public TypeInfo[] params() {
 		return params;
+	}
+
+	@Override
+	public Object newArray(int length) {
+		return rawType.newArray(length);
 	}
 
 	@Override
