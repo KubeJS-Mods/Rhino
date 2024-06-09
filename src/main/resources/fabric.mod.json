@@ -1,0 +1,19 @@
+{
+	"schemaVersion": 1,
+	"id": "rhino",
+	"version": "${version}",
+	"name": "Rhino",
+	"description": "A fork of Mozilla's Rhino library, modified for use in mods",
+	"authors": ["Lat", "Mozilla"],
+	"contact": {
+		"issues": "https://github.com/KubeJS-Mods/Rhino/issues",
+		"repo": "https://github.com/KubeJS-Mods/Rhino"
+	},
+	"license": "MPL-2.0",
+	"environment": "*",
+	"entrypoints": {
+	},
+	"depends": {
+		"fabricloader": "*"
+	}
+}

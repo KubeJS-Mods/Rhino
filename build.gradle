@@ -84,19 +84,11 @@ repositories {
 	maven {
 		url "https://maven.neoforged.net/releases"
 	}
-
-	maven {
-		name = 'ParchmentMC'
-		url = 'https://maven.parchmentmc.org'
-	}
 }
 
 dependencies {
 	minecraft "com.mojang:minecraft:$minecraft_version"
-	mappings loom.layered() {
-		officialMojangMappings()
-		parchment("org.parchmentmc.data:parchment-$minecraft_version:$parchment_version@zip")
-	}
+	mappings loom.officialMojangMappings()
 
 	neoForge("net.neoforged:neoforge:$neoforge_version")
 
@@ -142,8 +134,8 @@ unifiedPublishing {
 	project {
 		releaseType = "${ENV.RELEASE_TYPE ?: 'release'}"
 		gameVersions = Arrays.asList(rootProject.supported_versions.split(','))
-		gameLoaders = ["neoforge"]
-		displayName = "$mod_name NeoForge $project.version"
+		gameLoaders = ["neoforge", "fabric"]
+		displayName = "$mod_name $project.version"
 		changelog = 'Changelog not available'
 		mainPublication remapJar
 
@@ -167,7 +159,7 @@ unifiedPublishing {
 publishing {
 	publications {
 		mavenNeoForge(MavenPublication) {
-			artifactId = "${rootProject.archives_base_name}-neoforge"
+			artifactId = "${rootProject.archives_base_name}"
 			from components.java
 		}
 	}
