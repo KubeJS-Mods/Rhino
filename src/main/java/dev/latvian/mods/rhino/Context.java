@@ -1491,7 +1491,7 @@ public class Context {
 				if (target == TypeInfo.STRING || target == TypeInfo.OBJECT) {
 					return "undefined";
 				}
-				return reportConversionError("undefined", target, from);
+				return reportConversionError(from, target);
 			}
 			case JSTYPE_BOOLEAN -> {
 				// Under LC3, only JS Booleans can be coerced into a Boolean value
@@ -1500,7 +1500,7 @@ public class Context {
 				} else if (target == TypeInfo.STRING) {
 					return from.toString();
 				} else {
-					return reportConversionError(from, target);
+					return internalJsToJavaLast(from, target);
 				}
 			}
 			case JSTYPE_NUMBER -> {
@@ -1520,7 +1520,7 @@ public class Context {
 				} else if ((target.isPrimitive() && target != TypeInfo.BOOLEAN) || ScriptRuntime.NumberClass.isAssignableFrom(target.asClass())) {
 					return coerceToNumber(target, from);
 				} else {
-					return reportConversionError(from, target);
+					return internalJsToJavaLast(from, target);
 				}
 			}
 			case JSTYPE_STRING -> {
@@ -1538,7 +1538,7 @@ public class Context {
 				} else if ((target.isPrimitive() && target != TypeInfo.BOOLEAN) || ScriptRuntime.NumberClass.isAssignableFrom(target.asClass())) {
 					return coerceToNumber(target, from);
 				} else {
-					return reportConversionError(from, target);
+					return internalJsToJavaLast(from, target);
 				}
 			}
 			case JSTYPE_JAVA_CLASS -> {
@@ -1547,13 +1547,13 @@ public class Context {
 				} else if (target == TypeInfo.STRING) {
 					return unwrappedValue.toString();
 				} else {
-					return reportConversionError(unwrappedValue, target);
+					return internalJsToJavaLast(unwrappedValue, target);
 				}
 			}
 			case JSTYPE_JAVA_OBJECT, JSTYPE_JAVA_ARRAY -> {
 				if (target.isPrimitive()) {
 					if (target == TypeInfo.BOOLEAN) {
-						return reportConversionError(unwrappedValue, target);
+						return internalJsToJavaLast(unwrappedValue, target);
 					}
 					return coerceToNumber(target, unwrappedValue);
 				}
@@ -1563,14 +1563,14 @@ public class Context {
 				if (target.asClass().isInstance(unwrappedValue)) {
 					return unwrappedValue;
 				}
-				return reportConversionError(unwrappedValue, target);
+				return internalJsToJavaLast(unwrappedValue, target);
 			}
 			case JSTYPE_OBJECT -> {
 				if (target == TypeInfo.STRING) {
 					return ScriptRuntime.toString(this, from);
 				} else if (target.isPrimitive()) {
 					if (target == TypeInfo.BOOLEAN) {
-						return reportConversionError(from, target);
+						return internalJsToJavaLast(from, target);
 					}
 					return coerceToNumber(target, from);
 				} else if (target.asClass().isInstance(from)) {
@@ -1583,12 +1583,12 @@ public class Context {
 					if (target.asClass().isInstance(unwrappedValue)) {
 						return unwrappedValue;
 					}
-					return reportConversionError(unwrappedValue, target);
+					return internalJsToJavaLast(unwrappedValue, target);
 				} else if (target.asClass().isInterface() && (from instanceof NativeObject || from instanceof NativeFunction || from instanceof ArrowFunction)) {
 					// Try to use function/object as implementation of Java interface.
 					return createInterfaceAdapter(target, (ScriptableObject) from);
 				} else {
-					return reportConversionError(from, target);
+					return internalJsToJavaLast(from, target);
 				}
 			}
 		}
@@ -1597,7 +1597,7 @@ public class Context {
 	}
 
 	protected Object internalJsToJavaLast(Object from, TypeInfo target) {
-		return from;
+		return reportConversionError(from, target);
 	}
 
 	public final boolean canConvert(Object from, TypeInfo target) {
@@ -1867,13 +1867,7 @@ public class Context {
 	}
 
 	public Object reportConversionError(Object value, TypeInfo type) {
-		return reportConversionError(value, type, value);
-	}
-
-	public Object reportConversionError(Object value, TypeInfo type, Object stringValue) {
-		// It uses String.valueOf(value), not value.toString() since
-		// value can be null, bug 282447.
-		throw Context.reportRuntimeError2("msg.conversion.not.allowed", String.valueOf(stringValue), type.signature(), this);
+		throw Context.reportRuntimeError2("msg.conversion.not.allowed", String.valueOf(value), type.signature(), this);
 	}
 
 	public String defaultObjectToSource(Scriptable scope, Scriptable thisObj, Object[] args) {
