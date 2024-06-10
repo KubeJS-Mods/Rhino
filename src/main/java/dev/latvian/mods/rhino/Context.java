@@ -974,11 +974,11 @@ public class Context {
 	public Object wrap(Scriptable scope, Object obj, TypeInfo target) {
 		if (obj == null || obj == Undefined.INSTANCE || obj instanceof Scriptable) {
 			return obj;
-		} else if (target == TypeInfo.VOID) {
+		} else if (target.isVoid()) {
 			return Undefined.INSTANCE;
-		} else if (target == TypeInfo.CHARACTER) {
+		} else if (target.isCharacter()) { // is this necessary?
 			return (int) (Character) obj;
-		} else if (target != null && target.isPrimitive()) {
+		} else if (target.isPrimitive()) {
 			return obj;
 		} else if (target instanceof ArrayTypeInfo array) {
 			return new NativeJavaArray(scope, obj, array, this);
@@ -1195,7 +1195,7 @@ public class Context {
 		return Integer.MAX_VALUE;
 	}
 
-	protected ArrayValueProvider arrayValueProviderOf(Object value) {
+	public ArrayValueProvider arrayValueProviderOf(Object value) {
 		if (value instanceof Object[] arr) {
 			return arr.length == 0 ? ArrayValueProvider.EMPTY : new ArrayValueProvider.FromPlainJavaArray(arr);
 		} else if (value != null && value.getClass().isArray()) {
@@ -1212,7 +1212,7 @@ public class Context {
 		};
 	}
 
-	protected Object arrayOf(@Nullable Object from, TypeInfo target) {
+	public Object arrayOf(@Nullable Object from, TypeInfo target) {
 		if (from instanceof Object[] arr) {
 			if (target == null) {
 				return from;
@@ -1231,7 +1231,7 @@ public class Context {
 		return arrayValueProviderOf(from).createArray(this, target);
 	}
 
-	protected Object listOf(@Nullable Object from, TypeInfo target) {
+	public Object listOf(@Nullable Object from, TypeInfo target) {
 		if (from instanceof NativeJavaList n) {
 			if (target == null) {
 				// No conversion necessary
@@ -1253,7 +1253,7 @@ public class Context {
 		return arrayValueProviderOf(from).createList(this, target);
 	}
 
-	protected Object setOf(@Nullable Object from, TypeInfo target) {
+	public Object setOf(@Nullable Object from, TypeInfo target) {
 		if (from instanceof NativeJavaList n) {
 			if (target == null) {
 				// No conversion necessary
@@ -1275,12 +1275,12 @@ public class Context {
 		return arrayValueProviderOf(from).createSet(this, target);
 	}
 
-	protected Object mapOf(@Nullable Object from, TypeInfo kTarget, TypeInfo vTarget) {
+	public Object mapOf(@Nullable Object from, TypeInfo kTarget, TypeInfo vTarget) {
 		if (from instanceof NativeJavaMap n) {
-			if (kTarget == null && vTarget == null) {
+			if (!kTarget.shouldConvert() && !vTarget.shouldConvert()) {
 				// No conversion necessary
 				return n.map;
-			} else if (kTarget == n.mapKeyType && kTarget.equals(n.mapKeyType) && vTarget.equals(n.mapValueType)) {
+			} else if (kTarget.equals(n.mapKeyType) && vTarget.equals(n.mapValueType)) {
 				// No conversion necessary
 				return n.map;
 			} else {
@@ -1306,7 +1306,7 @@ public class Context {
 
 			return map;
 		} else if (from instanceof Map<?, ?> m) {
-			if (kTarget == null && vTarget == null) {
+			if (!kTarget.shouldConvert() && !vTarget.shouldConvert()) {
 				// No conversion necessary
 				return m;
 			}
@@ -1387,11 +1387,7 @@ public class Context {
 	}
 
 	public final Object jsToJava(@Nullable Object from, TypeInfo target) throws EvaluatorException {
-		if (target == null) {
-			return from;
-		}
-
-		if (target == TypeInfo.OBJECT) {
+		if (target == null || !target.shouldConvert()) {
 			return Wrapper.unwrapped(from);
 		} else if (target.is(TypeInfo.RAW_SET)) {
 			return setOf(from, target.param(0));
@@ -1495,7 +1491,7 @@ public class Context {
 			}
 			case JSTYPE_BOOLEAN -> {
 				// Under LC3, only JS Booleans can be coerced into a Boolean value
-				if (target == TypeInfo.BOOLEAN || target == TypeInfo.OBJECT) {
+				if (target.isBoolean() || target == TypeInfo.OBJECT) {
 					return from;
 				} else if (target == TypeInfo.STRING) {
 					return from.toString();
@@ -1507,17 +1503,8 @@ public class Context {
 				if (target == TypeInfo.STRING) {
 					return ScriptRuntime.toString(this, from);
 				} else if (target == TypeInfo.OBJECT) {
-					/*
-					if (cx.hasFeature(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE)) {
-						//to process numbers like 2.0 as 2 without decimal place
-						long roundedValue = Math.round(toDouble(value));
-						if (roundedValue == toDouble(value)) {
-							return coerceToNumber(Long.TYPE, value);
-						}
-					}
-					 */
 					return coerceToNumber(TypeInfo.DOUBLE, from);
-				} else if ((target.isPrimitive() && target != TypeInfo.BOOLEAN) || ScriptRuntime.NumberClass.isAssignableFrom(target.asClass())) {
+				} else if ((target.isPrimitive() && !target.isBoolean()) || ScriptRuntime.NumberClass.isAssignableFrom(target.asClass())) {
 					return coerceToNumber(target, from);
 				} else {
 					return internalJsToJavaLast(from, target);
@@ -1526,7 +1513,7 @@ public class Context {
 			case JSTYPE_STRING -> {
 				if (target == TypeInfo.STRING || target.asClass().isInstance(from)) {
 					return from.toString();
-				} else if (target == TypeInfo.CHARACTER) {
+				} else if (target.isCharacter()) {
 					// Special case for converting a single char string to a
 					// character
 					// Placed here because it applies *only* to JS strings,
@@ -1535,7 +1522,7 @@ public class Context {
 						return ((CharSequence) from).charAt(0);
 					}
 					return coerceToNumber(target, from);
-				} else if ((target.isPrimitive() && target != TypeInfo.BOOLEAN) || ScriptRuntime.NumberClass.isAssignableFrom(target.asClass())) {
+				} else if ((target.isPrimitive() && !target.isBoolean()) || ScriptRuntime.NumberClass.isAssignableFrom(target.asClass())) {
 					return coerceToNumber(target, from);
 				} else {
 					return internalJsToJavaLast(from, target);
@@ -1552,7 +1539,7 @@ public class Context {
 			}
 			case JSTYPE_JAVA_OBJECT, JSTYPE_JAVA_ARRAY -> {
 				if (target.isPrimitive()) {
-					if (target == TypeInfo.BOOLEAN) {
+					if (target.isBoolean()) {
 						return internalJsToJavaLast(unwrappedValue, target);
 					}
 					return coerceToNumber(target, unwrappedValue);
@@ -1569,7 +1556,7 @@ public class Context {
 				if (target == TypeInfo.STRING) {
 					return ScriptRuntime.toString(this, from);
 				} else if (target.isPrimitive()) {
-					if (target == TypeInfo.BOOLEAN) {
+					if (target.isBoolean()) {
 						return internalJsToJavaLast(from, target);
 					}
 					return coerceToNumber(target, from);
@@ -1627,17 +1614,17 @@ public class Context {
 			} else if (target.asClass().isInstance(from)) {
 				return 2;
 			} else if (target.isPrimitive()) {
-				if (target == TypeInfo.CHARACTER) {
+				if (target.isCharacter()) {
 					return 3;
-				} else if (target != TypeInfo.BOOLEAN) {
+				} else if (!target.isBoolean()) {
 					return 4;
 				}
 			}
 		} else if (from instanceof Number) {
 			if (target.isPrimitive()) {
-				if (target == TypeInfo.DOUBLE) {
+				if (target.isDouble()) {
 					return CONVERSION_TRIVIAL;
-				} else if (target != TypeInfo.BOOLEAN) {
+				} else if (!target.isBoolean()) {
 					return CONVERSION_TRIVIAL + getSizeRank(target);
 				}
 			} else {
@@ -1653,7 +1640,7 @@ public class Context {
 			}
 		} else if (from instanceof Boolean) {
 			// "boolean" is #1
-			if (target == TypeInfo.BOOLEAN) {
+			if (target.isBoolean()) {
 				return CONVERSION_TRIVIAL;
 			} else if (target == TypeInfo.OBJECT) {
 				return 3;
@@ -1679,7 +1666,7 @@ public class Context {
 					return CONVERSION_EXACT;
 				} else if (target == TypeInfo.STRING) {
 					return 2;
-				} else if (target.isPrimitive() && target != TypeInfo.BOOLEAN) {
+				} else if (target.isPrimitive() && !target.isBoolean()) {
 					return (fromCode == JSTYPE_JAVA_ARRAY) ? CONVERSION_NONE : 2 + getSizeRank(target);
 				} else if (target instanceof ArrayTypeInfo) {
 					return 3;
@@ -1720,7 +1707,7 @@ public class Context {
 						return 2;
 					}
 					return 12;
-				} else if (target.isPrimitive() && target != TypeInfo.BOOLEAN) {
+				} else if (target.isPrimitive() && !target.isBoolean()) {
 					return 4 + getSizeRank(target);
 				}
 			}
@@ -1730,21 +1717,21 @@ public class Context {
 	}
 
 	public static int getSizeRank(TypeInfo aType) {
-		if (aType == TypeInfo.DOUBLE) {
+		if (aType.isDouble()) {
 			return 1;
-		} else if (aType == TypeInfo.FLOAT) {
+		} else if (aType.isFloat()) {
 			return 2;
-		} else if (aType == TypeInfo.LONG) {
+		} else if (aType.isLong()) {
 			return 3;
-		} else if (aType == TypeInfo.INT) {
+		} else if (aType.isInt()) {
 			return 4;
-		} else if (aType == TypeInfo.SHORT) {
+		} else if (aType.isShort()) {
 			return 5;
-		} else if (aType == TypeInfo.CHARACTER) {
+		} else if (aType.isCharacter()) {
 			return 6;
-		} else if (aType == TypeInfo.BYTE) {
+		} else if (aType.isByte()) {
 			return 7;
-		} else if (aType == TypeInfo.BOOLEAN) {
+		} else if (aType.isBoolean()) {
 			return CONVERSION_NONE;
 		} else {
 			return 8;
@@ -1755,19 +1742,19 @@ public class Context {
 		Class<?> valueClass = value.getClass();
 
 		// Character
-		if (target == TypeInfo.CHARACTER) {
+		if (target.isCharacter()) {
 			if (valueClass == ScriptRuntime.CharacterClass) {
 				return value;
 			}
-			return (char) toInteger(value, TypeInfo.CHARACTER, Character.MIN_VALUE, Character.MAX_VALUE);
+			return (char) toInteger(value, target, Character.MIN_VALUE, Character.MAX_VALUE);
 		}
 
 		// Double, Float
-		if (target == TypeInfo.OBJECT || target == TypeInfo.DOUBLE) {
+		if (target == TypeInfo.OBJECT || target.isDouble()) {
 			return valueClass == ScriptRuntime.DoubleClass ? value : Double.valueOf(toDouble(value));
 		}
 
-		if (target == TypeInfo.FLOAT) {
+		if (target.isFloat()) {
 			if (valueClass == ScriptRuntime.FloatClass) {
 				return value;
 			}
@@ -1787,14 +1774,14 @@ public class Context {
 		}
 
 		// Integer, Long, Short, Byte
-		if (target == TypeInfo.INT) {
+		if (target.isInt()) {
 			if (valueClass == ScriptRuntime.IntegerClass) {
 				return value;
 			}
-			return (int) toInteger(value, TypeInfo.INT, Integer.MIN_VALUE, Integer.MAX_VALUE);
+			return (int) toInteger(value, target, Integer.MIN_VALUE, Integer.MAX_VALUE);
 		}
 
-		if (target == TypeInfo.LONG) {
+		if (target.isLong()) {
 			if (valueClass == ScriptRuntime.LongClass) {
 				return value;
 			}
@@ -1807,21 +1794,21 @@ public class Context {
 			 */
 			final double max = Double.longBitsToDouble(0x43dfffffffffffffL);
 			final double min = Double.longBitsToDouble(0xc3e0000000000000L);
-			return toInteger(value, TypeInfo.LONG, min, max);
+			return toInteger(value, target, min, max);
 		}
 
-		if (target == TypeInfo.SHORT) {
+		if (target.isShort()) {
 			if (valueClass == ScriptRuntime.ShortClass) {
 				return value;
 			}
-			return (short) toInteger(value, TypeInfo.SHORT, Short.MIN_VALUE, Short.MAX_VALUE);
+			return (short) toInteger(value, target, Short.MIN_VALUE, Short.MAX_VALUE);
 		}
 
-		if (target == TypeInfo.BYTE) {
+		if (target.isByte()) {
 			if (valueClass == ScriptRuntime.ByteClass) {
 				return value;
 			}
-			return (byte) toInteger(value, TypeInfo.BYTE, Byte.MIN_VALUE, Byte.MAX_VALUE);
+			return (byte) toInteger(value, target, Byte.MIN_VALUE, Byte.MAX_VALUE);
 		}
 
 		return toDouble(value);

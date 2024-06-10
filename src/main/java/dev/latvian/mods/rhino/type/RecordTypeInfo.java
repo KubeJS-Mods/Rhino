@@ -1,31 +1,141 @@
 package dev.latvian.mods.rhino.type;
 
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import dev.latvian.mods.rhino.Callable;
+import dev.latvian.mods.rhino.Context;
+import dev.latvian.mods.rhino.NativeArray;
+import dev.latvian.mods.rhino.NativeJavaList;
+import dev.latvian.mods.rhino.NativeJavaObject;
+import dev.latvian.mods.rhino.NativeMap;
+import dev.latvian.mods.rhino.RhinoException;
+import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 
-public class RecordTypeInfo extends ClassTypeInfo {
-	public record Component(String name, TypeInfo type) {
+import java.lang.reflect.Constructor;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+
+public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<Object> {
+	public record Component(int index, String name, TypeInfo type) {
+	}
+
+	public record Data(Component[] components, Map<String, Component> componentMap, Object[] defaultArguments) {
 	}
 
 	static final Map<Class<?>, RecordTypeInfo> CACHE = new IdentityHashMap<>();
 
-	private Map<String, Component> recordComponents;
+	private Data data;
+	private Constructor<?> constructor;
 
 	RecordTypeInfo(Class<?> type) {
 		super(type);
 	}
 
+	public Data getData() {
+		if (data == null) {
+			var rc = asClass().getRecordComponents();
+			var components = new Component[rc.length];
+			var componentMap = new HashMap<String, Component>();
+			var defaultArguments = new Object[rc.length];
+
+			for (int i = 0; i < rc.length; i++) {
+				var gt = rc[i].getGenericType();
+				var c = new Component(i, rc[i].getName(), TypeInfo.of(gt));
+				components[i] = c;
+				componentMap.put(c.name, c);
+				defaultArguments[i] = c.type.createDefaultValue();
+			}
+
+			data = new Data(components, Map.copyOf(componentMap), defaultArguments);
+		}
+
+		return data;
+	}
+
 	@Override
 	public Map<String, Component> recordComponents() {
-		if (recordComponents == null) {
-			recordComponents = new LinkedHashMap<>();
+		return getData().componentMap;
+	}
 
-			for (var field : asClass().getRecordComponents()) {
-				recordComponents.put(field.getName(), new Component(field.getName(), TypeInfo.of(field.getGenericType())));
+	public Constructor<?> getConstructor(Context cx) {
+		if (constructor == null) {
+			try {
+				var data = getData();
+				var types = new Class<?>[data.components.length];
+
+				for (int i = 0; i < data.components.length; i++) {
+					types[i] = data.components[i].type.asClass();
+				}
+
+				constructor = asClass().getConstructor(types);
+			} catch (Exception ex) {
+				throw Context.reportRuntimeError("Unable to find record '" + asClass().getName() + "' constructor", cx);
 			}
 		}
 
-		return recordComponents;
+		return constructor;
+	}
+
+	public Object createInstance(Context cx, Map<?, ?> map) {
+		var data = getData();
+		var args = data.defaultArguments.clone();
+
+		for (var entry : map.entrySet()) {
+			var c = data.componentMap.get(String.valueOf(entry.getKey()));
+
+			if (c != null) {
+				args[c.index] = cx.jsToJava(entry.getValue(), c.type);
+			}
+		}
+
+		try {
+			return getConstructor(cx).newInstance(args);
+		} catch (RhinoException ignored) {
+		} catch (Exception ex) {
+			throw Context.reportRuntimeError("Unable to create record '" + asClass().getName() + "' instance from map " + map, cx);
+		}
+
+		return cx.reportConversionError(map, this);
+	}
+
+	public Object createInstance(Context cx, Object... objects) {
+		var data = getData();
+		var args = data.defaultArguments.clone();
+		int alen = Math.min(args.length, objects.length);
+
+		for (int i = 0; i < alen; i++) {
+			args[i] = cx.jsToJava(objects[i], data.components[i].type);
+		}
+
+		try {
+			return getConstructor(cx).newInstance(args);
+		} catch (RhinoException ignored) {
+		} catch (Exception ex) {
+			throw Context.reportRuntimeError("Unable to create record '" + asClass().getName() + "' instance from array " + Arrays.toString(objects), cx);
+		}
+
+		return cx.reportConversionError(objects, this);
+	}
+
+	@Override
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	public Object wrap(Context cx, Object from, TypeInfo target) {
+		if (asClass().isInstance(from)) {
+			return from;
+		} else if (from instanceof NativeArray || from instanceof NativeJavaList) {
+			var arr = (Object[]) cx.arrayOf(from, TypeInfo.NONE);
+			return createInstance(cx, arr);
+		} else if (from instanceof Map<?, ?> || from instanceof NativeJavaObject || from instanceof NativeMap) {
+			var map = (Map) cx.mapOf(from, TypeInfo.STRING, TypeInfo.NONE);
+			return createInstance(cx, map);
+		} else if (from instanceof Callable) {
+			var map = new HashMap<>();
+			var consumer = (Consumer) cx.jsToJava(from, TypeInfo.RAW_CONSUMER);
+			consumer.accept(map);
+			return createInstance(cx, map);
+		}
+
+		return cx.reportConversionError(from, target);
 	}
 }

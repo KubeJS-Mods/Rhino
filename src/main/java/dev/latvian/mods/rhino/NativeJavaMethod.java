@@ -479,7 +479,7 @@ public class NativeJavaMethod extends BaseFunction {
 			System.err.println(" ----- Wrapped as " + wrapped + " class = " + actualType);
 		}
 
-		if (wrapped == null && staticType == TypeInfo.VOID) {
+		if (wrapped == null && staticType.isVoid()) {
 			wrapped = Undefined.INSTANCE;
 		}
 		return wrapped;

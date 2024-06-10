@@ -36,4 +36,49 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
 	public void append(TypeStringContext ctx, StringBuilder sb) {
 		ctx.appendClassName(sb, this);
 	}
+
+	@Override
+	public boolean isVoid() {
+		return type == Void.class || type == Void.TYPE;
+	}
+
+	@Override
+	public boolean isBoolean() {
+		return type == Boolean.class || type == Boolean.TYPE;
+	}
+
+	@Override
+	public boolean isByte() {
+		return type == Byte.class || type == Byte.TYPE;
+	}
+
+	@Override
+	public boolean isShort() {
+		return type == Short.class || type == Short.TYPE;
+	}
+
+	@Override
+	public boolean isInt() {
+		return type == Integer.class || type == Integer.TYPE;
+	}
+
+	@Override
+	public boolean isLong() {
+		return type == Long.class || type == Long.TYPE;
+	}
+
+	@Override
+	public boolean isFloat() {
+		return type == Float.class || type == Float.TYPE;
+	}
+
+	@Override
+	public boolean isDouble() {
+		return type == Double.class || type == Double.TYPE;
+	}
+
+	@Override
+	public boolean isCharacter() {
+		return type == Character.class || type == Character.TYPE;
+	}
 }

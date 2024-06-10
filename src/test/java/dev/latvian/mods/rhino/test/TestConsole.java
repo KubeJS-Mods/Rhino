@@ -114,4 +114,8 @@ public class TestConsole {
 	public void registerMaterial(Holder<TestMaterial> holder) {
 		info("Registered material: " + holder.value().name());
 	}
+
+	public void printRecord(TestRecord record) {
+		info(record);
+	}
 }

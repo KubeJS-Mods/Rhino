@@ -268,6 +268,8 @@ public final class NativeJSON extends IdScriptableObject {
 			clName.insert(0, "annotation ");
 		} else if (cl.isEnum()) {
 			clName.insert(0, "enum ");
+		} else if (cl.isRecord()) {
+			clName.insert(0, "record ");
 		} else {
 			clName.insert(0, "class ");
 		}
