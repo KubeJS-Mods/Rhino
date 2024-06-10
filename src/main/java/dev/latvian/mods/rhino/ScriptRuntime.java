@@ -2108,15 +2108,15 @@ public class ScriptRuntime {
 			}
 			return wrapNumber(toNumber(cx, val1) + toNumber(cx, val2));
 		}
-		return new ConsString(toCharSequence(cx, val1), toCharSequence(cx, val2));
+		return ConsString.flatten(toCharSequence(cx, val1), toCharSequence(cx, val2));
 	}
 
-	public static CharSequence add(Context cx, CharSequence val1, Object val2) {
-		return new ConsString(val1, toCharSequence(cx, val2));
+	public static String add(Context cx, CharSequence val1, Object val2) {
+		return ConsString.flatten(val1, toCharSequence(cx, val2));
 	}
 
-	public static CharSequence add(Context cx, Object val1, CharSequence val2) {
-		return new ConsString(toCharSequence(cx, val1), val2);
+	public static String add(Context cx, Object val1, CharSequence val2) {
+		return ConsString.flatten(toCharSequence(cx, val1), val2);
 	}
 
 	public static Object nameIncrDecr(Context cx, Scriptable scopeChain, String id, int incrDecrMask) {

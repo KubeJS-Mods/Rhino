@@ -1070,10 +1070,6 @@ public class Context {
 		this.isTopLevelStrict = isTopLevelStrict;
 		try {
 			result = callSync(callable, scope, thisObj, args);
-
-			if (result instanceof ConsString) {
-				result = result.toString();
-			}
 		} finally {
 			setTopCall(null);
 			// Cleanup cached references

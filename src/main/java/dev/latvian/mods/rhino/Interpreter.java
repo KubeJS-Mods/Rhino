@@ -2079,12 +2079,12 @@ public final class Interpreter extends Icode implements Evaluator {
 				// to reduce method calls
 			} else if (lhs instanceof CharSequence) {
 				if (rhs instanceof CharSequence) {
-					stack[stackTop] = new ConsString((CharSequence) lhs, (CharSequence) rhs);
+					stack[stackTop] = ConsString.flatten((CharSequence) lhs, (CharSequence) rhs);
 				} else {
-					stack[stackTop] = new ConsString((CharSequence) lhs, ScriptRuntime.toCharSequence(cx, rhs));
+					stack[stackTop] = ConsString.flatten((CharSequence) lhs, ScriptRuntime.toCharSequence(cx, rhs));
 				}
 			} else if (rhs instanceof CharSequence) {
-				stack[stackTop] = new ConsString(ScriptRuntime.toCharSequence(cx, lhs), (CharSequence) rhs);
+				stack[stackTop] = ConsString.flatten(ScriptRuntime.toCharSequence(cx, lhs), (CharSequence) rhs);
 
 			} else {
 				double lDbl = (lhs instanceof Number) ? ((Number) lhs).doubleValue() : ScriptRuntime.toNumber(cx, lhs);
@@ -2107,9 +2107,9 @@ public final class Interpreter extends Icode implements Evaluator {
 		} else if (lhs instanceof CharSequence) {
 			CharSequence rstr = ScriptRuntime.numberToString(cx, d, 10);
 			if (leftRightOrder) {
-				stack[stackTop] = new ConsString((CharSequence) lhs, rstr);
+				stack[stackTop] = ConsString.flatten((CharSequence) lhs, rstr);
 			} else {
-				stack[stackTop] = new ConsString(rstr, (CharSequence) lhs);
+				stack[stackTop] = ConsString.flatten(rstr, (CharSequence) lhs);
 			}
 		} else {
 			double lDbl = (lhs instanceof Number) ? ((Number) lhs).doubleValue() : ScriptRuntime.toNumber(cx, lhs);

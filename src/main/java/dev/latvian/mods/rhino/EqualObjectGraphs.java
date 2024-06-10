@@ -194,10 +194,6 @@ final class EqualObjectGraphs {
 			return o2 instanceof Wrapper && equalGraphs(cx, ((Wrapper) o1).unwrap(), ((Wrapper) o2).unwrap());
 		} else if (o1 instanceof Scriptable) {
 			return o2 instanceof Scriptable && equalScriptables(cx, (Scriptable) o1, (Scriptable) o2);
-		} else if (o1 instanceof ConsString) {
-			return ((ConsString) o1).toString().equals(o2);
-		} else if (o2 instanceof ConsString) {
-			return o1.equals(((ConsString) o2).toString());
 		} else if (o1 instanceof SymbolKey) {
 			return o2 instanceof SymbolKey && equalGraphs(cx, ((SymbolKey) o1).getName(), ((SymbolKey) o2).getName());
 		} else if (o1 instanceof Object[]) {

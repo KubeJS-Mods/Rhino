@@ -339,13 +339,6 @@ public class FunctionObject extends BaseFunction {
 		boolean checkMethodResult = false;
 		int argsLength = args.length;
 
-		for (int i = 0; i < argsLength; i++) {
-			// flatten cons-strings before passing them as arguments
-			if (args[i] instanceof ConsString) {
-				args[i] = args[i].toString();
-			}
-		}
-
 		if (parmsLength < 0) {
 			if (parmsLength == VARARGS_METHOD) {
 				Object[] invokeArgs = {cx, thisObj, args, this};
