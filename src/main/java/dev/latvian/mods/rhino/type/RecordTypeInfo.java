@@ -22,13 +22,15 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 	public record Component(int index, String name, TypeInfo type) {
 	}
 
-	public record Data(Component[] components, Map<String, Component> componentMap, Object[] defaultArguments, JSObjectTypeInfo objectTypeInfo) {
+	public record Data(Component[] components, Map<String, Component> componentMap, Object[] defaultArguments) {
 	}
 
 	static final Map<Class<?>, RecordTypeInfo> CACHE = new IdentityHashMap<>();
 
 	private Data data;
 	private Constructor<?> constructor;
+	private JSObjectTypeInfo objectTypeInfo;
+	private JSFixedArrayTypeInfo arrayTypeInfo;
 
 	RecordTypeInfo(Class<?> type) {
 		super(type);
@@ -40,7 +42,6 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 			var components = new Component[rc.length];
 			var componentMap = new HashMap<String, Component>();
 			var defaultArguments = new Object[rc.length];
-			var objectTypeInfoList = new ArrayList<JSOptionalParam>();
 
 			for (int i = 0; i < rc.length; i++) {
 				var gt = rc[i].getGenericType();
@@ -48,13 +49,50 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 				components[i] = c;
 				componentMap.put(c.name, c);
 				defaultArguments[i] = c.type.createDefaultValue();
-				objectTypeInfoList.add(new JSOptionalParam(c.name, c.type, true));
 			}
 
-			data = new Data(components, Map.copyOf(componentMap), defaultArguments, new JSObjectTypeInfo(List.copyOf(objectTypeInfoList)));
+			data = new Data(components, Map.copyOf(componentMap), defaultArguments);
 		}
 
 		return data;
+	}
+
+	public JSObjectTypeInfo getObjectTypeInfo() {
+		if (objectTypeInfo == null) {
+			var data = getData();
+			var list = new ArrayList<JSOptionalParam>(data.components.length);
+
+			for (var c : data.components) {
+				list.add(new JSOptionalParam(c.name, c.type, true));
+			}
+
+			objectTypeInfo = new JSObjectTypeInfo(List.copyOf(list));
+		}
+
+		return objectTypeInfo;
+	}
+
+	public JSFixedArrayTypeInfo getArrayTypeInfo() {
+		if (arrayTypeInfo == null) {
+			var data = getData();
+			var list = new ArrayList<JSOptionalParam>(data.components.length);
+
+			for (var c : data.components) {
+				list.add(new JSOptionalParam(c.name, c.type, true));
+			}
+
+			arrayTypeInfo = new JSFixedArrayTypeInfo(List.copyOf(list));
+		}
+
+		return arrayTypeInfo;
+	}
+
+	public TypeInfo createCombinedType(TypeInfo... preference) {
+		var types = new ArrayList<TypeInfo>(2 + preference.length);
+		types.addAll(Arrays.asList(preference));
+		types.add(getObjectTypeInfo());
+		types.add(getArrayTypeInfo());
+		return new JSOrTypeInfo(types);
 	}
 
 	@Override

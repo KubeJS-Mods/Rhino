@@ -243,7 +243,7 @@ public interface TypeInfo {
 	}
 
 	default TypeInfo or(TypeInfo info) {
-		return new JSOrTypeInfo(this, info);
+		return new JSOrTypeInfo(List.of(this, info));
 	}
 
 	default void append(TypeStringContext ctx, StringBuilder sb) {

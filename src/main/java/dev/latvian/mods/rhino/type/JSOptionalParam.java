@@ -13,14 +13,21 @@ public record JSOptionalParam(String name, TypeInfo type, boolean optional) {
 	}
 
 	public void append(TypeStringContext ctx, StringBuilder sb) {
-		sb.append(name);
+		if (!name.isEmpty()) {
+			sb.append(name);
 
-		if (optional) {
-			sb.append('?');
+			if (optional) {
+				sb.append('?');
+			}
+
+			sb.append(':');
+			ctx.appendSpace(sb);
 		}
 
-		sb.append(':');
-		ctx.appendSpace(sb);
 		ctx.append(sb, type);
+
+		if (optional && name.isEmpty()) {
+			sb.append('?');
+		}
 	}
 }

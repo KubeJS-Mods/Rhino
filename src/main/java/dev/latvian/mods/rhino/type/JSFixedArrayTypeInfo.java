@@ -1,7 +1,9 @@
 package dev.latvian.mods.rhino.type;
 
+import java.util.List;
+
 // [string, number]
-public record JSFixedArrayTypeInfo(TypeInfo... types) implements TypeInfo {
+public record JSFixedArrayTypeInfo(List<JSOptionalParam> types) implements TypeInfo {
 	@Override
 	public Class<?> asClass() {
 		return TypeInfo.class;
@@ -16,13 +18,13 @@ public record JSFixedArrayTypeInfo(TypeInfo... types) implements TypeInfo {
 	public void append(TypeStringContext ctx, StringBuilder sb) {
 		sb.append('[');
 
-		for (int i = 0; i < types.length; i++) {
+		for (int i = 0; i < types.size(); i++) {
 			if (i != 0) {
 				sb.append(',');
 				ctx.appendSpace(sb);
 			}
 
-			ctx.append(sb, types[i]);
+			types.get(i).append(ctx, sb);
 		}
 
 		sb.append(']');
