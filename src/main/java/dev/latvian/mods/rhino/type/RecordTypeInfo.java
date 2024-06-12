@@ -10,9 +10,11 @@ import dev.latvian.mods.rhino.RhinoException;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -20,7 +22,7 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 	public record Component(int index, String name, TypeInfo type) {
 	}
 
-	public record Data(Component[] components, Map<String, Component> componentMap, Object[] defaultArguments) {
+	public record Data(Component[] components, Map<String, Component> componentMap, Object[] defaultArguments, JSObjectTypeInfo objectTypeInfo) {
 	}
 
 	static final Map<Class<?>, RecordTypeInfo> CACHE = new IdentityHashMap<>();
@@ -38,6 +40,7 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 			var components = new Component[rc.length];
 			var componentMap = new HashMap<String, Component>();
 			var defaultArguments = new Object[rc.length];
+			var objectTypeInfoList = new ArrayList<JSOptionalParam>();
 
 			for (int i = 0; i < rc.length; i++) {
 				var gt = rc[i].getGenericType();
@@ -45,9 +48,10 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 				components[i] = c;
 				componentMap.put(c.name, c);
 				defaultArguments[i] = c.type.createDefaultValue();
+				objectTypeInfoList.add(new JSOptionalParam(c.name, c.type, true));
 			}
 
-			data = new Data(components, Map.copyOf(componentMap), defaultArguments);
+			data = new Data(components, Map.copyOf(componentMap), defaultArguments, new JSObjectTypeInfo(List.copyOf(objectTypeInfoList)));
 		}
 
 		return data;
