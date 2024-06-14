@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<Object> {
@@ -49,6 +50,10 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 				components[i] = c;
 				componentMap.put(c.name, c);
 				defaultArguments[i] = c.type.createDefaultValue();
+
+				if (c.type.is(TypeInfo.RAW_OPTIONAL)) {
+					defaultArguments[i] = Optional.empty();
+				}
 			}
 
 			data = new Data(components, Map.copyOf(componentMap), defaultArguments);
@@ -127,7 +132,11 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 			var c = data.componentMap.get(String.valueOf(entry.getKey()));
 
 			if (c != null) {
-				args[c.index] = cx.jsToJava(entry.getValue(), c.type);
+				if (args[c.index] == Optional.empty()) {
+					args[c.index] = Optional.ofNullable(cx.jsToJava(entry.getValue(), c.type.param(0)));
+				} else {
+					args[c.index] = cx.jsToJava(entry.getValue(), c.type);
+				}
 			}
 		}
 
@@ -147,7 +156,11 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 		int alen = Math.min(args.length, objects.length);
 
 		for (int i = 0; i < alen; i++) {
-			args[i] = cx.jsToJava(objects[i], data.components[i].type);
+			if (args[i] == Optional.empty()) {
+				args[i] = Optional.ofNullable(cx.jsToJava(objects[i], data.components[i].type.param(0)));
+			} else {
+				args[i] = cx.jsToJava(objects[i], data.components[i].type);
+			}
 		}
 
 		try {

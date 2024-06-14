@@ -11,6 +11,7 @@ import java.lang.reflect.WildcardType;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -60,6 +61,7 @@ public interface TypeInfo {
 	TypeInfo RAW_LIST = new InterfaceTypeInfo(List.class, Boolean.FALSE);
 	TypeInfo RAW_SET = new InterfaceTypeInfo(Set.class, Boolean.FALSE);
 	TypeInfo RAW_MAP = new InterfaceTypeInfo(Map.class, Boolean.FALSE);
+	TypeInfo RAW_OPTIONAL = new BasicClassTypeInfo(Optional.class);
 
 	Class<?> asClass();
 
@@ -126,6 +128,8 @@ public interface TypeInfo {
 			return CLASS;
 		} else if (c == Date.class) {
 			return DATE;
+		} else if (c == Optional.class) {
+			return RAW_OPTIONAL;
 		} else if (c == Runnable.class) {
 			return RUNNABLE;
 		} else if (c == Consumer.class) {
