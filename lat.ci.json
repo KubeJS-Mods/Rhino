@@ -1,5 +1,5 @@
 {
-	"minecraft": 2005,
+	"minecraft": 2100,
 	"type": "neoforge",
 	"version": {
 		"file": "gradle.properties",
@@ -10,7 +10,7 @@
 	"downloads": [
 		{
 			"name": "Download",
-			"url": "https://maven.latvian.dev/releases/dev/latvian/mods/rhino-neoforge/{version}/rhino-neoforge-{version}.jar"
+			"url": "https://maven.latvian.dev/releases/dev/latvian/mods/rhino/{version}/rhino-{version}.jar"
 		}
 	]
 }
