@@ -113,6 +113,10 @@ tasks {
 		filesMatching("META-INF/neoforge.mods.toml") {
 			expand toReplace
 		}
+
+		filesMatching("fabric.mod.json") {
+			expand toReplace
+		}
 	}
 }
 
