@@ -1321,7 +1321,7 @@ public class Context {
 
 	protected Object classOf(Object from) {
 		if (from instanceof NativeJavaClass n) {
-			return n;
+			return n.getClassObject();
 		} else if (from instanceof Class<?> c) {
 			if (visibleToScripts(c.getName(), ClassVisibilityContext.ARGUMENT)) {
 				return c;

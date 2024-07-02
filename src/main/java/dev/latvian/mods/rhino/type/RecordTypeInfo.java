@@ -17,9 +17,23 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<Object> {
+	private static final Map<Class<?>, Object> GLOBAL_DEFAULT_VALUES = new IdentityHashMap<>();
+
+	public static <T> void setGlobalDefaultValue(Class<T> type, T value) {
+		GLOBAL_DEFAULT_VALUES.put(type, value);
+	}
+
+	static {
+		setGlobalDefaultValue(Optional.class, Optional.empty());
+		setGlobalDefaultValue(List.class, List.of());
+		setGlobalDefaultValue(Set.class, Set.of());
+		setGlobalDefaultValue(Map.class, Map.of());
+	}
+
 	public record Component(int index, String name, TypeInfo type) {
 	}
 
@@ -51,8 +65,8 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 				componentMap.put(c.name, c);
 				defaultArguments[i] = c.type.createDefaultValue();
 
-				if (c.type.is(TypeInfo.RAW_OPTIONAL)) {
-					defaultArguments[i] = Optional.empty();
+				if (defaultArguments[i] == null) {
+					defaultArguments[i] = GLOBAL_DEFAULT_VALUES.getOrDefault(rc[i].getType(), null);
 				}
 			}
 
