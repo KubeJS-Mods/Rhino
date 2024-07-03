@@ -11,4 +11,5 @@ authors = "latvian.dev, Mozilla"
 description = '''
 A fork of Mozilla's Rhino library, modified for use in mods
 '''
+logoFile = "rhino_logo.png"
 displayTest = "NONE"

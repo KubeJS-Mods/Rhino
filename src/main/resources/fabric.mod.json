@@ -9,6 +9,7 @@
 		"issues": "https://github.com/KubeJS-Mods/Rhino/issues",
 		"repo": "https://github.com/KubeJS-Mods/Rhino"
 	},
+	"icon": "rhino_logo.png",
 	"license": "MPL-2.0",
 	"environment": "*",
 	"entrypoints": {
