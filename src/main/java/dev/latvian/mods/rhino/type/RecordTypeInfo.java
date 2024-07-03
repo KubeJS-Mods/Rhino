@@ -7,6 +7,7 @@ import dev.latvian.mods.rhino.NativeJavaList;
 import dev.latvian.mods.rhino.NativeJavaObject;
 import dev.latvian.mods.rhino.NativeMap;
 import dev.latvian.mods.rhino.RhinoException;
+import dev.latvian.mods.rhino.util.RemapForJS;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 
 import java.lang.reflect.Constructor;
@@ -60,7 +61,9 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 
 			for (int i = 0; i < rc.length; i++) {
 				var gt = rc[i].getGenericType();
-				var c = new Component(i, rc[i].getName(), TypeInfo.of(gt));
+
+				var rename = rc[i].getAccessor().getDeclaredAnnotation(RemapForJS.class);
+				var c = new Component(i, rename != null ? rename.value() : rc[i].getName(), TypeInfo.of(gt));
 				components[i] = c;
 				componentMap.put(c.name, c);
 				defaultArguments[i] = c.type.createDefaultValue();
