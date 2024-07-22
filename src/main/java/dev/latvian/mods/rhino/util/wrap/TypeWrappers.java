@@ -57,8 +57,6 @@ public class TypeWrappers {
 
 		if (wrapper != null && wrapper.validator().isValid(from, target)) {
 			return wrapper.factory();
-		} else if (target instanceof TypeWrapperFactory<?> w) {
-			return w;
 		} else {
 			return null;
 		}
