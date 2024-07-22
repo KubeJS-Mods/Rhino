@@ -1461,10 +1461,6 @@ public class Context {
 
 		Object unwrappedValue = Wrapper.unwrapped(from);
 
-		if (unwrappedValue instanceof TypeWrapperFactory<?> f) {
-			return f.wrap(this, unwrappedValue, target);
-		}
-
 		var typeWrapper = factory.getTypeWrappers().getWrapperFactory(unwrappedValue, target);
 
 		if (typeWrapper != null) {
@@ -1580,6 +1576,10 @@ public class Context {
 	}
 
 	protected Object internalJsToJavaLast(Object from, TypeInfo target) {
+		if (target instanceof TypeWrapperFactory<?> f) {
+			return f.wrap(this, from, target);
+		}
+
 		return reportConversionError(from, target);
 	}
 
