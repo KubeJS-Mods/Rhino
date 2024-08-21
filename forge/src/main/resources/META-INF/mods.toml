@@ -7,21 +7,9 @@ license = "MPL-2.0"
 modId = "rhino"
 version = "${version}"
 displayName = "Rhino"
-authors = "LatvianModder, Mozilla"
+authors = "latvian.dev, Mozilla"
 description = '''
 A fork of Mozilla's Rhino library, modified for use in mods
 '''
-
-[[dependencies.rhino]]
-modId = "forge"
-mandatory = true
-versionRange = "[38.0.0,)"
-ordering = "NONE"
-side = "BOTH"
-
-[[dependencies.rhino]]
-modId = "minecraft"
-mandatory = true
-versionRange = "[1.18,)"
-ordering = "NONE"
-side = "BOTH"
+logoFile = "rhino_logo.png"
+displayTest = "NONE"
