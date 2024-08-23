@@ -1,6 +1,7 @@
 {
 	"minecraft": 2001,
 	"type": "architectury",
+	"icon": "https://raw.githubusercontent.com/KubeJS-Mods/Rhino/main/.lat.ci/icon.png",
 	"version": {
 		"file": "gradle.properties",
 		"pattern": "^mod_version=([\\w.]+)$",
