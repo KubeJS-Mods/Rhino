@@ -137,7 +137,7 @@ jar {
 unifiedPublishing {
 	project {
 		releaseType = "${ENV.RELEASE_TYPE ?: 'release'}"
-		gameVersions = Arrays.asList(rootProject.supported_versions.split(','))
+		gameVersions = Arrays.asList(rootProject.supported_versions.split(', '))
 		gameLoaders = ["neoforge", "fabric"]
 		displayName = "$mod_name $project.version"
 		changelog = 'Changelog not available'

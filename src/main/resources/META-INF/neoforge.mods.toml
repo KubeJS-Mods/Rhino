@@ -1,6 +1,6 @@
 modLoader = "lowcodefml"
 loaderVersion = "[2,)"
-issueTrackerURL = "https://github.com/KubeJS-Mods/Rhino/issues"
+issueTrackerURL = "https://kubejs.com/support?source=rhino&mc=2101&loader=neoforge"
 license = "MPL-2.0"
 
 [[mods]]
@@ -12,4 +12,5 @@ description = '''
 A fork of Mozilla's Rhino library, modified for use in mods
 '''
 logoFile = "rhino_logo.png"
-displayTest = "NONE"
+modUrl = "https://kubejs.com"
+displayURL = "https://kubejs.com"
