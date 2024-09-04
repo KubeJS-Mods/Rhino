@@ -1,5 +1,6 @@
 package dev.latvian.mods.rhino.type;
 
+import java.util.Collection;
 import java.util.List;
 
 // [string, number]
@@ -28,5 +29,12 @@ public record JSFixedArrayTypeInfo(List<JSOptionalParam> types) implements TypeI
 		}
 
 		sb.append(']');
+	}
+
+	@Override
+	public void collectContainedComponentClasses(Collection<Class<?>> classes) {
+		for (var type : types) {
+			type.type().collectContainedComponentClasses(classes);
+		}
 	}
 }

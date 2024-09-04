@@ -1,5 +1,6 @@
 package dev.latvian.mods.rhino.type;
 
+import java.util.Collection;
 import java.util.List;
 
 // {a: string, b?: number}
@@ -44,5 +45,12 @@ public record JSObjectTypeInfo(List<JSOptionalParam> fields) implements TypeInfo
 		}
 
 		sb.append('}');
+	}
+
+	@Override
+	public void collectContainedComponentClasses(Collection<Class<?>> classes) {
+		for (var field : fields) {
+			field.type().collectContainedComponentClasses(classes);
+		}
 	}
 }

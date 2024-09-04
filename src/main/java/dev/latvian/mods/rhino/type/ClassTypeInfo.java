@@ -1,7 +1,10 @@
 package dev.latvian.mods.rhino.type;
 
+import java.util.Set;
+
 public abstract class ClassTypeInfo extends TypeInfoBase {
 	private final Class<?> type;
+	private Set<Class<?>> typeSet;
 
 	ClassTypeInfo(Class<?> type) {
 		this.type = type;
@@ -80,5 +83,14 @@ public abstract class ClassTypeInfo extends TypeInfoBase {
 	@Override
 	public boolean isCharacter() {
 		return type == Character.class || type == Character.TYPE;
+	}
+
+	@Override
+	public Set<Class<?>> getContainedComponentClasses() {
+		if (typeSet == null) {
+			typeSet = Set.of(type);
+		}
+
+		return typeSet;
 	}
 }

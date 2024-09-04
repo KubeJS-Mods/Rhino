@@ -8,7 +8,10 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.Collection;
 import java.util.Date;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,6 +65,7 @@ public interface TypeInfo {
 	TypeInfo RAW_SET = new InterfaceTypeInfo(Set.class, Boolean.FALSE);
 	TypeInfo RAW_MAP = new InterfaceTypeInfo(Map.class, Boolean.FALSE);
 	TypeInfo RAW_OPTIONAL = new BasicClassTypeInfo(Optional.class);
+	TypeInfo RAW_ENUM_SET = new BasicClassTypeInfo(EnumSet.class);
 
 	Class<?> asClass();
 
@@ -130,6 +134,8 @@ public interface TypeInfo {
 			return DATE;
 		} else if (c == Optional.class) {
 			return RAW_OPTIONAL;
+		} else if (c == EnumSet.class) {
+			return RAW_ENUM_SET;
 		} else if (c == Runnable.class) {
 			return RUNNABLE;
 		} else if (c == Consumer.class) {
@@ -293,5 +299,15 @@ public interface TypeInfo {
 
 	default boolean isCharacter() {
 		return false;
+	}
+
+	default void collectContainedComponentClasses(Collection<Class<?>> classes) {
+		classes.add(asClass());
+	}
+
+	default Set<Class<?>> getContainedComponentClasses() {
+		var set = new LinkedHashSet<Class<?>>();
+		collectContainedComponentClasses(set);
+		return set;
 	}
 }

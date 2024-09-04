@@ -1,5 +1,6 @@
 package dev.latvian.mods.rhino.type;
 
+import java.util.Collection;
 import java.util.List;
 
 // (a: string) => void
@@ -37,5 +38,14 @@ public record JSFunctionTypeInfo(List<JSOptionalParam> params, TypeInfo returnTy
 		sb.append('>');
 		ctx.appendSpace(sb);
 		ctx.append(sb, returnType);
+	}
+
+	@Override
+	public void collectContainedComponentClasses(Collection<Class<?>> classes) {
+		for (var param : params) {
+			param.type().collectContainedComponentClasses(classes);
+		}
+
+		returnType.collectContainedComponentClasses(classes);
 	}
 }

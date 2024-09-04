@@ -1,6 +1,7 @@
 package dev.latvian.mods.rhino.type;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -106,5 +107,14 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 	@Override
 	public List<Object> enumConstants() {
 		return rawType.enumConstants();
+	}
+
+	@Override
+	public void collectContainedComponentClasses(Collection<Class<?>> classes) {
+		rawType.collectContainedComponentClasses(classes);
+
+		for (var param : params) {
+			param.collectContainedComponentClasses(classes);
+		}
 	}
 }

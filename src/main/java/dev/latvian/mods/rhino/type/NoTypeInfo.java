@@ -1,5 +1,8 @@
 package dev.latvian.mods.rhino.type;
 
+import java.util.Collection;
+import java.util.Set;
+
 final class NoTypeInfo implements TypeInfo {
 	@Override
 	public Class<?> asClass() {
@@ -39,5 +42,14 @@ final class NoTypeInfo implements TypeInfo {
 	@Override
 	public TypeInfo withParams(TypeInfo... params) {
 		return this;
+	}
+
+	@Override
+	public void collectContainedComponentClasses(Collection<Class<?>> classes) {
+	}
+
+	@Override
+	public Set<Class<?>> getContainedComponentClasses() {
+		return Set.of();
 	}
 }

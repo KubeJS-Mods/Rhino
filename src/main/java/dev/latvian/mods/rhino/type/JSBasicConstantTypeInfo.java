@@ -1,5 +1,8 @@
 package dev.latvian.mods.rhino.type;
 
+import java.util.Collection;
+import java.util.Set;
+
 // null, undefined, true, false
 public record JSBasicConstantTypeInfo(String value) implements TypeInfo {
 	public static final JSBasicConstantTypeInfo NULL = new JSBasicConstantTypeInfo("null");
@@ -20,5 +23,14 @@ public record JSBasicConstantTypeInfo(String value) implements TypeInfo {
 	@Override
 	public void append(TypeStringContext ctx, StringBuilder sb) {
 		sb.append(value);
+	}
+
+	@Override
+	public void collectContainedComponentClasses(Collection<Class<?>> classes) {
+	}
+
+	@Override
+	public Set<Class<?>> getContainedComponentClasses() {
+		return Set.of();
 	}
 }

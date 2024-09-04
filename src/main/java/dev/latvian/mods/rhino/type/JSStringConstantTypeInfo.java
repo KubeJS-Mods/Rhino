@@ -2,6 +2,9 @@ package dev.latvian.mods.rhino.type;
 
 import dev.latvian.mods.rhino.ScriptRuntime;
 
+import java.util.Collection;
+import java.util.Set;
+
 // "abc"
 public record JSStringConstantTypeInfo(String constant) implements TypeInfo {
 	public static final JSStringConstantTypeInfo EMPTY = new JSStringConstantTypeInfo("");
@@ -19,5 +22,14 @@ public record JSStringConstantTypeInfo(String constant) implements TypeInfo {
 	@Override
 	public void append(TypeStringContext ctx, StringBuilder sb) {
 		sb.append(ScriptRuntime.escapeAndWrapString(constant));
+	}
+
+	@Override
+	public void collectContainedComponentClasses(Collection<Class<?>> classes) {
+	}
+
+	@Override
+	public Set<Class<?>> getContainedComponentClasses() {
+		return Set.of();
 	}
 }

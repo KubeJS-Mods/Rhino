@@ -1,6 +1,7 @@
 package dev.latvian.mods.rhino.type;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 // string | number
@@ -40,6 +41,13 @@ public record JSOrTypeInfo(List<TypeInfo> types) implements TypeInfo {
 			}
 
 			ctx.append(sb, types.get(i));
+		}
+	}
+
+	@Override
+	public void collectContainedComponentClasses(Collection<Class<?>> classes) {
+		for (var type : types) {
+			type.collectContainedComponentClasses(classes);
 		}
 	}
 }

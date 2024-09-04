@@ -1,5 +1,8 @@
 package dev.latvian.mods.rhino.type;
 
+import java.util.Collection;
+import java.util.Set;
+
 public final class ArrayTypeInfo extends TypeInfoBase {
 	private final TypeInfo component;
 	private Class<?> asClass;
@@ -47,5 +50,15 @@ public final class ArrayTypeInfo extends TypeInfoBase {
 	@Override
 	public TypeInfo componentType() {
 		return component;
+	}
+
+	@Override
+	public void collectContainedComponentClasses(Collection<Class<?>> classes) {
+		component.collectContainedComponentClasses(classes);
+	}
+
+	@Override
+	public Set<Class<?>> getContainedComponentClasses() {
+		return component.getContainedComponentClasses();
 	}
 }
