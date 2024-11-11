@@ -676,6 +676,14 @@ final class NativeMath extends IdScriptableObject {
 			case "fround" -> Id_fround;
 			case "clz32" -> Id_clz32;
 			default -> 0;
+            case "E" -> Id_E;
+            case "PI" -> Id_PI;
+            case "LN10" -> Id_LN10;
+            case "LN2" -> Id_LN2;
+            case "LOG2E" -> Id_LOG2E;
+            case "LOG10E" -> Id_LOG10E;
+            case "SQRT1_2" -> Id_SQRT1_2;
+            case "SQRT2" -> Id_SQRT2;
 		};
 	}
 
