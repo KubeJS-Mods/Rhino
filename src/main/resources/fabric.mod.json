@@ -6,7 +6,7 @@
 	"description": "A fork of Mozilla's Rhino library, modified for use in mods",
 	"authors": ["latvian.dev", "Mozilla"],
 	"contact": {
-		"issues": "https://github.com/KubeJS-Mods/Rhino/issues",
+		"issues": "https://kubejs.com/support?source=rhino&mc=2101&loader=fabric",
 		"repo": "https://github.com/KubeJS-Mods/Rhino"
 	},
 	"icon": "rhino_logo.png",

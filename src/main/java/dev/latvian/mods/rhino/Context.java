@@ -1249,6 +1249,20 @@ public class Context {
 		return arrayValueProviderOf(from).createList(this, target);
 	}
 
+	public boolean isListLike(Object from) {
+		return from instanceof NativeJavaList || from instanceof NativeJavaArray || from instanceof List<?>;
+	}
+
+	@Nullable
+	public <K> List<K> optionalListOf(@Nullable Object from, TypeInfo target) {
+		return isListLike(from) ? (List) listOf(from, target) : null;
+	}
+
+	@Nullable
+	public List<Object> optionalListOf(@Nullable Object from) {
+		return optionalListOf(from, TypeInfo.NONE);
+	}
+
 	public Object setOf(@Nullable Object from, TypeInfo target) {
 		if (from instanceof NativeJavaList n) {
 			if (target == null) {
@@ -1319,7 +1333,21 @@ public class Context {
 		}
 	}
 
-	protected Object classOf(Object from) {
+	public boolean isMapLike(Object from) {
+		return from instanceof NativeJavaMap || from instanceof Map<?, ?>;
+	}
+
+	@Nullable
+	public <K, V> Map<K, V> optionalMapOf(@Nullable Object from, TypeInfo kTarget, TypeInfo vTarget) {
+		return isMapLike(from) ? (Map) mapOf(from, kTarget, vTarget) : null;
+	}
+
+	@Nullable
+	public Map<String, Object> optionalMapOf(@Nullable Object from) {
+		return optionalMapOf(from, TypeInfo.STRING, TypeInfo.NONE);
+	}
+
+	public Object classOf(Object from) {
 		if (from instanceof NativeJavaClass n) {
 			return n.getClassObject();
 		} else if (from instanceof Class<?> c) {

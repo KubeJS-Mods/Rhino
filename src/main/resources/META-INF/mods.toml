@@ -1,6 +1,6 @@
 modLoader = "lowcodefml"
 loaderVersion = "[2,)"
-issueTrackerURL = "https://github.com/KubeJS-Mods/Rhino/issues"
+issueTrackerURL = "https://kubejs.com/support?source=rhino&mc=2101&loader=forge"
 license = "MPL-2.0"
 
 [[mods]]
