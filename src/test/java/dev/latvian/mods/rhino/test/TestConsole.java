@@ -4,7 +4,6 @@ import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.ContextFactory;
 import dev.latvian.mods.rhino.ScriptRuntime;
 import dev.latvian.mods.rhino.util.RemapPrefixForJS;
-import dev.latvian.mods.unit.UnitContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,10 +80,6 @@ public class TestConsole {
 
 	public TestConsoleTheme test2$getTheme() {
 		return theme;
-	}
-
-	public void printUnit(String input) {
-		info(input + " -> " + UnitContext.DEFAULT.parse(input));
 	}
 
 	public void printMaterial(TestMaterial material) {
