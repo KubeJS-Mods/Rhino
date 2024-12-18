@@ -182,7 +182,7 @@ public interface TypeInfo {
 			case Class<?> clz -> of(clz);
 			case ParameterizedType paramType -> of(paramType.getRawType()).withParams(ofArray(paramType.getActualTypeArguments()));
 			case GenericArrayType arrType -> of(arrType.getGenericComponentType()).asArray();
-			case TypeVariable<?> ignore -> NONE; // ClassTypeInfo.OBJECT
+			case TypeVariable<?> variable -> VariableTypeInfo.of(variable); // ClassTypeInfo.OBJECT, or NONE?
 			case WildcardType wildcard -> {
 				var lower = wildcard.getLowerBounds();
 
