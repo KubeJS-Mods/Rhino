@@ -11,6 +11,7 @@ import dev.latvian.mods.rhino.Token;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A list of one or more var, const or let declarations.
@@ -129,6 +130,6 @@ public class VariableDeclaration extends AstNode {
 	}
 
 	private String declTypeName() {
-		return Token.typeToName(type).toLowerCase();
+		return Token.typeToName(type).toLowerCase(Locale.ROOT);
 	}
 }

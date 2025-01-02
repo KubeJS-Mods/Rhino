@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -580,7 +581,7 @@ public class JavaMembers {
 					char ch0 = nameComponent.charAt(0);
 					if (Character.isUpperCase(ch0)) {
 						if (nameComponent.length() == 1) {
-							beanPropertyName = nameComponent.toLowerCase();
+							beanPropertyName = nameComponent.toLowerCase(Locale.ROOT);
 						} else {
 							char ch1 = nameComponent.charAt(1);
 							if (!Character.isUpperCase(ch1)) {

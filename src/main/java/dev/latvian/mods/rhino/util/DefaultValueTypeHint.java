@@ -1,5 +1,7 @@
 package dev.latvian.mods.rhino.util;
 
+import java.util.Locale;
+
 public enum DefaultValueTypeHint {
 	STRING,
 	NUMBER,
@@ -10,7 +12,7 @@ public enum DefaultValueTypeHint {
 	public final String name;
 
 	DefaultValueTypeHint() {
-		name = name().toLowerCase();
+		name = name().toLowerCase(Locale.ROOT);
 	}
 
 	public String toString() {

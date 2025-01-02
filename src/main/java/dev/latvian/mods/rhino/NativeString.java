@@ -1004,11 +1004,11 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 				}
 				case Id_toLocaleLowerCase: {
 					String thisStr = ScriptRuntime.toString(cx, ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
-					return thisStr.toLowerCase();
+					return thisStr.toLowerCase(Locale.ROOT);
 				}
 				case Id_toLocaleUpperCase: {
 					String thisStr = ScriptRuntime.toString(cx, ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
-					return thisStr.toUpperCase();
+					return thisStr.toUpperCase(Locale.ROOT);
 				}
 				case Id_trim: {
 					String str = ScriptRuntime.toString(cx, ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));

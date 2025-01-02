@@ -4,8 +4,10 @@ import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.util.RemappedEnumConstant;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -25,6 +27,7 @@ public class EnumTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<Ob
 	}
 
 	private List<Object> constants;
+	private Map<String, Object> constantMap;
 
 	EnumTypeInfo(Class<?> type) {
 		super(type);
@@ -48,21 +51,41 @@ public class EnumTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<Ob
 				return null;
 			}
 
-			for (var entry : enumConstants()) {
+			var constants = enumConstants();
+
+			if (constantMap == null) {
+				constantMap = new HashMap<>(constants.size());
+
+				for (var entry : constants) {
+					var name = getName(entry);
+					constantMap.put(name.toLowerCase(Locale.ROOT), entry);
+					constantMap.put(name, entry);
+				}
+			}
+
+			var lookup = constantMap.get(s);
+
+			if (lookup != null) {
+				return lookup;
+			}
+
+			for (var entry : constants) {
 				if (getName(entry).equalsIgnoreCase(s)) {
 					return entry;
 				}
 			}
 
-			throw new IllegalArgumentException("'" + s + "' is not a valid enum constant! Valid values are: " + enumConstants().stream().map(EnumTypeInfo::getName).map(s1 -> "'" + s1 + "'").collect(Collectors.joining(", ")));
+			throw new IllegalArgumentException("'" + s + "' is not a valid enum constant! Valid values are: " + constants.stream().map(EnumTypeInfo::getName).map(s1 -> "'" + s1 + "'").collect(Collectors.joining(", ")));
 		} else if (from instanceof Number) {
 			int index = ((Number) from).intValue();
 
-			if (index < 0 || index >= enumConstants().size()) {
-				throw new IllegalArgumentException(index + " is not a valid enum index! Valid values are: 0 - " + (enumConstants().size() - 1));
+			var constants = enumConstants();
+
+			if (index < 0 || index >= constants.size()) {
+				throw new IllegalArgumentException(index + " is not a valid enum index! Valid values are: 0 - " + (constants.size() - 1));
 			}
 
-			return enumConstants().get(index);
+			return constants.get(index);
 		}
 
 		return from;
