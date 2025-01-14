@@ -650,7 +650,7 @@ public class Context {
 	}
 
 	//--------------------------
-	// Static conversion methods
+	// Primitive conversion methods
 	//--------------------------
 
 	/**
@@ -662,8 +662,8 @@ public class Context {
 	 * @return the corresponding boolean value converted using
 	 * the ECMA rules
 	 */
-	public static boolean toBoolean(Object value, Context cx) {
-		return ScriptRuntime.toBoolean(cx, value);
+	public boolean toBoolean(Object value) {
+		return ScriptRuntime.toBoolean(this, value);
 	}
 
 	/**
@@ -677,8 +677,8 @@ public class Context {
 	 * @return the corresponding double value converted using
 	 * the ECMA rules
 	 */
-	public static double toNumber(Object value, Context cx) {
-		return ScriptRuntime.toNumber(cx, value);
+	public double toNumber(Object value) {
+		return ScriptRuntime.toNumber(this, value);
 	}
 
 	/**
@@ -691,8 +691,8 @@ public class Context {
 	 * @return the corresponding String value converted using
 	 * the ECMA rules
 	 */
-	public static String toString(Object value, Context cx) {
-		return ScriptRuntime.toString(cx, value);
+	public String toString(Object value) {
+		return ScriptRuntime.toString(this, value);
 	}
 
 	/**
@@ -712,8 +712,8 @@ public class Context {
 	 *              Boolean, and String
 	 * @return new JavaScript object
 	 */
-	public static Scriptable toObject(Object value, Scriptable scope, Context cx) {
-		return ScriptRuntime.toObject(cx, scope, value);
+	public Scriptable toObject(Object value, Scriptable scope) {
+		return ScriptRuntime.toObject(this, scope, value);
 	}
 
 

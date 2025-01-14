@@ -17,8 +17,6 @@ import dev.latvian.mods.rhino.v8dtoa.DoubleConversion;
 import dev.latvian.mods.rhino.v8dtoa.FastDtoa;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -2602,26 +2600,6 @@ public class ScriptRuntime {
 			d2 = toNumber(cx, val2);
 		}
 		return d1 <= d2;
-	}
-
-	public static ScriptableObject getGlobal(Context cx) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-		final String GLOBAL_CLASS = "dev.latvian.mods.rhino.tools.shell.Global";
-		Class<?> globalClass = Kit.classOrNull(GLOBAL_CLASS);
-		if (globalClass != null) {
-			try {
-				Class<?>[] parm = {ScriptRuntime.ContextClass};
-				Constructor<?> globalClassCtor = globalClass.getConstructor(parm);
-				Object[] arg = {cx};
-				return (ScriptableObject) globalClassCtor.newInstance(arg);
-			} catch (RuntimeException e) {
-				throw e;
-			} catch (Exception e) {
-				// fall through...
-				throw e;
-			}
-		}
-		throw new NoSuchMethodException();
-		//return new ImporterTopLevel(cx);
 	}
 
 	public static void initScript(Context cx, Scriptable scope, NativeFunction funObj, Scriptable thisObj, boolean evalScript) {
