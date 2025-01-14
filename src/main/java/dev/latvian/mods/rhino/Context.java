@@ -649,6 +649,74 @@ public class Context {
 		return result;
 	}
 
+	//--------------------------
+	// Static conversion methods
+	//--------------------------
+
+	/**
+	 * Convert the value to a JavaScript boolean value.
+	 * <p>
+	 * See ECMA 9.2.
+	 *
+	 * @param value a JavaScript value
+	 * @return the corresponding boolean value converted using
+	 * the ECMA rules
+	 */
+	public static boolean toBoolean(Object value, Context cx) {
+		return ScriptRuntime.toBoolean(cx, value);
+	}
+
+	/**
+	 * Convert the value to a JavaScript Number value.
+	 * <p>
+	 * Returns a Java double for the JavaScript Number.
+	 * <p>
+	 * See ECMA 9.3.
+	 *
+	 * @param value a JavaScript value
+	 * @return the corresponding double value converted using
+	 * the ECMA rules
+	 */
+	public static double toNumber(Object value, Context cx) {
+		return ScriptRuntime.toNumber(cx, value);
+	}
+
+	/**
+	 * Convert the value to a JavaScript String value.
+	 * <p>
+	 * See ECMA 9.8.
+	 * <p>
+	 *
+	 * @param value a JavaScript value
+	 * @return the corresponding String value converted using
+	 * the ECMA rules
+	 */
+	public static String toString(Object value, Context cx) {
+		return ScriptRuntime.toString(cx, value);
+	}
+
+	/**
+	 * Convert the value to an JavaScript object value.
+	 * <p>
+	 * Note that a scope must be provided to look up the constructors
+	 * for Number, Boolean, and String.
+	 * <p>
+	 * See ECMA 9.9.
+	 * <p>
+	 * Additionally, arbitrary Java objects and classes will be
+	 * wrapped in a Scriptable object with its Java fields and methods
+	 * reflected as JavaScript properties of the object.
+	 *
+	 * @param value any Java object
+	 * @param scope global scope containing constructors for Number,
+	 *              Boolean, and String
+	 * @return new JavaScript object
+	 */
+	public static Scriptable toObject(Object value, Scriptable scope, Context cx) {
+		return ScriptRuntime.toObject(cx, scope, value);
+	}
+
+
 	/**
 	 * Get a value corresponding to a key.
 	 * <p>
@@ -985,6 +1053,29 @@ public class Context {
 		} else {
 			return wrapAsJavaObject(scope, obj, target);
 		}
+	}
+
+	// Wraps an object if needed
+	public Object wrapAny(Scriptable scope, Object obj) {
+		if (obj instanceof String ||
+			obj instanceof Boolean ||
+			obj instanceof Integer ||
+			obj instanceof Short ||
+			obj instanceof Long ||
+			obj instanceof Float ||
+			obj instanceof Double) {
+			return obj;
+		} else if (obj instanceof Character) {
+			return String.valueOf(((Character) obj).charValue());
+		}
+		Class<?> cls = obj.getClass();
+		TypeInfo ti = TypeInfo.NONE;
+		if (cls.isArray()) {
+			ti = TypeInfo.of(cls);
+			//return NativeJavaArray.wrap(scope, obj);
+		}
+
+		return wrap(scope, obj, ti);
 	}
 
 	public Object wrap(Scriptable scope, Object obj) {
