@@ -230,9 +230,7 @@ public final class NativeIterator extends IdScriptableObject {
 
 		return switch (id) {
 			case Id_next -> iterator.objectIterator.nextExec(cx, scope);
-			case Id___iterator__ ->
-				/// XXX: what about argument? SpiderMonkey apparently ignores it
-				thisObj;
+			case Id___iterator__ -> thisObj; // XXX: what about argument? SpiderMonkey apparently ignores it
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		};
 	}

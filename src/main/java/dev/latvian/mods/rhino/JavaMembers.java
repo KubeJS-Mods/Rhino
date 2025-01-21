@@ -44,8 +44,8 @@ public class JavaMembers {
 
 		@Override
 		public boolean equals(Object o) {
-			if (o instanceof MethodSignature ms) {
-				return ms.name.equals(name) && Arrays.equals(args, ms.args);
+			if (o instanceof MethodSignature(String name1, Class<?>[] args1)) {
+				return name1.equals(name) && Arrays.equals(args, args1);
 			}
 			return false;
 		}

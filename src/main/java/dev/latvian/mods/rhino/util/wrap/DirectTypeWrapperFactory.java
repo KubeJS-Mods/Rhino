@@ -10,6 +10,7 @@ import dev.latvian.mods.rhino.type.TypeInfo;
 public interface DirectTypeWrapperFactory<T> extends TypeWrapperFactory<T> {
 	T wrap(Object from);
 
+	@Override
 	default T wrap(Context cx, Object from, TypeInfo target) {
 		return wrap(from);
 	}

@@ -244,9 +244,6 @@ public class ClassFileWriter {
 			stringLoop:
 			while (index != rightParenthesis) {
 				switch (pString.charAt(index)) {
-					default:
-						ok = false;
-						break stringLoop;
 					case 'J':
 					case 'D':
 						--stackDiff;
@@ -269,9 +266,6 @@ public class ClassFileWriter {
 							c = pString.charAt(index);
 						}
 						switch (c) {
-							default:
-								ok = false;
-								break stringLoop;
 							case 'J':
 							case 'D':
 							case 'B':
@@ -286,6 +280,9 @@ public class ClassFileWriter {
 								continue;
 							case 'L':
 								// fall through
+							default:
+								ok = false;
+								break stringLoop;
 						}
 						// fall through
 					case 'L': {
@@ -300,13 +297,13 @@ public class ClassFileWriter {
 						index = semicolon + 1;
 						continue;
 					}
+					default:
+						ok = false;
+						break stringLoop;
 				}
 			}
 			if (ok) {
 				switch (pString.charAt(rightParenthesis + 1)) {
-					default:
-						ok = false;
-						break;
 					case 'J':
 					case 'D':
 						++stackDiff;
@@ -322,6 +319,9 @@ public class ClassFileWriter {
 						++stackDiff;
 						// fall through
 					case 'V':
+						break;
+					default:
+						ok = false;
 						break;
 				}
 				if (ok) {

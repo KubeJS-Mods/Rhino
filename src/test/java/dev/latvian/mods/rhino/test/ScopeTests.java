@@ -14,11 +14,11 @@ public class ScopeTests {
 				if (false) {
 				  const xxx = 1
 				}
-								
+				
 				if (true) {
 				  const xxx = 2
 				}
-								
+				
 				console.info(true)
 				""", """
 				true

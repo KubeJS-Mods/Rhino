@@ -17,7 +17,7 @@ public class GenericsTests {
 			shared.testObject = {
 				a: -39, b: 2, c: 3439438
 			}
-						
+			
 			shared.testList = console.testList
 			""", "");
 	}

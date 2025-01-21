@@ -36,13 +36,13 @@ public class MiscTests {
 			const testObject = {
 				a: -39, b: 2, c: 3439438
 			}
-							
+			
 			let testList = console.testList
-			    
+			
 			for (let string of testList) {
 				console.info(string)
 			}
-							
+			
 			shared.testObject = testObject
 			shared.testList = testList
 			""", """

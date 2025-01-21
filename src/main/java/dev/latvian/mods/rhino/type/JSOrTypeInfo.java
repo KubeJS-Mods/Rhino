@@ -13,10 +13,10 @@ public record JSOrTypeInfo(List<TypeInfo> types) implements TypeInfo {
 
 	@Override
 	public TypeInfo or(TypeInfo info) {
-		if (info instanceof JSOrTypeInfo or) {
-			var list = new ArrayList<TypeInfo>(types.size() + or.types.size());
+		if (info instanceof JSOrTypeInfo(List<TypeInfo> types1)) {
+			var list = new ArrayList<TypeInfo>(types.size() + types1.size());
 			list.addAll(types);
-			list.addAll(or.types);
+			list.addAll(types1);
 			return new JSOrTypeInfo(List.copyOf(list));
 		} else {
 			var list = new ArrayList<TypeInfo>(types.size() + 1);
