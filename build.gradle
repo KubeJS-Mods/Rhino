@@ -33,6 +33,8 @@ version = "${mod_version}-${isLocal ? "local.${Instant.now().epochSecond}" : "bu
 group = project.maven_group
 base.archivesBaseName = project.archives_base_name
 
+println("Building version: ${version}")
+
 loom {
 	silentMojangMappingsLicense()
 
@@ -134,13 +136,34 @@ jar {
 	}
 }
 
+publishing {
+	publications {
+		mavenNeoForge(MavenPublication) {
+			artifactId = "${rootProject.archives_base_name}"
+			from components.java
+		}
+	}
+
+	repositories {
+		if (ENV.MAVEN_URL && ENV.MAVEN_USERNAME && ENV.MAVEN_TOKEN) {
+			maven {
+				url = ENV.MAVEN_URL
+				credentials {
+					username = ENV.MAVEN_USERNAME
+					password = ENV.MAVEN_TOKEN
+				}
+			}
+		}
+	}
+}
+
 unifiedPublishing {
 	project {
 		releaseType = "${ENV.RELEASE_TYPE ?: 'release'}"
 		gameVersions = Arrays.asList(rootProject.supported_versions.split(', '))
 		gameLoaders = ["neoforge", "forge", "fabric"]
 		displayName = "$mod_name $project.version"
-		changelog = 'Changelog not available'
+		changelog = 'https://github.com/KubeJS-Mods/Rhino/commits/main'
 		mainPublication remapJar
 
 		if (ENV.CURSEFORGE_KEY) {
@@ -160,33 +183,8 @@ unifiedPublishing {
 	}
 }
 
-publishing {
-	publications {
-		mavenNeoForge(MavenPublication) {
-			artifactId = "${rootProject.archives_base_name}"
-			from components.java
-		}
-	}
-
-	repositories {
-		if (ENV.MAVEN_TOKEN) {
-			maven {
-				url "https://maven.latvian.dev/releases"
-				credentials {
-					username = "lat"
-					password = "${ENV.MAVEN_TOKEN}"
-				}
-			}
-		}
-
-		if (ENV.SAPS_TOKEN) {
-			maven {
-				url "https://maven.saps.dev/releases"
-				credentials {
-					username = "latvian"
-					password = "${ENV.SAPS_TOKEN}"
-				}
-			}
-		}
+afterEvaluate {
+	tasks.withType(JavaCompile) {
+		options.compilerArgs << "-Xmaxerrs" << "1000"
 	}
 }
