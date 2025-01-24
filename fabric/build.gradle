@@ -65,7 +65,7 @@ unifiedPublishing {
 		gameVersions = Arrays.asList(rootProject.supported_versions.split(','))
 		gameLoaders = ["fabric", "quilt"]
 		displayName = "$mod_name Fabric $project.version"
-		changelog = getGitChangelog()
+		changelog = 'Changelog not available'
 		mainPublication remapJar
 
 		if (ENV.CURSEFORGE_KEY) {
