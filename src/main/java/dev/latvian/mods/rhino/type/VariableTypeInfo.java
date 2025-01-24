@@ -9,6 +9,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author ZZZank
+ * @author Prunoideae
  */
 public class VariableTypeInfo extends TypeInfoBase {
 	private static final Map<TypeVariable<?>, TypeInfo> CACHE = new HashMap<>();
@@ -24,9 +25,15 @@ public class VariableTypeInfo extends TypeInfoBase {
 	private TypeInfo consolidated = null;
 
 	/**
-	 * we don't need type name to match a TypeVariable, it's designed to be unique
+	 * Variable name is needed for type dumping purpose, otherwise I still need
+	 * to create a resolver completely parallel to {@link dev.latvian.mods.rhino.type.TypeInfo#of(Class)}
 	 */
-//    private final String name;
+    private final String name;
+
+	public VariableTypeInfo(String name) {
+		this.name = name;
+	}
+
 	static TypeInfo of(TypeVariable<?> t) {
 		READ.lock();
 		var got = CACHE.get(t);
@@ -39,7 +46,7 @@ public class VariableTypeInfo extends TypeInfoBase {
 			if (bound == Object.class) {
 				CACHE.put(t, got = TypeInfo.NONE);
 			} else {
-				VariableTypeInfo variable = new VariableTypeInfo();
+				VariableTypeInfo variable = new VariableTypeInfo(t.getName());
 				CACHE.put(t, got = variable);
 				/*
 				 * we cannot create VariableTypeInfo directly, because types like {@code Enum<T extends Enum<T>>} will
@@ -57,5 +64,9 @@ public class VariableTypeInfo extends TypeInfoBase {
 	@Override
 	public Class<?> asClass() {
 		return consolidated.asClass();
+	}
+
+	public String getName(){
+		return name;
 	}
 }
