@@ -17,6 +17,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.ArrayDeque;
 import java.util.Map;
 
 public final class JavaAdapter implements IdFunctionCall {
@@ -360,16 +361,29 @@ public final class JavaAdapter implements IdFunctionCall {
 	static Method[] getOverridableMethods(Class<?> clazz) {
 		ArrayList<Method> list = new ArrayList<>();
 		HashSet<String> skip = new HashSet<>();
+		ArrayDeque<Class<?>> interfaces = new ArrayDeque<>();
+		HashSet<Class<?>> visitedInterfaces = new HashSet<>();
 		// Check superclasses before interfaces so we always choose
 		// implemented methods over abstract ones, even if a subclass
 		// re-implements an interface already implemented in a superclass
 		// (e.g. java.util.ArrayList)
 		for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
 			appendOverridableMethods(c, list, skip);
-		}
-		for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
 			for (Class<?> intf : c.getInterfaces()) {
-				appendOverridableMethods(intf, list, skip);
+				interfaces.add(intf);
+			}
+		}
+		// Visit interfaces in depth first order.
+		while (!interfaces.isEmpty()) {
+			var intf = interfaces.remove();
+			if (visitedInterfaces.contains(intf)) {
+				continue;
+			}
+			visitedInterfaces.add(intf);
+			appendOverridableMethods(intf, list, skip);
+			var subIntf = intf.getInterfaces();
+			for (int j = subIntf.length -1; j >= 0; j--) {
+				interfaces.addFirst(subIntf[j]);
 			}
 		}
 		return list.toArray(new Method[0]);
