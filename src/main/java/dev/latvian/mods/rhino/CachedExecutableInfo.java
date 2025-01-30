@@ -29,7 +29,7 @@ public class CachedExecutableInfo extends CachedMemberInfo {
 	}
 
 	public TypeInfo getReturnType() {
-		return declaringClass.getTypeInfo();
+		return getDeclaringClass().getTypeInfo();
 	}
 
 	public CachedParameters getParameters() {

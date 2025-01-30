@@ -29,6 +29,7 @@ public class CachedConstructorInfo extends CachedExecutableInfo {
 
 	public CachedConstructorInfo(CachedClassInfo parent, Constructor<?> constructor) {
 		super(parent, constructor);
+		this.declaringClass = parent;
 		this.constructor = constructor;
 	}
 
