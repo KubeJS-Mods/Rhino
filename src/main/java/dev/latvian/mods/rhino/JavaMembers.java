@@ -686,11 +686,13 @@ public class JavaMembers {
 		public final CachedMethodInfo.Accessible cached;
 		public final Method method;
 		public final String name;
+		public final boolean hidden;
 
 		public MethodInfo(CachedMethodInfo.Accessible cached) {
 			this.cached = cached;
 			this.method = cached.getInfo().method;
 			this.name = cached.getName();
+			this.hidden = cached.isHidden();
 		}
 	}
 }
