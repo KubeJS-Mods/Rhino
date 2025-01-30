@@ -7,14 +7,10 @@
 package dev.latvian.mods.rhino;
 
 import dev.latvian.mods.rhino.type.TypeInfo;
+import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Executable;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 
 /**
  * Wrapper class for Method and Constructor instances to cache
@@ -25,22 +21,19 @@ import java.lang.reflect.Type;
  */
 
 public final class MemberBox {
-	private static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
+	private static CachedMethodInfo searchAccessibleMethod(CachedMethodInfo method, Class<?>[] params) {
+		if (Modifier.isPublic(method.modifiers) && !method.isStatic) {
+			var c = method.getDeclaringClass();
 
-	private static Method searchAccessibleMethod(Method method, Class<?>[] params) {
-		int modifiers = method.getModifiers();
-		if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers)) {
-			Class<?> c = method.getDeclaringClass();
-			if (!Modifier.isPublic(c.getModifiers())) {
+			if (!Modifier.isPublic(c.modifiers)) {
 				String name = method.getName();
-				Class<?>[] intfs = c.getInterfaces();
-				for (int i = 0, N = intfs.length; i != N; ++i) {
-					Class<?> intf = intfs[i];
-					if (Modifier.isPublic(intf.getModifiers())) {
+				var intfs = c.getInterfaces();
+				for (int i = 0, N = intfs.size(); i != N; ++i) {
+					var intf = intfs.get(i);
+					if (Modifier.isPublic(intf.modifiers)) {
 						try {
 							return intf.getMethod(name, params);
-						} catch (NoSuchMethodException ex) {
-						} catch (SecurityException ex) {
+						} catch (NoSuchMethodException ignored) {
 						}
 					}
 				}
@@ -49,15 +42,13 @@ public final class MemberBox {
 					if (c == null) {
 						break;
 					}
-					if (Modifier.isPublic(c.getModifiers())) {
+					if (Modifier.isPublic(c.modifiers)) {
 						try {
-							Method m = c.getMethod(name, params);
-							int mModifiers = m.getModifiers();
-							if (Modifier.isPublic(mModifiers) && !Modifier.isStatic(mModifiers)) {
+							var m = c.getMethod(name, params);
+							if (Modifier.isPublic(m.modifiers) && !m.isStatic) {
 								return m;
 							}
-						} catch (NoSuchMethodException ex) {
-						} catch (SecurityException ex) {
+						} catch (NoSuchMethodException ignored) {
 						}
 					}
 				}
@@ -66,162 +57,73 @@ public final class MemberBox {
 		return null;
 	}
 
-	transient Class[] argTypes;
-	transient TypeInfo[] argTypeInfos;
-	transient TypeInfo returnType;
+	transient CachedExecutableInfo executableInfo;
 	transient Object delegateTo;
-	transient boolean vararg;
-	transient boolean firstArgContext;
-	public transient Executable executable;
 	public transient WrappedExecutable wrappedExecutable;
 
-	MemberBox(Executable executable) {
-		this.executable = executable;
-		this.argTypes = executable.getParameterTypes();
-		this.argTypeInfos = TypeInfo.ofArray(executable.getGenericParameterTypes());
-		this.returnType = executable instanceof Method m ? TypeInfo.of(m.getGenericReturnType()) : executable instanceof Constructor<?> c ? TypeInfo.of(c.getDeclaringClass()) : TypeInfo.NONE;
-		this.vararg = executable.isVarArgs();
-
-		if (argTypes.length >= 1 && Context.class.isAssignableFrom(argTypes[0])) {
-			firstArgContext = true;
-
-			var newArgTypes = new Class[argTypes.length - 1];
-			System.arraycopy(argTypes, 1, newArgTypes, 0, newArgTypes.length);
-			argTypes = newArgTypes;
-
-			var newArgTypeInfos = new TypeInfo[argTypeInfos.length - 1];
-			System.arraycopy(argTypeInfos, 1, newArgTypeInfos, 0, newArgTypeInfos.length);
-			argTypeInfos = newArgTypeInfos;
-		}
-
-		if (argTypes.length == 0) {
-			argTypes = EMPTY_CLASS_ARRAY;
-			argTypeInfos = TypeInfo.EMPTY_ARRAY;
-		}
+	MemberBox(CachedExecutableInfo executableInfo) {
+		this.executableInfo = executableInfo;
 	}
 
 	MemberBox(WrappedExecutable wrappedExecutable) {
 		var executable = wrappedExecutable.unwrap();
 
 		if (executable != null) {
-			this.executable = executable;
-			this.argTypes = executable.getParameterTypes();
-			this.argTypeInfos = TypeInfo.ofArray(executable.getGenericParameterTypes());
-			this.returnType = executable instanceof Method m ? TypeInfo.of(m.getGenericReturnType()) : executable instanceof Constructor<?> c ? TypeInfo.of(c.getDeclaringClass()) : TypeInfo.NONE;
-			this.vararg = executable.isVarArgs();
-
-			if (argTypes.length >= 1 && Context.class.isAssignableFrom(argTypes[0])) {
-				firstArgContext = true;
-
-				var newArgTypes = new Class[argTypes.length - 1];
-				System.arraycopy(argTypes, 1, newArgTypes, 0, newArgTypes.length);
-				argTypes = newArgTypes;
-
-				var newArgTypeInfos = new TypeInfo[argTypeInfos.length - 1];
-				System.arraycopy(argTypeInfos, 1, newArgTypeInfos, 0, newArgTypeInfos.length);
-				argTypeInfos = newArgTypeInfos;
-			}
-
-			if (argTypes.length == 0) {
-				argTypes = EMPTY_CLASS_ARRAY;
-				argTypeInfos = TypeInfo.EMPTY_ARRAY;
-			}
+			this.executableInfo = executable;
 		} else {
 			this.wrappedExecutable = wrappedExecutable;
-			this.vararg = false;
 		}
 	}
 
-	Constructor<?> ctor() {
-		return (Constructor<?>) executable;
+	@Nullable
+	public CachedExecutableInfo getInfo() {
+		return executableInfo;
 	}
 
-	Member member() {
-		return executable;
+	public CachedParameters parameters() {
+		return executableInfo == null ? CachedParameters.EMPTY : executableInfo.getParameters();
 	}
 
 	boolean isMethod() {
-		return executable instanceof Method;
+		return executableInfo instanceof CachedMethodInfo;
 	}
 
 	boolean isCtor() {
-		return executable instanceof Constructor;
+		return executableInfo instanceof CachedConstructorInfo;
 	}
 
 	boolean isStatic() {
-		return Modifier.isStatic(executable.getModifiers());
-	}
-
-	boolean isPublic() {
-		return Modifier.isPublic(executable.getModifiers());
+		return executableInfo.isStatic;
 	}
 
 	String getName() {
-		return wrappedExecutable != null ? wrappedExecutable.toString() : executable.getName();
+		return wrappedExecutable != null ? wrappedExecutable.toString() : executableInfo.getName();
 	}
 
-	Class<?> getDeclaringClass() {
-		return executable.getDeclaringClass();
-	}
-
-	Class<?> getReturnType() {
-		return wrappedExecutable != null ? wrappedExecutable.getReturnType() : ((Method) executable).getReturnType();
-	}
-
-	Type getGenericReturnType() {
-		return wrappedExecutable != null ? wrappedExecutable.getGenericReturnType() : ((Method) executable).getGenericReturnType();
-
+	TypeInfo getReturnType() {
+		return wrappedExecutable != null ? wrappedExecutable.getReturnType() : executableInfo.getReturnType();
 	}
 
 	String toJavaDeclaration() {
-		StringBuilder sb = new StringBuilder();
-		if (isMethod()) {
-			sb.append(getReturnType());
-			sb.append(' ');
-			sb.append(getName());
-		} else {
-			String name = getDeclaringClass().getName();
-			int lastDot = name.lastIndexOf('.');
-			if (lastDot >= 0) {
-				name = name.substring(lastDot + 1);
-			}
-			sb.append(name);
-		}
-		sb.append(JavaMembers.liveConnectSignature(argTypes));
-		return sb.toString();
+		return String.valueOf(getReturnType()) + ' ' + getName() + JavaMembers.liveConnectSignature(parameters().types());
 	}
 
 	@Override
 	public String toString() {
-		return executable.toString();
+		return getName();
 	}
 
 	Object invoke(Object target, Object[] args, Context cx, Scriptable scope) {
 		if (wrappedExecutable != null) {
 			try {
 				return wrappedExecutable.invoke(cx, scope, target, args);
-			} catch (Exception ex) {
+			} catch (Throwable ex) {
 				throw Context.throwAsScriptRuntimeEx(ex, cx);
 			}
 		}
 
-		Method method = (Method) executable;
 		try {
-			try {
-				return method.invoke(target, firstArgContext ? cx.insertContextArg(args) : args);
-			} catch (IllegalAccessException ex) {
-				Method accessible = searchAccessibleMethod(method, argTypes);
-				if (accessible != null) {
-					executable = accessible;
-					method = accessible;
-				} else {
-					if (!VMBridge.tryToMakeAccessible(target, method)) {
-						throw Context.throwAsScriptRuntimeEx(ex, cx);
-					}
-				}
-				// Retry after recovery
-				return method.invoke(target, firstArgContext ? cx.insertContextArg(args) : args);
-			}
+			return executableInfo.invoke(cx, scope, target, args);
 		} catch (InvocationTargetException ite) {
 			// Must allow ContinuationPending exceptions to propagate unhindered
 			Throwable e = ite;
@@ -229,7 +131,7 @@ public final class MemberBox {
 				e = ((InvocationTargetException) e).getTargetException();
 			} while ((e instanceof InvocationTargetException));
 			throw Context.throwAsScriptRuntimeEx(e, cx);
-		} catch (Exception ex) {
+		} catch (Throwable ex) {
 			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		}
 	}
@@ -238,22 +140,14 @@ public final class MemberBox {
 		if (wrappedExecutable != null) {
 			try {
 				return wrappedExecutable.construct(cx, scope, args);
-			} catch (Exception ex) {
+			} catch (Throwable ex) {
 				throw Context.throwAsScriptRuntimeEx(ex, cx);
 			}
 		}
 
-		Constructor<?> ctor = ctor();
 		try {
-			try {
-				return ctor.newInstance(args);
-			} catch (IllegalAccessException ex) {
-				if (!VMBridge.tryToMakeAccessible(null, ctor)) {
-					throw Context.throwAsScriptRuntimeEx(ex, cx);
-				}
-			}
-			return ctor.newInstance(args);
-		} catch (Exception ex) {
+			return executableInfo.invoke(cx, scope, null, args);
+		} catch (Throwable ex) {
 			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		}
 	}

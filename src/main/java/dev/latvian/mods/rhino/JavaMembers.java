@@ -9,24 +9,17 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.ClassVisibilityContext;
 import dev.latvian.mods.rhino.util.HideFromJS;
-import dev.latvian.mods.rhino.util.RemapForJS;
-import dev.latvian.mods.rhino.util.RemapPrefixForJS;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Mike Shaver
@@ -35,46 +28,6 @@ import java.util.Set;
  * @see NativeJavaClass
  */
 public class JavaMembers {
-	public record MethodSignature(String name, Class<?>[] args) {
-		private static final Class<?>[] NO_ARGS = new Class<?>[0];
-
-		public MethodSignature(Method method) {
-			this(method.getName(), method.getParameterCount() == 0 ? NO_ARGS : method.getParameterTypes());
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (o instanceof MethodSignature(String name1, Class<?>[] args1)) {
-				return name1.equals(name) && Arrays.equals(args, args1);
-			}
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			return name.hashCode() ^ args.length;
-		}
-	}
-
-	public static class FieldInfo {
-		public final Field field;
-		public String name = "";
-
-		public FieldInfo(Field f) {
-			field = f;
-		}
-	}
-
-	public static class MethodInfo {
-		public Method method;
-		public String name = "";
-		public boolean hidden = false;
-
-		public MethodInfo(Method m) {
-			method = m;
-		}
-	}
-
 	public static String javaSignature(Class<?> type) {
 		if (!type.isArray()) {
 			return type.getName();
@@ -99,8 +52,8 @@ public class JavaMembers {
 		return sb.toString();
 	}
 
-	public static String liveConnectSignature(Class<?>[] argTypes) {
-		int N = argTypes.length;
+	public static String liveConnectSignature(List<Class<?>> argTypes) {
+		int N = argTypes.size();
 		if (N == 0) {
 			return "()";
 		}
@@ -110,7 +63,7 @@ public class JavaMembers {
 			if (i != 0) {
 				sb.append(',');
 			}
-			sb.append(javaSignature(argTypes[i]));
+			sb.append(javaSignature(argTypes.get(i)));
 		}
 		sb.append(')');
 		return sb.toString();
@@ -134,9 +87,8 @@ public class JavaMembers {
 		for (MemberBox method : methods) {
 			// Does getter method have an empty parameter list with a return
 			// value (eg. a getSomething() or isSomething())?
-			if (method.argTypes.length == 0 && (!isStatic || method.isStatic())) {
-				Class<?> type = method.getReturnType();
-				if (type != Void.TYPE) {
+			if (method.parameters().count() == 0 && (!isStatic || method.isStatic())) {
+				if (method.getReturnType() != TypeInfo.PRIMITIVE_VOID) {
 					return method;
 				}
 				break;
@@ -145,7 +97,8 @@ public class JavaMembers {
 		return null;
 	}
 
-	private static MemberBox extractSetMethod(Class<?> type, MemberBox[] methods, boolean isStatic) {
+	private static MemberBox extractSetMethod(TypeInfo type0, MemberBox[] methods, boolean isStatic) {
+		var type = type0.asClass();
 		//
 		// Note: it may be preferable to allow NativeJavaMethod.findFunction()
 		//       to find the appropriate setter; unfortunately, it requires an
@@ -155,19 +108,19 @@ public class JavaMembers {
 		// Make two passes: one to find a method with direct type assignment,
 		// and one to find a widening conversion.
 		for (int pass = 1; pass <= 2; ++pass) {
-			for (MemberBox method : methods) {
+			for (var method : methods) {
 				if (!isStatic || method.isStatic()) {
-					Class<?>[] params = method.argTypes;
-					if (params.length == 1) {
+					var params = method.parameters().types();
+					if (params.size() == 1) {
 						if (pass == 1) {
-							if (params[0] == type) {
+							if (params.getFirst() == type) {
 								return method;
 							}
 						} else {
 							if (pass != 2) {
 								Kit.codeBug();
 							}
-							if (params[0].isAssignableFrom(type)) {
+							if (params.getFirst().isAssignableFrom(type)) {
 								return method;
 							}
 						}
@@ -179,11 +132,10 @@ public class JavaMembers {
 	}
 
 	private static MemberBox extractSetMethod(MemberBox[] methods, boolean isStatic) {
-
 		for (MemberBox method : methods) {
 			if (!isStatic || method.isStatic()) {
-				if (method.getReturnType() == Void.TYPE) {
-					if (method.argTypes.length == 1) {
+				if (method.getReturnType() == TypeInfo.PRIMITIVE_VOID) {
+					if (method.parameters().count() == 1) {
 						return method;
 					}
 				}
@@ -243,7 +195,6 @@ public class JavaMembers {
 		return members;
 	}
 
-	public final Context localContext;
 	private final Class<?> cl;
 	private final Map<String, Object> members;
 	private final Map<String, Object> staticMembers;
@@ -252,8 +203,6 @@ public class JavaMembers {
 	private Map<String, FieldAndMethods> staticFieldAndMethods;
 
 	JavaMembers(Class<?> cl, boolean includeProtected, Context cx, Scriptable scope) {
-		this.localContext = cx;
-
 		if (!cx.visibleToScripts(cl.getName(), ClassVisibilityContext.MEMBER)) {
 			throw Context.reportRuntimeError1("msg.access.prohibited", cl.getName(), cx);
 		}
@@ -263,19 +212,19 @@ public class JavaMembers {
 		reflect(scope, includeProtected, cx);
 	}
 
-	public boolean has(String name, boolean isStatic) {
-		Map<String, Object> ht = isStatic ? staticMembers : members;
+	public boolean has(Context cx, String name, boolean isStatic) {
+		var ht = isStatic ? staticMembers : members;
 		Object obj = ht.get(name);
 		if (obj != null) {
 			return true;
 		}
-		return findExplicitFunction(name, isStatic) != null;
+		return findExplicitFunction(cx, name, isStatic) != null;
 	}
 
 	public Object get(Scriptable scope, String name, Object javaObject, boolean isStatic, Context cx) {
-		Map<String, Object> ht = isStatic ? staticMembers : members;
+		var ht = isStatic ? staticMembers : members;
 		Object member = ht.get(name);
-		if (!isStatic && member == null) {
+		if (!isStatic && member == null && cx.factory.getInstanceStaticFallback()) {
 			// Try to get static member from instance (LC3)
 			member = staticMembers.get(name);
 		}
@@ -296,13 +245,13 @@ public class JavaMembers {
 					return Scriptable.NOT_FOUND;
 				}
 				rval = bp.getter.invoke(javaObject, ScriptRuntime.EMPTY_OBJECTS, cx, scope);
-				type = TypeInfo.of(bp.getter.getGenericReturnType());
+				type = bp.getter.getReturnType();
 			} else {
-				Field field = (Field) member;
-				rval = field.get(isStatic ? null : javaObject);
-				type = TypeInfo.of(field.getGenericType());
+				CachedFieldInfo fieldInfo = (CachedFieldInfo) member;
+				rval = fieldInfo.get(cx, isStatic ? null : javaObject);
+				type = fieldInfo.getType();
 			}
-		} catch (Exception ex) {
+		} catch (Throwable ex) {
 			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		}
 		// Need to wrap the object before we return it.
@@ -311,9 +260,9 @@ public class JavaMembers {
 	}
 
 	public void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic, Context cx) {
-		Map<String, Object> ht = isStatic ? staticMembers : members;
+		var ht = isStatic ? staticMembers : members;
 		Object member = ht.get(name);
-		if (!isStatic && member == null) {
+		if (!isStatic && member == null && cx.factory.getInstanceStaticFallback()) {
 			// Try to get static member from instance (LC3)
 			member = staticMembers.get(name);
 		}
@@ -322,7 +271,7 @@ public class JavaMembers {
 		}
 		if (member instanceof FieldAndMethods) {
 			FieldAndMethods fam = (FieldAndMethods) ht.get(name);
-			member = fam.field;
+			member = fam.fieldInfo;
 		}
 
 		// Is this a bean property "set"?
@@ -334,7 +283,7 @@ public class JavaMembers {
 			// main setter. Otherwise, let the NativeJavaMethod decide which
 			// setter to use:
 			if (bp.setters == null || value == null) {
-				Object[] args = {cx.jsToJava(value, bp.setter.argTypeInfos[0])};
+				Object[] args = {cx.jsToJava(value, bp.setter.parameters().typeInfos().getFirst())};
 				try {
 					bp.setter.invoke(javaObject, args, cx, scope);
 				} catch (Exception ex) {
@@ -345,41 +294,39 @@ public class JavaMembers {
 				cx.callSync(bp.setters, ScriptableObject.getTopLevelScope(scope), scope, args);
 			}
 		} else {
-			if (!(member instanceof Field field)) {
+			if (!(member instanceof CachedFieldInfo fieldInfo)) {
 				String str = (member == null) ? "msg.java.internal.private" : "msg.java.method.assign";
 				throw Context.reportRuntimeError1(str, name, cx);
 			}
-			int fieldModifiers = field.getModifiers();
-
-			if (Modifier.isFinal(fieldModifiers)) {
+			if (fieldInfo.isFinal) {
 				// treat Java final the same as JavaScript [[READONLY]]
-				throw Context.throwAsScriptRuntimeEx(new IllegalAccessException("Can't modify final field " + field.getName()), cx);
+				throw Context.throwAsScriptRuntimeEx(new IllegalAccessException("Can't modify final field " + fieldInfo.rename), cx);
 			}
 
 			// This definitely could use some cache
-			Object javaValue = cx.jsToJava(value, TypeInfo.of(field.getGenericType()));
+			Object javaValue = cx.jsToJava(value, fieldInfo.getType());
 			try {
-				field.set(javaObject, javaValue);
-			} catch (IllegalAccessException accessEx) {
-				throw Context.throwAsScriptRuntimeEx(accessEx, cx);
+				fieldInfo.set(cx, javaObject, javaValue);
 			} catch (IllegalArgumentException argEx) {
-				throw Context.reportRuntimeError3("msg.java.internal.field.type", value.getClass().getName(), field, javaObject.getClass().getName(), cx);
+				throw Context.reportRuntimeError3("msg.java.internal.field.type", value.getClass().getName(), fieldInfo.getType(), javaObject.getClass().getName(), cx);
+			} catch (Throwable accessEx) {
+				throw Context.throwAsScriptRuntimeEx(accessEx, cx);
 			}
 		}
 	}
 
 	public Object[] getIds(boolean isStatic) {
-		Map<String, Object> map = isStatic ? staticMembers : members;
+		var map = isStatic ? staticMembers : members;
 		return map.keySet().toArray(ScriptRuntime.EMPTY_OBJECTS);
 	}
 
-	private MemberBox findExplicitFunction(String name, boolean isStatic) {
+	private MemberBox findExplicitFunction(Context cx, String name, boolean isStatic) {
 		int sigStart = name.indexOf('(');
 		if (sigStart < 0) {
 			return null;
 		}
 
-		Map<String, Object> ht = isStatic ? staticMembers : members;
+		var ht = isStatic ? staticMembers : members;
 		MemberBox[] methodsOrCtors = null;
 		boolean isCtor = (isStatic && sigStart == 0);
 
@@ -390,7 +337,7 @@ public class JavaMembers {
 			// Explicit request for an overloaded method
 			String trueName = name.substring(0, sigStart);
 			Object obj = ht.get(trueName);
-			if (!isStatic && obj == null) {
+			if (!isStatic && obj == null && cx.factory.getInstanceStaticFallback()) {
 				// Try to get static member from instance (LC3)
 				obj = staticMembers.get(trueName);
 			}
@@ -401,7 +348,7 @@ public class JavaMembers {
 
 		if (methodsOrCtors != null) {
 			for (MemberBox methodsOrCtor : methodsOrCtors) {
-				Class<?>[] type = methodsOrCtor.argTypes;
+				var type = methodsOrCtor.parameters().types();
 				String sig = liveConnectSignature(type);
 				if (sigStart + sig.length() == name.length() && name.regionMatches(sigStart, sig, 0, sig.length())) {
 					return methodsOrCtor;
@@ -413,9 +360,9 @@ public class JavaMembers {
 	}
 
 	private Object getExplicitFunction(Scriptable scope, String name, Object javaObject, boolean isStatic, Context cx) {
-		Map<String, Object> ht = isStatic ? staticMembers : members;
+		var ht = isStatic ? staticMembers : members;
 		Object member = null;
-		MemberBox methodOrCtor = findExplicitFunction(name, isStatic);
+		MemberBox methodOrCtor = findExplicitFunction(cx, name, isStatic);
 
 		if (methodOrCtor != null) {
 			Scriptable prototype = ScriptableObject.getFunctionPrototype(scope, cx);
@@ -451,22 +398,23 @@ public class JavaMembers {
 		// names to be allocated to the NativeJavaMethod before the field
 		// gets in the way.
 
-		for (MethodInfo methodInfo : getAccessibleMethods(cx, includeProtected)) {
-			var method = methodInfo.method;
-			int mods = method.getModifiers();
-			boolean isStatic = Modifier.isStatic(mods);
-			Map<String, Object> ht = isStatic ? staticMembers : members;
-			String name = methodInfo.name;
+		var storage = cx.getCachedClassStorage(includeProtected);
+		var classInfo = storage.get(cl);
 
-			Object value = ht.get(name);
+		for (var methodInfo0 : classInfo.getAccessibleMethods(includeProtected)) {
+			var methodInfo = methodInfo0.getInfo();
+			var name = methodInfo0.getName();
+			var ht = methodInfo.isStatic ? staticMembers : members;
+			var value = ht.get(name);
+
 			if (value == null) {
-				ht.put(name, method);
+				ht.put(name, methodInfo);
 			} else {
 				ObjArray overloadedMethods;
 				if (value instanceof ObjArray) {
 					overloadedMethods = (ObjArray) value;
 				} else {
-					if (!(value instanceof Method)) {
+					if (!(value instanceof CachedMethodInfo)) {
 						Kit.codeBug();
 					}
 					// value should be instance of Method as at this stage
@@ -475,7 +423,7 @@ public class JavaMembers {
 					overloadedMethods.add(value);
 					ht.put(name, overloadedMethods);
 				}
-				overloadedMethods.add(method);
+				overloadedMethods.add(methodInfo);
 			}
 		}
 
@@ -483,13 +431,14 @@ public class JavaMembers {
 		// first in staticMembers and then in members
 		for (int tableCursor = 0; tableCursor != 2; ++tableCursor) {
 			boolean isStatic = (tableCursor == 0);
-			Map<String, Object> ht = isStatic ? staticMembers : members;
-			for (Map.Entry<String, Object> entry : ht.entrySet()) {
+			var ht = isStatic ? staticMembers : members;
+
+			for (var entry : ht.entrySet()) {
 				MemberBox[] methodBoxes;
 				Object value = entry.getValue();
-				if (value instanceof Method) {
+				if (value instanceof CachedMethodInfo methodInfo) {
 					methodBoxes = new MemberBox[1];
-					methodBoxes[0] = new MemberBox((Method) value);
+					methodBoxes[0] = new MemberBox(methodInfo);
 				} else {
 					ObjArray overloadedMethods = (ObjArray) value;
 					int N = overloadedMethods.size();
@@ -498,7 +447,7 @@ public class JavaMembers {
 					}
 					methodBoxes = new MemberBox[N];
 					for (int i = 0; i != N; ++i) {
-						Method method = (Method) overloadedMethods.get(i);
+						var method = (CachedMethodInfo) overloadedMethods.get(i);
 						methodBoxes[i] = new MemberBox(method);
 					}
 				}
@@ -511,39 +460,39 @@ public class JavaMembers {
 		}
 
 		// Reflect fields.
-		for (FieldInfo fieldInfo : getAccessibleFields(cx, includeProtected)) {
-			var field = fieldInfo.field;
-			String name = fieldInfo.name;
+		for (var fieldInfo0 : classInfo.getAccessibleFields(includeProtected)) {
+			var fieldInfo = fieldInfo0.getInfo();
+			var name = fieldInfo0.getName();
 
-			int mods = field.getModifiers();
 			try {
-				boolean isStatic = Modifier.isStatic(mods);
-				Map<String, Object> ht = isStatic ? staticMembers : members;
+				var ht = fieldInfo.isStatic ? staticMembers : members;
 				Object member = ht.get(name);
 				if (member == null) {
-					ht.put(name, field);
+					ht.put(name, fieldInfo);
 				} else if (member instanceof NativeJavaMethod method) {
-					FieldAndMethods fam = new FieldAndMethods(scope, method.methods, field, cx);
-					Map<String, FieldAndMethods> fmht = isStatic ? staticFieldAndMethods : fieldAndMethods;
+					var fam = new FieldAndMethods(scope, method.methods, fieldInfo, cx);
+					var fmht = fieldInfo.isStatic ? staticFieldAndMethods : fieldAndMethods;
+
 					if (fmht == null) {
 						fmht = new HashMap<>();
-						if (isStatic) {
+						if (fieldInfo.isStatic) {
 							staticFieldAndMethods = fmht;
 						} else {
 							fieldAndMethods = fmht;
 						}
 					}
+
 					fmht.put(name, fam);
 					ht.put(name, fam);
-				} else if (member instanceof Field oldField) {
+				} else if (member instanceof CachedFieldInfo oldFieldInfo) {
 					// If this newly reflected field shadows an inherited field,
 					// then replace it. Otherwise, since access to the field
 					// would be ambiguous from Java, no field should be
 					// reflected.
 					// For now, the first field found wins, unless another field
 					// explicitly shadows it.
-					if (oldField.getDeclaringClass().isAssignableFrom(field.getDeclaringClass())) {
-						ht.put(name, field);
+					if (oldFieldInfo.getDeclaringClass().type.isAssignableFrom(fieldInfo.getDeclaringClass().type)) {
+						ht.put(name, fieldInfo);
 					}
 				} else {
 					// "unknown member type"
@@ -559,7 +508,7 @@ public class JavaMembers {
 		// static members and then for instance members
 		for (int tableCursor = 0; tableCursor != 2; ++tableCursor) {
 			boolean isStatic = (tableCursor == 0);
-			Map<String, Object> ht = isStatic ? staticMembers : members;
+			var ht = isStatic ? staticMembers : members;
 
 			Map<String, BeanProperty> toAdd = new HashMap<>();
 
@@ -622,7 +571,7 @@ public class JavaMembers {
 							if (getter != null) {
 								// We have a getter. Now, do we have a matching
 								// setter?
-								Class<?> type = getter.getReturnType();
+								var type = getter.getReturnType();
 								setter = extractSetMethod(type, njmSet.methods, isStatic);
 							} else {
 								// No getter, find any set method
@@ -644,7 +593,7 @@ public class JavaMembers {
 		}
 
 		// Reflect constructors
-		List<Constructor<?>> constructors = getAccessibleConstructors();
+		var constructors = classInfo.getConstructors();
 		MemberBox[] ctorMembers = new MemberBox[constructors.size()];
 		for (int i = 0; i != constructors.size(); ++i) {
 			ctorMembers[i] = new MemberBox(constructors.get(i));
@@ -666,206 +615,83 @@ public class JavaMembers {
 		return constructorsList;
 	}
 
+	@Deprecated(forRemoval = true)
 	public Collection<FieldInfo> getAccessibleFields(Context cx, boolean includeProtected) {
-		var fieldMap = new LinkedHashMap<String, FieldInfo>();
+		var list0 = cx.getCachedClassStorage(includeProtected).get(cl).getAccessibleFields(includeProtected);
+		var list = new ArrayList<FieldInfo>(list0.size());
 
-		try {
-			Class<?> currentClass = cl;
-
-			while (currentClass != null) {
-				// get all declared fields in this class, make them
-				// accessible, and save
-				Set<String> remapPrefixes = new HashSet<>();
-
-				for (RemapPrefixForJS r : currentClass.getAnnotationsByType(RemapPrefixForJS.class)) {
-					String s = r.value().trim();
-
-					if (!s.isEmpty()) {
-						remapPrefixes.add(s);
-					}
-				}
-
-				for (Field field : getDeclaredFieldsSafe(currentClass)) {
-					int mods = field.getModifiers();
-
-					if (!Modifier.isTransient(mods) && (Modifier.isPublic(mods) || includeProtected && Modifier.isProtected(mods)) && !field.isAnnotationPresent(HideFromJS.class)) {
-						try {
-							if (includeProtected && Modifier.isProtected(mods) && !field.isAccessible()) {
-								field.setAccessible(true);
-							}
-
-							FieldInfo info = new FieldInfo(field);
-
-							var remap = field.getAnnotation(RemapForJS.class);
-
-							if (remap != null) {
-								info.name = remap.value().trim();
-							}
-
-							if (info.name.isEmpty()) {
-								for (String s : remapPrefixes) {
-									if (field.getName().startsWith(s)) {
-										info.name = field.getName().substring(s.length()).trim();
-										break;
-									}
-								}
-							}
-
-							if (info.name.isEmpty()) {
-								info.name = cx.getMappedField(currentClass, field);
-							}
-
-							if (info.name.isEmpty()) {
-								info.name = field.getName();
-							}
-
-							if (!fieldMap.containsKey(info.name)) {
-								fieldMap.put(info.name, info);
-							}
-						} catch (Exception ex) {
-							// ex.printStackTrace();
-						}
-					}
-				}
-
-				// walk up superclass chain.  no need to deal specially with
-				// interfaces, since they can't have fields
-				currentClass = currentClass.getSuperclass();
-			}
-		} catch (SecurityException e) {
-			// fall through to !includePrivate case
-		}
-
-		return fieldMap.values();
-	}
-
-	public Collection<MethodInfo> getAccessibleMethods(Context cx, boolean includeProtected) {
-		var methodMap = new LinkedHashMap<MethodSignature, MethodInfo>();
-
-		var stack = new ArrayDeque<Class<?>>();
-		stack.add(cl);
-
-		while (!stack.isEmpty()) {
-			var currentClass = stack.pop();
-			Set<String> remapPrefixes = new HashSet<>();
-
-			for (RemapPrefixForJS r : currentClass.getAnnotationsByType(RemapPrefixForJS.class)) {
-				String s = r.value().trim();
-
-				if (!s.isEmpty()) {
-					remapPrefixes.add(s);
-				}
-			}
-
-			for (var method : getDeclaredMethodsSafe(currentClass)) {
-				int mods = method.getModifiers();
-
-				if ((Modifier.isPublic(mods) || includeProtected && Modifier.isProtected(mods))) {
-					MethodSignature signature = new MethodSignature(method);
-
-					var info = methodMap.get(signature);
-					boolean hidden = method.isAnnotationPresent(HideFromJS.class);
-
-					if (info == null) {
-						try {
-							if (!hidden && includeProtected && Modifier.isProtected(mods) && !method.isAccessible()) {
-								method.setAccessible(true);
-							}
-
-							info = new MethodInfo(method);
-							methodMap.put(signature, info);
-						} catch (Exception ex) {
-							// ex.printStackTrace();
-						}
-					}
-
-					if (info == null) {
-						continue;
-					} else if (hidden) {
-						info.hidden = true;
-						continue;
-					}
-
-					var remap = method.getAnnotation(RemapForJS.class);
-
-					if (remap != null) {
-						info.name = remap.value().trim();
-					}
-
-					if (info.name.isEmpty()) {
-						for (String s : remapPrefixes) {
-							if (method.getName().startsWith(s)) {
-								info.name = method.getName().substring(s.length()).trim();
-								break;
-							}
-						}
-					}
-
-					if (info.name.isEmpty()) {
-						info.name = cx.getMappedMethod(currentClass, method);
-					}
-				}
-			}
-
-			stack.addAll(Arrays.asList(currentClass.getInterfaces()));
-
-			var parent = currentClass.getSuperclass();
-
-			if (parent != null) {
-				stack.add(parent);
-			}
-		}
-
-		var list = new ArrayList<MethodInfo>(methodMap.size());
-
-		for (var m : methodMap.values()) {
-			if (!m.hidden) {
-				if (m.name.isEmpty()) {
-					m.name = m.method.getName();
-				}
-
-				list.add(m);
-			}
+		for (var f : list0) {
+			list.add(new FieldInfo(f));
 		}
 
 		return list;
 	}
 
-	private static Method[] getDeclaredMethodsSafe(Class<?> cl) {
-		try {
-			return cl.getDeclaredMethods();
-		} catch (Throwable t) {
-			System.err.println("[Rhino] Failed to get declared methods for " + cl.getName() + ": " + t);
-			return new Method[0];
-		}
-	}
+	@Deprecated(forRemoval = true)
+	public Collection<MethodInfo> getAccessibleMethods(Context cx, boolean includeProtected) {
+		var list0 = cx.getCachedClassStorage(includeProtected).get(cl).getAccessibleMethods(includeProtected);
+		var list = new ArrayList<MethodInfo>(list0.size());
 
-	private static Field[] getDeclaredFieldsSafe(Class<?> cl) {
-		try {
-			return cl.getDeclaredFields();
-		} catch (Throwable t) {
-			System.err.println("[Rhino] Failed to get declared fields for " + cl.getName() + ": " + t);
-			return new Field[0];
+		for (var m : list0) {
+			list.add(new MethodInfo(m));
 		}
+
+		return list;
 	}
 
 	public Map<String, FieldAndMethods> getFieldAndMethodsObjects(Scriptable scope, Object javaObject, boolean isStatic, Context cx) {
-		Map<String, FieldAndMethods> ht = isStatic ? staticFieldAndMethods : fieldAndMethods;
+		var ht = isStatic ? staticFieldAndMethods : fieldAndMethods;
+
 		if (ht == null) {
 			return null;
 		}
+
 		int len = ht.size();
-		Map<String, FieldAndMethods> result = new HashMap<>(len);
-		for (FieldAndMethods fam : ht.values()) {
-			FieldAndMethods famNew = new FieldAndMethods(scope, fam.methods, fam.field, cx);
+		var result = new HashMap<String, FieldAndMethods>(len);
+
+		for (var fam : ht.values()) {
+			FieldAndMethods famNew = new FieldAndMethods(scope, fam.methods, fam.fieldInfo, cx);
 			famNew.javaObject = javaObject;
-			result.put(fam.field.getName(), famNew);
+			result.put(fam.fieldInfo.rename, famNew);
 		}
+
 		return result;
 	}
 
 	RuntimeException reportMemberNotFound(String memberName, Context cx) {
 		return Context.reportRuntimeError2("msg.java.member.not.found", cl.getName(), memberName, cx);
+	}
+
+	/**
+	 * Temp compat class for Probe
+	 */
+	@Deprecated(forRemoval = true)
+	public static class FieldInfo {
+		public final CachedFieldInfo.Accessible cached;
+		public final Field field;
+		public final String name;
+
+		public FieldInfo(CachedFieldInfo.Accessible cached) {
+			this.cached = cached;
+			this.field = cached.getInfo().field;
+			this.name = cached.getName();
+		}
+	}
+
+	/**
+	 * Temp compat class for Probe
+	 */
+	@Deprecated(forRemoval = true)
+	public static class MethodInfo {
+		public final CachedMethodInfo.Accessible cached;
+		public final Method method;
+		public final String name;
+
+		public MethodInfo(CachedMethodInfo.Accessible cached) {
+			this.cached = cached;
+			this.method = cached.getInfo().method;
+			this.name = cached.getName();
+		}
 	}
 }
 

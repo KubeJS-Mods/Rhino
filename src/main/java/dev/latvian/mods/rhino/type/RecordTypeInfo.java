@@ -10,7 +10,6 @@ import dev.latvian.mods.rhino.RhinoException;
 import dev.latvian.mods.rhino.util.RemapForJS;
 import dev.latvian.mods.rhino.util.wrap.TypeWrapperFactory;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,6 +22,7 @@ import java.util.function.Consumer;
 
 public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<Object> {
 	private static final Map<Class<?>, Object> GLOBAL_DEFAULT_VALUES = new IdentityHashMap<>();
+	private static final TypeInfo CONSUMER_TYPE_INFO = TypeInfo.RAW_CONSUMER.withParams(TypeInfo.RAW_MAP.withParams(TypeInfo.STRING, TypeInfo.NONE));
 
 	public static <T> void setGlobalDefaultValue(Class<T> type, T value) {
 		GLOBAL_DEFAULT_VALUES.put(type, value);
@@ -39,12 +39,16 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 	}
 
 	public record Data(Component[] components, Map<String, Component> componentMap, Object[] defaultArguments) {
+		private Object[] createMHArgs() {
+			var args = new Object[components.length + 1];
+			System.arraycopy(components, 0, args, 1, components.length);
+			return args;
+		}
 	}
 
 	static final Map<Class<?>, RecordTypeInfo> CACHE = new IdentityHashMap<>();
 
 	private Data data;
-	private Constructor<?> constructor;
 	private JSObjectTypeInfo objectTypeInfo;
 	private JSFixedArrayTypeInfo arrayTypeInfo;
 
@@ -52,7 +56,7 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 		super(type);
 	}
 
-	public Data getData() {
+	public synchronized Data getData() {
 		if (data == null) {
 			var rc = asClass().getRecordComponents();
 			var components = new Component[rc.length];
@@ -122,34 +126,33 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 		return getData().componentMap;
 	}
 
-	public Constructor<?> getConstructor(Context cx) {
+	private Object createInstance0(Context cx, Object original, Object[] args) {
+		var constructor = cx.factory.getRecordConstructor(asClass());
+
 		if (constructor == null) {
-			try {
-				var data = getData();
-				var types = new Class<?>[data.components.length];
-
-				for (int i = 0; i < data.components.length; i++) {
-					types[i] = data.components[i].type.asClass();
-				}
-
-				constructor = asClass().getConstructor(types);
-			} catch (Exception ex) {
-				throw Context.reportRuntimeError("Unable to find record '" + asClass().getName() + "' constructor", cx);
-			}
+			throw Context.reportRuntimeError("Unable to find record '" + asClass().getName() + "' constructor", cx);
 		}
 
-		return constructor;
+		try {
+			return constructor.invokeWithArguments(args);
+		} catch (RhinoException ex) {
+			return cx.reportConversionError(original, this);
+		} catch (Throwable ex) {
+			throw Context.throwAsScriptRuntimeEx(ex, cx);
+		}
 	}
 
 	public Object createInstance(Context cx, Map<?, ?> map) {
 		var data = getData();
-		var args = data.defaultArguments.clone();
+		var defaultRecordProperties = cx.factory.getDefaultRecordProperties(asClass());
+		var args0 = defaultRecordProperties == null ? data.defaultArguments : defaultRecordProperties;
+		var args = args0.clone();
 
 		for (var entry : map.entrySet()) {
 			var c = data.componentMap.get(String.valueOf(entry.getKey()));
 
 			if (c != null) {
-				if (args[c.index] == Optional.empty()) {
+				if (args[c.index] instanceof Optional) {
 					args[c.index] = Optional.ofNullable(cx.jsToJava(entry.getValue(), c.type.param(0)));
 				} else {
 					args[c.index] = cx.jsToJava(entry.getValue(), c.type);
@@ -157,37 +160,26 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 			}
 		}
 
-		try {
-			return getConstructor(cx).newInstance(args);
-		} catch (RhinoException ignored) {
-		} catch (Exception ex) {
-			throw Context.reportRuntimeError("Unable to create record '" + asClass().getName() + "' instance from map " + map, cx);
-		}
-
-		return cx.reportConversionError(map, this);
+		return createInstance0(cx, map, args);
 	}
 
 	public Object createInstance(Context cx, Object... objects) {
 		var data = getData();
-		var args = data.defaultArguments.clone();
-		int alen = Math.min(args.length, objects.length);
+		var defaultRecordProperties = cx.factory.getDefaultRecordProperties(asClass());
+		var args0 = defaultRecordProperties == null ? data.defaultArguments : defaultRecordProperties;
+		var args = args0.clone();
+
+		int alen = Math.min(args0.length, objects.length);
 
 		for (int i = 0; i < alen; i++) {
-			if (args[i] == Optional.empty()) {
+			if (args[i] instanceof Optional) {
 				args[i] = Optional.ofNullable(cx.jsToJava(objects[i], data.components[i].type.param(0)));
 			} else {
 				args[i] = cx.jsToJava(objects[i], data.components[i].type);
 			}
 		}
 
-		try {
-			return getConstructor(cx).newInstance(args);
-		} catch (RhinoException ignored) {
-		} catch (Exception ex) {
-			throw Context.reportRuntimeError("Unable to create record '" + asClass().getName() + "' instance from array " + Arrays.toString(objects), cx);
-		}
-
-		return cx.reportConversionError(objects, this);
+		return createInstance0(cx, args, args);
 	}
 
 	@Override
@@ -202,12 +194,12 @@ public class RecordTypeInfo extends ClassTypeInfo implements TypeWrapperFactory<
 			var map = (Map) cx.mapOf(from, TypeInfo.STRING, TypeInfo.NONE);
 			return createInstance(cx, map);
 		} else if (from instanceof Callable) {
-			var map = new HashMap<>();
-			var consumer = (Consumer) cx.jsToJava(from, TypeInfo.RAW_CONSUMER);
+			var map = new HashMap<String, Object>(2);
+			var consumer = (Consumer<Map<String, ?>>) cx.jsToJava(from, CONSUMER_TYPE_INFO);
 			consumer.accept(map);
 			return createInstance(cx, map);
+		} else {
+			return cx.reportConversionError(from, target);
 		}
-
-		return cx.reportConversionError(from, target);
 	}
 }

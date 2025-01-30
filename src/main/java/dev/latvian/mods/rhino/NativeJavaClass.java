@@ -37,46 +37,47 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 		// we need to force this to be wrapped, because construct _has_
 		// to return a scriptable
 		Scriptable topLevel = ScriptableObject.getTopLevelScope(scope);
-		return cx.wrapNewObject(topLevel, instance, ctor.returnType);
+		return cx.wrapNewObject(topLevel, instance, ctor.getReturnType());
 	}
 
 	static Object constructInternal(Context cx, Scriptable scope, Object[] args, MemberBox ctor) {
-		var argTypes = ctor.argTypeInfos;
+		var params = ctor.parameters();
+		var argTypes = params.typeInfos();
 
-		if (ctor.vararg) {
+		if (params.isVarArg()) {
 			// marshall the explicit parameter
-			Object[] newArgs = new Object[argTypes.length];
-			for (int i = 0; i < argTypes.length - 1; i++) {
-				newArgs[i] = cx.jsToJava(args[i], argTypes[i]);
+			Object[] newArgs = new Object[argTypes.size()];
+			for (int i = 0; i < argTypes.size() - 1; i++) {
+				newArgs[i] = cx.jsToJava(args[i], argTypes.get(i));
 			}
 
 			Object varArgs;
 
 			// Handle special situation where a single variable parameter
 			// is given and it is a Java or ECMA array.
-			if (args.length == argTypes.length && (args[args.length - 1] == null || args[args.length - 1] instanceof NativeArray || args[args.length - 1] instanceof NativeJavaArray)) {
+			if (args.length == argTypes.size() && (args[args.length - 1] == null || args[args.length - 1] instanceof NativeArray || args[args.length - 1] instanceof NativeJavaArray)) {
 				// convert the ECMA array into a native array
-				varArgs = cx.jsToJava(args[args.length - 1], argTypes[argTypes.length - 1]);
+				varArgs = cx.jsToJava(args[args.length - 1], argTypes.getLast());
 			} else {
 				// marshall the variable parameter
-				var componentType = argTypes[argTypes.length - 1].componentType();
-				varArgs = componentType.newArray(args.length - argTypes.length + 1);
+				var componentType = argTypes.getLast().componentType();
+				varArgs = componentType.newArray(args.length - argTypes.size() + 1);
 				int len = Array.getLength(varArgs);
 				for (int i = 0; i < len; i++) {
-					Object value = cx.jsToJava(args[argTypes.length - 1 + i], componentType);
+					Object value = cx.jsToJava(args[argTypes.size() - 1 + i], componentType);
 					Array.set(varArgs, i, value);
 				}
 			}
 
 			// add varargs
-			newArgs[argTypes.length - 1] = varArgs;
+			newArgs[argTypes.size() - 1] = varArgs;
 			// replace the original args with the new one
 			args = newArgs;
 		} else {
 			Object[] origArgs = args;
 			for (int i = 0; i < args.length; i++) {
 				Object arg = args[i];
-				Object x = cx.jsToJava(arg, argTypes[i]);
+				Object x = cx.jsToJava(arg, argTypes.get(i));
 				if (x != arg) {
 					if (args == origArgs) {
 						args = origArgs.clone();
@@ -126,7 +127,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 
 	@Override
 	public boolean has(Context cx, String name, Scriptable start) {
-		return members.has(name, true) || javaClassPropertyName.equals(name);
+		return members.has(cx, name, true) || javaClassPropertyName.equals(name);
 	}
 
 	@Override
@@ -146,7 +147,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function {
 			}
 		}
 
-		if (members.has(name, true)) {
+		if (members.has(cx, name, true)) {
 			return members.get(this, name, javaObject, true, cx);
 		}
 

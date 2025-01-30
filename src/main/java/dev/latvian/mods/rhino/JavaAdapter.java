@@ -9,7 +9,6 @@ package dev.latvian.mods.rhino;
 import dev.latvian.mods.rhino.classfile.ByteCode;
 import dev.latvian.mods.rhino.classfile.ClassFileWriter;
 import dev.latvian.mods.rhino.type.TypeInfo;
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -610,7 +609,7 @@ public final class JavaAdapter implements IdFunctionCall {
 		cfw.add(ByteCode.RETURN);
 		cfw.stopMethod((short) 2); // this + delegee
 
-		throw new NotImplementedException("createAdapterWrapper can't be called with a null context.");
+		throw new NullPointerException("createAdapterWrapper can't be called with a null context.");
 	}
 
 	/**

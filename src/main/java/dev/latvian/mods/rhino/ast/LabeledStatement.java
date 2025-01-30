@@ -105,7 +105,7 @@ public class LabeledStatement extends AstNode {
 	}
 
 	public Label getFirstLabel() {
-		return labels.get(0);
+		return labels.getFirst();
 	}
 
 	@Override

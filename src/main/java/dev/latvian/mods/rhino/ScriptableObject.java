@@ -8,29 +8,16 @@
 
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.annotations.JSConstructor;
-import dev.latvian.mods.rhino.annotations.JSFunction;
-import dev.latvian.mods.rhino.annotations.JSGetter;
-import dev.latvian.mods.rhino.annotations.JSSetter;
-import dev.latvian.mods.rhino.annotations.JSStaticFunction;
+import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 import dev.latvian.mods.rhino.util.Deletable;
 import dev.latvian.mods.rhino.util.WrappedReflectionMethod;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -175,19 +162,19 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 
 			String fName = name == null ? "f" : name.toString();
 			if (getter != null) {
-				if (getter instanceof MemberBox) {
-					desc.defineProperty(cx, "get", new FunctionObject(fName, ((MemberBox) getter).member(), scope, cx), EMPTY);
-				} else if (getter instanceof Member) {
-					desc.defineProperty(cx, "get", new FunctionObject(fName, (Member) getter, scope, cx), EMPTY);
+				if (getter instanceof MemberBox box) {
+					desc.defineProperty(cx, "get", new FunctionObject(fName, box.executableInfo, scope, cx), EMPTY);
+				} else if (getter instanceof CachedExecutableInfo ex) {
+					desc.defineProperty(cx, "get", new FunctionObject(fName, ex, scope, cx), EMPTY);
 				} else {
 					desc.defineProperty(cx, "get", getter, EMPTY);
 				}
 			}
 			if (setter != null) {
-				if (setter instanceof MemberBox) {
-					desc.defineProperty(cx, "set", new FunctionObject(fName, ((MemberBox) setter).member(), scope, cx), EMPTY);
-				} else if (setter instanceof Member) {
-					desc.defineProperty(cx, "set", new FunctionObject(fName, (Member) setter, scope, cx), EMPTY);
+				if (setter instanceof MemberBox box) {
+					desc.defineProperty(cx, "set", new FunctionObject(fName, box.executableInfo, scope, cx), EMPTY);
+				} else if (setter instanceof CachedExecutableInfo ex) {
+					desc.defineProperty(cx, "set", new FunctionObject(fName, ex, scope, cx), EMPTY);
 				} else {
 					desc.defineProperty(cx, "set", setter, EMPTY);
 				}
@@ -214,10 +201,10 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 				}
 			} else {
 				if (setter instanceof MemberBox nativeSetter) {
-					Class<?>[] pTypes = nativeSetter.argTypes;
+					var pTypes = nativeSetter.parameters().types();
 					// XXX: cache tag since it is already calculated in
 					// defineProperty ?
-					Class<?> valueType = pTypes[pTypes.length - 1];
+					Class<?> valueType = pTypes.getLast();
 					int tag = FunctionObject.getTypeTag(valueType);
 					Object actualArg = FunctionObject.convertArg(cx, start, value, tag);
 					Object setterThis;
@@ -354,426 +341,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		}
 		// fall through to error
 		throw ScriptRuntime.typeError1(cx, "msg.default.value", (typeHint == null ? "undefined" : typeHint.name));
-	}
-
-	/**
-	 * Defines JavaScript objects from a Java class that implements Scriptable.
-	 * <p>
-	 * If the given class has a method
-	 * <pre>
-	 * static void init(Context cx, Scriptable scope, boolean sealed);</pre>
-	 * <p>
-	 * or its compatibility form
-	 * <pre>
-	 * static void init(Scriptable scope);</pre>
-	 * <p>
-	 * then it is invoked and no further initialization is done.<p>
-	 * <p>
-	 * However, if no such a method is found, then the class's constructors and
-	 * methods are used to initialize a class in the following manner.<p>
-	 * <p>
-	 * First, the zero-parameter constructor of the class is called to
-	 * create the prototype. If no such constructor exists,
-	 * a {@link EvaluatorException} is thrown. <p>
-	 * <p>
-	 * Next, all methods are scanned for special prefixes that indicate that they
-	 * have special meaning for defining JavaScript objects.
-	 * These special prefixes are
-	 * <ul>
-	 * <li><code>jsFunction_</code> for a JavaScript function
-	 * <li><code>jsStaticFunction_</code> for a JavaScript function that
-	 *           is a property of the constructor
-	 * <li><code>jsGet_</code> for a getter of a JavaScript property
-	 * <li><code>jsSet_</code> for a setter of a JavaScript property
-	 * <li><code>jsConstructor</code> for a JavaScript function that
-	 *           is the constructor
-	 * </ul><p>
-	 * <p>
-	 * If the method's name begins with "jsFunction_", a JavaScript function
-	 * is created with a name formed from the rest of the Java method name
-	 * following "jsFunction_". So a Java method named "jsFunction_foo" will
-	 * define a JavaScript method "foo". Calling this JavaScript function
-	 * will cause the Java method to be called. The parameters of the method
-	 * must be of number and types as defined by the FunctionObject class.
-	 * The JavaScript function is then added as a property
-	 * of the prototype. <p>
-	 * <p>
-	 * If the method's name begins with "jsStaticFunction_", it is handled
-	 * similarly except that the resulting JavaScript function is added as a
-	 * property of the constructor object. The Java method must be static.
-	 * <p>
-	 * If the method's name begins with "jsGet_" or "jsSet_", the method is
-	 * considered to define a property. Accesses to the defined property
-	 * will result in calls to these getter and setter methods. If no
-	 * setter is defined, the property is defined as READONLY.<p>
-	 * <p>
-	 * If the method's name is "jsConstructor", the method is
-	 * considered to define the body of the constructor. Only one
-	 * method of this name may be defined. You may use the varargs forms
-	 * for constructors documented in {@link ScriptableObject#getClassPrototype(Scriptable, String, Context)}
-	 * <p>
-	 * If no method is found that can serve as constructor, a Java
-	 * constructor will be selected to serve as the JavaScript
-	 * constructor in the following manner. If the class has only one
-	 * Java constructor, that constructor is used to define
-	 * the JavaScript constructor. If the the class has two constructors,
-	 * one must be the zero-argument constructor (otherwise an
-	 * {@link EvaluatorException} would have already been thrown
-	 * when the prototype was to be created). In this case
-	 * the Java constructor with one or more parameters will be used
-	 * to define the JavaScript constructor. If the class has three
-	 * or more constructors, an {@link EvaluatorException}
-	 * will be thrown.<p>
-	 * <p>
-	 * Finally, if there is a method
-	 * <pre>
-	 * static void finishInit(Scriptable scope, FunctionObject constructor,
-	 *                        Scriptable prototype)</pre>
-	 * <p>
-	 * it will be called to finish any initialization. The <code>scope</code>
-	 * argument will be passed, along with the newly created constructor and
-	 * the newly created prototype.<p>
-	 *
-	 * @param scope The scope in which to define the constructor.
-	 * @param clazz The Java class to use to define the JavaScript objects
-	 *              and properties.
-	 * @throws IllegalAccessException    if access is not available
-	 *                                   to a reflected class member
-	 * @throws InstantiationException    if unable to instantiate
-	 *                                   the named class
-	 * @throws InvocationTargetException if an exception is thrown
-	 *                                   during execution of methods of the named class
-	 * @see Function
-	 * @see FunctionObject
-	 * @see ScriptableObject#READONLY
-	 * @see ScriptableObject
-	 * #defineProperty(String, Class, int)
-	 */
-	public static <T extends Scriptable> void defineClass(Scriptable scope, Class<T> clazz, Context cx) throws IllegalAccessException, InstantiationException, InvocationTargetException {
-		defineClass(scope, clazz, false, false, cx);
-	}
-
-	/**
-	 * Defines JavaScript objects from a Java class, optionally
-	 * allowing sealing.
-	 * <p>
-	 * Similar to <code>defineClass(Scriptable scope, Class clazz)</code>
-	 * except that sealing is allowed. An object that is sealed cannot have
-	 * properties added or removed. Note that sealing is not allowed in
-	 * the current ECMA/ISO language specification, but is likely for
-	 * the next version.
-	 *
-	 * @param scope  The scope in which to define the constructor.
-	 * @param clazz  The Java class to use to define the JavaScript objects
-	 *               and properties. The class must implement Scriptable.
-	 * @param sealed Whether or not to create sealed standard objects that
-	 *               cannot be modified.
-	 * @throws IllegalAccessException    if access is not available
-	 *                                   to a reflected class member
-	 * @throws InstantiationException    if unable to instantiate
-	 *                                   the named class
-	 * @throws InvocationTargetException if an exception is thrown
-	 *                                   during execution of methods of the named class
-	 * @since 1.4R3
-	 */
-	public static <T extends Scriptable> void defineClass(Scriptable scope, Class<T> clazz, boolean sealed, Context cx) throws IllegalAccessException, InstantiationException, InvocationTargetException {
-		defineClass(scope, clazz, sealed, false, cx);
-	}
-
-	/**
-	 * Defines JavaScript objects from a Java class, optionally
-	 * allowing sealing and mapping of Java inheritance to JavaScript
-	 * prototype-based inheritance.
-	 * <p>
-	 * Similar to <code>defineClass(Scriptable scope, Class clazz)</code>
-	 * except that sealing and inheritance mapping are allowed. An object
-	 * that is sealed cannot have properties added or removed. Note that
-	 * sealing is not allowed in the current ECMA/ISO language specification,
-	 * but is likely for the next version.
-	 *
-	 * @param scope          The scope in which to define the constructor.
-	 * @param clazz          The Java class to use to define the JavaScript objects
-	 *                       and properties. The class must implement Scriptable.
-	 * @param sealed         Whether or not to create sealed standard objects that
-	 *                       cannot be modified.
-	 * @param mapInheritance Whether or not to map Java inheritance to
-	 *                       JavaScript prototype-based inheritance.
-	 * @param cx
-	 * @return the class name for the prototype of the specified class
-	 * @throws IllegalAccessException    if access is not available
-	 *                                   to a reflected class member
-	 * @throws InstantiationException    if unable to instantiate
-	 *                                   the named class
-	 * @throws InvocationTargetException if an exception is thrown
-	 *                                   during execution of methods of the named class
-	 * @since 1.6R2
-	 */
-	public static <T extends Scriptable> String defineClass(Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance, Context cx) throws IllegalAccessException, InstantiationException, InvocationTargetException {
-		BaseFunction ctor = buildClassCtor(scope, clazz, sealed, mapInheritance, cx);
-		if (ctor == null) {
-			return null;
-		}
-		String name = ctor.getClassPrototype(cx).getClassName();
-		defineProperty(scope, name, ctor, ScriptableObject.DONTENUM, cx);
-		return name;
-	}
-
-	static <T extends Scriptable> BaseFunction buildClassCtor(Scriptable scope, Class<T> clazz, boolean sealed, boolean mapInheritance, Context cx) throws IllegalAccessException, InstantiationException, InvocationTargetException {
-		Method[] methods = FunctionObject.getMethodList(clazz);
-		for (Method method : methods) {
-			if (!method.getName().equals("init")) {
-				continue;
-			}
-			Class<?>[] parmTypes = method.getParameterTypes();
-			if (parmTypes.length == 3 && parmTypes[0] == ScriptRuntime.ContextClass && parmTypes[1] == ScriptRuntime.ScriptableClass && parmTypes[2] == Boolean.TYPE && Modifier.isStatic(method.getModifiers())) {
-				Object[] args = {cx, scope, sealed ? Boolean.TRUE : Boolean.FALSE};
-				method.invoke(null, args);
-				return null;
-			}
-			if (parmTypes.length == 1 && parmTypes[0] == ScriptRuntime.ScriptableClass && Modifier.isStatic(method.getModifiers())) {
-				Object[] args = {scope};
-				method.invoke(null, args);
-				return null;
-			}
-
-		}
-
-		// If we got here, there isn't an "init" method with the right
-		// parameter types.
-
-		Constructor<?>[] ctors = clazz.getConstructors();
-		Constructor<?> protoCtor = null;
-		for (int i = 0; i < ctors.length; i++) {
-			if (ctors[i].getParameterTypes().length == 0) {
-				protoCtor = ctors[i];
-				break;
-			}
-		}
-		if (protoCtor == null) {
-			throw Context.reportRuntimeError1("msg.zero.arg.ctor", clazz.getName(), cx);
-		}
-
-		Scriptable proto = (Scriptable) protoCtor.newInstance(ScriptRuntime.EMPTY_OBJECTS);
-		String className = proto.getClassName();
-
-		// check for possible redefinition
-		Object existing = getProperty(getTopLevelScope(scope), className, cx);
-		if (existing instanceof BaseFunction) {
-			Object existingProto = ((BaseFunction) existing).getPrototypeProperty(cx);
-			if (existingProto != null && clazz.equals(existingProto.getClass())) {
-				return (BaseFunction) existing;
-			}
-		}
-
-		// Set the prototype's prototype, trying to map Java inheritance to JS
-		// prototype-based inheritance if requested to do so.
-		Scriptable superProto = null;
-		if (mapInheritance) {
-			Class<? super T> superClass = clazz.getSuperclass();
-			if (ScriptRuntime.ScriptableClass.isAssignableFrom(superClass) && !Modifier.isAbstract(superClass.getModifiers())) {
-				Class<? extends Scriptable> superScriptable = extendsScriptable(superClass);
-				String name = ScriptableObject.defineClass(scope, superScriptable, sealed, mapInheritance, cx);
-				if (name != null) {
-					superProto = ScriptableObject.getClassPrototype(scope, name, cx);
-				}
-			}
-		}
-		if (superProto == null) {
-			superProto = ScriptableObject.getObjectPrototype(scope, cx);
-		}
-		proto.setPrototype(superProto);
-
-		// Find out whether there are any methods that begin with
-		// "js". If so, then only methods that begin with special
-		// prefixes will be defined as JavaScript entities.
-		final String functionPrefix = "jsFunction_";
-		final String staticFunctionPrefix = "jsStaticFunction_";
-		final String getterPrefix = "jsGet_";
-		final String setterPrefix = "jsSet_";
-		final String ctorName = "jsConstructor";
-
-		Member ctorMember = findAnnotatedMember(methods, JSConstructor.class);
-		if (ctorMember == null) {
-			ctorMember = findAnnotatedMember(ctors, JSConstructor.class);
-		}
-		if (ctorMember == null) {
-			ctorMember = FunctionObject.findSingleMethod(methods, ctorName, cx);
-		}
-		if (ctorMember == null) {
-			if (ctors.length == 1) {
-				ctorMember = ctors[0];
-			} else if (ctors.length == 2) {
-				if (ctors[0].getParameterTypes().length == 0) {
-					ctorMember = ctors[1];
-				} else if (ctors[1].getParameterTypes().length == 0) {
-					ctorMember = ctors[0];
-				}
-			}
-			if (ctorMember == null) {
-				throw Context.reportRuntimeError1("msg.ctor.multiple.parms", clazz.getName(), cx);
-			}
-		}
-
-		FunctionObject ctor = new FunctionObject(className, ctorMember, scope, cx);
-		if (ctor.isVarArgsMethod()) {
-			throw Context.reportRuntimeError1("msg.varargs.ctor", ctorMember.getName(), cx);
-		}
-		ctor.initAsConstructor(scope, proto, cx);
-
-		Method finishInit = null;
-		HashSet<String> staticNames = new HashSet<>(), instanceNames = new HashSet<>();
-		for (Method method : methods) {
-			if (method == ctorMember) {
-				continue;
-			}
-			String name = method.getName();
-			if (name.equals("finishInit")) {
-				Class<?>[] parmTypes = method.getParameterTypes();
-				if (parmTypes.length == 3 && parmTypes[0] == ScriptRuntime.ScriptableClass && parmTypes[1] == FunctionObject.class && parmTypes[2] == ScriptRuntime.ScriptableClass && Modifier.isStatic(method.getModifiers())) {
-					finishInit = method;
-					continue;
-				}
-			}
-			// ignore any compiler generated methods.
-			if (name.indexOf('$') != -1) {
-				continue;
-			}
-			if (name.equals(ctorName)) {
-				continue;
-			}
-
-			Annotation annotation = null;
-			String prefix = null;
-			if (method.isAnnotationPresent(JSFunction.class)) {
-				annotation = method.getAnnotation(JSFunction.class);
-			} else if (method.isAnnotationPresent(JSStaticFunction.class)) {
-				annotation = method.getAnnotation(JSStaticFunction.class);
-			} else if (method.isAnnotationPresent(JSGetter.class)) {
-				annotation = method.getAnnotation(JSGetter.class);
-			} else if (method.isAnnotationPresent(JSSetter.class)) {
-				continue;
-			}
-
-			if (annotation == null) {
-				if (name.startsWith(functionPrefix)) {
-					prefix = functionPrefix;
-				} else if (name.startsWith(staticFunctionPrefix)) {
-					prefix = staticFunctionPrefix;
-				} else if (name.startsWith(getterPrefix)) {
-					prefix = getterPrefix;
-				} else {
-					// note that setterPrefix is among the unhandled names here -
-					// we deal with that when we see the getter
-					continue;
-				}
-			}
-
-			boolean isStatic = annotation instanceof JSStaticFunction || prefix == staticFunctionPrefix;
-			HashSet<String> names = isStatic ? staticNames : instanceNames;
-			String propName = getPropertyName(name, prefix, annotation);
-			if (names.contains(propName)) {
-				throw Context.reportRuntimeError2("duplicate.defineClass.name", name, propName, cx);
-			}
-			names.add(propName);
-			name = propName;
-
-			if (annotation instanceof JSGetter || prefix == getterPrefix) {
-				if (!(proto instanceof ScriptableObject)) {
-					throw Context.reportRuntimeError2("msg.extend.scriptable", proto.getClass().toString(), name, cx);
-				}
-				Method setter = findSetterMethod(methods, name, setterPrefix);
-				int attr = ScriptableObject.PERMANENT | ScriptableObject.DONTENUM | (setter != null ? 0 : ScriptableObject.READONLY);
-				((ScriptableObject) proto).defineProperty(cx, name, null, WrappedReflectionMethod.of(method), WrappedReflectionMethod.of(setter), attr);
-				continue;
-			}
-
-			if (isStatic && !Modifier.isStatic(method.getModifiers())) {
-				throw Context.reportRuntimeError("jsStaticFunction must be used with static method.", cx);
-			}
-
-			FunctionObject f = new FunctionObject(name, method, proto, cx);
-			if (f.isVarArgsConstructor()) {
-				throw Context.reportRuntimeError1("msg.varargs.fun", ctorMember.getName(), cx);
-			}
-			defineProperty(isStatic ? ctor : proto, name, f, DONTENUM, cx);
-			if (sealed) {
-				f.sealObject(cx);
-			}
-		}
-
-		// Call user code to complete initialization if necessary.
-		if (finishInit != null) {
-			Object[] finishArgs = {scope, ctor, proto};
-			finishInit.invoke(null, finishArgs);
-		}
-
-		// Seal the object if necessary.
-		if (sealed) {
-			ctor.sealObject(cx);
-			if (proto instanceof ScriptableObject) {
-				((ScriptableObject) proto).sealObject(cx);
-			}
-		}
-
-		return ctor;
-	}
-
-	private static Member findAnnotatedMember(AccessibleObject[] members, Class<? extends Annotation> annotation) {
-		for (AccessibleObject member : members) {
-			if (member.isAnnotationPresent(annotation)) {
-				return (Member) member;
-			}
-		}
-		return null;
-	}
-
-	private static Method findSetterMethod(Method[] methods, String name, String prefix) {
-		String newStyleName = "set" + Character.toUpperCase(name.charAt(0)) + name.substring(1);
-		for (Method method : methods) {
-			JSSetter annotation = method.getAnnotation(JSSetter.class);
-			if (annotation != null) {
-				if (name.equals(annotation.value()) || ("".equals(annotation.value()) && newStyleName.equals(method.getName()))) {
-					return method;
-				}
-			}
-		}
-		String oldStyleName = prefix + name;
-		for (Method method : methods) {
-			if (oldStyleName.equals(method.getName())) {
-				return method;
-			}
-		}
-		return null;
-	}
-
-	private static String getPropertyName(String methodName, String prefix, Annotation annotation) {
-		if (prefix != null) {
-			return methodName.substring(prefix.length());
-		}
-		String propName = null;
-		if (annotation instanceof JSGetter) {
-			propName = ((JSGetter) annotation).value();
-			if (propName == null || propName.length() == 0) {
-				if (methodName.length() > 3 && methodName.startsWith("get")) {
-					propName = methodName.substring(3);
-					if (Character.isUpperCase(propName.charAt(0))) {
-						if (propName.length() == 1) {
-							propName = propName.toLowerCase(Locale.ROOT);
-						} else if (!Character.isUpperCase(propName.charAt(1))) {
-							propName = Character.toLowerCase(propName.charAt(0)) + propName.substring(1);
-						}
-					}
-				}
-			}
-		} else if (annotation instanceof JSFunction) {
-			propName = ((JSFunction) annotation).value();
-		} else if (annotation instanceof JSStaticFunction) {
-			propName = ((JSStaticFunction) annotation).value();
-		}
-		if (propName == null || propName.length() == 0) {
-			propName = methodName;
-		}
-		return propName;
 	}
 
 	@SuppressWarnings({"unchecked"})
@@ -2031,7 +1598,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		buf[0] = 's';
 		String setterName = new String(buf);
 
-		var methods = FunctionObject.getMethodList(clazz);
+		var methods = FunctionObject.getMethodList(cx, clazz);
 		var getter = WrappedReflectionMethod.of(FunctionObject.findSingleMethod(methods, getterName, cx));
 		var setter = WrappedReflectionMethod.of(FunctionObject.findSingleMethod(methods, setterName, cx));
 		if (setter == null) {
@@ -2098,7 +1665,7 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 
 		MemberBox setterBox = null;
 		if (setter != null) {
-			if (setter.getReturnType() != Void.TYPE) {
+			if (setter.getReturnType() != TypeInfo.PRIMITIVE_VOID) {
 				throw Context.reportRuntimeError1("msg.setter.return", setter.toString(), cx);
 			}
 
@@ -2366,10 +1933,10 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * @see FunctionObject
 	 */
 	public void defineFunctionProperties(Context cx, String[] names, Class<?> clazz, int attributes) {
-		Method[] methods = FunctionObject.getMethodList(clazz);
+		var methods = FunctionObject.getMethodList(cx, clazz);
 		for (int i = 0; i < names.length; i++) {
 			String name = names[i];
-			Method m = FunctionObject.findSingleMethod(methods, name, cx);
+			var m = FunctionObject.findSingleMethod(methods, name, cx);
 			if (m == null) {
 				throw Context.reportRuntimeError2("msg.method.not.found", name, clazz.getName(), cx);
 			}
@@ -2410,7 +1977,6 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 	 * Return true if this object is sealed.
 	 *
 	 * @return true if sealed, false otherwise.
-	 * @see #defineClass(Scriptable, Class, boolean, boolean, Context)
 	 * @since 1.4R3
 	 */
 	public final boolean isSealed(Context cx) {

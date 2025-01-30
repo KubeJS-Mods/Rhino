@@ -743,7 +743,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				}
 			}
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			Context.throwAsScriptRuntimeEx(ex, cx);
 		}
 
 		return inst;

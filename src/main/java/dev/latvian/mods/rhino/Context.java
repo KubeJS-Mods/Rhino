@@ -24,9 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -164,14 +162,12 @@ public class Context {
 		while ((e instanceof InvocationTargetException)) {
 			e = ((InvocationTargetException) e).getTargetException();
 		}
-		// special handling of Error so scripts would not catch them
-		if (e instanceof Error) {
-			throw (Error) e;
+
+		switch (e) {
+			case Error err -> throw err; // special handling of Error so scripts would not catch them
+			case RhinoException err -> throw err;
+			case null, default -> throw new WrappedException(cx, e);
 		}
-		if (e instanceof RhinoException) {
-			throw (RhinoException) e;
-		}
-		throw new WrappedException(cx, e);
 	}
 
 	static Evaluator createInterpreter() {
@@ -1262,22 +1258,6 @@ public class Context {
 		return new DefiningClassLoader(parent);
 	}
 
-	public String getMappedClass(Class<?> from) {
-		return "";
-	}
-
-	public String getUnmappedClass(String from) {
-		return "";
-	}
-
-	public String getMappedField(Class<?> from, Field field) {
-		return "";
-	}
-
-	public String getMappedMethod(Class<?> from, Method method) {
-		return "";
-	}
-
 	public int getMaximumInterpreterStackDepth() {
 		return Integer.MAX_VALUE;
 	}
@@ -1987,5 +1967,17 @@ public class Context {
 		} else {
 			return args;
 		}
+	}
+
+	public void initJSON(ScriptableObject scope, boolean sealed) {
+		try {
+			NativeGSON.initGSON(scope, sealed, this);
+		} catch (Throwable ex) {
+			NativeJSON.init(scope, sealed, this);
+		}
+	}
+
+	public CachedClassStorage getCachedClassStorage(boolean includeProtected) {
+		return includeProtected ? CachedClassStorage.GLOBAL_PROTECTED : factory.getCachedClassStorage();
 	}
 }

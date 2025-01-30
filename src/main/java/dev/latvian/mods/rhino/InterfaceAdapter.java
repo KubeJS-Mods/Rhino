@@ -10,6 +10,7 @@ import dev.latvian.mods.rhino.type.TypeInfo;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 
 /**
  * Adapter to use JS function as implementation of Java interfaces with
@@ -104,7 +105,7 @@ public class InterfaceAdapter {
 				if (resultType == Void.TYPE) {
 					return null;
 				}
-				return cx.jsToJava(null, TypeInfo.of(method.getGenericReturnType()));
+				return cx.jsToJava(null, TypeInfo.safeOf(method::getGenericReturnType));
 			}
 			if (!(value instanceof Callable)) {
 				throw Context.reportRuntimeError1("msg.not.function.interface", methodName, cx);
@@ -125,12 +126,20 @@ public class InterfaceAdapter {
 		Scriptable thisObj = cx.wrapAsJavaObject(topScope, thisObject, TypeInfo.NONE);
 
 		Object result = cx.callSync(function, topScope, thisObj, args);
-		var javaResultType = method.getGenericReturnType();
+
+		Type javaResultType = Void.TYPE;
+
+		try {
+			javaResultType = method.getGenericReturnType();
+		} catch (Throwable ignore) {
+		}
+
 		if (javaResultType == Void.TYPE) {
 			result = null;
 		} else {
 			result = cx.jsToJava(result, TypeInfo.of(javaResultType));
 		}
+
 		return result;
 	}
 }

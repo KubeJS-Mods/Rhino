@@ -14,7 +14,7 @@ public class RecordTests {
 		TEST.test("emptyObject", """
 			console.printRecord({})
 			""", """
-			TestRecord[num=0, str=Optional.empty, subRecord=null]
+			TestRecord[num=420, str=Optional.empty, subRecord=null]
 			""");
 	}
 
@@ -23,7 +23,7 @@ public class RecordTests {
 		TEST.test("object", """
 			console.printRecord({str: 'hello'})
 			""", """
-			TestRecord[num=0, str=Optional[hello], subRecord=null]
+			TestRecord[num=420, str=Optional[hello], subRecord=null]
 			""");
 	}
 
@@ -32,7 +32,7 @@ public class RecordTests {
 		TEST.test("objectWithSub", """
 			console.printRecord({sub: {num: 5}})
 			""", """
-			TestRecord[num=0, str=Optional.empty, subRecord=TestRecord[num=5, str=Optional.empty, subRecord=null]]
+			TestRecord[num=420, str=Optional.empty, subRecord=TestRecord[num=5, str=Optional.empty, subRecord=null]]
 			""");
 	}
 
@@ -41,7 +41,7 @@ public class RecordTests {
 		TEST.test("object", """
 			console.printRecord(r => { r.str = 'hello' })
 			""", """
-			TestRecord[num=0, str=Optional[hello], subRecord=null]
+			TestRecord[num=420, str=Optional[hello], subRecord=null]
 			""");
 	}
 
@@ -59,7 +59,7 @@ public class RecordTests {
 		TEST.test("object", """
 			console.printRecord([5, 'hi', r => r.sub = {num: -50}])
 			""", """
-			TestRecord[num=5, str=Optional[hi], subRecord=TestRecord[num=0, str=Optional.empty, subRecord=TestRecord[num=-50, str=Optional.empty, subRecord=null]]]
+			TestRecord[num=5, str=Optional[hi], subRecord=TestRecord[num=420, str=Optional.empty, subRecord=TestRecord[num=-50, str=Optional.empty, subRecord=null]]]
 			""");
 	}
 }

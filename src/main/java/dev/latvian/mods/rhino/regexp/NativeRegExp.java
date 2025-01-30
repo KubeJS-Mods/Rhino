@@ -44,7 +44,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	public static final int MATCH = 1;
 	public static final int PREFIX = 2;
 	private static final Object REGEXP_TAG = new Object();
-	private static final boolean debug = false;
 
 	private static final byte REOP_SIMPLE_START = 1;  /* start of 'simple opcodes' */
 	private static final byte REOP_EMPTY = 1;  /* match rest of input against rest of r.e. */
@@ -195,9 +194,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 		CompilerState state = new CompilerState(cx, regexp.source, length, flags);
 		if (flat && length > 0) {
-			if (debug) {
-				System.out.println("flat = \"" + str + "\"");
-			}
 			state.result = new RENode(REOP_FLAT);
 			state.result.chr = state.cpbegin[0];
 			state.result.length = length;
@@ -225,18 +221,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			regexp.classCount = state.classCount;
 		}
 		int endPC = emitREBytecode(state, regexp, 0, state.result, cx);
-		regexp.program[endPC++] = REOP_END;
-
-		if (debug) {
-			System.out.println("Prog. length = " + endPC);
-			for (int i = 0; i < endPC; i++) {
-				System.out.print(regexp.program[i]);
-				if (i < (endPC - 1)) {
-					System.out.print(", ");
-				}
-			}
-			System.out.println();
-		}
+		regexp.program[endPC] = REOP_END;
 		regexp.parenCount = state.parenCount;
 
 		// If re starts with literal, init anchorCh accordingly
@@ -253,12 +238,6 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 				if (n.kid.op == REOP_BOL && n.kid2.op == REOP_BOL) {
 					regexp.anchorCh = ANCHOR_BOL;
 				}
-			}
-		}
-
-		if (debug) {
-			if (regexp.anchorCh >= 0) {
-				System.out.println("Anchor ch = '" + (char) regexp.anchorCh + "'");
 			}
 		}
 		return regexp;

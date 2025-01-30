@@ -1,7 +1,6 @@
 package dev.latvian.mods.rhino.test;
 
 import dev.latvian.mods.rhino.Context;
-import net.neoforged.bus.api.EventPriority;
 
 import java.util.function.Consumer;
 
@@ -12,7 +11,7 @@ public record EventBus(TestConsole console) {
 	public static class TestEvent extends Event {
 	}
 
-	public <T extends Event> void addListener(Context cx, EventPriority priority, boolean receiveCanceled, Class<T> eventType, Consumer<T> consumer) throws Exception {
+	public <T extends Event> void addListener(Context cx, String priority, boolean receiveCanceled, Class<T> eventType, Consumer<T> consumer) throws Exception {
 		console.info("Listening for " + eventType.getName());
 		consumer.accept(eventType.newInstance());
 	}

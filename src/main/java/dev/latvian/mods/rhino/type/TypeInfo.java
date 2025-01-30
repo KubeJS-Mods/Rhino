@@ -1,5 +1,7 @@
 package dev.latvian.mods.rhino.type;
 
+import dev.latvian.mods.rhino.Context;
+import dev.latvian.mods.rhino.Scriptable;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
@@ -31,13 +33,21 @@ public interface TypeInfo {
 
 	TypeInfo PRIMITIVE_VOID = new PrimitiveClassTypeInfo(Void.TYPE, null);
 	TypeInfo PRIMITIVE_BOOLEAN = new PrimitiveClassTypeInfo(Boolean.TYPE, false);
+	TypeInfo PRIMITIVE_BOOLEAN_ARRAY = PRIMITIVE_BOOLEAN.asArray();
 	TypeInfo PRIMITIVE_BYTE = new PrimitiveClassTypeInfo(Byte.TYPE, (byte) 0);
+	TypeInfo PRIMITIVE_BYTE_ARRAY = PRIMITIVE_BYTE.asArray();
 	TypeInfo PRIMITIVE_SHORT = new PrimitiveClassTypeInfo(Short.TYPE, (short) 0);
+	TypeInfo PRIMITIVE_SHORT_ARRAY = PRIMITIVE_SHORT.asArray();
 	TypeInfo PRIMITIVE_INT = new PrimitiveClassTypeInfo(Integer.TYPE, 0);
+	TypeInfo PRIMITIVE_INT_ARRAY = PRIMITIVE_INT.asArray();
 	TypeInfo PRIMITIVE_LONG = new PrimitiveClassTypeInfo(Long.TYPE, 0L);
+	TypeInfo PRIMITIVE_LONG_ARRAY = PRIMITIVE_LONG.asArray();
 	TypeInfo PRIMITIVE_FLOAT = new PrimitiveClassTypeInfo(Float.TYPE, 0F);
+	TypeInfo PRIMITIVE_FLOAT_ARRAY = PRIMITIVE_FLOAT.asArray();
 	TypeInfo PRIMITIVE_DOUBLE = new PrimitiveClassTypeInfo(Double.TYPE, 0D);
+	TypeInfo PRIMITIVE_DOUBLE_ARRAY = PRIMITIVE_DOUBLE.asArray();
 	TypeInfo PRIMITIVE_CHARACTER = new PrimitiveClassTypeInfo(Character.TYPE, (char) 0);
+	TypeInfo PRIMITIVE_CHARACTER_ARRAY = PRIMITIVE_CHARACTER.asArray();
 
 	TypeInfo VOID = new BasicClassTypeInfo(Void.class);
 	TypeInfo BOOLEAN = new BasicClassTypeInfo(Boolean.class);
@@ -54,13 +64,14 @@ public interface TypeInfo {
 	TypeInfo STRING_ARRAY = STRING.asArray();
 	TypeInfo CLASS = new BasicClassTypeInfo(Class.class);
 	TypeInfo DATE = new BasicClassTypeInfo(Date.class);
+	TypeInfo CONTEXT = new BasicClassTypeInfo(Context.class);
+	TypeInfo SCRIPTABLE = new BasicClassTypeInfo(Scriptable.class);
 
 	TypeInfo RUNNABLE = new InterfaceTypeInfo(Runnable.class, Boolean.TRUE);
 	TypeInfo RAW_CONSUMER = new InterfaceTypeInfo(Consumer.class, Boolean.TRUE);
 	TypeInfo RAW_SUPPLIER = new InterfaceTypeInfo(Supplier.class, Boolean.TRUE);
 	TypeInfo RAW_FUNCTION = new InterfaceTypeInfo(Function.class, Boolean.TRUE);
 	TypeInfo RAW_PREDICATE = new InterfaceTypeInfo(Predicate.class, Boolean.TRUE);
-
 	TypeInfo RAW_LIST = new InterfaceTypeInfo(List.class, Boolean.FALSE);
 	TypeInfo RAW_SET = new InterfaceTypeInfo(Set.class, Boolean.FALSE);
 	TypeInfo RAW_MAP = new InterfaceTypeInfo(Map.class, Boolean.FALSE);
@@ -90,72 +101,12 @@ public interface TypeInfo {
 			return OBJECT;
 		} else if (c == Void.TYPE) {
 			return PRIMITIVE_VOID;
-		} else if (c == Boolean.TYPE) {
-			return PRIMITIVE_BOOLEAN;
-		} else if (c == Byte.TYPE) {
-			return PRIMITIVE_BYTE;
-		} else if (c == Short.TYPE) {
-			return PRIMITIVE_SHORT;
-		} else if (c == Integer.TYPE) {
-			return PRIMITIVE_INT;
-		} else if (c == Long.TYPE) {
-			return PRIMITIVE_LONG;
-		} else if (c == Float.TYPE) {
-			return PRIMITIVE_FLOAT;
-		} else if (c == Double.TYPE) {
-			return PRIMITIVE_DOUBLE;
-		} else if (c == Character.TYPE) {
-			return PRIMITIVE_CHARACTER;
-		} else if (c == Void.class) {
-			return VOID;
-		} else if (c == Boolean.class) {
-			return BOOLEAN;
-		} else if (c == Byte.class) {
-			return BYTE;
-		} else if (c == Short.class) {
-			return SHORT;
-		} else if (c == Integer.class) {
-			return INT;
-		} else if (c == Long.class) {
-			return LONG;
-		} else if (c == Float.class) {
-			return FLOAT;
-		} else if (c == Double.class) {
-			return DOUBLE;
-		} else if (c == Character.class) {
-			return CHARACTER;
-		} else if (c == Number.class) {
-			return NUMBER;
-		} else if (c == String.class) {
-			return STRING;
-		} else if (c == Class.class) {
-			return CLASS;
-		} else if (c == Date.class) {
-			return DATE;
-		} else if (c == Optional.class) {
-			return RAW_OPTIONAL;
-		} else if (c == EnumSet.class) {
-			return RAW_ENUM_SET;
-		} else if (c == Runnable.class) {
-			return RUNNABLE;
-		} else if (c == Consumer.class) {
-			return RAW_CONSUMER;
-		} else if (c == Supplier.class) {
-			return RAW_SUPPLIER;
-		} else if (c == Function.class) {
-			return RAW_FUNCTION;
-		} else if (c == Predicate.class) {
-			return RAW_PREDICATE;
-		} else if (c == List.class) {
-			return RAW_LIST;
-		} else if (c == Set.class) {
-			return RAW_SET;
-		} else if (c == Map.class) {
-			return RAW_MAP;
-		} else if (c == Object[].class) {
-			return OBJECT_ARRAY;
-		} else if (c == String[].class) {
-			return STRING_ARRAY;
+		}
+
+		var cached = TypeUtils.IMMUTABLE_CACHE.get(c);
+
+		if (cached != null) {
+			return cached;
 		} else if (c.isArray()) {
 			return of(c.getComponentType()).asArray();
 		} else if (c.isEnum()) {
@@ -213,6 +164,22 @@ public interface TypeInfo {
 			}
 
 			return arr;
+		}
+	}
+
+	static TypeInfo safeOf(Supplier<Type> supplier) {
+		try {
+			return of(supplier.get());
+		} catch (Throwable ignored) {
+			return TypeInfo.NONE;
+		}
+	}
+
+	static TypeInfo[] safeOfArray(Supplier<Type[]> supplier) {
+		try {
+			return ofArray(supplier.get());
+		} catch (Exception ignored) {
+			return EMPTY_ARRAY;
 		}
 	}
 

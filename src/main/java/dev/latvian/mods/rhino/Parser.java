@@ -495,8 +495,8 @@ public class Parser {
 	}
 
 	private void exitLoop() {
-		Loop loop = loopSet.remove(loopSet.size() - 1);
-		loopAndSwitchSet.remove(loopAndSwitchSet.size() - 1);
+		Loop loop = loopSet.removeLast();
+		loopAndSwitchSet.removeLast();
 		if (loop.getParent() != null) {  // see comment in enterLoop
 			loop.setRelative(loop.getParent().getPosition());
 		}
@@ -511,7 +511,7 @@ public class Parser {
 	}
 
 	private void exitSwitch() {
-		loopAndSwitchSet.remove(loopAndSwitchSet.size() - 1);
+		loopAndSwitchSet.removeLast();
 	}
 
 	/**
@@ -578,7 +578,7 @@ public class Parser {
 						break;
 					}
 				} else if (tt == Token.COMMENT) {
-					n = scannedComments.get(scannedComments.size() - 1);
+					n = scannedComments.getLast();
 					consumeToken();
 				} else {
 					n = statement();
@@ -666,7 +666,7 @@ public class Parser {
 							break bodyLoop;
 						case Token.COMMENT:
 							consumeToken();
-							n = scannedComments.get(scannedComments.size() - 1);
+							n = scannedComments.getLast();
 							break;
 						case Token.FUNCTION:
 							consumeToken();
@@ -997,8 +997,8 @@ public class Parser {
 					addStrictWarning(pn instanceof EmptyStatement ? "msg.extra.trailing.semi" : "msg.no.side.effects", "", beg, nodeEnd(pn) - beg);
 				}
 				int ntt = peekToken();
-				if (ntt == Token.COMMENT && pn.getLineno() == scannedComments.get(scannedComments.size() - 1).getLineno()) {
-					pn.setInlineComment(scannedComments.get(scannedComments.size() - 1));
+				if (ntt == Token.COMMENT && pn.getLineno() == scannedComments.getLast().getLineno()) {
+					pn.setInlineComment(scannedComments.getLast());
 					consumeToken();
 				}
 				return pn;
@@ -1118,7 +1118,7 @@ public class Parser {
 				return pn;  // LabeledStatement
 			case Token.COMMENT:
 				//Do not consume token here
-				pn = scannedComments.get(scannedComments.size() - 1);
+				pn = scannedComments.getLast();
 				return pn;
 			default:
 				lineno = ts.lineno;
@@ -1172,7 +1172,7 @@ public class Parser {
 		if (matchToken(Token.ELSE, true)) {
 			int tt = peekToken();
 			if (tt == Token.COMMENT) {
-				pn.setElseKeyWordInlineComment(scannedComments.get(scannedComments.size() - 1));
+				pn.setElseKeyWordInlineComment(scannedComments.getLast());
 				consumeToken();
 			}
 			elsePos = ts.tokenBeg - pos;
@@ -1239,7 +1239,7 @@ public class Parser {
 						mustMatchToken(Token.COLON, "msg.no.colon.case", true);
 						break;
 					case Token.COMMENT:
-						AstNode n = scannedComments.get(scannedComments.size() - 1);
+						AstNode n = scannedComments.getLast();
 						pn.addChild(n);
 						continue switchLoop;
 					default:
@@ -1254,7 +1254,7 @@ public class Parser {
 
 				while ((tt = peekToken()) != Token.RC && tt != Token.CASE && tt != Token.DEFAULT && tt != Token.EOF) {
 					if (tt == Token.COMMENT) {
-						Comment inlineComment = scannedComments.get(scannedComments.size() - 1);
+						Comment inlineComment = scannedComments.getLast();
 						if (caseNode.getInlineComment() == null && inlineComment.getLineno() == caseNode.getLineno()) {
 							caseNode.setInlineComment(inlineComment);
 						} else {
@@ -1534,7 +1534,7 @@ public class Parser {
 		//Hnadled comment here because there should not be try without LC
 		int lctt = peekToken();
 		if (lctt == Token.COMMENT) {
-			Comment commentNode = scannedComments.get(scannedComments.size() - 1);
+			Comment commentNode = scannedComments.getLast();
 			pn.setInlineComment(commentNode);
 			consumeToken();
 			lctt = peekToken();
@@ -1689,7 +1689,7 @@ public class Parser {
 			if (loopAndSwitchSet == null || loopAndSwitchSet.size() == 0) {
 				reportError("msg.bad.break", pos, end - pos);
 			} else {
-				breakTarget = loopAndSwitchSet.get(loopAndSwitchSet.size() - 1);
+				breakTarget = loopAndSwitchSet.getLast();
 			}
 		}
 
@@ -1722,7 +1722,7 @@ public class Parser {
 			if (loopSet == null || loopSet.size() == 0) {
 				reportError("msg.continue.outside");
 			} else {
-				target = loopSet.get(loopSet.size() - 1);
+				target = loopSet.getLast();
 			}
 		} else {
 			if (labels == null || !(labels.getStatement() instanceof Loop)) {
@@ -1941,8 +1941,8 @@ public class Parser {
 			if (stmt == null) {
 				stmt = statementHelper();
 				int ntt = peekToken();
-				if (ntt == Token.COMMENT && stmt.getLineno() == scannedComments.get(scannedComments.size() - 1).getLineno()) {
-					stmt.setInlineComment(scannedComments.get(scannedComments.size() - 1));
+				if (ntt == Token.COMMENT && stmt.getLineno() == scannedComments.getLast().getLineno()) {
+					stmt.setInlineComment(scannedComments.getLast());
 					consumeToken();
 				}
 			}
@@ -2876,7 +2876,7 @@ public class Parser {
 				}
 				break;
 			} else if (tt == Token.FOR && !after_lb_or_comma && elements.size() == 1) {
-				return arrayComprehension(elements.get(0), pos);
+				return arrayComprehension(elements.getFirst(), pos);
 			} else if (tt == Token.EOF) {
 				reportError("msg.no.bracket.arg");
 				break;

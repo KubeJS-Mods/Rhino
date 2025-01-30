@@ -17,6 +17,8 @@ public class TestConsole {
 	private final ContextFactory factory;
 	private TestConsoleTheme theme;
 	public StringBuilder consoleOutput = new StringBuilder();
+	public final int immutableInt = 40;
+	public int mutableInt = 20;
 
 	public TestConsole(ContextFactory factory) {
 		this.factory = factory;
@@ -51,6 +53,10 @@ public class TestConsole {
 		consoleOutput.append(s);
 	}
 
+	public void varargTest(String a, int... values) {
+		info("VarArg Ints " + a + ": " + Arrays.toString(values));
+	}
+
 	public String getConsoleOutput() {
 		String s = consoleOutput.toString();
 		consoleOutput.setLength(0);
@@ -58,7 +64,7 @@ public class TestConsole {
 	}
 
 	public void freeze(Object... objects) {
-		System.out.println("Freezing " + Arrays.toString(objects));
+		info("Freezing " + Arrays.toString(objects));
 	}
 
 	public String[] getTestArray() {

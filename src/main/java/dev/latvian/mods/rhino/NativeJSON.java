@@ -6,23 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.internal.Streams;
-import com.google.gson.stream.JsonWriter;
 import dev.latvian.mods.rhino.json.JsonParser;
-import dev.latvian.mods.rhino.util.HideFromJS;
 
-import java.io.StringWriter;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -31,29 +16,16 @@ import java.util.Map;
  *
  * @author Matthew Crumley, Raphael Speyer
  */
-public final class NativeJSON extends IdScriptableObject {
+public class NativeJSON extends IdScriptableObject {
 	private static final Object JSON_TAG = "JSON";
 
-	private static final int MAX_STRINGIFY_GAP_LENGTH = 10;
+	protected static final int MAX_STRINGIFY_GAP_LENGTH = 10;
 
-	private static final HashSet<String> IGNORED_METHODS = new HashSet<>();
-	private static final int Id_toSource = 1;
-	private static final int Id_parse = 2;
-	private static final int Id_stringify = 3;
-	private static final int LAST_METHOD_ID = 3;
-	private static final int MAX_ID = 3;
-
-	static {
-		IGNORED_METHODS.add("void wait()");
-		IGNORED_METHODS.add("void wait(long, int)");
-		IGNORED_METHODS.add("native void wait(long)");
-		IGNORED_METHODS.add("boolean equals(Object)");
-		IGNORED_METHODS.add("String toString()");
-		IGNORED_METHODS.add("native int hashCode()");
-		IGNORED_METHODS.add("native Class getClass()");
-		IGNORED_METHODS.add("native void notify()");
-		IGNORED_METHODS.add("native void notifyAll()");
-	}
+	protected static final int Id_toSource = 1;
+	protected static final int Id_parse = 2;
+	protected static final int Id_stringify = 3;
+	protected static final int LAST_METHOD_ID = 3;
+	protected static final int MAX_ID = 3;
 
 	static void init(Scriptable scope, boolean sealed, Context cx) {
 		NativeJSON obj = new NativeJSON();
@@ -136,224 +108,67 @@ public final class NativeJSON extends IdScriptableObject {
 		return reviver.call(cx, scope, holder, new Object[]{name, property});
 	}
 
-	private static String repeat(char c, int count) {
-		char[] chars = new char[count];
-		Arrays.fill(chars, c);
-		return new String(chars);
-	}
-
 	public static String stringify(Object value, Object replacer, Object space, Context cx) {
-		JsonElement e = stringify0(cx, value);
-
-		StringWriter stringWriter = new StringWriter();
-		JsonWriter writer = new JsonWriter(stringWriter);
-
-		String indent = null;
-
-		if (space instanceof NativeNumber) {
-			space = ScriptRuntime.toNumber(cx, space);
-		} else if (space instanceof NativeString) {
-			space = ScriptRuntime.toString(cx, space);
-		}
-
-		if (space instanceof Number) {
-			int gapLength = (int) ScriptRuntime.toInteger(cx, space);
-			gapLength = Math.min(MAX_STRINGIFY_GAP_LENGTH, gapLength);
-			indent = (gapLength > 0) ? repeat(' ', gapLength) : "";
-		} else if (space instanceof String) {
-			indent = (String) space;
-			if (indent.length() > MAX_STRINGIFY_GAP_LENGTH) {
-				indent = indent.substring(0, MAX_STRINGIFY_GAP_LENGTH);
-			}
-		}
-
-		if (indent != null) {
-			writer.setIndent(indent);
-		}
-
-		writer.setSerializeNulls(true);
-		writer.setHtmlSafe(false);
-		writer.setLenient(true);
-
-		try {
-			Streams.write(e, writer);
-			return stringWriter.toString();
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			return "error";
-		}
-	}
-
-	private static void type(Context cx, StringBuilder builder, Class<?> type) {
-		String s = cx.getMappedClass(type);
-
-		if (s.startsWith("java.lang.") || s.startsWith("java.util.")) {
-			builder.append(s.substring(10));
-		} else {
-			builder.append(s.isEmpty() ? type.getName() : s);
-		}
-	}
-
-	private static void params(Context cx, StringBuilder builder, Class<?>[] params) {
-		builder.append('(');
-
-		for (int i = 0; i < params.length; i++) {
-			if (i > 0) {
-				builder.append(", ");
-			}
-
-			type(cx, builder, params[i]);
-		}
-
-		builder.append(')');
+		var builder = new StringBuilder();
+		stringify0(cx, value, builder);
+		return builder.toString();
 	}
 
 	// #string_id_map#
 
-	public static JsonElement stringify0(Context cx, Object v) {
-		if (v == null) {
-			return JsonNull.INSTANCE;
-		} else if (v instanceof Boolean) {
-			return new JsonPrimitive((Boolean) v);
-		} else if (v instanceof CharSequence) {
-			return new JsonPrimitive(v.toString());
-		} else if (v instanceof Number) {
-			return new JsonPrimitive((Number) v);
-		} else if (v instanceof NativeString) {
-			return new JsonPrimitive(ScriptRuntime.toString(cx, v));
-		} else if (v instanceof NativeNumber) {
-			return new JsonPrimitive(ScriptRuntime.toNumber(cx, v));
-		} else if (v instanceof Map) {
-			JsonObject json = new JsonObject();
-
-			for (Map.Entry<?, ?> entry : ((Map<?, ?>) v).entrySet()) {
-				json.add(entry.getKey().toString(), stringify0(cx, entry.getValue()));
-			}
-
-			return json;
-		} else if (v instanceof Iterable) {
-			JsonArray json = new JsonArray();
-
-			for (Object o : (Iterable<?>) v) {
-				json.add(stringify0(cx, o));
-			}
-
-			return json;
-		}
-
-		if (v instanceof Wrapper) {
-			v = ((Wrapper) v).unwrap();
-		}
-
-		Class<?> cl = v.getClass();
-		int array = 0;
-
-		while (cl.isArray()) {
-			cl = cl.getComponentType();
-			array++;
-		}
-
-		var mcl = cx.getMappedClass(cl);
-		StringBuilder clName = new StringBuilder(mcl.isEmpty() ? cl.getName() : mcl);
-
-		if (array > 0) {
-			clName.append("[]".repeat(array));
-		}
-
-		JsonArray list = new JsonArray();
-
-		if (cl.isInterface()) {
-			clName.insert(0, "interface ");
-		} else if (cl.isAnnotation()) {
-			clName.insert(0, "annotation ");
-		} else if (cl.isEnum()) {
-			clName.insert(0, "enum ");
-		} else if (cl.isRecord()) {
-			clName.insert(0, "record ");
-		} else {
-			clName.insert(0, "class ");
-		}
-
-		list.add(clName.toString());
-
-		for (Constructor<?> constructor : cl.getConstructors()) {
-			if (constructor.isAnnotationPresent(HideFromJS.class)) {
-				continue;
-			}
-
-			StringBuilder builder = new StringBuilder("new ");
-			String s = cx.getMappedClass(constructor.getDeclaringClass());
-
-			if (s.isEmpty()) {
-				s = constructor.getDeclaringClass().getName();
-			}
-
-			int si = s.lastIndexOf('.');
-			builder.append(si == -1 || si >= s.length() ? s : s.substring(si + 1));
-			params(cx, builder, constructor.getParameterTypes());
-			list.add(builder.toString());
-		}
-
-		for (Field field : cl.getFields()) {
-			int mod = field.getModifiers();
-
-			if (Modifier.isTransient(mod) || field.isAnnotationPresent(HideFromJS.class)) {
-				continue;
-			}
-
-			StringBuilder builder = new StringBuilder();
-
-			if (Modifier.isStatic(mod)) {
-				builder.append("static ");
-			}
-
-			if (Modifier.isFinal(mod)) {
-				builder.append("final ");
-			}
-
-			if (Modifier.isNative(mod)) {
-				builder.append("native ");
-			}
-
-			type(cx, builder, field.getType());
-			builder.append(' ');
-			builder.append(cx.getMappedField(cl, field));
-			list.add(builder.toString());
-		}
-
-		for (Method method : cl.getMethods()) {
-			if (method.isAnnotationPresent(HideFromJS.class)) {
-				continue;
-			}
-
-			int mod = method.getModifiers();
-
-			StringBuilder builder = new StringBuilder();
-
-			if (Modifier.isStatic(mod)) {
-				builder.append("static ");
-			}
-
-			if (Modifier.isNative(mod)) {
-				builder.append("native ");
-			}
-
-			type(cx, builder, method.getReturnType());
-			builder.append(' ');
-			builder.append(cx.getMappedMethod(cl, method));
-			params(cx, builder, method.getParameterTypes());
-
-			String s = builder.toString();
-
-			if (!IGNORED_METHODS.contains(s)) {
-				list.add(s);
-			}
-		}
-
-		return list;
+	private static void escape(StringBuilder builder, String string) {
+		builder.append('"');
+		builder.append(string.replace("\"", "\\\""));
+		builder.append('"');
 	}
 
-	private NativeJSON() {
+	private static void stringify0(Context cx, Object v, StringBuilder builder) {
+		if (v == null || v instanceof Boolean || v instanceof Number) {
+			builder.append(v);
+		} else if (v instanceof CharSequence) {
+			escape(builder, v.toString());
+		} else if (v instanceof NativeString) {
+			escape(builder, ScriptRuntime.toString(cx, v));
+		} else if (v instanceof NativeNumber) {
+			builder.append(ScriptRuntime.toNumber(cx, v));
+		} else if (v instanceof Map<?, ?> map) {
+			builder.append('{');
+			boolean first = true;
+
+			for (var entry : map.entrySet()) {
+				if (first) {
+					first = false;
+				} else {
+					builder.append(',');
+				}
+
+				escape(builder, String.valueOf(entry.getKey()));
+				builder.append(':');
+				stringify0(cx, entry.getValue(), builder);
+			}
+
+			builder.append('}');
+		} else if (v instanceof Iterable<?> itr) {
+			builder.append('[');
+			boolean first = true;
+
+			for (var value : itr) {
+				if (first) {
+					first = false;
+				} else {
+					builder.append(',');
+				}
+
+				stringify0(cx, value, builder);
+			}
+
+			builder.append(']');
+		} else {
+			stringify0(cx, cx.getCachedClassStorage(false).get(Wrapper.unwrapped(v).getClass()).getDebugInfo(), builder);
+		}
+	}
+
+	protected NativeJSON() {
 	}
 
 	@Override
@@ -425,12 +240,16 @@ public final class NativeJSON extends IdScriptableObject {
 						/* fall through */
 					default:
 				}
-				return stringify(value, replacer, space, cx);
+				return stringifyJSON(value, replacer, space, cx);
 			}
 
 			default:
 				throw new IllegalStateException(String.valueOf(methodId));
 		}
+	}
+
+	public String stringifyJSON(Object value, Object replacer, Object space, Context cx) {
+		return stringify(value, replacer, space, cx);
 	}
 
 	@Override

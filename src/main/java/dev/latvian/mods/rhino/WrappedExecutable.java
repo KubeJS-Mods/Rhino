@@ -1,14 +1,12 @@
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeInfo;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Executable;
-import java.lang.reflect.Type;
-
 public interface WrappedExecutable {
-	Object invoke(Context cx, Scriptable scope, Object self, Object[] args) throws Exception;
+	Object invoke(Context cx, Scriptable scope, Object self, Object[] args) throws Throwable;
 
-	default Object construct(Context cx, Scriptable scope, Object[] args) throws Exception {
+	default Object construct(Context cx, Scriptable scope, Object[] args) throws Throwable {
 		throw new UnsupportedOperationException();
 	}
 
@@ -16,16 +14,12 @@ public interface WrappedExecutable {
 		return false;
 	}
 
-	default Class<?> getReturnType() {
-		return Void.TYPE;
-	}
-
-	default Type getGenericReturnType() {
-		return getReturnType();
+	default TypeInfo getReturnType() {
+		return TypeInfo.PRIMITIVE_VOID;
 	}
 
 	@Nullable
-	default Executable unwrap() {
+	default CachedExecutableInfo unwrap() {
 		return null;
 	}
 }

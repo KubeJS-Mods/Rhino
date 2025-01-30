@@ -8,10 +8,7 @@
 
 package dev.latvian.mods.rhino;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.util.List;
 
 public class FunctionObject extends BaseFunction {
 	public static final int JAVA_UNSUPPORTED_TYPE = 0;
@@ -23,7 +20,6 @@ public class FunctionObject extends BaseFunction {
 	public static final int JAVA_OBJECT_TYPE = 6;
 	private static final short VARARGS_METHOD = -1;
 	private static final short VARARGS_CTOR = -2;
-	private static boolean sawSecurityException;
 
 	/**
 	 * @return One of <code>JAVA_*_TYPE</code> constants to indicate desired type
@@ -87,13 +83,13 @@ public class FunctionObject extends BaseFunction {
 		}
 	}
 
-	static Method findSingleMethod(Method[] methods, String name, Context cx) {
-		Method found = null;
-		for (int i = 0, N = methods.length; i != N; ++i) {
-			Method method = methods[i];
+	static CachedMethodInfo findSingleMethod(List<CachedMethodInfo> methods, String name, Context cx) {
+		CachedMethodInfo found = null;
+		for (int i = 0, N = methods.size(); i != N; ++i) {
+			var method = methods.get(i);
 			if (method != null && name.equals(method.getName())) {
 				if (found != null) {
-					throw Context.reportRuntimeError2("msg.no.overload", name, method.getDeclaringClass().getName(), cx);
+					throw Context.reportRuntimeError2("msg.no.overload", name, method.getDeclaringClass().getTypeInfo(), cx);
 				}
 				found = method;
 			}
@@ -109,37 +105,8 @@ public class FunctionObject extends BaseFunction {
 	 * @return the public methods declared in the specified class
 	 * @see Class#getDeclaredMethods()
 	 */
-	static Method[] getMethodList(Class<?> clazz) {
-		Method[] methods = null;
-		try {
-			// getDeclaredMethods may be rejected by the security manager
-			// but getMethods is more expensive
-			if (!sawSecurityException) {
-				methods = clazz.getDeclaredMethods();
-			}
-		} catch (SecurityException e) {
-			// If we get an exception once, give up on getDeclaredMethods
-			sawSecurityException = true;
-		}
-		if (methods == null) {
-			methods = clazz.getMethods();
-		}
-		int count = 0;
-		for (int i = 0; i < methods.length; i++) {
-			if (sawSecurityException ? methods[i].getDeclaringClass() != clazz : !Modifier.isPublic(methods[i].getModifiers())) {
-				methods[i] = null;
-			} else {
-				count++;
-			}
-		}
-		Method[] result = new Method[count];
-		int j = 0;
-		for (int i = 0; i < methods.length; i++) {
-			if (methods[i] != null) {
-				result[j++] = methods[i];
-			}
-		}
-		return result;
+	static List<CachedMethodInfo> getMethodList(Context cx, Class<?> clazz) {
+		return cx.getCachedClassStorage(false).get(clazz).getDeclaredMethods();
 	}
 
 	private final String functionName;
@@ -214,27 +181,23 @@ public class FunctionObject extends BaseFunction {
 	 * @param scope               enclosing scope of function
 	 * @see Scriptable
 	 */
-	public FunctionObject(String name, Member methodOrConstructor, Scriptable scope, Context cx) {
-		if (methodOrConstructor instanceof Constructor) {
-			member = new MemberBox((Constructor<?>) methodOrConstructor);
-			isStatic = true; // well, doesn't take a 'this'
-		} else {
-			member = new MemberBox((Method) methodOrConstructor);
-			isStatic = member.isStatic();
-		}
+	public FunctionObject(String name, CachedExecutableInfo methodOrConstructor, Scriptable scope, Context cx) {
+		member = new MemberBox(methodOrConstructor);
+		isStatic = methodOrConstructor.isStatic;
+
 		String methodName = member.getName();
 		this.functionName = name;
-		Class<?>[] types = member.argTypes;
-		int arity = types.length;
-		if (arity == 4 && (types[1].isArray() || types[2].isArray())) {
+		List<Class<?>> types = member.parameters().types();
+		int arity = types.size();
+		if (arity == 4 && (types.get(1).isArray() || types.get(2).isArray())) {
 			// Either variable args or an error.
-			if (types[1].isArray()) {
-				if (!isStatic || types[0] != ScriptRuntime.ContextClass || types[1].getComponentType() != ScriptRuntime.ObjectClass || types[2] != ScriptRuntime.FunctionClass || types[3] != Boolean.TYPE) {
+			if (types.get(1).isArray()) {
+				if (!isStatic || types.getFirst() != ScriptRuntime.ContextClass || types.get(1).getComponentType() != ScriptRuntime.ObjectClass || types.get(2) != ScriptRuntime.FunctionClass || types.get(3) != Boolean.TYPE) {
 					throw Context.reportRuntimeError1("msg.varargs.ctor", methodName, cx);
 				}
 				parmsLength = VARARGS_CTOR;
 			} else {
-				if (!isStatic || types[0] != ScriptRuntime.ContextClass || types[1] != ScriptRuntime.ScriptableClass || types[2].getComponentType() != ScriptRuntime.ObjectClass || types[3] != ScriptRuntime.FunctionClass) {
+				if (!isStatic || types.getFirst() != ScriptRuntime.ContextClass || types.get(1) != ScriptRuntime.ScriptableClass || types.get(2).getComponentType() != ScriptRuntime.ObjectClass || types.get(3) != ScriptRuntime.FunctionClass) {
 					throw Context.reportRuntimeError1("msg.varargs.fun", methodName, cx);
 				}
 				parmsLength = VARARGS_METHOD;
@@ -244,9 +207,9 @@ public class FunctionObject extends BaseFunction {
 			if (arity > 0) {
 				typeTags = new byte[arity];
 				for (int i = 0; i != arity; ++i) {
-					int tag = getTypeTag(types[i]);
+					int tag = getTypeTag(types.get(i));
 					if (tag == JAVA_UNSUPPORTED_TYPE) {
-						throw Context.reportRuntimeError2("msg.bad.parms", types[i].getName(), methodName, cx);
+						throw Context.reportRuntimeError2("msg.bad.parms", types.get(i).getName(), methodName, cx);
 					}
 					typeTags[i] = (byte) tag;
 				}
@@ -254,14 +217,14 @@ public class FunctionObject extends BaseFunction {
 		}
 
 		if (member.isMethod()) {
-			Class<?> returnType = member.getReturnType();
+			Class<?> returnType = member.getReturnType().asClass();
 			if (returnType == Void.TYPE) {
 				hasVoidReturn = true;
 			} else {
 				returnTypeTag = getTypeTag(returnType);
 			}
 		} else {
-			Class<?> ctorType = member.getDeclaringClass();
+			Class<?> ctorType = member.executableInfo.getDeclaringClass().type;
 			if (!ScriptRuntime.ScriptableClass.isAssignableFrom(ctorType)) {
 				throw Context.reportRuntimeError1("msg.bad.ctor.return", ctorType.getName(), cx);
 			}
@@ -353,7 +316,7 @@ public class FunctionObject extends BaseFunction {
 
 		} else {
 			if (!isStatic) {
-				Class<?> clazz = member.getDeclaringClass();
+				Class<?> clazz = member.executableInfo.getDeclaringClass().type;
 				if (!clazz.isInstance(thisObj)) {
 					boolean compatible = false;
 					if (thisObj == scope) {
@@ -412,7 +375,7 @@ public class FunctionObject extends BaseFunction {
 			if (hasVoidReturn) {
 				result = Undefined.INSTANCE;
 			} else if (returnTypeTag == JAVA_UNSUPPORTED_TYPE) {
-				result = cx.wrap(scope, result, member.returnType);
+				result = cx.wrap(scope, result, member.getReturnType());
 			}
 			// XXX: the code assumes that if returnTypeTag == JAVA_OBJECT_TYPE
 			// then the Java method did a proper job of converting the
@@ -436,7 +399,7 @@ public class FunctionObject extends BaseFunction {
 		}
 		Scriptable result;
 		try {
-			result = (Scriptable) member.getDeclaringClass().newInstance();
+			result = (Scriptable) member.executableInfo.getDeclaringClass().getClass().newInstance();
 		} catch (Exception ex) {
 			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		}

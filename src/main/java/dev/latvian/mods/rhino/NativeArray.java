@@ -2361,7 +2361,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			throw new ArrayIndexOutOfBoundsException("Array doesn't contain any objects");
 		}
 
-		return list.get(0);
+		return list.getFirst();
 	}
 
 	@Override

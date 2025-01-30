@@ -167,4 +167,30 @@ public class MiscTests {
 
 		GenericObject.test = "";
 	}
+
+	@Test
+	public void varargs() {
+		TEST.test("varargs", """
+			console.varargTest("hi", 1, 2, 3);
+			""", "VarArg Ints hi: [1, 2, 3]");
+	}
+
+	@Test
+	public void get() {
+		TEST.test("get", """
+			console.info(console.immutableInt)
+			""", """
+			40
+			""");
+	}
+
+	@Test
+	public void set() {
+		TEST.test("set", """
+			console.mutableInt = 30.5
+			console.info(console.mutableInt)
+			""", """
+			30
+			""");
+	}
 }

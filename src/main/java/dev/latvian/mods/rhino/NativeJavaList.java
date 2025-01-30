@@ -150,7 +150,7 @@ public class NativeJavaList extends NativeJavaObject {
 			return Undefined.INSTANCE;
 		}
 
-		return list.remove(list.size() - 1);
+		return list.removeLast();
 	}
 
 	private Object shift(Context cx) {
@@ -158,12 +158,12 @@ public class NativeJavaList extends NativeJavaObject {
 			return Undefined.INSTANCE;
 		}
 
-		return list.remove(0);
+		return list.removeFirst();
 	}
 
 	private int unshift(Context cx, Object[] args) {
 		for (int i = args.length - 1; i >= 0; i--) {
-			list.add(0, cx.jsToJava(args[i], listType));
+			list.addFirst(cx.jsToJava(args[i], listType));
 		}
 
 		return list.size();
@@ -183,7 +183,7 @@ public class NativeJavaList extends NativeJavaObject {
 		if (list.isEmpty()) {
 			return "";
 		} else if (list.size() == 1) {
-			return ScriptRuntime.toString(cx, list.get(0));
+			return ScriptRuntime.toString(cx, list.getFirst());
 		}
 
 		String j = ScriptRuntime.toString(cx, args[0]);
@@ -277,7 +277,7 @@ public class NativeJavaList extends NativeJavaObject {
 		if (list.isEmpty()) {
 			return Undefined.INSTANCE;
 		} else if (list.size() == 1) {
-			return list.get(0);
+			return list.getFirst();
 		}
 
 		BinaryOperator operator = (BinaryOperator) args[0];
@@ -294,7 +294,7 @@ public class NativeJavaList extends NativeJavaObject {
 		if (list.isEmpty()) {
 			return Undefined.INSTANCE;
 		} else if (list.size() == 1) {
-			return list.get(0); // might not be correct start index
+			return list.getFirst(); // might not be correct start index
 		}
 
 		BinaryOperator operator = (BinaryOperator) args[0];

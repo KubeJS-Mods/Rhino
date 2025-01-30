@@ -88,7 +88,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 
 	@Override
 	public boolean has(Context cx, String name, Scriptable start) {
-		return members.has(name, false) || customMembers != null && customMembers.containsKey(name);
+		return members.has(cx, name, false) || customMembers != null && customMembers.containsKey(name);
 	}
 
 	@Override
@@ -149,7 +149,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 		// We could be asked to modify the value of a property in the
 		// prototype. Since we can't add a property to a Java object,
 		// we modify it in the prototype rather than copy it down.
-		if (prototype == null || members.has(name, false)) {
+		if (prototype == null || members.has(cx, name, false)) {
 			members.put(this, name, javaObject, value, false, cx);
 		} else {
 			prototype.put(cx, name, prototype, value);
@@ -162,7 +162,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 		// prototype. Since we can't add a property to a Java object,
 		// we modify it in the prototype rather than copy it down.
 		String name = symbol.toString();
-		if (prototype == null || members.has(name, false)) {
+		if (prototype == null || members.has(cx, name, false)) {
 			members.put(this, name, javaObject, value, false, cx);
 		} else if (prototype instanceof SymbolScriptable) {
 			((SymbolScriptable) prototype).put(cx, symbol, prototype, value);

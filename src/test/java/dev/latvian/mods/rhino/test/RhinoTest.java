@@ -22,6 +22,8 @@ public class RhinoTest {
 		typeWrappers.registerDirect(TestMaterial.class, TestMaterial::get);
 		typeWrappers.register(WithContext.class, WithContext::of);
 		typeWrappers.register(Holder.class, Holder::of);
+
+		factory.registerDefaultRecordProperties(TestRecord.DEFAULT);
 	}
 
 	public void test(String name, String script, String match) {
@@ -31,6 +33,7 @@ public class RhinoTest {
 			context.addToScope(rootScope, "console", console);
 			context.addToScope(rootScope, "shared", shared);
 			context.addToScope(rootScope, "EventBus", new EventBus(console));
+			context.addToScope(rootScope, "StaticUtils", StaticUtils.class);
 			context.testName = name;
 			context.evaluateString(rootScope, script, testName + "/" + name, 1, null);
 		} catch (Exception ex) {

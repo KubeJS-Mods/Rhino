@@ -14,8 +14,9 @@ public class GenericObject<T> {
 		"string", "java.lang.String",
 		"anyString", "java.lang.CharSequence",
 		"anySuperString", "java.lang.CharSequence",
-		"t", "?",
-		"tString", "java.lang.CharSequence",
+		"t", "T",
+		"t1", "T1",
+		"enumName", "E",
 		"k", "dev.latvian.mods.rhino.test.GenericObject<java.lang.CharSequence>"
 	);
 
@@ -50,11 +51,15 @@ public class GenericObject<T> {
 		return null;
 	}
 
-	public <T> GenericObject<T> t() {
+	public GenericObject<T> t() {
 		return null;
 	}
 
-	public GenericObject<? extends CharSequence> tString() {
+	public <T1> GenericObject<T1> t1() {
+		return null;
+	}
+
+	public <E extends Enum<E>> GenericObject<E> enumName() {
 		return null;
 	}
 

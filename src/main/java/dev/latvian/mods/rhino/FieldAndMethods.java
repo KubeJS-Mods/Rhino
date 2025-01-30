@@ -1,18 +1,14 @@
 package dev.latvian.mods.rhino;
 
-import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 
-import java.lang.reflect.Field;
-
 public class FieldAndMethods extends NativeJavaMethod {
-	public transient Field field;
-	public transient TypeInfo fieldType;
+	public transient CachedFieldInfo fieldInfo;
 	public transient Object javaObject;
 
-	FieldAndMethods(Scriptable scope, MemberBox[] methods, Field field, Context cx) {
+	FieldAndMethods(Scriptable scope, MemberBox[] methods, CachedFieldInfo fieldInfo, Context cx) {
 		super(methods);
-		this.field = field;
+		this.fieldInfo = fieldInfo;
 		setParentScope(scope);
 		setPrototype(getFunctionPrototype(scope, cx));
 	}
@@ -24,16 +20,12 @@ public class FieldAndMethods extends NativeJavaMethod {
 		}
 		Object rval;
 		try {
-			rval = field.get(javaObject);
-		} catch (IllegalAccessException accEx) {
-			throw Context.reportRuntimeError1("msg.java.internal.private", field.getName(), cx);
+			rval = fieldInfo.get(cx, javaObject);
+		} catch (Throwable accEx) {
+			throw Context.reportRuntimeError1("msg.java.internal.private", fieldInfo.rename, cx);
 		}
 
-		if (fieldType == null) {
-			this.fieldType = TypeInfo.of(field.getGenericType());
-		}
-
-		rval = cx.wrap(this, rval, fieldType);
+		rval = cx.wrap(this, rval, fieldInfo.getType());
 		if (rval instanceof Scriptable) {
 			rval = ((Scriptable) rval).getDefaultValue(cx, hint);
 		}
