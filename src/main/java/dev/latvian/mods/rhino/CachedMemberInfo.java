@@ -45,6 +45,10 @@ public class CachedMemberInfo {
 		}
 	}
 
+	public AccessibleObject getCached() {
+		return member;
+	}
+
 	public String getName() {
 		return rename.isEmpty() ? originalName : rename;
 	}

@@ -36,6 +36,11 @@ public class CachedFieldInfo extends CachedMemberInfo {
 		this.field = f;
 	}
 
+	@Override
+	public Field getCached() {
+		return field;
+	}
+
 	public TypeInfo getType() {
 		if (type == null) {
 			type = TypeInfo.safeOf(field::getGenericType);

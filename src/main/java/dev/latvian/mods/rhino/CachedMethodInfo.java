@@ -33,11 +33,15 @@ public class CachedMethodInfo extends CachedExecutableInfo {
 	final Method method;
 	private TypeInfo returnType;
 	protected MethodHandle methodHandle;
-	private boolean failed;
 
 	public CachedMethodInfo(CachedClassInfo parent, Method m) {
 		super(parent, m);
 		this.method = m;
+	}
+
+	@Override
+	public Method getCached() {
+		return method;
 	}
 
 	@Override

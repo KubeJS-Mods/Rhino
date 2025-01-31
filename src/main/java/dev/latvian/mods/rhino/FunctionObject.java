@@ -399,8 +399,8 @@ public class FunctionObject extends BaseFunction {
 		}
 		Scriptable result;
 		try {
-			result = (Scriptable) member.executableInfo.getDeclaringClass().getClass().newInstance();
-		} catch (Exception ex) {
+			result = (Scriptable) member.executableInfo.invoke(cx, scope, null, ScriptRuntime.EMPTY_OBJECTS);
+		} catch (Throwable ex) {
 			throw Context.throwAsScriptRuntimeEx(ex, cx);
 		}
 

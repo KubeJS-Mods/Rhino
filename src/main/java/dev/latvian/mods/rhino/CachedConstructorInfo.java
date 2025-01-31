@@ -33,6 +33,11 @@ public class CachedConstructorInfo extends CachedExecutableInfo {
 	}
 
 	@Override
+	public Constructor<?> getCached() {
+		return constructor;
+	}
+
+	@Override
 	public Object invoke(Context cx, Scriptable scope, @Nullable Object instance, Object... args) throws Throwable {
 		var parameters = getParameters();
 

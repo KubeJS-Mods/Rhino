@@ -20,6 +20,11 @@ public class CachedExecutableInfo extends CachedMemberInfo {
 		this.parameterCount = e.getParameterCount();
 	}
 
+	@Override
+	public Executable getCached() {
+		return executable;
+	}
+
 	public MethodSignature getSignature() {
 		if (signature == null) {
 			signature = new MethodSignature(executable);
