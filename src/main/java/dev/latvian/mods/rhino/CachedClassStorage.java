@@ -1,5 +1,7 @@
 package dev.latvian.mods.rhino;
 
+import java.lang.reflect.Member;
+import java.lang.reflect.Modifier;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
@@ -23,6 +25,14 @@ public class CachedClassStorage {
 		}
 
 		return map.computeIfAbsent(type, c -> new CachedClassInfo(this, c));
+	}
+
+	public boolean isVisible(int modifiers) {
+		return Modifier.isPublic(modifiers) || includeProtected && Modifier.isProtected(modifiers);
+	}
+
+	public boolean include(Class<?> type, Member member) {
+		return isVisible(member.getModifiers()) && member.getDeclaringClass() == type;
 	}
 
 	public String getDebugClassName(Class<?> type) {

@@ -102,6 +102,10 @@ public class CachedClassInfo {
 		var list = constructors;
 
 		if (list == null) {
+			if (!storage.isVisible(modifiers)) {
+				return constructors = List.of();
+			}
+
 			list = new ArrayList<>(1);
 
 			for (var constructor : type.getConstructors()) {
@@ -123,24 +127,20 @@ public class CachedClassInfo {
 	}
 
 	public List<CachedFieldInfo> getDeclaredFields() {
-		if (isInterface) {
-			return List.of();
-		}
-
 		var list = declaredFields;
 
 		if (list == null) {
+			if (!storage.isVisible(modifiers)) {
+				return declaredFields = List.of();
+			}
+
 			list = new ArrayList<>();
 
 			try {
 				for (var field : type.getDeclaredFields()) {
-					int mods = field.getModifiers();
-
-					if (Modifier.isPublic(mods) || storage.includeProtected && Modifier.isProtected(mods)) {
+					if (storage.include(type, field)) {
 						try {
-							var info = new CachedFieldInfo(this, field);
-							info.declaringClass = this;
-							list.add(info);
+							list.add(new CachedFieldInfo(this, field));
 						} catch (Throwable ignored) {
 						}
 					}
@@ -152,15 +152,13 @@ public class CachedClassInfo {
 					for (var field : type.getFields()) {
 						int mods = field.getModifiers();
 
-						if ((Modifier.isPublic(mods) || storage.includeProtected && Modifier.isProtected(mods)) && field.getDeclaringClass() == type) {
+						if (storage.include(type, field)) {
 							try {
 								if (storage.includeProtected && Modifier.isProtected(mods) && !field.isAccessible()) {
 									field.setAccessible(true);
 								}
 
-								var info = new CachedFieldInfo(this, field);
-								info.declaringClass = this;
-								list.add(info);
+								list.add(new CachedFieldInfo(this, field));
 							} catch (Throwable ignored) {
 							}
 						}
@@ -180,16 +178,16 @@ public class CachedClassInfo {
 		var list = declaredMethods;
 
 		if (list == null) {
+			if (!storage.isVisible(modifiers)) {
+				return declaredMethods = List.of();
+			}
+
 			list = new ArrayList<>();
 
 			try {
 				for (var method : type.getDeclaredMethods()) {
-					int mods = method.getModifiers();
-
-					if (Modifier.isPublic(mods) || storage.includeProtected && Modifier.isProtected(mods)) {
-						var info = new CachedMethodInfo(this, method);
-						info.declaringClass = this;
-						list.add(info);
+					if (storage.include(type, method)) {
+						list.add(new CachedMethodInfo(this, method));
 					}
 				}
 			} catch (Throwable ex) {
@@ -198,12 +196,8 @@ public class CachedClassInfo {
 
 				try {
 					for (var method : type.getMethods()) {
-						int mods = method.getModifiers();
-
-						if ((Modifier.isPublic(mods) || storage.includeProtected && Modifier.isProtected(mods)) && method.getDeclaringClass() == type) {
-							var info = new CachedMethodInfo(this, method);
-							info.declaringClass = this;
-							list.add(info);
+						if (storage.include(type, method)) {
+							list.add(new CachedMethodInfo(this, method));
 						}
 					}
 				} catch (Throwable ex1) {

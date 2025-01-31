@@ -269,8 +269,7 @@ public class JavaMembers {
 		if (member == null) {
 			throw reportMemberNotFound(name, cx);
 		}
-		if (member instanceof FieldAndMethods) {
-			FieldAndMethods fam = (FieldAndMethods) ht.get(name);
+		if (member instanceof FieldAndMethods fam) {
 			member = fam.fieldInfo;
 		}
 
@@ -295,12 +294,15 @@ public class JavaMembers {
 			}
 		} else {
 			if (!(member instanceof CachedFieldInfo fieldInfo)) {
-				String str = (member == null) ? "msg.java.internal.private" : "msg.java.method.assign";
-				throw Context.reportRuntimeError1(str, name, cx);
+				if (member == null) {
+					throw Context.reportRuntimeError3("msg.java.internal.private.set", name, String.valueOf(javaObject), cl.getName(), cx);
+				} else {
+					throw Context.reportRuntimeError2("msg.java.method.assign", name, cl.getName(), cx);
+				}
 			}
 			if (fieldInfo.isFinal) {
 				// treat Java final the same as JavaScript [[READONLY]]
-				throw Context.throwAsScriptRuntimeEx(new IllegalAccessException("Can't modify final field " + fieldInfo.rename), cx);
+				throw Context.throwAsScriptRuntimeEx(new IllegalAccessException("Can't modify final field " + fieldInfo.getName()), cx);
 			}
 
 			// This definitely could use some cache
@@ -347,7 +349,7 @@ public class JavaMembers {
 		}
 
 		if (methodsOrCtors != null) {
-			for (MemberBox methodsOrCtor : methodsOrCtors) {
+			for (var methodsOrCtor : methodsOrCtors) {
 				var type = methodsOrCtor.parameters().types();
 				String sig = liveConnectSignature(type);
 				if (sigStart + sig.length() == name.length() && name.regionMatches(sigStart, sig, 0, sig.length())) {
@@ -652,7 +654,7 @@ public class JavaMembers {
 		for (var fam : ht.values()) {
 			FieldAndMethods famNew = new FieldAndMethods(scope, fam.methods, fam.fieldInfo, cx);
 			famNew.javaObject = javaObject;
-			result.put(fam.fieldInfo.rename, famNew);
+			result.put(fam.fieldInfo.getName(), famNew);
 		}
 
 		return result;

@@ -124,8 +124,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 			}
 		}
 
-		// TODO: passing 'this' as the scope is bogus since it has
-		//  no parent scope
+		// TODO: passing 'this' as the scope is bogus since it has no parent scope
 		return members.get(this, name, javaObject, false, cx);
 	}
 

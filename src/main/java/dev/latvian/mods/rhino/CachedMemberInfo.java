@@ -5,7 +5,6 @@ import dev.latvian.mods.rhino.util.RemapForJS;
 
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
-import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
 
 public class CachedMemberInfo {
@@ -13,7 +12,6 @@ public class CachedMemberInfo {
 	final AccessibleObject member;
 	public final String originalName;
 	String rename;
-	CachedClassInfo declaringClass;
 	public final int modifiers;
 	public final boolean isStatic;
 	final boolean isHidden;
@@ -52,11 +50,7 @@ public class CachedMemberInfo {
 	}
 
 	public CachedClassInfo getDeclaringClass() {
-		if (declaringClass == null) {
-			declaringClass = parent.storage.get(((Member) member).getDeclaringClass());
-		}
-
-		return declaringClass;
+		return parent;
 	}
 
 	@Override

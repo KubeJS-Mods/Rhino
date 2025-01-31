@@ -193,4 +193,19 @@ public class MiscTests {
 			30
 			""");
 	}
+
+	@Test
+	public void privateInnerClassAccess() {
+		TEST.test("privateInnerClassAccess", """
+			console.info(console.immutableTestList.size())
+			for(let s of console.immutableTestList) {
+			  console.info(s)
+			}
+			""", """
+			3
+			abc
+			def
+			ghi
+			""");
+	}
 }

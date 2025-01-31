@@ -22,7 +22,7 @@ public class FieldAndMethods extends NativeJavaMethod {
 		try {
 			rval = fieldInfo.get(cx, javaObject);
 		} catch (Throwable accEx) {
-			throw Context.reportRuntimeError1("msg.java.internal.private", fieldInfo.rename, cx);
+			throw Context.reportRuntimeError3("msg.java.internal.private.get", fieldInfo.getName(), String.valueOf(javaObject), fieldInfo.parent.type.getName(), cx);
 		}
 
 		rval = cx.wrap(this, rval, fieldInfo.getType());

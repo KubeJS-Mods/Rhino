@@ -1956,19 +1956,6 @@ public class Context {
 		return "not_supported";
 	}
 
-	public Object[] insertContextArg(Object[] args) {
-		if (args.length == 0) {
-			return new Object[]{this};
-		} else if (!(args[0] instanceof Context)) {
-			Object[] newArgs = new Object[args.length + 1];
-			newArgs[0] = this;
-			System.arraycopy(args, 0, newArgs, 1, args.length);
-			return newArgs;
-		} else {
-			return args;
-		}
-	}
-
 	public void initJSON(ScriptableObject scope, boolean sealed) {
 		try {
 			NativeGSON.initGSON(scope, sealed, this);

@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 public class CachedMethodInfo extends CachedExecutableInfo {
 	public static class Accessible {
@@ -34,6 +33,7 @@ public class CachedMethodInfo extends CachedExecutableInfo {
 	final Method method;
 	private TypeInfo returnType;
 	protected MethodHandle methodHandle;
+	private boolean failed;
 
 	public CachedMethodInfo(CachedClassInfo parent, Method m) {
 		super(parent, m);
@@ -55,7 +55,7 @@ public class CachedMethodInfo extends CachedExecutableInfo {
 
 		// FIXME: Fix vararg method invocation
 		if (parameters.isVarArg()) {
-			if (parent.storage.includeProtected && Modifier.isProtected(modifiers) && !method.isAccessible()) {
+			if (!method.isAccessible()) {
 				method.setAccessible(true);
 			}
 
@@ -64,7 +64,7 @@ public class CachedMethodInfo extends CachedExecutableInfo {
 			var mh = methodHandle;
 
 			if (mh == null) {
-				if (parent.storage.includeProtected && Modifier.isProtected(modifiers) && !method.isAccessible()) {
+				if (!method.isAccessible()) {
 					method.setAccessible(true);
 				}
 

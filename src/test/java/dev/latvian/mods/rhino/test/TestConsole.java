@@ -68,11 +68,15 @@ public class TestConsole {
 	}
 
 	public String[] getTestArray() {
-		return new String[]{"abc", "def", "ghi"};
+		return PrivateListTest.ELEMENTS;
+	}
+
+	public List<String> getImmutableTestList() {
+		return PrivateListTest.TEST_LIST;
 	}
 
 	public List<String> getTestList() {
-		return new ArrayList<>(Arrays.asList(getTestArray()));
+		return new ArrayList<>(PrivateListTest.TEST_LIST);
 	}
 
 	public Map<String, String> getTestMap() {
@@ -86,6 +90,10 @@ public class TestConsole {
 
 	public TestConsoleTheme test2$getTheme() {
 		return theme;
+	}
+
+	public int getMutableInt() {
+		return 50;
 	}
 
 	public void printMaterial(TestMaterial material) {

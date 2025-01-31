@@ -29,7 +29,6 @@ public class CachedConstructorInfo extends CachedExecutableInfo {
 
 	public CachedConstructorInfo(CachedClassInfo parent, Constructor<?> constructor) {
 		super(parent, constructor);
-		this.declaringClass = parent;
 		this.constructor = constructor;
 	}
 
@@ -38,6 +37,10 @@ public class CachedConstructorInfo extends CachedExecutableInfo {
 		var parameters = getParameters();
 
 		if (parameters.isVarArg()) {
+			if (!constructor.isAccessible()) {
+				constructor.setAccessible(true);
+			}
+
 			// FIXME: Fix vararg method invocation
 			return constructor.newInstance(transformArgs(cx, null, parameters, args));
 		} else {
