@@ -754,7 +754,6 @@ public class Context {
 		return result;
 	}
 
-
 	/**
 	 * Returns the maximum stack depth (in terms of number of call frames)
 	 * allowed in a single invocation of interpreter. If the set depth would be
@@ -796,6 +795,74 @@ public class Context {
 		}
 		maximumInterpreterStackDepth = max;
 	}
+
+	//--------------------------
+	// Primitive conversion methods
+	//--------------------------
+
+	/**
+	 * Convert the value to a JavaScript boolean value.
+	 * <p>
+	 * See ECMA 9.2.
+	 *
+	 * @param value a JavaScript value
+	 * @return the corresponding boolean value converted using
+	 * the ECMA rules
+	 */
+	public boolean toBoolean(Object value) {
+		return ScriptRuntime.toBoolean(this, value);
+	}
+
+	/**
+	 * Convert the value to a JavaScript Number value.
+	 * <p>
+	 * Returns a Java double for the JavaScript Number.
+	 * <p>
+	 * See ECMA 9.3.
+	 *
+	 * @param value a JavaScript value
+	 * @return the corresponding double value converted using
+	 * the ECMA rules
+	 */
+	public double toNumber(Object value) {
+		return ScriptRuntime.toNumber(this, value);
+	}
+
+	/**
+	 * Convert the value to a JavaScript String value.
+	 * <p>
+	 * See ECMA 9.8.
+	 * <p>
+	 *
+	 * @param value a JavaScript value
+	 * @return the corresponding String value converted using
+	 * the ECMA rules
+	 */
+	public String toString(Object value) {
+		return ScriptRuntime.toString(this, value);
+	}
+
+	/**
+	 * Convert the value to an JavaScript object value.
+	 * <p>
+	 * Note that a scope must be provided to look up the constructors
+	 * for Number, Boolean, and String.
+	 * <p>
+	 * See ECMA 9.9.
+	 * <p>
+	 * Additionally, arbitrary Java objects and classes will be
+	 * wrapped in a Scriptable object with its Java fields and methods
+	 * reflected as JavaScript properties of the object.
+	 *
+	 * @param value any Java object
+	 * @param scope global scope containing constructors for Number,
+	 *              Boolean, and String
+	 * @return new JavaScript object
+	 */
+	public Scriptable toObject(Object value, Scriptable scope) {
+		return ScriptRuntime.toObject(this, scope, value);
+	}
+
 
 	/**
 	 * Get a value corresponding to a key.
