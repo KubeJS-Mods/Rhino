@@ -1,5 +1,7 @@
 package dev.latvian.mods.rhino.type;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.HashMap;
@@ -63,5 +65,10 @@ public class VariableTypeInfo extends TypeInfoBase {
 	@Override
 	public String toString() {
 		return name;
+	}
+
+	@Override
+	public @NotNull TypeInfo consolidate(@NotNull Map<VariableTypeInfo, TypeInfo> mapping) {
+		return mapping.getOrDefault(this, this);
 	}
 }

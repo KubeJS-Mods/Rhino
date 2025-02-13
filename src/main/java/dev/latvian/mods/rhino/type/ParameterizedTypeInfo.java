@@ -1,5 +1,7 @@
 package dev.latvian.mods.rhino.type;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -116,5 +118,14 @@ public final class ParameterizedTypeInfo extends TypeInfoBase {
 		for (var param : params) {
 			param.collectContainedComponentClasses(classes);
 		}
+	}
+
+	@Override
+	protected TypeInfo consolidateImpl(@NotNull Map<VariableTypeInfo, TypeInfo> mapping) {
+		var consolidatedParams = TypeConsolidator.consolidateAll(this.params, mapping);
+		if (consolidatedParams == params) {
+			return this;
+		}
+		return new ParameterizedTypeInfo(this.rawType, consolidatedParams);
 	}
 }

@@ -2,6 +2,7 @@ package dev.latvian.mods.rhino.type;
 
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.Scriptable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
@@ -126,6 +127,10 @@ public interface TypeInfo {
 				return BasicClassTypeInfo.CACHE.computeIfAbsent(c, BasicClassTypeInfo::new);
 			}
 		}
+	}
+
+	static VariableTypeInfo of(TypeVariable<?> typeVariable) {
+		return (VariableTypeInfo) VariableTypeInfo.of(typeVariable);
 	}
 
 	static TypeInfo of(Type type) {
@@ -276,5 +281,15 @@ public interface TypeInfo {
 		var set = new LinkedHashSet<Class<?>>();
 		collectContainedComponentClasses(set);
 		return set;
+	}
+
+	/**
+	 * @param mapping see {@link TypeConsolidator#getMapping(Class)}
+	 * @return consolidated type, implementations aare encouraged to return {@code this} if the consolidated type
+	 * is the same as original
+	 */
+	@NotNull
+	default TypeInfo consolidate(@NotNull Map<VariableTypeInfo, TypeInfo> mapping) {
+		return this;
 	}
 }
