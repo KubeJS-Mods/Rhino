@@ -1,5 +1,6 @@
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeConsolidator;
 import dev.latvian.mods.rhino.type.TypeInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,8 @@ public class CachedMethodInfo extends CachedExecutableInfo {
 	@Override
 	public TypeInfo getReturnType() {
 		if (returnType == null) {
-			returnType = TypeInfo.safeOf(method::getGenericReturnType);
+			returnType = TypeInfo.safeOf(method::getGenericReturnType)
+				.consolidate(TypeConsolidator.getMapping(this.parent.type));
 		}
 
 		return returnType;

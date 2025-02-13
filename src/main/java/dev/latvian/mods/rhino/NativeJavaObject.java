@@ -6,12 +6,16 @@
 
 package dev.latvian.mods.rhino;
 
+import com.google.common.collect.ImmutableMap;
+import dev.latvian.mods.rhino.type.ParameterizedTypeInfo;
 import dev.latvian.mods.rhino.type.TypeInfo;
+import dev.latvian.mods.rhino.type.VariableTypeInfo;
 import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 import dev.latvian.mods.rhino.util.Deletable;
 import dev.latvian.mods.rhino.util.JavaIteratorWrapper;
 import org.openjdk.nashorn.internal.runtime.NativeJavaPackage;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +41,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 	protected Scriptable parent;
 	protected transient Object javaObject;
 	protected transient TypeInfo typeInfo;
+	private transient Map<VariableTypeInfo, TypeInfo> typeMapping;
 	protected transient JavaMembers members;
 	protected transient Map<String, FieldAndMethods> fieldAndMethods;
 	protected transient Map<String, CustomMember> customMembers;
@@ -64,6 +69,36 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 		members = JavaMembers.lookupClass(cx, scope, dynamicType, typeInfo.asClass(), isAdapter);
 		fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false, cx);
 		customMembers = null;
+	}
+
+	/**
+	 * get mapping for argTypes that are already 'flattened' the type variable used by the current
+	 * class, so here we only need to convert type variables of current class to the actual type.
+	 * <p>
+	 * for example, an object is previously obtained via "public A<String> getA();" method, where
+	 * the A is "class A<T1> { ... }". Then we only need to use mapping 'T1 -> String' to convert
+	 * argTypes once
+	 * <p>
+	 * where are the arg types 'flattened': {@link CachedExecutableInfo#getParameters()}
+	 */
+	public Map<VariableTypeInfo, TypeInfo> getTypeMapping() {
+		if (typeMapping == null) {
+			if (typeInfo instanceof ParameterizedTypeInfo parameterized) {
+				var parameters = parameterized.asClass().getTypeParameters();
+				if (parameters.length == 1) {
+					typeMapping = Collections.singletonMap(TypeInfo.of(parameters[0]), parameterized.param(0));
+				} else {
+					var mapping = ImmutableMap.<VariableTypeInfo, TypeInfo>builder();
+					for (int i = 0, size = parameters.length; i < size; i++) {
+						mapping.put(TypeInfo.of(parameters[i]), parameterized.param(i));
+					}
+					typeMapping = mapping.build();
+				}
+			} else {
+				typeMapping = Collections.emptyMap();
+			}
+		}
+		return typeMapping;
 	}
 
 	public void addCustomMember(CustomMember member) {

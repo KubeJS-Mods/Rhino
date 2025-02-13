@@ -305,10 +305,13 @@ public class JavaMembers {
 				throw Context.throwAsScriptRuntimeEx(new IllegalAccessException("Can't modify final field " + fieldInfo.getName()), cx);
 			}
 
-			// This definitely could use some cache
-			Object javaValue = cx.jsToJava(value, fieldInfo.getType());
+			var type = fieldInfo.getType();
+			if (scope instanceof NativeJavaObject nativeJavaObject) {
+				type = type.consolidate(nativeJavaObject.getTypeMapping());
+			}
+
 			try {
-				fieldInfo.set(cx, javaObject, javaValue);
+				fieldInfo.set(cx, javaObject, cx.jsToJava(value, type));
 			} catch (IllegalArgumentException argEx) {
 				throw Context.reportRuntimeError3("msg.java.internal.field.type", value.getClass().getName(), fieldInfo.getType(), javaObject.getClass().getName(), cx);
 			} catch (Throwable accessEx) {
