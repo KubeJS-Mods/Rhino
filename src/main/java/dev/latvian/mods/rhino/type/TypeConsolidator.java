@@ -6,9 +6,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -67,6 +69,38 @@ public final class TypeConsolidator {
         }
         return consolidatedAll == null ? original : consolidatedAll;
     }
+
+	@NotNull
+	public static List<@NotNull TypeInfo> consolidateAll(
+		@NotNull List<@NotNull TypeInfo> original,
+		@NotNull Map<VariableTypeInfo, TypeInfo> mapping
+	) {
+		var len = original.size();
+		if (DEBUG) {
+			System.out.println("consolidating" + original);
+		}
+		if (len == 0) {
+			return original;
+		} else if (len == 1) {
+			var consolidated = original.getFirst().consolidate(mapping);
+			return consolidated != original.getFirst() ? List.of(consolidated) : original;
+		}
+		List<@NotNull TypeInfo> consolidatedAll = null;
+		for (int i = 0; i < len; i++) {
+			var type = original.get(i);
+			var consolidated = type.consolidate(mapping);
+			if (consolidated != type) {
+				if (consolidatedAll == null) {
+					consolidatedAll = new ArrayList<>(len);
+					consolidatedAll.addAll(original.subList(0, i));
+				}
+				consolidatedAll.set(i, consolidated);
+			} else if (consolidatedAll != null) {
+				consolidatedAll.set(i, consolidated);
+			}
+		}
+		return consolidatedAll == null ? original : consolidatedAll;
+	}
 
     @Nullable
     private static Map<VariableTypeInfo, TypeInfo> getImpl(Class<?> type) {
