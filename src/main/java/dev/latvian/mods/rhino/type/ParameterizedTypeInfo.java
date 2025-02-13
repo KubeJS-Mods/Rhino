@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public final class ParameterizedTypeInfo extends TypeInfoBase {
+public final class ParameterizedTypeInfo extends TypeInfoBase.OptionallyConsolidatable {
 	private final TypeInfo rawType;
 	private final TypeInfo[] params;
 	private int hashCode;

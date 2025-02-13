@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public final class ArrayTypeInfo extends TypeInfoBase {
+public final class ArrayTypeInfo extends TypeInfoBase.OptionallyConsolidatable {
 	private final TypeInfo component;
 	private Class<?> asClass;
 
