@@ -1,6 +1,5 @@
 package dev.latvian.mods.rhino.type;
 
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +16,7 @@ import java.util.Map;
  * @author ZZZank
  */
 public final class TypeConsolidator {
-    private static final Map<Class<?>, Map<VariableTypeInfo, TypeInfo>> MAPPINGS = new Reference2ObjectOpenHashMap<>();
+    private static final Map<Class<?>, Map<VariableTypeInfo, TypeInfo>> MAPPINGS = new IdentityHashMap<>();
 
     private static final boolean DEBUG = false;
 
