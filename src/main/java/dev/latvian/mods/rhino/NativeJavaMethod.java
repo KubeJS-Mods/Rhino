@@ -349,30 +349,9 @@ public class NativeJavaMethod extends BaseFunction {
 
 		var argTypes = pars.typeInfos();
 
-		/**
-		 *
-		 * the argTypes are already 'flattened' the type variable used by the current class, so here
-		 * we only need to convert type variables of current class to the actual type.
-		 *
-		 * for example, an object is previously obtained via "public A<String> getA();" method, where
-		 * the A is "class A<T1> { ... }". Then we only need to use mapping 'T1 -> String' to convert
-		 * argTypes once
-		 */
 		if (thisObj instanceof NativeJavaObject nativeJavaObject
-			&& nativeJavaObject.typeInfo instanceof ParameterizedTypeInfo parameterized) {
-			var parameters = parameterized.asClass().getTypeParameters();
-			if (parameters.length == 1) {
-				argTypes = TypeConsolidator.consolidateAll(
-					argTypes,
-					Collections.singletonMap(TypeInfo.of(parameters[0]), parameterized.param(0))
-				);
-			} else {
-				var mapping = ImmutableMap.<VariableTypeInfo, TypeInfo>builder();
-				for (int i = 0, size = parameters.length; i < size; i++) {
-					mapping.put(TypeInfo.of(parameters[i]), parameterized.param(i));
-				}
-				argTypes = TypeConsolidator.consolidateAll(argTypes, mapping.build());
-			}
+			&& nativeJavaObject.typeInfo instanceof ParameterizedTypeInfo ignored) {
+			argTypes = TypeConsolidator.consolidateAll(argTypes, nativeJavaObject.getTypeMapping());
 		}
 
 		if (pars.isVarArg()) {
