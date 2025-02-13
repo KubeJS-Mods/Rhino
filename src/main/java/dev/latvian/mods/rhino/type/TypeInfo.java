@@ -130,7 +130,9 @@ public interface TypeInfo {
 	}
 
 	static VariableTypeInfo of(TypeVariable<?> typeVariable) {
-		return (VariableTypeInfo) VariableTypeInfo.of(typeVariable);
+		synchronized (VariableTypeInfo.CACHE) {
+			return VariableTypeInfo.CACHE.computeIfAbsent(typeVariable, VariableTypeInfo::new);
+		}
 	}
 
 	static TypeInfo of(Type type) {
@@ -138,7 +140,7 @@ public interface TypeInfo {
 			case Class<?> clz -> of(clz);
 			case ParameterizedType paramType -> of(paramType.getRawType()).withParams(ofArray(paramType.getActualTypeArguments()));
 			case GenericArrayType arrType -> of(arrType.getGenericComponentType()).asArray();
-			case TypeVariable<?> variable -> VariableTypeInfo.of(variable); // ClassTypeInfo.OBJECT, or NONE?
+			case TypeVariable<?> variable -> of(variable);
 			case WildcardType wildcard -> {
 				var lower = wildcard.getLowerBounds();
 

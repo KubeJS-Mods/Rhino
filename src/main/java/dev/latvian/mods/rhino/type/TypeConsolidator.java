@@ -138,7 +138,7 @@ public final class TypeConsolidator {
             && parameterized.getRawType() instanceof Class<?> parent
         ) {
             final var params = parent.getTypeParameters(); // T
-            var args = parameterized.getActualTypeArguments(); // T is mapped to
+            final var args = parameterized.getActualTypeArguments(); // T is mapped to
             for (int i = 0; i < args.length; i++) {
                 pushTo.put(TypeInfo.of(params[i]), TypeInfo.of(args[i]));
             }
