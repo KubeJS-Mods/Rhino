@@ -6,14 +6,11 @@
 
 package dev.latvian.mods.rhino;
 
-import com.google.common.collect.ImmutableMap;
 import dev.latvian.mods.rhino.type.ParameterizedTypeInfo;
 import dev.latvian.mods.rhino.type.TypeConsolidator;
 import dev.latvian.mods.rhino.type.TypeInfo;
-import dev.latvian.mods.rhino.type.VariableTypeInfo;
 
 import java.lang.reflect.Array;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -431,11 +428,14 @@ public class NativeJavaMethod extends BaseFunction {
 		}
 
 		Object retval = meth.invoke(javaObject, args, cx, scope);
-		var staticType = meth.getReturnType();
+		var returnType = meth.getReturnType();
+		if (thisObj instanceof NativeJavaObject nativeJavaObject) {
+			returnType = returnType.consolidate(nativeJavaObject.getTypeMapping());
+		}
 
-		Object wrapped = cx.wrap(scope, retval, staticType);
+		Object wrapped = cx.wrap(scope, retval, returnType);
 
-		if (wrapped == null && staticType.isVoid()) {
+		if (wrapped == null && returnType.isVoid()) {
 			wrapped = Undefined.INSTANCE;
 		}
 		return wrapped;
