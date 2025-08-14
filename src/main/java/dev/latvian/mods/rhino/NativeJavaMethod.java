@@ -6,6 +6,8 @@
 
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.ParameterizedTypeInfo;
+import dev.latvian.mods.rhino.type.TypeConsolidator;
 import dev.latvian.mods.rhino.type.TypeInfo;
 
 import java.lang.reflect.Array;
@@ -341,7 +343,13 @@ public class NativeJavaMethod extends BaseFunction {
 
 		MemberBox meth = methods[index];
 		var pars = meth.parameters();
+
 		var argTypes = pars.typeInfos();
+
+		if (thisObj instanceof NativeJavaObject nativeJavaObject
+			&& nativeJavaObject.typeInfo instanceof ParameterizedTypeInfo ignored) {
+			argTypes = TypeConsolidator.consolidateAll(argTypes, nativeJavaObject.getTypeMapping());
+		}
 
 		if (pars.isVarArg()) {
 			// marshall the explicit parameters
@@ -420,11 +428,14 @@ public class NativeJavaMethod extends BaseFunction {
 		}
 
 		Object retval = meth.invoke(javaObject, args, cx, scope);
-		var staticType = meth.getReturnType();
+		var returnType = meth.getReturnType();
+		if (thisObj instanceof NativeJavaObject nativeJavaObject) {
+			returnType = returnType.consolidate(nativeJavaObject.getTypeMapping());
+		}
 
-		Object wrapped = cx.wrap(scope, retval, staticType);
+		Object wrapped = cx.wrap(scope, retval, returnType);
 
-		if (wrapped == null && staticType.isVoid()) {
+		if (wrapped == null && returnType.isVoid()) {
 			wrapped = Undefined.INSTANCE;
 		}
 		return wrapped;

@@ -1,5 +1,6 @@
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeConsolidator;
 import dev.latvian.mods.rhino.type.TypeInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,8 @@ public class CachedFieldInfo extends CachedMemberInfo {
 
 	public TypeInfo getType() {
 		if (type == null) {
-			type = TypeInfo.safeOf(field::getGenericType);
+			type = TypeInfo.safeOf(field::getGenericType)
+				.consolidate(TypeConsolidator.getMapping(this.parent.type));
 		}
 
 		return type;

@@ -1,5 +1,6 @@
 package dev.latvian.mods.rhino;
 
+import dev.latvian.mods.rhino.type.TypeConsolidator;
 import dev.latvian.mods.rhino.type.TypeInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +63,8 @@ public class CachedExecutableInfo extends CachedMemberInfo {
 			} else if (ti.length == 0 && !varArgs) {
 				v = parameters = CachedParameters.EMPTY;
 			} else {
+				//first type consolidation, to remove type variables from super classes/interfaces
+				ti = TypeConsolidator.consolidateAll(ti, TypeConsolidator.getMapping(this.parent.type));
 				v = parameters = new CachedParameters(tc.length, List.of(tc), List.of(ti), fcx, varArgs ? ti[ti.length - 1].componentType() : null);
 			}
 		}

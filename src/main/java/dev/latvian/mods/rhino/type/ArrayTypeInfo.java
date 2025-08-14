@@ -1,9 +1,12 @@
 package dev.latvian.mods.rhino.type;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
-public final class ArrayTypeInfo extends TypeInfoBase {
+public final class ArrayTypeInfo extends TypeInfoBase.OptionallyConsolidatable {
 	private final TypeInfo component;
 	private Class<?> asClass;
 
@@ -60,5 +63,14 @@ public final class ArrayTypeInfo extends TypeInfoBase {
 	@Override
 	public Set<Class<?>> getContainedComponentClasses() {
 		return component.getContainedComponentClasses();
+	}
+
+	@Override
+	protected TypeInfo consolidateImpl(@NotNull Map<VariableTypeInfo, TypeInfo> mapping) {
+		var consolidatedComponent = component.consolidate(mapping);
+		if (consolidatedComponent == component) {
+			return this;
+		}
+		return new ArrayTypeInfo(consolidatedComponent);
 	}
 }

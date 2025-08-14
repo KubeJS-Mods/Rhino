@@ -2,6 +2,7 @@ package dev.latvian.mods.rhino.type;
 
 import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.Scriptable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
@@ -128,12 +129,18 @@ public interface TypeInfo {
 		}
 	}
 
+	static VariableTypeInfo of(TypeVariable<?> typeVariable) {
+		synchronized (VariableTypeInfo.CACHE) {
+			return VariableTypeInfo.CACHE.computeIfAbsent(typeVariable, VariableTypeInfo::new);
+		}
+	}
+
 	static TypeInfo of(Type type) {
 		return switch (type) {
 			case Class<?> clz -> of(clz);
 			case ParameterizedType paramType -> of(paramType.getRawType()).withParams(ofArray(paramType.getActualTypeArguments()));
 			case GenericArrayType arrType -> of(arrType.getGenericComponentType()).asArray();
-			case TypeVariable<?> variable -> VariableTypeInfo.of(variable); // ClassTypeInfo.OBJECT, or NONE?
+			case TypeVariable<?> variable -> of(variable);
 			case WildcardType wildcard -> {
 				var lower = wildcard.getLowerBounds();
 
@@ -276,5 +283,15 @@ public interface TypeInfo {
 		var set = new LinkedHashSet<Class<?>>();
 		collectContainedComponentClasses(set);
 		return set;
+	}
+
+	/**
+	 * @param mapping see {@link TypeConsolidator#getMapping(Class)}
+	 * @return consolidated type, implementations aare encouraged to return {@code this} if the consolidated type
+	 * is the same as original
+	 */
+	@NotNull
+	default TypeInfo consolidate(@NotNull Map<VariableTypeInfo, TypeInfo> mapping) {
+		return this;
 	}
 }
