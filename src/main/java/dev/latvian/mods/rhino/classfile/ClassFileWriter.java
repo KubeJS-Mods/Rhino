@@ -278,8 +278,18 @@ public class ClassFileWriter {
 								++count;
 								++index;
 								continue;
-							case 'L':
-								// fall through
+							case 'L': {
+								--stackDiff;
+								++count;
+								++index;
+								int semicolon = pString.indexOf(';', index);
+								if (!(index + 1 <= semicolon && semicolon < rightParenthesis)) {
+									ok = false;
+									break stringLoop;
+								}
+								index = semicolon + 1;
+								continue;
+							}
 							default:
 								ok = false;
 								break stringLoop;
