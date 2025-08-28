@@ -52,21 +52,18 @@ public final class TypeConsolidator {
             var consolidated = original[0].consolidate(mapping);
             return consolidated != original[0] ? new TypeInfo[]{consolidated} : original;
         }
-        TypeInfo[] consolidatedAll = null;
-        for (int i = 0; i < len; i++) {
-            var type = original[i];
-            var consolidated = type.consolidate(mapping);
-            if (consolidated != type) {
-                if (consolidatedAll == null) {
-                    consolidatedAll = new TypeInfo[len];
-                    System.arraycopy(original, 0, consolidatedAll, 0, i);
-                }
-                consolidatedAll[i] = consolidated;
-            } else if (consolidatedAll != null) {
-                consolidatedAll[i] = consolidated;
-            }
-        }
-        return consolidatedAll == null ? original : consolidatedAll;
+		var transformed = original;
+		for (var i = 0; i < original.length; i++) {
+			var type = original[i];
+			var consolidated = type.consolidate(mapping);
+			if (consolidated != type) {
+				if (transformed == original) {
+					transformed = original.clone();
+				}
+				transformed[i] = consolidated;
+			}
+		}
+		return transformed;
     }
 
 	@NotNull
@@ -84,21 +81,18 @@ public final class TypeConsolidator {
 			var consolidated = original.getFirst().consolidate(mapping);
 			return consolidated != original.getFirst() ? List.of(consolidated) : original;
 		}
-		List<@NotNull TypeInfo> consolidatedAll = null;
+		var transformed = original;
 		for (int i = 0; i < len; i++) {
 			var type = original.get(i);
 			var consolidated = type.consolidate(mapping);
 			if (consolidated != type) {
-				if (consolidatedAll == null) {
-					consolidatedAll = new ArrayList<>(len);
-					consolidatedAll.addAll(original.subList(0, i));
+				if (transformed == original) {
+					transformed = new ArrayList<>(original);
 				}
-				consolidatedAll.set(i, consolidated);
-			} else if (consolidatedAll != null) {
-				consolidatedAll.set(i, consolidated);
+				transformed.set(i, consolidated);
 			}
 		}
-		return consolidatedAll == null ? original : consolidatedAll;
+		return transformed;
 	}
 
     @Nullable
