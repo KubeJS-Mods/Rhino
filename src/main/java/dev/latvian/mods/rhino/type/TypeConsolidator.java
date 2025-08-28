@@ -11,12 +11,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author ZZZank
  */
 public final class TypeConsolidator {
-    private static final Map<Class<?>, Map<VariableTypeInfo, TypeInfo>> MAPPINGS = new HashMap<>();
+    private static final Map<Class<?>, Map<VariableTypeInfo, TypeInfo>> MAPPINGS = new ConcurrentHashMap<>();
 
     private static final boolean DEBUG = false;
 
@@ -100,9 +101,13 @@ public final class TypeConsolidator {
         if (type == null || type.isPrimitive() || type == Object.class) {
             return null;
         }
-        synchronized (MAPPINGS) {
-            return MAPPINGS.computeIfAbsent(type, TypeConsolidator::collect);
-        }
+		// no '.computeIfAbsent(...)' because of 'java.util.ConcurrentModificationException'
+		var got = MAPPINGS.get(type);
+		if (got == null) {
+			got = TypeConsolidator.collect(type);
+			MAPPINGS.put(type, got);
+		}
+		return got;
     }
 
     @NotNull
