@@ -8,7 +8,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +16,7 @@ import java.util.Map;
  * @author ZZZank
  */
 public final class TypeConsolidator {
-    private static final Map<Class<?>, Map<VariableTypeInfo, TypeInfo>> MAPPINGS = new IdentityHashMap<>();
+    private static final Map<Class<?>, Map<VariableTypeInfo, TypeInfo>> MAPPINGS = new HashMap<>();
 
     private static final boolean DEBUG = false;
 
@@ -107,7 +107,7 @@ public final class TypeConsolidator {
 
     @NotNull
     private static Map<VariableTypeInfo, TypeInfo> collect(Class<?> type) {
-        var mapping = new IdentityHashMap<VariableTypeInfo, TypeInfo>();
+        var mapping = new HashMap<VariableTypeInfo, TypeInfo>();
 
         /**
          * (classes are named as 'XXX': A, B, C, ...)
@@ -136,19 +136,25 @@ public final class TypeConsolidator {
 
         //mapping from super
         //in our D.class example, super mapping will only include Ta -> Tc
-        var superMapping = getImpl(parent);
+        var superMapping = getMapping(parent);
 
-        if (superMapping == null || superMapping.isEmpty()) {
+		var interfaces = type.getInterfaces();
+		var interfaceMappings = new ArrayList<Map<VariableTypeInfo, TypeInfo>>(interfaces.length);
+		for (var anInterface : interfaces) {
+			interfaceMappings.add(getMapping(anInterface));
+		}
+
+		if (superMapping.isEmpty() || interfaceMappings.stream().allMatch(Map::isEmpty)) {
             return postMapping(mapping);
         }
 
-        //'flatten' super mapping
-        var merged = new IdentityHashMap<>(superMapping);
-        for (var entry : merged.entrySet()) {
-            //in our D.class example, super mapping Ta -> Tc will be 'flattened' to Ta -> Td
-            entry.setValue(entry.getValue().consolidate(mapping));
-        }
-        //merge two mapping
+        // 'flatten' super mapping
+        var merged = new HashMap<>(transformMapping(superMapping, mapping));
+		// 'flatten' interface mapping
+		for (var interfaceMapping : interfaceMappings) {
+			merged.putAll(transformMapping(interfaceMapping, mapping));
+		}
+        // merge all mappings
         merged.putAll(mapping);
 
         //in our D.class example, our mapping will include Ta -> Td, Tb -> A<Td>, Tc -> Td.
@@ -157,9 +163,24 @@ public final class TypeConsolidator {
         return postMapping(merged);
     }
 
+	private static Map<VariableTypeInfo, TypeInfo> transformMapping(
+		Map<VariableTypeInfo, TypeInfo> mapping, Map<VariableTypeInfo, TypeInfo> transformer) {
+		if (mapping.isEmpty()) {
+			return Map.of();
+		} else if (mapping.size() == 1) {
+			var entry = mapping.entrySet().iterator().next();
+			return Map.of(entry.getKey(), entry.getValue().consolidate(transformer));
+		}
+		var transformed = new HashMap<>(mapping);
+		for (var entry : transformed.entrySet()) {
+			entry.setValue(entry.getValue().consolidate(transformer));
+		}
+		return transformed;
+	}
+
     private static void extractSuperMapping(
         Type superType,
-        IdentityHashMap<VariableTypeInfo, TypeInfo> pushTo
+        Map<VariableTypeInfo, TypeInfo> pushTo
     ) {
         if (superType instanceof ParameterizedType parameterized
             && parameterized.getRawType() instanceof Class<?> parent
