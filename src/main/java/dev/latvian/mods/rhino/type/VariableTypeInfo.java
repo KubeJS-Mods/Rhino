@@ -15,6 +15,8 @@ public class VariableTypeInfo extends TypeInfoBase {
 	static final Map<TypeVariable<?>, VariableTypeInfo> CACHE = new HashMap<>();
 
 	private final TypeVariable<?> raw;
+	// defer bound init to handle "T extends Enum<T>" properly
+	private TypeInfo mainBound;
 
 	VariableTypeInfo(TypeVariable<?> typeVariable) {
 		this.raw = typeVariable;
@@ -28,11 +30,28 @@ public class VariableTypeInfo extends TypeInfoBase {
 	 */
 	@Override
 	public Class<?> asClass() {
-		return Object.class;
+		return getMainBound().asClass();
+	}
+
+	@Override
+	public boolean shouldConvert() {
+		return asClass() != Object.class;
 	}
 
 	public String getName() {
 		return raw.getName();
+	}
+
+	public TypeInfo getMainBound() {
+		if (mainBound == null) {
+			var bound = raw.getBounds()[0];
+			if (bound == Object.class) {
+				mainBound = NONE;
+			} else {
+				mainBound = TypeInfo.of(bound);
+			}
+		}
+		return mainBound;
 	}
 
 	public TypeInfo[] getBounds() {
