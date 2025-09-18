@@ -12,7 +12,10 @@ public class TypeConsolidatorTest {
 	public static final RhinoTest TEST = new RhinoTest("type_consolidator");
 
 	public static final class Gener<T> {
-		public static final Gener<?> NONE = new Gener<>(TEST, List.of());
+		public static final Gener<?> WILDCARD = new Gener<>(TEST, new ArrayList<>());
+		public static final Gener RAW = new Gener<>(TEST, new ArrayList<>());
+		public static final Gener<TestConsoleTheme> ENUM = new Gener<>(TEST, new ArrayList<>());
+
 		private final RhinoTest test;
 		private final List<T> loaded;
 		/**
@@ -23,13 +26,6 @@ public class TypeConsolidatorTest {
 		public Gener(RhinoTest test, List<T> loaded) {
 			this.test = test;
 			this.loaded = loaded;
-		}
-
-		/**
-		 * simulate what bindings will usually do, (also there's no other easy way of passing full type info to JS)
-		 */
-		public static Gener<TestConsoleTheme> of() {
-			return new Gener<>(TEST, new ArrayList<>());
 		}
 
 		/**
@@ -54,15 +50,21 @@ public class TypeConsolidatorTest {
 	}
 
 	static {
-		TEST.shared.put("Gener", Gener.NONE);
+		TEST.scopeAction = (cx, scope) -> {
+			cx.addToScope(scope, "Gener", Gener.class);
+		};
 	}
 
 	@Test
-	void test() {
+	void testGeneric() {
 		TEST.test("get_set", """
-			const g = shared.Gener.of();
+			const g = Gener.ENUM;
+			
+			// method
 			g.load("dArk");
 			console.info(g.get(0));
+
+			// field
 			g.example = "light"
 			console.info(g.example);
 			""", """
@@ -72,5 +74,37 @@ public class TypeConsolidatorTest {
 			TestConsoleTheme.class, TestConsoleTheme.DARK,
 			TestConsoleTheme.DARK,
 			TestConsoleTheme.LIGHT));
+	}
+
+	@Test
+	void testRaw() {
+		TEST.test("get_set", """
+			const g = Gener.RAW;
+
+			g.load("dArk");
+			console.info(g.get(0));
+
+			g.example = "light"
+			console.info(g.example);
+			""", """
+			type: %s, value: %s
+			%s
+			%s""".formatted(String.class, "dArk", "dArk", "light"));
+	}
+
+	@Test
+	void testWildcard() {
+		TEST.test("get_set", """
+			const g = Gener.WILDCARD;
+
+			g.load("dArk");
+			console.info(g.get(0));
+
+			g.example = "light"
+			console.info(g.example);
+			""", """
+			type: %s, value: %s
+			%s
+			%s""".formatted(String.class, "dArk", "dArk", "light"));
 	}
 }

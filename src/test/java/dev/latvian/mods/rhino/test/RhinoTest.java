@@ -1,16 +1,19 @@
 package dev.latvian.mods.rhino.test;
 
 import dev.latvian.mods.rhino.ContextFactory;
+import dev.latvian.mods.rhino.Scriptable;
 import org.junit.jupiter.api.Assertions;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class RhinoTest {
 	public final String testName;
 	public final ContextFactory factory;
 	public TestConsole console;
 	public final Map<String, Object> shared;
+	public BiConsumer<TestContext, Scriptable> scopeAction;
 
 	public RhinoTest(String n) {
 		this.testName = n;
@@ -30,10 +33,13 @@ public class RhinoTest {
 		try {
 			var context = (TestContext) factory.enter();
 			var rootScope = context.initStandardObjects();
+
 			context.addToScope(rootScope, "console", console);
 			context.addToScope(rootScope, "shared", shared);
 			context.addToScope(rootScope, "EventBus", new EventBus(console));
 			context.addToScope(rootScope, "StaticUtils", StaticUtils.class);
+			scopeAction.accept(context, rootScope);
+
 			context.testName = name;
 			context.evaluateString(rootScope, script, testName + "/" + name, 1, null);
 		} catch (Exception ex) {
