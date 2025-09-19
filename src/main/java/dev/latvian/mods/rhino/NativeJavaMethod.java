@@ -336,7 +336,7 @@ public class NativeJavaMethod extends BaseFunction {
 
 		int index = findCachedFunction(cx, args);
 		if (index < 0) {
-			Class<?> c = methods[0].executableInfo.getDeclaringClass().getClass();
+			Class<?> c = methods[0].executableInfo.getDeclaringClass().type;
 			String sig = c.getName() + '.' + getFunctionName() + '(' + scriptSignature(args) + ')';
 			throw Context.reportRuntimeError1("msg.java.no_such_method", sig, cx);
 		}
