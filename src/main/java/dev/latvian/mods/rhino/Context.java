@@ -1216,6 +1216,8 @@ public class Context {
 			return new NativeJavaList(this, scope, list, list, target);
 		} else if (javaObject instanceof Set<?> set) {
 			return new NativeJavaList(this, scope, set, new JavaSetWrapper<>(set), target);
+		} else if (javaObject instanceof Class<?> clazz) {
+			return new NativeJavaClass(this, scope, clazz);
 		}
 
 		// TODO: Wrap Gson
