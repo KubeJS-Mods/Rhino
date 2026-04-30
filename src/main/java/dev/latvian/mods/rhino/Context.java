@@ -1726,7 +1726,7 @@ public class Context {
 				if (target == TypeInfo.STRING) {
 					// native numbers are #1-8
 					return 9;
-				} else if (target == TypeInfo.OBJECT) {
+				} else if (target.asClass() == Object.class) {
 					return 10;
 				} else if (ScriptRuntime.NumberClass.isAssignableFrom(target.asClass())) {
 					// "double" is #1
@@ -1737,7 +1737,7 @@ public class Context {
 			// "boolean" is #1
 			if (target.isBoolean()) {
 				return CONVERSION_TRIVIAL;
-			} else if (target == TypeInfo.OBJECT) {
+			} else if (target.asClass() == Object.class) {
 				return 3;
 			} else if (target == TypeInfo.STRING) {
 				return 4;
