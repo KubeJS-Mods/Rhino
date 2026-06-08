@@ -75,4 +75,9 @@ public class VariableTypeInfo extends TypeInfoBase {
 	public @NotNull TypeInfo consolidate(@NotNull Map<VariableTypeInfo, TypeInfo> mapping) {
 		return mapping.getOrDefault(this, this);
 	}
+
+	@Override
+	public boolean isFunctionalInterface() {
+		return getMainBound().isFunctionalInterface();
+	}
 }
