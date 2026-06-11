@@ -451,7 +451,7 @@ final class NativeMath extends IdScriptableObject {
 						}
 						return ScriptRuntime.negativeZeroObj;
 					}
-					return 0.5 * Math.log((x + 1.0) / (x - 1.0));
+					return 0.5 * Math.log((1.0 + x) / (1.0 - x));
 				}
 				return ScriptRuntime.NaNobj;
 
