@@ -1272,7 +1272,10 @@ public class Context {
 
 		return switch (value) {
 			case NativeArray array -> ArrayValueProvider.fromNativeArray(array);
+			// special casing this because it can wrap i.e. sets as well
 			case NativeJavaList list -> ArrayValueProvider.fromJavaList(list.list, list);
+			case NativeJavaArray array -> arrayValueProviderOf(array.array);
+			case Wrapper w -> arrayValueProviderOf(w.unwrap()); // other stuff like NJO wrapping set falls through to this
 			case List<?> list -> ArrayValueProvider.fromJavaList(list, list);
 			case Iterable<?> itr -> ArrayValueProvider.fromIterable(itr);
 			case null, default -> value == null ? ArrayValueProvider.FromObject.FROM_NULL : new ArrayValueProvider.FromObject(value);
