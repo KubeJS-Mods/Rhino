@@ -1082,7 +1082,7 @@ public class Parser {
 
 			case Token.LET:
 				pn = letStatement();
-				if (pn instanceof VariableDeclaration && peekToken() == Token.SEMI) {
+				if (pn instanceof VariableDeclaration) {
 					break;
 				}
 				return pn;
