@@ -429,6 +429,7 @@ public class NodeTransformer {
 			result = replaceCurrent(parent, previous, scopeNode, result);
 			ArrayList<Object> list = new ArrayList<>();
 			Node objectLiteral = new Node(Token.OBJECTLIT);
+			Node assignments = new Node(Token.BLOCK);
 			for (Node v = vars.getFirstChild(); v != null; v = v.getNext()) {
 				Node current = v;
 				if (current.getType() == Token.LETEXPR) {
@@ -459,10 +460,22 @@ public class NodeTransformer {
 				}
 				list.add(ScriptRuntime.getIndexObject(current.getString()));
 				Node init = current.getFirstChild();
+				if (init != null && !isExpression) {
+					// ES6 semantics: run initializers sequentially inside the new
+					// scope so that later ones can reference earlier variables,
+					// e.g. for (let a = 1, b = a; ...)
+					current.removeChild(init);
+					Node bind = Node.newString(Token.BINDNAME, current.getString());
+					assignments.addChildToBack(new Node(Token.EXPR_VOID, new Node(Token.SETNAME, bind, init)));
+					init = null;
+				}
 				if (init == null) {
 					init = new Node(Token.VOID, Node.newNumber(0.0));
 				}
 				objectLiteral.addChildToBack(init);
+			}
+			if (assignments.hasChildren()) {
+				body = new Node(Token.BLOCK, assignments, body);
 			}
 			objectLiteral.putProp(Node.OBJECT_IDS_PROP, list.toArray());
 			newVars = new Node(Token.ENTERWITH, objectLiteral);

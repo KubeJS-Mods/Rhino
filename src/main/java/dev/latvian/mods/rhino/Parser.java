@@ -1482,7 +1482,7 @@ public class Parser {
 				init.setLineno(ts.lineno);
 			} else if (tt == Token.VAR || tt == Token.LET || tt == Token.CONST) {
 				consumeToken();
-				init = variables(Token.LET, ts.tokenBeg, false);
+				init = variables(tt, ts.tokenBeg, false);
 			} else {
 				init = expr();
 
@@ -2095,71 +2095,70 @@ public class Parser {
 	}
 
 	void defineSymbol(int declType, String name, boolean ignoreNotInBlock) {
-		// help me :(
-
 		if (name == null) {
 			codeBug();
 		}
 
 		Scope definingScope = currentScope.getDefiningScope(name);
 		AstSymbol symbol = definingScope != null ? definingScope.getSymbol(name) : null;
-
-		if (symbol != null && definingScope == currentScope) {
-			addError(switch (symbol.getDeclType()) {
-				case Token.LET -> "msg.let.redecl";
-				case Token.VAR -> "msg.var.redecl";
-				case Token.CONST -> "msg.const.redecl";
-				case Token.FUNCTION -> "msg.fn.redecl";
-				default -> "msg.parm.redecl";
-			}, name);
-
-			return;
-		}
-
-		/*
 		int symDeclType = symbol != null ? symbol.getDeclType() : -1;
-		if (symbol != null && (symDeclType == Token.CONST || declType == Token.CONST || (definingScope == currentScope && symDeclType == Token.LET))) {
-			addError(symDeclType == Token.CONST ? "msg.const.redecl" : symDeclType == Token.LET ? "msg.let.redecl" : symDeclType == Token.VAR ? "msg.var.redecl" : symDeclType == Token.FUNCTION ? "msg.fn.redecl" : "msg.parm.redecl", name);
-			return;
-		}
-		 */
 
 		switch (declType) {
-			case Token.LET, Token.VAR, Token.CONST, Token.FUNCTION, Token.LP -> currentScope.putSymbol(new AstSymbol(declType, name));
-			default -> throw Kit.codeBug();
-		}
-
-		/*
-		switch (declType) {
-			case Token.LET -> {
-				if (!ignoreNotInBlock && ((currentScope.getType() == Token.IF) || currentScope instanceof Loop)) {
-					addError("msg.let.decl.not.in.block");
+			case Token.LET, Token.CONST -> {
+				// block scoped; redeclaring any binding in the same scope is an error
+				if (symbol != null && definingScope == currentScope) {
+					addError(switch (symDeclType) {
+						case Token.LET -> "msg.let.redecl";
+						case Token.VAR -> "msg.var.redecl";
+						case Token.CONST -> "msg.const.redecl";
+						case Token.FUNCTION -> "msg.fn.redecl";
+						default -> "msg.parm.redecl";
+					}, name);
 					return;
 				}
-				currentScope.putSymbol(new Symbol(declType, name));
+				currentScope.putSymbol(new AstSymbol(declType, name));
 			}
-			case Token.VAR, Token.CONST, Token.FUNCTION -> {
-				if (symbol != null) {
-					if (symDeclType == Token.VAR) {
-						addStrictWarning("msg.var.redecl", name);
-					} else if (symDeclType == Token.LP) {
-						addStrictWarning("msg.var.hides.arg", name);
-					}
-				} else {
-					currentScriptOrFn.putSymbol(new Symbol(declType, name));
+			case Token.VAR, Token.FUNCTION -> {
+				// function scoped: hoisted to the enclosing function or script.
+				// Conflicts with a lexical binding declared anywhere between here
+				// and the function top are errors; duplicate vars are allowed.
+				if (symbol != null && (symDeclType == Token.LET || symDeclType == Token.CONST) && scopeIsWithinCurrentFunction(definingScope)) {
+					addError(symDeclType == Token.CONST ? "msg.const.redecl" : "msg.let.redecl", name);
+					return;
+				}
+				if (symbol == null || definingScope != currentScriptOrFn) {
+					currentScriptOrFn.putSymbol(new AstSymbol(declType, name));
 				}
 			}
 			case Token.LP -> {
-				if (symbol != null) {
-					// must be duplicate parameter. Second parameter hides the
+				if (symbol != null && definingScope == currentScriptOrFn) {
+					// must be a duplicate parameter. Second parameter hides the
 					// first, so go ahead and add the second parameter
 					addWarning("msg.dup.parms", name);
 				}
-				currentScriptOrFn.putSymbol(new Symbol(declType, name));
+				currentScriptOrFn.putSymbol(new AstSymbol(declType, name));
 			}
 			default -> throw codeBug();
 		}
-		 */
+	}
+
+	/**
+	 * Returns whether the given scope is between the current scope and the
+	 * enclosing function (or script) top, i.e. a hoisted var declared here
+	 * would collide with bindings declared in it.
+	 */
+	private boolean scopeIsWithinCurrentFunction(Scope scope) {
+		Scope s = currentScope;
+		while (s != null) {
+			if (s == scope) {
+				return true;
+			}
+			if (s == currentScriptOrFn) {
+				return false;
+			}
+			s = s.getParentScope();
+		}
+		return false;
 	}
 
 	private AstNode expr() throws IOException {

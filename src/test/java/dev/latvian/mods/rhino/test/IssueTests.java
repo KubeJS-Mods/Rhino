@@ -98,6 +98,60 @@ public class IssueTests {
 	}
 
 	@Test
+	public void varFunctionScoping() {
+		// https://github.com/KubeJS-Mods/Rhino/issues/36
+		TEST.test("varFunctionScoping", """
+			if (1) { var thing = 'exists!' }
+			console.info(thing)
+			function f() {
+				if (true) { var inner = 'inner!' }
+				return inner
+			}
+			console.info(f())
+			""", """
+			exists!
+			inner!
+			""");
+	}
+
+	@Test
+	public void varInForLoopInit() {
+		// https://github.com/KubeJS-Mods/Rhino/issues/35
+		TEST.test("varInForLoopInit", """
+			let out = []
+			for (var x = 0, y = x; y < 3; y++) { out.push(y) }
+			console.info(out.join(','))
+			for (var g = 0; g < 2; g++) {}
+			console.info(g)
+			""", """
+			0,1,2
+			2
+			""");
+	}
+
+	@Test
+	public void letInForLoopInitReferencingEarlierVar() {
+		TEST.test("letInForLoopInitReferencingEarlierVar", """
+			let out = []
+			for (let a = 1, b = a; b < 4; b++) { out.push(a + ':' + b) }
+			console.info(out.join(','))
+			console.info(typeof a)
+			""", """
+			1:1,1:2,1:3
+			undefined
+			""");
+	}
+
+	@Test
+	public void duplicateVarAllowed() {
+		TEST.test("duplicateVarAllowed", """
+			var d = 1
+			var d = 2
+			console.info(d)
+			""", "2");
+	}
+
+	@Test
 	public void treeMapWithNonStringKeys() {
 		// https://github.com/KubeJS-Mods/Rhino/issues/67
 		TEST.test("treeMapWithNonStringKeys", """

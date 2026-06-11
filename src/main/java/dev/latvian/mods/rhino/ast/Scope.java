@@ -33,7 +33,7 @@ public class Scope extends Jump {
 		scope.symbolTable = null;
 		result.parent = scope.parent;
 		result.setParentScope(scope.getParentScope());
-		result.setParentScope(result);
+		scope.setParentScope(result);
 		scope.parent = result;
 		result.top = scope.top;
 		return result;
