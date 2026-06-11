@@ -71,9 +71,10 @@ public class NativeGlobal implements IdFunctionCall {
 		ScriptableObject.defineProperty(scope, "NaN", ScriptRuntime.NaNobj, ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT, cx);
 		ScriptableObject.defineProperty(scope, "Infinity", ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY), ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT, cx);
 		ScriptableObject.defineProperty(scope, "undefined", Undefined.INSTANCE, ScriptableObject.READONLY | ScriptableObject.DONTENUM | ScriptableObject.PERMANENT, cx);
+		ScriptableObject.defineProperty(scope, "globalThis", scope, ScriptableObject.DONTENUM, cx);
 
-        /*
-            Each error constructor gets its own Error object as a prototype,
+		/*
+			Each error constructor gets its own Error object as a prototype,
             with the 'name' property set to the name of the error.
         */
 		for (TopLevel.NativeErrors error : TopLevel.NativeErrors.values()) {
