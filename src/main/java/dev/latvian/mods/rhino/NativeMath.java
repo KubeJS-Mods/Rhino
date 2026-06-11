@@ -479,7 +479,7 @@ final class NativeMath extends IdScriptableObject {
 				if (n == 0) {
 					return Double32;
 				}
-				return 31 - Math.floor(Math.log(n >>> 0) * LOG2E);
+				return (double) Integer.numberOfLeadingZeros((int) n);
 
 			case Id_cos:
 				x = ScriptRuntime.toNumber(cx, args, 0);
