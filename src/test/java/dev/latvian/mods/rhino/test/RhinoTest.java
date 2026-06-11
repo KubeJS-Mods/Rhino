@@ -38,7 +38,10 @@ public class RhinoTest {
 			context.addToScope(rootScope, "shared", shared);
 			context.addToScope(rootScope, "EventBus", new EventBus(console));
 			context.addToScope(rootScope, "StaticUtils", StaticUtils.class);
-			scopeAction.accept(context, rootScope);
+
+			if (scopeAction != null) {
+				scopeAction.accept(context, rootScope);
+			}
 
 			context.testName = name;
 			context.evaluateString(rootScope, script, testName + "/" + name, 1, null);

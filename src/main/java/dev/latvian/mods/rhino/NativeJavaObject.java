@@ -13,7 +13,6 @@ import dev.latvian.mods.rhino.type.VariableTypeInfo;
 import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 import dev.latvian.mods.rhino.util.Deletable;
 import dev.latvian.mods.rhino.util.JavaIteratorWrapper;
-import org.openjdk.nashorn.internal.runtime.NativeJavaPackage;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,7 +25,6 @@ import java.util.Map;
  *
  * @author Mike Shaver
  * @see NativeJavaArray
- * @see NativeJavaPackage
  * @see NativeJavaClass
  */
 
