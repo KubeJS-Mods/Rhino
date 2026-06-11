@@ -856,7 +856,8 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 					if (id == Id_charAt) {
 						return String.valueOf(c);
 					}
-					return c;
+					// charCodeAt must return a Number, not a Character (which would behave like a string)
+					return (int) c;
 				}
 
 				case Id_indexOf: {

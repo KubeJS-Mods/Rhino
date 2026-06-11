@@ -153,7 +153,7 @@ public class MiscTests {
 		TEST.test("jsonStringifyWithNestedArrays", """
 			const thing = {nested: [1, 2, 3]};
 			console.info(JSON.stringify(thing));
-			""", "{\"nested\":[1.0,2.0,3.0]}");
+			""", "{\"nested\":[1,2,3]}");
 	}
 
 	@Test

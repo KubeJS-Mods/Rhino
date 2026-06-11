@@ -88,14 +88,10 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 
 	private static NativeSymbol js_constructor(Context cx, Object[] args) {
 		String desc;
-		if (args.length > 0) {
-			if (Undefined.INSTANCE.equals(args[0])) {
-				desc = "";
-			} else {
-				desc = ScriptRuntime.toString(cx, args[0]);
-			}
+		if (args.length > 0 && !Undefined.INSTANCE.equals(args[0])) {
+			desc = ScriptRuntime.toString(cx, args[0]);
 		} else {
-			desc = "";
+			desc = null;
 		}
 
 		if (args.length > 1) {
@@ -263,6 +259,20 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
 	@Override
 	public String toString() {
 		return key.toString();
+	}
+
+	@Override
+	public Object get(Context cx, String name, Scriptable start) {
+		if (isSymbol() && "description".equals(name)) {
+			String desc = key.getName();
+			return desc == null ? Undefined.INSTANCE : desc;
+		}
+		return super.get(cx, name, start);
+	}
+
+	@Override
+	public boolean has(Context cx, String name, Scriptable start) {
+		return (isSymbol() && "description".equals(name)) || super.has(cx, name, start);
 	}
 
 	@Override

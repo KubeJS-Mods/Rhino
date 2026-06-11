@@ -84,6 +84,11 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		return ensureScriptable(s, cx);
 	}
 
+	private static Object getValueForId(Context cx, Scriptable obj, Object id) {
+		Object value = id instanceof Integer index ? obj.get(cx, index, obj) : obj.get(cx, ScriptRuntime.toString(cx, id), obj);
+		return value == NOT_FOUND ? Undefined.INSTANCE : value;
+	}
+
 	public final ContextFactory factory;
 
 	public NativeObject(ContextFactory factory) {
@@ -418,7 +423,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				for (int i = 0; i < ids.length; i++) {
 					Object[] entry = new Object[2];
 					entry[0] = ScriptRuntime.toString(cx, ids[i]);
-					entry[1] = obj.get(cx, entry[0].toString(), scope);
+					entry[1] = getValueForId(cx, obj, ids[i]);
 					entries[i] = cx.newArray(scope, entry);
 				}
 				return cx.newArray(scope, entries);
@@ -429,7 +434,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				Object[] ids = obj.getIds(cx);
 				Object[] values = new Object[ids.length];
 				for (int i = 0; i < ids.length; i++) {
-					values[i] = obj.get(cx, ScriptRuntime.toString(cx, ids[i]), scope);
+					values[i] = getValueForId(cx, obj, ids[i]);
 				}
 				return cx.newArray(scope, values);
 			}

@@ -114,7 +114,21 @@ public class NativeJSON extends IdScriptableObject {
 		return builder.toString();
 	}
 
+	/**
+	 * Values that JSON.stringify must not serialize: undefined, functions and symbols.
+	 * They produce undefined at the top level, are skipped in objects and become null in arrays.
+	 */
+	static boolean isUnserializable(Object v) {
+		return Undefined.isUndefined(v) || v instanceof Callable || v instanceof Symbol;
+	}
+
 	// #string_id_map#
+
+	private static void appendNumber(Context cx, StringBuilder builder, Number n) {
+		double d = n.doubleValue();
+		// JSON has no representation for non-finite numbers; integral doubles must not print a ".0" suffix
+		builder.append(Double.isFinite(d) ? ScriptRuntime.toString(cx, n) : "null");
+	}
 
 	private static void escape(StringBuilder builder, String string) {
 		builder.append('"');
@@ -123,19 +137,50 @@ public class NativeJSON extends IdScriptableObject {
 	}
 
 	private static void stringify0(Context cx, Object v, StringBuilder builder) {
-		if (v == null || v instanceof Boolean || v instanceof Number) {
+		if (v == null || v instanceof Boolean) {
 			builder.append(v);
+		} else if (v instanceof Number n) {
+			appendNumber(cx, builder, n);
 		} else if (v instanceof CharSequence) {
 			escape(builder, v.toString());
 		} else if (v instanceof NativeString) {
 			escape(builder, ScriptRuntime.toString(cx, v));
 		} else if (v instanceof NativeNumber) {
-			builder.append(ScriptRuntime.toNumber(cx, v));
+			appendNumber(cx, builder, ScriptRuntime.toNumber(cx, v));
+		} else if (v instanceof NativeObject obj) {
+			// don't use the Map view here, it can't distinguish undefined (skipped) from null (kept)
+			builder.append('{');
+			boolean first = true;
+
+			for (Object id : obj.getIds(cx)) {
+				Object value = id instanceof Integer index ? obj.get(cx, index, obj) : obj.get(cx, String.valueOf(id), obj);
+				if (value == Scriptable.NOT_FOUND || isUnserializable(value)) {
+					continue;
+				} else if (value instanceof Wrapper w) {
+					value = w.unwrap();
+				}
+
+				if (first) {
+					first = false;
+				} else {
+					builder.append(',');
+				}
+
+				escape(builder, String.valueOf(id));
+				builder.append(':');
+				stringify0(cx, value, builder);
+			}
+
+			builder.append('}');
 		} else if (v instanceof Map<?, ?> map) {
 			builder.append('{');
 			boolean first = true;
 
 			for (var entry : map.entrySet()) {
+				if (isUnserializable(entry.getValue())) {
+					continue;
+				}
+
 				if (first) {
 					first = false;
 				} else {
@@ -163,6 +208,8 @@ public class NativeJSON extends IdScriptableObject {
 			}
 
 			builder.append(']');
+		} else if (isUnserializable(v)) {
+			builder.append("null");
 		} else {
 			stringify0(cx, cx.getCachedClassStorage(false).get(Wrapper.unwrapped(v).getClass()).getDebugInfo(), builder);
 		}
@@ -239,6 +286,9 @@ public class NativeJSON extends IdScriptableObject {
 					case 0:
 						/* fall through */
 					default:
+				}
+				if (args.length == 0 || isUnserializable(value)) {
+					return Undefined.INSTANCE;
 				}
 				return stringifyJSON(value, replacer, space, cx);
 			}

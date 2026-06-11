@@ -69,11 +69,24 @@ public class VMBridge {
 				}
 			}
 
-			if (method.isDefault()) {
+			if (method.isDefault() && !hasJSImplementation(method)) {
 				return InvocationHandler.invokeDefault(proxy, method, args);
 			} else {
 				return adapter.invoke(cx, target, topScope, proxy, method, args);
 			}
+		}
+
+		/**
+		 * A JS object may override a default method by providing a function
+		 * property of the same name; only fall back to the Java default
+		 * implementation when it doesn't.
+		 */
+		private boolean hasJSImplementation(Method method) {
+			if (target instanceof Callable) {
+				// a lone function only implements the abstract method(s)
+				return false;
+			}
+			return target instanceof Scriptable s && ScriptableObject.getProperty(s, method.getName(), cx) instanceof Callable;
 		}
 	}
 
