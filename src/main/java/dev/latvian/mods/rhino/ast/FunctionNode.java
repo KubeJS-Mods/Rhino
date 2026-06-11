@@ -296,6 +296,7 @@ public class FunctionNode extends ScriptNode {
 	public void setIsES6Generator() {
 		isES6Generator = true;
 		isGenerator = true;
+		needsActivation = true;
 	}
 
 	public void addResumptionPoint(Node target) {
