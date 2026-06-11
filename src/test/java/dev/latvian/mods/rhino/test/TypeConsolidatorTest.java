@@ -9,7 +9,9 @@ import java.util.List;
  * @author ZZZank
  */
 public class TypeConsolidatorTest {
-	public static final RhinoTest TEST = new RhinoTest("type_consolidator");
+	public static final RhinoTest TEST = new RhinoTest("type_consolidator").withScopeAction((cx, scope) -> {
+		cx.addToScope(scope, "Gener", Gener.class);
+	});
 
 	public static final class Gener<T> {
 		public static final Gener<?> WILDCARD = new Gener<>(TEST, new ArrayList<>());
@@ -47,12 +49,6 @@ public class TypeConsolidatorTest {
 		public String toString() {
 			return "Gener[test=%s, loaded=%s]".formatted(test, loaded);
 		}
-	}
-
-	static {
-		TEST.scopeAction = (cx, scope) -> {
-			cx.addToScope(scope, "Gener", Gener.class);
-		};
 	}
 
 	@Test

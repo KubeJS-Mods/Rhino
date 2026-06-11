@@ -856,7 +856,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 					if (id == Id_charAt) {
 						return String.valueOf(c);
 					}
-					return c;
+					return (int) c; // js has no char type, so return as an int
 				}
 
 				case Id_indexOf: {

@@ -1,19 +1,19 @@
 package dev.latvian.mods.rhino.test;
 
+import dev.latvian.mods.rhino.Context;
 import dev.latvian.mods.rhino.ContextFactory;
 import dev.latvian.mods.rhino.Scriptable;
 import org.junit.jupiter.api.Assertions;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 public class RhinoTest {
 	public final String testName;
 	public final ContextFactory factory;
 	public TestConsole console;
 	public final Map<String, Object> shared;
-	public BiConsumer<TestContext, Scriptable> scopeAction;
+	public ScopeAction scopeAction = ScopeAction.NONE;
 
 	public RhinoTest(String n) {
 		this.testName = n;
@@ -37,8 +37,7 @@ public class RhinoTest {
 			context.addToScope(rootScope, "console", console);
 			context.addToScope(rootScope, "shared", shared);
 			context.addToScope(rootScope, "EventBus", new EventBus(console));
-			context.addToScope(rootScope, "StaticUtils", StaticUtils.class);
-			scopeAction.accept(context, rootScope);
+			scopeAction.apply(context, rootScope);
 
 			context.testName = name;
 			context.evaluateString(rootScope, script, testName + "/" + name, 1, null);
@@ -49,5 +48,17 @@ public class RhinoTest {
 		}
 
 		Assertions.assertEquals(match.trim(), console.getConsoleOutput().trim());
+	}
+
+	@FunctionalInterface
+	public interface ScopeAction {
+		void apply(Context cx, Scriptable rootScope);
+
+		ScopeAction NONE = (cx, rootScope) -> {};
+	}
+
+	public RhinoTest withScopeAction(ScopeAction action) {
+		scopeAction = action;
+		return this;
 	}
 }

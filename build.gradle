@@ -4,7 +4,7 @@ plugins {
 	id 'base'
 	id 'java'
 	id 'maven-publish'
-	id 'net.neoforged.moddev' version "2.0.75"
+	id 'net.neoforged.moddev' version "2.0.138"
 	id "me.shedaniel.unified-publishing" version "0.1.+"
 }
 
@@ -69,6 +69,10 @@ dependencies {
 	// Unit Testing
 	testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_version"
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_version"
+
+	// why are these not being added automatically? is the mc classpath missing in test?
+	testRuntimeOnly "com.google.guava:guava:32.1.2-jre"
+	testRuntimeOnly "com.google.code.gson:gson:2.10.1"
 }
 
 test {

@@ -30,9 +30,35 @@ public class NativeJavaMap extends NativeJavaObject {
 		return "JavaMap";
 	}
 
+	private static final Object INVALID_KEY = new Object();
+
+	private Object toMapKey(Context cx, Object jsKey) {
+		try {
+			return cx.jsToJava(jsKey, mapKeyType);
+		} catch (Exception ex) {
+			return INVALID_KEY;
+		}
+	}
+
+	/**
+	 * Instead of upstream, which deliberately only supports {@code String} or {@code Integer} as key,
+	 * we use {@link #toMapKey} to try and convert the input first.
+	 */
+	private boolean safeHas(Object key) {
+		if (key == INVALID_KEY) {
+			return false;
+		}
+
+		try {
+			return map.containsKey(key);
+		} catch (ClassCastException | NullPointerException ex) {
+			return false;
+		}
+	}
+
 	@Override
 	public boolean has(Context cx, String name, Scriptable start) {
-		if (map.containsKey(name)) {
+		if (safeHas(toMapKey(cx, name))) {
 			return true;
 		}
 		return super.has(cx, name, start);
@@ -40,7 +66,7 @@ public class NativeJavaMap extends NativeJavaObject {
 
 	@Override
 	public boolean has(Context cx, int index, Scriptable start) {
-		if (map.containsKey(index)) {
+		if (safeHas(toMapKey(cx, index))) {
 			return true;
 		}
 		return super.has(cx, index, start);
@@ -48,28 +74,30 @@ public class NativeJavaMap extends NativeJavaObject {
 
 	@Override
 	public Object get(Context cx, String name, Scriptable start) {
-		if (map.containsKey(name)) {
-			return cx.javaToJS(map.get(cx.jsToJava(name, mapKeyType)), start, mapValueType);
+		Object key = toMapKey(cx, name);
+		if (safeHas(key)) {
+			return cx.javaToJS(map.get(key), start, mapValueType);
 		}
 		return super.get(cx, name, start);
 	}
 
 	@Override
 	public Object get(Context cx, int index, Scriptable start) {
-		if (map.containsKey(index)) {
-			return cx.javaToJS(map.get(cx.jsToJava(index, mapKeyType)), start, mapValueType);
+		Object key = toMapKey(cx, index);
+		if (safeHas(key)) {
+			return cx.javaToJS(map.get(key), start, mapValueType);
 		}
 		return super.get(cx, index, start);
 	}
 
 	@Override
 	public void put(Context cx, String name, Scriptable start, Object value) {
-		map.put(name, cx.jsToJava(value, mapValueType));
+		map.put(cx.jsToJava(name, mapKeyType), cx.jsToJava(value, mapValueType));
 	}
 
 	@Override
 	public void put(Context cx, int index, Scriptable start, Object value) {
-		map.put(index, cx.jsToJava(value, mapValueType));
+		map.put(cx.jsToJava(index, mapKeyType), cx.jsToJava(value, mapValueType));
 	}
 
 	@Override
@@ -87,12 +115,18 @@ public class NativeJavaMap extends NativeJavaObject {
 
 	@Override
 	public void delete(Context cx, String name) {
-		Deletable.deleteObject(map.remove(name));
+		Object key = toMapKey(cx, name);
+		if (safeHas(key)) {
+			Deletable.deleteObject(map.remove(key));
+		}
 	}
 
 	@Override
 	public void delete(Context cx, int index) {
-		Deletable.deleteObject(map.remove(index));
+		Object key = toMapKey(cx, index);
+		if (safeHas(key)) {
+			Deletable.deleteObject(map.remove(key));
+		}
 	}
 
 	@Override
@@ -102,6 +136,6 @@ public class NativeJavaMap extends NativeJavaObject {
 	}
 
 	private boolean hasOwnProperty(Context cx, Object[] args) {
-		return map.containsKey(ScriptRuntime.toString(cx, args[0]));
+		return safeHas(toMapKey(cx, ScriptRuntime.toString(cx, args[0])));
 	}
 }

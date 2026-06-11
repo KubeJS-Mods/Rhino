@@ -1802,6 +1802,10 @@ public class Context {
 						return 2;
 					}
 					return 12;
+				} else if (target.asClass().isInterface() && from instanceof NativeObject) {
+					// JS objects can implement any interface, including ones with
+					// only default methods (which jsToJava already supported)
+					return 3;
 				} else if (target.isPrimitive() && !target.isBoolean()) {
 					return 4 + getSizeRank(target);
 				}

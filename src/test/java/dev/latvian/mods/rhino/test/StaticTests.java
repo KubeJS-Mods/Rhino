@@ -7,7 +7,11 @@ import org.junit.jupiter.api.TestMethodOrder;
 @SuppressWarnings("unused")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class StaticTests {
-	public static final RhinoTest TEST = new RhinoTest("static");
+	public static final RhinoTest TEST = new RhinoTest("static").withScopeAction(
+		(cx, scope) -> {
+			cx.addToScope(scope, "StaticUtils", StaticUtils.class);
+		}
+	);
 
 	@Test
 	public void get() {

@@ -10,7 +10,33 @@ import java.lang.reflect.Modifier;
 @SuppressWarnings("unused")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class MiscTests {
-	public static final RhinoTest TEST = new RhinoTest("misc");
+	public static class InterfaceTests {
+		public interface Defaulted {
+			default String someMethod() {
+				return "default";
+			}
+		}
+
+		public interface DefaultedAbstract {
+			String abstractMethod();
+
+			default String someMethod() {
+				return "default";
+			}
+		}
+
+		public static String callDefaulted(Defaulted d) {
+			return d.someMethod();
+		}
+
+		public static String callDefaultedAbstract(DefaultedAbstract d) {
+			return d.someMethod() + "," + d.abstractMethod();
+		}
+	}
+
+	public static final RhinoTest TEST = new RhinoTest("misc").withScopeAction(((cx, rootScope) -> {
+		cx.addToScope(rootScope, "Interfaces", InterfaceTests.class);
+	}));
 
 	@Test
 	public void testFunctionAssignment() {
@@ -121,6 +147,20 @@ public class MiscTests {
 	}
 
 	@Test
+	public void numberKeyedObjectValues() {
+		TEST.test("numberKeyedObjectValues", """
+			const obj = { 0: 50, 1: 25, 2: 18, 3: 7 }
+			console.info(Object.keys(obj).join(','))
+			console.info(Object.values(obj).join(','))
+			console.info(Object.entries(obj).map(e => e.join(':')).join(','))
+			""", """
+			0,1,2,3
+			50,25,18,7
+			0:50,1:25,2:18,3:7
+			""");
+	}
+
+	@Test
 	@Order(4)
 	public void deconstruction() {
 		TEST.test("deconstruction", """
@@ -149,11 +189,64 @@ public class MiscTests {
 	}
 
 	@Test
+	public void jsonStringifyNumbers() {
+		TEST.test("jsonStringifyNumbers", """
+			console.info(JSON.stringify(50.0))
+			console.info(JSON.stringify(1.5))
+			console.info(JSON.stringify({ a: 1, b: 2.5 }))
+			console.info(JSON.stringify([1, 2, 3]))
+			console.info(JSON.stringify({ a: Infinity, b: NaN, c: 1/0 }))
+			""", """
+			50
+			1.5
+			{"a":1,"b":2.5}
+			[1,2,3]
+			{"a":null,"b":null,"c":null}
+			""");
+	}
+
+	@Test
 	public void jsonStringifyWithNestedArrays() {
 		TEST.test("jsonStringifyWithNestedArrays", """
 			const thing = {nested: [1, 2, 3]};
 			console.info(JSON.stringify(thing));
-			""", "{\"nested\":[1.0,2.0,3.0]}");
+			""", "{\"nested\":[1,2,3]}");
+	}
+
+	@Test
+	public void jsonStringifySpecial() {
+		TEST.test("jsonStringifyUnserializable", """
+			console.info(JSON.stringify(undefined))
+			console.info(JSON.stringify(function () {}))
+			console.info(JSON.stringify(Symbol('x')))
+			console.info(JSON.stringify({ a: null, b: undefined, c: () => 4, d: 'ok' }))
+			console.info(JSON.stringify([1, undefined, () => 4, 2]))
+			""", """
+			undefined
+			undefined
+			undefined
+			{"a":null,"d":"ok"}
+			[1,null,null,2]
+			""");
+	}
+
+	@Test
+	public void symbolDescription() {
+		TEST.test("symbolDescription", """
+			console.info(Symbol('desc').description)
+			console.info(Symbol.iterator.description)
+			console.info(Symbol.for('foo').description)
+			console.info(`${Symbol('foo').description}bar`)
+			console.info(Symbol().description)
+			console.info(Symbol.keyFor(Symbol.for('foo')))
+			""", """
+			desc
+			Symbol.iterator
+			foo
+			foobar
+			undefined
+			foo
+			""");
 	}
 
 	@Test
@@ -206,6 +299,19 @@ public class MiscTests {
 			abc
 			def
 			ghi
+			""");
+	}
+
+	@Test
+	public void overriddenDefaultMethod() {
+		TEST.test("overriddenDefaultMethod", """
+			console.info(Interfaces.callDefaulted({}))
+			console.info(Interfaces.callDefaulted({ someMethod: () => 'overridden' }))
+			console.info(Interfaces.callDefaultedAbstract({ someMethod: () => 'overridden', abstractMethod: () => 'js abstract' }))
+			""", """
+			default
+			overridden
+			overridden,js abstract
 			""");
 	}
 }

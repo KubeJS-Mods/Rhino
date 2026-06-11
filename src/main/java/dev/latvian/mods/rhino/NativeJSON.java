@@ -114,6 +114,14 @@ public class NativeJSON extends IdScriptableObject {
 		return builder.toString();
 	}
 
+	/**
+	 * Values that JSON.stringify must not serialize: undefined, functions and symbols.
+	 * They produce undefined at the top level, are skipped in objects and become null in arrays.
+	 */
+	static boolean doesNotSerialize(Object v) {
+		return Undefined.isUndefined(v) || v == Scriptable.NOT_FOUND || v instanceof Callable || v instanceof Symbol;
+	}
+
 	// #string_id_map#
 
 	private static void escape(StringBuilder builder, String string) {
@@ -123,19 +131,50 @@ public class NativeJSON extends IdScriptableObject {
 	}
 
 	private static void stringify0(Context cx, Object v, StringBuilder builder) {
-		if (v == null || v instanceof Boolean || v instanceof Number) {
+		if (v == null || v instanceof Boolean) {
 			builder.append(v);
+		} else if (v instanceof Number || v instanceof NativeNumber) {
+			var d = ScriptRuntime.toNumber(cx, v);
+			// numbers in rhino are stored as doubles, which may be Infinity or NaN
+			builder.append(Double.isFinite(d) ? ScriptRuntime.toString(cx, d) : "null");
 		} else if (v instanceof CharSequence) {
 			escape(builder, v.toString());
 		} else if (v instanceof NativeString) {
 			escape(builder, ScriptRuntime.toString(cx, v));
-		} else if (v instanceof NativeNumber) {
-			builder.append(ScriptRuntime.toNumber(cx, v));
+		} else if (v instanceof NativeObject obj) {
+			builder.append('{');
+			boolean first = true;
+
+			for (var id : obj.getIds(cx)) {
+				// todo: maybe a sealed type since only ints, strings and symbols can be keys?
+				Object value = id instanceof Integer index ? obj.get(cx, index, obj) : obj.get(cx, String.valueOf(id), obj);
+				value = Wrapper.unwrapped(value);
+
+				if (doesNotSerialize(value)) {
+					continue;
+				}
+
+				if (first) {
+					first = false;
+				} else {
+					builder.append(',');
+				}
+
+				escape(builder, String.valueOf(id));
+				builder.append(':');
+				stringify0(cx, value, builder);
+			}
+
+			builder.append('}');
 		} else if (v instanceof Map<?, ?> map) {
 			builder.append('{');
 			boolean first = true;
 
 			for (var entry : map.entrySet()) {
+				if (doesNotSerialize(entry.getValue())) {
+					continue;
+				}
+
 				if (first) {
 					first = false;
 				} else {
@@ -163,6 +202,8 @@ public class NativeJSON extends IdScriptableObject {
 			}
 
 			builder.append(']');
+		} else if (doesNotSerialize(v)) {
+			builder.append("null");
 		} else {
 			stringify0(cx, cx.getCachedClassStorage(false).get(Wrapper.unwrapped(v).getClass()).getDebugInfo(), builder);
 		}
@@ -239,6 +280,9 @@ public class NativeJSON extends IdScriptableObject {
 					case 0:
 						/* fall through */
 					default:
+				}
+				if (args.length == 0 || doesNotSerialize(value)) {
+					return Undefined.INSTANCE;
 				}
 				return stringifyJSON(value, replacer, space, cx);
 			}
