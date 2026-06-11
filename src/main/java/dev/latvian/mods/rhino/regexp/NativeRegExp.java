@@ -2597,7 +2597,7 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 
 			case SymbolId_search:
 				Scriptable scriptable = (Scriptable) realThis(thisObj, f, cx).execSub(cx, scope, args, MATCH);
-				return scriptable.get(cx, "index", scriptable);
+				return scriptable == null ? -1 : scriptable.get(cx, "index", scriptable);
 		}
 		throw new IllegalArgumentException(String.valueOf(id));
 	}

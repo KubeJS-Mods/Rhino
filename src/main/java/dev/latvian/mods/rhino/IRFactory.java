@@ -1655,12 +1655,9 @@ public final class IRFactory extends Parser {
 			} else if (name.equals("With")) {
 				type = Node.SPECIALCALL_WITH;
 			}
-		} else if (child.getType() == Token.GETPROP) {
-			String name = child.getLastChild().getString();
-			if (name.equals("eval")) {
-				type = Node.SPECIALCALL_EVAL;
-			}
 		}
+		// Note: a property access like a.eval() is NOT a direct eval call and
+		// must not get special treatment (it may be any Java/JS method named eval)
 		Node node = new Node(nodeType, child);
 		if (type != Node.NON_SPECIALCALL) {
 			// Calls to these functions require activation objects.

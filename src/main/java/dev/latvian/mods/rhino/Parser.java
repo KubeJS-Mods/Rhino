@@ -1082,7 +1082,9 @@ public class Parser {
 
 			case Token.LET:
 				pn = letStatement();
-				if (pn instanceof VariableDeclaration && peekToken() == Token.SEMI) {
+				if (pn instanceof VariableDeclaration) {
+					// fall through to the semicolon/ASI check below; requiring a
+					// pending semicolon here silently accepted "let a = 4 let b = 5"
 					break;
 				}
 				return pn;

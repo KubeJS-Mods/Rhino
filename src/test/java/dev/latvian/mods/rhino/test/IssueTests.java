@@ -112,6 +112,56 @@ public class IssueTests {
 	}
 
 	@Test
+	public void upstreamBackports() {
+		// assorted small fixes backported from upstream Rhino
+		TEST.test("upstreamBackports", """
+			console.info(Math.atanh(0.5).toFixed(6))
+			console.info(Math.clz32(1))
+			console.info(Math.clz32(2147483648))
+			console.info(globalThis.Math === Math)
+			console.info(/xyz/[Symbol.search]('abc'))
+			console.info((function* (n) { yield n })(42).next().value)
+			let gen = (function* () { yield 1 })()
+			gen.next()
+			gen.next()
+			console.info(gen.return(99).value)
+			let count = 0
+			new Date({ valueOf: () => { count++; return 2020 } }, 0)
+			console.info(count)
+			let obj = { eval: x => x + 1 }
+			console.info(obj.eval(41))
+			""", """
+			0.549306
+			31
+			0
+			true
+			-1
+			42
+			99
+			1
+			42
+			""");
+	}
+
+	@Test
+	public void letRequiresSemicolonOrNewline() {
+		TEST.test("letRequiresSemicolonOrNewline", """
+			try {
+				eval('let a = 4 let b = 5')
+				console.info('accepted')
+			} catch (e) {
+				console.info('rejected')
+			}
+			let c = 1
+			let d = 2
+			console.info(c + d)
+			""", """
+			rejected
+			3
+			""");
+	}
+
+	@Test
 	public void overriddenDefaultMethod() {
 		// https://github.com/KubeJS-Mods/Rhino/issues/65
 		TEST.test("overriddenDefaultMethod", """

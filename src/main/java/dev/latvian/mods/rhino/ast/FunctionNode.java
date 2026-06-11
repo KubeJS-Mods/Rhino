@@ -296,6 +296,9 @@ public class FunctionNode extends ScriptNode {
 	public void setIsES6Generator() {
 		isES6Generator = true;
 		isGenerator = true;
+		// Generators need an activation object even if their body contains no
+		// yield, otherwise parameters are silently mis-bound
+		setRequiresActivation();
 	}
 
 	public void addResumptionPoint(Node target) {

@@ -451,7 +451,7 @@ final class NativeMath extends IdScriptableObject {
 						}
 						return ScriptRuntime.negativeZeroObj;
 					}
-					return 0.5 * Math.log((x + 1.0) / (x - 1.0));
+					return 0.5 * Math.log((1.0 + x) / (1.0 - x));
 				}
 				return ScriptRuntime.NaNobj;
 
@@ -479,7 +479,7 @@ final class NativeMath extends IdScriptableObject {
 				if (n == 0) {
 					return Double32;
 				}
-				return 31 - Math.floor(Math.log(n >>> 0) * LOG2E);
+				return (double) Integer.numberOfLeadingZeros((int) n);
 
 			case Id_cos:
 				x = ScriptRuntime.toNumber(cx, args, 0);
@@ -547,11 +547,11 @@ final class NativeMath extends IdScriptableObject {
 				x = (methodId == Id_max) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
 				for (int i = 0; i != args.length; ++i) {
 					double d = ScriptRuntime.toNumber(cx, args[i]);
-					if (Double.isNaN(d)) {
-						x = d; // NaN
-						break;
-					}
-					if (methodId == Id_max) {
+					// every argument must be coerced (its valueOf may have side
+					// effects), so no early break on NaN
+					if (Double.isNaN(d) || Double.isNaN(x)) {
+						x = Double.NaN;
+					} else if (methodId == Id_max) {
 						// if (x < d) x = d; does not work due to -0.0 >= +0.0
 						x = Math.max(x, d);
 					} else {
