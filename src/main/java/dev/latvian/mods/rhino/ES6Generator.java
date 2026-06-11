@@ -322,6 +322,7 @@ public final class ES6Generator extends IdScriptableObject {
 			if (op == GeneratorState.GENERATOR_THROW) {
 				throw new JavaScriptException(cx, value, lineSource, lineNumber);
 			}
+			ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY, value, cx);
 			ScriptableObject.putProperty(result, ES6Iterator.DONE_PROPERTY, Boolean.TRUE, cx);
 			return result;
 		}
