@@ -39,6 +39,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		BaseFunction obj = new BaseFunction();
 		// Function.prototype attributes: see ECMA 15.3.3.1
 		obj.prototypePropertyAttributes = DONTENUM | READONLY | PERMANENT;
+		obj.setStandardPropertyAttributes(READONLY | DONTENUM);
 		obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed, cx);
 	}
 
@@ -75,6 +76,10 @@ public class BaseFunction extends IdScriptableObject implements Function {
 	// see ECMA 15.3.5.2
 	private int prototypePropertyAttributes = PERMANENT | DONTENUM;
 	private int argumentsAttributes = PERMANENT | DONTENUM;
+	// "-1" means the property has been deleted
+	private int namePropertyAttributes = PERMANENT | READONLY | DONTENUM;
+	private int lengthPropertyAttributes = PERMANENT | READONLY | DONTENUM;
+	private int arityPropertyAttributes = PERMANENT | READONLY | DONTENUM;
 
 	public BaseFunction() {
 	}
@@ -138,33 +143,34 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
 	@Override
 	protected int findInstanceIdInfo(String s, Context cx) {
-		int id = switch (s) {
-			case "name" -> Id_name;
-			case "length" -> Id_length;
-			case "arity" -> Id_arity;
-			case "prototype" -> Id_prototype;
-			case "arguments" -> Id_arguments;
-			default -> 0;
-		};
-
-		if (id == 0) {
-			return super.findInstanceIdInfo(s, cx);
-		}
-
-		int attr;
-		switch (id) {
-			case Id_length, Id_arity, Id_name -> attr = DONTENUM | READONLY | PERMANENT;
-			case Id_prototype -> {
-				// some functions such as built-ins don't have a prototype property
-				if (!hasPrototypeProperty()) {
-					return 0;
+		switch (s) {
+			case "length" -> {
+				if (lengthPropertyAttributes >= 0) {
+					return instanceIdInfo(lengthPropertyAttributes, Id_length);
 				}
-				attr = prototypePropertyAttributes;
 			}
-			case Id_arguments -> attr = argumentsAttributes;
-			default -> throw new IllegalStateException();
+			case "arity" -> {
+				if (arityPropertyAttributes >= 0) {
+					return instanceIdInfo(arityPropertyAttributes, Id_arity);
+				}
+			}
+			case "name" -> {
+				if (namePropertyAttributes >= 0) {
+					return instanceIdInfo(namePropertyAttributes, Id_name);
+				}
+			}
+			case "prototype" -> {
+				// some functions such as built-ins don't have a prototype property
+				if (hasPrototypeProperty()) {
+					return instanceIdInfo(prototypePropertyAttributes, Id_prototype);
+				}
+			}
+			case "arguments" -> {
+				return instanceIdInfo(argumentsAttributes, Id_arguments);
+			}
 		}
-		return instanceIdInfo(attr, id);
+
+		return super.findInstanceIdInfo(s, cx);
 	}
 
 	@Override
@@ -182,9 +188,9 @@ public class BaseFunction extends IdScriptableObject implements Function {
 	@Override
 	protected Object getInstanceIdValue(int id, Context cx) {
 		return switch (id) {
-			case Id_length -> getLength();
-			case Id_arity -> getArity();
-			case Id_name -> getFunctionName();
+			case Id_length -> lengthPropertyAttributes >= 0 ? getLength() : NOT_FOUND;
+			case Id_arity -> arityPropertyAttributes >= 0 ? getArity() : NOT_FOUND;
+			case Id_name -> namePropertyAttributes >= 0 ? getFunctionName() : NOT_FOUND;
 			case Id_prototype -> getPrototypeProperty(cx);
 			case Id_arguments -> getArguments(cx);
 			default -> super.getInstanceIdValue(id, cx);
@@ -211,8 +217,19 @@ public class BaseFunction extends IdScriptableObject implements Function {
 				}
 				return;
 			case Id_name:
+				if (value == NOT_FOUND) {
+					namePropertyAttributes = -1;
+				}
+				return;
 			case Id_arity:
+				if (value == NOT_FOUND) {
+					arityPropertyAttributes = -1;
+				}
+				return;
 			case Id_length:
+				if (value == NOT_FOUND) {
+					lengthPropertyAttributes = -1;
+				}
 				return;
 		}
 		super.setInstanceIdValue(id, value, cx);
@@ -227,6 +244,18 @@ public class BaseFunction extends IdScriptableObject implements Function {
 			}
 			case Id_arguments -> {
 				argumentsAttributes = attr;
+				return;
+			}
+			case Id_arity -> {
+				arityPropertyAttributes = attr;
+				return;
+			}
+			case Id_name -> {
+				namePropertyAttributes = attr;
+				return;
+			}
+			case Id_length -> {
+				lengthPropertyAttributes = attr;
 				return;
 			}
 		}
@@ -317,6 +346,11 @@ public class BaseFunction extends IdScriptableObject implements Function {
 	 * Make value as DontEnum, DontDelete, ReadOnly
 	 * prototype property of this Function object
 	 */
+	public void setStandardPropertyAttributes(int attributes) {
+		namePropertyAttributes = attributes;
+		lengthPropertyAttributes = attributes;
+	}
+
 	public void setImmunePrototypeProperty(Object value) {
 		if ((prototypePropertyAttributes & READONLY) != 0) {
 			throw new IllegalStateException();
