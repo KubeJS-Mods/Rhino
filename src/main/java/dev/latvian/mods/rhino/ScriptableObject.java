@@ -805,9 +805,10 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		return result;
 	}
 
-	private static Scriptable getBase(Scriptable obj, String name, Context cx) {
+	private static Scriptable getBase(Scriptable start, String name, Context cx) {
+		Scriptable obj = start;
 		do {
-			if (obj.has(cx, name, obj)) {
+			if (obj.has(cx, name, start)) {
 				break;
 			}
 			obj = obj.getPrototype(cx);
@@ -815,9 +816,10 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		return obj;
 	}
 
-	private static Scriptable getBase(Context cx, Scriptable obj, int index) {
+	private static Scriptable getBase(Context cx, Scriptable start, int index) {
+		Scriptable obj = start;
 		do {
-			if (obj.has(cx, index, obj)) {
+			if (obj.has(cx, index, start)) {
 				break;
 			}
 			obj = obj.getPrototype(cx);
@@ -825,9 +827,10 @@ public abstract class ScriptableObject implements Scriptable, SymbolScriptable, 
 		return obj;
 	}
 
-	private static Scriptable getBase(Context cx, Scriptable obj, Symbol key) {
+	private static Scriptable getBase(Context cx, Scriptable start, Symbol key) {
+		Scriptable obj = start;
 		do {
-			if (ensureSymbolScriptable(obj, cx).has(cx, key, obj)) {
+			if (ensureSymbolScriptable(obj, cx).has(cx, key, start)) {
 				break;
 			}
 			obj = obj.getPrototype(cx);
