@@ -1,5 +1,10 @@
 package dev.latvian.mods.rhino;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Abstract Object Operations as defined by EcmaScript
  *
@@ -121,5 +126,55 @@ class AbstractEcmaObjectOperations {
 		obj.preventExtensions();
 
 		return true;
+	}
+
+	enum KEY_COERCION {
+		PROPERTY,
+		COLLECTION,
+	}
+
+	/**
+	 * Implement the ECMAScript abstract operation "GroupBy" defined in section 7.3.35 of ECMA262.
+	 *
+	 * @see <a href="https://tc39.es/ecma262/#sec-groupby"></a>
+	 */
+	static Map<Object, List<Object>> groupBy(Context cx, Scriptable scope, IdFunctionObject f, Object items, Object callback, KEY_COERCION keyCoercion) {
+		ScriptRuntimeES6.requireObjectCoercible(cx, items, f);
+		if (!(callback instanceof Callable)) {
+			throw ScriptRuntime.notFunctionError(cx, callback);
+		}
+
+		// LinkedHashMap used to preserve key creation order
+		Map<Object, List<Object>> groups = new LinkedHashMap<>();
+		final Object iterator = ScriptRuntime.callIterator(cx, scope, items);
+		try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, iterator)) {
+			double i = 0;
+			for (Object o : it) {
+				if (i > NativeNumber.MAX_SAFE_INTEGER) {
+					it.close();
+					throw ScriptRuntime.typeError(cx, "Too many values to iterate");
+				}
+
+				Object[] args = {o, i};
+				Object key = ((Callable) callback).call(cx, scope, Undefined.SCRIPTABLE_INSTANCE, args);
+				if (keyCoercion == KEY_COERCION.PROPERTY) {
+					if (!ScriptRuntime.isSymbol(key)) {
+						key = ScriptRuntime.toString(cx, key);
+					}
+				} else {
+					assert keyCoercion == KEY_COERCION.COLLECTION;
+					if ((key instanceof Number) && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
+						key = ScriptRuntime.zeroObj;
+					}
+				}
+
+				List<Object> group = groups.computeIfAbsent(key, (k) -> new ArrayList<>());
+				group.add(o);
+
+				i++;
+			}
+		}
+
+		return groups;
 	}
 }

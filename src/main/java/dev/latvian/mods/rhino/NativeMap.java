@@ -6,12 +6,16 @@
 
 package dev.latvian.mods.rhino;
 
+import java.util.List;
+import java.util.Map;
+
 public class NativeMap extends IdScriptableObject {
 	static final String ITERATOR_TAG = "Map Iterator";
 	private static final Object MAP_TAG = "Map";
 	private static final Object NULL_VALUE = new Object();
 	// Note that "SymbolId_iterator" is not present here. That's because the spec
 	// requires that it be the same value as the "entries" prototype property.
+	private static final int ConstructorId_groupBy = -1;
 	private static final int Id_constructor = 1;
 	private static final int Id_set = 2;
 	private static final int Id_get = 3;
@@ -113,6 +117,12 @@ public class NativeMap extends IdScriptableObject {
 	}
 
 	@Override
+	protected void fillConstructorProperties(IdFunctionObject ctor, Context cx) {
+		addIdFunctionProperty(ctor, MAP_TAG, ConstructorId_groupBy, "groupBy", 2, cx);
+		super.fillConstructorProperties(ctor, cx);
+	}
+
+	@Override
 	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		if (!f.hasTag(MAP_TAG)) {
 			return super.execIdCall(f, cx, scope, thisObj, args);
@@ -149,6 +159,22 @@ public class NativeMap extends IdScriptableObject {
 				return realThis(thisObj, f, cx).js_forEach(cx, scope, args.length > 0 ? args[0] : Undefined.INSTANCE, args.length > 1 ? args[1] : Undefined.INSTANCE);
 			case SymbolId_getSize:
 				return realThis(thisObj, f, cx).js_getSize();
+
+			case ConstructorId_groupBy: {
+				Object items = args.length < 1 ? Undefined.INSTANCE : args[0];
+				Object callback = args.length < 2 ? Undefined.INSTANCE : args[1];
+
+				Map<Object, List<Object>> groups = AbstractEcmaObjectOperations.groupBy(cx, scope, f, items, callback, AbstractEcmaObjectOperations.KEY_COERCION.COLLECTION);
+
+				NativeMap map = (NativeMap) cx.newObject(scope, "Map");
+
+				for (Map.Entry<Object, List<Object>> entry : groups.entrySet()) {
+					Scriptable elements = cx.newArray(scope, entry.getValue().toArray());
+					map.entries.put(cx, entry.getKey(), elements);
+				}
+
+				return map;
+			}
 		}
 		throw new IllegalArgumentException("Map.prototype has no method: " + f.getFunctionName());
 	}

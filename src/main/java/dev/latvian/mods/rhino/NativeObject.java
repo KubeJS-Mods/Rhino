@@ -63,6 +63,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 	private static final int ConstructorId_fromEntries = -20;
 	private static final int ConstructorId_hasOwn = -21;
 	private static final int ConstructorId_getOwnPropertyDescriptors = -22;
+	private static final int ConstructorId_groupBy = -23;
 	private static final int Id_constructor = 1;
 	private static final int Id_toString = 2;
 	private static final int Id_toLocaleString = 3;
@@ -147,6 +148,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_freeze, "freeze", 1, cx);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_assign, "assign", 2, cx);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_is, "is", 2, cx);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_groupBy, "groupBy", 2, cx);
 		super.fillConstructorProperties(ctor, cx);
 	}
 
@@ -653,6 +655,28 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				return ScriptRuntime.same(cx, a1, a2);
 			}
 
+			case ConstructorId_groupBy: {
+				Object items = args.length < 1 ? Undefined.INSTANCE : args[0];
+				Object callback = args.length < 2 ? Undefined.INSTANCE : args[1];
+
+				Map<Object, List<Object>> groups = AbstractEcmaObjectOperations.groupBy(cx, scope, f, items, callback, AbstractEcmaObjectOperations.KEY_COERCION.PROPERTY);
+
+				NativeObject obj = (NativeObject) cx.newObject(scope);
+				obj.setPrototype(null);
+
+				for (Map.Entry<Object, List<Object>> entry : groups.entrySet()) {
+					Scriptable elements = cx.newArray(scope, entry.getValue().toArray());
+
+					ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
+					desc.put(cx, "enumerable", desc, Boolean.TRUE);
+					desc.put(cx, "configurable", desc, Boolean.TRUE);
+					desc.put(cx, "value", desc, elements);
+
+					obj.defineOwnProperty(cx, entry.getKey(), desc);
+				}
+
+				return obj;
+			}
 
 			default:
 				throw new IllegalArgumentException(String.valueOf(id));
