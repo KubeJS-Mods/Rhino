@@ -76,7 +76,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static final int SymbolId_iterator = 32;
 	private static final int Id_at = 33;
 	private static final int Id_flat = 34;
-	private static final int MAX_PROTOTYPE_ID = Id_flat;
+	private static final int Id_flatMap = 35;
+	private static final int MAX_PROTOTYPE_ID = Id_flatMap;
 	private static final int ConstructorId_join = -Id_join;
 	private static final int ConstructorId_reverse = -Id_reverse;
 	private static final int ConstructorId_sort = -Id_sort;
@@ -1279,6 +1280,47 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		return result;
 	}
 
+	private static Object js_flatMap(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+		Object callbackArg = args.length > 0 ? args[0] : Undefined.INSTANCE;
+		if (!(callbackArg instanceof Function f) || callbackArg instanceof NativeRegExp) {
+			throw ScriptRuntime.notFunctionError(cx, callbackArg);
+		}
+
+		Scriptable parent = getTopLevelScope(f);
+		Scriptable thisArg;
+		if (args.length < 2 || args[1] == null || args[1] == Undefined.INSTANCE) {
+			thisArg = parent;
+		} else {
+			thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
+		}
+
+		long length = getLengthProperty(cx, o, false);
+
+		Scriptable result = cx.newArray(scope, 0);
+		long j = 0;
+		for (long i = 0; i < length; i++) {
+			Object elem = getRawElem(o, i, cx);
+			if (elem == NOT_FOUND) {
+				continue;
+			}
+			Object[] innerArgs = {elem, i, o};
+			Object mapCall = f.call(cx, parent, thisArg, innerArgs);
+			if (js_isArray(mapCall)) {
+				Scriptable arr = (Scriptable) mapCall;
+				long arrLength = getLengthProperty(cx, arr, false);
+				for (long k = 0; k < arrLength; k++) {
+					Object temp = getRawElem(arr, k, cx);
+					defineElem(cx, result, j++, temp);
+				}
+			} else {
+				defineElem(cx, result, j++, mapCall);
+			}
+		}
+		setLengthProperty(cx, result, j);
+		return result;
+	}
+
 	/**
 	 * Implements the methods "every", "filter", "forEach", "map", and "some".
 	 */
@@ -1695,6 +1737,10 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				arity = 0;
 				s = "flat";
 			}
+			case Id_flatMap -> {
+				arity = 1;
+				s = "flatMap";
+			}
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 
@@ -1825,6 +1871,9 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 				case Id_flat:
 					return js_flat(cx, scope, thisObj, args);
+
+				case Id_flatMap:
+					return js_flatMap(cx, scope, thisObj, args);
 
 				case Id_every:
 				case Id_filter:
@@ -2421,6 +2470,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			case "copyWithin" -> Id_copyWithin;
 			case "at" -> Id_at;
 			case "flat" -> Id_flat;
+			case "flatMap" -> Id_flatMap;
 			default -> 0;
 		};
 	}
