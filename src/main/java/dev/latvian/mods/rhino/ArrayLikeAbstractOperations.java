@@ -17,6 +17,8 @@ public class ArrayLikeAbstractOperations {
 		SOME,
 		FIND,
 		FIND_INDEX,
+		FIND_LAST,
+		FIND_LAST_INDEX,
 	}
 
 	public enum ReduceOperation {
@@ -30,7 +32,7 @@ public class ArrayLikeAbstractOperations {
 	public static Object iterativeMethod(Context cx, IdFunctionObject fun, IterativeOperation operation, Scriptable scope, Scriptable thisObj, Object[] args) {
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-		if (IterativeOperation.FIND == operation || IterativeOperation.FIND_INDEX == operation) {
+		if (IterativeOperation.FIND == operation || IterativeOperation.FIND_INDEX == operation || IterativeOperation.FIND_LAST == operation || IterativeOperation.FIND_LAST_INDEX == operation) {
 			ScriptRuntimeES6.requireObjectCoercible(cx, o, fun);
 		}
 
@@ -52,11 +54,15 @@ public class ArrayLikeAbstractOperations {
 			array = cx.newArray(scope, resultLength);
 		}
 		long j = 0;
-		for (long i = 0; i < length; i++) {
+		boolean reverse = operation == IterativeOperation.FIND_LAST || operation == IterativeOperation.FIND_LAST_INDEX;
+		long start = reverse ? length - 1 : 0;
+		long end = reverse ? -1 : length;
+		long increment = reverse ? -1 : +1;
+		for (long i = start; i != end; i += increment) {
 			Object[] innerArgs = new Object[3];
 			Object elem = getRawElem(o, i, cx);
 			if (elem == Scriptable.NOT_FOUND) {
-				if (operation == IterativeOperation.FIND || operation == IterativeOperation.FIND_INDEX) {
+				if (operation == IterativeOperation.FIND || operation == IterativeOperation.FIND_INDEX || operation == IterativeOperation.FIND_LAST || operation == IterativeOperation.FIND_LAST_INDEX) {
 					elem = Undefined.INSTANCE;
 				} else {
 					continue;
@@ -88,11 +94,13 @@ public class ArrayLikeAbstractOperations {
 					}
 					break;
 				case FIND:
+				case FIND_LAST:
 					if (ScriptRuntime.toBoolean(cx, result)) {
 						return elem;
 					}
 					break;
 				case FIND_INDEX:
+				case FIND_LAST_INDEX:
 					if (ScriptRuntime.toBoolean(cx, result)) {
 						return ScriptRuntime.wrapNumber(i);
 					}
@@ -103,7 +111,7 @@ public class ArrayLikeAbstractOperations {
 			case EVERY -> Boolean.TRUE;
 			case FILTER, MAP -> array;
 			case SOME -> Boolean.FALSE;
-			case FIND_INDEX -> ScriptRuntime.wrapNumber(-1);
+			case FIND_INDEX, FIND_LAST_INDEX -> ScriptRuntime.wrapNumber(-1);
 			default -> Undefined.INSTANCE;
 		};
 	}

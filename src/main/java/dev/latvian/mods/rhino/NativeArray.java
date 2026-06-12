@@ -79,7 +79,9 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static final int Id_at = 33;
 	private static final int Id_flat = 34;
 	private static final int Id_flatMap = 35;
-	private static final int MAX_PROTOTYPE_ID = Id_flatMap;
+	private static final int Id_findLast = 36;
+	private static final int Id_findLastIndex = 37;
+	private static final int MAX_PROTOTYPE_ID = Id_findLastIndex;
 	private static final int ConstructorId_join = -Id_join;
 	private static final int ConstructorId_reverse = -Id_reverse;
 	private static final int ConstructorId_sort = -Id_sort;
@@ -101,6 +103,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static final int ConstructorId_findIndex = -Id_findIndex;
 	private static final int ConstructorId_reduce = -Id_reduce;
 	private static final int ConstructorId_reduceRight = -Id_reduceRight;
+	private static final int ConstructorId_findLast = -Id_findLast;
+	private static final int ConstructorId_findLastIndex = -Id_findLastIndex;
 	private static final int ConstructorId_isArray = -26;
 	private static final int ConstructorId_of = -27;
 	private static final int ConstructorId_from = -28;
@@ -1230,9 +1234,6 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		return result;
 	}
 
-	/**
-	 * Implements the methods "every", "filter", "forEach", "map", and "some".
-	 */
 	private static boolean js_isArray(Object o) {
 		return o instanceof NativeJavaList || o instanceof List || o instanceof Scriptable s && "Array".equals(s.getClassName());
 	}
@@ -1364,6 +1365,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_some, "some", 1, cx);
 		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_find, "find", 1, cx);
 		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_findIndex, "findIndex", 1, cx);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_findLast, "findLast", 1, cx);
+		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_findLastIndex, "findLastIndex", 1, cx);
 		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduce, "reduce", 1, cx);
 		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduceRight, "reduceRight", 1, cx);
 		addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_isArray, "isArray", 1, cx);
@@ -1518,6 +1521,14 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				arity = 1;
 				s = "flatMap";
 			}
+			case Id_findLast -> {
+				arity = 1;
+				s = "findLast";
+			}
+			case Id_findLastIndex -> {
+				arity = 1;
+				s = "findLastIndex";
+			}
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 
@@ -1553,7 +1564,9 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				case ConstructorId_find:
 				case ConstructorId_findIndex:
 				case ConstructorId_reduce:
-				case ConstructorId_reduceRight: {
+				case ConstructorId_reduceRight:
+				case ConstructorId_findLast:
+				case ConstructorId_findLastIndex: {
 					// this is a small trick; we will handle all the ConstructorId_xxx calls
 					// the same way the object calls are processed
 					// so we adjust the args, inverting the id and
@@ -1666,6 +1679,10 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 					return ArrayLikeAbstractOperations.iterativeMethod(cx, f, IterativeOperation.FIND, scope, thisObj, args);
 				case Id_findIndex:
 					return ArrayLikeAbstractOperations.iterativeMethod(cx, f, IterativeOperation.FIND_INDEX, scope, thisObj, args);
+				case Id_findLast:
+					return ArrayLikeAbstractOperations.iterativeMethod(cx, f, IterativeOperation.FIND_LAST, scope, thisObj, args);
+				case Id_findLastIndex:
+					return ArrayLikeAbstractOperations.iterativeMethod(cx, f, IterativeOperation.FIND_LAST_INDEX, scope, thisObj, args);
 				case Id_reduce:
 					return ArrayLikeAbstractOperations.reduceMethod(cx, ReduceOperation.REDUCE, scope, thisObj, args);
 				case Id_reduceRight:
@@ -2255,6 +2272,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			case "at" -> Id_at;
 			case "flat" -> Id_flat;
 			case "flatMap" -> Id_flatMap;
+			case "findLast" -> Id_findLast;
+			case "findLastIndex" -> Id_findLastIndex;
 			default -> 0;
 		};
 	}
