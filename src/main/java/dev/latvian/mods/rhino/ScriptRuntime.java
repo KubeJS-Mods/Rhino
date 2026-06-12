@@ -2551,7 +2551,13 @@ public class ScriptRuntime {
 		return hasObjectElem(cx, (Scriptable) b, a);
 	}
 
-	public static boolean cmp_LT(Context cx, Object val1, Object val2) {
+	/**
+	 * Implements the relational operators {@code <}, {@code <=}, {@code >} and {@code >=},
+	 * always evaluating (converting) val1 before val2 as per spec.
+	 */
+	public static boolean compare(Context cx, Object val1, Object val2, int op) {
+		assert op == Token.GE || op == Token.LE || op == Token.GT || op == Token.LT;
+
 		double d1, d2;
 		if (val1 instanceof Number && val2 instanceof Number) {
 			d1 = ((Number) val1).doubleValue();
@@ -2567,40 +2573,38 @@ public class ScriptRuntime {
 				val2 = ((Scriptable) val2).getDefaultValue(cx, DefaultValueTypeHint.NUMBER);
 			}
 			if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
-				return val1.toString().compareTo(val2.toString()) < 0;
+				return switch (op) {
+					case Token.GE -> val1.toString().compareTo(val2.toString()) >= 0;
+					case Token.LE -> val1.toString().compareTo(val2.toString()) <= 0;
+					case Token.GT -> val1.toString().compareTo(val2.toString()) > 0;
+					case Token.LT -> val1.toString().compareTo(val2.toString()) < 0;
+					default -> throw Kit.codeBug();
+				};
 			}
 			d1 = toNumber(cx, val1);
 			d2 = toNumber(cx, val2);
 		}
-		return d1 < d2;
+		return switch (op) {
+			case Token.GE -> d1 >= d2;
+			case Token.LE -> d1 <= d2;
+			case Token.GT -> d1 > d2;
+			case Token.LT -> d1 < d2;
+			default -> throw Kit.codeBug();
+		};
+	}
+
+	@Deprecated
+	public static boolean cmp_LT(Context cx, Object val1, Object val2) {
+		return compare(cx, val1, val2, Token.LT);
 	}
 
 	// ------------------
 	// Statements
 	// ------------------
 
+	@Deprecated
 	public static boolean cmp_LE(Context cx, Object val1, Object val2) {
-		double d1, d2;
-		if (val1 instanceof Number && val2 instanceof Number) {
-			d1 = ((Number) val1).doubleValue();
-			d2 = ((Number) val2).doubleValue();
-		} else {
-			if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
-				throw typeError0(cx, "msg.compare.symbol");
-			}
-			if (val1 instanceof Scriptable) {
-				val1 = ((Scriptable) val1).getDefaultValue(cx, DefaultValueTypeHint.NUMBER);
-			}
-			if (val2 instanceof Scriptable) {
-				val2 = ((Scriptable) val2).getDefaultValue(cx, DefaultValueTypeHint.NUMBER);
-			}
-			if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
-				return val1.toString().compareTo(val2.toString()) <= 0;
-			}
-			d1 = toNumber(cx, val1);
-			d2 = toNumber(cx, val2);
-		}
-		return d1 <= d2;
+		return compare(cx, val1, val2, Token.LE);
 	}
 
 	public static void initScript(Context cx, Scriptable scope, NativeFunction funObj, Scriptable thisObj, boolean evalScript) {

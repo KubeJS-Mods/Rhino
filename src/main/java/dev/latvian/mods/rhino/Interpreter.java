@@ -1531,13 +1531,7 @@ public final class Interpreter extends Icode implements Evaluator {
 						throw Kit.codeBug();
 				}
 			}
-			valBln = switch (op) {
-				case Token.GE -> ScriptRuntime.cmp_LE(cx, rhs, lhs);
-				case Token.LE -> ScriptRuntime.cmp_LE(cx, lhs, rhs);
-				case Token.GT -> ScriptRuntime.cmp_LT(cx, rhs, lhs);
-				case Token.LT -> ScriptRuntime.cmp_LT(cx, lhs, rhs);
-				default -> throw Kit.codeBug();
-			};
+			valBln = ScriptRuntime.compare(cx, lhs, rhs, op);
 		}
 		stack[stackTop] = valBln;
 		return stackTop;
