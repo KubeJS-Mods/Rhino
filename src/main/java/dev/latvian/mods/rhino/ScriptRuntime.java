@@ -2960,25 +2960,27 @@ public class ScriptRuntime {
 		Scriptable object = cx.newObject(scope);
 		for (int i = 0, end = propertyIds.length; i != end; ++i) {
 			Object id = propertyIds[i];
-			int getterSetter = getterSetters == null ? 0 : getterSetters[i];
+			int getterSetter = getterSetters == null ? 0 : getterSetters[i]; // -1 for GET, 1 for SET, 0 for a regular property
 			Object value = propertyValues[i];
-			if (id instanceof String) {
-				if (getterSetter == 0) {
-					if (isSpecialProperty((String) id)) {
-						Ref ref = specialRef(cx, scope, object, (String) id);
+			if (getterSetter == 0) {
+				if (id instanceof String str) {
+					if (isSpecialProperty(str)) {
+						Ref ref = specialRef(cx, scope, object, str);
 						ref.set(cx, scope, value);
 					} else {
-						object.put(cx, (String) id, object, value);
+						object.put(cx, str, object, value);
 					}
 				} else {
-					ScriptableObject so = (ScriptableObject) object;
-					Callable getterOrSetter = (Callable) value;
-					boolean isSetter = getterSetter == 1;
-					so.setGetterOrSetter(cx, (String) id, 0, getterOrSetter, isSetter);
+					int index = (Integer) id;
+					object.put(cx, index, object, value);
 				}
 			} else {
-				int index = (Integer) id;
-				object.put(cx, index, object, value);
+				ScriptableObject so = (ScriptableObject) object;
+				Callable getterOrSetter = (Callable) value;
+				boolean isSetter = getterSetter == 1;
+				String key = id instanceof String ? (String) id : null;
+				int index = key == null ? (Integer) id : 0;
+				so.setGetterOrSetter(cx, key, index, getterOrSetter, isSetter);
 			}
 		}
 		return object;
