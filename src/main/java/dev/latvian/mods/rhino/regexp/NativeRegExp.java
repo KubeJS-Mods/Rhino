@@ -1773,7 +1773,11 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 			}
 		}
 
+		final boolean instructionCounting = cx.getInstructionObserverThreshold() != 0;
 		for (; ; ) {
+			if (instructionCounting) {
+				ScriptRuntime.addInstructionCount(cx, 5);
+			}
 
 			if (reopIsSimple(op)) {
 				int match = simpleMatch(gData, input, op, program, pc, end, true, cx);
@@ -1995,8 +1999,8 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 								pc += getOffset(program, pc);
 								break switchStatement;
 							}
-							if (state.min == 0 && gData.cp == state.index) {
-								// matched an empty string, that'll get us nowhere
+							if (state.min == 0 && (gData.cp == state.index || state.max == 0)) {
+								// matched an empty string or an {0} quantifier, that'll get us nowhere
 								result = false;
 								continuationPc = state.continuationPc;
 								continuationOp = state.continuationOp;
@@ -2259,18 +2263,25 @@ public class NativeRegExp extends IdScriptableObject implements Function {
 	}
 
 	Scriptable compile(Context cx, Scriptable scope, Object[] args) {
-		if (args.length > 0 && args[0] instanceof NativeRegExp thatObj) {
-			if (args.length > 1 && args[1] != Undefined.INSTANCE) {
-				// report error
-				throw ScriptRuntime.typeError0(cx, "msg.bad.regexp.compile");
-			}
+		if (args.length >= 1 && args[0] instanceof NativeRegExp thatObj && (args.length == 1 || args[1] == Undefined.INSTANCE)) {
+			// Avoid recompiling the regex
 			this.re = thatObj.re;
-			setLastIndex(thatObj.lastIndex, cx);
-			return this;
+		} else {
+			String pattern;
+			if (args.length == 0 || args[0] == Undefined.INSTANCE) {
+				pattern = "";
+			} else if (args[0] instanceof NativeRegExp thatObj) {
+				// Passing a regex and flags is allowed in ES6, but was forbidden in ES5 and lower.
+				// Spec ref: 22.2.4.1 in ES6
+				pattern = new String(thatObj.re.source);
+			} else {
+				pattern = escapeRegExp(cx, args[0]);
+			}
+
+			String flags = args.length > 1 && args[1] != Undefined.INSTANCE ? ScriptRuntime.toString(cx, args[1]) : null;
+
+			this.re = compileRE(cx, pattern, flags, false);
 		}
-		String s = args.length == 0 || args[0] instanceof Undefined ? "" : escapeRegExp(cx, args[0]);
-		String global = args.length > 1 && args[1] != Undefined.INSTANCE ? ScriptRuntime.toString(cx, args[1]) : null;
-		this.re = compileRE(cx, s, global, false);
 		setLastIndex(ScriptRuntime.zeroObj, cx);
 		return this;
 	}

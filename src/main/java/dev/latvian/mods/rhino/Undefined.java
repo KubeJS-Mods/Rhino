@@ -100,6 +100,9 @@ public class Undefined {
 
 		@Override
 		public Object getDefaultValue(Context cx, DefaultValueTypeHint hint) {
+			if (hint == null || hint == DefaultValueTypeHint.STRING) {
+				return "undefined";
+			}
 			throw new UnsupportedOperationException("undefined doesn't support getDefaultValue");
 		}
 

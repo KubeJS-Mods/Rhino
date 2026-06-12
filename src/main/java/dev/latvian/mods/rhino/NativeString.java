@@ -11,7 +11,9 @@ import dev.latvian.mods.rhino.regexp.RegExp;
 
 import java.text.Collator;
 import java.text.Normalizer;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * This class implements the String native object.
@@ -87,7 +89,11 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 	private static final int Id_trimStart = 48;
 	private static final int Id_trimEnd = 49;
 	private static final int SymbolId_iterator = 50;
-	private static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
+	private static final int Id_replaceAll = 51;
+	private static final int Id_at = 52;
+	private static final int Id_isWellFormed = 53;
+	private static final int Id_toWellFormed = 54;
+	private static final int MAX_PROTOTYPE_ID = Id_toWellFormed;
 	private static final int ConstructorId_charAt = -Id_charAt;
 	private static final int ConstructorId_charCodeAt = -Id_charCodeAt;
 	private static final int ConstructorId_indexOf = -Id_indexOf;
@@ -103,6 +109,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 	private static final int ConstructorId_match = -Id_match;
 	private static final int ConstructorId_search = -Id_search;
 	private static final int ConstructorId_replace = -Id_replace;
+	private static final int ConstructorId_replaceAll = -Id_replaceAll;
 	private static final int ConstructorId_localeCompare = -Id_localeCompare;
 	private static final int ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
 
@@ -528,6 +535,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_match, "match", 2, cx);
 		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_search, "search", 2, cx);
 		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_replace, "replace", 2, cx);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_replaceAll, "replaceAll", 2, cx);
 		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_localeCompare, "localeCompare", 2, cx);
 		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_toLocaleLowerCase, "toLocaleLowerCase", 1, cx);
 		super.fillConstructorProperties(ctor, cx);
@@ -675,6 +683,22 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 				arity = 2;
 				s = "replace";
 			}
+			case Id_replaceAll -> {
+				arity = 2;
+				s = "replaceAll";
+			}
+			case Id_at -> {
+				arity = 1;
+				s = "at";
+			}
+			case Id_isWellFormed -> {
+				arity = 0;
+				s = "isWellFormed";
+			}
+			case Id_toWellFormed -> {
+				arity = 0;
+				s = "toWellFormed";
+			}
 			case Id_localeCompare -> {
 				arity = 1;
 				s = "localeCompare";
@@ -768,6 +792,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 				case ConstructorId_match:
 				case ConstructorId_search:
 				case ConstructorId_replace:
+				case ConstructorId_replaceAll:
 				case ConstructorId_localeCompare:
 				case ConstructorId_toLocaleLowerCase: {
 					if (args.length > 0) {
@@ -977,18 +1002,103 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 
 				case Id_match:
 				case Id_search:
-				case Id_replace: {
+				case Id_replace:
+				case Id_replaceAll: {
 					int actionType;
 					if (id == Id_match) {
 						actionType = RegExp.RA_MATCH;
 					} else if (id == Id_search) {
 						actionType = RegExp.RA_SEARCH;
-					} else {
+					} else if (id == Id_replace) {
 						actionType = RegExp.RA_REPLACE;
+					} else {
+						actionType = RegExp.RA_REPLACE_ALL;
 					}
 
 					ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f);
 					return cx.getRegExp().action(cx, scope, thisObj, args, actionType);
+				}
+
+				case Id_at: {
+					String str = ScriptRuntime.toString(cx, ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
+					Object targetArg = (args.length >= 1) ? args[0] : Undefined.INSTANCE;
+					int len = str.length();
+					int relativeIndex = (int) ScriptRuntime.toInteger(cx, targetArg);
+
+					int k = (relativeIndex >= 0) ? relativeIndex : len + relativeIndex;
+
+					if ((k < 0) || (k >= len)) {
+						return Undefined.INSTANCE;
+					}
+
+					return str.substring(k, k + 1);
+				}
+
+				case Id_isWellFormed: {
+					CharSequence str = ScriptRuntime.toCharSequence(cx, ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
+					int len = str.length();
+					boolean foundLeadingSurrogate = false;
+					for (int i = 0; i < len; i++) {
+						char c = str.charAt(i);
+						if (Character.isHighSurrogate(c)) {
+							if (foundLeadingSurrogate) {
+								return false;
+							}
+							foundLeadingSurrogate = true;
+						} else if (Character.isLowSurrogate(c)) {
+							if (!foundLeadingSurrogate) {
+								return false;
+							}
+							foundLeadingSurrogate = false;
+						} else if (foundLeadingSurrogate) {
+							return false;
+						}
+					}
+					return !foundLeadingSurrogate;
+				}
+
+				case Id_toWellFormed: {
+					CharSequence str = ScriptRuntime.toCharSequence(cx, ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
+					// true represents a surrogate pair
+					// false represents a singular surrogate
+					// normal characters aren't present
+					Map<Integer, Boolean> surrogates = new HashMap<>();
+
+					int len = str.length();
+					char prev = 0;
+					int firstSurrogateIndex = -1;
+					for (int i = 0; i < len; i++) {
+						char c = str.charAt(i);
+
+						if (Character.isHighSurrogate(prev) && Character.isLowSurrogate(c)) {
+							surrogates.put(i - 1, Boolean.TRUE);
+							surrogates.put(i, Boolean.TRUE);
+						} else if (Character.isHighSurrogate(c) || Character.isLowSurrogate(c)) {
+							surrogates.put(i, Boolean.FALSE);
+							if (firstSurrogateIndex == -1) {
+								firstSurrogateIndex = i;
+							}
+						}
+
+						prev = c;
+					}
+
+					if (surrogates.isEmpty()) {
+						return str.toString();
+					}
+
+					StringBuilder sb = new StringBuilder(str.subSequence(0, firstSurrogateIndex));
+					for (int i = firstSurrogateIndex; i < len; i++) {
+						char c = str.charAt(i);
+						Boolean pairOrNormal = surrogates.get(i);
+						if (pairOrNormal == null || pairOrNormal) {
+							sb.append(c);
+						} else {
+							sb.append('�');
+						}
+					}
+
+					return sb.toString();
 				}
 				// ECMA-262 1 5.5.4.9
 				case Id_localeCompare: {
@@ -1227,6 +1337,10 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 			case "match" -> Id_match;
 			case "search" -> Id_search;
 			case "replace" -> Id_replace;
+			case "replaceAll" -> Id_replaceAll;
+			case "at" -> Id_at;
+			case "isWellFormed" -> Id_isWellFormed;
+			case "toWellFormed" -> Id_toWellFormed;
 			case "localeCompare" -> Id_localeCompare;
 			case "toLocaleLowerCase" -> Id_toLocaleLowerCase;
 			case "toLocaleUpperCase" -> Id_toLocaleUpperCase;

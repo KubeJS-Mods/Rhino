@@ -17,6 +17,7 @@ import dev.latvian.mods.rhino.util.JavaIteratorWrapper;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * This class reflects non-Array Java objects into the JavaScript environment.  It
@@ -332,5 +333,15 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper {
 			}
 		}
 		return value;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj != null && obj.getClass().equals(getClass()) && Objects.equals(((NativeJavaObject) obj).javaObject, javaObject);
+	}
+
+	@Override
+	public int hashCode() {
+		return javaObject == null ? 0 : javaObject.hashCode();
 	}
 }

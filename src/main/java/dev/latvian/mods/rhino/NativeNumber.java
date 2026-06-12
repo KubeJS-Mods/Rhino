@@ -23,6 +23,7 @@ final class NativeNumber extends IdScriptableObject {
 
 	private static final int MAX_PRECISION = 100;
 	private static final double MIN_SAFE_INTEGER = -MAX_SAFE_INTEGER;
+	private static final double EPSILON = 2.220446049250313e-16; // Math.pow(2, -52)
 	private static final int ConstructorId_isFinite = -1;
 	private static final int ConstructorId_isNaN = -2;
 	private static final int ConstructorId_isInteger = -3;
@@ -183,6 +184,7 @@ final class NativeNumber extends IdScriptableObject {
 		ctor.defineProperty(cx, "MIN_VALUE", ScriptRuntime.wrapNumber(Double.MIN_VALUE), attr);
 		ctor.defineProperty(cx, "MAX_SAFE_INTEGER", ScriptRuntime.wrapNumber(MAX_SAFE_INTEGER), attr);
 		ctor.defineProperty(cx, "MIN_SAFE_INTEGER", ScriptRuntime.wrapNumber(MIN_SAFE_INTEGER), attr);
+		ctor.defineProperty(cx, "EPSILON", ScriptRuntime.wrapNumber(EPSILON), attr);
 
 		addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isFinite, "isFinite", 1, cx);
 		addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isNaN, "isNaN", 1, cx);

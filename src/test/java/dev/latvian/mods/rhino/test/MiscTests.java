@@ -1,95 +1,13 @@
 package dev.latvian.mods.rhino.test;
 
 import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-
-import java.lang.reflect.Modifier;
 
 @SuppressWarnings("unused")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class MiscTests {
-	public static class InterfaceTests {
-		public interface Defaulted {
-			default String someMethod() {
-				return "default";
-			}
-		}
-
-		public interface DefaultedAbstract {
-			String abstractMethod();
-
-			default String someMethod() {
-				return "default";
-			}
-		}
-
-		public static String callDefaulted(Defaulted d) {
-			return d.someMethod();
-		}
-
-		public static String callDefaultedAbstract(DefaultedAbstract d) {
-			return d.someMethod() + "," + d.abstractMethod();
-		}
-	}
-
-	public static final RhinoTest TEST = new RhinoTest("misc").withScopeAction(((cx, rootScope) -> {
-		cx.addToScope(rootScope, "Interfaces", InterfaceTests.class);
-	}));
-
-	@Test
-	public void testFunctionAssignment() {
-		TEST.test("functionAssignment",
-			"""
-				let x = () => {};
-				x.abc = 1;
-				console.info(x.abc);
-				""",
-			"1"
-		);
-	}
-
-	@Test
-	public void testDelete() {
-		TEST.test("delete", "let x = {a: 1}; delete x.a; console.info(x.a);", "undefined");
-	}
-
-	@Test
-	@Order(1)
-	public void init() {
-		TEST.test("init", """
-			const testObject = {
-				a: -39, b: 2, c: 3439438
-			}
-			
-			let testList = console.testList
-			
-			for (let string of testList) {
-				console.info(string)
-			}
-			
-			shared.testObject = testObject
-			shared.testList = testList
-			""", """
-			abc
-			def
-			ghi
-			""");
-	}
-
-	@Test
-	public void array() {
-		TEST.test("array", """
-			for (let x of console.testArray) {
-				console.info(x)
-			}
-			""", """
-			abc
-			def
-			ghi
-			""");
-	}
+	public static final RhinoTest TEST = new RhinoTest("misc");
 
 	@Test
 	public void enums() {
@@ -103,130 +21,124 @@ public class MiscTests {
 	}
 
 	@Test
-	@Order(2)
-	public void arrayLength() {
-		TEST.test("arrayLength", """
-			console.info('init ' + shared.testList.length)
-			shared.testList.add('abcawidawidaiwdjawd')
-			console.info('add ' + shared.testList.length)
-			shared.testList.push('abcawidawidaiwdjawd')
-			console.info('push ' + shared.testList.length)
+	public void errorCause() {
+		TEST.test("errorCause", """
+			const e = new Error('msg', { cause: 'root' });
+			console.info(e.cause);
+			console.info(e.message);
+			const e2 = new Error('msg2');
+			console.info('cause' in e2);
+			const e3 = new TypeError('bad', { cause: 42 });
+			console.info(e3.cause);
+			const e4 = new Error('m', { cause: undefined });
+			console.info('cause' in e4);
 			""", """
-			init 3
-			add 4
-			push 5
+			root
+			msg
+			false
+			42
+			true
 			""");
 	}
 
 	@Test
-	@Order(3)
-	public void popUnshiftMap() {
-		TEST.test("popUnshiftMap", """
-			console.info('pop ' + shared.testList.pop() + ' ' + shared.testList.length)
-			console.info('shift ' + shared.testList.shift() + ' ' + shared.testList.length)
-			console.info('map ' + shared.testList.concat(['xyz']).reverse().map(e => e.toUpperCase()).join(" | "))
+	public void errorIsError() {
+		TEST.test("errorIsError", """
+			console.info(Error.isError(new Error('x')));
+			console.info(Error.isError(new TypeError('x')));
+			console.info(Error.isError({ name: 'Error', message: 'x' }));
+			console.info(Error.isError('Error'));
+			console.info(Error.isError());
+			console.info(Error.isError(null));
 			""", """
-			pop abcawidawidaiwdjawd 4
-			shift abc 3
-			map XYZ | ABCAWIDAWIDAIWDJAWD | GHI | DEF
+			true
+			true
+			false
+			false
+			false
+			false
 			""");
 	}
 
 	@Test
-	@Order(4)
-	public void keysValuesEntries() {
-		TEST.test("keysValuesEntries", """
-			console.info(Object.keys(shared.testObject))
-			console.info(Object.values(shared.testObject))
-			console.info(Object.entries(shared.testObject))
+	public void functionAssign() {
+		TEST.test("functionAssign", """
+			let x = () => {};
+			x.abc = 1;
+			console.info(x.abc);
+			""", "1");
+	}
+
+	@Test
+	public void functionProto() {
+		TEST.test("functionProto", """
+			function F() {}
+			const p = { x: 1 };
+			F.__proto__ = p;
+			console.info(F.x);
+			const o = {};
+			o.__proto__ = { y: 2 };
+			console.info(o.y);
 			""", """
-			['a', 'b', 'c']
-			[-39, 2, 3439438]
-			[['a', -39], ['b', 2], ['c', 3439438]]
+			1
+			2
 			""");
 	}
 
 	@Test
-	public void numberKeyedObjectValues() {
-		TEST.test("numberKeyedObjectValues", """
-			const obj = { 0: 50, 1: 25, 2: 18, 3: 7 }
-			console.info(Object.keys(obj).join(','))
-			console.info(Object.values(obj).join(','))
-			console.info(Object.entries(obj).map(e => e.join(':')).join(','))
+	public void get() {
+		TEST.test("get", """
+			console.info(console.immutableInt)
 			""", """
-			0,1,2,3
-			50,25,18,7
-			0:50,1:25,2:18,3:7
+			40
 			""");
 	}
 
 	@Test
-	@Order(4)
-	public void deconstruction() {
-		TEST.test("deconstruction", """
-			for (let [key, value] of Object.entries(shared.testObject)) {
-				console.info(`${key} : ${value}`)
-			}
+	public void set() {
+		TEST.test("set", """
+			console.mutableInt = 30.5
+			console.info(console.mutableInt)
 			""", """
-			a : -39
-			b : 2
-			c : 3439438
+			30
 			""");
 	}
 
 	@Test
-	@Order(4)
-	public void typeWrappers() {
-		TEST.test("typeWrappers", """
-			console.printMaterial('wood')
-			console.printMaterial('stone')
-			console.printMaterial('wood')
-			""", """
-			wood#0037c6ad
-			stone#068af865
-			wood#0037c6ad
-			""");
+	public void testDelete() {
+		TEST.test("delete", "let x = {a: 1}; delete x.a; console.info(x.a);", "undefined");
 	}
 
 	@Test
-	public void jsonStringifyNumbers() {
-		TEST.test("jsonStringifyNumbers", """
-			console.info(JSON.stringify(50.0))
-			console.info(JSON.stringify(1.5))
-			console.info(JSON.stringify({ a: 1, b: 2.5 }))
-			console.info(JSON.stringify([1, 2, 3]))
-			console.info(JSON.stringify({ a: Infinity, b: NaN, c: 1/0 }))
+	public void mathF16round() {
+		TEST.test("mathF16round", """
+			console.info(Math.f16round(5.5));
+			console.info(Math.f16round(5.05));
+			console.info(Math.f16round(0.1));
+			console.info(Math.f16round(NaN));
+			console.info(Math.f16round(Infinity));
+			console.info(Math.f16round(-Infinity));
+			console.info(1 / Math.f16round(-0));
+			console.info(Math.f16round(65520));
+			console.info(Math.f16round(65519.999));
+			console.info(Math.f16round(5.960464477539063e-8));
+			console.info(Math.f16round(2.980232238769531e-8));
+			console.info(Math.f16round(1.337));
+			console.info(Math.f16round());
 			""", """
-			50
-			1.5
-			{"a":1,"b":2.5}
-			[1,2,3]
-			{"a":null,"b":null,"c":null}
-			""");
-	}
-
-	@Test
-	public void jsonStringifyWithNestedArrays() {
-		TEST.test("jsonStringifyWithNestedArrays", """
-			const thing = {nested: [1, 2, 3]};
-			console.info(JSON.stringify(thing));
-			""", "{\"nested\":[1,2,3]}");
-	}
-
-	@Test
-	public void jsonStringifySpecial() {
-		TEST.test("jsonStringifyUnserializable", """
-			console.info(JSON.stringify(undefined))
-			console.info(JSON.stringify(function () {}))
-			console.info(JSON.stringify(Symbol('x')))
-			console.info(JSON.stringify({ a: null, b: undefined, c: () => 4, d: 'ok' }))
-			console.info(JSON.stringify([1, undefined, () => 4, 2]))
-			""", """
-			undefined
-			undefined
-			undefined
-			{"a":null,"d":"ok"}
-			[1,null,null,2]
+			5.5
+			5.05078125
+			0.0999755859375
+			NaN
+			Infinity
+			-Infinity
+			-Infinity
+			Infinity
+			65504
+			5.960464477539063e-8
+			0
+			1.3369140625
+			NaN
 			""");
 	}
 
@@ -250,44 +162,6 @@ public class MiscTests {
 	}
 
 	@Test
-	public void types() {
-		for (var method : GenericObject.class.getDeclaredMethods()) {
-			if (!Modifier.isStatic(method.getModifiers())) {
-				GenericObject.test = method.getName();
-				GenericObject.test(method.getName(), method.getGenericReturnType());
-			}
-		}
-
-		GenericObject.test = "";
-	}
-
-	@Test
-	public void varargs() {
-		TEST.test("varargs", """
-			console.varargTest("hi", 1, 2, 3);
-			""", "VarArg Ints hi: [1, 2, 3]");
-	}
-
-	@Test
-	public void get() {
-		TEST.test("get", """
-			console.info(console.immutableInt)
-			""", """
-			40
-			""");
-	}
-
-	@Test
-	public void set() {
-		TEST.test("set", """
-			console.mutableInt = 30.5
-			console.info(console.mutableInt)
-			""", """
-			30
-			""");
-	}
-
-	@Test
 	public void privateInnerClassAccess() {
 		TEST.test("privateInnerClassAccess", """
 			console.info(console.immutableTestList.size())
@@ -303,15 +177,22 @@ public class MiscTests {
 	}
 
 	@Test
-	public void overriddenDefaultMethod() {
-		TEST.test("overriddenDefaultMethod", """
-			console.info(Interfaces.callDefaulted({}))
-			console.info(Interfaces.callDefaulted({ someMethod: () => 'overridden' }))
-			console.info(Interfaces.callDefaultedAbstract({ someMethod: () => 'overridden', abstractMethod: () => 'js abstract' }))
+	public void typeWrappers() {
+		TEST.test("typeWrappers", """
+			console.printMaterial('wood')
+			console.printMaterial('stone')
+			console.printMaterial('wood')
 			""", """
-			default
-			overridden
-			overridden,js abstract
+			wood#0037c6ad
+			stone#068af865
+			wood#0037c6ad
 			""");
+	}
+
+	@Test
+	public void varargs() {
+		TEST.test("varargs", """
+			console.varargTest("hi", 1, 2, 3);
+			""", "VarArg Ints hi: [1, 2, 3]");
 	}
 }

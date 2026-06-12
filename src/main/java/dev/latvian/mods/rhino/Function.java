@@ -16,7 +16,7 @@ package dev.latvian.mods.rhino;
  * @see Scriptable
  */
 
-public interface Function extends Scriptable, Callable {
+public interface Function extends Scriptable, Callable, Constructable {
 	/**
 	 * Call the function.
 	 * <p>
@@ -47,5 +47,6 @@ public interface Function extends Scriptable, Callable {
 	 * @param args  the array of arguments
 	 * @return the allocated object
 	 */
+	@Override
 	Scriptable construct(Context cx, Scriptable scope, Object[] args);
 }

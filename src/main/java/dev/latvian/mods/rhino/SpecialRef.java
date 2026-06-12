@@ -83,7 +83,25 @@ class SpecialRef extends Ref {
 						throw ScriptRuntime.typeError0(cx, "msg.not.extensible");
 					}
 
-					if ((value != null && ScriptRuntime.typeof(cx, value) != MemberType.OBJECT) || ScriptRuntime.typeof(cx, target) != MemberType.OBJECT) {
+					MemberType typeOfTarget = ScriptRuntime.typeof(cx, target);
+					if (typeOfTarget == MemberType.FUNCTION) {
+						if (value == null) {
+							target.setPrototype(Undefined.SCRIPTABLE_INSTANCE);
+							return value;
+						}
+
+						MemberType typeOfValue = ScriptRuntime.typeof(cx, value);
+						if (typeOfValue == MemberType.OBJECT || typeOfValue == MemberType.FUNCTION) {
+							target.setPrototype(obj);
+						}
+						return value;
+					}
+
+					if (typeOfTarget == MemberType.SYMBOL) {
+						return value;
+					}
+
+					if ((value != null && ScriptRuntime.typeof(cx, value) != MemberType.OBJECT) || typeOfTarget != MemberType.OBJECT) {
 						return Undefined.INSTANCE;
 					}
 					target.setPrototype(obj);

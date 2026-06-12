@@ -21,6 +21,7 @@ import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 /**
@@ -2362,11 +2363,24 @@ public class ScriptRuntime {
 	}
 
 	/**
+	 * @return true if the value is trivially representable in JS,
+	 * i.e. it is either a JS primitive or a Scriptable.
+	 */
+	private static boolean isJSValue(Object obj) {
+		return obj == null || Undefined.isUndefined(obj) || obj instanceof Scriptable || obj instanceof CharSequence || obj instanceof Number || obj instanceof Boolean || obj instanceof Symbol;
+	}
+
+	/**
 	 * Implement "SameValueZero" from ECMA 7.2.9
 	 */
 	public static boolean sameZero(Context cx, Object x, Object y) {
 		x = Wrapper.unwrapped(x);
 		y = Wrapper.unwrapped(y);
+
+		if (!isJSValue(x) || !isJSValue(y)) {
+			// use java equals for java objects
+			return Objects.equals(x, y);
+		}
 
 		if (typeof(cx, x) != typeof(cx, y)) {
 			return false;
@@ -2551,7 +2565,13 @@ public class ScriptRuntime {
 		return hasObjectElem(cx, (Scriptable) b, a);
 	}
 
-	public static boolean cmp_LT(Context cx, Object val1, Object val2) {
+	/**
+	 * Implements the relational operators {@code <}, {@code <=}, {@code >} and {@code >=},
+	 * always evaluating (converting) val1 before val2 as per spec.
+	 */
+	public static boolean compare(Context cx, Object val1, Object val2, int op) {
+		assert op == Token.GE || op == Token.LE || op == Token.GT || op == Token.LT;
+
 		double d1, d2;
 		if (val1 instanceof Number && val2 instanceof Number) {
 			d1 = ((Number) val1).doubleValue();
@@ -2567,40 +2587,51 @@ public class ScriptRuntime {
 				val2 = ((Scriptable) val2).getDefaultValue(cx, DefaultValueTypeHint.NUMBER);
 			}
 			if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
-				return val1.toString().compareTo(val2.toString()) < 0;
+				return switch (op) {
+					case Token.GE -> val1.toString().compareTo(val2.toString()) >= 0;
+					case Token.LE -> val1.toString().compareTo(val2.toString()) <= 0;
+					case Token.GT -> val1.toString().compareTo(val2.toString()) > 0;
+					case Token.LT -> val1.toString().compareTo(val2.toString()) < 0;
+					default -> throw Kit.codeBug();
+				};
 			}
 			d1 = toNumber(cx, val1);
 			d2 = toNumber(cx, val2);
 		}
-		return d1 < d2;
+		return switch (op) {
+			case Token.GE -> d1 >= d2;
+			case Token.LE -> d1 <= d2;
+			case Token.GT -> d1 > d2;
+			case Token.LT -> d1 < d2;
+			default -> throw Kit.codeBug();
+		};
+	}
+
+	@Deprecated
+	public static boolean cmp_LT(Context cx, Object val1, Object val2) {
+		return compare(cx, val1, val2, Token.LT);
 	}
 
 	// ------------------
 	// Statements
 	// ------------------
 
+	@Deprecated
 	public static boolean cmp_LE(Context cx, Object val1, Object val2) {
-		double d1, d2;
-		if (val1 instanceof Number && val2 instanceof Number) {
-			d1 = ((Number) val1).doubleValue();
-			d2 = ((Number) val2).doubleValue();
-		} else {
-			if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
-				throw typeError0(cx, "msg.compare.symbol");
-			}
-			if (val1 instanceof Scriptable) {
-				val1 = ((Scriptable) val1).getDefaultValue(cx, DefaultValueTypeHint.NUMBER);
-			}
-			if (val2 instanceof Scriptable) {
-				val2 = ((Scriptable) val2).getDefaultValue(cx, DefaultValueTypeHint.NUMBER);
-			}
-			if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
-				return val1.toString().compareTo(val2.toString()) <= 0;
-			}
-			d1 = toNumber(cx, val1);
-			d2 = toNumber(cx, val2);
+		return compare(cx, val1, val2, Token.LE);
+	}
+
+	/**
+	 * Adds to the current count of executed instructions and notifies the context's
+	 * instruction observer when the configured threshold is exceeded. Used by long-running
+	 * native loops (such as the regexp engine) so they remain interruptible.
+	 */
+	public static void addInstructionCount(Context cx, int instructionsToAdd) {
+		cx.instructionCount += instructionsToAdd;
+		if (cx.instructionCount > cx.instructionThreshold) {
+			cx.observeInstructionCount(cx.instructionCount);
+			cx.instructionCount = 0;
 		}
-		return d1 <= d2;
 	}
 
 	public static void initScript(Context cx, Scriptable scope, NativeFunction funObj, Scriptable thisObj, boolean evalScript) {
@@ -2956,25 +2987,27 @@ public class ScriptRuntime {
 		Scriptable object = cx.newObject(scope);
 		for (int i = 0, end = propertyIds.length; i != end; ++i) {
 			Object id = propertyIds[i];
-			int getterSetter = getterSetters == null ? 0 : getterSetters[i];
+			int getterSetter = getterSetters == null ? 0 : getterSetters[i]; // -1 for GET, 1 for SET, 0 for a regular property
 			Object value = propertyValues[i];
-			if (id instanceof String) {
-				if (getterSetter == 0) {
-					if (isSpecialProperty((String) id)) {
-						Ref ref = specialRef(cx, scope, object, (String) id);
+			if (getterSetter == 0) {
+				if (id instanceof String str) {
+					if (isSpecialProperty(str)) {
+						Ref ref = specialRef(cx, scope, object, str);
 						ref.set(cx, scope, value);
 					} else {
-						object.put(cx, (String) id, object, value);
+						object.put(cx, str, object, value);
 					}
 				} else {
-					ScriptableObject so = (ScriptableObject) object;
-					Callable getterOrSetter = (Callable) value;
-					boolean isSetter = getterSetter == 1;
-					so.setGetterOrSetter(cx, (String) id, 0, getterOrSetter, isSetter);
+					int index = (Integer) id;
+					object.put(cx, index, object, value);
 				}
 			} else {
-				int index = (Integer) id;
-				object.put(cx, index, object, value);
+				ScriptableObject so = (ScriptableObject) object;
+				Callable getterOrSetter = (Callable) value;
+				boolean isSetter = getterSetter == 1;
+				String key = id instanceof String ? (String) id : null;
+				int index = key == null ? (Integer) id : 0;
+				so.setGetterOrSetter(cx, key, index, getterOrSetter, isSetter);
 			}
 		}
 		return object;
