@@ -55,7 +55,8 @@ final class NativeMath extends IdScriptableObject {
 	private static final int Id_log2 = 34;
 	private static final int Id_fround = 35;
 	private static final int Id_clz32 = 36;
-	private static final int LAST_METHOD_ID = Id_clz32;
+	private static final int Id_f16round = 37;
+	private static final int LAST_METHOD_ID = Id_f16round;
 	private static final int Id_E = LAST_METHOD_ID + 1;
 	private static final int Id_PI = LAST_METHOD_ID + 2;
 	private static final int Id_LN10 = LAST_METHOD_ID + 3;
@@ -169,6 +170,148 @@ final class NativeMath extends IdScriptableObject {
 		return Math.sqrt(y);
 	}
 
+	private static double js_f16round(double x) {
+		// Handle special cases
+		if (Double.isNaN(x)) {
+			return Double.NaN;
+		}
+		if (x == 0.0) {
+			return x; // Preserve sign of zero
+		}
+		if (Double.isInfinite(x)) {
+			return x;
+		}
+
+		// Extract components from double precision
+		long bits = Double.doubleToLongBits(x);
+		int sign = (int) (bits >>> 63);
+		int exponent = (int) ((bits >>> 52) & 0x7FF);
+		long mantissa = bits & 0x000FFFFFFFFFFFFFL;
+
+		// Adjust from double bias (1023) to float16 bias (15)
+		exponent = exponent - 1023 + 15;
+
+		// Handle overflow to infinity
+		if (exponent >= 31) {
+			return (sign != 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
+		}
+
+		// Handle underflow and subnormal values
+		if (exponent < 0) {
+			return handleSubnormalF16(sign, exponent, mantissa);
+		}
+
+		// Normal value: round mantissa from 52 to 10 bits
+		return handleNormalF16(sign, exponent, mantissa);
+	}
+
+	private static double handleSubnormalF16(int sign, int exponent, long mantissa) {
+		// Values below 2^-24 underflow to zero
+		if (exponent < -10) {
+			return (sign != 0) ? -0.0 : 0.0;
+		}
+
+		// Special case: exactly 2^-25 rounds to zero (ties-to-even)
+		if (exponent == -10 && mantissa == 0) {
+			return (sign != 0) ? -0.0 : 0.0;
+		}
+
+		// Special case: slightly above 2^-25 rounds to 2^-24
+		if (exponent == -10 && mantissa > 0) {
+			double smallestSubnormal = 5.960464477539063e-8; // 2^-24
+			return (sign != 0) ? -smallestSubnormal : smallestSubnormal;
+		}
+
+		// Convert to subnormal representation
+		int totalShift = 42 + (1 - exponent);
+		mantissa = mantissa | (1L << 52); // Add implicit 1 bit
+
+		// Extract rounding information before shift
+		long roundBit = (mantissa >> (totalShift - 1)) & 1;
+		long stickyBits = mantissa & ((1L << (totalShift - 1)) - 1);
+
+		// Shift to get 10-bit mantissa
+		mantissa >>>= totalShift;
+
+		// Apply ties-to-even rounding
+		if (roundBit == 1 && (stickyBits != 0 || (mantissa & 1) == 1)) {
+			mantissa++;
+		}
+
+		// Reconstruct subnormal value
+		if (mantissa == 0) {
+			return (sign != 0) ? -0.0 : 0.0;
+		}
+
+		// Check for overflow to normal range
+		if (mantissa >= (1L << 10)) {
+			// Smallest normal = 2^-14
+			return (sign != 0) ? -6.103515625e-5 : 6.103515625e-5;
+		}
+
+		// Subnormal value = 2^-14 * (mantissa / 1024)
+		double value = Math.scalb((double) mantissa / 1024.0, -14);
+		return (sign != 0) ? -value : value;
+	}
+
+	private static double handleNormalF16(int sign, int exponent, long mantissa) {
+		// Add implicit 1 bit for normal values
+		long fullMantissa = mantissa | (1L << 52);
+
+		// Extract rounding information
+		long roundBit = (fullMantissa >> 41) & 1;
+		long stickyBits = fullMantissa & ((1L << 41) - 1);
+		fullMantissa >>>= 42;
+
+		// Handle boundary between largest subnormal and smallest normal
+		if (exponent == 0) {
+			if (fullMantissa == 2046) {
+				// Exactly the largest subnormal
+				return reconstructSubnormalF16(sign, 1023);
+			} else if (fullMantissa == 2047 && roundBit == 0 && stickyBits == 0) {
+				// Midpoint: ties-to-even rounds to smallest normal
+				return reconstructNormalF16(sign, 1, 0);
+			}
+		}
+
+		// Extract 10-bit mantissa (remove implicit 1)
+		mantissa = fullMantissa & 0x3FF;
+
+		// Apply ties-to-even rounding
+		if (roundBit == 1 && (stickyBits != 0 || (mantissa & 1) == 1)) {
+			mantissa++;
+		}
+
+		// Handle mantissa overflow
+		if (mantissa >= (1L << 10)) {
+			mantissa = 0;
+			exponent++;
+			if (exponent >= 31) {
+				return (sign != 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
+			}
+		}
+
+		// Reconstruct the value
+		if (exponent == 0) {
+			return reconstructSubnormalF16(sign, mantissa);
+		} else {
+			return reconstructNormalF16(sign, exponent, mantissa);
+		}
+	}
+
+	private static double reconstructSubnormalF16(int sign, long mantissa) {
+		if (mantissa == 0) {
+			return (sign != 0) ? -0.0 : 0.0;
+		}
+		double value = Math.scalb((double) mantissa / 1024.0, -14);
+		return (sign != 0) ? -value : value;
+	}
+
+	private static double reconstructNormalF16(int sign, int exponent, long mantissa) {
+		long resultBits = ((long) sign << 63) | (((long) (exponent + 1023 - 15)) << 52) | (mantissa << 42);
+		return Double.longBitsToDouble(resultBits);
+	}
+
 	private static double js_trunc(double d) {
 		return ((d < 0.0) ? Math.ceil(d) : Math.floor(d));
 	}
@@ -261,6 +404,10 @@ final class NativeMath extends IdScriptableObject {
 				case Id_expm1 -> {
 					arity = 1;
 					name = "expm1";
+				}
+				case Id_f16round -> {
+					arity = 1;
+					name = "f16round";
 				}
 				case Id_floor -> {
 					arity = 1;
@@ -505,6 +652,11 @@ final class NativeMath extends IdScriptableObject {
 				x = Math.expm1(x);
 				break;
 
+			case Id_f16round:
+				x = ScriptRuntime.toNumber(cx, args, 0);
+				x = js_f16round(x);
+				break;
+
 			case Id_floor:
 				x = ScriptRuntime.toNumber(cx, args, 0);
 				x = Math.floor(x);
@@ -671,6 +823,7 @@ final class NativeMath extends IdScriptableObject {
 			case "log2" -> Id_log2;
 			case "fround" -> Id_fround;
 			case "clz32" -> Id_clz32;
+			case "f16round" -> Id_f16round;
 			case "E" -> Id_E;
 			case "PI" -> Id_PI;
 			case "LN10" -> Id_LN10;
