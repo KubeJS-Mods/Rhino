@@ -17,7 +17,7 @@ class AbstractEcmaObjectOperations {
 	 * @see <a href="https://262.ecma-international.org/12.0/#sec-hasownproperty">HasOwnProperty</a>
 	 */
 	static boolean hasOwnProperty(Context cx, Object o, Object property) {
-		ScriptableObject obj = ScriptableObject.ensureScriptableObject(o, cx);
+		Scriptable obj = ScriptableObject.ensureScriptable(o, cx);
 		boolean result;
 		if (property instanceof Symbol sym) {
 			result = ScriptableObject.ensureSymbolScriptable(o, cx).has(cx, sym, obj);
