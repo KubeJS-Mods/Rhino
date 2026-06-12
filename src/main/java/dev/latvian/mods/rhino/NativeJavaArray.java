@@ -10,6 +10,7 @@ import dev.latvian.mods.rhino.type.TypeInfo;
 import dev.latvian.mods.rhino.util.DefaultValueTypeHint;
 
 import java.lang.reflect.Array;
+import java.util.Objects;
 
 /**
  * This class reflects Java arrays into the JavaScript environment.
@@ -146,5 +147,15 @@ public class NativeJavaArray extends NativeJavaObject implements SymbolScriptabl
 			prototype = ScriptableObject.getArrayPrototype(this.getParentScope(), cx);
 		}
 		return prototype;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return (obj instanceof NativeJavaArray other) && Objects.equals(other.array, array);
+	}
+
+	@Override
+	public int hashCode() {
+		return array == null ? 0 : array.hashCode();
 	}
 }

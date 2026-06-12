@@ -21,6 +21,7 @@ import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 /**
@@ -2362,11 +2363,24 @@ public class ScriptRuntime {
 	}
 
 	/**
+	 * @return true if the value is trivially representable in JS,
+	 * i.e. it is either a JS primitive or a Scriptable.
+	 */
+	private static boolean isJSValue(Object obj) {
+		return obj == null || Undefined.isUndefined(obj) || obj instanceof Scriptable || obj instanceof CharSequence || obj instanceof Number || obj instanceof Boolean || obj instanceof Symbol;
+	}
+
+	/**
 	 * Implement "SameValueZero" from ECMA 7.2.9
 	 */
 	public static boolean sameZero(Context cx, Object x, Object y) {
 		x = Wrapper.unwrapped(x);
 		y = Wrapper.unwrapped(y);
+
+		if (!isJSValue(x) || !isJSValue(y)) {
+			// use java equals for java objects
+			return Objects.equals(x, y);
+		}
 
 		if (typeof(cx, x) != typeof(cx, y)) {
 			return false;
