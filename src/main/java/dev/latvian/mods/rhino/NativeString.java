@@ -11,7 +11,9 @@ import dev.latvian.mods.rhino.regexp.RegExp;
 
 import java.text.Collator;
 import java.text.Normalizer;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * This class implements the String native object.
@@ -89,7 +91,9 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 	private static final int SymbolId_iterator = 50;
 	private static final int Id_replaceAll = 51;
 	private static final int Id_at = 52;
-	private static final int MAX_PROTOTYPE_ID = Id_at;
+	private static final int Id_isWellFormed = 53;
+	private static final int Id_toWellFormed = 54;
+	private static final int MAX_PROTOTYPE_ID = Id_toWellFormed;
 	private static final int ConstructorId_charAt = -Id_charAt;
 	private static final int ConstructorId_charCodeAt = -Id_charCodeAt;
 	private static final int ConstructorId_indexOf = -Id_indexOf;
@@ -687,6 +691,14 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 				arity = 1;
 				s = "at";
 			}
+			case Id_isWellFormed -> {
+				arity = 0;
+				s = "isWellFormed";
+			}
+			case Id_toWellFormed -> {
+				arity = 0;
+				s = "toWellFormed";
+			}
 			case Id_localeCompare -> {
 				arity = 1;
 				s = "localeCompare";
@@ -1021,6 +1033,73 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 
 					return str.substring(k, k + 1);
 				}
+
+				case Id_isWellFormed: {
+					CharSequence str = ScriptRuntime.toCharSequence(cx, ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
+					int len = str.length();
+					boolean foundLeadingSurrogate = false;
+					for (int i = 0; i < len; i++) {
+						char c = str.charAt(i);
+						if (Character.isHighSurrogate(c)) {
+							if (foundLeadingSurrogate) {
+								return false;
+							}
+							foundLeadingSurrogate = true;
+						} else if (Character.isLowSurrogate(c)) {
+							if (!foundLeadingSurrogate) {
+								return false;
+							}
+							foundLeadingSurrogate = false;
+						} else if (foundLeadingSurrogate) {
+							return false;
+						}
+					}
+					return !foundLeadingSurrogate;
+				}
+
+				case Id_toWellFormed: {
+					CharSequence str = ScriptRuntime.toCharSequence(cx, ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
+					// true represents a surrogate pair
+					// false represents a singular surrogate
+					// normal characters aren't present
+					Map<Integer, Boolean> surrogates = new HashMap<>();
+
+					int len = str.length();
+					char prev = 0;
+					int firstSurrogateIndex = -1;
+					for (int i = 0; i < len; i++) {
+						char c = str.charAt(i);
+
+						if (Character.isHighSurrogate(prev) && Character.isLowSurrogate(c)) {
+							surrogates.put(i - 1, Boolean.TRUE);
+							surrogates.put(i, Boolean.TRUE);
+						} else if (Character.isHighSurrogate(c) || Character.isLowSurrogate(c)) {
+							surrogates.put(i, Boolean.FALSE);
+							if (firstSurrogateIndex == -1) {
+								firstSurrogateIndex = i;
+							}
+						}
+
+						prev = c;
+					}
+
+					if (surrogates.isEmpty()) {
+						return str.toString();
+					}
+
+					StringBuilder sb = new StringBuilder(str.subSequence(0, firstSurrogateIndex));
+					for (int i = firstSurrogateIndex; i < len; i++) {
+						char c = str.charAt(i);
+						Boolean pairOrNormal = surrogates.get(i);
+						if (pairOrNormal == null || pairOrNormal) {
+							sb.append(c);
+						} else {
+							sb.append('�');
+						}
+					}
+
+					return sb.toString();
+				}
 				// ECMA-262 1 5.5.4.9
 				case Id_localeCompare: {
 					// For now, create and configure a collator instance. I can't
@@ -1260,6 +1339,8 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 			case "replace" -> Id_replace;
 			case "replaceAll" -> Id_replaceAll;
 			case "at" -> Id_at;
+			case "isWellFormed" -> Id_isWellFormed;
+			case "toWellFormed" -> Id_toWellFormed;
 			case "localeCompare" -> Id_localeCompare;
 			case "toLocaleLowerCase" -> Id_toLocaleLowerCase;
 			case "toLocaleUpperCase" -> Id_toLocaleUpperCase;
