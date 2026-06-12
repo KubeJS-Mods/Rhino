@@ -32,6 +32,18 @@ public class JavaScriptException extends RhinoException {
 		this.localContext = cx;
 		recordErrorOrigin(sourceName, lineNumber, null, 0);
 		this.value = value;
+		// try to extract the cause. Value can be either a (wrapped) java.lang.Throwable
+		// or a NativeError, that may contain the causing javaException
+		Object javaCause = value;
+		if (value instanceof NativeError error) {
+			javaCause = error.get(cx, "javaException", error);
+		}
+		if (javaCause instanceof Wrapper wrapper) {
+			javaCause = wrapper.unwrap();
+		}
+		if (javaCause instanceof Throwable throwable && throwable != this) {
+			this.initCause(throwable);
+		}
 	}
 
 	@Override
