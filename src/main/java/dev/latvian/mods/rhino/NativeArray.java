@@ -285,13 +285,11 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		final long length = getLengthProperty(cx, items, false);
 		final Scriptable result = callConstructorOrCreateArray(cx, scope, thisObj, length, true);
 		for (long k = 0; k < length; k++) {
-			Object temp = getRawElem(items, k, cx);
-			if (temp != NOT_FOUND) {
-				if (mapping) {
-					temp = mapFn.call(cx, scope, thisArg, new Object[]{temp, k});
-				}
-				defineElem(cx, result, k, temp);
+			Object temp = getElem(cx, items, k);
+			if (mapping) {
+				temp = mapFn.call(cx, scope, thisArg, new Object[]{temp, k});
 			}
+			defineElem(cx, result, k, temp);
 		}
 
 		setLengthProperty(cx, result, length);
