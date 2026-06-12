@@ -25,6 +25,7 @@ final class NativeError extends IdScriptableObject {
 	private static final int Id_toString = 2;
 	private static final int Id_toSource = 3;
 	private static final int ConstructorId_captureStackTrace = -1;
+	private static final int ConstructorId_isError = -2;
 	private static final int MAX_PROTOTYPE_ID = 3;
 
 	/**
@@ -185,6 +186,7 @@ final class NativeError extends IdScriptableObject {
 	@Override
 	protected void fillConstructorProperties(IdFunctionObject ctor, Context cx) {
 		addIdFunctionProperty(ctor, ERROR_TAG, ConstructorId_captureStackTrace, "captureStackTrace", 2, cx);
+		addIdFunctionProperty(ctor, ERROR_TAG, ConstructorId_isError, "isError", 1, cx);
 
 		// This is running on the global "Error" object. Associate an object there that can store
 		// default stack trace, etc.
@@ -252,6 +254,9 @@ final class NativeError extends IdScriptableObject {
 			case ConstructorId_captureStackTrace:
 				js_captureStackTrace(cx, thisObj, args);
 				return Undefined.INSTANCE;
+
+			case ConstructorId_isError:
+				return js_isError(args);
 		}
 		throw new IllegalArgumentException(String.valueOf(id));
 	}
@@ -320,6 +325,11 @@ final class NativeError extends IdScriptableObject {
 
 		Scriptable eltArray = cx.newArray(this, elts);
 		return prepare.call(cx, prepare, this, new Object[]{this, eltArray});
+	}
+
+	private static Boolean js_isError(Object[] args) {
+		Object arg = args.length > 0 ? args[0] : Undefined.INSTANCE;
+		return arg instanceof NativeError;
 	}
 
 	// #/string_id_map#
