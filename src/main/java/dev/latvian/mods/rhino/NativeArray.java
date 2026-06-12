@@ -1977,6 +1977,10 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			length = index + 1;
 		}
 		super.defineOwnProperty(cx, id, desc, checkValid);
+
+		if ("length".equals(id)) {
+			lengthAttr = getAttributes(cx, "length"); // Update cached attributes value for length property
+		}
 	}
 
 	public long getLength() {

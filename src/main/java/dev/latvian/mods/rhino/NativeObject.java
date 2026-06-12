@@ -567,20 +567,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					return Boolean.TRUE;
 				}
 
-				ScriptableObject obj = ensureScriptableObject(arg, cx);
-
-				if (obj.isExtensible()) {
-					return Boolean.FALSE;
-				}
-
-				for (Object name : obj.getAllIds(cx)) {
-					Object configurable = obj.getOwnPropertyDescriptor(cx, name).get(cx, "configurable");
-					if (Boolean.TRUE.equals(configurable)) {
-						return Boolean.FALSE;
-					}
-				}
-
-				return Boolean.TRUE;
+				return AbstractEcmaObjectOperations.testIntegrityLevel(cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
 			}
 			case ConstructorId_isFrozen: {
 				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
@@ -588,23 +575,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					return Boolean.TRUE;
 				}
 
-				ScriptableObject obj = ensureScriptableObject(arg, cx);
-
-				if (obj.isExtensible()) {
-					return Boolean.FALSE;
-				}
-
-				for (Object name : obj.getAllIds(cx)) {
-					ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
-					if (Boolean.TRUE.equals(desc.get(cx, "configurable"))) {
-						return Boolean.FALSE;
-					}
-					if (isDataDescriptor(desc, cx) && Boolean.TRUE.equals(desc.get(cx, "writable"))) {
-						return Boolean.FALSE;
-					}
-				}
-
-				return Boolean.TRUE;
+				return AbstractEcmaObjectOperations.testIntegrityLevel(cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
 			}
 			case ConstructorId_seal: {
 				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
@@ -612,18 +583,9 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					return arg;
 				}
 
-				ScriptableObject obj = ensureScriptableObject(arg, cx);
+				AbstractEcmaObjectOperations.setIntegrityLevel(cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
 
-				for (Object name : obj.getAllIds(cx)) {
-					ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
-					if (Boolean.TRUE.equals(desc.get(cx, "configurable"))) {
-						desc.put(cx, "configurable", desc, Boolean.FALSE);
-						obj.defineOwnProperty(cx, name, desc, false);
-					}
-				}
-				obj.preventExtensions();
-
-				return obj;
+				return arg;
 			}
 			case ConstructorId_freeze: {
 				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
@@ -631,21 +593,9 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					return arg;
 				}
 
-				ScriptableObject obj = ensureScriptableObject(arg, cx);
+				AbstractEcmaObjectOperations.setIntegrityLevel(cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
 
-				for (Object name : obj.getIds(cx, true, true)) {
-					ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
-					if (isDataDescriptor(desc, cx) && Boolean.TRUE.equals(desc.get(cx, "writable"))) {
-						desc.put(cx, "writable", desc, Boolean.FALSE);
-					}
-					if (Boolean.TRUE.equals(desc.get(cx, "configurable"))) {
-						desc.put(cx, "configurable", desc, Boolean.FALSE);
-					}
-					obj.defineOwnProperty(cx, name, desc, false);
-				}
-				obj.preventExtensions();
-
-				return obj;
+				return arg;
 			}
 
 			case ConstructorId_assign: {
