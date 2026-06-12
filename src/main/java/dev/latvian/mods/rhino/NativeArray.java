@@ -81,7 +81,11 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static final int Id_flatMap = 35;
 	private static final int Id_findLast = 36;
 	private static final int Id_findLastIndex = 37;
-	private static final int MAX_PROTOTYPE_ID = Id_findLastIndex;
+	private static final int Id_toReversed = 38;
+	private static final int Id_toSorted = 39;
+	private static final int Id_toSpliced = 40;
+	private static final int Id_with = 41;
+	private static final int MAX_PROTOTYPE_ID = Id_with;
 	private static final int ConstructorId_join = -Id_join;
 	private static final int ConstructorId_reverse = -Id_reverse;
 	private static final int ConstructorId_sort = -Id_sort;
@@ -505,11 +509,14 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	/**
 	 * See ECMA 15.4.4.5
 	 */
+
 	private static Scriptable js_sort(final Context cx, final Scriptable scope, final Scriptable thisObj, final Object[] args) {
 		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+		Comparator<Object> comparator = ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
+		return sort(cx, o, comparator);
+	}
 
-		final Comparator<Object> comparator = ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
-
+	private static Scriptable sort(final Context cx, final Scriptable o, final Comparator<Object> comparator) {
 		long llength = getLengthProperty(cx, o, false);
 		final int length = (int) llength;
 		if (llength != length) {
@@ -1238,6 +1245,131 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		return o instanceof NativeJavaList || o instanceof List || o instanceof Scriptable s && "Array".equals(s.getClassName());
 	}
 
+	private static Object js_toSorted(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		Comparator<Object> comparator = ArrayLikeAbstractOperations.getSortComparator(cx, scope, args);
+
+		Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
+		long len = getLengthProperty(cx, source, false);
+
+		if (len > Integer.MAX_VALUE) {
+			String msg = ScriptRuntime.getMessage0("msg.arraylength.bad");
+			throw ScriptRuntime.rangeError(cx, msg);
+		}
+		Scriptable result = cx.newArray(scope, (int) len);
+
+		for (int k = 0; k < len; ++k) {
+			Object fromValue = getElem(cx, source, k);
+			setElem(cx, result, k, fromValue);
+		}
+
+		sort(cx, result, comparator);
+		return result;
+	}
+
+	private static Object js_toReversed(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
+		long len = getLengthProperty(cx, source, false);
+
+		if (len > Integer.MAX_VALUE) {
+			String msg = ScriptRuntime.getMessage0("msg.arraylength.bad");
+			throw ScriptRuntime.rangeError(cx, msg);
+		}
+		Scriptable result = cx.newArray(scope, (int) len);
+
+		for (int k = 0; k < len; ++k) {
+			int from = (int) len - k - 1;
+			Object fromValue = getElem(cx, source, from);
+			setElem(cx, result, k, fromValue);
+		}
+
+		return result;
+	}
+
+	private static Object js_toSpliced(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
+		long len = getLengthProperty(cx, source, false);
+
+		long actualStart = 0;
+		if (args.length > 0) {
+			actualStart = ArrayLikeAbstractOperations.toSliceIndex(ScriptRuntime.toInteger(cx, args[0]), len);
+		}
+
+		long insertCount = args.length > 2 ? args.length - 2 : 0;
+
+		long actualSkipCount;
+		if (args.length == 0) {
+			actualSkipCount = 0;
+		} else if (args.length == 1) {
+			actualSkipCount = len - actualStart;
+		} else {
+			long sc = ScriptRuntime.toLength(cx, args, 1);
+			actualSkipCount = Math.max(0, Math.min(sc, len - actualStart));
+		}
+
+		long newLen = len + insertCount - actualSkipCount;
+		if (newLen > NativeNumber.MAX_SAFE_INTEGER) {
+			throw ScriptRuntime.typeError1(cx, "msg.arraylength.too.big", String.valueOf(newLen));
+		}
+		if (newLen > Integer.MAX_VALUE) {
+			String msg = ScriptRuntime.getMessage0("msg.arraylength.bad");
+			throw ScriptRuntime.rangeError(cx, msg);
+		}
+
+		Scriptable result = cx.newArray(scope, (int) newLen);
+
+		long i = 0;
+		long r = actualStart + actualSkipCount;
+
+		while (i < actualStart) {
+			Object e = getElem(cx, source, i);
+			setElem(cx, result, i, e);
+			i++;
+		}
+
+		for (int j = 2; j < args.length; j++) {
+			setElem(cx, result, i, args[j]);
+			i++;
+		}
+
+		while (i < newLen) {
+			Object e = getElem(cx, source, r);
+			setElem(cx, result, i, e);
+			i++;
+			r++;
+		}
+
+		return result;
+	}
+
+	private static Object js_with(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		Scriptable source = ScriptRuntime.toObject(cx, scope, thisObj);
+
+		long len = getLengthProperty(cx, source, false);
+		long relativeIndex = args.length > 0 ? (int) ScriptRuntime.toInteger(cx, args[0]) : 0;
+		long actualIndex = relativeIndex >= 0 ? relativeIndex : len + relativeIndex;
+
+		if (actualIndex < 0 || actualIndex >= len) {
+			throw ScriptRuntime.rangeError(cx, "index out of range");
+		}
+		if (len > Integer.MAX_VALUE) {
+			String msg = ScriptRuntime.getMessage0("msg.arraylength.bad");
+			throw ScriptRuntime.rangeError(cx, msg);
+		}
+
+		Scriptable result = cx.newArray(scope, (int) len);
+		for (long k = 0; k < len; ++k) {
+			Object value;
+			if (k == actualIndex) {
+				value = args.length > 1 ? args[1] : Undefined.INSTANCE;
+			} else {
+				value = getElem(cx, source, k);
+			}
+			setElem(cx, result, k, value);
+		}
+
+		return result;
+	}
+
 	private final Context localContext;
 
 	/**
@@ -1529,6 +1661,22 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				arity = 1;
 				s = "findLastIndex";
 			}
+			case Id_toReversed -> {
+				arity = 0;
+				s = "toReversed";
+			}
+			case Id_toSorted -> {
+				arity = 1;
+				s = "toSorted";
+			}
+			case Id_toSpliced -> {
+				arity = 2;
+				s = "toSpliced";
+			}
+			case Id_with -> {
+				arity = 2;
+				s = "with";
+			}
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 
@@ -1664,6 +1812,18 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 				case Id_flatMap:
 					return js_flatMap(cx, scope, thisObj, args);
+
+				case Id_toReversed:
+					return js_toReversed(cx, scope, thisObj, args);
+
+				case Id_toSorted:
+					return js_toSorted(cx, scope, thisObj, args);
+
+				case Id_toSpliced:
+					return js_toSpliced(cx, scope, thisObj, args);
+
+				case Id_with:
+					return js_with(cx, scope, thisObj, args);
 
 				case Id_every:
 					return ArrayLikeAbstractOperations.iterativeMethod(cx, f, IterativeOperation.EVERY, scope, thisObj, args);
@@ -2274,6 +2434,10 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			case "flatMap" -> Id_flatMap;
 			case "findLast" -> Id_findLast;
 			case "findLastIndex" -> Id_findLastIndex;
+			case "toReversed" -> Id_toReversed;
+			case "toSorted" -> Id_toSorted;
+			case "toSpliced" -> Id_toSpliced;
+			case "with" -> Id_with;
 			default -> 0;
 		};
 	}
