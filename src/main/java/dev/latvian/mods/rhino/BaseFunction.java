@@ -441,7 +441,11 @@ public class BaseFunction extends IdScriptableObject implements Function {
 		return result;
 	}
 
-	private synchronized Object setupDefaultPrototype(Context cx) {
+	protected void setPrototypeProperty(Object prototype) {
+		this.prototypeProperty = prototype;
+	}
+
+	protected synchronized Object setupDefaultPrototype(Context cx) {
 		if (prototypeProperty != null) {
 			return prototypeProperty;
 		}
