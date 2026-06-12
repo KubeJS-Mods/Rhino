@@ -2621,6 +2621,19 @@ public class ScriptRuntime {
 		return compare(cx, val1, val2, Token.LE);
 	}
 
+	/**
+	 * Adds to the current count of executed instructions and notifies the context's
+	 * instruction observer when the configured threshold is exceeded. Used by long-running
+	 * native loops (such as the regexp engine) so they remain interruptible.
+	 */
+	public static void addInstructionCount(Context cx, int instructionsToAdd) {
+		cx.instructionCount += instructionsToAdd;
+		if (cx.instructionCount > cx.instructionThreshold) {
+			cx.observeInstructionCount(cx.instructionCount);
+			cx.instructionCount = 0;
+		}
+	}
+
 	public static void initScript(Context cx, Scriptable scope, NativeFunction funObj, Scriptable thisObj, boolean evalScript) {
 		if (!cx.hasTopCallScope()) {
 			throw new IllegalStateException();
