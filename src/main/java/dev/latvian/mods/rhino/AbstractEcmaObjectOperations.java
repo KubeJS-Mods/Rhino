@@ -12,6 +12,28 @@ class AbstractEcmaObjectOperations {
 	}
 
 	/**
+	 * Implementation of Abstract Object operation HasOwnProperty as defined by EcmaScript
+	 *
+	 * @see <a href="https://262.ecma-international.org/12.0/#sec-hasownproperty">HasOwnProperty</a>
+	 */
+	static boolean hasOwnProperty(Context cx, Object o, Object property) {
+		ScriptableObject obj = ScriptableObject.ensureScriptableObject(o, cx);
+		boolean result;
+		if (property instanceof Symbol sym) {
+			result = ScriptableObject.ensureSymbolScriptable(o, cx).has(cx, sym, obj);
+		} else {
+			ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, property);
+			if (s.stringId == null) {
+				result = obj.has(cx, s.index, obj);
+			} else {
+				result = obj.has(cx, s.stringId, obj);
+			}
+		}
+
+		return result;
+	}
+
+	/**
 	 * Implementation of Abstract Object operation testIntegrityLevel as defined by EcmaScript
 	 *
 	 * @see <a href="https://262.ecma-international.org/11.0/#sec-testintegritylevel">TestIntegrityLevel</a>

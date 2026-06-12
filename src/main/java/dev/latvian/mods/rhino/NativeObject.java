@@ -61,6 +61,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 	private static final int ConstructorId_entries = -18;
 	private static final int ConstructorId_values = -19;
 	private static final int ConstructorId_fromEntries = -20;
+	private static final int ConstructorId_hasOwn = -21;
 	private static final int Id_constructor = 1;
 	private static final int Id_toString = 2;
 	private static final int Id_toLocaleString = 3;
@@ -129,6 +130,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_entries, "entries", 1, cx);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_values, "values", 1, cx);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_fromEntries, "fromEntries", 1, cx);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_hasOwn, "hasOwn", 2, cx);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyNames, "getOwnPropertyNames", 1, cx);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertySymbols, "getOwnPropertySymbols", 1, cx);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyDescriptor, "getOwnPropertyDescriptor", 2, cx);
@@ -244,19 +246,10 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				if (thisObj == null || Undefined.isUndefined(thisObj)) {
 					throw ScriptRuntime.typeError0(cx, "msg." + (thisObj == null ? "null" : "undef") + ".to.object");
 				}
-				boolean result;
+
 				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
-				if (arg instanceof Symbol) {
-					result = ensureSymbolScriptable(thisObj, cx).has(cx, (Symbol) arg, thisObj);
-				} else {
-					ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, arg);
-					if (s.stringId == null) {
-						result = thisObj.has(cx, s.index, thisObj);
-					} else {
-						result = thisObj.has(cx, s.stringId, thisObj);
-					}
-				}
-				return result;
+
+				return AbstractEcmaObjectOperations.hasOwnProperty(cx, thisObj, arg);
 			}
 
 			case Id_propertyIsEnumerable: {
@@ -498,6 +491,11 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 					}
 				}
 				return cx.newArray(scope, syms.toArray());
+			}
+			case ConstructorId_hasOwn: {
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
+				Object propertyName = args.length < 2 ? Undefined.INSTANCE : args[1];
+				return AbstractEcmaObjectOperations.hasOwnProperty(cx, arg, propertyName);
 			}
 			case ConstructorId_getOwnPropertyDescriptor: {
 				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
