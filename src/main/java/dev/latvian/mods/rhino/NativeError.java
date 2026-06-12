@@ -109,10 +109,18 @@ final class NativeError extends IdScriptableObject {
 				putProperty(obj, "message", ScriptRuntime.toString(cx, args[0]), cx);
 			}
 			if (arglen >= 2) {
-				putProperty(obj, "fileName", args[1], cx);
-				if (arglen >= 3) {
-					int line = ScriptRuntime.toInt32(cx, args[2]);
-					putProperty(obj, "lineNumber", line, cx);
+				if (args[1] instanceof NativeObject options) {
+					Object cause = getProperty(options, "cause", cx);
+					if (cause != NOT_FOUND) {
+						putProperty(obj, "cause", cause, cx);
+						obj.setAttributes(cx, "cause", DONTENUM);
+					}
+				} else {
+					putProperty(obj, "fileName", ScriptRuntime.toString(cx, args[1]), cx);
+					if (arglen >= 3) {
+						int line = ScriptRuntime.toInt32(cx, args[2]);
+						putProperty(obj, "lineNumber", line, cx);
+					}
 				}
 			}
 		}
