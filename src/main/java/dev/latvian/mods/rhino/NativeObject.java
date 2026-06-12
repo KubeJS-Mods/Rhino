@@ -62,6 +62,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 	private static final int ConstructorId_values = -19;
 	private static final int ConstructorId_fromEntries = -20;
 	private static final int ConstructorId_hasOwn = -21;
+	private static final int ConstructorId_getOwnPropertyDescriptors = -22;
 	private static final int Id_constructor = 1;
 	private static final int Id_toString = 2;
 	private static final int Id_toLocaleString = 3;
@@ -134,6 +135,7 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyNames, "getOwnPropertyNames", 1, cx);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertySymbols, "getOwnPropertySymbols", 1, cx);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyDescriptor, "getOwnPropertyDescriptor", 2, cx);
+		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyDescriptors, "getOwnPropertyDescriptors", 1, cx);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_defineProperty, "defineProperty", 3, cx);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isExtensible, "isExtensible", 1, cx);
 		addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_preventExtensions, "preventExtensions", 1, cx);
@@ -496,6 +498,26 @@ public class NativeObject extends IdScriptableObject implements Map, DataObject 
 				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
 				Object propertyName = args.length < 2 ? Undefined.INSTANCE : args[1];
 				return AbstractEcmaObjectOperations.hasOwnProperty(cx, arg, propertyName);
+			}
+			case ConstructorId_getOwnPropertyDescriptors: {
+				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
+				Scriptable s = getCompatibleObject(cx, scope, arg);
+				ScriptableObject obj = ensureScriptableObject(s, cx);
+
+				ScriptableObject descs = (ScriptableObject) cx.newObject(scope);
+				for (Object key : obj.getIds(cx, true, true)) {
+					Scriptable desc = obj.getOwnPropertyDescriptor(cx, key);
+					if (desc == null) {
+						continue;
+					} else if (key instanceof Symbol sym) {
+						descs.put(cx, sym, descs, desc);
+					} else if (key instanceof Integer index) {
+						descs.put(cx, index, descs, desc);
+					} else {
+						descs.put(cx, ScriptRuntime.toString(cx, key), descs, desc);
+					}
+				}
+				return descs;
 			}
 			case ConstructorId_getOwnPropertyDescriptor: {
 				Object arg = args.length < 1 ? Undefined.INSTANCE : args[0];
