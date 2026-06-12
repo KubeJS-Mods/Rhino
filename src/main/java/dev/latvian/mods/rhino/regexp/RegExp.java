@@ -21,6 +21,7 @@ public class RegExp {
 	public static final int RA_MATCH = 1;
 	public static final int RA_REPLACE = 2;
 	public static final int RA_SEARCH = 3;
+	public static final int RA_REPLACE_ALL = 4;
 
 	private static NativeRegExp createRegExp(Context cx, Scriptable scope, Object[] args, int optarg, boolean forceFlat) {
 		NativeRegExp re;
@@ -70,7 +71,7 @@ public class RegExp {
 				if (data.mode == RA_MATCH) {
 					match_glob(data, cx, scope, count, reImpl);
 				} else {
-					if (data.mode != RA_REPLACE) {
+					if (data.mode != RA_REPLACE && data.mode != RA_REPLACE_ALL) {
 						Kit.codeBug();
 					}
 					SubString lastMatch = reImpl.lastMatch;
@@ -87,7 +88,7 @@ public class RegExp {
 				}
 			}
 		} else {
-			result = re.executeRegExp(cx, scope, reImpl, str, indexp, ((data.mode == RA_REPLACE) ? NativeRegExp.TEST : NativeRegExp.MATCH));
+			result = re.executeRegExp(cx, scope, reImpl, str, indexp, ((data.mode == RA_REPLACE || data.mode == RA_REPLACE_ALL) ? NativeRegExp.TEST : NativeRegExp.MATCH));
 		}
 
 		return result;
@@ -372,12 +373,15 @@ public class RegExp {
 				NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
 				return matchOrReplace(cx, scope, thisObj, args, this, data, re);
 			}
-			case RA_REPLACE -> {
+			case RA_REPLACE, RA_REPLACE_ALL -> {
 				boolean useRE = args.length > 0 && args[0] instanceof NativeRegExp;
 				NativeRegExp re = null;
 				String search = null;
 				if (useRE) {
 					re = createRegExp(cx, scope, args, 2, true);
+					if (RA_REPLACE_ALL == actionType && (re.getFlags() & NativeRegExp.JSREG_GLOB) == 0) {
+						throw ScriptRuntime.typeError(cx, "replaceAll must be called with a global RegExp");
+					}
 				} else {
 					Object arg0 = args.length < 1 ? Undefined.INSTANCE : args[0];
 					search = ScriptRuntime.toString(cx, arg0);
@@ -398,33 +402,55 @@ public class RegExp {
 				data.charBuf = null;
 				data.leftIndex = 0;
 
-				Object val;
 				if (useRE) {
-					val = matchOrReplace(cx, scope, thisObj, args, this, data, re);
+					Object val = matchOrReplace(cx, scope, thisObj, args, this, data, re);
+					if (data.charBuf == null) {
+						if (data.global || val == null || !val.equals(Boolean.TRUE)) {
+							/* Didn't match even once. */
+							return data.str;
+						}
+						SubString lc = this.leftContext;
+						replace_glob(data, cx, scope, this, lc.index, lc.length);
+					}
 				} else {
-					String str = data.str;
-					int index = str.indexOf(search);
-					if (index >= 0) {
-						int slen = search.length();
+					final String str = data.str;
+					final int strLen = str.length();
+					final int searchLen = search.length();
+					int index = -1;
+					int lastIndex = 0;
+					for (; ; ) {
+						if (search.isEmpty()) {
+							if (index == -1) {
+								index = 0;
+							} else {
+								index = (lastIndex < strLen) ? lastIndex + 1 : -1;
+							}
+						} else {
+							index = str.indexOf(search, lastIndex);
+						}
+
+						if (index == -1) {
+							if (data.charBuf == null) {
+								return str;
+							}
+							break;
+						}
+
 						this.parens = null;
 						this.lastParen = null;
 						this.leftContext = new SubString(str, 0, index);
-						this.lastMatch = new SubString(str, index, slen);
-						this.rightContext = new SubString(str, index + slen, str.length() - index - slen);
-						val = Boolean.TRUE;
-					} else {
-						val = Boolean.FALSE;
+						this.lastMatch = new SubString(str, index, searchLen);
+						this.rightContext = new SubString(str, index + searchLen, strLen - index - searchLen);
+
+						replace_glob(data, cx, scope, this, lastIndex, index - lastIndex);
+						lastIndex = index + searchLen;
+
+						if (actionType != RA_REPLACE_ALL) {
+							break;
+						}
 					}
 				}
 
-				if (data.charBuf == null) {
-					if (data.global || val == null || !val.equals(Boolean.TRUE)) {
-						/* Didn't match even once. */
-						return data.str;
-					}
-					SubString lc = this.leftContext;
-					replace_glob(data, cx, scope, this, lc.index, lc.length);
-				}
 				SubString rc = this.rightContext;
 				data.charBuf.append(rc.str, rc.index, rc.index + rc.length);
 				return data.charBuf.toString();

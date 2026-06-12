@@ -87,7 +87,8 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 	private static final int Id_trimStart = 48;
 	private static final int Id_trimEnd = 49;
 	private static final int SymbolId_iterator = 50;
-	private static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
+	private static final int Id_replaceAll = 51;
+	private static final int MAX_PROTOTYPE_ID = Id_replaceAll;
 	private static final int ConstructorId_charAt = -Id_charAt;
 	private static final int ConstructorId_charCodeAt = -Id_charCodeAt;
 	private static final int ConstructorId_indexOf = -Id_indexOf;
@@ -103,6 +104,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 	private static final int ConstructorId_match = -Id_match;
 	private static final int ConstructorId_search = -Id_search;
 	private static final int ConstructorId_replace = -Id_replace;
+	private static final int ConstructorId_replaceAll = -Id_replaceAll;
 	private static final int ConstructorId_localeCompare = -Id_localeCompare;
 	private static final int ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
 
@@ -528,6 +530,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_match, "match", 2, cx);
 		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_search, "search", 2, cx);
 		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_replace, "replace", 2, cx);
+		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_replaceAll, "replaceAll", 2, cx);
 		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_localeCompare, "localeCompare", 2, cx);
 		addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_toLocaleLowerCase, "toLocaleLowerCase", 1, cx);
 		super.fillConstructorProperties(ctor, cx);
@@ -675,6 +678,10 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 				arity = 2;
 				s = "replace";
 			}
+			case Id_replaceAll -> {
+				arity = 2;
+				s = "replaceAll";
+			}
 			case Id_localeCompare -> {
 				arity = 1;
 				s = "localeCompare";
@@ -768,6 +775,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 				case ConstructorId_match:
 				case ConstructorId_search:
 				case ConstructorId_replace:
+				case ConstructorId_replaceAll:
 				case ConstructorId_localeCompare:
 				case ConstructorId_toLocaleLowerCase: {
 					if (args.length > 0) {
@@ -977,14 +985,17 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 
 				case Id_match:
 				case Id_search:
-				case Id_replace: {
+				case Id_replace:
+				case Id_replaceAll: {
 					int actionType;
 					if (id == Id_match) {
 						actionType = RegExp.RA_MATCH;
 					} else if (id == Id_search) {
 						actionType = RegExp.RA_SEARCH;
-					} else {
+					} else if (id == Id_replace) {
 						actionType = RegExp.RA_REPLACE;
+					} else {
+						actionType = RegExp.RA_REPLACE_ALL;
 					}
 
 					ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f);
@@ -1227,6 +1238,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 			case "match" -> Id_match;
 			case "search" -> Id_search;
 			case "replace" -> Id_replace;
+			case "replaceAll" -> Id_replaceAll;
 			case "localeCompare" -> Id_localeCompare;
 			case "toLocaleLowerCase" -> Id_toLocaleLowerCase;
 			case "toLocaleUpperCase" -> Id_toLocaleUpperCase;
