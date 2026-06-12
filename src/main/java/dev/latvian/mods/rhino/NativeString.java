@@ -88,7 +88,8 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 	private static final int Id_trimEnd = 49;
 	private static final int SymbolId_iterator = 50;
 	private static final int Id_replaceAll = 51;
-	private static final int MAX_PROTOTYPE_ID = Id_replaceAll;
+	private static final int Id_at = 52;
+	private static final int MAX_PROTOTYPE_ID = Id_at;
 	private static final int ConstructorId_charAt = -Id_charAt;
 	private static final int ConstructorId_charCodeAt = -Id_charCodeAt;
 	private static final int ConstructorId_indexOf = -Id_indexOf;
@@ -682,6 +683,10 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 				arity = 2;
 				s = "replaceAll";
 			}
+			case Id_at -> {
+				arity = 1;
+				s = "at";
+			}
 			case Id_localeCompare -> {
 				arity = 1;
 				s = "localeCompare";
@@ -1001,6 +1006,21 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 					ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f);
 					return cx.getRegExp().action(cx, scope, thisObj, args, actionType);
 				}
+
+				case Id_at: {
+					String str = ScriptRuntime.toString(cx, ScriptRuntimeES6.requireObjectCoercible(cx, thisObj, f));
+					Object targetArg = (args.length >= 1) ? args[0] : Undefined.INSTANCE;
+					int len = str.length();
+					int relativeIndex = (int) ScriptRuntime.toInteger(cx, targetArg);
+
+					int k = (relativeIndex >= 0) ? relativeIndex : len + relativeIndex;
+
+					if ((k < 0) || (k >= len)) {
+						return Undefined.INSTANCE;
+					}
+
+					return str.substring(k, k + 1);
+				}
 				// ECMA-262 1 5.5.4.9
 				case Id_localeCompare: {
 					// For now, create and configure a collator instance. I can't
@@ -1239,6 +1259,7 @@ final class NativeString extends IdScriptableObject implements Wrapper {
 			case "search" -> Id_search;
 			case "replace" -> Id_replace;
 			case "replaceAll" -> Id_replaceAll;
+			case "at" -> Id_at;
 			case "localeCompare" -> Id_localeCompare;
 			case "toLocaleLowerCase" -> Id_toLocaleLowerCase;
 			case "toLocaleUpperCase" -> Id_toLocaleUpperCase;

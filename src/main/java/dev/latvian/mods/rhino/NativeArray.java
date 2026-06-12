@@ -74,7 +74,8 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 	private static final int Id_includes = 30;
 	private static final int Id_copyWithin = 31;
 	private static final int SymbolId_iterator = 32;
-	private static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
+	private static final int Id_at = 33;
+	private static final int MAX_PROTOTYPE_ID = Id_at;
 	private static final int ConstructorId_join = -Id_join;
 	private static final int ConstructorId_reverse = -Id_reverse;
 	private static final int ConstructorId_sort = -Id_sort;
@@ -1225,6 +1226,21 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 		return thisObj;
 	}
 
+	private static Object js_at(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+		Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+		long len = getLengthProperty(cx, o, false);
+
+		long relativeIndex = 0;
+		if (args.length >= 1) {
+			relativeIndex = (long) ScriptRuntime.toInteger(cx, args[0]);
+		}
+		long k = (relativeIndex >= 0) ? relativeIndex : len + relativeIndex;
+		if ((k < 0) || (k >= len)) {
+			return Undefined.INSTANCE;
+		}
+		return getElem(cx, thisObj, k);
+	}
+
 	/**
 	 * Implements the methods "every", "filter", "forEach", "map", and "some".
 	 */
@@ -1633,6 +1649,10 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 				arity = 2;
 				s = "copyWithin";
 			}
+			case Id_at -> {
+				arity = 1;
+				s = "at";
+			}
 			default -> throw new IllegalArgumentException(String.valueOf(id));
 		}
 
@@ -1757,6 +1777,9 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 
 				case Id_copyWithin:
 					return js_copyWithin(cx, scope, thisObj, args);
+
+				case Id_at:
+					return js_at(cx, scope, thisObj, args);
 
 				case Id_every:
 				case Id_filter:
@@ -2351,6 +2374,7 @@ public class NativeArray extends IdScriptableObject implements List, DataObject 
 			case "entries" -> Id_entries;
 			case "includes" -> Id_includes;
 			case "copyWithin" -> Id_copyWithin;
+			case "at" -> Id_at;
 			default -> 0;
 		};
 	}
